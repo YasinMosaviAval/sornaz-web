@@ -1,0 +1,12 @@
+:root {
+    --primary: #0066cc;
+    --primary-dark: #004080;
+    --bg: #f8f9fa;
+    --sidebar-bg: #1a1f36;
+    --white: #ffffff;
+    --text: #1e293b;
+    --text-light: #a3a9c2;
+    --light: #f0f7ff;
+    --danger: #d32f2f;
+    --shadow: 0 4px 15px rgba(0,0,0,0.08);
+}

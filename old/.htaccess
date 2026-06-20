@@ -1,0 +1,13 @@
+Options -Indexes
+
+RewriteEngine On
+RewriteBase /
+
+# فایل‌های static رو رد کن
+RewriteCond %{REQUEST_URI} !\.(jpg|jpeg|png|gif|webp|svg|ico|css|js|woff|woff2|ttf|eot|pdf|mp3|mp4)$
+
+# پوشه یا فایل واقعی باشه رد کن
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteRule .* index.php [L]

@@ -1,0 +1,80 @@
+/* ==========================================================================
+    Layout & Grid & Sections
+   ========================================================================== */
+
+.container,
+main.about-us section,
+main.contact-us section,
+section.article-list section,
+section.article-details article { width: 100%; max-width: 1600px; margin: 0 auto; padding: 0 2rem; }
+
+.container_ac,
+.schedule_container,
+.container_index { margin: 0 auto; padding: 0 1rem; }
+
+
+section.article-list ul li div:nth-child(1) { flex: 0 0 280px; margin: auto 0;}
+section.article-list ul li div:nth-child(2) { flex: 1; display: flex; flex-direction: column; }
+section.article-list ul li div:nth-child(2) > div { align-items: start; display: inline-block; margin-bottom: 2rem;}
+
+
+section.article-details article section.related-articles > div > div { background: var(--white); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,102,204,0.06); overflow: hidden; transition: all 0.35s ease; }
+section.article-details article section.related-articles > div > div:hover { box-shadow: 0 20px 40px rgba(0,0,0,0.12), 0 8px 20px rgba(0,102,204,0.12); border-color: #cce0ff; }
+section.article-details article section.related-articles > div > div > div:nth-child(2) { padding: 2rem; }
+section.article-details article section.related-articles > div > div > div:nth-child(2) > div:nth-child(3) { margin: 1rem 0; display: flex; flex-wrap: wrap; gap: 0.8rem; }
+
+
+section.article-details article section.related-articles > div { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3rem; max-width: 1200px; margin: 0 auto; }
+.dashboard-grid { max-width: 1200px; margin: -3rem auto 0; padding: 0 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 2rem; }
+
+.stats-grid,
+.about-grid,
+.class-grid,
+.review-grid,
+.gallery-grid,
+.classes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:4rem; width: 1600px; margin: 0 auto; }
+
+.class-grid { grid-template-columns: repeat(2, 500px); }
+.review-grid { grid-template-columns: repeat(1, 800px); }
+.gallery-grid { grid-template-columns: repeat(3, 340px); }
+
+      /* grid-template-columns: */
+      /* minmax(10px, 1fr) 3fr; */
+      /* repeat(3, 320px); */
+    /* 320px 320px 320px; */
+    /* auto auto auto; */
+    /* 1fr 1fr 1fr; */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 2rem; margin-bottom: 3rem; }
+
+.grid-2,
+.profile-grid,
+.profile-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+
+
+
+
+.hero-section { background: linear-gradient(135deg, #e6f0ff 0%, var(--light) 100%); padding: 4rem 0 6rem; text-align: center; }
+
+.overview-section div div { line-height: 3.5rem; }
+
+.overview-section,
+.theory-section,
+.iranian-music-section { margin: 8rem auto; border-bottom: 1px solid #cccccc; width: 1100px; }
+
+
+.classes-section, .reviews-section { margin-top: 4rem; }
+
+
+@media (max-width: 768px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    section.article-list ul li div:nth-child(1) { flex: 0 0 auto; }
+    section.article-list ul li div:nth-child(2) > div { display: inline-flex;}
+    .hero-section { padding: 7rem 0 5rem; }
+    section.article-details article section.comments-section { padding: 4rem 0 6rem; }
+}
+
+@media (max-width: 992px) {
+    section.article-details article section.related-articles > div { grid-template-columns: 1fr; gap: 2.5rem; }
+    .profile-sections { grid-template-columns: 1fr; }
+}
+

@@ -1,0 +1,5 @@
+/* ==========================================================================
+    Footer
+    ========================================================================== */
+footer { background: linear-gradient(135deg, var(--primary) -50%, var(--primary-dark) 100%); padding: 5rem 5rem 2rem; }
+footer > div { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 4rem; margin-bottom: 4rem; }

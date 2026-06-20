@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.2"
+   width="3.8910103mm"
+   height="9.7565212mm"
+   viewBox="0 0 2.2141999 5.5519993"
+   id="svg2"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="quadruple-croche pointée.svg">
+  <metadata
+     id="metadata186">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+        <cc:license
+           rdf:resource="http://creativecommons.org/publicdomain/zero/1.0/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/publicdomain/zero/1.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs184" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1018"
+     id="namedview182"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="2.5371828"
+     inkscape:cx="82.118862"
+     inkscape:cy="-59.446062"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
+  <!-- Page: 1/1 -->
+  <path
+     transform="matrix(0.004,0,0,-0.004,0.13,5.5119997)"
+     d="m -16,0 0,1000 16,0 0,-125 c 99,22 227,72 227,165 0,22 -7,43 -7,64 0,14 11,23 23,23 7,0 14,-4 19,-12 4,-25 7,-50 7,-75 0,-30 -9,-56 -23,-79 11,-36 18,-72 18,-109 0,-31 -9,-59 -23,-84 11,-35 18,-72 18,-109 0,-37 -11,-69 -28,-98 8,-34 12,-70 12,-105 C 243,274 0,187 0,5 L 0,0 -16,0 Z M 0,205 c 87,60 201,148 201,251 0,19 -2,38 -5,56 C 119,421 0,348 0,225 l 0,-20 z m 0,220 c 93,51 216,131 216,234 0,22 -3,43 -8,64 C 131,636 0,573 0,450 l 0,-25 z m 0,225 c 96,38 222,104 222,202 0,23 -4,46 -10,68 C 133,842 0,793 0,675 l 0,-25 z"
+     id="path46"
+     inkscape:connector-curvature="0"
+     style="fill:currentColor" />
+  <rect
+     transform="translate(0.065,1.0519997)"
+     x="-0.064999998"
+     y="-0.31220001"
+     width="0.13"
+     height="4.8122001"
+     ry="0.039999999"
+     id="rect48"
+     style="fill:currentColor" />
+  <path
+     transform="matrix(0.004,0,0,-0.004,1.7662,0.55199968)"
+     d="M 0,0 C 0,31 25,56 56,56 87,56 112,31 112,0 112,-31 87,-56 56,-56 25,-56 0,-31 0,0 Z"
+     id="path54"
+     inkscape:connector-curvature="0"
+     style="fill:currentColor" />
+  <a
+     id="a56"
+     transform="translate(-55.5756,-6.2933003)">
+    <path
+       transform="matrix(0.004,0,0,-0.004,55.5756,6.8453)"
+       d="m 220,138 c 56,0 109,-29 109,-91 0,-72 -56,-121 -103,-149 -36,-21 -76,-36 -117,-36 -56,0 -109,29 -109,91 0,72 56,121 103,149 36,21 76,36 117,36 z"
+       id="path58"
+       inkscape:connector-curvature="0"
+       style="fill:currentColor" />
+  </a>
+</svg>

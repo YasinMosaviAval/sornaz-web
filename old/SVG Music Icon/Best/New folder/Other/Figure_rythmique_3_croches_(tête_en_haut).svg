@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.2"
+   width="46.239716"
+   height="23.611452"
+   viewBox="0 0 7.4261 3.7919999"
+   id="svg3187"
+   inkscape:version="0.48.5 r10040"
+   sodipodi:docname="noire pointée.svg">
+  <metadata
+     id="metadata3347">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/publicdomain/" />
+        <dc:description>Figure rythmique</dc:description>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs3345" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1018"
+     id="namedview3343"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="2"
+     inkscape:cx="-3.0668141"
+     inkscape:cy="-143.06626"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg3187" />
+  <!-- Page: 1/1 -->
+  <text
+     transform="translate(-49.0476,-1.498)"
+     font-size="2.1995"
+     id="text3189"
+     style="font-size:2.19950008px;text-anchor:start;fill:currentColor;font-family:Century Schoolbook L">
+    <tspan
+       id="tspan3191" />
+  </text>
+  <path
+     transform="matrix(0.004,0,0,-0.004,0,0.55199993)"
+     d="m 220,138 c 56,0 109,-29 109,-91 0,-72 -56,-121 -103,-149 -36,-21 -76,-36 -117,-36 -56,0 -109,29 -109,91 0,72 56,121 103,149 36,21 76,36 117,36 z"
+     id="path3203"
+     inkscape:connector-curvature="0"
+     style="fill:currentColor" />
+  <polygon
+     transform="translate(0,3.552)"
+     points="0.04,0.2 0.04,-0.2 6.2002,-0.2 6.2002,0.2 "
+     id="polygon3205"
+     style="fill:currentColor;stroke:currentColor;stroke-width:0.08;stroke-linecap:round;stroke-linejoin:round" />
+  <rect
+     transform="translate(0.065,1.552)"
+     x="-0.064999998"
+     y="-0.81220001"
+     width="0.13"
+     height="2.8122001"
+     ry="0.039999999"
+     id="rect3207"
+     style="fill:currentColor" />
+  <path
+     transform="matrix(0.004,0,0,-0.004,3.055,0.55199993)"
+     d="m 220,138 c 56,0 109,-29 109,-91 0,-72 -56,-121 -103,-149 -36,-21 -76,-36 -117,-36 -56,0 -109,29 -109,91 0,72 56,121 103,149 36,21 76,36 117,36 z"
+     id="path3209"
+     inkscape:connector-curvature="0"
+     style="fill:currentColor" />
+  <rect
+     transform="translate(3.12,1.552)"
+     x="-0.064999998"
+     y="-0.81220001"
+     width="0.13"
+     height="2.8122001"
+     ry="0.039999999"
+     id="rect3211"
+     style="fill:currentColor" />
+  <path
+     transform="matrix(0.004,0,0,-0.004,6.1101,0.55199993)"
+     d="m 220,138 c 56,0 109,-29 109,-91 0,-72 -56,-121 -103,-149 -36,-21 -76,-36 -117,-36 -56,0 -109,29 -109,91 0,72 56,121 103,149 36,21 76,36 117,36 z"
+     id="path3213"
+     inkscape:connector-curvature="0"
+     style="fill:currentColor" />
+  <rect
+     transform="translate(6.1751,1.552)"
+     x="-0.064999998"
+     y="-0.81220001"
+     width="0.13"
+     height="2.8122001"
+     ry="0.039999999"
+     id="rect3215"
+     style="fill:currentColor" />
+</svg>

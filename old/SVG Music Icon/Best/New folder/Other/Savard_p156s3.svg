@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.2"
+   width="220"
+   height="65"
+   viewBox="0 0 35.332008 10.439002"
+   id="svg2"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="Savard_p156s3.svg">
+  <metadata
+     id="metadata138">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs136" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1020"
+     id="namedview134"
+     showgrid="true"
+     inkscape:snap-grids="false"
+     inkscape:zoom="3.5881183"
+     inkscape:cx="164.63469"
+     inkscape:cy="5.6132137"
+     inkscape:window-x="-3"
+     inkscape:window-y="-3"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3115"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true" />
+  </sodipodi:namedview>
+  <!-- Page: 1/1 -->
+  <text
+     font-size="2.1995"
+     id="text4"
+     style="font-size:2.19950008px;text-anchor:start;fill:currentColor;font-family:Century Schoolbook L"
+     x="5.6905999"
+     y="-155.7251">
+    <tspan
+       id="tspan6" />
+  </text>
+  <a
+     transform="translate(31.6841,6.5807979)"
+     xlink:href="http://lilypond.org/"
+     id="a126">
+    <rect
+       x="0"
+       y="-0.44389999"
+       width="56.133499"
+       height="2.0827"
+       id="rect128"
+       style="fill:none;stroke:none" />
+  </a>
+  <g
+     id="g3135"
+     transform="translate(-17.634985,-143.39715)">
+    <path
+       style="fill:currentColor"
+       inkscape:connector-curvature="0"
+       id="path22"
+       d="m 46.958388,148.88848 c 0.224,0 0.436,0.116 0.436,0.364 0,0.288 -0.224,0.484 -0.412,0.596 -0.144,0.084 -0.304,0.144 -0.468,0.144 -0.224,0 -0.436,-0.116 -0.436,-0.364 0,-0.288 0.224,-0.484 0.412,-0.596 0.144,-0.084 0.304,-0.144 0.468,-0.144 z" />
+    <path
+       style="fill:currentColor"
+       inkscape:connector-curvature="0"
+       id="path24"
+       d="m 45.892488,146.78848 c -0.032,-0.008 -0.056,-0.036 -0.056,-0.072 0,-0.04 0.036,-0.076 0.076,-0.076 0.008,0 0.012,0.004 0.016,0.004 l 1.632,0.42 c 0.052,0 0.076,0.024 0.076,0.076 0,0.052 -0.024,0.076 -0.076,0.076 l -1.632,0.42 c -0.004,0 -0.008,0.004 -0.016,0.004 -0.04,0 -0.076,-0.036 -0.076,-0.076 0,-0.036 0.024,-0.064 0.056,-0.072 l 1.004,-0.26 0.56,-0.092 -0.56,-0.092 z" />
+    <rect
+       style="fill:currentColor"
+       id="rect38"
+       ry="0.039999999"
+       height="3.1222"
+       width="0.13"
+       y="149.62828"
+       x="46.078388" />
+    <path
+       style="fill:currentColor"
+       inkscape:connector-curvature="0"
+       id="path40"
+       d="m 49.474588,148.88848 c 0.224,0 0.436,0.116 0.436,0.364 0,0.288 -0.224,0.484 -0.412,0.596 -0.144,0.084 -0.304,0.144 -0.468,0.144 -0.224,0 -0.436,-0.116 -0.436,-0.364 0,-0.288 0.224,-0.484 0.412,-0.596 0.144,-0.084 0.304,-0.144 0.468,-0.144 z" />
+    <rect
+       style="fill:currentColor"
+       id="rect42"
+       ry="0.039999999"
+       height="3.1222"
+       width="0.13"
+       y="149.62828"
+       x="48.594585" />
+    <rect
+       style="fill:currentColor"
+       id="rect44"
+       ry="0.039999999"
+       height="3.1222"
+       width="0.13"
+       y="149.62828"
+       x="51.110687" />
+    <rect
+       style="fill:currentColor"
+       id="rect46"
+       ry="0.039999999"
+       height="3.1222"
+       width="0.13"
+       y="149.62828"
+       x="43.562187" />
+    <path
+       style="fill:currentColor"
+       inkscape:connector-curvature="0"
+       id="path48"
+       d="m 44.442188,148.88848 c 0.224,0 0.436,0.116 0.436,0.364 0,0.288 -0.224,0.484 -0.412,0.596 -0.144,0.084 -0.304,0.144 -0.468,0.144 -0.224,0 -0.436,-0.116 -0.436,-0.364 0,-0.288 0.224,-0.484 0.412,-0.596 0.144,-0.084 0.304,-0.144 0.468,-0.144 z" />
+    <rect
+       style="fill:currentColor"
+       id="rect50"
+       ry="0.039999999"
+       height="3.1222"
+       width="0.13"
+       y="149.62828"
+       x="41.045986" />
+    <polygon
+       style="fill:currentColor;stroke:currentColor;stroke-width:0.12687418;stroke-linecap:round;stroke-linejoin:round"
+       id="polygon54"
+       points="0.04,-0.2 12.6709,-0.2 12.6709,0.2 0.04,0.2 "
+       transform="matrix(0.39758815,0,0,1,38.553884,151.92321)" />
+    <polygon
+       style="fill:currentColor;stroke:currentColor;stroke-width:0.08;stroke-linecap:round;stroke-linejoin:round"
+       id="polygon56"
+       points="12.6709,0.2 0.04,0.2 0.04,-0.2 12.6709,-0.2 "
+       transform="translate(38.529788,152.75048)" />
+    <path
+       style="fill:currentColor"
+       inkscape:connector-curvature="0"
+       id="path58"
+       d="m 41.925988,148.88848 c 0.224,0 0.436,0.116 0.436,0.364 0,0.288 -0.224,0.484 -0.412,0.596 -0.144,0.084 -0.304,0.144 -0.468,0.144 -0.224,0 -0.436,-0.116 -0.436,-0.364 0,-0.288 0.224,-0.484 0.412,-0.596 0.144,-0.084 0.304,-0.144 0.468,-0.144 z" />
+    <path
+       style="fill:currentColor"
+       inkscape:connector-curvature="0"
+       id="path60"
+       d="m 51.990688,148.88848 c 0.224,0 0.436,0.116 0.436,0.364 0,0.288 -0.224,0.484 -0.412,0.596 -0.144,0.084 -0.304,0.144 -0.468,0.144 -0.224,0 -0.436,-0.116 -0.436,-0.364 0,-0.288 0.224,-0.484 0.412,-0.596 0.144,-0.084 0.304,-0.144 0.468,-0.144 z" />
+    <rect
+       style="fill:currentColor"
+       id="rect86"
+       ry="0.039999999"
+       height="3.1222"
+       width="0.13"
+       y="149.62828"
+       x="38.529785" />
+    <path
+       style="fill:currentColor"
+       inkscape:connector-curvature="0"
+       id="path104"
+       d="m 38.343888,146.78848 c -0.032,-0.008 -0.056,-0.036 -0.056,-0.072 0,-0.04 0.036,-0.076 0.076,-0.076 0.008,0 0.012,0.004 0.016,0.004 l 1.632,0.42 c 0.052,0 0.076,0.024 0.076,0.076 0,0.052 -0.024,0.076 -0.076,0.076 l -1.632,0.42 c -0.004,0 -0.008,0.004 -0.016,0.004 -0.04,0 -0.076,-0.036 -0.076,-0.076 0,-0.036 0.024,-0.064 0.056,-0.072 l 1.004,-0.26 0.56,-0.092 -0.56,-0.092 z" />
+    <path
+       style="fill:currentColor"
+       inkscape:connector-curvature="0"
+       id="path106"
+       d="m 39.409788,148.88848 c 0.224,0 0.436,0.116 0.436,0.364 0,0.288 -0.224,0.484 -0.412,0.596 -0.144,0.084 -0.304,0.144 -0.468,0.144 -0.224,0 -0.436,-0.116 -0.436,-0.364 0,-0.288 0.224,-0.484 0.412,-0.596 0.144,-0.084 0.304,-0.144 0.468,-0.144 z" />
+    <text
+       style="font-size:1.44540036px;text-anchor:start;fill:currentColor;font-family:Century Schoolbook L"
+       y="144.88852"
+       x="40.974613"
+       id="text122"
+       font-size="2.1995">
+      <tspan
+         style="font-size:1.44540036px"
+         id="tspan124">double-triolet</tspan>
+    </text>
+    <polygon
+       style="fill:currentColor;stroke:currentColor;stroke-width:0.12687418;stroke-linecap:round;stroke-linejoin:round"
+       id="polygon54-3"
+       points="12.6709,-0.2 12.6709,0.2 0.04,0.2 0.04,-0.2 "
+       transform="matrix(0.39758814,0,0,1,46.148394,151.92321)" />
+  </g>
+  <g
+     id="g3181"
+     transform="translate(-22.289905,-143.39715)">
+    <path
+       style="fill:currentColor"
+       inkscape:connector-curvature="0"
+       id="path62"
+       d="m 31.861288,148.88848 c 0.224,0 0.436,0.116 0.436,0.364 0,0.288 -0.224,0.484 -0.412,0.596 -0.144,0.084 -0.304,0.144 -0.468,0.144 -0.224,0 -0.436,-0.116 -0.436,-0.364 0,-0.288 0.224,-0.484 0.412,-0.596 0.144,-0.084 0.304,-0.144 0.468,-0.144 z" />
+    <rect
+       style="fill:currentColor"
+       id="rect64"
+       ry="0.039999999"
+       height="3.1222"
+       width="0.13"
+       y="149.62828"
+       x="28.46509" />
+    <path
+       style="fill:currentColor"
+       inkscape:connector-curvature="0"
+       id="path66"
+       d="m 28.279188,146.78848 c -0.032,-0.008 -0.056,-0.036 -0.056,-0.072 0,-0.04 0.036,-0.076 0.076,-0.076 0.008,0 0.012,0.004 0.016,0.004 l 1.632,0.42 c 0.052,0 0.076,0.024 0.076,0.076 0,0.052 -0.024,0.076 -0.076,0.076 l -1.632,0.42 c -0.004,0 -0.008,0.004 -0.016,0.004 -0.04,0 -0.076,-0.036 -0.076,-0.076 0,-0.036 0.024,-0.064 0.056,-0.072 l 1.004,-0.26 0.56,-0.092 -0.56,-0.092 z" />
+    <path
+       style="fill:currentColor"
+       inkscape:connector-curvature="0"
+       id="path68"
+       d="m 29.345088,148.88848 c 0.224,0 0.436,0.116 0.436,0.364 0,0.288 -0.224,0.484 -0.412,0.596 -0.144,0.084 -0.304,0.144 -0.468,0.144 -0.224,0 -0.436,-0.116 -0.436,-0.364 0,-0.288 0.224,-0.484 0.412,-0.596 0.144,-0.084 0.304,-0.144 0.468,-0.144 z" />
+    <rect
+       style="fill:currentColor"
+       id="rect70"
+       ry="0.039999999"
+       height="3.1222"
+       width="0.13"
+       y="149.62828"
+       x="30.981287" />
+    <rect
+       style="fill:currentColor"
+       id="rect72"
+       ry="0.039999999"
+       height="3.1222"
+       width="0.13"
+       y="149.62828"
+       x="25.948889" />
+    <path
+       style="fill:currentColor"
+       inkscape:connector-curvature="0"
+       id="path74"
+       d="m 26.828888,148.88848 c 0.224,0 0.436,0.116 0.436,0.364 0,0.288 -0.224,0.484 -0.412,0.596 -0.144,0.084 -0.304,0.144 -0.468,0.144 -0.224,0 -0.436,-0.116 -0.436,-0.364 0,-0.288 0.224,-0.484 0.412,-0.596 0.144,-0.084 0.304,-0.144 0.468,-0.144 z" />
+    <rect
+       style="fill:currentColor"
+       id="rect76"
+       ry="0.039999999"
+       height="3.1222"
+       width="0.13"
+       y="149.62828"
+       x="23.432789" />
+    <path
+       style="fill:currentColor"
+       inkscape:connector-curvature="0"
+       id="path82"
+       d="m 23.246888,146.78848 c -0.032,-0.008 -0.056,-0.036 -0.056,-0.072 0,-0.04 0.036,-0.076 0.076,-0.076 0.008,0 0.012,0.004 0.016,0.004 l 1.632,0.42 c 0.052,0 0.076,0.024 0.076,0.076 0,0.052 -0.024,0.076 -0.076,0.076 l -1.632,0.42 c -0.004,0 -0.008,0.004 -0.016,0.004 -0.04,0 -0.076,-0.036 -0.076,-0.076 0,-0.036 0.024,-0.064 0.056,-0.072 l 1.004,-0.26 0.56,-0.092 -0.56,-0.092 z" />
+    <rect
+       style="fill:currentColor"
+       id="rect84"
+       ry="0.039999999"
+       height="3.1222"
+       width="0.13"
+       y="149.62828"
+       x="36.013687" />
+    <polygon
+       style="fill:currentColor;stroke:currentColor;stroke-width:0.17808394;stroke-linecap:round;stroke-linejoin:round"
+       id="polygon88"
+       points="12.6709,0.2 0.04,0.2 0.04,-0.2 12.6709,-0.2 "
+       transform="matrix(0.20180429,0,0,1,23.464716,151.92321)" />
+    <polygon
+       style="fill:currentColor;stroke:currentColor;stroke-width:0.08;stroke-linecap:round;stroke-linejoin:round"
+       id="polygon90"
+       points="0.04,-0.2 12.6709,-0.2 12.6709,0.2 0.04,0.2 "
+       transform="translate(23.432788,152.75048)" />
+    <path
+       style="fill:currentColor"
+       inkscape:connector-curvature="0"
+       id="path108"
+       d="m 24.312788,148.88848 c 0.224,0 0.436,0.116 0.436,0.364 0,0.288 -0.224,0.484 -0.412,0.596 -0.144,0.084 -0.304,0.144 -0.468,0.144 -0.224,0 -0.436,-0.116 -0.436,-0.364 0,-0.288 0.224,-0.484 0.412,-0.596 0.144,-0.084 0.304,-0.144 0.468,-0.144 z" />
+    <path
+       style="fill:currentColor"
+       inkscape:connector-curvature="0"
+       id="path110"
+       d="m 36.893688,148.88848 c 0.224,0 0.436,0.116 0.436,0.364 0,0.288 -0.224,0.484 -0.412,0.596 -0.144,0.084 -0.304,0.144 -0.468,0.144 -0.224,0 -0.436,-0.116 -0.436,-0.364 0,-0.288 0.224,-0.484 0.412,-0.596 0.144,-0.084 0.304,-0.144 0.468,-0.144 z" />
+    <rect
+       style="fill:currentColor"
+       id="rect112"
+       ry="0.039999999"
+       height="3.1222"
+       width="0.13"
+       y="149.62828"
+       x="33.497486" />
+    <path
+       style="fill:currentColor"
+       inkscape:connector-curvature="0"
+       id="path114"
+       d="m 33.311588,146.78848 c -0.032,-0.008 -0.056,-0.036 -0.056,-0.072 0,-0.04 0.036,-0.076 0.076,-0.076 0.008,0 0.012,0.004 0.016,0.004 l 1.632,0.42 c 0.052,0 0.076,0.024 0.076,0.076 0,0.052 -0.024,0.076 -0.076,0.076 l -1.632,0.42 c -0.004,0 -0.008,0.004 -0.016,0.004 -0.04,0 -0.076,-0.036 -0.076,-0.076 0,-0.036 0.024,-0.064 0.056,-0.072 l 1.004,-0.26 0.56,-0.092 -0.56,-0.092 z" />
+    <path
+       style="fill:currentColor"
+       inkscape:connector-curvature="0"
+       id="path116"
+       d="m 34.377488,148.88848 c 0.224,0 0.436,0.116 0.436,0.364 0,0.288 -0.224,0.484 -0.412,0.596 -0.144,0.084 -0.304,0.144 -0.468,0.144 -0.224,0 -0.436,-0.116 -0.436,-0.364 0,-0.288 0.224,-0.484 0.412,-0.596 0.144,-0.084 0.304,-0.144 0.468,-0.144 z" />
+    <text
+       style="font-size:1.44540036px;text-anchor:start;fill:currentColor;font-family:Century Schoolbook L"
+       y="144.84259"
+       x="28.2631"
+       id="text118"
+       font-size="2.1995">
+      <tspan
+         style="font-size:1.44540036px"
+         id="tspan120">sixain</tspan>
+    </text>
+    <polygon
+       style="fill:currentColor;stroke:currentColor;stroke-width:0.17808394;stroke-linecap:round;stroke-linejoin:round"
+       id="polygon88-6"
+       points="12.6709,0.2 0.04,0.2 0.04,-0.2 12.6709,-0.2 "
+       transform="matrix(0.20180429,0,0,1,28.507253,151.92321)" />
+    <polygon
+       style="fill:currentColor;stroke:currentColor;stroke-width:0.17808394;stroke-linecap:round;stroke-linejoin:round"
+       id="polygon88-7"
+       points="12.6709,0.2 0.04,0.2 0.04,-0.2 12.6709,-0.2 "
+       transform="matrix(0.20180429,0,0,1,33.539825,151.92321)" />
+  </g>
+</svg>

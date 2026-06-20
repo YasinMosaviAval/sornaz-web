@@ -1,0 +1,21 @@
+/* ==========================================================================
+   Forms
+   ========================================================================== */
+
+form { background: var(--white); border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); padding:2.5rem; width: max-content; margin: 6rem auto;}
+
+.required { color: var(--danger); }
+
+/* form > div { display: flex; flex-direction: column; flex: 1; min-width: 300px; margin-bottom:1.8rem; } */
+
+.category-form-wrapper { background: var(--white); border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); padding: 2.5rem; margin-bottom: 3rem; }
+
+.form-title { font-size: 2.2rem; color: var(--primary-dark); margin-bottom: 2rem; text-align: center; }
+.form-row { display: flex; gap: 2rem; margin-bottom: 2rem; flex-wrap: wrap; }
+.form-group { flex: 1; min-width: 280px; }
+.form-group.full { flex: 100%; }
+.form-group label { display: block; margin-bottom: 0.8rem; font-size: 1.5rem; color: #444; }
+.form-group input,
+.form-group select,
+.form-group textarea { padding: 1.2rem; border: 1px solid #ccc; border-radius: 10px; font-size: 1.55rem; }
+.form-group textarea { min-height: 110px; resize: vertical; }

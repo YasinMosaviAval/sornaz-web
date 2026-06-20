@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<svg width="20" height="60" xmlns="http://www.w3.org/2000/svg">
+ <g>
+  <title>Layer 1</title>
+  <g id="staff40">
+   <rect x="0" y="16" width="40" height="1" fill="#000000"/>
+   <rect x="0" y="22" width="40" height="1" fill="#000000"/>
+   <rect x="0" y="28" width="40" height="1" fill="#000000"/>
+   <rect x="0" y="34" width="40" height="1" fill="#000000"/>
+   <rect x="0" y="40" width="40" height="1" fill="#000000"/>
+  </g>
+  <rect fill="#000000" stroke-width="6" stroke-dasharray="null" stroke-linejoin="null" stroke-linecap="null" x="3.29032" y="22.12903" width="3.87097" height="12.12903" id="svg_3"/>
+  <rect fill="#000000" stroke-width="6" stroke-dasharray="null" stroke-linejoin="null" stroke-linecap="null" x="9.80645" y="22.12903" width="3.87097" height="12.12903" id="svg_4"/>
+ </g>
+</svg>

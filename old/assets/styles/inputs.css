@@ -1,0 +1,7 @@
+/* ==========================================================================
+    HTML Tags
+    ========================================================================== */
+input, select, textarea { padding: 1rem; border: 1px solid #ccc; border-radius: 8px; font-family: 'Vazirmatn', sans-serif; }
+
+textarea { resize: vertical; min-height: 140px; }
+.search-bar input { width: 100%; padding: 0.8rem 1.5rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1.4rem; }

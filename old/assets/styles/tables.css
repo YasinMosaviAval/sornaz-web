@@ -1,0 +1,12 @@
+/* ==========================================================================
+    Tables
+   ========================================================================== */
+
+table { border-collapse:collapse; background:white; box-shadow:0 4px 12px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden; }
+th, td { padding:1.4rem; text-align:start; border-bottom:1px solid #eee; font-size:1.5rem; border:1px solid #eee; }
+th { background: var(--primary); color: var(--white); font-weight: 600; cursor: pointer; user-select: none; position: relative; }
+tr:hover { background:#f0f7ff; }
+th:hover { background:#0055aa; }
+
+table.schedule { width:100%; border-collapse:collapse; background:var(--white); box-shadow: var(--shadow); border-radius:12px; overflow:hidden; }
+.categories-table { width: 100%; border-collapse: collapse; }

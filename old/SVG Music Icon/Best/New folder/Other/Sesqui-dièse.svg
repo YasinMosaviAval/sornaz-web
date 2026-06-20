@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.2"
+   width="9.9626379"
+   height="18.679947"
+   viewBox="0 0 1.5999999 3.0000001"
+   id="svg2"
+   inkscape:version="0.48.5 r10040"
+   sodipodi:docname="sesqui-bémol.svg">
+  <metadata
+     id="metadata96">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs94" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1018"
+     id="namedview92"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="4"
+     inkscape:cx="25.229626"
+     inkscape:cy="12.948101"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
+  <!-- Page: 1/1 -->
+  <text
+     transform="translate(-35.072901,-1.36)"
+     font-size="2.2001"
+     id="text4"
+     style="font-size:2.20009995px;text-anchor:start;fill:currentColor;font-family:Century Schoolbook L">
+    <tspan
+       id="tspan6" />
+  </text>
+  <path
+     transform="matrix(0.004,0,0,-0.004,-7.1649232e-7,1.5)"
+     d="m 331,-300 c 0,-10 -8,-19 -18,-19 -10,0 -19,9 -19,19 v 142 l -75,-19 v -151 c 0,-10 -9,-19 -19,-19 -10,0 -19,9 -19,19 v 141 l -75,-18 v -151 c 0,-10 -8,-19 -18,-19 -10,0 -19,9 -19,19 v 141 l -44,-11 h -5 c -11,0 -20,9 -20,20 v 60 c 0,9 6,17 15,19 l 54,14 V 48 L 25,37 C 23,37 22,36 20,36 9,36 0,45 0,56 v 60 c 0,9 6,18 15,20 l 54,13 v 151 c 0,10 9,19 19,19 10,0 18,-9 18,-19 V 158 l 75,19 v 151 c 0,10 9,19 19,19 10,0 19,-9 19,-19 V 187 l 75,18 v 151 c 0,10 9,19 19,19 10,0 18,-9 18,-19 V 215 l 44,11 h 5 c 11,0 20,-9 20,-20 v -60 c 0,-9 -6,-17 -15,-19 L 331,113 V -48 l 44,11 c 2,0 3,1 5,1 11,0 20,-9 20,-20 v -60 c 0,-9 -6,-18 -15,-20 l -54,-13 V -300 z M 106,57 v -161 l 75,19 V 76 z M 219,85 V -76 l 75,19 v 161 z"
+     id="path46"
+     inkscape:connector-curvature="0"
+     style="fill:currentColor" />
+</svg>

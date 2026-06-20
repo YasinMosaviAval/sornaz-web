@@ -1,0 +1,6 @@
+[07-Jun-2026 20:51:42 Asia/Tehran] PHP Warning:  require_once(/home/dansimi1/domains/dansim.ir/public_html/lib/phpmailer/Exception.php): Failed to open stream: No such file or directory in /home/dansimi1/domains/dansim.ir/public_html/system/loader.php on line 6
+[07-Jun-2026 20:51:42 Asia/Tehran] PHP Fatal error:  Uncaught Error: Failed opening required '/home/dansimi1/domains/dansim.ir/public_html/lib/phpmailer/Exception.php' (include_path='.:/usr/local/php-8.1/lib/php') in /home/dansimi1/domains/dansim.ir/public_html/system/loader.php:6
+Stack trace:
+#0 /home/dansimi1/domains/dansim.ir/public_html/index.php(3): require_once()
+#1 {main}
+  thrown in /home/dansimi1/domains/dansim.ir/public_html/system/loader.php on line 6

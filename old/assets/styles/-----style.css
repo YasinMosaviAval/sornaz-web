@@ -1,0 +1,131 @@
+/* ==========================================================================
+    Site Logo
+    ========================================================================== */
+.logo-link { display: block; margin-bottom: 0.8rem; }
+/* ==========================================================================
+    Academy Section user profile
+    ========================================================================== */
+.avatar { width: 120px; height: 120px; border-radius: 50%; border: 1px solid var(--primary); object-fit: cover; margin-bottom: 1rem; box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+.next-class { background: #e6ffe6; padding: 1.5rem; border-radius: 12px; margin-top: 1.5rem;}
+/* ==========================================================================
+    Academy Section teacher profile
+    ========================================================================== */
+.teacher-name { font-size: 3.2rem; margin: 0.5rem 0; font-weight: 900; }
+.teacher-role { font-size: 1.8rem; opacity: 0.9; margin-bottom: 1rem; }
+.main-content { max-width: 1200px; margin: -4rem auto 0; padding: 0 2rem; position: relative; }
+.bio-text { font-size: 1.65rem; color: #444; line-height: 2; }
+.skills-list { display: flex; flex-wrap: wrap; gap: 1rem; margin: 2rem 0; }
+.skill-tag { background: var(--light); color: var(--primary); padding: 0.7rem 1.5rem; border-radius: 30px; font-size: 1.4rem; font-weight: 500; }
+.class-body { padding: 1.5rem; }
+.class-time { color: #555; font-size: 1.4rem; }
+.review-avatar { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
+.review-name { font-weight: 600; font-size: 1.5rem; }
+.review-rating { color: #ffc107; font-size: 1.4rem; }
+.review-text { font-size: 1.55rem; color: #555; }
+.gallery-item { position: relative; overflow: hidden; border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.gallery-item:hover { transform: scale(1.04); box-shadow: 0 12px 30px rgba(0,0,0,0.15); }
+.gallery-caption { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.65); color: var(--white); padding: 1rem; font-size: 1.3rem; text-align: center; opacity: 0; transition: opacity 0.3s ease;}
+.gallery-item:hover .gallery-caption { opacity: 1; }
+/* ==========================================================================
+Academy Section manager-profile
+========================================================================== */
+.avatar-large,
+.teacher-avatar { width: 180px; height: 180px; border-radius: 50%; border: 1px solid var(--primary); object-fit: cover; box-shadow: 0 8px 25px rgba(0,0,0,0.3); margin-bottom: 1.5rem; }
+.admin-stats { display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap; margin-top: 2rem; }
+.stat-item { text-align: center; min-width: 140px; }
+.log-item:last-child { border-bottom: none; }
+/* ==========================================================================
+    Academy Section schedule
+    ========================================================================== */
+.day { font-weight:700; background:var(--light); }
+.class-slot { background:#e6ffe6; padding:0.8rem; border-radius:6px; margin:0.5rem 0; }
+.empty { color:#aaa; }
+/* ==========================================================================
+    Academy Section payment
+    ========================================================================== */
+.payment-box { background: var(--white); border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.1); padding:3rem; text-align:center; }
+.amount { font-size:3rem; font-weight:700; color:var(--danger); margin:1.5rem 0; }
+.details { font-size:1.6rem; color:#555; margin-bottom:2rem; line-height:1.8; }
+/* ==========================================================================
+    Academy Section profile ------------- remove
+    ========================================================================== */
+.stats { display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap; margin-top: 2rem; }
+/* .profile-name { font-size: 3.4rem; margin: 0.5rem 0; font-weight: 900; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.profile-role { font-size: 1.8rem; opacity: 0.9; margin-bottom: 1rem; }
+.stat { text-align: center; min-width: 140px; }
+.info-list { list-style: none; padding: 0; }
+.info-item { display: flex; align-items: center; margin-bottom: 1.5rem; font-size: 1.6rem; }
+.info-icon { font-size: 1.8rem; color: var(--primary); margin-left: 1.2rem; min-width: 30px; text-align: center; }
+.activity-log { max-height: 400px; overflow-y: auto; border: 1px solid #eee; border-radius: 10px; padding: 1.5rem; background: #fafcff; }
+.log-item { color: #555; font-size: 1.45rem; padding: 1rem 0; border-bottom: 1px solid #eee; }
+.log-time { color: #888; font-size: 1.3rem; margin-right: 1rem; } */
+/* ==========================================================================
+    Admin CSS
+    ========================================================================== */
+.wrapper { display: flex; min-height: 100vh; }
+.sidebar { width: 260px; height:100vh; position:fixed; padding:1rem; background: var(--sidebar-bg); color: var(--white); overflow-y: auto; transition: width 0.3s; }
+.submenu { display: none; padding-right: 1rem; }
+.submenu.show { display: block; }
+.content { margin-right: 260px; flex: 1; }
+.search-bar { flex: 1; max-width: 400px; margin: 0 2rem; }
+.topbar { background: var(--white); padding: 1rem 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+.topbar-right { display: flex; align-items: center; gap: 1.5rem; }
+.notification, .profile { font-size: 1.6rem; color: #555; cursor: pointer; }
+.stat-icon { font-size: 3rem; color: var(--primary); margin-bottom: 1rem; }
+/* ==========================================================================
+    Categories Management Page
+    ========================================================================== */
+.categories-list { background: white; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); overflow: hidden; }
+.edit-cat { color: var(--primary); }
+.delete-cat { color: var(--danger); }
+/* ==========================================================================
+    Category Management - فرم ثابت + جدول
+    ========================================================================== */
+.status { padding: 0.4rem 1rem; border-radius: 20px; font-size: 1.3rem; }
+.status.approved { background: #e8f5e9; color: #2e7d32; }
+.status.pending { background: #fff3e0; color: #ef6c00; }
+/* ==========================================================================
+    Comments - نظرات
+    ========================================================================== */
+.filter-list { list-style: none; display: flex; gap: 2.5rem; margin: 0; padding: 0 2rem; }
+.filter-item .count { background: #e0e0e0; color: #333; padding: 0.3rem 0.8rem; border-radius: 12px; font-size: 1.2rem; margin-right: 0.5rem; }
+/* ==========================================================================
+    Responsive
+    ========================================================================== */
+@media (max-width: 992px) {
+    .avatar-large,
+    .teacher-avatar { width: 140px; height: 140px; }
+    .teacher-name { font-size: 2.6rem; }
+    /* .sidebar { width: 80px; } */
+    /* .sidebar-header h2, .sidebar-menu span:not(.icon) { display: none; } */
+    .content { margin-right: 80px; }
+}
+
+
+
+
+
+
+/* ==========================================================================
+    text editor
+    ========================================================================== */
+/* body {font-family: sans-serif;direction: rtl;padding: 20px;background: #f5f5f5;} */
+    .editor-container {max-width: 900px;margin: auto;background: #fff;border-radius: 10px;box-shadow: 0 2px 10px rgba(0,0,0,0.1);overflow: hidden;}
+    .toolbar {background: #eee;padding: 10px;display: flex;gap: 8px;flex-wrap: wrap;align-items: center;}
+    /* .toolbar button, .toolbar select, .toolbar input[type="color"] {padding: 5px 8px;border: none;cursor: pointer;border-radius: 5px;} */
+    .toolbar button:hover {background: #ddd;}
+    #editor {min-height: 250px;padding: 15px;outline: none;}
+    #editor.dragover {border: 2px dashed #999;}
+
+    .img-wrapper {display:inline-block;position:relative;}
+    img.resizable {max-width:100%;height:auto;display:block;}
+
+    .resizer {width:10px;height:10px;background:#333;position:absolute;}
+    .resizer.br {right:0;bottom:0;cursor:se-resize;}
+    .resizer.bl {left:0;bottom:0;cursor:sw-resize;}
+    .resizer.tr {right:0;top:0;cursor:ne-resize;}
+    .resizer.tl {left:0;top:0;cursor:nw-resize;}
+
+    .hidden {display:none;}
+    /* textarea.code-view {width:100%;height:250px;border:none;padding:15px;font-family:monospace;outline:none;} */
+    .output {margin-top:20px;background:#222;color:#0f0;padding:10px;white-space:pre-wrap;}

@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.2"
+   width="295"
+   height="95"
+   viewBox="0 0 47.377011 15.257003"
+   id="svg2"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="Savard_p155s1.svg">
+  <metadata
+     id="metadata148">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs146" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1020"
+     id="namedview144"
+     showgrid="true"
+     inkscape:snap-grids="false"
+     inkscape:zoom="14.352473"
+     inkscape:cx="137.49614"
+     inkscape:cy="49.321197"
+     inkscape:window-x="-3"
+     inkscape:window-y="-3"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g4002">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3125"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true" />
+  </sodipodi:namedview>
+  <!-- Page: 1/1 -->
+  <text
+     font-size="2.1995"
+     id="text4"
+     style="font-size:2.19950008px;text-anchor:start;fill:currentColor;font-family:Century Schoolbook L"
+     x="5.6905999"
+     y="-150.90709">
+    <tspan
+       id="tspan6" />
+  </text>
+  <a
+     transform="translate(31.6841,11.398798)"
+     xlink:href="http://lilypond.org/"
+     id="a136">
+    <rect
+       x="0"
+       y="-0.44389999"
+       width="56.133499"
+       height="2.0827"
+       id="rect138"
+       style="fill:none;stroke:none" />
+  </a>
+  <g
+     id="g4042"
+     transform="translate(-6.6690681,-3.877412)">
+    <g
+       transform="translate(-2.2945731,0.04747393)"
+       id="g4024">
+      <g
+         id="g3140"
+         transform="matrix(-0.99999872,0.00159802,-0.00159802,-0.99999872,105.48887,32.610368)">
+        <polygon
+           style="fill:currentColor;stroke:currentColor;stroke-width:0.08;stroke-linecap:round;stroke-linejoin:round"
+           id="polygon44"
+           points="0.04,-0.2 3.3081,-0.2 3.3081,0.2 0.04,0.2 "
+           transform="translate(51.389389,14.635701)" />
+        <rect
+           style="fill:currentColor"
+           id="rect46"
+           ry="0.039999999"
+           height="2.8122001"
+           width="0.13"
+           y="14.6357"
+           x="54.607487" />
+        <path
+           style="fill:currentColor"
+           inkscape:connector-curvature="0"
+           id="path48"
+           d="m 54.301289,17.083701 c 0.224,0 0.436,0.116 0.436,0.364 0,0.288 -0.224,0.484 -0.412,0.596 -0.144,0.084 -0.304,0.144 -0.468,0.144 -0.224,0 -0.436,-0.116 -0.436,-0.364 0,-0.288 0.224,-0.484 0.412,-0.596 0.144,-0.084 0.304,-0.144 0.468,-0.144 z" />
+        <rect
+           style="fill:currentColor"
+           id="rect62"
+           ry="0.039999999"
+           height="2.8122001"
+           width="0.13"
+           y="14.6357"
+           x="51.389385" />
+        <path
+           style="fill:currentColor"
+           inkscape:connector-curvature="0"
+           id="path74"
+           d="m 51.083189,17.083701 c 0.224,0 0.436,0.116 0.436,0.364 0,0.288 -0.224,0.484 -0.412,0.596 -0.144,0.084 -0.304,0.144 -0.468,0.144 -0.224,0 -0.436,-0.116 -0.436,-0.364 0,-0.288 0.224,-0.484 0.412,-0.596 0.144,-0.084 0.304,-0.144 0.468,-0.144 z" />
+      </g>
+      <g
+         id="g3127"
+         transform="translate(7.4059324,0.01582464)">
+        <rect
+           id="rect72"
+           ry="0.039999999"
+           height="3.3122001"
+           width="0.13"
+           y="-2.5"
+           x="-0.064999998"
+           transform="translate(46.1261,7.6453)"
+           style="fill:currentColor" />
+        <path
+           transform="matrix(0.004,0,0,-0.004,44.8749,8.6453)"
+           id="path76"
+           d="m 220,138 c 56,0 109,-29 109,-91 0,-72 -56,-121 -103,-149 -36,-21 -76,-36 -117,-36 -56,0 -109,29 -109,91 0,72 56,121 103,149 36,21 76,36 117,36 z"
+           inkscape:connector-curvature="0"
+           style="fill:currentColor" />
+      </g>
+      <text
+         font-size="2.1995"
+         id="text88"
+         x="35.378506"
+         y="9.2005272"
+         style="font-size:2.19950008px;text-anchor:start;fill:currentColor;font-family:Century Schoolbook L">
+        <tspan
+           id="tspan90"
+           style="font-size:1.6060003px">Même valeur.</tspan>
+      </text>
+      <text
+         font-size="2.1995"
+         id="text96"
+         x="35.141922"
+         y="15.623947"
+         style="font-size:2.19950008px;text-anchor:start;fill:currentColor;font-family:Century Schoolbook L">
+        <tspan
+           id="tspan98"
+           style="font-size:1.6060003px">Division binaire :</tspan>
+      </text>
+      <g
+         id="g3937">
+        <path
+           transform="matrix(0.16060004,0,0,0.16060004,0,-1.7368859e-6)"
+           inkscape:connector-curvature="0"
+           id="path3917"
+           d="m 330.09053,62.583271 -9.95199,24.732156 0,0"
+           style="color:#000000;fill:none;stroke:#000000;stroke-width:0.69999999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:0.69999998, 4.19999987;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+        <path
+           inkscape:connector-curvature="0"
+           id="path3917-3"
+           d="m 52.979131,10.081736 1.554356,3.989383 0,0"
+           style="color:#000000;fill:none;stroke:#000000;stroke-width:0.11242002;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:0.11242002, 0.67452013;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+      </g>
+    </g>
+    <g
+       id="g4002">
+      <rect
+         x="27.372377"
+         y="5.1452999"
+         width="0.13"
+         height="3.3122001"
+         ry="0.039999999"
+         id="rect60"
+         style="fill:currentColor" />
+      <text
+         font-style="italic"
+         font-size="1.7455"
+         id="text64"
+         style="font-size:1.74549997px;font-style:italic;text-anchor:start;fill:currentColor;font-family:Century Schoolbook L"
+         x="26.2157"
+         y="13.567109">
+        <tspan
+           id="tspan66">3</tspan>
+      </text>
+      <path
+         d="m 27.066277,8.0933 c 0.224,0 0.436,0.116 0.436,0.364 0,0.288 -0.224,0.484 -0.412,0.596 -0.144,0.084 -0.304,0.144 -0.468,0.144 -0.224,0 -0.436,-0.116 -0.436,-0.364 0,-0.288 0.224,-0.484 0.412,-0.596 0.144,-0.084 0.304,-0.144 0.468,-0.144 z"
+         id="path70"
+         inkscape:connector-curvature="0"
+         style="fill:currentColor" />
+      <g
+         id="g3131"
+         transform="matrix(-0.99999787,-0.00206198,0.00206198,-0.99999787,52.760686,32.779471)">
+        <rect
+           id="rect54"
+           ry="0.039999999"
+           height="2.8122001"
+           width="0.13"
+           y="-2"
+           x="-0.064999998"
+           transform="translate(26.6937,16.6453)"
+           style="fill:currentColor" />
+        <path
+           id="path56"
+           d="m 220,138 c 56,0 109,-29 109,-91 0,-72 -56,-121 -103,-149 -36,-21 -76,-36 -117,-36 -56,0 -109,29 -109,91 0,72 56,121 103,149 36,21 76,36 117,36 z"
+           transform="matrix(0.004,0,0,-0.004,25.4425,17.6453)"
+           inkscape:connector-curvature="0"
+           style="fill:currentColor" />
+        <rect
+           id="rect58"
+           ry="0.039999999"
+           height="2.8122001"
+           width="0.13"
+           y="-2"
+           x="-0.064999998"
+           transform="translate(24.1775,16.6453)"
+           style="fill:currentColor" />
+        <path
+           id="path68"
+           d="m 220,138 c 56,0 109,-29 109,-91 0,-72 -56,-121 -103,-149 -36,-21 -76,-36 -117,-36 -56,0 -109,29 -109,91 0,72 56,121 103,149 36,21 76,36 117,36 z"
+           transform="matrix(0.004,0,0,-0.004,22.9264,17.6453)"
+           inkscape:connector-curvature="0"
+           style="fill:currentColor" />
+        <polygon
+           id="polygon78"
+           points="0.04,0.2 0.04,-0.2 5.1224,-0.2 5.1224,0.2 "
+           transform="translate(24.1125,14.6453)"
+           style="fill:currentColor;stroke:currentColor;stroke-width:0.08;stroke-linecap:round;stroke-linejoin:round" />
+        <rect
+           id="rect80"
+           ry="0.039999999"
+           height="2.8122001"
+           width="0.13"
+           y="-2"
+           x="-0.064999998"
+           transform="translate(29.2099,16.6453)"
+           style="fill:currentColor" />
+        <path
+           id="path82"
+           d="m 220,138 c 56,0 109,-29 109,-91 0,-72 -56,-121 -103,-149 -36,-21 -76,-36 -117,-36 -56,0 -109,29 -109,91 0,72 56,121 103,149 36,21 76,36 117,36 z"
+           transform="matrix(0.004,0,0,-0.004,27.9587,17.6453)"
+           inkscape:connector-curvature="0"
+           style="fill:currentColor" />
+      </g>
+      <text
+         font-size="2.1995"
+         id="text84"
+         x="7.5257125"
+         y="9.1304426"
+         style="font-size:2.19950008px;text-anchor:start;fill:currentColor;font-family:Century Schoolbook L">
+        <tspan
+           id="tspan86"
+           style="font-size:1.6060003px">Valeur simple :</tspan>
+      </text>
+      <text
+         font-size="2.1995"
+         id="text92"
+         x="7.5257125"
+         y="15.62279"
+         style="font-size:2.19950008px;text-anchor:start;fill:currentColor;font-family:Century Schoolbook L">
+        <tspan
+           id="tspan94"
+           style="font-size:1.6060003px">Division ternaire :</tspan>
+      </text>
+      <path
+         d="m 25.009855,12.655218 c 0.864665,-1.09172 2.467368,-1.09172 3.332034,0 -0.864666,-0.958054 -2.467369,-0.958054 -3.332034,0 z"
+         id="path132"
+         inkscape:connector-curvature="0"
+         style="fill:currentColor;stroke:currentColor;stroke-width:0.08000001;stroke-linecap:round;stroke-linejoin:round" />
+      <path
+         style="color:#000000;fill:none;stroke:#000000;stroke-width:0.69999999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:0.69999998, 4.19999987;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+         d="M 149.77242,87.216893 164.94673,62.386202"
+         id="path3967"
+         inkscape:connector-curvature="0"
+         transform="matrix(0.16060004,0,0,0.16060004,0,-1.7368859e-6)" />
+      <path
+         style="color:#000000;fill:none;stroke:#000000;stroke-width:0.11242002;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:0.11242002, 0.67452013;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+         d="M 29.433835,14.007035 26.99684,10.019225"
+         id="path3967-2"
+         inkscape:connector-curvature="0" />
+      <path
+         style="color:#000000;fill:none;stroke:#000000;stroke-width:0.11242002;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:0.11242002, 2.69808059;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+         d="m 26.754484,9.9142953 -0.0084,-0.6294213 0,0 0,0 0.0056,0.0056"
+         id="path4000"
+         inkscape:connector-curvature="0" />
+    </g>
+  </g>
+</svg>

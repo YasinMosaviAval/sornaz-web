@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.0"
+   width="48.065819"
+   height="42.435688"
+   id="svg1487"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="Figure_rythmique_deux_double_croches_lien_haut.svg">
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1046"
+     inkscape:window-height="884"
+     id="namedview14"
+     showgrid="false"
+     inkscape:zoom="5.5613567"
+     inkscape:cx="24.032909"
+     inkscape:cy="21.217844"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg1487" />
+  <metadata
+     id="metadata1492">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs1490" />
+  <g
+     id="g15720"
+     transform="matrix(-1,0,0,-1,346.7203,340.82481)">
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+       id="path15722"
+       d="m 303.07455,299.63785 c -3.39584,1.81997 -5.20528,5.11455 -4.09222,7.59296 1.18726,2.64364 5.26701,3.38972 9.10658,1.66537 3.83956,-1.72436 5.99216,-5.2694 4.8049,-7.91303 -1.18727,-2.64364 -5.26701,-3.38972 -9.10658,-1.66537 -0.23997,0.10777 -0.48628,0.19874 -0.71268,0.32007 z" />
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:none;stroke:#000000;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="path15724"
+       d="m 299.4045,305.82483 0,33.74719" />
+  </g>
+  <g
+     id="g15738"
+     transform="matrix(-1,0,0,-1,313.1786,340.92889)">
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+       id="path15740"
+       d="m 303.03285,299.74193 c -3.39584,1.81997 -5.20528,5.11455 -4.09222,7.59296 1.18726,2.64364 5.26701,3.38972 9.10658,1.66537 3.83956,-1.72436 5.99216,-5.2694 4.8049,-7.91303 -1.18727,-2.64364 -5.26701,-3.38972 -9.10658,-1.66537 -0.23997,0.10777 -0.48628,0.19874 -0.71268,0.32007 z" />
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:none;stroke:#000000;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="path15742"
+       d="m 299.3628,305.92891 0,33.64311" />
+  </g>
+  <rect
+     style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+     id="rect15744"
+     y="-13.399982"
+     x="-48.065819"
+     height="4.5999999"
+     width="35"
+     transform="scale(-1,-1)" />
+  <rect
+     style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+     id="rect15746"
+     y="-4.5999947"
+     x="-48.065758"
+     height="4.5999999"
+     width="35"
+     transform="scale(-1,-1)" />
+  <rect
+     style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+     id="rect15744-3"
+     y="-21.899534"
+     x="-48.247894"
+     height="4.5999999"
+     width="35"
+     transform="scale(-1,-1)"
+     inkscape:transform-center-x="7.9117384"
+     inkscape:transform-center-y="2.3" />
+</svg>

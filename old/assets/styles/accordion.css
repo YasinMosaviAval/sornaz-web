@@ -1,0 +1,7 @@
+/* ==========================================================================
+    Accordion
+    ========================================================================== */
+main.about-us section > div { max-width: 1100px; margin: 0 auto; }
+main.about-us section > div > div { background: var(--white); border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); margin-bottom: 1.8rem; overflow: hidden; border: 1px solid #e8f0ff; }
+main.about-us section > div > div > div { max-height: 0; overflow: hidden; padding: 0 2.5rem; background: #fafcff; transition: max-height 0.45s ease, padding 0.3s ease; font-size: 1.7rem; color: #444; line-height: 1.9; }
+main.about-us section button .accordion-toggle { font-size: 3rem; font-weight: bold; color: var(--primary); transition: transform 0.3s; }

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+<svg width="210mm" height="297mm" version="1.1"
+  viewBox="0 0 210 297"
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+>
+
+  <title> Papier à musique </title>
+  <desc> Papier à musique </desc>
+
+  <rect x="0" y="0"
+    width="210" height="297"
+    fill="none" stroke="grey" stroke-width="0.083"
+  />
+  <g id="huitGroupes">
+    <g id="quatreGroupes">
+      <g id="deuxGroupes">
+        <g id="unGroupe">
+          <g id="quatreLignes">
+            <g id="deuxLignes">
+              <!-- une ligne -->
+              <line id="uneLigne" stroke="black" stroke-width="0.083"
+                x1="10" y1="20"
+                x2="200" y2="20"
+              />
+              <use xlink:href="#uneLigne" transform="translate(0, 2)"/>
+            </g>
+            <use xlink:href="#deuxLignes" transform="translate(0, 4)"/>
+          </g>
+          <use xlink:href="#uneLigne" transform="translate(0, 8)"/>
+        </g>
+        <use xlink:href="#unGroupe" transform="translate(0, 20)"/>
+      </g>
+    <use xlink:href="#deuxGroupes" transform="translate(0, 40)"/>
+    </g>
+    <use xlink:href="#quatreGroupes" transform="translate(0, 80)"/>
+ </g>
+ <use xlink:href="#quatreGroupes" transform="translate(0, 160)"/>
+ <use xlink:href="#unGroupe" transform="translate(0, 240)"/>
+ </svg>

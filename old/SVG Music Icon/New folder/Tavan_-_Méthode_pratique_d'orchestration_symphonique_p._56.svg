@@ -1,0 +1,1343 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.2"
+   width="210.00mm"
+   height="297.00mm"
+   viewBox="0 0 119.5016 169.0094"
+   id="svg2"
+   inkscape:version="0.48.5 r10040"
+   sodipodi:docname="Tavan - Méthode pratique d'orchestration symphonique p. 56.svg">
+  <title
+     id="title3181">Manière de dresser la partition par ordre de parties pour un grand orchestre</title>
+  <metadata
+     id="metadata522">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Manière de dresser la partition par ordre de parties pour un grand orchestre</dc:title>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/publicdomain/" />
+        <dc:date>1887</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Émile Tavan</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>Enoch &amp; Cie Éditeurs</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:description>diagramme de la page 56 de la Méthode pratique d'orchestration symphonique</dc:description>
+        <dc:source>Méthode pratique d'orchestration symphonique</dc:source>
+        <dc:language>français</dc:language>
+      </cc:Work>
+      <cc:License
+         rdf:about="https://creativecommons.org/publicdomain/mark/1.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs520" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1018"
+     id="namedview518"
+     showgrid="false"
+     inkscape:zoom="2.5371828"
+     inkscape:cx="56.596216"
+     inkscape:cy="570.03889"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
+  <!-- Page: 1/1 -->
+  <text
+     transform="translate(5.6906, 2.8453)"
+     font-family="Century Schoolbook L"
+     font-size="2.2001"
+     text-anchor="start"
+     fill="currentColor"
+     id="text4"
+     style="-inkscape-font-specification:Linux Libertine;font-family:Linux Libertine;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:1.92720042px;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan6"
+       style="-inkscape-font-specification:Linux Libertine;font-family:Linux Libertine;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:1.92720042px;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%" />
+  </text>
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,124.7077)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line10"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,123.7077)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line12"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,122.7077)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line14"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,121.7077)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line16"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,120.7077)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line18"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,117.9153)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line22"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,116.9153)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line24"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,115.9153)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line26"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,114.9153)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line28"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,113.9153)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line30"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,112.123)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line36"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,111.123)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line38"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,110.123)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line40"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,109.123)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line42"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,108.123)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line44"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,105.3306)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line46"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,104.3306)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line48"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,103.3306)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line50"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,102.3306)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line52"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,101.3306)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line54"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,98.5382)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line60"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,97.5382)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line62"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,96.5382)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line64"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,95.5382)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line66"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,94.5382)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line68"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,92.7458)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line72"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,91.7458)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line74"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,90.7458)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line76"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,89.7458)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line78"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,88.7458)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line80"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,85.9535)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line84"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,84.9535)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line86"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,83.9535)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line88"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,82.9535)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line90"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,81.9535)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line92"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,164.7527)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line114"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,163.7527)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line116"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,162.7527)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line118"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,161.7527)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line120"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,158.9603)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line124"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,157.9603)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line126"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,156.9603)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line128"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,155.9603)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line130"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none"
+     transform="matrix(6.4178251,0,0,1,52.548451,165.7527)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line112" />
+  <line
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none"
+     transform="matrix(6.4178251,0,0,1,52.548451,154.9603)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line132" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,152.1679)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line136"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,151.1679)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line138"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,150.1679)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line140"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,149.1679)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line142"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,148.1679)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line144"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,145.3755)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line148"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,144.3755)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line150"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,143.3755)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line152"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,142.3755)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line154"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,141.3755)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line156"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,138.5832)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line158"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,137.5832)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line160"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,136.5832)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line162"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,135.5832)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line164"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,134.5832)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line166"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,131.5001)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line172"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,130.5001)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line174"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,129.5001)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line176"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,128.5001)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line178"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,127.5001)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line180"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,59.2026)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line182"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,58.2026)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line184"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,57.2026)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line186"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,56.2026)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line188"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,55.2026)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line190"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,52.1196)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line198"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,51.1196)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line200"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,50.1196)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line202"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,49.1196)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line204"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,48.1196)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line206"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,23.7874)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line208"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,22.7874)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line210"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,21.7874)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line212"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,20.7874)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line214"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,19.7874)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line216"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,45.0365)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line218"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,44.0365)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line220"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,43.0365)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line222"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,42.0365)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line224"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,41.0365)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line226"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,37.9535)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line230"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,36.9535)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line232"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,35.9535)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line234"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,34.9535)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line236"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,33.9535)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line238"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,30.8704)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line240"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,29.8704)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line242"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,28.8704)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line244"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,27.8704)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line246"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,26.8704)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line248"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,9.6213)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line252"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,8.6213)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line254"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,7.6213)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line256"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,6.6213)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line258"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,5.6213)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line260"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,78.8704)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line262"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,77.8704)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line264"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,76.8704)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line266"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,75.8704)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line268"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,74.8704)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line270"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,71.7874)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line274"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,70.7874)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line276"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,69.7874)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line278"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,68.7874)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line280"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,67.7874)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line282"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,64.995)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line286"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,63.995)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line288"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,62.995)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line290"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,61.995)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line292"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,60.995)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line294"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,16.7043)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line298"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,15.7043)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line300"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,14.7043)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line302"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,13.7043)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line304"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <line
+     transform="matrix(6.4178251,0,0,1,52.548451,12.7043)"
+     x1="0.050000001"
+     y1="0"
+     x2="8.9799995"
+     y2="0"
+     id="line306"
+     style="stroke:currentColor;stroke-width:0.06339452;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+  <text
+     transform="translate(22.066603,91.5482)"
+     font-size="2"
+     id="text324"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan326"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">1ers Trombones</tspan>
+  </text>
+  <text
+     transform="translate(22.10989,97.3406)"
+     font-size="2"
+     id="text328"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan330"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">3me Trombones</tspan>
+  </text>
+  <path
+     transform="matrix(0.004,0,0,-0.004,52.459342,93.642)"
+     d="m -18,-381 c 0,-195 -78,-384 -78,-567 0,-105 24,-201 105,-270 3,-3 6,-6 6,-9 0,-9 -6,-15 -15,-15 -3,0 -6,0 -9,3 -111,96 -150,240 -150,387 0,198 81,393 81,579 0,102 -24,198 -105,267 -3,3 -3,3 -3,6 0,3 0,3 3,6 81,69 105,165 105,267 0,186 -81,381 -81,579 0,147 39,291 150,387 3,3 6,3 9,3 9,0 15,-6 15,-15 0,-3 -3,-6 -6,-9 C -72,1149 -96,1053 -96,948 -96,765 -18,576 -18,381 -18,234 -57,99 -162,0 -57,-99 -18,-234 -18,-381 z"
+     id="path332"
+     inkscape:connector-curvature="0"
+     style="fill:currentColor" />
+  <text
+     transform="translate(22.112243,104.133)"
+     font-size="2"
+     id="text334"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan336"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">Tuba</tspan>
+  </text>
+  <text
+     transform="translate(22.148942,110.7034)"
+     font-size="2"
+     id="text338"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan340"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">Timbales et Triangle</tspan>
+  </text>
+  <text
+     transform="translate(22.148942,116.7006)"
+     font-size="2"
+     id="text342"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan344"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">Tambour et Grosse-Caisse</tspan>
+  </text>
+  <path
+     transform="matrix(0.004,0,0,-0.004,52.459342,113.0192)"
+     d="m -18,-381 c 0,-195 -78,-384 -78,-567 0,-105 24,-201 105,-270 3,-3 6,-6 6,-9 0,-9 -6,-15 -15,-15 -3,0 -6,0 -9,3 -111,96 -150,240 -150,387 0,198 81,393 81,579 0,102 -24,198 -105,267 -3,3 -3,3 -3,6 0,3 0,3 3,6 81,69 105,165 105,267 0,186 -81,381 -81,579 0,147 39,291 150,387 3,3 6,3 9,3 9,0 15,-6 15,-15 0,-3 -3,-6 -6,-9 C -72,1149 -96,1053 -96,948 -96,765 -18,576 -18,381 -18,234 -57,99 -162,0 -57,-99 -18,-234 -18,-381 z"
+     id="path350"
+     inkscape:connector-curvature="0"
+     style="fill:currentColor" />
+  <text
+     transform="translate(39.137411,123.493)"
+     font-size="2.2001"
+     id="text352"
+     style="font-size:1.92720044px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:currentColor;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan354"
+       style="font-size:1.28480029px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">(ligne de blanc)</tspan>
+  </text>
+  <text
+     transform="translate(22.040255,130.3025)"
+     font-size="2"
+     id="text360"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan362"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">1er Violon conducteur</tspan>
+  </text>
+  <text
+     transform="translate(22.076955,137.3855)"
+     font-size="2"
+     id="text364"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan366"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">2me Violon</tspan>
+  </text>
+  <text
+     transform="translate(22.150824,144.1779)"
+     font-size="2"
+     id="text368"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan370"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">Alto</tspan>
+  </text>
+  <text
+     transform="translate(39.137411,150.9703)"
+     font-size="2.2001"
+     id="text372"
+     style="font-size:1.92720044px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:currentColor;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan374"
+       style="font-size:1.28480029px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">(ligne de blanc)</tspan>
+  </text>
+  <text
+     transform="translate(22.150824,157.7627)"
+     font-size="2"
+     id="text376"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan378"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">Violoncelle</tspan>
+  </text>
+  <text
+     transform="translate(22.116007,164.555)"
+     font-size="2"
+     id="text380"
+     style="font-size:2.56960058px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan382"
+       style="font-size:2.56960058px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">Contre-Basse</tspan>
+  </text>
+  <rect
+     transform="translate(52.759342,85.687)"
+     x="0"
+     y="-80.1157"
+     width="0.16"
+     height="160.2314"
+     ry="0.050000001"
+     id="rect384"
+     style="fill:currentColor" />
+  <text
+     transform="translate(22.116006,8.4236)"
+     font-size="2"
+     id="text386"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan388"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">Grande Flûte</tspan>
+  </text>
+  <text
+     transform="translate(22.140943,15.4896)"
+     font-size="2"
+     id="text390"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan392"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">Petite Flûte ou Piccolo</tspan>
+  </text>
+  <path
+     transform="matrix(0.004,0,0,-0.004,52.459342,11.1628)"
+     d="m -18,-429 c 0,-222 -87,-435 -87,-645 0,-117 27,-225 114,-306 3,-3 6,-9 6,-12 0,-9 -6,-15 -15,-15 -3,0 -6,0 -9,3 -120,111 -162,267 -162,432 0,225 93,447 93,660 0,117 -30,225 -117,306 -3,3 -3,3 -3,6 0,3 0,3 3,6 87,81 117,189 117,306 0,213 -93,435 -93,660 0,165 42,321 162,432 3,3 6,3 9,3 9,0 15,-6 15,-15 0,-3 -3,-9 -6,-12 -87,-81 -114,-189 -114,-306 0,-210 87,-423 87,-645 C -18,267 -60,111 -174,0 -60,-111 -18,-267 -18,-429 z"
+     id="path394"
+     inkscape:connector-curvature="0"
+     style="fill:currentColor" />
+  <text
+     transform="translate(39.137411,22.5897)"
+     font-size="2.2001"
+     id="text396"
+     style="font-size:1.92720044px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:currentColor;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan398"
+       style="font-size:1.28480029px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">(ligne de blanc)</tspan>
+  </text>
+  <text
+     transform="translate(22.138591,29.6728)"
+     font-size="2"
+     id="text400"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan402"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">Hautbois</tspan>
+  </text>
+  <text
+     transform="translate(39.137411,36.7558)"
+     font-size="2.2001"
+     id="text404"
+     style="font-size:1.92720044px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:currentColor;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan406"
+       style="font-size:1.28480029px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">(ligne de blanc)</tspan>
+  </text>
+  <text
+     transform="translate(22.070838,43.8389)"
+     font-size="2"
+     id="text408"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan410"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">1re Clarinette en ***</tspan>
+  </text>
+  <text
+     transform="translate(22.106597,50.9219)"
+     font-size="2"
+     id="text412"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan414"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">2me Clarinette en ***</tspan>
+  </text>
+  <path
+     transform="matrix(0.004,0,0,-0.004,52.459342,46.578)"
+     d="m -18,-429 c 0,-222 -87,-435 -87,-645 0,-117 27,-225 114,-306 3,-3 6,-9 6,-12 0,-9 -6,-15 -15,-15 -3,0 -6,0 -9,3 -120,111 -162,267 -162,432 0,225 93,447 93,660 0,117 -30,225 -117,306 -3,3 -3,3 -3,6 0,3 0,3 3,6 87,81 117,189 117,306 0,213 -93,435 -93,660 0,165 42,321 162,432 3,3 6,3 9,3 9,0 15,-6 15,-15 0,-3 -3,-9 -6,-12 -87,-81 -114,-189 -114,-306 0,-210 87,-423 87,-645 C -18,267 -60,111 -174,0 -60,-111 -18,-267 -18,-429 z"
+     id="path416"
+     inkscape:connector-curvature="0"
+     style="fill:currentColor" />
+  <text
+     transform="translate(22.120712,57.9879)"
+     font-size="2"
+     id="text418"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan420"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">Cors en ***</tspan>
+  </text>
+  <text
+     transform="translate(22.138591,63.7803)"
+     font-size="2"
+     id="text422"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan424"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">Bassons</tspan>
+  </text>
+  <path
+     transform="matrix(0.004,0,0,-0.004,52.459342,60.0988)"
+     d="m -18,-381 c 0,-195 -78,-384 -78,-567 0,-105 24,-201 105,-270 3,-3 6,-6 6,-9 0,-9 -6,-15 -15,-15 -3,0 -6,0 -9,3 -111,96 -150,240 -150,387 0,198 81,393 81,579 0,102 -24,198 -105,267 -3,3 -3,3 -3,6 0,3 0,3 3,6 81,69 105,165 105,267 0,186 -81,381 -81,579 0,147 39,291 150,387 3,3 6,3 9,3 9,0 15,-6 15,-15 0,-3 -3,-6 -6,-9 C -72,1149 -96,1053 -96,948 -96,765 -18,576 -18,381 -18,234 -57,99 -162,0 -57,-99 -18,-234 -18,-381 z"
+     id="path426"
+     inkscape:connector-curvature="0"
+     style="fill:currentColor" />
+  <text
+     transform="translate(39.137411,70.5897)"
+     font-size="2.2001"
+     id="text428"
+     style="font-size:1.92720044px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:currentColor;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan430"
+       style="font-size:1.28480029px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">(ligne de blanc)</tspan>
+  </text>
+  <text
+     transform="translate(22.070838,77.6728)"
+     font-size="2"
+     id="text432"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan434"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">1er Cornet en ***</tspan>
+  </text>
+  <text
+     transform="translate(22.106597,84.7558)"
+     font-size="2"
+     id="text436"
+     style="font-size:2.56960056px;font-style:normal;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine;font-weight:normal;font-stretch:normal;font-variant:normal;text-anchor:middle;text-align:center;writing-mode:lr;line-height:125%"
+     sodipodi:linespacing="125%">
+    <tspan
+       id="tspan438"
+       style="font-size:2.56960056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr;text-anchor:middle;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine">2me Cornet en ***</tspan>
+  </text>
+  <path
+     transform="matrix(0.004,0,0,-0.004,52.459342,80.4119)"
+     d="m -18,-429 c 0,-222 -87,-435 -87,-645 0,-117 27,-225 114,-306 3,-3 6,-9 6,-12 0,-9 -6,-15 -15,-15 -3,0 -6,0 -9,3 -120,111 -162,267 -162,432 0,225 93,447 93,660 0,117 -30,225 -117,306 -3,3 -3,3 -3,6 0,3 0,3 3,6 87,81 117,189 117,306 0,213 -93,435 -93,660 0,165 42,321 162,432 3,3 6,3 9,3 9,0 15,-6 15,-15 0,-3 -3,-9 -6,-12 -87,-81 -114,-189 -114,-306 0,-210 87,-423 87,-645 C -18,267 -60,111 -174,0 -60,-111 -18,-267 -18,-429 z"
+     id="path440"
+     inkscape:connector-curvature="0"
+     style="fill:currentColor" />
+  <path
+     style="fill:currentColor"
+     inkscape:connector-curvature="0"
+     transform="matrix(0.004,0,0,-0.004,52.459342,160.3565)"
+     d="m -18,-381 c 0,-195 -78,-384 -78,-567 0,-105 24,-201 105,-270 3,-3 6,-6 6,-9 0,-9 -6,-15 -15,-15 -3,0 -6,0 -9,3 -111,96 -150,240 -150,387 0,198 81,393 81,579 0,102 -24,198 -105,267 -3,3 -3,3 -3,6 0,3 0,3 3,6 81,69 105,165 105,267 0,186 -81,381 -81,579 0,147 39,291 150,387 3,3 6,3 9,3 9,0 15,-6 15,-15 0,-3 -3,-6 -6,-9 C -72,1149 -96,1053 -96,948 -96,765 -18,576 -18,381 -18,234 -57,99 -162,0 -57,-99 -18,-234 -18,-381 z"
+     id="path350-1" />
+</svg>

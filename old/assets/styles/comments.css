@@ -1,0 +1,15 @@
+section.article-details article section.comments-section > div > div { background: #f9fcff; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-right: 5px solid var(--primary); }
+section.article-details article section.comments-section > div > div > div > span:nth-child(1) { font-weight: 600; color: var(--primary-dark); }
+section.article-details article section.comments-section > div > div > div > span:nth-child(2) { font-size: 1.4rem; }
+.comment-reply { margin-right: 4rem; border-right-color: #3399ff; background: var(--light); }
+
+.comments-filter-bar { background: white; border-bottom: 1px solid #ddd; padding: 1rem 0; margin-bottom: 2rem; }
+
+@media (max-width: 768px) {
+    section.article-details article section.comments-section > div > div { padding: 1.6rem; }
+    .comment-reply { margin-right: 2rem; }
+}
+
+
+
+

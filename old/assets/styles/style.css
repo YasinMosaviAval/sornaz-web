@@ -1,0 +1,24 @@
+/* style.css */
+
+/* ======================= */
+/* @import "variables.css"; */
+@import "base.css";
+@import "buttons.css";
+@import "inputs.css";
+@import "typography.css";
+@import "lists.css";
+@import "images.css";
+@import "tables.css";
+
+
+
+@import "forms.css";
+@import "layout.css";
+@import "footer.css";
+@import "header.css";
+@import "cards.css";
+@import "admin.css";
+@import "accordion.css";
+@import "gallery.css";
+@import "comments.css";
+@import "-----style.css";

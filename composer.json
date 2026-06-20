@@ -1,0 +1,16 @@
+{
+    "name": "sornaz/framework",
+    "description": "A simple PHP framework",
+    "require": {
+        "php": ">=8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Core\\": "core/",
+            "Modules\\": "modules/"
+        },
+        "files": [
+            "core/support/helpers.php"
+        ]
+    }
+}

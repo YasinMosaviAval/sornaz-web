@@ -1,0 +1,1911 @@
+@font-face {
+  font-family: 'icomoon';
+  src:  url('fonts/icomoon.eot?9lcsv6');
+  src:  url('fonts/icomoon.eot?9lcsv6#iefix') format('embedded-opentype'),
+    url('fonts/icomoon.ttf?9lcsv6') format('truetype'),
+    url('fonts/icomoon.woff?9lcsv6') format('woff'),
+    url('fonts/icomoon.svg?9lcsv6#icomoon') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'icomoon' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-1_note_semibreve:before {
+  content: "\e900";
+}
+.icon-128_note_quarter_demisemiquaver_music:before {
+  content: "\e901";
+}
+.icon-thNote:before {
+  content: "\e902";
+}
+.icon-nd_note:before {
+  content: "\e903";
+}
+.icon-th_rest:before {
+  content: "\e904";
+}
+.icon-Accent:before {
+  content: "\e905";
+}
+.icon-A-flat-major_f-minor:before {
+  content: "\e906";
+}
+.icon-A-major_f-sharp-minor:before {
+  content: "\e907";
+}
+.icon-Arpeggio:before {
+  content: "\e908";
+}
+.icon-Barre_de_reprise_01_droite:before {
+  content: "\e909";
+}
+.icon-Barre_de_reprise_01_gauche:before {
+  content: "\e90a";
+}
+.icon-Bass_Clef_old_style:before {
+  content: "\e90b";
+}
+.icon-Bton_de_pauses:before {
+  content: "\e90c";
+}
+.icon-Battement_2_temps:before {
+  content: "\e90d";
+}
+.icon-Battue_de_la_mesure__3_temps:before {
+  content: "\e90e";
+}
+.icon-Battue_de_la_mesure__4_temps:before {
+  content: "\e90f";
+}
+.icon-Battue_de_la_mesure__98:before {
+  content: "\e910";
+}
+.icon-Beamed_notes:before {
+  content: "\e911";
+}
+.icon-Bcarre:before {
+  content: "\e912";
+}
+.icon-Bcarre-bmol:before {
+  content: "\e913";
+}
+.icon-Bcarre-dise:before {
+  content: "\e914";
+}
+.icon-Bmol:before {
+  content: "\e915";
+}
+.icon-B-flat-major_g-minor:before {
+  content: "\e916";
+}
+.icon-Blanche:before {
+  content: "\e917";
+}
+.icon-Blanche_doublement_pointe:before {
+  content: "\e918";
+}
+.icon-Blanche_doublement_pointe_tte_en_bas:before {
+  content: "\e919";
+}
+.icon-Blanche_pointe:before {
+  content: "\e91a";
+}
+.icon-Blanche_pointe_tte_en_bas:before {
+  content: "\e91b";
+}
+.icon-Blanche_tte_en_bas:before {
+  content: "\e91c";
+}
+.icon-Blanche2:before {
+  content: "\e91d";
+}
+.icon-Blanche3:before {
+  content: "\e91e";
+}
+.icon-Blanchepointee2:before {
+  content: "\e91f";
+}
+.icon-B-major_g-sharp-minor:before {
+  content: "\e920";
+}
+.icon-C_indication_de_mesure:before {
+  content: "\e921";
+}
+.icon-C_barr_indication_de_mesure:before {
+  content: "\e922";
+}
+.icon-C-flat-major_a-flat-minor:before {
+  content: "\e923";
+}
+.icon-Clef_Bass_F:before {
+  content: "\e924";
+}
+.icon-C-major_a-minor:before {
+  content: "\e925";
+}
+.icon-Commontime:before {
+  content: "\e926";
+}
+.icon-Crescendo-decrescendo:before {
+  content: "\e927";
+}
+.icon-Croche:before {
+  content: "\e928";
+}
+.icon-Croche_doublement_pointe:before {
+  content: "\e929";
+}
+.icon-Croche_doublement_pointe_tte_en_bas:before {
+  content: "\e92a";
+}
+.icon-Croche_pointe:before {
+  content: "\e92b";
+}
+.icon-Croche_pointe_tte_en_bas:before {
+  content: "\e92c";
+}
+.icon-Croche_tte_en_bas:before {
+  content: "\e92d";
+}
+.icon-Croche2 .path1:before {
+  content: "\e92e";
+  color: rgb(0, 0, 0);
+  opacity: 0.97;
+}
+.icon-Croche2 .path2:before {
+  content: "\e92f";
+  margin-left: -0.33984375em;
+  color: rgb(0, 0, 0);
+}
+.icon-Croche2 .path3:before {
+  content: "\e930";
+  margin-left: -0.33984375em;
+  color: rgb(0, 0, 0);
+  opacity: 0.97;
+}
+.icon-Croche3 .path1:before {
+  content: "\e931";
+  color: rgb(0, 0, 0);
+  opacity: 0.97;
+}
+.icon-Croche3 .path2:before {
+  content: "\e932";
+  margin-left: -0.533203125em;
+  color: rgb(0, 0, 0);
+}
+.icon-Croche3 .path3:before {
+  content: "\e933";
+  margin-left: -0.533203125em;
+  color: rgb(0, 0, 0);
+  opacity: 0.97;
+}
+.icon-Crochepointee2 .path1:before {
+  content: "\e934";
+  color: rgb(0, 0, 0);
+  opacity: 0.97;
+}
+.icon-Crochepointee2 .path2:before {
+  content: "\e935";
+  margin-left: -0.33984375em;
+  color: rgb(0, 0, 0);
+}
+.icon-Crochepointee2 .path3:before {
+  content: "\e936";
+  margin-left: -0.33984375em;
+  color: rgb(0, 0, 0);
+  opacity: 0.97;
+}
+.icon-Crochepointee2 .path4:before {
+  content: "\e937";
+  margin-left: -0.33984375em;
+  color: rgb(0, 0, 0);
+}
+.icon-Crotchet_rest_plain-svg:before {
+  content: "\e938";
+}
+.icon-C-sharp-major_a-sharp-minor:before {
+  content: "\e939";
+}
+.icon-Demi-pause_silence:before {
+  content: "\e93a";
+}
+.icon-Demi-pause_pointe_silence:before {
+  content: "\e93b";
+}
+.icon-Demi-soupir_silence:before {
+  content: "\e93c";
+}
+.icon-Demi-soupir_point_silence:before {
+  content: "\e93d";
+}
+.icon-D-flat-major_b-flat-minor:before {
+  content: "\e93e";
+}
+.icon-Dise:before {
+  content: "\e93f";
+}
+.icon-D-major_b-minor:before {
+  content: "\e940";
+}
+.icon-Do_Mayor_armadura:before {
+  content: "\e941";
+}
+.icon-Dotted_32nd_note_with_upward_stem:before {
+  content: "\e942";
+}
+.icon-Dotted_crotchet_rest .path1:before {
+  content: "\e943";
+  color: rgb(0, 0, 0);
+}
+.icon-Dotted_crotchet_rest .path2:before {
+  content: "\e944";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Dotted_eighth_note_stem_up:before {
+  content: "\e945";
+}
+.icon-Dotted_half_note_with_upwards_stem:before {
+  content: "\e946";
+}
+.icon-Dotted_quarter_note:before {
+  content: "\e947";
+}
+.icon-Dotted_quarter_note_with_upwards_stem:before {
+  content: "\e948";
+}
+.icon-Dotted_sixteenth_note_with_upwards_stem:before {
+  content: "\e949";
+}
+.icon-Dotted_whole_note:before {
+  content: "\e94a";
+}
+.icon-Double_dotted_32nd_note_with_upward_stem:before {
+  content: "\e94b";
+}
+.icon-Double_Dotted_crotchet_rest .path1:before {
+  content: "\e94c";
+  color: rgb(0, 0, 0);
+}
+.icon-Double_Dotted_crotchet_rest .path2:before {
+  content: "\e94d";
+  margin-left: -1.4580078125em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Double_Dotted_crotchet_rest .path3:before {
+  content: "\e94e";
+  margin-left: -1.4580078125em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Double_dotted_eighth_note_with_upward_stem:before {
+  content: "\e94f";
+}
+.icon-Double_dotted_half_note_with_upward_stem:before {
+  content: "\e950";
+}
+.icon-Double_dotted_quarter_note_with_upward_stem:before {
+  content: "\e951";
+}
+.icon-Double_dotted_sixteenth_note_with_upwards_stem:before {
+  content: "\e952";
+}
+.icon-Double_dotted_whole_note:before {
+  content: "\e953";
+}
+.icon-Double_whole_note:before {
+  content: "\e954";
+}
+.icon-Double-bmol:before {
+  content: "\e955";
+}
+.icon-Double-croche:before {
+  content: "\e956";
+}
+.icon-Double-croche_doublement_pointe:before {
+  content: "\e957";
+}
+.icon-Double-croche_doublement_pointe_tte_en_bas:before {
+  content: "\e958";
+}
+.icon-Double-croche_pointe:before {
+  content: "\e959";
+}
+.icon-Double-croche_pointe_tte_en_bas:before {
+  content: "\e95a";
+}
+.icon-Doublecroche2 .path1:before {
+  content: "\e95b";
+  color: rgb(0, 0, 0);
+  opacity: 0.97;
+}
+.icon-Doublecroche2 .path2:before {
+  content: "\e95c";
+  margin-left: -0.33984375em;
+  color: rgb(0, 0, 0);
+}
+.icon-Doublecroche2 .path3:before {
+  content: "\e95d";
+  margin-left: -0.33984375em;
+  color: rgb(0, 0, 0);
+  opacity: 0.97;
+}
+.icon-Doublecroche2 .path4:before {
+  content: "\e95e";
+  margin-left: -0.33984375em;
+  color: rgb(0, 0, 0);
+  opacity: 0.97;
+}
+.icon-Doublecroche3 .path1:before {
+  content: "\e95f";
+  color: rgb(0, 0, 0);
+  opacity: 0.97;
+}
+.icon-Doublecroche3 .path2:before {
+  content: "\e960";
+  margin-left: -0.533203125em;
+  color: rgb(0, 0, 0);
+}
+.icon-Doublecroche3 .path3:before {
+  content: "\e961";
+  margin-left: -0.533203125em;
+  color: rgb(0, 0, 0);
+  opacity: 0.97;
+}
+.icon-Doublecroche3 .path4:before {
+  content: "\e962";
+  margin-left: -0.533203125em;
+  color: rgb(0, 0, 0);
+  opacity: 0.97;
+}
+.icon-Double-dise:before {
+  content: "\e963";
+}
+.icon-Double-dise_alt:before {
+  content: "\e964";
+}
+.icon-E-flat-major_c-minor:before {
+  content: "\e965";
+}
+.icon-E-major_c-sharp-minor:before {
+  content: "\e966";
+}
+.icon-FClef:before {
+  content: "\e967";
+}
+.icon-Fermata:before {
+  content: "\e968";
+}
+.icon-Fermata_Inverted:before {
+  content: "\e969";
+}
+.icon-Figure_rythmique_3_blanches_tte_en_haut:before {
+  content: "\e96a";
+}
+.icon-Figure_rythmique_3_croches_tte_en_haut:before {
+  content: "\e96b";
+}
+.icon-Figure_rythmique_3_doubles_croches_tte_en_haut:before {
+  content: "\e96c";
+}
+.icon-Figure_rythmique_3_noires_tte_en_haut:before {
+  content: "\e96d";
+}
+.icon-Figure_rythmique_3_quadruples_croches_tte_en_haut:before {
+  content: "\e96e";
+}
+.icon-Figure_rythmique_3_triples_croches_tte_en_haut:before {
+  content: "\e96f";
+}
+.icon-Figure_rythmique_blanche_doublement_pointee_hampe_haut:before {
+  content: "\e970";
+}
+.icon-Figure_rythmique_blanche_et_noire_liee .path1:before {
+  content: "\e971";
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_blanche_et_noire_liee .path2:before {
+  content: "\e972";
+  margin-left: -0.8798828125em;
+  color: none;
+}
+.icon-Figure_rythmique_blanche_et_noire_liee .path3:before {
+  content: "\e973";
+  margin-left: -0.8798828125em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_blanche_et_noire_liee .path4:before {
+  content: "\e974";
+  margin-left: -0.8798828125em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_blanche_et_noire_liee .path5:before {
+  content: "\e975";
+  margin-left: -0.8798828125em;
+  color: none;
+}
+.icon-Figure_rythmique_blanche_hampe_bas:before {
+  content: "\e976";
+}
+.icon-Figure_rythmique_blanche_hampe_haut:before {
+  content: "\e977";
+}
+.icon-Figure_rythmique_croche_hampe_bas .path1:before {
+  content: "\e978";
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_croche_hampe_bas .path2:before {
+  content: "\e979";
+  margin-left: -0.34765625em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_croche_hampe_bas .path3:before {
+  content: "\e97a";
+  margin-left: -0.34765625em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_croche_hampe_haut .path1:before {
+  content: "\e97b";
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_croche_hampe_haut .path2:before {
+  content: "\e97c";
+  margin-left: -0.595703125em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_croche_hampe_haut .path3:before {
+  content: "\e97d";
+  margin-left: -0.595703125em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_deux_blanches_liees .path1:before {
+  content: "\e97e";
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_deux_blanches_liees .path2:before {
+  content: "\e97f";
+  margin-left: -1.8583984375em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_deux_blanches_liees .path3:before {
+  content: "\e980";
+  margin-left: -1.8583984375em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_deux_blanches_liees .path4:before {
+  content: "\e981";
+  margin-left: -1.8583984375em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_deux_blanches_liees .path5:before {
+  content: "\e982";
+  margin-left: -1.8583984375em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_deux_blanches_liees .path6:before {
+  content: "\e983";
+  margin-left: -1.8583984375em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_deux_croches_liees .path1:before {
+  content: "\e984";
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_deux_croches_liees .path2:before {
+  content: "\e985";
+  margin-left: -1.80078125em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_deux_croches_liees .path3:before {
+  content: "\e986";
+  margin-left: -1.80078125em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_deux_croches_liees .path4:before {
+  content: "\e987";
+  margin-left: -1.80078125em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_deux_croches_liees .path5:before {
+  content: "\e988";
+  margin-left: -1.80078125em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_deux_croches_liees .path6:before {
+  content: "\e989";
+  margin-left: -1.80078125em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_deux_croches_liees .path7:before {
+  content: "\e98a";
+  margin-left: -1.80078125em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_deux_croches_liees .path8:before {
+  content: "\e98b";
+  margin-left: -1.80078125em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_deux_croches_liees .path9:before {
+  content: "\e98c";
+  margin-left: -1.80078125em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_deux_croches_lien_bas:before {
+  content: "\e98d";
+}
+.icon-Figure_rythmique_deux_croches_lien_haut:before {
+  content: "\e98e";
+}
+.icon-Figure_rythmique_deux_double_croches_lien_bas:before {
+  content: "\e98f";
+}
+.icon-Figure_rythmique_deux_noires_liees .path1:before {
+  content: "\e990";
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_deux_noires_liees .path2:before {
+  content: "\e991";
+  margin-left: -1.806640625em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_deux_noires_liees .path3:before {
+  content: "\e992";
+  margin-left: -1.806640625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_deux_noires_liees .path4:before {
+  content: "\e993";
+  margin-left: -1.806640625em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_deux_noires_liees .path5:before {
+  content: "\e994";
+  margin-left: -1.806640625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_deux_noires_liees .path6:before {
+  content: "\e995";
+  margin-left: -1.806640625em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_deux_noires_liees .path7:before {
+  content: "\e996";
+  margin-left: -1.806640625em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_deux_quadruple_croches_lien_haut:before {
+  content: "\e997";
+}
+.icon-Figure_rythmique_deux_triple_croches_lien_haut:before {
+  content: "\e998";
+}
+.icon-Figure_rythmique_double_croche_hampe_bas .path1:before {
+  content: "\e999";
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_double_croche_hampe_bas .path2:before {
+  content: "\e99a";
+  margin-left: -0.322265625em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_double_croche_hampe_bas .path3:before {
+  content: "\e99b";
+  margin-left: -0.322265625em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_double_croche_hampe_bas .path4:before {
+  content: "\e99c";
+  margin-left: -0.322265625em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_double_croche_hampe_haut .path1:before {
+  content: "\e99d";
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_double_croche_hampe_haut .path2:before {
+  content: "\e99e";
+  margin-left: -0.5419921875em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_double_croche_hampe_haut .path3:before {
+  content: "\e99f";
+  margin-left: -0.5419921875em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_double_croche_hampe_haut .path4:before {
+  content: "\e9a0";
+  margin-left: -0.5419921875em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_equivalence_noire_pointee .path1:before {
+  content: "\e9a1";
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_equivalence_noire_pointee .path2:before {
+  content: "\e9a2";
+  margin-left: -1.95703125em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_equivalence_noire_pointee .path3:before {
+  content: "\e9a3";
+  margin-left: -1.95703125em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_equivalence_noire_pointee .path4:before {
+  content: "\e9a4";
+  margin-left: -1.95703125em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_equivalence_noire_pointee .path5:before {
+  content: "\e9a5";
+  margin-left: -1.95703125em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_equivalence_noire_pointee .path6:before {
+  content: "\e9a6";
+  margin-left: -1.95703125em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_equivalence_noire_pointee .path7:before {
+  content: "\e9a7";
+  margin-left: -1.95703125em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_equivalence_noire_pointee .path8:before {
+  content: "\e9a8";
+  margin-left: -1.95703125em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_equivalence_noire_pointee .path9:before {
+  content: "\e9a9";
+  margin-left: -1.95703125em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_equivalence_triolet_de_croches_noire .path1:before {
+  content: "\e9aa";
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_equivalence_triolet_de_croches_noire .path2:before {
+  content: "\e9ab";
+  margin-left: -1.876953125em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_equivalence_triolet_de_croches_noire .path3:before {
+  content: "\e9ac";
+  margin-left: -1.876953125em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_equivalence_triolet_de_croches_noire .path4:before {
+  content: "\e9ad";
+  margin-left: -1.876953125em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_equivalence_triolet_de_croches_noire .path5:before {
+  content: "\e9ae";
+  margin-left: -1.876953125em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_equivalence_triolet_de_croches_noire .path6:before {
+  content: "\e9af";
+  margin-left: -1.876953125em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_equivalence_triolet_de_croches_noire .path7:before {
+  content: "\e9b0";
+  margin-left: -1.876953125em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_equivalence_triolet_de_croches_noire .path8:before {
+  content: "\e9b1";
+  margin-left: -1.876953125em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_equivalence_triolet_de_croches_noire .path9:before {
+  content: "\e9b2";
+  margin-left: -1.876953125em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_equivalence_triolet_de_croches_noire .path10:before {
+  content: "\e9b3";
+  margin-left: -1.876953125em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_equivalence_triolet_de_croches_noire .path11:before {
+  content: "\e9b4";
+  margin-left: -1.876953125em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path1:before {
+  content: "\e9b5";
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path2:before {
+  content: "\e9b6";
+  margin-left: -2.140625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path3:before {
+  content: "\e9b7";
+  margin-left: -2.140625em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path4:before {
+  content: "\e9b8";
+  margin-left: -2.140625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path5:before {
+  content: "\e9b9";
+  margin-left: -2.140625em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path6:before {
+  content: "\e9ba";
+  margin-left: -2.140625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path7:before {
+  content: "\e9bb";
+  margin-left: -2.140625em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path8:before {
+  content: "\e9bc";
+  margin-left: -2.140625em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path9:before {
+  content: "\e9bd";
+  margin-left: -2.140625em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path10:before {
+  content: "\e9be";
+  margin-left: -2.140625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path11:before {
+  content: "\e9bf";
+  margin-left: -2.140625em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path12:before {
+  content: "\e9c0";
+  margin-left: -2.140625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path13:before {
+  content: "\e9c1";
+  margin-left: -2.140625em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path14:before {
+  content: "\e9c2";
+  margin-left: -2.140625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path15:before {
+  content: "\e9c3";
+  margin-left: -2.140625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path16:before {
+  content: "\e9c4";
+  margin-left: -2.140625em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path17:before {
+  content: "\e9c5";
+  margin-left: -2.140625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path18:before {
+  content: "\e9c6";
+  margin-left: -2.140625em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_noire_croche_en_triolet .path19:before {
+  content: "\e9c7";
+  margin-left: -2.140625em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_noire_hampe_bas:before {
+  content: "\e9c8";
+}
+.icon-Figure_rythmique_noire_hampe_haut:before {
+  content: "\e9c9";
+}
+.icon-Figure_rythmique_quadruple_croche_hampe_bas .path1:before {
+  content: "\e9ca";
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_quadruple_croche_hampe_bas .path2:before {
+  content: "\e9cb";
+  margin-left: -0.2568359375em;
+  color: none;
+}
+.icon-Figure_rythmique_quadruple_croche_hampe_bas .path3:before {
+  content: "\e9cc";
+  margin-left: -0.2568359375em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_quadruple_croche_hampe_bas .path4:before {
+  content: "\e9cd";
+  margin-left: -0.2568359375em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_quadruple_croche_hampe_bas .path5:before {
+  content: "\e9ce";
+  margin-left: -0.2568359375em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_quadruple_croche_hampe_bas .path6:before {
+  content: "\e9cf";
+  margin-left: -0.2568359375em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_quadruple_croche_hampe_haut .path1:before {
+  content: "\e9d0";
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_quadruple_croche_hampe_haut .path2:before {
+  content: "\e9d1";
+  margin-left: -0.4326171875em;
+  color: none;
+}
+.icon-Figure_rythmique_quadruple_croche_hampe_haut .path3:before {
+  content: "\e9d2";
+  margin-left: -0.4326171875em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_quadruple_croche_hampe_haut .path4:before {
+  content: "\e9d3";
+  margin-left: -0.4326171875em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_quadruple_croche_hampe_haut .path5:before {
+  content: "\e9d4";
+  margin-left: -0.4326171875em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_quadruple_croche_hampe_haut .path6:before {
+  content: "\e9d5";
+  margin-left: -0.4326171875em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_quatre_double_croches_lien_bas:before {
+  content: "\e9d6";
+}
+.icon-Figure_rythmique_ronde:before {
+  content: "\e9d7";
+}
+.icon-Figure_rythmique_sextolet_double_croches_lien_bas:before {
+  content: "\e9d8";
+}
+.icon-Figure_rythmique_triolet_de_croches_lien_bas:before {
+  content: "\e9d9";
+}
+.icon-Figure_rythmique_triple_croche_hampe_bas .path1:before {
+  content: "\e9da";
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_triple_croche_hampe_bas .path2:before {
+  content: "\e9db";
+  margin-left: -0.2978515625em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_triple_croche_hampe_bas .path3:before {
+  content: "\e9dc";
+  margin-left: -0.2978515625em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_triple_croche_hampe_bas .path4:before {
+  content: "\e9dd";
+  margin-left: -0.2978515625em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_triple_croche_hampe_bas .path5:before {
+  content: "\e9de";
+  margin-left: -0.2978515625em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_triple_croche_hampe_haut .path1:before {
+  content: "\e9df";
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_triple_croche_hampe_haut .path2:before {
+  content: "\e9e0";
+  margin-left: -0.505859375em;
+  color: none;
+  opacity: 0.75;
+}
+.icon-Figure_rythmique_triple_croche_hampe_haut .path3:before {
+  content: "\e9e1";
+  margin-left: -0.505859375em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_triple_croche_hampe_haut .path4:before {
+  content: "\e9e2";
+  margin-left: -0.505859375em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_triple_croche_hampe_haut .path5:before {
+  content: "\e9e3";
+  margin-left: -0.505859375em;
+  color: rgb(0, 0, 0);
+}
+.icon-Figure_rythmique_trois_blanches:before {
+  content: "\e9e4";
+}
+.icon-Figure_rythmique_trois_croches:before {
+  content: "\e9e5";
+}
+.icon-Figure_rythmique_trois_croches_lien_haut .path1:before {
+  content: "\e9e6";
+  color: rgb(255, 255, 255);
+}
+.icon-Figure_rythmique_trois_croches_lien_haut .path2:before {
+  content: "\e9e7";
+  margin-left: -1.53515625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_trois_croches_lien_haut .path3:before {
+  content: "\e9e8";
+  margin-left: -1.53515625em;
+  color: none;
+}
+.icon-Figure_rythmique_trois_croches_lien_haut .path4:before {
+  content: "\e9e9";
+  margin-left: -1.53515625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_trois_croches_lien_haut .path5:before {
+  content: "\e9ea";
+  margin-left: -1.53515625em;
+  color: none;
+}
+.icon-Figure_rythmique_trois_croches_lien_haut .path6:before {
+  content: "\e9eb";
+  margin-left: -1.53515625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_trois_croches_lien_haut .path7:before {
+  content: "\e9ec";
+  margin-left: -1.53515625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9;
+}
+.icon-Figure_rythmique_trois_croches_lien_haut .path8:before {
+  content: "\e9ed";
+  margin-left: -1.53515625em;
+  color: none;
+}
+.icon-Figure_rythmique_trois_doubles_croches:before {
+  content: "\e9ee";
+}
+.icon-Figure_rythmique_trois_noires:before {
+  content: "\e9ef";
+}
+.icon-Figure_rythmique_trois_quadruples_croches:before {
+  content: "\e9f0";
+}
+.icon-Figure_rythmique_trois_triples_croches:before {
+  content: "\e9f1";
+}
+.icon-F-major_d-minor:before {
+  content: "\e9f2";
+}
+.icon-F-sharp-major_d-sharp-minor:before {
+  content: "\e9f3";
+}
+.icon-G-flat-major_e-flat-minor:before {
+  content: "\e9f4";
+}
+.icon-G-major_e-minor:before {
+  content: "\e9f5";
+}
+.icon-GrandStaff:before {
+  content: "\e9f6";
+}
+.icon-Grupetto:before {
+  content: "\e9f7";
+}
+.icon-Grupetto_invers:before {
+  content: "\e9f8";
+}
+.icon-Gruppetto_svg:before {
+  content: "\e9f9";
+}
+.icon-Half_note_with_upwards_stem:before {
+  content: "\e9fa";
+}
+.icon-Huitime_de_soupir_silence:before {
+  content: "\e9fb";
+}
+.icon-Huitime_de_soupir_point_silence:before {
+  content: "\e9fc";
+}
+.icon-Liaison_infrieure:before {
+  content: "\e9fd";
+}
+.icon-Liaison_musicale_haute:before {
+  content: "\e9fe";
+}
+.icon-Liaison_suprieure:before {
+  content: "\e9ff";
+}
+.icon-Lignes_supplmentaires:before {
+  content: "\ea00";
+}
+.icon-Marcato:before {
+  content: "\ea01";
+}
+.icon-Mordant:before {
+  content: "\ea02";
+}
+.icon-Mordente:before {
+  content: "\ea03";
+}
+.icon-Music_ClefN:before {
+  content: "\ea04";
+}
+.icon-Music-alt-doublewholenote:before {
+  content: "\ea05";
+}
+.icon-Music-appoggiatura:before {
+  content: "\ea06";
+}
+.icon-Music-arpeggio:before {
+  content: "\ea07";
+}
+.icon-Music-beam .path1:before {
+  content: "\ea08";
+  color: rgb(0, 0, 0);
+}
+.icon-Music-beam .path2:before {
+  content: "\ea09";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-beam .path3:before {
+  content: "\ea0a";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-beam .path4:before {
+  content: "\ea0b";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-beam .path5:before {
+  content: "\ea0c";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-beam .path6:before {
+  content: "\ea0d";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-commontime:before {
+  content: "\ea0e";
+}
+.icon-Music-cuttime:before {
+  content: "\ea0f";
+}
+.icon-Music-demiflat:before {
+  content: "\ea10";
+}
+.icon-Music-demisharp:before {
+  content: "\ea11";
+}
+.icon-Music-dotnote .path1:before {
+  content: "\ea12";
+  color: rgb(0, 0, 0);
+}
+.icon-Music-dotnote .path2:before {
+  content: "\ea13";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+}
+.icon-Music-dotnote .path3:before {
+  content: "\ea14";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-dotnote .path4:before {
+  content: "\ea15";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-dotnote .path5:before {
+  content: "\ea16";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-dotnote .path6:before {
+  content: "\ea17";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-dotnote .path7:before {
+  content: "\ea18";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-doubleflat .path1:before {
+  content: "\ea19";
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-doubleflat .path2:before {
+  content: "\ea1a";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-doubleflat .path3:before {
+  content: "\ea1b";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-doubleflat .path4:before {
+  content: "\ea1c";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-doubleflat .path5:before {
+  content: "\ea1d";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-doubleflat .path6:before {
+  content: "\ea1e";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+}
+.icon-Music-doubleflat .path7:before {
+  content: "\ea1f";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+}
+.icon-Music-doubleflat .path8:before {
+  content: "\ea20";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+}
+.icon-Music-downbow:before {
+  content: "\ea21";
+}
+.icon-Music-fermata:before {
+  content: "\ea22";
+}
+.icon-Music-flat .path1:before {
+  content: "\ea23";
+  color: rgb(0, 0, 0);
+}
+.icon-Music-flat .path2:before {
+  content: "\ea24";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+}
+.icon-Music-flat .path3:before {
+  content: "\ea25";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-flat .path4:before {
+  content: "\ea26";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-flat .path5:before {
+  content: "\ea27";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-flat .path6:before {
+  content: "\ea28";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-flat .path7:before {
+  content: "\ea29";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-glissando:before {
+  content: "\ea2a";
+}
+.icon-Music-halfrest .path1:before {
+  content: "\ea2b";
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-halfrest .path2:before {
+  content: "\ea2c";
+  margin-left: -1.3515625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-halfrest .path3:before {
+  content: "\ea2d";
+  margin-left: -1.3515625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-halfrest .path4:before {
+  content: "\ea2e";
+  margin-left: -1.3515625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-halfrest .path5:before {
+  content: "\ea2f";
+  margin-left: -1.3515625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-halfrest .path6:before {
+  content: "\ea30";
+  margin-left: -1.3515625em;
+  color: rgb(0, 0, 0);
+}
+.icon-Music-harmonic:before {
+  content: "\ea31";
+}
+.icon-Music-hundredtwentyeighthrest:before {
+  content: "\ea32";
+}
+.icon-Music-inverted-mordent:before {
+  content: "\ea33";
+}
+.icon-Music-keysigflat:before {
+  content: "\ea34";
+}
+.icon-Music-keysigsharp:before {
+  content: "\ea35";
+}
+.icon-Music-legato:before {
+  content: "\ea36";
+}
+.icon-Music-ligature:before {
+  content: "\ea37";
+}
+.icon-Music-marcato:before {
+  content: "\ea38";
+}
+.icon-Music-mordent:before {
+  content: "\ea39";
+}
+.icon-Music-natural .path1:before {
+  content: "\ea3a";
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-natural .path2:before {
+  content: "\ea3b";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-natural .path3:before {
+  content: "\ea3c";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-natural .path4:before {
+  content: "\ea3d";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-natural .path5:before {
+  content: "\ea3e";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-natural .path6:before {
+  content: "\ea3f";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+}
+.icon-Music-natural .path7:before {
+  content: "\ea40";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+}
+.icon-Music-pedal:before {
+  content: "\ea41";
+}
+.icon-Music-pizzicato:before {
+  content: "\ea42";
+}
+.icon-Music-sesquiflat:before {
+  content: "\ea43";
+}
+.icon-Music-sesquisharp:before {
+  content: "\ea44";
+}
+.icon-Music-sharp .path1:before {
+  content: "\ea45";
+  color: rgb(0, 0, 0);
+}
+.icon-Music-sharp .path2:before {
+  content: "\ea46";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+}
+.icon-Music-sharp .path3:before {
+  content: "\ea47";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-sharp .path4:before {
+  content: "\ea48";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-sharp .path5:before {
+  content: "\ea49";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-sharp .path6:before {
+  content: "\ea4a";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-sharp .path7:before {
+  content: "\ea4b";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-slur:before {
+  content: "\ea4c";
+}
+.icon-Music-snappizzicato:before {
+  content: "\ea4d";
+}
+.icon-Music-staccatissimo:before {
+  content: "\ea4e";
+}
+.icon-Music-staccato:before {
+  content: "\ea4f";
+}
+.icon-Music-strong-marcato:before {
+  content: "\ea50";
+}
+.icon-Music-tenuto:before {
+  content: "\ea51";
+}
+.icon-Music-tie:before {
+  content: "\ea52";
+}
+.icon-Music-timesig:before {
+  content: "\ea53";
+}
+.icon-Music-tremolo:before {
+  content: "\ea54";
+}
+.icon-Music-triad:before {
+  content: "\ea55";
+}
+.icon-Music-trill .path1:before {
+  content: "\ea56";
+  color: none;
+}
+.icon-Music-trill .path2:before {
+  content: "\ea57";
+  margin-left: -1em;
+  color: none;
+}
+.icon-Music-trill .path3:before {
+  content: "\ea58";
+  margin-left: -1em;
+  color: none;
+}
+.icon-Music-trill .path4:before {
+  content: "\ea59";
+  margin-left: -1em;
+  color: none;
+}
+.icon-Music-trill .path5:before {
+  content: "\ea5a";
+  margin-left: -1em;
+  color: none;
+}
+.icon-Music-trill .path6:before {
+  content: "\ea5b";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+}
+.icon-Music-trill .path7:before {
+  content: "\ea5c";
+  margin-left: -1em;
+  color: rgb(0, 0, 0);
+  opacity: 0.9412;
+}
+.icon-Music-triplet:before {
+  content: "\ea5d";
+}
+.icon-Music-turn-2:before {
+  content: "\ea5e";
+}
+.icon-Music-upbow:before {
+  content: "\ea5f";
+}
+.icon-Music-wholerest .path1:before {
+  content: "\ea60";
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-wholerest .path2:before {
+  content: "\ea61";
+  margin-left: -1.3515625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-wholerest .path3:before {
+  content: "\ea62";
+  margin-left: -1.3515625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-wholerest .path4:before {
+  content: "\ea63";
+  margin-left: -1.3515625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-wholerest .path5:before {
+  content: "\ea64";
+  margin-left: -1.3515625em;
+  color: rgb(0, 0, 0);
+  opacity: 0.25;
+}
+.icon-Music-wholerest .path6:before {
+  content: "\ea65";
+  margin-left: -1.3515625em;
+  color: rgb(0, 0, 0);
+}
+.icon-Noire_doublement_pointe:before {
+  content: "\ea66";
+}
+.icon-Noire_doublement_pointe_tte_en_bas:before {
+  content: "\ea67";
+}
+.icon-Noire_pointe:before {
+  content: "\ea68";
+}
+.icon-Noire_pointe_tte_en_bas:before {
+  content: "\ea69";
+}
+.icon-Noire2 .path1:before {
+  content: "\ea6a";
+  color: rgb(0, 0, 0);
+  opacity: 0.97;
+}
+.icon-Noire2 .path2:before {
+  content: "\ea6b";
+  margin-left: -0.33984375em;
+  color: rgb(0, 0, 0);
+}
+.icon-Noire3 .path1:before {
+  content: "\ea6c";
+  color: rgb(0, 0, 0);
+  opacity: 0.97;
+}
+.icon-Noire3 .path2:before {
+  content: "\ea6d";
+  margin-left: -0.533203125em;
+  color: rgb(0, 0, 0);
+}
+.icon-Noirepointee2 .path1:before {
+  content: "\ea6e";
+  color: rgb(0, 0, 0);
+}
+.icon-Noirepointee2 .path2:before {
+  content: "\ea6f";
+  margin-left: -0.3173828125em;
+  color: rgb(0, 0, 0);
+  opacity: 0.97;
+}
+.icon-Noirepointee2 .path3:before {
+  content: "\ea70";
+  margin-left: -0.3173828125em;
+  color: rgb(0, 0, 0);
+}
+.icon-Nuancef:before {
+  content: "\ea71";
+}
+.icon-Nuanceff:before {
+  content: "\ea72";
+}
+.icon-Nuancefff:before {
+  content: "\ea73";
+}
+.icon-Nuanceffff:before {
+  content: "\ea74";
+}
+.icon-Nuancefffff:before {
+  content: "\ea75";
+}
+.icon-Nuancefp:before {
+  content: "\ea76";
+}
+.icon-Nuancefz:before {
+  content: "\ea77";
+}
+.icon-Nuancemf:before {
+  content: "\ea78";
+}
+.icon-Nuancemp:before {
+  content: "\ea79";
+}
+.icon-Nuancep:before {
+  content: "\ea7a";
+}
+.icon-Nuancepp:before {
+  content: "\ea7b";
+}
+.icon-Nuanceppp:before {
+  content: "\ea7c";
+}
+.icon-Nuancepppp:before {
+  content: "\ea7d";
+}
+.icon-Nuanceppppp:before {
+  content: "\ea7e";
+}
+.icon-Nuancesf:before {
+  content: "\ea7f";
+}
+.icon-Nuancesfffz:before {
+  content: "\ea80";
+}
+.icon-Nuancesffz:before {
+  content: "\ea81";
+}
+.icon-Nuancesfz:before {
+  content: "\ea82";
+}
+.icon-Pause_silence:before {
+  content: "\ea83";
+}
+.icon-Pause_pointe_silence:before {
+  content: "\ea84";
+}
+.icon-Point_dorgue:before {
+  content: "\ea85";
+}
+.icon-Point_dorgue_invers:before {
+  content: "\ea86";
+}
+.icon-Point_dorgue1:before {
+  content: "\ea87";
+}
+.icon-Quadruple-croche:before {
+  content: "\ea88";
+}
+.icon-Quadruple-croche_doublement_pointe:before {
+  content: "\ea89";
+}
+.icon-Quadruple-croche_doublement_pointe_tte_en_bas:before {
+  content: "\ea8a";
+}
+.icon-Quadruple-croche_pointe:before {
+  content: "\ea8b";
+}
+.icon-Quadruple-croche_pointe_tte_en_bas:before {
+  content: "\ea8c";
+}
+.icon-Quart_de_soupir_silence:before {
+  content: "\ea8d";
+}
+.icon-Quart_de_soupir_point_silence:before {
+  content: "\ea8e";
+}
+.icon-Quarter_note_with_upwards_stem:before {
+  content: "\ea8f";
+}
+.icon-Quintuple-croche:before {
+  content: "\ea90";
+}
+.icon-Quintuple-croche_tte_en_bas:before {
+  content: "\ea91";
+}
+.icon-Ronde:before {
+  content: "\ea92";
+}
+.icon-Ronde_doublement_pointe:before {
+  content: "\ea93";
+}
+.icon-Ronde_pointe:before {
+  content: "\ea94";
+}
+.icon-Ronde_tte_en_bas:before {
+  content: "\ea95";
+}
+.icon-Ronde2:before {
+  content: "\ea96";
+}
+.icon-Ronde3:before {
+  content: "\ea97";
+}
+.icon-Rondepointee2:before {
+  content: "\ea98";
+}
+.icon-Rondepointee3:before {
+  content: "\ea99";
+}
+.icon-Savard_p155s1:before {
+  content: "\ea9a";
+}
+.icon-Savard_p155s2:before {
+  content: "\ea9b";
+}
+.icon-Savard_p155s3:before {
+  content: "\ea9c";
+}
+.icon-Savard_p156s2:before {
+  content: "\ea9d";
+}
+.icon-Savard_p156s3:before {
+  content: "\ea9e";
+}
+.icon-SegnoTeken:before {
+  content: "\ea9f";
+}
+.icon-Seizime_de_soupir_silence:before {
+  content: "\eaa0";
+}
+.icon-Semi-bmol:before {
+  content: "\eaa1";
+}
+.icon-Semi-dise:before {
+  content: "\eaa2";
+}
+.icon-Semigarrapatea:before {
+  content: "\eaa3";
+}
+.icon-Sesqui-bmol:before {
+  content: "\eaa4";
+}
+.icon-Sesqui-dise:before {
+  content: "\eaa5";
+}
+.icon-Sfz:before {
+  content: "\eaa6";
+}
+.icon-Signe:before {
+  content: "\eaa7";
+}
+.icon-Signe1:before {
+  content: "\eaa8";
+}
+.icon-Signe2:before {
+  content: "\eaa9";
+}
+.icon-Silence_demi-pause:before {
+  content: "\eaaa";
+}
+.icon-Silence_pause:before {
+  content: "\eaab";
+}
+.icon-Silencio_de_semigarrapatea:before {
+  content: "\eaac";
+}
+.icon-Sixteenth_note_with_upwards_stem:before {
+  content: "\eaad";
+}
+.icon-Soufflet_1:before {
+  content: "\eaae";
+}
+.icon-Soufflet_2:before {
+  content: "\eaaf";
+}
+.icon-Soupir_point_silence:before {
+  content: "\eab0";
+}
+.icon-Soupir1_silence:before {
+  content: "\eab1";
+}
+.icon-Soupir1_point_silence:before {
+  content: "\eab2";
+}
+.icon-StaffGroup:before {
+  content: "\eab3";
+}
+.icon-Three-quarter_sharp:before {
+  content: "\eab4";
+}
+.icon-Timesignature_2-4:before {
+  content: "\eab5";
+}
+.icon-Timesignature_3-1:before {
+  content: "\eab6";
+}
+.icon-Timesignature_3-2:before {
+  content: "\eab7";
+}
+.icon-Timesignature_3-4:before {
+  content: "\eab8";
+}
+.icon-Timesignature_3-8:before {
+  content: "\eab9";
+}
+.icon-Timesignature_6-4:before {
+  content: "\eaba";
+}
+.icon-Timesignature_6-8:before {
+  content: "\eabb";
+}
+.icon-Timesignature_6-16:before {
+  content: "\eabc";
+}
+.icon-Timesignature_9-4:before {
+  content: "\eabd";
+}
+.icon-Timesignature_9-8:before {
+  content: "\eabe";
+}
+.icon-Timesignature_9-16:before {
+  content: "\eabf";
+}
+.icon-Timesignature_12-4:before {
+  content: "\eac0";
+}
+.icon-Timesignature_12-8:before {
+  content: "\eac1";
+}
+.icon-Timesignature_12-16:before {
+  content: "\eac2";
+}
+.icon-Timesignature2-2:before {
+  content: "\eac3";
+}
+.icon-Timesignature3-4:before {
+  content: "\eac4";
+}
+.icon-Timesignature4-4:before {
+  content: "\eac5";
+}
+.icon-Trente-deuxime_de_soupir_silence-1:before {
+  content: "\eac6";
+}
+.icon-Trille1:before {
+  content: "\eac7";
+}
+.icon-Trille2:before {
+  content: "\eac8";
+}
+.icon-Triple-croche:before {
+  content: "\eac9";
+}
+.icon-Triple-croche_doublement_pointe:before {
+  content: "\eaca";
+}
+.icon-Triple-croche_doublement_pointe_tte_en_bas:before {
+  content: "\eacb";
+}
+.icon-Triple-croche_pointe:before {
+  content: "\eacc";
+}
+.icon-Triple-croche_pointe_tte_en_bas:before {
+  content: "\eacd";
+}
+.icon-WhiteNotehead:before {
+  content: "\eace";
+}

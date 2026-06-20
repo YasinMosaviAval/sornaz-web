@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.2"
+   width="3.5145974mm"
+   height="5.2718959mm"
+   viewBox="0 0 2 2.9999999"
+   id="svg2"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="signe2.svg">
+  <title
+     id="title3333">signe</title>
+  <metadata
+     id="metadata52">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>signe</dc:title>
+        <cc:license
+           rdf:resource="http://creativecommons.org/publicdomain/mark/1.0/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/publicdomain/mark/1.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <path
+     d="M 0,0 5.4804688,9.3398438 0,18.679688 l 1.4941406,0 4.7324219,-8.066407 4.7324215,8.066407 1.494141,0 L 6.9726562,9.3398438 12.453125,0 10.958984,0 6.2265625,8.0664062 1.4941406,0 0,0 Z M 6.2265625,1.8730469 A 0.72200215,0.7220021 0 0 0 5.5039062,2.59375 0.72200215,0.7220021 0 0 0 6.2265625,3.3164062 0.72200215,0.7220021 0 0 0 6.9492188,2.59375 0.72200215,0.7220021 0 0 0 6.2265625,1.8730469 Z M 1.9238281,8.6171875 A 0.72200218,0.72200216 0 0 0 1.2011719,9.3398438 0.72200218,0.72200216 0 0 0 1.9238281,10.0625 0.72200218,0.72200216 0 0 0 2.6464844,9.3398438 0.72200218,0.72200216 0 0 0 1.9238281,8.6171875 Z m 8.6054689,0 A 0.72200216,0.72200212 0 0 0 9.8066406,9.3398438 0.72200216,0.72200212 0 0 0 10.529297,10.0625 0.72200216,0.72200212 0 0 0 11.251953,9.3398438 0.72200216,0.72200212 0 0 0 10.529297,8.6171875 Z M 6.2265625,15.363281 a 0.72200217,0.72200214 0 0 0 -0.7226563,0.722657 0.72200217,0.72200214 0 0 0 0.7226563,0.722656 0.72200217,0.72200214 0 0 0 0.7226563,-0.722656 0.72200217,0.72200214 0 0 0 -0.7226563,-0.722657 z"
+     transform="scale(0.16060003,0.16060004)"
+     id="path28"
+     inkscape:connector-curvature="0"
+     style="fill:currentColor" />
+</svg>
