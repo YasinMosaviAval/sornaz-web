@@ -7,16 +7,12 @@ class View {
     protected array $data;
     protected ?string $layout = null;
 
-    public function __construct(
-        string $view,
-        array $data = []
-    ) {
+    public function __construct(string $view, array $data = []) {
         $this->view = $view;
         $this->data = $data;
     }
 
-    public function render(): string
-    {
+    public function render(): string {
         $path = base_path(
             'views/' .
             str_replace('.', '/', $this->view)
@@ -55,9 +51,7 @@ class View {
     }
 
 
-    public function layout(
-        string $layout
-    ): static {
+    public function layout(string $layout): static {
 
         $this->layout = $layout;
 

@@ -43,4 +43,23 @@ class Request {
     public function all() {
         return $_REQUEST;
     }
+
+
+    public function validate(array $rules): array {
+        $validator = new \Core\Validation\Validator();
+
+        if (!$validator->validate($_POST, $rules)) {
+            throw new \Core\Validation\ValidationException(
+                $validator->errors()
+            );
+            // throw new \Exception(
+            //     json_encode(
+            //         $validator->errors(),
+            //         JSON_PRETTY_PRINT
+            //     )
+            // );
+        }
+
+        return $_POST;
+    }
 }

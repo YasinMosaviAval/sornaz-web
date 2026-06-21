@@ -45,5 +45,13 @@ class Session {
     }
 
 
+    public function peekFlash(string $key, mixed $default = null): mixed {
+        return $_SESSION['_flash'][$key] ?? $default;
+    }
 
+
+
+    public function clearFlash(): void {
+        unset($_SESSION['_flash']);
+    }
 }

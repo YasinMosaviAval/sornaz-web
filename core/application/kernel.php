@@ -46,7 +46,7 @@ class Kernel {
         ) {
 
             if (is_callable($action)) {
-                return call_user_func_array($action, $params);
+                return $this->invokeCallable($action, $params);
             }
 
             if (is_array($action)) {
@@ -62,10 +62,42 @@ class Kernel {
             return null;
         };
 
-        $pipeline = new MiddlewarePipeline($instances, $request);
-        $result = $pipeline->then($destination);
+        // $pipeline = new MiddlewarePipeline($instances, $request);
+        // $result = $pipeline->then($destination);
 
-        $response->send($result);
+        // $response->send($result);
+
+        try {
+
+            $pipeline =
+                new MiddlewarePipeline(
+                    $instances,
+                    $request
+                );
+
+            $result =
+                $pipeline->then(
+                    $destination
+                );
+
+            $response->send($result);
+
+        } catch (
+            \Core\Validation\ValidationException $e
+        ) {
+
+            session()->flash(
+                '_errors',
+                $e->errors()
+            );
+
+            session()->flash(
+                '_old',
+                $_POST
+            );
+
+            back()->send();
+        }
     }
 
 
@@ -100,5 +132,37 @@ class Kernel {
         }
 
         return $reflection->invokeArgs($controller, $arguments);
+    }
+
+
+    protected function invokeCallable(callable $callable, array $routeParams = []) {
+        $reflection = new \ReflectionFunction($callable);
+        $arguments = [];
+
+        foreach ($reflection->getParameters() as $parameter) {
+            $name = $parameter->getName();
+            if (isset($routeParams[$name])) {
+                $arguments[] = $routeParams[$name];
+                continue;
+            }
+
+            $type = $parameter->getType();
+
+            if ($type && !$type->isBuiltin()) {
+                $arguments[] = app()
+                    ->container()
+                    ->make($type->getName());
+                continue;
+            }
+
+            if ($parameter->isDefaultValueAvailable()) {
+                $arguments[] = $parameter->getDefaultValue();
+                continue;
+            }
+
+            throw new \Exception("Cannot resolve parameter {$name}");
+        }
+
+        return $reflection->invokeArgs($arguments);
     }
 }
