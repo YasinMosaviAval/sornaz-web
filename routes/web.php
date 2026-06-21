@@ -55,10 +55,35 @@ Router::group(
 Router::get('/', function () {return 'Framework Works!';});
 Router::get('/about', function () {return 'About Page';});
 
-Router::get('/users', fn() => 'Users')->middleware('auth');
+// Router::get('/users', fn() => 'Users')->middleware('auth');
 // Router::get('/users', fn() => 'GET USERS');
+Router::get('/users', function () {return 'Users Page';});
 Router::get('/users/{id}', [UserController::class,'show']);
 Router::get('/users/{id}/posts/{post_id}', [UserController::class, 'show']);
+
+Router::get('/test', function () {session()->put('name', 'Yasin'); return 'saved';});
+Router::get('/app-test', function () {return get_class(app());});
+Router::get('/helper-test', function () {return get_class(session());});
+Router::get('/show', function () {return session()->get('name');});
+Router::get('/flash-show', function () {return session()->getFlash('success', 'No Message');});
+Router::get('/flash-set', function () {session()->flash('success', 'User Saved'); return 'Flash Created';});
+
+Router::get('/redirect-test', function () {return redirect('/users');});
+Router::get('/back-test', function () {return back();});
+
+Router::get(
+    '/save-user',
+    function () {
+        session()->flash('success', 'User Saved');
+        return redirect('/show-message');
+    }
+);
+Router::get('/show-message', function () {return session()->getFlash('success', 'No Message');});
+Router::get('/view-test', function () {return view('users.index', ['name' => 'Yasin', 'age' => 35]);});
+Router::get('/layout-test', function () {return view('users.index', ['name' => 'Yasin', 'age' => 35, 'title' => 'Users'])->layout('main');});
+
+
+
 
 
 Router::post('/users', fn() => 'CREATE USER');

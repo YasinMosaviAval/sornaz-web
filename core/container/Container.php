@@ -7,16 +7,25 @@ use ReflectionParameter;
 
 class Container {
     protected array $bindings = [];
+    protected array $instances = [];
+
+
 
     public function bind(string $abstract, string $concrete): void {
         $this->bindings[$abstract]
             = $concrete;
     }
 
+
+
+
     public function make(string $class): object {
+        if (isset($this->instances[$class])) {
+            return $this->instances[$class];
+        }
+
         if (isset($this->bindings[$class])) {
-            $class =
-                $this->bindings[$class];
+            $class = $this->bindings[$class];
         }
 
         $reflection = new ReflectionClass($class);
@@ -41,6 +50,9 @@ class Container {
         );
     }
 
+
+
+
     protected function resolveParameter(ReflectionParameter $parameter) {
         $type = $parameter->getType();
 
@@ -51,5 +63,12 @@ class Container {
         return $this->make(
             $type->getName()
         );
+    }
+
+
+
+
+    public function instance(string $abstract, object $instance): void {
+        $this->instances[$abstract] = $instance;
     }
 }
