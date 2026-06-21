@@ -4,11 +4,13 @@ namespace Core\Application;
 
 use Core\Http\Request;
 use Core\Http\Response;
+use Core\Middleware\MiddlewarePipeline;
 use Core\Router\Router;
 
 class Kernel {
     public function handle() {
         $request = new Request();
+        session()->start();
 
         $route = Router::dispatch(
             $request->method(),
@@ -27,31 +29,41 @@ class Kernel {
 
         $middlewares = $route['middlewares'] ?? [];
 
+        $instances = [];
+
+        $map = require base_path('config/middleware.php');
 
         foreach ($middlewares as $alias) {
-
-            $map = require base_path('config/middleware.php');
-
-            $class = $map[$alias];
-
-            $middleware = app()
+            $instances[] = app()
                 ->container()
-                ->make($class);
-
-            $middleware->handle(fn() => null);
+                ->make($map[$alias]);
         }
 
-        if (is_callable($action)) {
-            $result = call_user_func_array($action, $params);
-        } elseif (is_array($action)) {
-            [$controllerClass, $method] = $action;
-            
-            $controller = app()
-                ->container()
-                ->make($controllerClass);
 
-            $result = $this->invokeControllerMethod($controller, $method, $params);
-        }
+        $destination = function () use (
+            $action,
+            $params
+        ) {
+
+            if (is_callable($action)) {
+                return call_user_func_array($action, $params);
+            }
+
+            if (is_array($action)) {
+                [$controllerClass, $method] = $action;
+
+                $controller = app()
+                    ->container()
+                    ->make($controllerClass);
+
+                return $this->invokeControllerMethod($controller, $method, $params);
+            }
+
+            return null;
+        };
+
+        $pipeline = new MiddlewarePipeline($instances, $request);
+        $result = $pipeline->then($destination);
 
         $response->send($result);
     }
