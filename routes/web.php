@@ -1,5 +1,6 @@
 <?php
 
+use Core\Http\Request;
 use Core\Router\Router;
 use Modules\System\Controllers\UserController;
 
@@ -82,6 +83,113 @@ Router::get('/show-message', function () {return session()->getFlash('success', 
 Router::get('/view-test', function () {return view('users.index', ['name' => 'Yasin', 'age' => 35]);});
 Router::get('/layout-test', function () {return view('users.index', ['name' => 'Yasin', 'age' => 35, 'title' => 'Users'])->layout('main');});
 
+
+Router::get('/login-test', function () {
+
+    auth()->login([
+        'id' => 15,
+        'name' => 'Yasin'
+    ]);
+
+    return 'Logged In';
+});
+Router::get('/user-test', function () {
+
+    var_dump(
+        auth()->user()
+    );
+});
+Router::get('/logout-test', function () {
+
+    auth()->logout();
+
+    return 'Logged Out';
+});
+
+Router::get(
+    '/dashboard',
+    function () {
+
+        return 'Dashboard';
+    }
+)->middleware('auth');
+
+Router::get('/login', function () {
+
+    return '
+    <form method="POST" action="/login">
+
+        '.csrf_field().'
+
+        <input name="email">
+
+        <button>
+            Login
+        </button>
+
+    </form>';
+});
+
+
+Router::post('/login', function (Request $request) {
+
+    auth()->login([
+        'id' => 1,
+        'email' => $_POST['email']
+    ]);
+
+    return redirect('/dashboard');
+});
+
+Router::get('/dashboard', function () {
+
+    return view(
+        'dashboard.index'
+    )->layout('main');
+
+})->middleware('auth');
+// Router::get(
+//     '/validation-form',
+//     function () {
+//         return '
+//         <form method="POST" action="/validation-test">
+//             Name
+//             <input name="name" value="' . old('name') . '">
+//             <br>
+//             ' . error('name') . '
+//             <br><br>
+//             Email
+//             <input name="email" value="' . old('email') . '">
+//             <br>
+//             ' . error('email') . '
+//             <br><br>
+//             <button>Submit</button>
+//         </form>
+//         ';
+//     }
+// );
+Router::get(
+    '/validation-form',
+    function () {
+        return '
+        <form method="POST" action="/validation-test">
+            ' . csrf_field() . '
+            <input name="name">
+            <button>Save</button>
+        </form>
+        ';
+    }
+);
+Router::post(
+    '/validation-test',
+    function (Request $request) {
+        $request->validate([
+            'name'  => 'required|min:3',
+            // 'email' => 'required|email'
+        ]);
+        return 'Valid';
+    }
+)->middleware('csrf');
 
 
 

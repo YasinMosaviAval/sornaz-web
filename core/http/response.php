@@ -7,7 +7,9 @@ use Core\View\View;
 class Response {
 
 
+
     public function send(mixed $content): void {
+
         if ($content instanceof RedirectResponse) {
             $content->send();
             return;
@@ -15,9 +17,10 @@ class Response {
 
         if ($content instanceof View) {
             echo $content->render();
-            return;
+        } else {
+            echo $content;
         }
 
-        echo $content;
+        session()->clearFlash();
     }
 }

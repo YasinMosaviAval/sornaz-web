@@ -2,21 +2,40 @@
 <html>
 
 <head>
-    <meta charset="utf-8">
-    <title><?= $title ?? 'Sornaz' ?></title>
+    <title>Sornaz</title>
 </head>
 
 <body>
 
 <header>
-    Header
+
+<?php if(auth()->check()): ?>
+
+    Logged as:
+
+    <?= auth()->user()['email'] ?>
+
+    |
+    <a href="/logout">
+        Logout
+    </a>
+
+<?php else: ?>
+
+    <a href="/login">
+        Login
+    </a>
+
+<?php endif; ?>
+
 </header>
 
+<hr>
+<?= user()['email'] ?>
+<hr>
+<?= user_id() ?>
+<hr>
 <?= $content ?>
-
-<footer>
-    Footer
-</footer>
 
 </body>
 </html>
