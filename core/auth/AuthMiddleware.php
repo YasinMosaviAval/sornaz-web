@@ -1,27 +1,69 @@
 <?php
 
-namespace Core\Auth;
+// namespace Core\Auth;
 
-use Core\Http\Request;
+// use Core\Http\Request;
 
-class AuthMiddleware
-{
-    public function handle(
-        Request $request,
-        callable $next
-    ) {
+// class AuthorizeMiddleware
+// {
+//     public function handle(
+//         Request $request,
+//         callable $next
+//     ) {
 
-        if (
-            !auth()->check()
-        ) {
+//         $ability =
+//             $request->route()['ability']
+//             ?? null;
 
-            return redirect(
-                '/login'
-            );
-        }
+//         if (!$ability) {
+//             return $next($request);
+//         }
 
-        return $next(
-            $request
-        );
-    }
-}
+//         if (
+//             Gate::denies(
+//                 $ability
+//             )
+//         ) {
+
+//             http_response_code(403);
+
+//             exit('Forbidden');
+//         }
+
+//         return $next($request);
+//     }
+// }
+
+
+
+// ===============================================================================================================
+// ===============================================================================================================
+// ===============================================================================================================
+// ===============================================================================================================
+
+
+// namespace Core\Auth;
+
+// use Core\Http\Request;
+
+// class AuthMiddleware
+// {
+//     public function handle(
+//         Request $request,
+//         callable $next
+//     ) {
+
+//         if (
+//             !auth()->check()
+//         ) {
+
+//             return redirect(
+//                 '/login'
+//             );
+//         }
+
+//         return $next(
+//             $request
+//         );
+//     }
+// }

@@ -13,8 +13,6 @@ class Router {
     }
 
 
-
-
     protected static function currentPrefix(): string {
         $prefix = '';
         foreach (static::$groupStack as $group) {
@@ -36,8 +34,10 @@ class Router {
         return $route;
     }
 
-
-
+    // AI VSCode Copilot suggested this function, but it was commented out in the original code.
+    // public static function getRoutes(): array {
+    //     return static::$routes;
+    // }
     public static function dispatch(string $method, string $uri) {
         $routes = static::$routes[$method] ?? [];
 
@@ -55,7 +55,8 @@ class Router {
                 $route->uri
             );
 
-            $pattern = '#^' . $pattern . '$#';
+            // $pattern = '#^' . $pattern . '$#';
+            $pattern = '#^' . rtrim($pattern, '/') . '/?$#';
 
             if (preg_match($pattern, $uri, $matches)) {
 
@@ -78,6 +79,7 @@ class Router {
 
         return null;
     }
+
 
     public static function get(string $uri, mixed $action) {return static::addRoute('GET', $uri, $action);}
     public static function post(string $uri, mixed $action) {return static::addRoute('POST', $uri, $action);}

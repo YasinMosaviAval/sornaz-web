@@ -1,0 +1,38 @@
+<?php
+
+namespace Modules\System\Models;
+
+use Core\Database\Model;
+use Core\Database\SoftDeletes;
+use Modules\Content\Models\Post;
+use Modules\System\Models\Role;
+
+class User extends Model {
+    protected static string $table = 'users';
+    protected static string $primaryKey = 'user_id';
+
+    use SoftDeletes;
+
+    public function posts() {
+        return $this->hasMany(
+            Post::class,
+            'author_id',
+            'user_id'
+        );
+    }
+
+
+
+    public function roles() {
+        return $this->belongsToMany(
+            Role::class,
+            'user_roles',
+            'user_id',
+            'role_id',
+            'user_id',
+            'role_id'
+        );
+    }
+
+    
+}

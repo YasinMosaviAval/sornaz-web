@@ -87,3 +87,81 @@ function user(): ?array {
 function user_id(): ?int {
     return auth()->id();
 }
+
+
+function can(
+    string $ability,
+    mixed ...$arguments
+): bool {
+
+    return \Core\Auth\Gate::allows(
+        $ability,
+        ...$arguments
+    );
+}
+
+
+function cannot(
+    string $ability,
+    mixed ...$arguments
+): bool {
+
+    return \Core\Auth\Gate::denies(
+        $ability,
+        ...$arguments
+    );
+}
+
+
+function db(): \PDO
+{
+    return app()
+        ->container()
+        ->make(
+            \Core\Database\Connection::class
+        )
+        ->pdo();
+}
+
+
+
+function query(): \Core\Database\DB
+{
+    return new \Core\Database\DB();
+}
+
+
+
+
+function transaction(
+    callable $callback
+)
+{
+    db()->beginTransaction();
+
+    try {
+
+        $result =
+            $callback();
+
+        db()->commit();
+
+        return $result;
+
+    } catch (\Throwable $e) {
+
+        db()->rollback();
+
+        throw $e;
+    }
+}
+
+
+function events()
+{
+    return app()
+        ->container()
+        ->make(
+            \Core\Events\EventDispatcher::class
+        );
+}

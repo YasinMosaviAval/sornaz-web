@@ -23,6 +23,25 @@ class Application {
         return $this->container;
     }
 
+
+
+//     public function run()
+// {
+//     require base_path('routes/web.php');
+
+//     var_dump(
+//         \Core\Router\Router::dispatch(
+//             'GET',
+//             '/db-test'
+//         )
+//     );
+
+//     exit;
+
+//     (new Kernel())->handle();
+// }
+
+
     public function run() {
         require base_path('routes/web.php');
 
