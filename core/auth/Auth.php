@@ -2,9 +2,16 @@
 
 namespace Core\Auth;
 
+use Modules\System\Contracts\UserRepositoryInterface;
+
 class Auth
 {
     protected string $sessionKey = '_auth_user';
+
+    public function __construct(
+        protected UserRepositoryInterface $users
+    ) {
+    }
 
     public function check(): bool
     {
@@ -15,24 +22,30 @@ class Auth
 
     public function user(): ?array
     {
+        $id = $this->id();
+
+        if (!$id) {
+            return null;
+        }
+
+        return $this->users
+            ->find($id);
+    }
+
+    public function id(): ?int
+    {
         return session()->get(
             $this->sessionKey
         );
     }
 
-    public function id(): ?int
-    {
-        return $this->user()['id']
-            ?? null;
-    }
-
     public function login(
-        array $user
+        int $userId
     ): void {
 
         session()->put(
             $this->sessionKey,
-            $user
+            $userId
         );
     }
 
