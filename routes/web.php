@@ -14,6 +14,7 @@ use Modules\System\Events\UserCreated;
 use Modules\System\Listeners\CreateTranslationRecord;
 use Modules\System\Listeners\SendWelcomeEmail;
 use Modules\System\Listeners\WriteAuditLog;
+use Modules\System\Providers\EventServiceProvider;
 
 Router::group(
     ['prefix' => '/admin'],
@@ -118,18 +119,8 @@ Router::get('/model-test-update', function () {$user = User::find(1); $user->upd
 Router::get('/model-test-delete', function () { $user = User::find(1129); $user->delete();});
 Router::get('/relation-test', function () {$post = Post::find(1); $author = $post->author(); return $author->email;});
 Router::get('/relation-test1', function () {$user = User::find(1); $posts = $user->posts(); return count($posts);});
-Router::get('/many-test', function () {
-        $user = User::find(1);
-        $roles = $user->roles();
-        return '<pre>' . print_r(array_map(fn($role) => $role->toArray(), $roles), true) . '</pre>';
-    }
-);
-Router::get('/many-test1', function () {
-        $role = Role::find(1);
-        $users = $role->users();
-        return '<pre>' . print_r(array_map(fn($user) => $user->toArray(), $users), true) . '</pre>';
-    }
-);
+Router::get('/many-test', function () {$user = User::find(1); $roles = $user->roles(); return '<pre>' . print_r(array_map(fn($role) => $role->toArray(), $roles), true) . '</pre>';});
+Router::get('/many-test1', function () {$role = Role::find(1); $users = $role->users(); return '<pre>' . print_r(array_map(fn($user) => $user->toArray(), $users), true) . '</pre>';});
 Router::get('/event-test', function () {
         $logDir = base_path('storage/logs');
         if (!is_dir($logDir)) {
@@ -174,50 +165,108 @@ Router::get('/listener-test', function () {
         return '';
     }
 );
+Router::get('/update-test', function () {
+        $user = User::find(1);
+        $user->update([
+            'username' => 'Ali'
+        ]);
+    }
+);
+
+Router::get('/provider-test', function () {
+        // $provider = new EventServiceProvider();
+        // return get_parent_class($provider);
+
+        // $manager = new Core\Providers\ProviderManager();
+        // $manager->load([EventServiceProvider::class]);
+        // return 'loaded';
+
+        // $manager = new Core\Providers\ProviderManager();
+        // $manager->load([EventServiceProvider::class]);
+        // $manager->register();
+        // return 'registered';
+
+        $manager = new Core\Providers\ProviderManager();
+        $manager->load([EventServiceProvider::class]);
+        $manager->register();
+        $manager->boot();
+        return 'booted';
+    }
+);
+
+Router::get('/timestamp-test', function () {
+    User::create([
+        'username' => 'Ali Ar',
+        'email' => 'ali@test.com',
+        'password' => '1234567890'
+    ]);
+
+    $user = User::find(1140);
+    sleep(3);
+    $user->update([
+        'username' => 'New Name'
+    ]);
+
+    }
+);
+
+Router::get('/mass-assignment-test', function () {
+    // User::create([
+    //     'username' => 'Test User',
+    //     'email' => 'test@test.com',
+    //     'password' => '123456',
+    //     'status' => 'approved',
+    // ]);
+    // echo 'done-------<br>';
+
+    // $user = User::find(1142);
+    // $user->update([
+    //     'username' => 'New Name',
+    //     'password' => 'abcdef',
+    //     'status' => 'inactive',
+    // ]);
+    // echo 'update-------<br>';
+
+
+    // $user = new User();
+    // $user->fill([
+    //     'username' => 'Ali',
+    //     'email' => 'ali@test.com',
+    //     'password' => '12345678999999',
+    // ]);
+    // return '<pre>'.print_r($user->toArray(), true).'</pre>';
+
+
+    $user = new User();
+    $user->forceFill([
+        'username' => 'Ali',
+        'email' => 'ali@test.com',
+        'password' => '123456',
+    ]);
+    return '<pre>'.print_r($user->toArray(), true).'</pre>';
+    }
+);
+
 Router::get('/provider-test', function () {$user = User::find(1); events()->dispatch(new UserCreated($user)); return '<hr>Done';});
-Router::get('/users-test', function () {return '<pre>' . print_r(User::all(), true) . '</pre>';});
-Router::get('/find-test', function () {var_dump(User::find(0));});
-Router::get('/soft-delete', function () {$user = User::find(0); $user->delete(); return 'Deleted';});
+Router::get('/find-user', function () {var_dump(User::find(1));});
 Router::get('/all-users', function () {return '<pre>' . print_r(User::all(), true) . '</pre>';});
-Router::get('/find-user', function () {var_dump(User::find(0));});
 Router::get('/with-trashed', function () {return '<pre>' . print_r(User::withTrashed()->get(), true) . '</pre>';});
 Router::get('/only-trashed', function () {return '<pre>' . print_r(User::onlyTrashed()->get(), true) . '</pre>';});
-Router::get('/restore-user', function () {DB::table('users')->where('user_id', 1138)->update(['deleted_at' => null]); return 'Restored';});
+Router::get('/restore-test', function () {$user = User::withTrashed()->find(1120); if(!$user) {return 'User Not Found';} $user->restore(); return 'Restored';});
+Router::get('/force-delete-test', function () {$user = User::withTrashed()->find(1120); if(!$user) {return 'User Not Found';} $user->forceDelete(); return 'Deleted';});
+Router::get('/soft-delete-test', function () {$user = User::find(1120); $user->delete(); return 'Soft Deleted';});
 
 
-
-
-Router::get('/restore-test',
-    function () {
-        // $user = User::withTrashed()->find(1134);
-        $user = User::query()->withTrashed()->where('user_id', 1134)->first();
-        $user = $user ? new User($user) : null;
-        // if (!($user instanceof User)) {
-        if (!$user) {
-            return 'User Not Found';
-        }
-        $user->restore();
-        return 'Restored';
-    }
-);
-Router::get('/force-delete-test',
-    function () {
-        // $user = User::withTrashed()->find(1134);
-        $user = User::query()->withTrashed()->where('user_id', 1134)->first();
-        $user = $user ? new User($user) : null;
-        // die($user);
-        // if (!($user instanceof User)) {
-        if (!$user) {
-            return 'User Not Found';
-        }
-        $user->forceDelete();
-        return 'Deleted';
-    }
-);
-Router::get('/soft-delete-test', function () {$user = User::find(1134); $user->delete(); return 'Soft Deleted';});
-
-
-
+Router::get('/cast-test', function () {
+    $user = User::find(1);
+    // return '<pre>' . print_r($user, true) . '</pre>';
+    print_r($user->user_id);
+    print_r(gettype($user->user_id));
+    print_r($user->status);
+    print_r(gettype($user->status));
+    print_r($user->created_at);
+    print_r(get_class($user->created_at));
+});
 
 
 

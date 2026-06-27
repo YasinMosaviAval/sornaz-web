@@ -10,6 +10,20 @@ use Modules\System\Models\Role;
 class User extends Model {
     protected static string $table = 'users';
     protected static string $primaryKey = 'user_id';
+    protected array $casts = [
+        'user_id' => 'int',
+        'status' => 'bool',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
+    protected array $fillable = [
+        'username',
+        'email',
+        // 'password',
+        // 'status'
+    ];
 
     use SoftDeletes;
 

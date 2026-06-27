@@ -9,19 +9,8 @@ use Core\Router\Router;
 
 class Kernel {
 
-
-
-
     public function handle() {
         $request = new Request();
-
-        
-// var_dump(
-//     $request->method(),
-//     $request->uri()
-// );
-// exit;
-
 
         session()->start();
 
@@ -74,11 +63,6 @@ class Kernel {
 
             return null;
         };
-
-        // $pipeline = new MiddlewarePipeline($instances, $request);
-        // $result = $pipeline->then($destination);
-
-        // $response->send($result);
 
         try {
 

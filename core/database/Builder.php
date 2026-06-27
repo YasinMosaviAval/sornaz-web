@@ -18,21 +18,17 @@ class Builder {
     protected bool $onlyTrashed = false;
     protected array $scopes = [];
     protected bool $scopesApplied=false;
+    protected ?string $modelClass = null;
 
-    public function __construct(PDO $pdo) {
-        $this->pdo = $pdo;
-    }
+
+    public function __construct(PDO $pdo) {$this->pdo = $pdo;}
+
 
     public function table(string $table): static {
         $this->table = $table;
         return $this;
     }
 
-    // public function where(string $column, mixed $value, string $operator = '='): static {
-    //     $this->wheres[] = "{$column} {$operator} ?";
-    //     $this->bindings[] = $value;
-    //     return $this;
-    // }
 
     public function where(string $column, mixed $value, string $operator = '='): static {
         if (strtoupper($operator) === 'IS' && $value === null) {
@@ -48,54 +44,32 @@ class Builder {
         return $this;
     }
 
+
     public function orderBy(string $column, string $direction = 'ASC'): static {
         $this->orders[] = "{$column} {$direction}";
         return $this;
     }
+
 
     public function limit(int $limit): static {
         $this->limit = $limit;
         return $this;
     }
 
-    protected function buildSelect(): string {
-        $sql = "SELECT " . implode(',', $this->selects) . " FROM {$this->table}";
-
-        if ($this->joins) {
-            $sql .= ' ' . implode(' ', $this->joins);
-        }
-
-        if ($this->wheres) {
-            $sql .= ' WHERE ' . implode( ' AND ', $this->wheres);
-        }
-
-        if ($this->orders) {
-            $sql .= ' ORDER BY ' . implode( ',', $this->orders);
-        }
-
-        if ($this->limit) {
-            $sql .= " LIMIT {$this->limit}";
-        }
-
-        if ($this->offset !== null) {
-            $sql .= " OFFSET {$this->offset}";
-        }
-
-        return $sql;
-    }
-
 
     public function get(): array {
-        // $this->applyScopes();
+        $this->applyScopes();
         $stmt = $this->pdo->prepare($this->buildSelect());
         $stmt->execute($this->bindings);
-        return $stmt->fetchAll();
+        $rows = $stmt->fetchAll();
+        if (!$this->modelClass) {
+            return $rows;
+        }
+        return array_map(fn($row) => new $this->modelClass($row), $rows);
     }
 
 
-
-    public function first(): ?array {
-        // $this->applyScopes();
+    public function first(): mixed {
         $this->limit(1);
         return $this->get()[0] ?? null;
     }
@@ -107,13 +81,10 @@ class Builder {
     }
 
 
-
     public function join(string $table, string $first, string $operator, string $second): static {
         $this->joins[] = "INNER JOIN {$table} ON {$first} {$operator} {$second}";
         return $this;
     }
-
-
 
 
     public function leftJoin(string $table, string $first, string $operator, string $second): static {
@@ -129,7 +100,6 @@ class Builder {
         }
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($this->bindings);
-
         return (int) $stmt->fetch()['total'];
     }
 
@@ -141,13 +111,9 @@ class Builder {
 
 
     public function paginate(int $page = 1, int $perPage = 20): array {
-        // $this->applyScopes();
         $total = $this->count();
         $offset = ($page - 1) * $perPage;
-        $data = $this->limit($perPage)
-            ->offset($offset)
-            ->get();
-            
+        $data = $this->limit($perPage)->offset($offset)->get();
         return [
             'data' => $data,
             'total' => $total,
@@ -156,7 +122,6 @@ class Builder {
             'last_page' => ceil($total / $perPage)
         ];
     }
-
 
 
     public function insert(array $data): bool {
@@ -171,13 +136,11 @@ class Builder {
     public function update(array $data): bool {
         $sets = [];
         $bindings = [];
-
         foreach ($data as $column => $value) {
             $sets[] = "{$column} = ?";
             $bindings[] = $value;
         }
         $sql = "UPDATE {$this->table} SET " . implode(',', $sets);
-
         if ($this->wheres) {
             $sql .= ' WHERE ' . implode(' AND ', $this->wheres);
             $bindings = array_merge($bindings, $this->bindings);
@@ -185,8 +148,6 @@ class Builder {
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute($bindings);
     }
-
-
 
 
     public function delete(): bool {
@@ -199,48 +160,22 @@ class Builder {
     }
 
 
-
-    public function lastInsertId(): string {
-        return $this->pdo->lastInsertId();
-    }
+    public function lastInsertId(): string {return $this->pdo->lastInsertId();}
 
 
-    public function find(mixed $id, string $primaryKey = 'user_id'): ?array {
-        return $this
-            ->where($primaryKey, $id)
-            ->first();
-    }
+    // public function find(mixed $id, string $primaryKey = 'user_id'): ?array {return $this->where($primaryKey, $id)->first();}
+
+    public function find(mixed $id, string $primaryKey = 'user_id'): mixed {return $this->where($primaryKey, $id)->first();}
 
 
-
-    public function whereIn(
-        string $column,
-        array $values
-    ): static {
-
+    public function whereIn(string $column, array $values): static {
         if (empty($values)) {
             $this->wheres[] = '1 = 0';
             return $this;
         }
-
-        $placeholders = implode(
-            ',',
-            array_fill(
-                0,
-                count($values),
-                '?'
-            )
-        );
-
-        $this->wheres[] =
-            "{$column} IN ({$placeholders})";
-
-        $this->bindings =
-            array_merge(
-                $this->bindings,
-                $values
-            );
-
+        $placeholders = implode(',', array_fill(0, count($values), '?'));
+        $this->wheres[] = "{$column} IN ({$placeholders})";
+        $this->bindings = array_merge($this->bindings, $values);
         return $this;
     }
 
@@ -275,22 +210,32 @@ class Builder {
     }
 
 
+    public function isWithTrashed(): bool {return $this->withTrashed;}
+
+
+    public function isOnlyTrashed(): bool {return $this->onlyTrashed;}
+
+
+    public function model(string $class): static {$this->modelClass = $class; return $this;}
+
+
+    protected function buildSelect(): string {
+        $sql = "SELECT " . implode(',', $this->selects) . " FROM {$this->table}";
+        if ($this->joins)  {$sql .= ' ' . implode(' ', $this->joins);}
+        if ($this->wheres) {$sql .= ' WHERE ' . implode( ' AND ', $this->wheres);}
+        if ($this->orders) {$sql .= ' ORDER BY ' . implode( ',', $this->orders);}
+        if ($this->limit)  {$sql .= " LIMIT {$this->limit}";}
+        if ($this->offset !== null) {$sql .= " OFFSET {$this->offset}";}
+        return $sql;
+    }
+
+
     protected function applyScopes(): void {
         if($this->scopesApplied){return;}
         $this->scopesApplied=true;
         foreach($this->scopes as $scope){
             $scope->apply($this);
         }
-    }
-
-
-    public function isWithTrashed(): bool {
-        return $this->withTrashed;
-    }
-
-
-    public function isOnlyTrashed(): bool {
-        return $this->onlyTrashed;
     }
 
 
