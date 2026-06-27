@@ -3,48 +3,52 @@
 namespace Core\Application;
 
 use Core\Container\Container;
+use Core\Providers\ProviderManager;
 
 class Application {
-    protected static ?Application $instance = null;
 
+
+    protected static ?Application $instance = null;
     protected Container $container;
+    protected ProviderManager $providers;
+
 
     public function __construct() {
         self::$instance = $this;
-
         $this->container = new Container();
+        $this->providers = new ProviderManager();
     }
+
 
     public static function getInstance(): Application {
         return self::$instance;
     }
+
 
     public function container(): Container {
         return $this->container;
     }
 
 
-
-//     public function run()
-// {
-//     require base_path('routes/web.php');
-
-//     var_dump(
-//         \Core\Router\Router::dispatch(
-//             'GET',
-//             '/db-test'
-//         )
-//     );
-
-//     exit;
-
-//     (new Kernel())->handle();
-// }
-
-
     public function run() {
+        $this->bootstrap();
         require base_path('routes/web.php');
-
         (new Kernel())->handle();
     }
+
+
+    public function providers(): ProviderManager {
+        return $this->providers;
+    }
+
+
+    protected function bootstrap(): void {
+        $providers = require base_path('config/providers.php');
+        $this->providers->load($providers);
+        $this->providers->register();
+        $this->providers->boot();
+    }
+
+
+
 }

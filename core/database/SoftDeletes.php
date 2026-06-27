@@ -4,8 +4,7 @@ namespace Core\Database;
 
 use Core\Database\Scopes\SoftDeletingScope;
 
-trait SoftDeletes
-{
+trait SoftDeletes {
     // protected static array $globalScopes = [];
 
     public function delete(): bool {
