@@ -26,6 +26,8 @@ class Builder {
     protected bool $timestamps = false;
     protected bool $softDeletes = false;
     protected array $eagerLoads = [];
+    protected array $withCounts = [];
+    protected array $withAggregates = [];
 
 
     public function __construct(PDO $pdo) {$this->pdo = $pdo;}
@@ -77,16 +79,16 @@ class Builder {
     public function get(): array {
         $this->applyScopes();
         $stmt = $this->pdo->prepare($this->buildSelect());
-        // echo $this->buildSelect();
-        // echo '<pre>';
-        // print_r($this->bindings);
-        // exit;
         $stmt->execute($this->bindings);
         $rows = $stmt->fetchAll();
         if (!$this->modelClass) {return $rows;}
         $models = array_map(fn($row)=>new $this->modelClass($row), $rows);
         $this->eagerLoadRelations($models);
+        $this->loadRelationCounts($models);
         return $models;
+        // $models = array_map(fn($row)=>new $this->modelClass($row), $rows);
+        // $this->eagerLoadRelations($models);
+        // return $models;
     }
 
 
@@ -183,8 +185,6 @@ class Builder {
 
     public function lastInsertId(): string {return $this->pdo->lastInsertId();}
 
-
-    // public function find(mixed $id, string $primaryKey = 'user_id'): ?array {return $this->where($primaryKey, $id)->first();}
 
     public function find(mixed $id, string $primaryKey = 'user_id'): mixed {return $this->where($primaryKey, $id)->first();}
 
@@ -310,6 +310,23 @@ public function with(string|array $relations): static
 
     return $this;
 }
+
+
+public function withCount(string|array $relations): static
+{
+    foreach ((array) $relations as $key => $value) {
+
+        if (is_int($key)) {
+            $this->withCounts[$value] = null;
+        } else {
+            $this->withCounts[$key] = $value;
+        }
+
+    }
+
+    return $this;
+}
+
 
 
 public function getEagerLoads(): array
@@ -480,6 +497,79 @@ protected function eagerLoadTree(
         }
     }
 }
+
+
+protected function loadRelationCounts(array $models): void
+{
+    if (empty($models) || empty($this->withCounts)) {
+        return;
+    }
+
+    foreach ($this->withCounts as $relationName => $constraint) {
+
+        $this->loadRelationCount(
+            $models,
+            $relationName,
+            $constraint
+        );
+
+    }
+}
+
+
+
+protected function loadRelationAggregate(
+    array $models,
+    string $relationName,
+    string $aggregate,
+    ?string $column = null,
+    ?\Closure $constraint = null
+): void {
+    $first = $models[0];
+    $relation = $first->{$relationName}();
+    if (!$relation instanceof \Core\Database\Relations\HasMany) {
+        return;
+    }
+    $relatedClass = $relation->getRelated();
+    $foreignKey = $relation->getForeignKey();
+    $localKey = $relation->getLocalKey();
+    foreach ($models as $model) {
+        $query = $relatedClass::query()
+            ->where(
+                $foreignKey,
+                $model->{$localKey}
+            );
+        if ($constraint) {
+            $constraint($query);
+        }
+        $attribute = $relationName . '_' . strtolower($aggregate);
+        switch (strtolower($aggregate)) {
+            case 'count':
+                $model->{$attribute} = $query->count();
+                break;
+        }
+    }
+}
+
+
+
+protected function loadRelationCount(
+    array $models,
+    string $relationName,
+    ?\Closure $constraint = null
+): void {
+    $this->loadRelationAggregate(
+        $models,
+        $relationName,
+        'count',
+        null,
+        $constraint
+    );
+}
+
+
+
+
 
 
 

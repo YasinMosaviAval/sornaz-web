@@ -341,10 +341,38 @@ Router::get('/relations-test', function () {
 // echo '<hr>';
 
 
-User::with([
-    'posts' => fn($q) => $q->latest()
+// User::with([
+//     'posts' => fn($q) => $q->latest()
+// ])->get();
+// echo '<hr>';
+
+
+// $users = User::withCount('posts')->get();
+// echo count($users);
+
+
+// $users = User::withCount('posts')->get();
+// foreach ($users as $user) {
+//     echo $user->username;
+//     echo ' : ';
+//     echo $user->posts_count;
+//     echo '<br>';
+// }
+
+
+
+$users = User::withCount([
+    'posts' => fn($q) => $q->where(
+        'status',
+        'published'
+    )
 ])->get();
-echo '<hr>';
+foreach ($users as $user) {
+    echo $user->posts_count;
+    echo '<br>';
+}
+
+
 
 
 // User::with([
