@@ -327,18 +327,30 @@ Router::get('/relations-test', function () {
 // $user = $relation->getEager();
 // print_r($user);
 
-$users = User::with('posts')->get();
-echo count($users[0]->posts);
+// $users = User::with('posts')->get();
+// echo count($users[0]->posts);
+// echo '<hr>';
+
+
+// $posts = Post::with('author')->get();
+// echo $posts[0]->author->username;
+// echo '<hr>';
+
+
+// User::with('posts.author')->get();
+// echo '<hr>';
+
+
+User::with([
+    'posts' => fn($q) => $q->latest()
+])->get();
 echo '<hr>';
 
 
-$posts = Post::with('author')->get();
-echo $posts[0]->author->username;
-echo '<hr>';
-
-
-User::with('posts.author')->get();
-echo '<hr>';
+// User::with([
+//     'posts' => fn($q) => $q->where('status', 'published')
+// ])->get();
+// echo '<hr>';
 
     }
 );

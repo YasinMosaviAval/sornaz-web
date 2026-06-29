@@ -58,10 +58,29 @@ class Builder {
     }
 
 
+    // public function latest(?string $column = null): static {
+    //     $this->query->orderBy($column ?? $this->relatedPrimaryKey(), 'DESC');
+    //     return $this;
+    // }
+    public function latest(?string $column = null): static {$column ??= $this->modelClass::getPrimaryKey(); return $this->orderBy($column, 'DESC');}
+
+
+public function oldest(?string $column = null): static {$column ??= $this->modelClass::getPrimaryKey(); return $this->orderBy($column, 'ASC');}
+
+    // public function oldest(?string $column = null): static {
+    //     $this->query->orderBy($column ?? $this->relatedPrimaryKey(), 'ASC');
+    //     return $this;
+    // }
+
+
     public function limit(int $limit): static {
         $this->limit = $limit;
         return $this;
     }
+
+
+
+    
 
 
     public function get(): array {
@@ -354,86 +373,6 @@ protected function groupModels(array $rows, string $foreignKey): array
 }
 
 
-// protected function eagerLoadHasMany(
-//     array $models,
-//     string $relationName,
-//     \Core\Database\Relations\HasMany $relation
-// ): void {
-
-//     $keys = $this->collectKeys(
-//         $models,
-//         $relation->getLocalKey()
-//     );
-
-//     if (!$keys) {
-//         return;
-//     }
-
-//     $results = $relation
-//         ->getQuery()
-//         ->whereIn(
-//             $relation->getForeignKey(),
-//             $keys
-//         )
-//         ->get();
-
-//     $dictionary = $this->groupModels(
-//         $results,
-//         $relation->getForeignKey()
-//     );
-
-//     foreach ($models as $model) {
-
-//         $model->setRelation(
-//             $relationName,
-//             $dictionary[$model->{$relation->getLocalKey()}] ?? []
-//         );
-
-//     }
-
-// }
-
-
-// protected function eagerLoadHasOne(
-//     array $models,
-//     string $relationName,
-//     \Core\Database\Relations\HasOne $relation
-// ): void {
-
-//     $keys = $this->collectKeys(
-//         $models,
-//         $relation->getLocalKey()
-//     );
-
-//     if (!$keys) {
-//         return;
-//     }
-
-//     $results = $relation
-//         ->getQuery()
-//         ->whereIn(
-//             $relation->getForeignKey(),
-//             $keys
-//         )
-//         ->get();
-
-//     $dictionary = [];
-
-//     foreach ($results as $row) {
-//         $dictionary[$row->{$relation->getForeignKey()}] = $row;
-//     }
-
-//     foreach ($models as $model) {
-
-//         $model->setRelation(
-//             $relationName,
-//             $dictionary[$model->{$relation->getLocalKey()}] ?? null
-//         );
-
-//     }
-// }
-
-
 protected function parseEagerLoads(): array
 {
     $tree = [];
@@ -499,7 +438,7 @@ protected function eagerLoadTree(
          */
         if ($constraint instanceof \Closure) {
             $constraint(
-                $relation->builder()
+                $relation->getQuery()
             );
         }
 
