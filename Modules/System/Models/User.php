@@ -2,6 +2,7 @@
 
 namespace Modules\System\Models;
 
+use Core\Database\Builder;
 use Core\Database\Model;
 use Core\Database\SoftDeletes;
 use Modules\Content\Models\Post;
@@ -48,5 +49,35 @@ class User extends Model {
         );
     }
 
-    
+    public function scopeActive(Builder $query) {
+        return $query->where(
+            'status',
+            'approved'
+            // 'active'
+        );
+    }
+
+
+    public function scopePending(Builder $query) {
+        return $query->where(
+            'status',
+            'pending'
+        );
+    }
+
+    public function scopeVisible(Builder $query) {
+        return $query->where(
+            'visibility',
+            'public'
+        );
+    }
+
+
+    public function profile() {
+        return $this->hasOne(
+            Profile::class,
+            'user_id',
+            'user_id'
+        );
+    }
 }

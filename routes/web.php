@@ -247,6 +247,102 @@ Router::get('/mass-assignment-test', function () {
     }
 );
 
+Router::get('/local-scopes-test', function () {
+    $users = User::active()->get();
+    return '<pre>' .
+    print_r($users, true) .
+    '</pre>';
+
+    // User::active()
+    // ->visible()
+    // ->get();
+
+    // User::active()
+    // ->orderBy('username')
+    // ->paginate();
+
+    // User::active()
+    // ->where('gender', 'male')
+    // ->get();
+    }
+);
+
+Router::get('/relations-test', function () {
+    // new \Core\Database\Relations\BelongsToMany(
+        //     User::query()
+    // );
+
+    // $user = new User();
+    // $user->posts();
+
+    // $user = new User();
+    // $posts = $user->posts()->get();
+    // return '<pre>'.print_r($posts, true).'</pre>';
+
+    // $user = new User();
+    // $post = $user->posts()->first();
+
+    // $user = new User();
+    // $count = $user->posts()->count();
+    // return $count;
+
+
+    // $relation = User::find(1)->posts();
+    // return '<pre>'.print_r([
+    //     get_class($relation),
+    //     get_class($relation->getParent()),
+    //     $relation->getRelated(),
+    //     $relation->getForeignKey(),
+    //     $relation->getLocalKey(),
+    // ], true).'</pre>';
+
+    
+    // $user = User::find(1);
+    // $posts = $user->posts()->latest()->get();
+    // return '<pre>'.print_r($posts,true).'</pre>';
+
+
+    // $user = new User();
+    // $user = User::find(1);
+    // $user->posts()->oldest()->count();
+
+
+    // $users = User::query()->with('posts')->get();
+    // foreach ($users as $user) {
+    //     echo $user->username;
+    //     echo count($user->posts);
+    // }
+
+// $user = User::find(1);
+// $relation = $user->posts();
+// $relation->addEagerConstraints([$user]);
+// $posts = $relation->getEager();
+// print_r($posts);
+
+
+
+// $post = Post::find(1);
+// $relation = $post->author();
+// $relation->addEagerConstraints([$post]);
+// $user = $relation->getEager();
+// print_r($user);
+
+$users = User::with('posts')->get();
+echo count($users[0]->posts);
+echo '<hr>';
+
+
+$posts = Post::with('author')->get();
+echo $posts[0]->author->username;
+echo '<hr>';
+
+
+User::with('posts.author')->get();
+echo '<hr>';
+
+    }
+);
+
 Router::get('/provider-test', function () {$user = User::find(1); events()->dispatch(new UserCreated($user)); return '<hr>Done';});
 Router::get('/find-user', function () {var_dump(User::find(1));});
 Router::get('/all-users', function () {return '<pre>' . print_r(User::all(), true) . '</pre>';});

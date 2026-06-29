@@ -9,22 +9,21 @@ trait HasAttributes {
     protected array $casts = [];
 
 
-    // public function __construct(array $attributes = []) {$this->attributes = $attributes;}
-    // public function __construct(array $attributes = []) {$this->fill($attributes);}
     public function __construct(array $attributes = []){if ($attributes) {$this->forceFill($attributes);}}
 
-    public function __get(string $key) {$value = $this->attributes[$key] ?? null; return $this->castAttribute($key, $value);}
+    public function __get(string $key) {
+        $value = $this->attributes[$key] ?? null;
+        if ($this->relationLoaded($key)) {
+            return $this->getRelation($key);
+        }
+        return $this->castAttribute($key, $value);
+    }
 
     public function __set(string $key, mixed $value): void {$this->attributes[$key] = $value;}
 
 
+
     public function toArray(): array {return $this->attributes;}
-
-
-    // public function fill(array $attributes): static {
-    //     $this->attributes = array_merge($this->attributes, $attributes);
-    //     return $this;
-    // }
 
 
     protected function castAttribute(string $key, mixed $value): mixed{

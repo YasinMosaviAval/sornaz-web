@@ -49,21 +49,4 @@ trait HasCRUD {
     }
 
 
-    // public function delete(): bool {
-    //     static::fireEvent('deleting', $this);
-    //     if (in_array(SoftDeletes::class, class_uses(static::class))) {
-    //         $result = static::query()->where(static::$primaryKey, $this->{static::$primaryKey})->update(['deleted_at' => date('Y-m-d H:i:s')]);
-    //     } else {
-    //         $result = static::query()->where(static::$primaryKey, $this->{static::$primaryKey})->delete();
-    //     }
-    //     if ($result) {
-    //         if (isset($this->attributes['deleted_at'])) {
-    //             $this->attributes['deleted_at'] = date('Y-m-d H:i:s');
-    //         }
-    //         static::fireEvent('deleted', $this);
-    //     }
-    //     return $result;
-    // }
-
-
 }

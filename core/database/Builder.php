@@ -19,6 +19,13 @@ class Builder {
     protected array $scopes = [];
     protected bool $scopesApplied=false;
     protected ?string $modelClass = null;
+    protected ?string $primaryKey = null;
+    protected array $fillable = [];
+    protected array $guarded = [];
+    protected array $casts = [];
+    protected bool $timestamps = false;
+    protected bool $softDeletes = false;
+    protected array $eagerLoads = [];
 
 
     public function __construct(PDO $pdo) {$this->pdo = $pdo;}
@@ -60,12 +67,16 @@ class Builder {
     public function get(): array {
         $this->applyScopes();
         $stmt = $this->pdo->prepare($this->buildSelect());
+        // echo $this->buildSelect();
+        // echo '<pre>';
+        // print_r($this->bindings);
+        // exit;
         $stmt->execute($this->bindings);
         $rows = $stmt->fetchAll();
-        if (!$this->modelClass) {
-            return $rows;
-        }
-        return array_map(fn($row) => new $this->modelClass($row), $rows);
+        if (!$this->modelClass) {return $rows;}
+        $models = array_map(fn($row)=>new $this->modelClass($row), $rows);
+        $this->eagerLoadRelations($models);
+        return $models;
     }
 
 
@@ -216,8 +227,16 @@ class Builder {
     public function isOnlyTrashed(): bool {return $this->onlyTrashed;}
 
 
-    public function model(string $class): static {$this->modelClass = $class; return $this;}
-
+    public function model(string $class): static {
+        $this->modelClass = $class;
+        $this->primaryKey = $class::getPrimaryKey();
+        $this->fillable = $this->getFillable();
+        $this->guarded = $this->getGuarded();
+        $this->casts = $this->getCasts();
+        $this->timestamps = $class::usesTimestamps();
+        $this->softDeletes = $class::usesSoftDeletes();
+        return $this;
+    }
 
     protected function buildSelect(): string {
         $sql = "SELECT " . implode(',', $this->selects) . " FROM {$this->table}";
@@ -239,7 +258,298 @@ class Builder {
     }
 
 
+    public function __call(string $method, array $arguments) {
+        if (!$this->modelClass) {
+            throw new \BadMethodCallException(
+                "Method {$method} does not exist."
+            );
+        }
+        $scope = 'scope' . ucfirst($method);
+        if (!method_exists($this->modelClass, $scope)) {
+            throw new \BadMethodCallException(
+                "Method {$method} does not exist."
+            );
+        }
+        $model = new $this->modelClass();
+        array_unshift($arguments, $this);
+        $result = $model->$scope(...$arguments);
+        return $result instanceof self ? $result : $this;
+    }
 
+
+    public function getPrimaryKey(): string {return $this->$primaryKey;}
+    public function getFillable(): array {return $this->fillable;}
+    public function getGuarded(): array {return $this->guarded;}
+    public function getCasts(): array {return $this->casts;}
+    public function usesTimestamps(): bool {return $timestamps ?? true;}
+    public static function usesSoftDeletes(): bool {return in_array(SoftDeletes::class, class_uses(static::class));}
+
+
+
+public function with(string|array $relations): static
+{
+    foreach ((array)$relations as $key => $value) {
+
+        if (is_int($key)) {
+            $this->eagerLoads[$value] = null;
+        } else {
+            $this->eagerLoads[$key] = $value;
+        }
+
+    }
+
+    return $this;
+}
+
+
+public function getEagerLoads(): array
+{
+    return $this->eagerLoads;
+}
+
+
+protected function eagerLoadRelations(array $models): void
+{
+    if (empty($this->eagerLoads)) {
+        return;
+    }
+
+    $tree = $this->parseEagerLoads();
+
+    $this->eagerLoadTree(
+        $models,
+        $tree
+    );
+}
+
+
+protected function collectKeys(array $models, string $key): array
+{
+    $ids = [];
+
+    foreach ($models as $model) {
+
+        $value = $model->$key;
+
+        if ($value !== null) {
+            $ids[] = $value;
+        }
+    }
+
+    return array_values(array_unique($ids));
+}
+
+
+protected function groupModels(array $rows, string $foreignKey): array
+{
+    $grouped = [];
+
+    foreach ($rows as $row) {
+
+        $grouped[$row->$foreignKey][] = $row;
+
+    }
+
+    return $grouped;
+}
+
+
+// protected function eagerLoadHasMany(
+//     array $models,
+//     string $relationName,
+//     \Core\Database\Relations\HasMany $relation
+// ): void {
+
+//     $keys = $this->collectKeys(
+//         $models,
+//         $relation->getLocalKey()
+//     );
+
+//     if (!$keys) {
+//         return;
+//     }
+
+//     $results = $relation
+//         ->getQuery()
+//         ->whereIn(
+//             $relation->getForeignKey(),
+//             $keys
+//         )
+//         ->get();
+
+//     $dictionary = $this->groupModels(
+//         $results,
+//         $relation->getForeignKey()
+//     );
+
+//     foreach ($models as $model) {
+
+//         $model->setRelation(
+//             $relationName,
+//             $dictionary[$model->{$relation->getLocalKey()}] ?? []
+//         );
+
+//     }
+
+// }
+
+
+// protected function eagerLoadHasOne(
+//     array $models,
+//     string $relationName,
+//     \Core\Database\Relations\HasOne $relation
+// ): void {
+
+//     $keys = $this->collectKeys(
+//         $models,
+//         $relation->getLocalKey()
+//     );
+
+//     if (!$keys) {
+//         return;
+//     }
+
+//     $results = $relation
+//         ->getQuery()
+//         ->whereIn(
+//             $relation->getForeignKey(),
+//             $keys
+//         )
+//         ->get();
+
+//     $dictionary = [];
+
+//     foreach ($results as $row) {
+//         $dictionary[$row->{$relation->getForeignKey()}] = $row;
+//     }
+
+//     foreach ($models as $model) {
+
+//         $model->setRelation(
+//             $relationName,
+//             $dictionary[$model->{$relation->getLocalKey()}] ?? null
+//         );
+
+//     }
+// }
+
+
+protected function parseEagerLoads(): array
+{
+    $tree = [];
+
+    foreach ($this->eagerLoads as $relation => $constraint) {
+
+        $parts = explode('.', $relation);
+
+        $current =& $tree;
+
+        foreach ($parts as $part) {
+
+            if (!isset($current[$part])) {
+                $current[$part] = [];
+            }
+
+            $current =& $current[$part];
+        }
+
+        $current['_constraint'] = $constraint;
+
+    }
+
+    return $tree;
+}
+
+
+
+protected function eagerLoadTree(
+    array $models,
+    array $tree
+): void {
+
+    if (empty($models)) {
+        return;
+    }
+
+    foreach ($tree as $relationName => $children) {
+
+        $constraint = $children['_constraint'] ?? null;
+
+        unset($children['_constraint']);
+
+        $relation = $models[0]->{$relationName}();
+
+        /*
+         * مقدار اولیه Relation
+         */
+        $relation->initRelation(
+            $models,
+            $relationName
+        );
+
+        /*
+         * محدود کردن Query
+         */
+        $relation->addEagerConstraints(
+            $models
+        );
+
+        /*
+         * اعمال Closure
+         */
+        if ($constraint instanceof \Closure) {
+            $constraint(
+                $relation->builder()
+            );
+        }
+
+        /*
+         * اجرای Query
+         */
+        $results = $relation->getEager();
+
+        /*
+         * اتصال نتایج به مدل‌ها
+         */
+        $relation->match(
+            $models,
+            $results,
+            $relationName
+        );
+
+        /*
+         * Nested Relations
+         */
+        if (!empty($children)) {
+
+            $nestedModels = [];
+
+            foreach ($models as $model) {
+
+                $loaded = $model->getRelation($relationName);
+
+                if ($loaded === null) {
+                    continue;
+                }
+
+                if (is_array($loaded)) {
+                    $nestedModels = array_merge(
+                        $nestedModels,
+                        $loaded
+                    );
+                } else {
+                    $nestedModels[] = $loaded;
+                }
+            }
+            if (!empty($nestedModels)) {
+                $this->eagerLoadTree(
+                    $nestedModels,
+                    $children
+                );
+            }
+        }
+    }
+}
 
 
 

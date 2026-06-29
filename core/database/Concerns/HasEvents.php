@@ -3,6 +3,7 @@
 namespace Core\Database\Concerns;
 
 use Core\Database\Model;
+use Core\Database\SoftDeletes;
 
 trait HasEvents {
     /**
@@ -87,6 +88,40 @@ trait HasEvents {
      */
     public static function getEvents(): array {return static::$events[static::class] ?? [];}
 
+
+    public static function getPrimaryKey(): string {return static::$primaryKey;}
+    public function getFillable(): array {return $this->fillable;}
+    public function getGuarded(): array {return $this->guarded;}
+    public function getCasts(): array {return $this->casts;}
+    public static function usesTimestamps(): bool {return static::$timestamps ?? true;}
+    public static function usesSoftDeletes(): bool {return in_array(SoftDeletes::class, class_uses(static::class));}
+
+public function setRelation(
+    string $name,
+    mixed $value
+): static {
+
+    $this->relations[$name] = $value;
+
+    return $this;
+}
+
+public function getRelation(
+    string $name
+): mixed {
+
+    return $this->relations[$name] ?? null;
+}
+
+public function relationLoaded(
+    string $name
+): bool {
+
+    return array_key_exists(
+        $name,
+        $this->relations
+    );
+}
 
 
 }
