@@ -58,19 +58,10 @@ class Builder {
     }
 
 
-    // public function latest(?string $column = null): static {
-    //     $this->query->orderBy($column ?? $this->relatedPrimaryKey(), 'DESC');
-    //     return $this;
-    // }
     public function latest(?string $column = null): static {$column ??= $this->modelClass::getPrimaryKey(); return $this->orderBy($column, 'DESC');}
 
 
-public function oldest(?string $column = null): static {$column ??= $this->modelClass::getPrimaryKey(); return $this->orderBy($column, 'ASC');}
-
-    // public function oldest(?string $column = null): static {
-    //     $this->query->orderBy($column ?? $this->relatedPrimaryKey(), 'ASC');
-    //     return $this;
-    // }
+    public function oldest(?string $column = null): static {$column ??= $this->modelClass::getPrimaryKey(); return $this->orderBy($column, 'ASC');}
 
 
     public function limit(int $limit): static {
