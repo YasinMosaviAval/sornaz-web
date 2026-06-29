@@ -11,18 +11,6 @@ abstract class HasOneOrMany extends Relation {
     }
 
 
-    public function latest(?string $column = null): static {
-        $this->query->orderBy($column ?? $this->relatedPrimaryKey(), 'DESC');
-        return $this;
-    }
-
-
-    public function oldest(?string $column = null): static {
-        $this->query->orderBy($column ?? $this->relatedPrimaryKey(), 'ASC');
-        return $this;
-    }
-
-
     public function addEagerConstraints(array $models): void
     {
         $keys = [];
