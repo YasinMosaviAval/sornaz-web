@@ -3,11 +3,13 @@
 namespace Core\Database;
 
 use PDO;
+use Core\Database\Aggregates\AggregateLoader;
 
 class Builder {
     protected PDO $pdo;
     protected string $table;
     protected array $wheres = [];
+    protected array $rawWheres = [];
     protected array $bindings = [];
     protected array $orders = [];
     protected ?int $limit = null;
@@ -28,7 +30,6 @@ class Builder {
     protected array $eagerLoads = [];
     protected array $withCounts = [];
     protected array $withAggregates = [];
-
 
     public function __construct(PDO $pdo) {$this->pdo = $pdo;}
 
@@ -54,6 +55,22 @@ class Builder {
     }
 
 
+    public function whereRaw(
+        string $sql,
+        array $bindings = []
+    ): static {
+
+        $this->rawWheres[] = $sql;
+
+        $this->bindings = array_merge(
+            $this->bindings,
+            $bindings
+        );
+
+        return $this;
+    }
+
+
     public function orderBy(string $column, string $direction = 'ASC'): static {
         $this->orders[] = "{$column} {$direction}";
         return $this;
@@ -73,7 +90,77 @@ class Builder {
 
 
 
-    
+
+public function with(string|array $relations): static
+{
+    foreach ((array)$relations as $key => $value) {
+
+        if (is_int($key)) {
+            $this->eagerLoads[$value] = null;
+        } else {
+            $this->eagerLoads[$key] = $value;
+        }
+
+    }
+
+    return $this;
+}
+
+
+public function withCount(string|array $relations): static
+{
+    foreach ((array) $relations as $key => $value) {
+
+        if (is_int($key)) {
+            $this->withCounts[$value] = null;
+        } else {
+            $this->withCounts[$key] = $value;
+        }
+
+    }
+
+    return $this;
+}
+
+
+public function getWithCounts(): array
+{
+    return $this->withCounts;
+}
+
+
+
+public function has(
+    string $relation,
+    string $operator = '>=',
+    int $count = 1
+): static {
+
+    return $this->addRelationExistenceConstraint(
+        $relation,
+        null,
+        $operator,
+        $count
+    );
+
+}
+
+public function whereHas(
+    string $relation,
+    ?\Closure $callback = null,
+    string $operator = '>=',
+    int $count = 1
+): static {
+
+    return $this->addRelationExistenceConstraint(
+        $relation,
+        $callback,
+        $operator,
+        $count
+    );
+
+}
+
 
 
     public function get(): array {
@@ -84,8 +171,11 @@ class Builder {
         if (!$this->modelClass) {return $rows;}
         $models = array_map(fn($row)=>new $this->modelClass($row), $rows);
         $this->eagerLoadRelations($models);
-        $this->loadRelationCounts($models);
+        (new AggregateLoader($this))->load($models);
         return $models;
+        // $this->eagerLoadRelations($models);
+        // $this->loadRelationCounts($models);
+        // return $models;
         // $models = array_map(fn($row)=>new $this->modelClass($row), $rows);
         // $this->eagerLoadRelations($models);
         // return $models;
@@ -251,7 +341,10 @@ class Builder {
     protected function buildSelect(): string {
         $sql = "SELECT " . implode(',', $this->selects) . " FROM {$this->table}";
         if ($this->joins)  {$sql .= ' ' . implode(' ', $this->joins);}
-        if ($this->wheres) {$sql .= ' WHERE ' . implode( ' AND ', $this->wheres);}
+        $whereParts = array_merge($this->wheres, $this->rawWheres);
+        if (!empty($whereParts)) {
+            $sql .= ' WHERE ' . implode(' AND ', $whereParts);
+        }
         if ($this->orders) {$sql .= ' ORDER BY ' . implode( ',', $this->orders);}
         if ($this->limit)  {$sql .= " LIMIT {$this->limit}";}
         if ($this->offset !== null) {$sql .= " OFFSET {$this->offset}";}
@@ -294,38 +387,6 @@ class Builder {
     public function usesTimestamps(): bool {return $timestamps ?? true;}
     public static function usesSoftDeletes(): bool {return in_array(SoftDeletes::class, class_uses(static::class));}
 
-
-
-public function with(string|array $relations): static
-{
-    foreach ((array)$relations as $key => $value) {
-
-        if (is_int($key)) {
-            $this->eagerLoads[$value] = null;
-        } else {
-            $this->eagerLoads[$key] = $value;
-        }
-
-    }
-
-    return $this;
-}
-
-
-public function withCount(string|array $relations): static
-{
-    foreach ((array) $relations as $key => $value) {
-
-        if (is_int($key)) {
-            $this->withCounts[$value] = null;
-        } else {
-            $this->withCounts[$key] = $value;
-        }
-
-    }
-
-    return $this;
-}
 
 
 
@@ -499,26 +560,26 @@ protected function eagerLoadTree(
 }
 
 
-protected function loadRelationCounts(array $models): void
-{
-    if (empty($models) || empty($this->withCounts)) {
-        return;
-    }
+// protected function loadRelationCounts(array $models): void
+// {
+//     if (empty($models) || empty($this->withCounts)) {
+//         return;
+//     }
 
-    foreach ($this->withCounts as $relationName => $constraint) {
+//     foreach ($this->withCounts as $relationName => $constraint) {
 
-        $this->loadRelationCount(
-            $models,
-            $relationName,
-            $constraint
-        );
+//         $this->loadRelationCount(
+//             $models,
+//             $relationName,
+//             $constraint
+//         );
 
-    }
-}
+//     }
+// }
 
 
 
-protected function loadRelationAggregate(
+public function loadRelationAggregate(
     array $models,
     string $relationName,
     string $aggregate,
@@ -553,23 +614,32 @@ protected function loadRelationAggregate(
 
 
 
-protected function loadRelationCount(
-    array $models,
-    string $relationName,
-    ?\Closure $constraint = null
-): void {
-    $this->loadRelationAggregate(
-        $models,
-        $relationName,
-        'count',
-        null,
-        $constraint
-    );
+// protected function loadRelationCount(
+//     array $models,
+//     string $relationName,
+//     ?\Closure $constraint = null
+// ): void {
+//     $this->loadRelationAggregate(
+//         $models,
+//         $relationName,
+//         'count',
+//         null,
+//         $constraint
+//     );
+// }
+
+
+
+protected function addRelationExistenceConstraint(
+    string $relation,
+    ?\Closure $callback,
+    string $operator,
+    int $count
+): static {
+
+    return $this;
+
 }
-
-
-
-
 
 
 
