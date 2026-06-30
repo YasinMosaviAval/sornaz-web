@@ -4,6 +4,8 @@ namespace Core\Database;
 
 use PDO;
 use Core\Database\Aggregates\AggregateLoader;
+use Core\Database\Aggregates\AggregateExecutor;
+
 
 class Builder {
     protected PDO $pdo;
@@ -197,12 +199,6 @@ public function whereHas(
         $this->eagerLoadRelations($models);
         (new AggregateLoader($this))->load($models);
         return $models;
-        // $this->eagerLoadRelations($models);
-        // $this->loadRelationCounts($models);
-        // return $models;
-        // $models = array_map(fn($row)=>new $this->modelClass($row), $rows);
-        // $this->eagerLoadRelations($models);
-        // return $models;
     }
 
 
@@ -584,24 +580,6 @@ protected function eagerLoadTree(
 }
 
 
-// protected function loadRelationCounts(array $models): void
-// {
-//     if (empty($models) || empty($this->withCounts)) {
-//         return;
-//     }
-
-//     foreach ($this->withCounts as $relationName => $constraint) {
-
-//         $this->loadRelationCount(
-//             $models,
-//             $relationName,
-//             $constraint
-//         );
-
-//     }
-// }
-
-
 
 public function loadRelationAggregate(
     array $models,
@@ -627,46 +605,15 @@ public function loadRelationAggregate(
         if ($constraint) {
             $constraint($query);
         }
-        // $attribute = $relationName . '_' . strtolower($aggregate);
-        // $attribute = match ($aggregate) {
-        //     'count'  => "{$relation}_count",
-        //     'exists' => "{$relation}_exists",
-        //     default  => "{$relation}_{$aggregate}"
-        // };
         $attribute = match ($aggregate) {
             'count'  => "{$relationName}_count",
             'exists' => "{$relationName}_exists",
             default  => "{$relationName}_{$aggregate}",
         };
-        switch ($aggregate) {
-            case 'count':
-            case 'exists':
-                $count = $query->count();
-                $value = match ($aggregate) {
-                    'count'  => $count,
-                    'exists' => $count > 0,
-                };
-                $model->$attribute = $value;
-                break;
-        }
+        $executor = new AggregateExecutor();
+        $model->$attribute = $executor->execute($query, $aggregate);
     }
 }
-
-
-
-// protected function loadRelationCount(
-//     array $models,
-//     string $relationName,
-//     ?\Closure $constraint = null
-// ): void {
-//     $this->loadRelationAggregate(
-//         $models,
-//         $relationName,
-//         'count',
-//         null,
-//         $constraint
-//     );
-// }
 
 
 
@@ -676,9 +623,7 @@ protected function addRelationExistenceConstraint(
     string $operator,
     int $count
 ): static {
-
     return $this;
-
 }
 
 

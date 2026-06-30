@@ -6,7 +6,7 @@ use Closure;
 use Core\Database\Builder;
 
 class AggregateLoader {
-        protected Builder $builder;
+    protected Builder $builder;
 
     public function __construct(Builder $builder){
         $this->builder = $builder;
@@ -82,16 +82,5 @@ class AggregateLoader {
     }
 
 
-
-
-    // protected function loadCount(array $models,string $relation,?\Closure $constraint): void{
-    //     $this->builder->loadRelationAggregate(
-    //         $models,
-    //         $relation,
-    //         'count',
-    //         null,
-    //         $constraint
-    //     );
-    // }
 
 }
