@@ -2,53 +2,96 @@
 
 namespace Core\Database\Aggregates;
 
+use Closure;
 use Core\Database\Builder;
 
-class AggregateLoader
-{
-    protected Builder $builder;
+class AggregateLoader {
+        protected Builder $builder;
 
-    public function __construct(Builder $builder)
-    {
+    public function __construct(Builder $builder){
         $this->builder = $builder;
     }
 
-    public function load(array $models): void
-    {
+
+    public function load(array $models): void {
         if (empty($models)) {
             return;
         }
 
-        if (empty($this->builder->getWithCounts())) {
-            return;
-        }
+        /*
+        |--------------------------------------------------------------------------
+        | withCount()
+        |--------------------------------------------------------------------------
+        */
 
         foreach (
             $this->builder->getWithCounts()
             as $relation => $constraint
         ) {
 
-            $this->loadCount(
+            $this->loadAggregate(
                 $models,
                 $relation,
+                'count',
+                null,
                 $constraint
             );
 
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | withExists()
+        |--------------------------------------------------------------------------
+        */
+
+        foreach (
+            $this->builder->getWithExists()
+            as $relation => $constraint
+        ) {
+
+            $this->loadAggregate(
+                $models,
+                $relation,
+                'exists',
+                null,
+                $constraint
+            );
+
+        }
+
     }
 
-    protected function loadCount(
+    /**
+     * Generic Aggregate Loader
+     */
+    protected function loadAggregate(
         array $models,
         string $relation,
-        ?\Closure $constraint
-    ): void
-    {
+        string $aggregate,
+        ?string $column,
+        ?Closure $constraint
+    ): void {
         $this->builder->loadRelationAggregate(
             $models,
             $relation,
-            'count',
-            null,
+            $aggregate,
+            $column,
             $constraint
         );
     }
+
+
+
+
+    // protected function loadCount(array $models,string $relation,?\Closure $constraint): void{
+    //     $this->builder->loadRelationAggregate(
+    //         $models,
+    //         $relation,
+    //         'count',
+    //         null,
+    //         $constraint
+    //     );
+    // }
+
 }
