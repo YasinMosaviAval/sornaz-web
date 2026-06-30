@@ -6,9 +6,13 @@ use Core\Database\Relations\RelationLoader;
 
 trait LoadsRelations {
 
+    // public function load(string|array $relations): static {
+    //     $loader = new RelationLoader();
+    //     $loader->parse(is_array($relations) ? array_fill_keys($relations, null) : [$relations => null])->load([$this]);
+    //     return $this;
+    // }
     public function load(string|array $relations): static {
-        $loader = new RelationLoader();
-        $loader->parse(is_array($relations) ? array_fill_keys($relations, null) : [$relations => null])->load([$this]);
+        $this->loadRelations(is_array($relations) ? array_fill_keys($relations, null) : [$relations => null]);
         return $this;
     }
 
@@ -22,11 +26,14 @@ trait LoadsRelations {
             }
         }
         if (!empty($missing)) {
-            $this->load($missing);
+            $this->loadRelations(array_fill_keys($missing,null));
         }
         return $this;
     }
 
 
+    protected function loadRelations(array $relations): void {
+        (new RelationLoader())->parse($relations)->load([$this]);
+    }
 
 }
