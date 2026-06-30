@@ -25,38 +25,7 @@ class RelationLoader {
     }
 
 
-    public function load(array $models): void {
-        if (empty($models)) {return;}
-        foreach ($this->tree as $relationName => $children) {
-            $constraint = $children['_constraint'] ?? null;
-            unset($children['_constraint']);
-            $relation = $models[0]->{$relationName}();
-            $relation->initRelation($models, $relationName);
-            $relation->addEagerConstraints($models);
-            if ($constraint instanceof \Closure) {
-                $constraint($relation->getQuery());
-            }
-            $results = $relation->getEager();
-            $relation->match($models, $results, $relationName);
-            if (!empty($children)) {
-                $nestedModels = [];
-                foreach ($models as $model) {
-                    $loaded = $model->getRelation($relationName);
-                    if ($loaded === null) {continue;}
-                    if (is_array($loaded)) {
-                        $nestedModels = array_merge($nestedModels, $loaded);
-                    } else {
-                        $nestedModels[] = $loaded;
-                    }
-                }
-                $this->loadNested($nestedModels, $children);
-            }
-        }
-    }
-
-
-
-    public function loadNested(array $models, array $tree): void {
+    protected function processNode(array $models, array $tree): void {
         if (empty($models)) {return;}
         foreach ($tree as $relationName => $children) {
             $constraint = $children['_constraint'] ?? null;
@@ -80,12 +49,13 @@ class RelationLoader {
                         $nestedModels[] = $loaded;
                     }
                 }
-                $this->load($nestedModels, $children);
+                $this->processNode($nestedModels, $children);
             }
         }
     }
 
 
+    public function load(array $models): void {$this->processNode($models, $this->tree);}
 
 
 
