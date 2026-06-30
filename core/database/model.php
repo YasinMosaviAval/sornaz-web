@@ -13,6 +13,7 @@ use Core\Database\Concerns\HasObservers;
 use Core\Database\Concerns\HasTimestamps;
 use Core\Database\Concerns\GuardsAttributes;
 use Core\Database\Concerns\HasMagicMethods;
+use Core\Database\Concerns\LoadsRelations;
 
 abstract class Model {
 
@@ -28,6 +29,7 @@ abstract class Model {
     use HasTimestamps;
     use GuardsAttributes;
     use HasMagicMethods;
+    use LoadsRelations;
 
 
     protected static string $table;

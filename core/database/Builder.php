@@ -373,33 +373,7 @@ class Builder {
     }
 
 
-    // protected function parseEagerLoads(): array {
-    //     $tree = [];
-    //     foreach ($this->eagerLoads as $relation => $constraint) {
-    //         $parts = explode('.', $relation);
-    //         $current =& $tree;
-    //         foreach ($parts as $part) {
-    //             if (!isset($current[$part])) {
-    //                 $current[$part] = [];
-    //             }
-    //             $current =& $current[$part];
-    //         }
-    //         $current['_constraint'] = $constraint;
-    //     }
-    //     return $tree;
-    // }
-
-
-
     public function getEagerLoads(): array {return $this->eagerLoads;}
-
-
-
-    // protected function eagerLoadRelations(array $models): void {
-    //     if (empty($this->eagerLoads)) {return;}
-    //     $tree = $this->parseEagerLoads();
-    //     (new RelationLoader())->load($models, $tree);
-    // }
 
 
     protected function eagerLoadRelations(array $models): void {
