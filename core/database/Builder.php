@@ -29,6 +29,7 @@ class Builder {
     protected bool $softDeletes = false;
     protected array $eagerLoads = [];
     protected array $withCounts = [];
+    protected array $withExists = [];
     protected array $withAggregates = [];
 
     public function __construct(PDO $pdo) {$this->pdo = $pdo;}
@@ -128,6 +129,29 @@ public function getWithCounts(): array
     return $this->withCounts;
 }
 
+
+public function withExists(
+    string|array $relations
+): static {
+
+    foreach ((array)$relations as $key => $value) {
+
+        if (is_int($key)) {
+            $this->withExists[$value] = null;
+        } else {
+            $this->withExists[$key] = $value;
+        }
+
+    }
+
+    return $this;
+}
+
+
+public function getWithExists(): array
+{
+    return $this->withExists;
+}
 
 
 public function has(
@@ -603,10 +627,26 @@ public function loadRelationAggregate(
         if ($constraint) {
             $constraint($query);
         }
-        $attribute = $relationName . '_' . strtolower($aggregate);
-        switch (strtolower($aggregate)) {
+        // $attribute = $relationName . '_' . strtolower($aggregate);
+        // $attribute = match ($aggregate) {
+        //     'count'  => "{$relation}_count",
+        //     'exists' => "{$relation}_exists",
+        //     default  => "{$relation}_{$aggregate}"
+        // };
+        $attribute = match ($aggregate) {
+            'count'  => "{$relationName}_count",
+            'exists' => "{$relationName}_exists",
+            default  => "{$relationName}_{$aggregate}",
+        };
+        switch ($aggregate) {
             case 'count':
-                $model->{$attribute} = $query->count();
+            case 'exists':
+                $count = $query->count();
+                $value = match ($aggregate) {
+                    'count'  => $count,
+                    'exists' => $count > 0,
+                };
+                $model->$attribute = $value;
                 break;
         }
     }

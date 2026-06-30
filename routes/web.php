@@ -384,10 +384,20 @@ Router::get('/relations-test', function () {
 // User::with('posts')->get();
 // User::withCount('posts')->get();
 // User::with('posts.comments')->get();
-User::withCount('posts')->get();
-User::withCount(['posts' => fn($q) => $q->where('status', 'published')])->get();
-User::with(['posts'])->withCount('posts')->get();
+// User::withCount('posts')->get();
+// User::withCount(['posts' => fn($q) => $q->where('status', 'published')])->get();
+// User::with(['posts'])->withCount('posts')->get();
 
+
+$users = User::query()->withExists('posts')->get();
+foreach ($users as $user) {
+    echo $user->username;
+    echo ' => ';
+    var_dump(
+        $user->posts_exists
+    );
+    echo '<hr>';
+}
 
 // $builder = User::query()->withCount('posts');
 // echo '<pre>';
