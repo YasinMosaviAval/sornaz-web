@@ -5,7 +5,8 @@ namespace Core\Database;
 use PDO;
 use Core\Database\Aggregates\AggregateLoader;
 use Core\Database\Aggregates\AggregateExecutor;
-
+use Core\Database\Relations\HasMany;
+use Core\Database\Relations\RelationLoader;
 
 class Builder {
     protected PDO $pdo;
@@ -34,6 +35,7 @@ class Builder {
     protected array $withExists = [];
     protected array $withAggregates = [];
 
+
     public function __construct(PDO $pdo) {$this->pdo = $pdo;}
 
 
@@ -58,18 +60,9 @@ class Builder {
     }
 
 
-    public function whereRaw(
-        string $sql,
-        array $bindings = []
-    ): static {
-
+    public function whereRaw(string $sql, array $bindings = []): static {
         $this->rawWheres[] = $sql;
-
-        $this->bindings = array_merge(
-            $this->bindings,
-            $bindings
-        );
-
+        $this->bindings = array_merge($this->bindings, $bindings);
         return $this;
     }
 
@@ -92,101 +85,56 @@ class Builder {
     }
 
 
-
-
-public function with(string|array $relations): static
-{
-    foreach ((array)$relations as $key => $value) {
-
-        if (is_int($key)) {
-            $this->eagerLoads[$value] = null;
-        } else {
-            $this->eagerLoads[$key] = $value;
+    public function with(string|array $relations): static {
+        foreach ((array)$relations as $key => $value) {
+            if (is_int($key)) {
+                $this->eagerLoads[$value] = null;
+            } else {
+                $this->eagerLoads[$key] = $value;
+            }
         }
-
+        return $this;
     }
 
-    return $this;
-}
 
-
-public function withCount(string|array $relations): static
-{
-    foreach ((array) $relations as $key => $value) {
-
-        if (is_int($key)) {
-            $this->withCounts[$value] = null;
-        } else {
-            $this->withCounts[$key] = $value;
+    public function withCount(string|array $relations): static {
+        foreach ((array) $relations as $key => $value) {
+            if (is_int($key)) {
+                $this->withCounts[$value] = null;
+            } else {
+                $this->withCounts[$key] = $value;
+            }
         }
-
+        return $this;
     }
 
-    return $this;
-}
+
+    public function getWithCounts(): array {return $this->withCounts;}
 
 
-public function getWithCounts(): array
-{
-    return $this->withCounts;
-}
-
-
-public function withExists(
-    string|array $relations
-): static {
-
-    foreach ((array)$relations as $key => $value) {
-
-        if (is_int($key)) {
-            $this->withExists[$value] = null;
-        } else {
-            $this->withExists[$key] = $value;
+    public function withExists( string|array $relations): static {
+        foreach ((array)$relations as $key => $value) {
+            if (is_int($key)) {
+                $this->withExists[$value] = null;
+            } else {
+                $this->withExists[$key] = $value;
+            }
         }
-
+        return $this;
     }
 
-    return $this;
-}
+
+    public function getWithExists(): array {return $this->withExists;}
 
 
-public function getWithExists(): array
-{
-    return $this->withExists;
-}
+    public function has(string $relation, string $operator = '>=', int $count = 1): static {
+        return $this->addRelationExistenceConstraint($relation, null, $operator, $count);
+    }
 
 
-public function has(
-    string $relation,
-    string $operator = '>=',
-    int $count = 1
-): static {
-
-    return $this->addRelationExistenceConstraint(
-        $relation,
-        null,
-        $operator,
-        $count
-    );
-
-}
-
-public function whereHas(
-    string $relation,
-    ?\Closure $callback = null,
-    string $operator = '>=',
-    int $count = 1
-): static {
-
-    return $this->addRelationExistenceConstraint(
-        $relation,
-        $callback,
-        $operator,
-        $count
-    );
-
-}
-
+    public function whereHas(string $relation, ?\Closure $callback = null, string $operator = '>=', int $count = 1): static {
+        return $this->addRelationExistenceConstraint($relation, $callback, $operator, $count);
+    }
 
 
     public function get(): array {
@@ -383,15 +331,11 @@ public function whereHas(
 
     public function __call(string $method, array $arguments) {
         if (!$this->modelClass) {
-            throw new \BadMethodCallException(
-                "Method {$method} does not exist."
-            );
+            throw new \BadMethodCallException("Method {$method} does not exist.");
         }
         $scope = 'scope' . ucfirst($method);
         if (!method_exists($this->modelClass, $scope)) {
-            throw new \BadMethodCallException(
-                "Method {$method} does not exist."
-            );
+            throw new \BadMethodCallException("Method {$method} does not exist.");
         }
         $model = new $this->modelClass();
         array_unshift($arguments, $this);
@@ -408,223 +352,81 @@ public function whereHas(
     public static function usesSoftDeletes(): bool {return in_array(SoftDeletes::class, class_uses(static::class));}
 
 
-
-
-public function getEagerLoads(): array
-{
-    return $this->eagerLoads;
-}
-
-
-protected function eagerLoadRelations(array $models): void
-{
-    if (empty($this->eagerLoads)) {
-        return;
-    }
-
-    $tree = $this->parseEagerLoads();
-
-    $this->eagerLoadTree(
-        $models,
-        $tree
-    );
-}
-
-
-protected function collectKeys(array $models, string $key): array
-{
-    $ids = [];
-
-    foreach ($models as $model) {
-
-        $value = $model->$key;
-
-        if ($value !== null) {
-            $ids[] = $value;
-        }
-    }
-
-    return array_values(array_unique($ids));
-}
-
-
-protected function groupModels(array $rows, string $foreignKey): array
-{
-    $grouped = [];
-
-    foreach ($rows as $row) {
-
-        $grouped[$row->$foreignKey][] = $row;
-
-    }
-
-    return $grouped;
-}
-
-
-protected function parseEagerLoads(): array
-{
-    $tree = [];
-
-    foreach ($this->eagerLoads as $relation => $constraint) {
-
-        $parts = explode('.', $relation);
-
-        $current =& $tree;
-
-        foreach ($parts as $part) {
-
-            if (!isset($current[$part])) {
-                $current[$part] = [];
+    protected function collectKeys(array $models, string $key): array {
+        $ids = [];
+        foreach ($models as $model) {
+            $value = $model->$key;
+            if ($value !== null) {
+                $ids[] = $value;
             }
-
-            $current =& $current[$part];
         }
-
-        $current['_constraint'] = $constraint;
-
+        return array_values(array_unique($ids));
     }
 
-    return $tree;
-}
 
-
-
-protected function eagerLoadTree(
-    array $models,
-    array $tree
-): void {
-
-    if (empty($models)) {
-        return;
+    protected function groupModels(array $rows, string $foreignKey): array {
+        $grouped = [];
+        foreach ($rows as $row) {
+            $grouped[$row->$foreignKey][] = $row;
+        }
+        return $grouped;
     }
 
-    foreach ($tree as $relationName => $children) {
 
-        $constraint = $children['_constraint'] ?? null;
-
-        unset($children['_constraint']);
-
-        $relation = $models[0]->{$relationName}();
-
-        /*
-         * مقدار اولیه Relation
-         */
-        $relation->initRelation(
-            $models,
-            $relationName
-        );
-
-        /*
-         * محدود کردن Query
-         */
-        $relation->addEagerConstraints(
-            $models
-        );
-
-        /*
-         * اعمال Closure
-         */
-        if ($constraint instanceof \Closure) {
-            $constraint(
-                $relation->getQuery()
-            );
-        }
-
-        /*
-         * اجرای Query
-         */
-        $results = $relation->getEager();
-
-        /*
-         * اتصال نتایج به مدل‌ها
-         */
-        $relation->match(
-            $models,
-            $results,
-            $relationName
-        );
-
-        /*
-         * Nested Relations
-         */
-        if (!empty($children)) {
-
-            $nestedModels = [];
-
-            foreach ($models as $model) {
-
-                $loaded = $model->getRelation($relationName);
-
-                if ($loaded === null) {
-                    continue;
+    protected function parseEagerLoads(): array {
+        $tree = [];
+        foreach ($this->eagerLoads as $relation => $constraint) {
+            $parts = explode('.', $relation);
+            $current =& $tree;
+            foreach ($parts as $part) {
+                if (!isset($current[$part])) {
+                    $current[$part] = [];
                 }
+                $current =& $current[$part];
+            }
+            $current['_constraint'] = $constraint;
+        }
+        return $tree;
+    }
 
-                if (is_array($loaded)) {
-                    $nestedModels = array_merge(
-                        $nestedModels,
-                        $loaded
-                    );
-                } else {
-                    $nestedModels[] = $loaded;
-                }
+
+
+    public function getEagerLoads(): array {return $this->eagerLoads;}
+
+
+
+    protected function eagerLoadRelations(array $models): void {
+        if (empty($this->eagerLoads)) {return;}
+        $tree = $this->parseEagerLoads();
+        (new RelationLoader())->load($models, $tree);
+    }
+
+
+
+    public function loadRelationAggregate(array $models, string $relationName, string $aggregate, ?string $column = null, ?\Closure $constraint = null): void {
+        $first = $models[0];
+        $relation = $first->{$relationName}();
+        if (!$relation instanceof HasMany) {return;}
+        $relatedClass = $relation->getRelated();
+        $foreignKey = $relation->getForeignKey();
+        $localKey = $relation->getLocalKey();
+        foreach ($models as $model) {
+            $query = $relatedClass::query()->where($foreignKey, $model->{$localKey});
+            if ($constraint) {
+                $constraint($query);
             }
-            if (!empty($nestedModels)) {
-                $this->eagerLoadTree(
-                    $nestedModels,
-                    $children
-                );
-            }
+            $attribute = match ($aggregate) {
+                'count'  => "{$relationName}_count",
+                'exists' => "{$relationName}_exists",
+                default  => "{$relationName}_{$aggregate}",
+            };
+            $executor = new AggregateExecutor();
+            $model->$attribute = $executor->execute($query, $aggregate);
         }
     }
-}
 
 
-
-public function loadRelationAggregate(
-    array $models,
-    string $relationName,
-    string $aggregate,
-    ?string $column = null,
-    ?\Closure $constraint = null
-): void {
-    $first = $models[0];
-    $relation = $first->{$relationName}();
-    if (!$relation instanceof \Core\Database\Relations\HasMany) {
-        return;
-    }
-    $relatedClass = $relation->getRelated();
-    $foreignKey = $relation->getForeignKey();
-    $localKey = $relation->getLocalKey();
-    foreach ($models as $model) {
-        $query = $relatedClass::query()
-            ->where(
-                $foreignKey,
-                $model->{$localKey}
-            );
-        if ($constraint) {
-            $constraint($query);
-        }
-        $attribute = match ($aggregate) {
-            'count'  => "{$relationName}_count",
-            'exists' => "{$relationName}_exists",
-            default  => "{$relationName}_{$aggregate}",
-        };
-        $executor = new AggregateExecutor();
-        $model->$attribute = $executor->execute($query, $aggregate);
-    }
-}
-
-
-
-protected function addRelationExistenceConstraint(
-    string $relation,
-    ?\Closure $callback,
-    string $operator,
-    int $count
-): static {
-    return $this;
-}
+    protected function addRelationExistenceConstraint(string $relation, ?\Closure $callback, string $operator, int $count): static {return $this;}
 
 
 
