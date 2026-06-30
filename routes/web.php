@@ -395,15 +395,15 @@ Router::get('/relations-test', function () {
     //     echo $post->title;
     // }
 
-    // $user = User::find(1);
-    // $user->load('posts');
-    // $user->loadMissing('posts');
-
-    // $user = User::find(1);
-    // $user->loadMissing('posts');
-
     $user = User::find(1);
-    $user->loadMissing(['posts', 'profile']);
+    $user->load('posts');
+    $user->loadMissing('posts');
+
+    // $user = User::find(1);
+    // $user->loadMissing('posts');
+
+    // $user = User::find(1);
+    // $user->loadMissing(['posts', 'profile']);
 
 
 
