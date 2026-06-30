@@ -12,4 +12,21 @@ trait LoadsRelations {
         return $this;
     }
 
+
+    public function loadMissing(string|array $relations): static {
+        $relations = (array)$relations;
+        $missing = [];
+        foreach ($relations as $relation) {
+            if (!$this->relationLoaded($relation)) {
+                $missing[] = $relation;
+            }
+        }
+        if (!empty($missing)) {
+            $this->load($missing);
+        }
+        return $this;
+    }
+
+
+
 }
