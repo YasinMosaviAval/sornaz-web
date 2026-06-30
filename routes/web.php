@@ -361,18 +361,37 @@ Router::get('/relations-test', function () {
 
 
 
-$users = User::withCount([
-    'posts' => fn($q) => $q->where(
-        'status',
-        'published'
-    )
-])->get();
-foreach ($users as $user) {
-    echo $user->posts_count;
-    echo '<br>';
-}
+// $users = User::withCount([
+//     'posts' => fn($q) => $q->where(
+//         'status',
+//         'published'
+//     )
+// ])->get();
+// foreach ($users as $user) {
+//     echo $user->posts_count;
+//     echo '<br>';
+// }
 
 
+// User::has('posts')->get();
+// User::whereHas('posts')->get();
+
+
+// $users = User::query()->whereRaw("1 = 1")->get();
+// echo count($users);
+
+
+// User::with('posts')->get();
+// User::withCount('posts')->get();
+// User::with('posts.comments')->get();
+User::withCount('posts')->get();
+User::withCount(['posts' => fn($q) => $q->where('status', 'published')])->get();
+User::with(['posts'])->withCount('posts')->get();
+
+
+// $builder = User::query()->withCount('posts');
+// echo '<pre>';
+// print_r($builder->getWithCounts());
 
 
 // User::with([
