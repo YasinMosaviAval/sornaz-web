@@ -313,104 +313,102 @@ Router::get('/relations-test', function () {
     //     echo count($user->posts);
     // }
 
-// $user = User::find(1);
-// $relation = $user->posts();
-// $relation->addEagerConstraints([$user]);
-// $posts = $relation->getEager();
-// print_r($posts);
+    // $user = User::find(1);
+    // $relation = $user->posts();
+    // $relation->addEagerConstraints([$user]);
+    // $posts = $relation->getEager();
+    // print_r($posts);
 
 
 
-// $post = Post::find(1);
-// $relation = $post->author();
-// $relation->addEagerConstraints([$post]);
-// $user = $relation->getEager();
-// print_r($user);
+    // $post = Post::find(1);
+    // $relation = $post->author();
+    // $relation->addEagerConstraints([$post]);
+    // $user = $relation->getEager();
+    // print_r($user);
 
-// $users = User::with('posts')->get();
-// echo count($users[0]->posts);
-// echo '<hr>';
-
-
-// $posts = Post::with('author')->get();
-// echo $posts[0]->author->username;
-// echo '<hr>';
+    // $users = User::with('posts')->get();
+    // echo count($users[0]->posts);
+    // echo '<hr>';
 
 
-// User::with('posts.author')->get();
-// echo '<hr>';
+    // $posts = Post::with('author')->get();
+    // echo $posts[0]->author->username;
+    // echo '<hr>';
 
 
-// User::with([
-//     'posts' => fn($q) => $q->latest()
-// ])->get();
-// echo '<hr>';
+    // User::with('posts.author')->get();
+    // echo '<hr>';
 
 
-// $users = User::withCount('posts')->get();
-// echo count($users);
+    // User::with([
+    //     'posts' => fn($q) => $q->latest()
+    // ])->get();
+    // echo '<hr>';
 
 
-// $users = User::withCount('posts')->get();
-// foreach ($users as $user) {
-//     echo $user->username;
-//     echo ' : ';
-//     echo $user->posts_count;
-//     echo '<br>';
-// }
+    // $users = User::withCount('posts')->get();
+    // echo count($users);
+
+
+    // $users = User::withCount('posts')->get();
+    // foreach ($users as $user) {
+    //     echo $user->username;
+    //     echo ' : ';
+    //     echo $user->posts_count;
+    //     echo '<br>';
+    // }
 
 
 
-// $users = User::withCount([
-//     'posts' => fn($q) => $q->where(
-//         'status',
-//         'published'
-//     )
-// ])->get();
-// foreach ($users as $user) {
-//     echo $user->posts_count;
-//     echo '<br>';
-// }
+    // $users = User::withCount([
+    //     'posts' => fn($q) => $q->where(
+    //         'status',
+    //         'published'
+    //     )
+    // ])->get();
+    // foreach ($users as $user) {
+    //     echo $user->posts_count;
+    //     echo '<br>';
+    // }
 
 
-// User::has('posts')->get();
-// User::whereHas('posts')->get();
+    // User::has('posts')->get();
+    // User::whereHas('posts')->get();
 
 
-// $users = User::query()->whereRaw("1 = 1")->get();
-// echo count($users);
+    // $users = User::query()->whereRaw("1 = 1")->get();
+    // echo count($users);
 
 
-// User::with('posts')->get();
-// User::withCount('posts')->get();
-// User::with('posts.comments')->get();
-// User::withCount('posts')->get();
-// User::withCount(['posts' => fn($q) => $q->where('status', 'published')])->get();
-// User::with(['posts'])->withCount('posts')->get();
+    // User::with('posts')->get();
+    // User::withCount('posts')->get();
+    // User::with('posts.comments')->get();
+    // User::withCount('posts')->get();
+    // User::withCount(['posts' => fn($q) => $q->where('status', 'published')])->get();
+    // User::with(['posts'])->withCount('posts')->get();
 
 
-$users = User::query()->withExists('posts')->get();
-foreach ($users as $user) {
-    echo $user->username;
-    echo ' => ';
-    var_dump(
-        $user->posts_exists
-    );
-    echo '<hr>';
-}
-
-// $builder = User::query()->withCount('posts');
-// echo '<pre>';
-// print_r($builder->getWithCounts());
-
-
-// User::with([
-//     'posts' => fn($q) => $q->where('status', 'published')
-// ])->get();
-// echo '<hr>';
-
+    $users = User::query()->withExists('posts')->get();
+    foreach ($users as $user) {
+        echo $user->username;
+        echo ' => ';
+        var_dump(
+            $user->posts_exists
+        );
+        echo '<hr>';
     }
-);
+
+    // $builder = User::query()->withCount('posts');
+    // echo '<pre>';
+    // print_r($builder->getWithCounts());
+
+
+    // User::with([
+    //     'posts' => fn($q) => $q->where('status', 'published')
+    // ])->get();
+    // echo '<hr>';
+});
 
 Router::get('/provider-test', function () {$user = User::find(1); events()->dispatch(new UserCreated($user)); return '<hr>Done';});
 Router::get('/find-user', function () {var_dump(User::find(1));});

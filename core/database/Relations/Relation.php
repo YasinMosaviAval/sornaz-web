@@ -38,36 +38,25 @@ abstract class Relation {
 
     abstract public function getEager(): array;
     
-    abstract public function match(
-        array $models,
-        array $results,
-        string $relation
-    ): void;
+    abstract public function match(array $models, array $results, string $relation): void;
 
-    public function initRelation(
-        array $models,
-        string $relation
-    ): array {
-
+    public function initRelation(array $models, string $relation): array {
         foreach ($models as $model) {
             $model->setRelation($relation, []);
         }
-
         return $models;
     }
 
 
     public function __call($method, $arguments) {
         $result = $this->query->$method(...$arguments);
-        if ($result instanceof Builder) {
-            return $this;
-        }
+        if ($result instanceof Builder) {return $this;}
         return $result;
     }
 
     protected function relatedPrimaryKey(): string {return $this->related::getPrimaryKey();}
 
-    
+
     public function getParentKey(): mixed {return $this->parent->{$this->localKey};}
     public function getRelatedPrimaryKey(): string {return $this->relatedPrimaryKey();}
 

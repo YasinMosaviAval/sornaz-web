@@ -28,40 +28,22 @@ abstract class Model {
     use HasTimestamps;
     use GuardsAttributes;
     use HasMagicMethods;
-    
-    
+
+
     protected static string $table;
     protected static string $primaryKey = 'id';
     protected array $relations = [];
-    
 
-    public function setRelation(
-        string $name,
-        mixed $value
-    ): static {
 
+    public function setRelation(string $name, mixed $value): static {
         $this->relations[$name] = $value;
-
         return $this;
     }
 
-    public function getRelation(
-        string $name
-    ): mixed {
-
-        return $this->relations[$name] ?? null;
-    }
+    public function getRelation(string $name): mixed {return $this->relations[$name] ?? null;}
 
 
-    public function relationLoaded(
-        string $name
-    ): bool {
-
-        return array_key_exists(
-            $name,
-            $this->relations
-        );
-    }
+    public function relationLoaded(string $name): bool {return array_key_exists($name, $this->relations);}
 
 }
 
