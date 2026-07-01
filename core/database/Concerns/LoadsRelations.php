@@ -23,6 +23,9 @@ trait LoadsRelations {
         }
         if (!empty($missing)) {
             $this->loadRelations(array_fill_keys($missing,null));
+            // $relations = array_fill_keys($missing, null);
+            // $relations = $this->filterMissingRelations($relations);
+            // $this->loadRelations($relations);
         }
         return $this;
     }
