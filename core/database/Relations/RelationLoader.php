@@ -57,9 +57,18 @@ class RelationLoader {
     }
 
 
-    public function load(array $models): void {$this->processNode($models, $this->parsedTree);}
-
+    public function load(array $models): void {
+        if (!$this->hasTree()) {return;}
+        $this->processNode($models, $this->parsedTree);
+    }
 
     public function getTree(): array {return $this->parsedTree;}
+
+    public function setTree(array $tree): static {$this->parsedTree = $tree; return $this;}
+
+    public function hasTree(): bool {return !empty($this->parsedTree);}
+
+    public function clear(): static {$this->parsedTree = []; return $this;}
+
 
 }

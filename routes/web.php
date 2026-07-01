@@ -389,18 +389,18 @@ Router::get('/relations-test', function () {
     User::with(['posts'])->withCount('posts')->get();
 
 
-    // $user = User::find(1);
-    // $user->load('posts');
-    // foreach ($user->posts as $post) {
-    //     echo $post->title;
-    // }
+    $user = User::find(1);
+    $user->load('posts');
+    foreach ($user->posts as $post) {
+        echo $post->title;
+    }
 
     // $user = User::find(1);
-    // $user->load('posts');
-    // $user->loadMissing('posts');
+    $user->load('posts');
+    $user->loadMissing('posts');
 
     // $user = User::find(1);
-    // $user->loadMissing('posts');
+    $user->loadMissing('posts');
 
     // $user = User::find(1);
     // $user->loadMissing(['posts', 'profile']);
