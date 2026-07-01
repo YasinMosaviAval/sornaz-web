@@ -36,6 +36,7 @@ class Builder {
     protected array $withExists = [];
     protected array $withAggregates = [];
     protected ?RelationExistence $relationExistence = null;
+    protected array $subQueries = [];
 
 
     public function __construct(PDO $pdo) {$this->pdo = $pdo;}
@@ -418,6 +419,66 @@ class Builder {
         }
         return $this->relationExistence;
     }
+
+
+    public function getModelClass(): ?string {return $this->modelClass;}
+
+
+public function whereExists(
+    Builder $query
+): static {
+
+    $this->rawWheres[] =
+        'EXISTS (' .
+        $query->toSql() .
+        ')';
+
+    $this->bindings = array_merge(
+        $this->bindings,
+        $query->getBindings()
+    );
+
+    return $this;
+
+}
+
+
+
+public function whereNotExists(
+    Builder $query
+): static {
+
+    $this->rawWheres[] =
+        'NOT EXISTS (' .
+        $query->toSql() .
+        ')';
+
+    $this->bindings = array_merge(
+        $this->bindings,
+        $query->getBindings()
+    );
+
+    return $this;
+
+}
+
+
+public function toSql(): string
+{
+    return $this->buildSelect();
+}
+
+
+
+public function getBindings(): array
+{
+    return $this->bindings;
+}
+
+
+
+
+
 
 
 }
