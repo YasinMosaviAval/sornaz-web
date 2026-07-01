@@ -62,14 +62,18 @@ class RelationLoader {
         $this->processNode($models, $this->parsedTree);
     }
 
+
     public function getTree(): array {return $this->parsedTree;}
 
+
     public function setTree(array $tree): static {$this->parsedTree = $tree; return $this;}
+
 
     public function mapTree(callable $callback): static {
         $this->parsedTree = $this->mapNode($this->parsedTree, $callback);
         return $this;
     }
+
 
     protected function mapNode(array $tree, callable $callback): array {
         $result = [];
@@ -91,6 +95,31 @@ class RelationLoader {
         }
         return $result;
     }
+
+
+    public function filterTree(callable $callback): static {
+        $this->parsedTree = $this->filterNode($this->parsedTree, $callback);
+        return $this;
+    }
+
+    protected function filterNode(array $tree, callable $callback): array {
+        $result = [];
+        foreach ($tree as $relation => $children) {
+            if ($relation === '_constraint') {continue;}
+            $constraint = $children['_constraint'] ?? null;
+            unset($children['_constraint']);
+            $children = $this->filterNode($children, $callback);
+            if ($constraint !== null) {
+                $children['_constraint'] = $constraint;
+            }
+            if ($callback($relation, $children)) {
+                $result[$relation] = $children;
+            }
+        }
+        return $result;
+    }
+
+
 
     public function hasTree(): bool {return !empty($this->parsedTree);}
 
