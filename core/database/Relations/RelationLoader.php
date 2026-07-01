@@ -66,6 +66,32 @@ class RelationLoader {
 
     public function setTree(array $tree): static {$this->parsedTree = $tree; return $this;}
 
+    public function mapTree(callable $callback): static {
+        $this->parsedTree = $this->mapNode($this->parsedTree, $callback);
+        return $this;
+    }
+
+    protected function mapNode(array $tree, callable $callback): array {
+        $result = [];
+        foreach ($tree as $name => $children) {
+            if ($name === '_constraint') {
+                $result[$name] = $children;
+                continue;
+            }
+            $constraint = $children['_constraint'] ?? null;
+            unset($children['_constraint']);
+            $children = $this->mapNode($children, $callback);
+            if ($constraint !== null) {
+                $children['_constraint'] = $constraint;
+            }
+            $mapped = $callback($name, $children);
+            if ($mapped !== null) {
+                $result[$name] = $mapped;
+            }
+        }
+        return $result;
+    }
+
     public function hasTree(): bool {return !empty($this->parsedTree);}
 
     public function clear(): static {$this->parsedTree = []; return $this;}
