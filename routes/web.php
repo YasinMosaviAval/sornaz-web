@@ -407,13 +407,17 @@ Router::get('/relations-test', function () {
 
 
 
-// $user = User::find(1);
-$user->load('posts');
-$user->loadMissing('posts');
+    // $user = User::find(1);
+    $user->load('posts');
+    $user->loadMissing('posts');
 
 
-User::query()->has('posts')->get();
+    User::query()->has('posts')->get();
 
+
+    $postQuery = Post::query()->where('status', 'published');
+    echo $postQuery->toSql() . '<br>';
+    print_r($postQuery->getBindings());
 
     // $users = User::query()->withExists('posts')->get();
     // foreach ($users as $user) {
