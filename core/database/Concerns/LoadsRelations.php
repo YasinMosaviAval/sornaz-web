@@ -22,10 +22,10 @@ trait LoadsRelations {
             }
         }
         if (!empty($missing)) {
-            $this->loadRelations(array_fill_keys($missing,null));
-            // $relations = array_fill_keys($missing, null);
-            // $relations = $this->filterMissingRelations($relations);
-            // $this->loadRelations($relations);
+            $loader = $this->newRelationLoader();
+            $loader->parse(array_fill_keys($missing, null));
+            $loader->filterTree(fn($relation) => !$this->relationLoaded($relation));
+            $this->loadRelationLoader($loader);
         }
         return $this;
     }
@@ -34,5 +34,9 @@ trait LoadsRelations {
     protected function loadRelations(array $relations): void {
         (new RelationLoader())->parse($relations)->load([$this]);
     }
+
+    protected function loadRelationLoader(RelationLoader $loader): void {$loader->load([$this]);}
+
+    protected function newRelationLoader(): RelationLoader {return new RelationLoader();}
 
 }
