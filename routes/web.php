@@ -407,6 +407,9 @@ Router::get('/relations-test', function () {
 
 
 
+// $user = User::find(1);
+$user->load('posts');
+$user->loadMissing('posts');
 
     // $users = User::query()->withExists('posts')->get();
     // foreach ($users as $user) {
