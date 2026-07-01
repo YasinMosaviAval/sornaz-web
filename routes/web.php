@@ -411,6 +411,10 @@ Router::get('/relations-test', function () {
 $user->load('posts');
 $user->loadMissing('posts');
 
+
+User::query()->has('posts')->get();
+
+
     // $users = User::query()->withExists('posts')->get();
     // foreach ($users as $user) {
     //     echo $user->username;

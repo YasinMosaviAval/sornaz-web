@@ -6,6 +6,7 @@ use PDO;
 use Core\Database\Aggregates\AggregateLoader;
 use Core\Database\Aggregates\AggregateExecutor;
 use Core\Database\Relations\HasMany;
+use Core\Database\Relations\RelationExistence;
 use Core\Database\Relations\RelationLoader;
 
 class Builder {
@@ -34,6 +35,7 @@ class Builder {
     protected array $withCounts = [];
     protected array $withExists = [];
     protected array $withAggregates = [];
+    protected ?RelationExistence $relationExistence = null;
 
 
     public function __construct(PDO $pdo) {$this->pdo = $pdo;}
@@ -127,9 +129,11 @@ class Builder {
     public function getWithExists(): array {return $this->withExists;}
 
 
-    public function has(string $relation, string $operator = '>=', int $count = 1): static {
-        return $this->addRelationExistenceConstraint($relation, null, $operator, $count);
-    }
+    // public function has(string $relation, string $operator = '>=', int $count = 1): static {
+    //     return $this->addRelationExistenceConstraint($relation, null, $operator, $count);
+    // }
+
+    public function has(string $relation): static {return $this->relationExistence()->has($relation);}
 
 
     public function whereHas(string $relation, ?\Closure $callback = null, string $operator = '>=', int $count = 1): static {
@@ -408,6 +412,12 @@ class Builder {
     protected function addRelationExistenceConstraint(string $relation, ?\Closure $callback, string $operator, int $count): static {return $this;}
 
 
+    protected function relationExistence(): RelationExistence {
+        if ($this->relationExistence === null) {
+            $this->relationExistence = new RelationExistence($this);
+        }
+        return $this->relationExistence;
+    }
 
 
 }
