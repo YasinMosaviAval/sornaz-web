@@ -6,13 +6,14 @@ class RelationLoader {
 
 
     protected array $tree = [];
+    protected array $parsedTree = [];
 
 
-    public function parse(array $eagerLoads): static {
-        $this->tree = [];
-        foreach ($eagerLoads as $relation => $constraint) {
+    public function parse(array $relations): static {
+        $tree = [];
+        foreach ($relations as $relation => $constraint) {
             $parts = explode('.', $relation);
-            $current =& $this->tree;
+            $current =& $tree;
             foreach ($parts as $part) {
                 if (!isset($current[$part])) {
                     $current[$part] = [];
@@ -21,6 +22,7 @@ class RelationLoader {
             }
             $current['_constraint'] = $constraint;
         }
+        $this->parsedTree = $tree;
         return $this;
     }
 
@@ -55,8 +57,9 @@ class RelationLoader {
     }
 
 
-    public function load(array $models): void {$this->processNode($models, $this->tree);}
+    public function load(array $models): void {$this->processNode($models, $this->parsedTree);}
 
 
+    public function getTree(): array {return $this->parsedTree;}
 
 }
