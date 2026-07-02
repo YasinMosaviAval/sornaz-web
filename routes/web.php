@@ -440,11 +440,13 @@ Router::get('/relations-test', function () {
 
 
 
+    // print_r(User::query()->doesntHave('posts')->toSql());
+    // print_r(User::query()->whereHas('posts', function ($q) {$q->where('status', 'published');})->toSql());
+    print_r(User::query()->has('posts')->toSql());
+    echo $PHP_EOL;
     print_r(User::query()->doesntHave('posts')->toSql());
-    print_r(User::query()->whereHas('posts', function ($q) {$q->where('status', 'published');})->toSql());
-
-
-
+    echo $PHP_EOL;
+    print_r(User::query()->whereHas('posts', function ($q) {$q->where('status', 'published');}));
 
 
     // $users = User::query()->withExists('posts')->get();
