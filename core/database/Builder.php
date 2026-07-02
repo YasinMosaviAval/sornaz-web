@@ -7,10 +7,10 @@ use Core\Database\Aggregates\AggregateLoader;
 use Core\Database\Aggregates\AggregateExecutor;
 use Core\Database\Relations\HasMany;
 use Core\Database\Relations\RelationExistence;
-use Core\Database\Relations\RelationLoader;
-use Core\Database\Relations\RelationPath;
+
 use Core\Database\Concerns\BuildsWhereQueries;
 use Core\Database\Concerns\BuildsRelationQueries;
+use Core\Database\Concerns\BuildsRelationAggregates;
 
 class Builder {
 
@@ -26,7 +26,7 @@ class Builder {
 
     use BuildsWhereQueries;
     use BuildsRelationQueries;
-
+    use BuildsRelationAggregates;
 
 
     protected PDO $pdo;
