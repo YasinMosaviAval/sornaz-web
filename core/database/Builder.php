@@ -8,11 +8,13 @@ use Core\Database\Aggregates\AggregateExecutor;
 use Core\Database\Relations\HasMany;
 use Core\Database\Relations\RelationExistence;
 use Core\Database\Relations\RelationLoader;
+use Core\Database\Relations\RelationPath;
 
 class Builder {
     protected PDO $pdo;
     protected string $table;
     protected array $wheres = [];
+    protected array $whereStack = [];
     protected array $rawWheres = [];
     protected array $bindings = [];
     protected array $orders = [];
@@ -47,27 +49,6 @@ class Builder {
         return $this;
     }
 
-
-    public function where(string $column, mixed $value, string $operator = '='): static {
-        if (strtoupper($operator) === 'IS' && $value === null) {
-            $this->wheres[] = "{$column} IS NULL";
-            return $this;
-        }
-        if (strtoupper($operator) === 'IS NOT' && $value === null) {
-            $this->wheres[] = "{$column} IS NOT NULL";
-            return $this;
-        }
-        $this->wheres[] = "{$column} {$operator} ?";
-        $this->bindings[] = $value;
-        return $this;
-    }
-
-
-    public function whereRaw(string $sql, array $bindings = []): static {
-        $this->rawWheres[] = $sql;
-        $this->bindings = array_merge($this->bindings, $bindings);
-        return $this;
-    }
 
 
     public function orderBy(string $column, string $direction = 'ASC'): static {
@@ -129,17 +110,6 @@ class Builder {
 
     public function getWithExists(): array {return $this->withExists;}
 
-
-    // public function has(string $relation, string $operator = '>=', int $count = 1): static {
-    //     return $this->addRelationExistenceConstraint($relation, null, $operator, $count);
-    // }
-
-    public function has(string $relation): static {return $this->relationExistence()->has($relation);}
-
-
-    public function whereHas(string $relation, ?\Closure $callback = null, string $operator = '>=', int $count = 1): static {
-        return $this->addRelationExistenceConstraint($relation, $callback, $operator, $count);
-    }
 
 
     public function get(): array {
@@ -252,30 +222,6 @@ class Builder {
     public function find(mixed $id, string $primaryKey = 'user_id'): mixed {return $this->where($primaryKey, $id)->first();}
 
 
-    public function whereIn(string $column, array $values): static {
-        if (empty($values)) {
-            $this->wheres[] = '1 = 0';
-            return $this;
-        }
-        $placeholders = implode(',', array_fill(0, count($values), '?'));
-        $this->wheres[] = "{$column} IN ({$placeholders})";
-        $this->bindings = array_merge($this->bindings, $values);
-        return $this;
-    }
-
-
-    public function whereNull(string $column): static {
-        $this->wheres[] = "{$column} IS NULL";
-        return $this;
-    }
-
-
-    public function whereNotNull(string $column): static {
-        $this->wheres[] = "{$column} IS NOT NULL";
-        return $this;
-    }
-
-
     public function withTrashed(): static {
         $this->withTrashed = true;
         return $this;
@@ -349,11 +295,11 @@ class Builder {
     }
 
 
-    public function getPrimaryKey(): string {return $this->$primaryKey;}
+    public function getPrimaryKey(): string {return $this->primaryKey;}
     public function getFillable(): array {return $this->fillable;}
     public function getGuarded(): array {return $this->guarded;}
     public function getCasts(): array {return $this->casts;}
-    public function usesTimestamps(): bool {return $timestamps ?? true;}
+    public function usesTimestamps(): bool {return $this->timestamps;}
     public static function usesSoftDeletes(): bool {return in_array(SoftDeletes::class, class_uses(static::class));}
 
 
@@ -423,62 +369,160 @@ class Builder {
 
     public function getModelClass(): ?string {return $this->modelClass;}
 
-
-public function whereExists(
-    Builder $query
-): static {
-
-    $this->rawWheres[] =
-        'EXISTS (' .
-        $query->toSql() .
-        ')';
-
-    $this->bindings = array_merge(
-        $this->bindings,
-        $query->getBindings()
-    );
-
-    return $this;
-
-}
+    public function selectRaw(string $sql): static {
+        $this->selects = [$sql];
+        return $this;
+    }
 
 
 
-public function whereNotExists(
-    Builder $query
-): static {
-
-    $this->rawWheres[] =
-        'NOT EXISTS (' .
-        $query->toSql() .
-        ')';
-
-    $this->bindings = array_merge(
-        $this->bindings,
-        $query->getBindings()
-    );
-
-    return $this;
-
-}
-
-
-public function toSql(): string
-{
-    return $this->buildSelect();
-}
+    public function toSql(): string {return $this->buildSelect();}
 
 
 
-public function getBindings(): array
-{
-    return $this->bindings;
-}
+    public function getBindings(): array {return $this->bindings;}
 
 
 
 
 
+    // protected function addWhere(...)
 
 
+
+    public function where(string $column, mixed $value, string $operator = '='): static {
+        if (strtoupper($operator) === 'IS' && $value === null) {
+            $this->wheres[] = "{$column} IS NULL";
+            return $this;
+        }
+        if (strtoupper($operator) === 'IS NOT' && $value === null) {
+            $this->wheres[] = "{$column} IS NOT NULL";
+            return $this;
+        }
+        // $this->wheres[] = "{$column} {$operator} ?";
+        $this->whereStack[] = [
+            'type' => 'basic',
+            'sql' => "{$column} {$operator} ?"
+        ];
+        $this->wheres[] = "{$column} {$operator} ?";
+        $this->bindings[] = $value;
+        return $this;
+    }
+
+
+
+    public function whereRaw(string $sql, array $bindings = []): static {
+        $this->rawWheres[] = $sql;
+        $this->whereStack[] = [
+            'type' => 'raw',
+            'sql' => $sql
+        ];
+        $this->bindings = array_merge($this->bindings, $bindings);
+        return $this;
+    }
+
+
+
+    public function whereIn(string $column, array $values): static {
+        if (empty($values)) {
+            $this->wheres[] = '1 = 0';
+            return $this;
+        }
+        $placeholders = implode(',', array_fill(0, count($values), '?'));
+        $this->wheres[] = "{$column} IN ({$placeholders})";
+        $this->whereStack[] = [
+            'type' => 'in',
+            'sql'  => "{$column} IN ({$placeholders})"
+        ];
+        $this->bindings = array_merge($this->bindings, $values);
+        return $this;
+    }
+
+
+
+    public function whereNull(string $column): static {
+        $this->wheres[] = "{$column} IS NULL";
+        $this->whereStack[] = [
+            'type' => 'null',
+            'sql'  => "{$column} IS NULL"
+        ];
+        return $this;
+    }
+
+
+
+    public function whereNotNull(string $column): static {
+        $this->wheres[] = "{$column} IS NOT NULL";
+        $this->whereStack[] = [
+            'type' => 'not_null',
+            'sql'  => "{$column} IS NOT NULL"
+        ];
+        return $this;
+    }
+
+
+
+    public function whereExists(Builder $query): static {
+        $this->rawWheres[] = 'EXISTS (' . $query->toSql() . ')';
+        $this->whereStack[] = [
+            'type' => 'exists',
+            'query' => $query
+        ];
+        $this->bindings = array_merge($this->bindings, $query->getBindings());
+        return $this;
+    }
+
+
+
+    public function whereNotExists(Builder $query): static {
+        $this->rawWheres[] = 'NOT EXISTS (' . $query->toSql() . ')';
+        $this->whereStack[] = [
+            'type'  => 'not_exists',
+            'query' => $query
+        ];
+        $this->bindings = array_merge($this->bindings, $query->getBindings());
+        return $this;
+    }
+
+
+
+    public function whereColumn(string $first, string $second, string $operator = '='): static {
+        $sql = "{$first} {$operator} {$second}";
+        $this->rawWheres[] = $sql;
+        $this->whereStack[] = [
+            'type' => 'column',
+            'sql'  => $sql
+        ];
+        return $this;
+    }
+// =================================================================================================
+
+
+
+    public function has(string $relation): static {return $this->relationExistence()->has($relation);}
+
+
+    // public function whereHas(string $relation, ?\Closure $callback = null, string $operator = '>=', int $count = 1): static {
+    //     return $this->addRelationExistenceConstraint($relation, $callback, $operator, $count);
+    // }
+
+
+
+
+
+    public function doesntHave(string $relation): static {
+        (new RelationExistence($this))->doesntHave($relation);
+        return $this;
+    }
+
+    public function whereHas(string $relation, \Closure $callback): static {
+        (new RelationExistence($this))->whereHas($relation, $callback);
+        return $this;
+    }
+
+
+
+    protected function parseEagerLoads(): array {
+        return RelationPath::parse($this->eagerLoads);
+    }
 }

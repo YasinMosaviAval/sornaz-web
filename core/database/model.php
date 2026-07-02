@@ -47,5 +47,9 @@ abstract class Model {
 
     public function relationLoaded(string $name): bool {return array_key_exists($name, $this->relations);}
 
+
+    public static function getTable(): string {return static::$table;}
+
+
 }
 
