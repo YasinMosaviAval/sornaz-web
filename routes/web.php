@@ -447,7 +447,13 @@ Router::get('/relations-test', function () {
     print_r(User::query()->doesntHave('posts')->toSql());
     echo $PHP_EOL;
     print_r(User::query()->whereHas('posts', function ($q) {$q->where('status', 'published');}));
+    echo $PHP_EOL;
 
+    print_r(User::query()->whereRelation('posts', 'status', 'published')->toSql());
+    echo $PHP_EOL;
+
+    print_r(User::query()->where('status', 'active')->orWhereHas('posts', function ($q) {$q->where('status', 'published');})->toSql());
+    echo $PHP_EOL;
 
     // $users = User::query()->withExists('posts')->get();
     // foreach ($users as $user) {

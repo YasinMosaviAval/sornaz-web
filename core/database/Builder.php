@@ -9,8 +9,25 @@ use Core\Database\Relations\HasMany;
 use Core\Database\Relations\RelationExistence;
 use Core\Database\Relations\RelationLoader;
 use Core\Database\Relations\RelationPath;
+use Core\Database\Concerns\BuildsWhereQueries;
 
 class Builder {
+
+
+// BuildsSelectQueries
+// BuildsWhereQueries
+// BuildsJoinQueries
+// BuildsAggregateQueries
+// BuildsRelationQueries
+// ExecutesQueries
+// BuildsMutationQueries
+// BuildsPaginationQueries
+
+    use BuildsWhereQueries;
+
+
+
+
     protected PDO $pdo;
     protected string $table;
     protected array $wheres = [];
@@ -390,74 +407,74 @@ class Builder {
 
 
 
-    public function where(string $column, mixed $value, string $operator = '='): static {
-        if (strtoupper($operator) === 'IS' && $value === null) {
-            $this->wheres[] = "{$column} IS NULL";
-            return $this;
-        }
-        if (strtoupper($operator) === 'IS NOT' && $value === null) {
-            $this->wheres[] = "{$column} IS NOT NULL";
-            return $this;
-        }
-        $this->whereStack[] = [
-            'type' => 'basic',
-            'sql' => "{$column} {$operator} ?"
-        ];
-        $this->wheres[] = "{$column} {$operator} ?";
-        $this->bindings[] = $value;
-        return $this;
-    }
+    // public function where(string $column, mixed $value, string $operator = '='): static {
+    //     if (strtoupper($operator) === 'IS' && $value === null) {
+    //         $this->wheres[] = "{$column} IS NULL";
+    //         return $this;
+    //     }
+    //     if (strtoupper($operator) === 'IS NOT' && $value === null) {
+    //         $this->wheres[] = "{$column} IS NOT NULL";
+    //         return $this;
+    //     }
+    //     $this->whereStack[] = [
+    //         'type' => 'basic',
+    //         'sql' => "{$column} {$operator} ?"
+    //     ];
+    //     $this->wheres[] = "{$column} {$operator} ?";
+    //     $this->bindings[] = $value;
+    //     return $this;
+    // }
 
 
 
-    public function whereRaw(string $sql, array $bindings = []): static {
-        $this->rawWheres[] = $sql;
-        $this->whereStack[] = [
-            'type' => 'raw',
-            'sql' => $sql
-        ];
-        $this->bindings = array_merge($this->bindings, $bindings);
-        return $this;
-    }
+    // public function whereRaw(string $sql, array $bindings = []): static {
+    //     $this->rawWheres[] = $sql;
+    //     $this->whereStack[] = [
+    //         'type' => 'raw',
+    //         'sql' => $sql
+    //     ];
+    //     $this->bindings = array_merge($this->bindings, $bindings);
+    //     return $this;
+    // }
 
 
 
-    public function whereIn(string $column, array $values): static {
-        if (empty($values)) {
-            $this->wheres[] = '1 = 0';
-            return $this;
-        }
-        $placeholders = implode(',', array_fill(0, count($values), '?'));
-        $this->wheres[] = "{$column} IN ({$placeholders})";
-        $this->whereStack[] = [
-            'type' => 'in',
-            'sql'  => "{$column} IN ({$placeholders})"
-        ];
-        $this->bindings = array_merge($this->bindings, $values);
-        return $this;
-    }
+    // public function whereIn(string $column, array $values): static {
+    //     if (empty($values)) {
+    //         $this->wheres[] = '1 = 0';
+    //         return $this;
+    //     }
+    //     $placeholders = implode(',', array_fill(0, count($values), '?'));
+    //     $this->wheres[] = "{$column} IN ({$placeholders})";
+    //     $this->whereStack[] = [
+    //         'type' => 'in',
+    //         'sql'  => "{$column} IN ({$placeholders})"
+    //     ];
+    //     $this->bindings = array_merge($this->bindings, $values);
+    //     return $this;
+    // }
 
 
 
-    public function whereNull(string $column): static {
-        $this->wheres[] = "{$column} IS NULL";
-        $this->whereStack[] = [
-            'type' => 'null',
-            'sql'  => "{$column} IS NULL"
-        ];
-        return $this;
-    }
+    // public function whereNull(string $column): static {
+    //     $this->wheres[] = "{$column} IS NULL";
+    //     $this->whereStack[] = [
+    //         'type' => 'null',
+    //         'sql'  => "{$column} IS NULL"
+    //     ];
+    //     return $this;
+    // }
 
 
 
-    public function whereNotNull(string $column): static {
-        $this->wheres[] = "{$column} IS NOT NULL";
-        $this->whereStack[] = [
-            'type' => 'not_null',
-            'sql'  => "{$column} IS NOT NULL"
-        ];
-        return $this;
-    }
+    // public function whereNotNull(string $column): static {
+    //     $this->wheres[] = "{$column} IS NOT NULL";
+    //     $this->whereStack[] = [
+    //         'type' => 'not_null',
+    //         'sql'  => "{$column} IS NOT NULL"
+    //     ];
+    //     return $this;
+    // }
 
 
 
@@ -485,15 +502,15 @@ class Builder {
 
 
 
-    public function whereColumn(string $first, string $second, string $operator = '='): static {
-        $sql = "{$first} {$operator} {$second}";
-        $this->rawWheres[] = $sql;
-        $this->whereStack[] = [
-            'type' => 'column',
-            'sql'  => $sql
-        ];
-        return $this;
-    }
+    // public function whereColumn(string $first, string $second, string $operator = '='): static {
+    //     $sql = "{$first} {$operator} {$second}";
+    //     $this->rawWheres[] = $sql;
+    //     $this->whereStack[] = [
+    //         'type' => 'column',
+    //         'sql'  => $sql
+    //     ];
+    //     return $this;
+    // }
 // =================================================================================================
 
 
@@ -507,6 +524,8 @@ class Builder {
         return $this;
     }
 
+
+
     public function whereHas(string $relation, \Closure $callback): static {
         (new RelationExistence($this))->whereHas($relation, $callback);
         return $this;
@@ -517,4 +536,31 @@ class Builder {
     protected function parseEagerLoads(): array {
         return RelationPath::parse($this->eagerLoads);
     }
+
+
+
+    public function whereRelation(string $relation, string $column, mixed $value, string $operator = '='): static {
+        (new RelationExistence($this))->whereRelation($relation, $column, $value, $operator);
+        return $this;
+    }
+
+
+
+    public function orWhereHas(string $relation, \Closure $callback): static {
+        (new RelationExistence($this))->orWhereHas($relation, $callback);
+        return $this;
+    }
+
+
+
+    public function orWhereExists(Builder $query): static {
+        $sql = 'OR EXISTS (' . $query->toSql() . ')';
+        $this->rawWheres[] = $sql;
+        $this->bindings = array_merge($this->bindings, $query->getBindings());
+        return $this;
+    }
+
+
+
+
 }
