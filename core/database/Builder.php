@@ -11,22 +11,17 @@ use Core\Database\Relations\RelationExistence;
 use Core\Database\Concerns\BuildsWhereQueries;
 use Core\Database\Concerns\BuildsRelationQueries;
 use Core\Database\Concerns\BuildsRelationAggregates;
+use Core\Database\Concerns\BuildsSelectQueries;
+use Core\Database\Concerns\BuildsQueryCompiler;
 
 class Builder {
 
 
-// BuildsSelectQueries
-// BuildsWhereQueries
-// BuildsJoinQueries
-// BuildsAggregateQueries
-// BuildsRelationQueries
-// ExecutesQueries
-// BuildsMutationQueries
-// BuildsPaginationQueries
-
     use BuildsWhereQueries;
     use BuildsRelationQueries;
     use BuildsRelationAggregates;
+    use BuildsSelectQueries;
+    use BuildsQueryCompiler;
 
 
     protected PDO $pdo;
@@ -57,6 +52,8 @@ class Builder {
     protected array $withAggregates = [];
     protected ?RelationExistence $relationExistence = null;
     protected array $subQueries = [];
+    protected bool $distinct = false;
+
 
 
     public function __construct(PDO $pdo) {$this->pdo = $pdo;}
@@ -105,11 +102,6 @@ class Builder {
         return $this->get()[0] ?? null;
     }
 
-
-    public function select(array|string $columns): static {
-        $this->selects = (array) $columns;
-        return $this;
-    }
 
 
     public function join(string $table, string $first, string $operator, string $second): static {
@@ -232,18 +224,6 @@ class Builder {
         return $this;
     }
 
-    protected function buildSelect(): string {
-        $sql = "SELECT " . implode(',', $this->selects) . " FROM {$this->table}";
-        if ($this->joins)  {$sql .= ' ' . implode(' ', $this->joins);}
-        $whereParts = array_merge($this->wheres, $this->rawWheres);
-        if (!empty($whereParts)) {
-            $sql .= ' WHERE ' . implode(' AND ', $whereParts);
-        }
-        if ($this->orders) {$sql .= ' ORDER BY ' . implode( ',', $this->orders);}
-        if ($this->limit)  {$sql .= " LIMIT {$this->limit}";}
-        if ($this->offset !== null) {$sql .= " OFFSET {$this->offset}";}
-        return $sql;
-    }
 
 
     protected function applyScopes(): void {
@@ -329,12 +309,6 @@ class Builder {
 
     public function getModelClass(): ?string {return $this->modelClass;}
 
-    public function selectRaw(string $sql): static {
-        $this->selects = [$sql];
-        return $this;
-    }
-
-
 
     public function toSql(): string {return $this->buildSelect();}
 
@@ -374,6 +348,83 @@ class Builder {
         $this->bindings = array_merge($this->bindings, $query->getBindings());
         return $this;
     }
+
+
+
+
+    // protected function buildSelect(): string {
+    //     return implode(
+    //         ' ',
+    //         array_filter([
+    //             $this->compileSelect(),
+    //             $this->compileJoins(),
+    //             $this->compileWhere(),
+    //             $this->compileOrderBy(),
+    //             $this->compileLimit(),
+    //             $this->compileOffset(),
+    //         ])
+    //     );
+    // }
+
+
+
+
+    // protected function compileJoins(): string {
+    //     if (empty($this->joins)) {return '';}
+    //     return implode(' ', $this->joins);
+    // }
+
+
+
+    // protected function compileWhere(): string {
+    //     $parts = array_merge($this->wheres, $this->rawWheres);
+    //     if (empty($parts)) {return '';}
+    //     return 'WHERE ' . implode(' AND ', $parts);
+    // }
+
+
+
+    // protected function compileOrderBy(): string {
+    //     if (empty($this->orders)) {return '';}
+    //     return 'ORDER BY ' . implode(',', $this->orders);
+    // }
+
+
+
+    // protected function compileLimit(): string {
+    //     if (!$this->limit) {return '';}
+    //     return "LIMIT {$this->limit}";
+    // }
+
+
+
+    // protected function compileOffset(): string {
+    //     if ($this->offset === null) {return '';}
+    //     return "OFFSET {$this->offset}";
+    // }
+
+
+
+// protected function compileDistinct(): string
+// {
+//     return $this->distinct
+//         ? 'DISTINCT'
+//         : '';
+// }
+
+
+
+// protected function compileSelect(): string
+// {
+//     return trim(
+//         'SELECT ' .
+//         $this->compileDistinct() .
+//         ' ' .
+//         implode(',', $this->selects) .
+//         " FROM {$this->table}"
+//     );
+// }
+
 
 
 
