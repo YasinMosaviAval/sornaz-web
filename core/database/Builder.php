@@ -399,7 +399,6 @@ class Builder {
             $this->wheres[] = "{$column} IS NOT NULL";
             return $this;
         }
-        // $this->wheres[] = "{$column} {$operator} ?";
         $this->whereStack[] = [
             'type' => 'basic',
             'sql' => "{$column} {$operator} ?"
@@ -500,13 +499,6 @@ class Builder {
 
 
     public function has(string $relation): static {return $this->relationExistence()->has($relation);}
-
-
-    // public function whereHas(string $relation, ?\Closure $callback = null, string $operator = '>=', int $count = 1): static {
-    //     return $this->addRelationExistenceConstraint($relation, $callback, $operator, $count);
-    // }
-
-
 
 
 
