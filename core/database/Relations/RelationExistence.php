@@ -62,5 +62,27 @@ class RelationExistence {
 
 
 
+    public function whereRelation(string $relation, string $column, mixed $value, string $operator = '='): Builder {
+        return $this->whereHas(
+            $relation,
+            function (Builder $query) use ($column, $value, $operator) {
+                $query->where($column, $value, $operator);
+            }
+        );
+    }
+
+
+
+    public function orWhereHas(string $relation, \Closure $callback): Builder {
+        $model = new ($this->builder->getModelClass());
+        /** @var Relation $relationObject */
+        $relationObject = $this->resolveRelation($model, $relation);
+        $query = $this->subQuery->whereExists($relationObject, $callback);
+        $this->builder->orWhereExists($query);
+        return $this->builder;
+    }
+
+
+
 
 }
