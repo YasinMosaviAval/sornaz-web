@@ -382,25 +382,25 @@ Router::get('/relations-test', function () {
 
 
     // User::with('posts.comments')->get();
-    User::with('posts')->get();
-    User::withCount('posts')->get();
-    User::withCount('posts')->get();
-    User::withCount(['posts' => fn($q) => $q->where('status', 'published')])->get();
-    User::with(['posts'])->withCount('posts')->get();
+    // User::with('posts')->get();
+    // User::withCount('posts')->get();
+    // User::withCount('posts')->get();
+    // User::withCount(['posts' => fn($q) => $q->where('status', 'published')])->get();
+    // User::with(['posts'])->withCount('posts')->get();
 
-
-    $user = User::find(1);
-    $user->load('posts');
-    foreach ($user->posts as $post) {
-        echo $post->title;
-    }
 
     // $user = User::find(1);
-    $user->load('posts');
-    $user->loadMissing('posts');
+    // $user->load('posts');
+    // foreach ($user->posts as $post) {
+    //     echo $post->title;
+    // }
 
     // $user = User::find(1);
-    $user->loadMissing('posts');
+    // $user->load('posts');
+    // $user->loadMissing('posts');
+
+    // $user = User::find(1);
+    // $user->loadMissing('posts');
 
     // $user = User::find(1);
     // $user->loadMissing(['posts', 'profile']);
@@ -408,16 +408,44 @@ Router::get('/relations-test', function () {
 
 
     // $user = User::find(1);
-    $user->load('posts');
-    $user->loadMissing('posts');
+    // $user->load('posts');
+    // $user->loadMissing('posts');
 
 
-    User::query()->has('posts')->get();
+    // User::query()->has('posts')->get();
 
 
-    $postQuery = Post::query()->where('status', 'published');
-    echo $postQuery->toSql() . '<br>';
-    print_r($postQuery->getBindings());
+    // $postQuery = Post::query()->where('status', 'published');
+    // echo $postQuery->toSql() . '<br>';
+    // print_r($postQuery->getBindings());
+
+
+
+    // $user = User::find(1);
+    // $r = $user->posts();
+    // echo $r->getParentTable();
+    // echo PHP_EOL;
+    // echo $r->getRelatedTable();
+    // echo PHP_EOL;
+    // echo $r->getForeignKey();
+    // echo PHP_EOL;
+    // echo $r->getLocalKey();
+
+
+
+
+    // $q = Post::query()->whereColumn('posts.author_id', 'users.user_id');
+    // echo $q->toSql();
+
+
+
+
+    print_r(User::query()->doesntHave('posts')->toSql());
+    print_r(User::query()->whereHas('posts', function ($q) {$q->where('status', 'published');})->toSql());
+
+
+
+
 
     // $users = User::query()->withExists('posts')->get();
     // foreach ($users as $user) {

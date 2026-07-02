@@ -11,9 +11,17 @@ use Core\Database\Relations\BelongsToMany;
 trait HasRelationships {
 
 
+    // protected function belongsTo(string $related, string $foreignKey, string $ownerKey = 'id'): BelongsTo {
+    //     return new BelongsTo(
+    //         $related::query()->where($ownerKey, $this->$foreignKey),
+    //         $this,
+    //         $related,
+    //         $foreignKey,
+    //         $ownerKey
+    //     );
+    // }
     protected function belongsTo(string $related, string $foreignKey, string $ownerKey = 'id'): BelongsTo {
         return new BelongsTo(
-            $related::query()->where($ownerKey, $this->$foreignKey),
             $this,
             $related,
             $foreignKey,
@@ -21,10 +29,17 @@ trait HasRelationships {
         );
     }
 
-
+    // protected function hasOne(string $related, string $foreignKey, string $localKey = 'id'): HasOne {
+    //     return new HasOne(
+    //         $related::query()->where($foreignKey, $this->$localKey),
+    //         $this,
+    //         $related,
+    //         $foreignKey,
+    //         $localKey
+    //     );
+    // }
     protected function hasOne(string $related, string $foreignKey, string $localKey = 'id'): HasOne {
         return new HasOne(
-            $related::query()->where($foreignKey, $this->$localKey),
             $this,
             $related,
             $foreignKey,
@@ -33,9 +48,17 @@ trait HasRelationships {
     }
 
 
+    // protected function hasMany(string $related, string $foreignKey, string $localKey = 'id'): HasMany {
+    //     return new HasMany(
+    //         $related::query()->where($foreignKey, $this->$localKey),
+    //         $this,
+    //         $related,
+    //         $foreignKey,
+    //         $localKey
+    //     );
+    // }
     protected function hasMany(string $related, string $foreignKey, string $localKey = 'id'): HasMany {
         return new HasMany(
-            $related::query()->where($foreignKey, $this->$localKey),
             $this,
             $related,
             $foreignKey,
@@ -51,12 +74,21 @@ trait HasRelationships {
             $ids[] = $row[$relatedPivotKey];
         }
         return new BelongsToMany(
-            $related::query()->whereIn($relatedKey, $ids),
             $this,
             $related,
+            $pivotTable,
             $foreignPivotKey,
+            $relatedPivotKey,
+            $localKey,
             $relatedKey
         );
+        // return new BelongsToMany(
+        //     $related::query()->whereIn($relatedKey, $ids),
+        //     $this,
+        //     $related,
+        //     $foreignPivotKey,
+        //     $relatedKey
+        // );
     }
 
 
