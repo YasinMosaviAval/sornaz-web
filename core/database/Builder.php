@@ -24,39 +24,67 @@ class Builder {
     use BuildsQueryCompiler;
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Database
+    |--------------------------------------------------------------------------
+    */
     protected PDO $pdo;
     protected string $table;
+    protected ?string $modelClass = null;
+    protected ?string $primaryKey = null;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Query Builder
+    |--------------------------------------------------------------------------
+    */
+    protected array $selects = ['*'];
+    protected bool $distinct = false;
+    protected array $joins = [];
     protected array $wheres = [];
-    protected array $whereStack = [];
     protected array $rawWheres = [];
     protected array $bindings = [];
     protected array $orders = [];
     protected ?int $limit = null;
-    protected array $selects = ['*'];
-    protected array $joins = [];
     protected ?int $offset = null;
-    protected bool $withTrashed = false;
-    protected bool $onlyTrashed = false;
-    protected array $scopes = [];
-    protected bool $scopesApplied=false;
-    protected ?string $modelClass = null;
-    protected ?string $primaryKey = null;
+    protected array $subQueries = [];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Model
+    |--------------------------------------------------------------------------
+    */
     protected array $fillable = [];
     protected array $guarded = [];
     protected array $casts = [];
     protected bool $timestamps = false;
     protected bool $softDeletes = false;
+    protected bool $withTrashed = false;
+    protected bool $onlyTrashed = false;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scopes
+    |--------------------------------------------------------------------------
+    */
+    protected array $scopes = [];
+    protected bool $scopesApplied = false;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relations
+    |--------------------------------------------------------------------------
+    */
     protected array $eagerLoads = [];
     protected array $withCounts = [];
     protected array $withExists = [];
-    protected array $withAggregates = [];
     protected ?RelationExistence $relationExistence = null;
-    protected array $subQueries = [];
-    protected bool $distinct = false;
 
 
 
     public function __construct(PDO $pdo) {$this->pdo = $pdo;}
+
 
 
     public function table(string $table): static {
@@ -72,16 +100,20 @@ class Builder {
     }
 
 
+
     public function latest(?string $column = null): static {$column ??= $this->modelClass::getPrimaryKey(); return $this->orderBy($column, 'DESC');}
 
 
+
     public function oldest(?string $column = null): static {$column ??= $this->modelClass::getPrimaryKey(); return $this->orderBy($column, 'ASC');}
+
 
 
     public function limit(int $limit): static {
         $this->limit = $limit;
         return $this;
     }
+
 
 
     public function get(): array {
@@ -97,6 +129,7 @@ class Builder {
     }
 
 
+
     public function first(): mixed {
         $this->limit(1);
         return $this->get()[0] ?? null;
@@ -110,10 +143,12 @@ class Builder {
     }
 
 
+
     public function leftJoin(string $table, string $first, string $operator, string $second): static {
         $this->joins[] = "LEFT JOIN {$table} ON {$first} {$operator} {$second}";
         return $this;
     }
+
 
 
     public function count(): int {
@@ -127,10 +162,12 @@ class Builder {
     }
 
 
+
     public function offset(int $offset): static {
         $this->offset = $offset;
         return $this;
     }
+
 
 
     public function paginate(int $page = 1, int $perPage = 20): array {
@@ -147,6 +184,7 @@ class Builder {
     }
 
 
+
     public function insert(array $data): bool {
         $columns = array_keys($data);
         $placeholders = array_fill(0, count($columns), '?');
@@ -154,6 +192,7 @@ class Builder {
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute(array_values($data));
     }
+
 
 
     public function update(array $data): bool {
@@ -173,6 +212,7 @@ class Builder {
     }
 
 
+
     public function delete(): bool {
         $sql = "DELETE FROM {$this->table}";
         if ($this->wheres) {
@@ -183,10 +223,13 @@ class Builder {
     }
 
 
+
     public function lastInsertId(): string {return $this->pdo->lastInsertId();}
 
 
+
     public function find(mixed $id, string $primaryKey = 'user_id'): mixed {return $this->where($primaryKey, $id)->first();}
+
 
 
     public function withTrashed(): static {
@@ -195,10 +238,12 @@ class Builder {
     }
 
 
+
     public function onlyTrashed(): static {
         $this->onlyTrashed = true;
         return $this;
     }
+
 
 
     public function addScope($scope): static {
@@ -207,10 +252,13 @@ class Builder {
     }
 
 
+
     public function isWithTrashed(): bool {return $this->withTrashed;}
 
 
+
     public function isOnlyTrashed(): bool {return $this->onlyTrashed;}
+
 
 
     public function model(string $class): static {
@@ -235,6 +283,7 @@ class Builder {
     }
 
 
+
     public function __call(string $method, array $arguments) {
         if (!$this->modelClass) {
             throw new \BadMethodCallException("Method {$method} does not exist.");
@@ -250,12 +299,14 @@ class Builder {
     }
 
 
+
     public function getPrimaryKey(): string {return $this->primaryKey;}
     public function getFillable(): array {return $this->fillable;}
     public function getGuarded(): array {return $this->guarded;}
     public function getCasts(): array {return $this->casts;}
     public function usesTimestamps(): bool {return $this->timestamps;}
     public static function usesSoftDeletes(): bool {return in_array(SoftDeletes::class, class_uses(static::class));}
+
 
 
     protected function collectKeys(array $models, string $key): array {
@@ -268,6 +319,7 @@ class Builder {
         }
         return array_values(array_unique($ids));
     }
+
 
 
     protected function groupModels(array $rows, string $foreignKey): array {
@@ -310,6 +362,7 @@ class Builder {
     public function getModelClass(): ?string {return $this->modelClass;}
 
 
+
     public function toSql(): string {return $this->buildSelect();}
 
 
@@ -320,10 +373,6 @@ class Builder {
 
     public function whereExists(Builder $query): static {
         $this->rawWheres[] = 'EXISTS (' . $query->toSql() . ')';
-        $this->whereStack[] = [
-            'type' => 'exists',
-            'query' => $query
-        ];
         $this->bindings = array_merge($this->bindings, $query->getBindings());
         return $this;
     }
@@ -332,15 +381,11 @@ class Builder {
 
     public function whereNotExists(Builder $query): static {
         $this->rawWheres[] = 'NOT EXISTS (' . $query->toSql() . ')';
-        $this->whereStack[] = [
-            'type'  => 'not_exists',
-            'query' => $query
-        ];
         $this->bindings = array_merge($this->bindings, $query->getBindings());
         return $this;
     }
 
-// =================================================================================================
+
 
     public function orWhereExists(Builder $query): static {
         $sql = 'OR EXISTS (' . $query->toSql() . ')';
@@ -348,84 +393,6 @@ class Builder {
         $this->bindings = array_merge($this->bindings, $query->getBindings());
         return $this;
     }
-
-
-
-
-    // protected function buildSelect(): string {
-    //     return implode(
-    //         ' ',
-    //         array_filter([
-    //             $this->compileSelect(),
-    //             $this->compileJoins(),
-    //             $this->compileWhere(),
-    //             $this->compileOrderBy(),
-    //             $this->compileLimit(),
-    //             $this->compileOffset(),
-    //         ])
-    //     );
-    // }
-
-
-
-
-    // protected function compileJoins(): string {
-    //     if (empty($this->joins)) {return '';}
-    //     return implode(' ', $this->joins);
-    // }
-
-
-
-    // protected function compileWhere(): string {
-    //     $parts = array_merge($this->wheres, $this->rawWheres);
-    //     if (empty($parts)) {return '';}
-    //     return 'WHERE ' . implode(' AND ', $parts);
-    // }
-
-
-
-    // protected function compileOrderBy(): string {
-    //     if (empty($this->orders)) {return '';}
-    //     return 'ORDER BY ' . implode(',', $this->orders);
-    // }
-
-
-
-    // protected function compileLimit(): string {
-    //     if (!$this->limit) {return '';}
-    //     return "LIMIT {$this->limit}";
-    // }
-
-
-
-    // protected function compileOffset(): string {
-    //     if ($this->offset === null) {return '';}
-    //     return "OFFSET {$this->offset}";
-    // }
-
-
-
-// protected function compileDistinct(): string
-// {
-//     return $this->distinct
-//         ? 'DISTINCT'
-//         : '';
-// }
-
-
-
-// protected function compileSelect(): string
-// {
-//     return trim(
-//         'SELECT ' .
-//         $this->compileDistinct() .
-//         ' ' .
-//         implode(',', $this->selects) .
-//         " FROM {$this->table}"
-//     );
-// }
-
-
 
 
 }
