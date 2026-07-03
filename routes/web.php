@@ -174,18 +174,6 @@ Router::get('/update-test', function () {
 );
 
 Router::get('/provider-test', function () {
-        // $provider = new EventServiceProvider();
-        // return get_parent_class($provider);
-
-        // $manager = new Core\Providers\ProviderManager();
-        // $manager->load([EventServiceProvider::class]);
-        // return 'loaded';
-
-        // $manager = new Core\Providers\ProviderManager();
-        // $manager->load([EventServiceProvider::class]);
-        // $manager->register();
-        // return 'registered';
-
         $manager = new Core\Providers\ProviderManager();
         $manager->load([EventServiceProvider::class]);
         $manager->register();
@@ -211,32 +199,6 @@ Router::get('/timestamp-test', function () {
 );
 
 Router::get('/mass-assignment-test', function () {
-    // User::create([
-    //     'username' => 'Test User',
-    //     'email' => 'test@test.com',
-    //     'password' => '123456',
-    //     'status' => 'approved',
-    // ]);
-    // echo 'done-------<br>';
-
-    // $user = User::find(1142);
-    // $user->update([
-    //     'username' => 'New Name',
-    //     'password' => 'abcdef',
-    //     'status' => 'inactive',
-    // ]);
-    // echo 'update-------<br>';
-
-
-    // $user = new User();
-    // $user->fill([
-    //     'username' => 'Ali',
-    //     'email' => 'ali@test.com',
-    //     'password' => '12345678999999',
-    // ]);
-    // return '<pre>'.print_r($user->toArray(), true).'</pre>';
-
-
     $user = new User();
     $user->forceFill([
         'username' => 'Ali',
@@ -252,196 +214,10 @@ Router::get('/local-scopes-test', function () {
     return '<pre>' .
     print_r($users, true) .
     '</pre>';
-
-    // User::active()
-    // ->visible()
-    // ->get();
-
-    // User::active()
-    // ->orderBy('username')
-    // ->paginate();
-
-    // User::active()
-    // ->where('gender', 'male')
-    // ->get();
     }
 );
 
 Router::get('/relations-test', function () {
-    // new \Core\Database\Relations\BelongsToMany(
-        //     User::query()
-    // );
-
-    // $user = new User();
-    // $user->posts();
-
-    // $user = new User();
-    // $posts = $user->posts()->get();
-    // return '<pre>'.print_r($posts, true).'</pre>';
-
-    // $user = new User();
-    // $post = $user->posts()->first();
-
-    // $user = new User();
-    // $count = $user->posts()->count();
-    // return $count;
-
-
-    // $relation = User::find(1)->posts();
-    // return '<pre>'.print_r([
-    //     get_class($relation),
-    //     get_class($relation->getParent()),
-    //     $relation->getRelated(),
-    //     $relation->getForeignKey(),
-    //     $relation->getLocalKey(),
-    // ], true).'</pre>';
-
-    
-    // $user = User::find(1);
-    // $posts = $user->posts()->latest()->get();
-    // return '<pre>'.print_r($posts,true).'</pre>';
-
-
-    // $user = new User();
-    // $user = User::find(1);
-    // $user->posts()->oldest()->count();
-
-
-    // $users = User::query()->with('posts')->get();
-    // foreach ($users as $user) {
-    //     echo $user->username;
-    //     echo count($user->posts);
-    // }
-
-    // $user = User::find(1);
-    // $relation = $user->posts();
-    // $relation->addEagerConstraints([$user]);
-    // $posts = $relation->getEager();
-    // print_r($posts);
-
-
-
-    // $post = Post::find(1);
-    // $relation = $post->author();
-    // $relation->addEagerConstraints([$post]);
-    // $user = $relation->getEager();
-    // print_r($user);
-
-    // $users = User::with('posts')->get();
-    // echo count($users[0]->posts);
-    // echo '<hr>';
-
-
-    // $posts = Post::with('author')->get();
-    // echo $posts[0]->author->username;
-    // echo '<hr>';
-
-
-    // User::with('posts.author')->get();
-    // echo '<hr>';
-
-
-    // User::with([
-    //     'posts' => fn($q) => $q->latest()
-    // ])->get();
-    // echo '<hr>';
-
-
-    // $users = User::withCount('posts')->get();
-    // echo count($users);
-
-
-    // $users = User::withCount('posts')->get();
-    // foreach ($users as $user) {
-    //     echo $user->username;
-    //     echo ' : ';
-    //     echo $user->posts_count;
-    //     echo '<br>';
-    // }
-
-
-
-    // $users = User::withCount([
-    //     'posts' => fn($q) => $q->where(
-    //         'status',
-    //         'published'
-    //     )
-    // ])->get();
-    // foreach ($users as $user) {
-    //     echo $user->posts_count;
-    //     echo '<br>';
-    // }
-
-
-    // User::has('posts')->get();
-    // User::whereHas('posts')->get();
-
-
-    // $users = User::query()->whereRaw("1 = 1")->get();
-    // echo count($users);
-
-
-    // User::with('posts.comments')->get();
-    // User::with('posts')->get();
-    // User::withCount('posts')->get();
-    // User::withCount('posts')->get();
-    // User::withCount(['posts' => fn($q) => $q->where('status', 'published')])->get();
-    // User::with(['posts'])->withCount('posts')->get();
-
-
-    // $user = User::find(1);
-    // $user->load('posts');
-    // foreach ($user->posts as $post) {
-    //     echo $post->title;
-    // }
-
-    // $user = User::find(1);
-    // $user->load('posts');
-    // $user->loadMissing('posts');
-
-    // $user = User::find(1);
-    // $user->loadMissing('posts');
-
-    // $user = User::find(1);
-    // $user->loadMissing(['posts', 'profile']);
-
-
-
-    // $user = User::find(1);
-    // $user->load('posts');
-    // $user->loadMissing('posts');
-
-
-    // User::query()->has('posts')->get();
-
-
-    // $postQuery = Post::query()->where('status', 'published');
-    // echo $postQuery->toSql() . '<br>';
-    // print_r($postQuery->getBindings());
-
-
-
-    // $user = User::find(1);
-    // $r = $user->posts();
-    // echo $r->getParentTable();
-    // echo PHP_EOL;
-    // echo $r->getRelatedTable();
-    // echo PHP_EOL;
-    // echo $r->getForeignKey();
-    // echo PHP_EOL;
-    // echo $r->getLocalKey();
-
-
-
-
-    // $q = Post::query()->whereColumn('posts.author_id', 'users.user_id');
-    // echo $q->toSql();
-
-
-
-
-    // print_r(User::query()->doesntHave('posts')->toSql());
-    // print_r(User::query()->whereHas('posts', function ($q) {$q->where('status', 'published');})->toSql());
     print_r(User::query()->has('posts')->toSql());
     echo $PHP_EOL;
     print_r(User::query()->doesntHave('posts')->toSql());
@@ -455,25 +231,6 @@ Router::get('/relations-test', function () {
     print_r(User::query()->where('status', 'active')->orWhereHas('posts', function ($q) {$q->where('status', 'published');})->toSql());
     echo $PHP_EOL;
 
-    // $users = User::query()->withExists('posts')->get();
-    // foreach ($users as $user) {
-    //     echo $user->username;
-    //     echo ' => ';
-    //     var_dump(
-    //         $user->posts_exists
-    //     );
-    //     echo '<hr>';
-    // }
-
-    // $builder = User::query()->withCount('posts');
-    // echo '<pre>';
-    // print_r($builder->getWithCounts());
-
-
-    // User::with([
-    //     'posts' => fn($q) => $q->where('status', 'published')
-    // ])->get();
-    // echo '<hr>';
 });
 
 Router::get('/provider-test', function () {$user = User::find(1); events()->dispatch(new UserCreated($user)); return '<hr>Done';});
@@ -488,7 +245,6 @@ Router::get('/soft-delete-test', function () {$user = User::find(1120); $user->d
 
 Router::get('/cast-test', function () {
     $user = User::find(1);
-    // return '<pre>' . print_r($user, true) . '</pre>';
     print_r($user->user_id);
     print_r(gettype($user->user_id));
     print_r($user->status);
