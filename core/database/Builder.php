@@ -3,9 +3,6 @@
 namespace Core\Database;
 
 use PDO;
-use Core\Database\Aggregates\AggregateLoader;
-use Core\Database\Aggregates\AggregateExecutor;
-use Core\Database\Relations\HasMany;
 use Core\Database\Relations\RelationExistence;
 
 use Core\Database\Concerns\BuildsWhereQueries;
@@ -15,6 +12,7 @@ use Core\Database\Concerns\BuildsSelectQueries;
 use Core\Database\Concerns\BuildsQueryCompiler;
 use Core\Database\Concerns\BuildsMutationQueries;
 use Core\Database\Concerns\ExecutesQueries;
+use Core\Database\Concerns\BuildsQueryClauses;
 
 class Builder {
 
@@ -26,11 +24,12 @@ class Builder {
     use BuildsQueryCompiler;
     use BuildsMutationQueries;
     use ExecutesQueries;
+    use BuildsQueryClauses;
 
 
     /*
     |--------------------------------------------------------------------------
-    | Database
+    | Connection
     |--------------------------------------------------------------------------
     */
     protected PDO $pdo;
@@ -38,9 +37,12 @@ class Builder {
     protected ?string $modelClass = null;
     protected ?string $primaryKey = null;
 
+
+
+
     /*
     |--------------------------------------------------------------------------
-    | Query Builder
+    | Query State
     |--------------------------------------------------------------------------
     */
     protected array $selects = ['*'];
@@ -52,7 +54,6 @@ class Builder {
     protected array $orders = [];
     protected ?int $limit = null;
     protected ?int $offset = null;
-    protected array $subQueries = [];
 
     /*
     |--------------------------------------------------------------------------
@@ -98,61 +99,8 @@ class Builder {
 
 
 
-    public function orderBy(string $column, string $direction = 'ASC'): static {
-        $this->orders[] = "{$column} {$direction}";
-        return $this;
-    }
-
-
-
-    public function latest(?string $column = null): static {$column ??= $this->modelClass::getPrimaryKey(); return $this->orderBy($column, 'DESC');}
-
-
-
-    public function oldest(?string $column = null): static {$column ??= $this->modelClass::getPrimaryKey(); return $this->orderBy($column, 'ASC');}
-
-
-
-    public function limit(int $limit): static {
-        $this->limit = $limit;
-        return $this;
-    }
-
-
-
-
-    public function join(string $table, string $first, string $operator, string $second): static {
-        $this->joins[] = "INNER JOIN {$table} ON {$first} {$operator} {$second}";
-        return $this;
-    }
-
-
-
-    public function leftJoin(string $table, string $first, string $operator, string $second): static {
-        $this->joins[] = "LEFT JOIN {$table} ON {$first} {$operator} {$second}";
-        return $this;
-    }
-
-
-
-
-
-
-
-    public function offset(int $offset): static {
-        $this->offset = $offset;
-        return $this;
-    }
-
-
-
-
-
-
 
     public function lastInsertId(): string {return $this->pdo->lastInsertId();}
-
-
 
 
 
@@ -253,33 +201,6 @@ class Builder {
         }
         return $grouped;
     }
-
-
-
-    public function loadRelationAggregate(array $models, string $relationName, string $aggregate, ?string $column = null, ?\Closure $constraint = null): void {
-        $first = $models[0];
-        $relation = $first->{$relationName}();
-        if (!$relation instanceof HasMany) {return;}
-        $relatedClass = $relation->getRelated();
-        $foreignKey = $relation->getForeignKey();
-        $localKey = $relation->getLocalKey();
-        foreach ($models as $model) {
-            $query = $relatedClass::query()->where($foreignKey, $model->{$localKey});
-            if ($constraint) {
-                $constraint($query);
-            }
-            $attribute = match ($aggregate) {
-                'count'  => "{$relationName}_count",
-                'exists' => "{$relationName}_exists",
-                default  => "{$relationName}_{$aggregate}",
-            };
-            $executor = new AggregateExecutor();
-            $model->$attribute = $executor->execute($query, $aggregate);
-        }
-    }
-
-
-    protected function addRelationExistenceConstraint(string $relation, ?\Closure $callback, string $operator, int $count): static {return $this;}
 
 
 
