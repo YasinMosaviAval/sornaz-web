@@ -8,11 +8,8 @@ use Core\Database\SoftDeletes;
 trait HasCRUD {
 
 
-    // protected static string $table;
-    // protected static string $primaryKey = 'id';
-
     public function save(): bool {
-        return DB::table(static::$table)->insert($this->attributes);
+        return static::create($this->attributes);
     }
 
 

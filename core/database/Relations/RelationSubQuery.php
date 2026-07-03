@@ -24,7 +24,7 @@ class RelationSubQuery
 
         $query->selectRaw('1');
 
-        return $relation->buildExistenceQuery($query);
+        return $relation->getExistenceQuery($query);
     }
 
     public function whereExists(

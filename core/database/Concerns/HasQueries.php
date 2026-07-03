@@ -26,15 +26,4 @@ trait HasQueries {
     public static function paginate(int $page = 1, int $perPage = 20) {return static::query()->paginate($page, $perPage);}
 
 
-
-
-
-
-
-
-
-
-
-
-
 }

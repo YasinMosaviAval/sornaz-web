@@ -97,8 +97,8 @@ class BelongsToMany extends Relation {
     }
 
 
-
-    public function buildExistenceQuery(Builder $query): Builder {
+    // TODO: Support has()/whereHas() for BelongsToMany in v1.1
+    public function getExistenceQuery(Builder $query): Builder {
         return $query;
     }
 

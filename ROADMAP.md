@@ -1,5 +1,6 @@
 v1.1
 
+- BelongsToMany existence query
 - exists()
 - value()
 - pluck()

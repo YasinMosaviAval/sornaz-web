@@ -36,10 +36,6 @@ class Builder {
     protected string $table;
     protected ?string $modelClass = null;
     protected ?string $primaryKey = null;
-
-
-
-
     /*
     |--------------------------------------------------------------------------
     | Query State
@@ -96,7 +92,6 @@ class Builder {
         $this->table = $table;
         return $this;
     }
-
 
 
 
