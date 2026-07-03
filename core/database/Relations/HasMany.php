@@ -62,7 +62,7 @@ class HasMany extends HasOneOrMany {
 
 
 
-    public function buildExistenceQuery(Builder $query): Builder {
+    public function getExistenceQuery(Builder $query): Builder {
         return $query->whereColumn(
             $this->getRelatedTable().'.'.$this->foreignKey,
             $this->getParentTable().'.'.$this->localKey

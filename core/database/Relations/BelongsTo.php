@@ -72,7 +72,7 @@ class BelongsTo extends BelongsToRelation {
 
 
 
-    public function buildExistenceQuery(Builder $query): Builder {
+    public function getExistenceQuery(Builder $query): Builder {
         return $query->whereColumn(
             $this->getRelatedTable().'.'.$this->localKey,
             $this->getParentTable().'.'.$this->foreignKey

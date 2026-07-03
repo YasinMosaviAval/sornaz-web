@@ -6,7 +6,6 @@ trait BuildsQueryClauses {
 
 
 
-
     public function join(string $table, string $first, string $operator, string $second): static {
         $this->joins[] = "INNER JOIN {$table} ON {$first} {$operator} {$second}";
         return $this;

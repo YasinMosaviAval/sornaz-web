@@ -32,6 +32,9 @@ class RelationLoader {
         foreach ($tree as $relationName => $children) {
             $constraint = $children['_constraint'] ?? null;
             unset($children['_constraint']);
+            if (!method_exists($models[0], $relationName)) {
+                throw new \RuntimeException("Relation [{$relationName}] does not exist on model [" . get_class($models[0]) . "].");
+            }
             $relation = $models[0]->{$relationName}();
             $relation->initRelation($models, $relationName);
             $relation->addEagerConstraints($models);
