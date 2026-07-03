@@ -1,26 +1,102 @@
-v1.1
+# Roadmap
 
-- BelongsToMany existence query
+---
+
+# Version 1.1
+
+## ORM
+
 - exists()
-- value()
 - pluck()
-- chunk()
+- value()
 - cursor()
+- chunk()
+- findOrFail()
 
-v1.2
+## Query Builder
 
-- Morph Relations
+- Nested Where Groups
 
-v1.3
+- where(function(){})
 
-- Query Events
+- orWhere(function(){})
 
-v2.0
+## Aggregates
 
-- Grammar Layer
+- withSum()
 
-- MySQL
+- withAvg()
 
-- PostgreSQL
+- withMin()
 
-- SQLite
+- withMax()
+
+## Relationships
+
+- MorphOne
+
+- MorphMany
+
+- MorphTo
+
+## Performance
+
+- Bulk Insert
+
+- Upsert
+
+- Query Cache
+
+---
+
+# Version 2.0
+
+## Database
+
+- Migration Builder
+
+- Schema Builder
+
+- Seeder
+
+- Factory
+
+## Console
+
+- Artisan-like Commands
+
+## Cache
+
+- Cache Driver
+
+## Queue
+
+- Queue Driver
+
+## Mail
+
+- Mail Driver
+
+## Validation
+
+- Validation Component
+
+## Authentication
+
+- Authentication
+
+- Authorization
+
+## HTTP
+
+- API Resources
+
+- Rate Limiter
+
+- API Authentication
+
+---
+
+Roadmap is intentionally flexible.
+
+Features will only be implemented when needed by real projects.
