@@ -14,6 +14,7 @@ use Core\Database\Concerns\BuildsRelationAggregates;
 use Core\Database\Concerns\BuildsSelectQueries;
 use Core\Database\Concerns\BuildsQueryCompiler;
 use Core\Database\Concerns\BuildsMutationQueries;
+use Core\Database\Concerns\ExecutesQueries;
 
 class Builder {
 
@@ -24,6 +25,7 @@ class Builder {
     use BuildsSelectQueries;
     use BuildsQueryCompiler;
     use BuildsMutationQueries;
+    use ExecutesQueries;
 
 
     /*
@@ -118,26 +120,6 @@ class Builder {
 
 
 
-    public function get(): array {
-        $this->applyScopes();
-        $stmt = $this->pdo->prepare($this->buildSelect());
-        $stmt->execute($this->bindings);
-        $rows = $stmt->fetchAll();
-        if (!$this->modelClass) {return $rows;}
-        $models = array_map(fn($row)=>new $this->modelClass($row), $rows);
-        $this->eagerLoadRelations($models);
-        (new AggregateLoader($this))->load($models);
-        return $models;
-    }
-
-
-
-    public function first(): mixed {
-        $this->limit(1);
-        return $this->get()[0] ?? null;
-    }
-
-
 
     public function join(string $table, string $first, string $operator, string $second): static {
         $this->joins[] = "INNER JOIN {$table} ON {$first} {$operator} {$second}";
@@ -153,15 +135,7 @@ class Builder {
 
 
 
-    public function count(): int {
-        $sql = "SELECT COUNT(*) AS total FROM {$this->table}";
-        if ($this->wheres) {
-            $sql .= ' WHERE ' . implode(' AND ', $this->wheres);
-        }
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($this->bindings);
-        return (int) $stmt->fetch()['total'];
-    }
+
 
 
 
@@ -172,26 +146,13 @@ class Builder {
 
 
 
-    public function paginate(int $page = 1, int $perPage = 20): array {
-        $total = $this->count();
-        $offset = ($page - 1) * $perPage;
-        $data = $this->limit($perPage)->offset($offset)->get();
-        return [
-            'data' => $data,
-            'total' => $total,
-            'page' => $page,
-            'per_page' => $perPage,
-            'last_page' => ceil($total / $perPage)
-        ];
-    }
+
 
 
 
     public function lastInsertId(): string {return $this->pdo->lastInsertId();}
 
 
-
-    public function find(mixed $id, string $primaryKey = 'user_id'): mixed {return $this->where($primaryKey, $id)->first();}
 
 
 
