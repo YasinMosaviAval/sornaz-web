@@ -14,6 +14,7 @@ use Core\Database\Concerns\HasTimestamps;
 use Core\Database\Concerns\GuardsAttributes;
 use Core\Database\Concerns\HasMagicMethods;
 use Core\Database\Concerns\LoadsRelations;
+use Core\Database\Concerns\HasTranslations;
 
 abstract class Model {
 
@@ -30,7 +31,7 @@ abstract class Model {
     use GuardsAttributes;
     use HasMagicMethods;
     use LoadsRelations;
-
+    use HasTranslations;
 
     protected static string $table;
     protected static string $primaryKey = 'id';
