@@ -288,7 +288,13 @@ Router::delete('/users/{id}', fn($id) => "DELETE USER {$id}");
 
 
 
-
+Router::group(
+    ['prefix' => '/academy'],
+    function () {
+        Router::get('/create', [AcademyController::class,'create']);
+        Router::post('/', [AcademyController::class,'store']);
+    }
+);
 
 
 Router::get(

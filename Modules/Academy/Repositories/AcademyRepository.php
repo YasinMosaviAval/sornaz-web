@@ -23,35 +23,45 @@ class AcademyRepository extends Repository {
         return AcademyModel::query()->latest('user_id')->get();
     }
 
+
+
+
+
+
+
+
+    // public function query() {
+    //     return AcademyModel::query()->academies();
+    // }
+
+    public function paginateList(AcademyIndexRequest $request): array {
+        $query = $this->query();
+        if ($request->search()) {
+            $query->where(function ($q) use ($request) {
+                $q->where('username', 'LIKE', '%' . $request->search() . '%')
+                    ->orWhere('email', 'LIKE', '%' . $request->search() . '%');
+            });
+        }
+        if ($request->status() !== null) {
+            $query->where('status', $request->status());
+        }
+        return $query->paginate(
+            page: $request->page(),
+            perPage: $request->perPage()
+        );
+    }
+
+    public function findById(int $id) {
+        return $this->query()->where('user_id', $id)->first();
+    }
+
+    public function existsByUsername(string $username): bool {
+        return $this->query()->where('username', $username)->exists();
+    }
+
+    public function existsByEmail(string $email): bool {
+        return $this->query()->where('email', $email)->exists();
+    }
 }
-
-
-    // public function paginateList(AcademyIndexRequest $request): array {
-    //     $query = AcademyModel::query()->academies();
-    //     if ($request->status() !== null) {
-    //         $query->where('status', $request->status());
-    //     }
-    //     if ($request->search()) {
-    //         $query->whereLike('username', '%' . $request->search() . '%');
-    //     }
-    //     $query->orderBy($request->sort(), $request->direction());
-    //     return $query->paginate($request->page(), $request->perPage());
-    // }
-
-    // public function paginate(AcademyIndexRequest $request) {
-    //     $query = AcademyModel::query()->academies();
-    //     if ($request->status() !== null) {
-    //         $query->where('status', $request->status());
-    //     }
-    //     if ($request->search()) {
-    //         $query->where(function ($q) use ($request) {
-    //             $q->whereLike('username', '%' . $request->search() . '%');
-    //             $q->orWhereLike('email', '%' . $request->search() . '%');
-    //         });
-    //     }
-    //     return $query
-    //         ->orderBy($request->orderBy(), $request->direction())
-    //         ->paginate($request->page(), $request->perPage());
-    // }
 
 

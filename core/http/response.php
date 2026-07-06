@@ -2,11 +2,18 @@
 
 namespace Core\Http;
 
-class Response
+class Response implements ResponseInterface
 {
-    public function send(string $content = ''): void
+    protected string $content = '';
+
+    public function __construct(string $content = '')
     {
-        echo $content;
+        $this->content = $content;
+    }
+
+    public function send(): void
+    {
+        echo $this->content;
     }
 
     public function json(mixed $data): void
@@ -15,7 +22,8 @@ class Response
 
         echo json_encode(
             $data,
-            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+            JSON_UNESCAPED_UNICODE |
+            JSON_UNESCAPED_SLASHES
         );
     }
 }

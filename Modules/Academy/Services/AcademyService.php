@@ -28,8 +28,7 @@ class AcademyService {
     public function delete(int $id): bool {return $this->repository->delete($id);}
 
     public function paginate(AcademyIndexRequest $request) {
-        $query = AcademyModel::query();
-        $query->academies();
+        $query = AcademyModel::query()->academies();
         if ($request->status() !== null) {
             $query->where('status', $request->status());
         }
@@ -41,5 +40,11 @@ class AcademyService {
             ->orderBy($request->orderBy(), $request->direction())
             ->paginate($request->page(), $request->perPage());
     }
+
+
+    public function findById(int $id) {
+        return $this->repository->findById($id);
+    }
+
 
 }
