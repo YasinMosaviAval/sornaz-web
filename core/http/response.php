@@ -2,25 +2,20 @@
 
 namespace Core\Http;
 
-use Core\View\View;
+class Response
+{
+    public function send(string $content = ''): void
+    {
+        echo $content;
+    }
 
-class Response {
+    public function json(mixed $data): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
 
-
-
-    public function send(mixed $content): void {
-
-        if ($content instanceof RedirectResponse) {
-            $content->send();
-            return;
-        }
-
-        if ($content instanceof View) {
-            echo $content->render();
-        } else {
-            echo $content;
-        }
-
-        session()->clearFlash();
+        echo json_encode(
+            $data,
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
     }
 }

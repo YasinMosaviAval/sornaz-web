@@ -6,6 +6,7 @@ use Core\Http\Request;
 use Core\Http\Response;
 use Core\Middleware\MiddlewarePipeline;
 use Core\Router\Router;
+use Core\Http\ResponseInterface;
 
 class Kernel {
 
@@ -76,6 +77,16 @@ class Kernel {
                 $pipeline->then(
                     $destination
                 );
+
+            if ($result instanceof ResponseInterface) {
+                $result->send();
+                return;
+            }
+
+            if (is_array($result)) {
+                $response->json($result);
+                return;
+            }
 
             $response->send($result);
 
@@ -163,3 +174,4 @@ class Kernel {
         return $reflection->invokeArgs($arguments);
     }
 }
+

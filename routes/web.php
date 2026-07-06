@@ -7,6 +7,9 @@ use Modules\System\Controllers\UserController;
 use Modules\System\Models\User;
 
 use Core\Database\DB;
+use Core\Router\Route;
+use Modules\Academy\Controllers\Web\AcademyController;
+use Modules\Academy\Services\AcademyService;
 use Modules\Content\Models\Post;
 use Modules\System\Models\Role;
 
@@ -219,17 +222,35 @@ Router::get('/local-scopes-test', function () {
 
 Router::get('/relations-test', function () {
     print_r(User::query()->has('posts')->toSql());
-    echo $PHP_EOL;
+    echo '<br><br>';
     print_r(User::query()->doesntHave('posts')->toSql());
-    echo $PHP_EOL;
+    echo '<br><br>';
     print_r(User::query()->whereHas('posts', function ($q) {$q->where('status', 'published');}));
-    echo $PHP_EOL;
-
+    echo '<br><br>';
+    
     print_r(User::query()->whereRelation('posts', 'status', 'published')->toSql());
-    echo $PHP_EOL;
-
+    echo '<br><br>';
+    
     print_r(User::query()->where('status', 'active')->orWhereHas('posts', function ($q) {$q->where('status', 'published');})->toSql());
-    echo $PHP_EOL;
+    echo '<br><br>';
+
+
+    $service = new AcademyService();
+    $result = $service->list();
+    print_r($result);
+
+    // dump(DB::table('users')->count());
+    // echo '<hr><hr>';
+    // dump(AcademyModel::first());
+    // echo '<hr><hr>';
+    // dump(AcademyModel::find(5));
+    // echo '<hr><hr>';
+    // echo '<hr><hr>';
+    // dump(DB::table('users')->get());
+    // dump(DB::table('users')->where('type','academy')->get());
+    // dump(AcademyModel::all());
+
+
 
 });
 
@@ -253,19 +274,25 @@ Router::get('/cast-test', function () {
     print_r(get_class($user->created_at));
 });
 
-
-
-
-
-
-
-
-
-
-
 Router::post('/validation-test', function (Request $request) {$request->validate(['name'  => 'required|min:3']); return 'Valid';})->middleware('csrf');
 Router::post('/users', fn() => 'CREATE USER');
 
-
-
 Router::delete('/users/{id}', fn($id) => "DELETE USER {$id}");
+
+
+
+
+
+
+
+
+
+
+
+
+
+Router::get(
+    '/admin/academies',
+    [AcademyController::class,'index']
+);
+
