@@ -18,6 +18,9 @@ trait HasBooting {
 
     protected static function boot(): void {
         static::bootTraits();
+        if (method_exists(static::class, 'bootModel')) {
+            forward_static_call([static::class, 'bootModel']);
+        }
     }
 
 
