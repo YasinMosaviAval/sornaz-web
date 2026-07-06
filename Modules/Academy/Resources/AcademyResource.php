@@ -1,24 +1,26 @@
 <?php
 
-namespace Core\Http\Resources;
+namespace Modules\Academy\Resources;
 
-class AcademyResource extends Resource
+use Core\Http\Resources\JsonResource;
+
+class AcademyResource extends JsonResource
 {
     public function toArray(): array
     {
         return [
-            'id' => $this->resource->user_id,
-            'username' => $this->resource->username,
-            'email' => $this->resource->email,
-            'type' => $this->resource->type,
+            'id' => $this->user_id,
+            'username' => $this->username,
+            'email' => $this->email,
+            'type' => $this->type,
             'type_label' => $this->typeLabel(),
-            'locale' => $this->resource->locale,
+            'locale' => $this->locale,
         ];
     }
 
     protected function typeLabel(): string
     {
-        return match ($this->resource->type) {
+        return match ($this->type) {
             'academy' => 'آموزشگاه',
             'branch' => 'شعبه',
             'teacher' => 'مدرس',
@@ -27,4 +29,3 @@ class AcademyResource extends Resource
         };
     }
 }
-

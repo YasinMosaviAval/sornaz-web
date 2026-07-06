@@ -2,13 +2,14 @@
 
 namespace Modules\Academy\Controllers\Web;
 
+use Core\http\Resources\ResourceCollection;
 use Modules\Academy\Services\AcademyService;
 use Modules\Academy\Requests\AcademyIndexRequest;
 use Modules\Academy\Repositories\AcademyRepository;
+use Modules\Academy\Requests\AcademyStoreRequest;
 
 use Core\Http\ResponseFactory;
-use Core\Http\Resources\AcademyResource;
-use Core\Http\Resources\ResourceCollection;
+use Modules\Academy\Resources\AcademyResource;
 
 class AcademyController {
 
@@ -29,7 +30,7 @@ class AcademyController {
         $request = new AcademyIndexRequest($_GET);
         $items = $this->service->paginate($request);
         return ResponseFactory::view(
-            'academy.index',
+            'Academy::index',
             ['academies' => (new ResourceCollection($items, AcademyResource::class))->resolve()]
         );
     }
@@ -37,14 +38,10 @@ class AcademyController {
 
 
     public function show(int $id) {
-        return $this->service->find($id);
-    }
-
-
-
-    public function store(array $request) {
-        $request=(new AcademyIndexRequest())->validate($request);
-        return $this->service->create($request);
+        return ResponseFactory::view(
+            'Academy::show',
+            ['academy' => AcademyResource::make($this->service->findById($id))->resolve()]
+        );
     }
 
 
@@ -62,8 +59,18 @@ class AcademyController {
 
 
 
+    public function create() {
+        return ResponseFactory::view('Academy::create');
+    }
 
 
+
+    public function store() {
+        $request = new AcademyStoreRequest($_POST);
+        $data = $request->validate();
+        $this->service->create($data);
+        return redirect('/academy');
+    }
 
 
 }

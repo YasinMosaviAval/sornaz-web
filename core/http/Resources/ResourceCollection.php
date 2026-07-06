@@ -1,20 +1,81 @@
 <?php
 
-namespace Core\Http\Resources;
+namespace Core\http\Resources;
 
-class ResourceCollection
-{
+use Countable;
+use IteratorAggregate;
+use ArrayIterator;
+
+class ResourceCollection implements Countable, IteratorAggregate {
+
+    protected iterable $items;
+    protected string $resource;
+
     public function __construct(
-        protected array $items,
-        protected string $resourceClass
-    ) {}
+        iterable $items,
+        string $resource
+    ) {
+
+        $this->items = $items;
+        $this->resource = $resource;
+    }
+
 
     public function resolve(): array
     {
-        return array_map(
-            fn($item) =>
-                (new $this->resourceClass($item))->resolve(),
-            $this->items
+        $result = [];
+
+        foreach ($this->items as $item) {
+
+            $result[] =
+                new $this->resource(
+                    $item
+                );
+
+            $result[array_key_last($result)] =
+                $result[array_key_last($result)]
+                    ->resolve();
+        }
+
+        return $result;
+    }
+
+
+    public function toArray(): array
+    {
+        return $this->resolve();
+    }
+
+
+    public function jsonSerialize(): array
+    {
+        return $this->resolve();
+    }
+
+
+    public function count(): int
+    {
+        return count(
+            $this->resolve()
+        );
+    }
+
+
+    public function getIterator(): ArrayIterator
+    {
+        return new ArrayIterator(
+            $this->resolve()
+        );
+    }
+
+
+    public function toJson(
+        int $flags = JSON_UNESCAPED_UNICODE
+    ): string {
+
+        return json_encode(
+            $this->resolve(),
+            $flags
         );
     }
 }

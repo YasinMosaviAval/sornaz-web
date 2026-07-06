@@ -88,12 +88,10 @@ abstract class Repository
     /**
      * Builder مشترک
      */
-    protected function query(): Builder
-    {
+    protected function query(): Builder {
         if ($this->model !== null) {
             return $this->model::query();
         }
-
         return DB::table($this->table);
     }
 

@@ -88,7 +88,8 @@ class Kernel {
                 return;
             }
 
-            $response->send($result);
+            // $response->send($result);
+            $response->send((string)$result);
 
         } catch (
             \Core\Validation\ValidationException $e
