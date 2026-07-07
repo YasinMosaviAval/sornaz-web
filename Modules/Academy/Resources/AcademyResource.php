@@ -12,9 +12,14 @@ class AcademyResource extends JsonResource
             'id' => $this->user_id,
             'username' => $this->username,
             'email' => $this->email,
+            'phone' => $this->phone,
+            'status' => $this->status,
+            'locale' => $this->locale,
+            'timezone' => $this->timezone,
+            'avatar_file_id' => $this->avatar_file_id,
             'type' => $this->type,
             'type_label' => $this->typeLabel(),
-            'locale' => $this->locale,
+            
         ];
     }
 
