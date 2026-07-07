@@ -23,6 +23,12 @@ class AcademyModel extends Model {
         'type'
     ];
 
+    protected array $translated = [
+        'title',
+        'summary',
+        'description',
+    ];
+
 
     /*
     |--------------------------------------------------------------------------

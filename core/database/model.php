@@ -37,6 +37,8 @@ abstract class Model {
     protected static string $table;
     protected static string $primaryKey = 'id';
     protected array $relations = [];
+    protected array $translated = [];
+    protected array $translatedAttributes = [];
     protected ?TranslationManager $translator = null;
 
     public function setRelation(string $name, mixed $value): static {
@@ -73,6 +75,44 @@ abstract class Model {
     public function setTrans(string $field, mixed $value, ?string $locale = null, int $version = 1): bool {
         return $this->translator()->set($this, null, $field, $value, $locale, $version);
     }
+
+
+
+    public function getTranslatedAttributes(): array {
+        return $this->translated;
+    }
+
+
+
+    public function setTranslatedAttribute(string $field, mixed $value): void {
+        $this->translatedAttributes[$field] = $value;
+    }
+
+
+
+    public function getTranslatedAttribute(string $field): mixed {
+        return $this->translatedAttributes[$field] ?? null;
+    }
+
+
+
+    public function getDirtyTranslations(): array {
+        return $this->translatedAttributes;
+    }
+
+
+
+    public function clearDirtyTranslations(): void {
+        $this->translatedAttributes = [];
+    }
+
+
+
+    public function hasDirtyTranslations(): bool {
+        return !empty($this->translatedAttributes);
+    }
+
+
 
 
 

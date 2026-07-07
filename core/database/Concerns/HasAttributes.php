@@ -11,16 +11,90 @@ trait HasAttributes {
 
     public function __construct(array $attributes = []){if ($attributes) {$this->forceFill($attributes);}}
 
+    // public function __get(string $key) {
+    //     $value = $this->attributes[$key] ?? null;
+    //     if ($this->relationLoaded($key)) {
+    //         return $this->getRelation($key);
+    //     }
+    //     return $this->castAttribute($key, $value);
+    // }
+
     public function __get(string $key) {
-        $value = $this->attributes[$key] ?? null;
+        /*
+        |--------------------------------------------------------------------------
+        | Loaded Relation
+        |--------------------------------------------------------------------------
+        */
+
         if ($this->relationLoaded($key)) {
             return $this->getRelation($key);
         }
-        return $this->castAttribute($key, $value);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Translated Attribute
+        |--------------------------------------------------------------------------
+        */
+
+        if ($this->isTranslatedAttribute($key)) {
+            $translated = $this->trans($key);
+
+            /*
+            |--------------------------------------------------------------------------
+            | اگر ترجمه وجود داشت همان برگردد
+            |--------------------------------------------------------------------------
+            */
+
+            if ($translated !== null) {
+                return $translated;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | اگر ترجمه وجود نداشت از مقدار اصلی استفاده کن
+            |--------------------------------------------------------------------------
+            */
+
+            if (array_key_exists($key, $this->attributes)) {
+                return $this->castAttribute($key, $this->attributes[$key]);
+            }
+            return null;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Normal Attribute
+        |--------------------------------------------------------------------------
+        */
+
+        if (array_key_exists($key, $this->attributes)) {
+            return $this->castAttribute($key, $this->attributes[$key]);
+        }
+        return null;
     }
 
-    public function __set(string $key, mixed $value): void {$this->attributes[$key] = $value;}
 
+    // public function __set(string $key, mixed $value): void {$this->attributes[$key] = $value;}
+    public function __set(string $key, mixed $value): void {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Translation Attribute
+        |--------------------------------------------------------------------------
+        */
+
+        if ($this->isTranslatedAttribute($key)) {
+            $this->setTranslatedAttribute($key, $value);
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Normal Attribute
+        |--------------------------------------------------------------------------
+        */
+        $this->attributes[$key] = $value;
+    }
 
 
     public function toArray(): array {return $this->attributes;}
@@ -43,6 +117,19 @@ trait HasAttributes {
         };
     }
 
+
+    public function __isset(string $key): bool {
+        if (array_key_exists($key, $this->attributes)) {
+            return true;
+        }
+        return $this->isTranslatedAttribute($key);
+    }
+
+
+
+    protected function isTranslatedAttribute(string $key): bool {
+        return in_array($key, $this->getTranslatedAttributes(), true);
+    }
 
 
 
