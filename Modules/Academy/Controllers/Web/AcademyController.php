@@ -37,7 +37,6 @@ class AcademyController {
     }
 
 
-
     public function show(int $id) {
         return ResponseFactory::view(
             'Academy::show',

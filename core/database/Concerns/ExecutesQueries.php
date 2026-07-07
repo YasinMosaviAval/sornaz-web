@@ -14,6 +14,11 @@ trait ExecutesQueries
         $rows = $stmt->fetchAll();
         if (!$this->modelClass) {return $rows;}
         $models = array_map(fn($row) => new $this->modelClass($row), $rows);
+        $translator = new \Core\Translation\TranslationManager();
+        $translator->warmup(
+            $this->modelClass::getTable(),
+            $models
+        );
         $this->eagerLoadRelations($models);
         (new AggregateLoader($this))->load($models);
         return $models;

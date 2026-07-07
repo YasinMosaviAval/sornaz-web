@@ -78,3 +78,25 @@ function config(string $key, mixed $default = null): mixed {
     return $configs[$file][$item] ?? $default;
 }
 
+
+
+if (!function_exists('component')) {
+    function component(string $view, array $data = []): void {
+        View::component($view, $data);
+    }
+}
+
+
+
+if (!function_exists('componentExists')) {
+    function componentExists(string $view): bool {
+        return View::componentExists($view);
+    }
+}
+
+
+if (!function_exists('e')) {
+    function e(mixed $value): string {
+        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+    }
+}

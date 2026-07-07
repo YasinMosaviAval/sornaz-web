@@ -104,4 +104,26 @@ class TranslationRepository
         return $translation->delete();
     }
 
+
+
+    public function loadMany(
+        string $table,
+        array $ids,
+        ?string $locale = null,
+        int $version = 1
+    ): array {
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        $locale ??= app()->getLocale();
+
+        return Translation::query()
+            ->where('table_name', $table)
+            ->whereIn('table_id', $ids)
+            ->where('locale', $locale)
+            ->where('version', $version)
+            ->get();
+    }
 }
