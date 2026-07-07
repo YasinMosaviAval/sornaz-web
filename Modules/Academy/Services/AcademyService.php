@@ -42,9 +42,8 @@ class AcademyService {
     }
 
 
-    public function findById(int $id) {
+    public function findById(int $id): ?AcademyModel {
         return $this->repository->findById($id);
     }
-
 
 }

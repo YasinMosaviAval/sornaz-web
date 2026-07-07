@@ -1,88 +1,14 @@
 <?php
 
 namespace Core\Database;
-/*
-
-    abstract class Repository {
-        protected string $table;
-
-        protected string $primaryKey = 'id';
-
-        public function all(): array
-        {
-            return DB::table(
-                $this->table
-            )->get();
-        }
-
-        public function find(
-            int $id
-        ): ?array {
-
-            return DB::table(
-                $this->table
-            )->find(
-                $id,
-                $this->primaryKey
-            );
-        }
-
-        public function create(
-            array $data
-        ): bool {
-
-            return DB::table(
-                $this->table
-            )->insert($data);
-        }
-
-        public function update(
-            int $id,
-            array $data
-        ): bool {
-
-            return DB::table(
-                $this->table
-            )
-            ->where(
-                $this->primaryKey,
-                $id
-            )
-            ->update($data);
-        }
-
-        public function delete(
-            int $id
-        ): bool {
-
-            return DB::table(
-                $this->table
-            )
-            ->where(
-                $this->primaryKey,
-                $id
-            )
-            ->delete();
-        }
-    }
-*/
-
-
 
 use RuntimeException;
 
-abstract class Repository
-{
-    /**
-     * اگر Repository روی Model کار کند
-     */
+abstract class Repository {
+
+
     protected ?string $model = null;
-
-    /**
-     * اگر Repository مستقیماً روی جدول کار کند
-     */
     protected string $table;
-
     protected string $primaryKey = 'id';
 
     /**
@@ -98,149 +24,106 @@ abstract class Repository
     /**
      * دریافت همه رکوردها
      */
-    public function all(): array
-    {
+    public function all(): array {
         return $this->query()->get();
     }
 
     /**
      * اولین رکورد
      */
-    public function first(): mixed
-    {
+    public function first(): mixed {
         return $this->query()->first();
     }
 
     /**
      * یافتن بر اساس کلید اصلی
      */
-    public function find(int|string $id): mixed
-    {
-        return $this->query()->find(
-            $id,
-            $this->primaryKey
-        );
+    public function find(int|string $id): mixed {
+        return $this->query()->find($id, $this->primaryKey);
     }
 
     /**
      * یافتن یا Exception
      */
-    public function findOrFail(int|string $id): mixed
-    {
+    public function findOrFail(int|string $id): mixed {
         $record = $this->find($id);
-
         if (!$record) {
-            throw new RuntimeException(
-                "Record [$id] not found."
-            );
+            throw new RuntimeException("Record [$id] not found.");
         }
-
         return $record;
     }
 
     /**
      * ایجاد رکورد
      */
-    public function create(array $data): bool
-    {
+    public function create(array $data): bool {
         if ($this->model !== null) {
             return $this->model::create($data);
         }
-
         return $this->query()->insert($data);
     }
 
     /**
      * بروزرسانی
      */
-    public function update(
-        int|string $id,
-        array $data
-    ): bool {
-
+    public function update(int|string $id, array $data): bool {
         if ($this->model !== null) {
-
             $model = $this->find($id);
-
             if (!$model) {
                 return false;
             }
-
             return $model->update($data);
         }
-
-        return $this->query()
-            ->where(
-                $this->primaryKey,
-                $id
-            )
-            ->update($data);
-
+        return $this->query()->where($this->primaryKey, $id)->update($data);
     }
 
     /**
      * حذف
      */
-    public function delete(
-        int|string $id
-    ): bool {
-
+    public function delete(int|string $id): bool {
         if ($this->model !== null) {
-
             $model = $this->find($id);
-
             if (!$model) {
                 return false;
             }
-
             return $model->delete();
         }
-
-        return $this->query()
-            ->where(
-                $this->primaryKey,
-                $id
-            )
-            ->delete();
-
+        return $this->query()->where($this->primaryKey, $id)->delete();
     }
 
     /**
      * تعداد رکوردها
      */
-    public function count(): int
-    {
+    public function count(): int {
         return $this->query()->count();
     }
 
     /**
      * وجود رکورد
      */
-    public function exists(): bool
-    {
+    public function exists(): bool {
         return $this->count() > 0;
     }
 
     /**
      * صفحه‌بندی
      */
-    public function paginate(
-        int $page = 1,
-        int $perPage = 20
-    ): array {
-
-        return $this->query()->paginate(
-            $page,
-            $perPage
-        );
-
+    public function paginate(int $page = 1, int $perPage = 20): array {
+        return $this->query()->paginate($page, $perPage);
     }
 
     /**
      * دسترسی مستقیم به Builder
      */
-    public function builder(): Builder
-    {
+    public function builder(): Builder {
         return $this->query();
     }
+
+
+
+
+
+
+
+
 }

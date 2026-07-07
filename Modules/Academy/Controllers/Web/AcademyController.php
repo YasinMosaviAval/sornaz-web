@@ -7,6 +7,7 @@ use Modules\Academy\Services\AcademyService;
 use Modules\Academy\Requests\AcademyIndexRequest;
 use Modules\Academy\Repositories\AcademyRepository;
 use Modules\Academy\Requests\AcademyStoreRequest;
+use Modules\Academy\Requests\AcademyUpdateRequest;
 
 use Core\Http\ResponseFactory;
 use Modules\Academy\Resources\AcademyResource;
@@ -46,15 +47,11 @@ class AcademyController {
 
 
 
-    public function update(int $id, array $request){
-        $request=(new AcademyIndexRequest())->validate($request);
-        return $this->service->update($id,$request);
-    }
-
-
-
-    public function destroy(int $id) {
-        return $this->service->delete($id);
+    public function update(int $id) {
+        $request = new AcademyUpdateRequest($_POST);
+        $data = $request->validate();
+        $this->service->update($id, $data);
+        return redirect('/academy');
     }
 
 
@@ -71,6 +68,29 @@ class AcademyController {
         $this->service->create($data);
         return redirect('/academy');
     }
+
+
+
+    public function edit(int $id) {
+        return ResponseFactory::view(
+            'Academy::edit',
+            ['academy' => AcademyResource::make($this->service->findById($id))->resolve()]
+        );
+    }
+
+
+
+    public function destroy(int $id) {
+        $this->service->delete($id);
+        return redirect('/academy');
+    }
+
+
+
+
+
+
+
 
 
 }
