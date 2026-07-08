@@ -1,10 +1,8 @@
 <?php
-
-use Core\View\View;
-
+// use Core\View\View;
 ?>
 
-<div class="sn-sidebar">
+<!-- <div class="sn-sidebar">
     <div class="sn-sidebar-header">
         <div class="sn-logo">
             SORNAZ
@@ -12,7 +10,8 @@ use Core\View\View;
     </div>
 
     <div class="sn-sidebar-menu">
-        <?php
+        <?
+            /*
             View::component('layout.sidebar-item',[
                 'icon'=>'home',
                 'title'=>'داشبورد',
@@ -28,6 +27,23 @@ use Core\View\View;
                 'title'=>'شعب',
                 'url'=>'/branches'
             ]);
+            */
         ?>
     </div>
+</div> -->
+
+
+<div class="sidebar-logo">
+    <h2>SORNAZ</h2>
 </div>
+
+<nav class="sidebar-menu">
+    <a href="/dashboard">داشبورد</a>
+    <a href="/dashboard/academies">آموزشگاه‌ها</a>
+    <a href="#">شعبه‌ها</a>
+    <a href="#">مدرسین</a>
+    <a href="#">هنرجویان</a>
+    <a href="#">کلاس‌ها</a>
+    <a href="#">مالی</a>
+    <a href="#">تنظیمات</a>
+</nav>

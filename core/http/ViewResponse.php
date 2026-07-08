@@ -2,80 +2,48 @@
 
 namespace Core\Http;
 
-use RuntimeException;
+use Core\View\View;
 
-class ViewResponse implements ResponseInterface
-{
-    public function __construct(
-        protected string $view,
-        protected array $data = []
-    ) {
+class ViewResponse implements ResponseInterface {
+
+
+    protected View $view;
+
+
+    public function __construct(string $view, array $data = []) {
+        $this->view = new View($view, $data);
     }
 
-    public function send(): void
-    {
-        extract($this->data);
-
-        include $this->resolveViewPath();
+    public function send(): void {
+        echo $this->view->render();
     }
 
-    protected function resolveViewPath(): string
-    {
-        /*
-        |--------------------------------------------------------------------------
-        | Module View
-        |--------------------------------------------------------------------------
-        |
-        | Academy::index
-        | Academy::teacher.profile
-        |
-        */
 
-        if (str_contains($this->view, '::')) {
-
-            [$module, $view] = explode(
-                '::',
-                $this->view,
-                2
-            );
-
-            $view = str_replace(
-                '.',
-                DIRECTORY_SEPARATOR,
-                $view
-            );
-
-            $path = base_path(
-                "Modules/{$module}/Resources/Views/{$view}.php"
-            );
-
-            if (file_exists($path)) {
-                return $path;
-            }
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Default Resources View
-        |--------------------------------------------------------------------------
-        */
-
-        $view = str_replace(
-            '.',
-            DIRECTORY_SEPARATOR,
-            $this->view
-        );
-
-        $path = base_path(
-            "resources/views/{$view}.php"
-        );
-
-        if (file_exists($path)) {
-            return $path;
-        }
-
-        throw new RuntimeException(
-            "View [{$this->view}] not found."
-        );
+    public function layout(string $layout): static {
+        $this->view->layout($layout);
+        return $this;
     }
+
+
+    public function title(string $title): static {
+        $this->view->title($title);
+        return $this;
+    }
+
+
+    public function breadcrumb(mixed $breadcrumb): static {
+        $this->view->breadcrumb($breadcrumb);
+        return $this;
+    }
+
+
+    public function toolbar(mixed $toolbar): static {
+        $this->view->toolbar($toolbar);
+        return $this;
+    }
+
+
+
+
+
 }

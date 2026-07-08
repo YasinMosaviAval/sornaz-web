@@ -5,12 +5,10 @@ namespace Core\Translation;
 use Core\Database\Model;
 
 class Translation extends Model {
-    
-    use HasTranslations;
 
     protected static string $table = 'translations';
-    protected static string $primaryKey = 'translation_id';
 
+    protected static string $primaryKey = 'translation_id';
 
     protected array $fillable = [
         'table_name',
@@ -20,6 +18,7 @@ class Translation extends Model {
         'value',
         'version',
     ];
+
 
 
 
