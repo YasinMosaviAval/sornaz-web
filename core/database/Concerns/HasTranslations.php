@@ -4,25 +4,23 @@ namespace Core\Database\Concerns;
 
 use Core\Translation\TranslationService;
 
-trait HasTranslations
-{
+trait HasTranslations {
+
+
+    protected array $translated = [];
+
+
 
     /**
      * دریافت ترجمه یک فیلد
      */
-    public function translate(
-        string $field,
-        ?string $locale = null,
-        int $version = 1
-    ): mixed {
-
+    public function translate(string $field, ?string $locale = null, int $version = 1): mixed {
         return TranslationService::manager()->get(
             $this,
             $field,
             $locale,
             $version
         );
-
     }
 
 
@@ -30,13 +28,7 @@ trait HasTranslations
     /**
      * ثبت یا بروزرسانی ترجمه
      */
-    public function setTranslation(
-        string $field,
-        mixed $value,
-        ?string $locale = null,
-        int $version = 1
-    ): bool {
-
+    public function setTranslation(string $field, mixed $value, ?string $locale = null, int $version = 1): bool {
         return TranslationService::manager()->set(
             $this,
             $field,
@@ -44,7 +36,6 @@ trait HasTranslations
             $locale,
             $version
         );
-
     }
 
 
@@ -52,19 +43,13 @@ trait HasTranslations
     /**
      * بررسی وجود ترجمه
      */
-    public function hasTranslation(
-        string $field,
-        ?string $locale = null,
-        int $version = 1
-    ): bool {
-
+    public function hasTranslation(string $field, ?string $locale = null, int $version = 1): bool {
         return TranslationService::manager()->exists(
             $this,
             $field,
             $locale,
             $version
         );
-
     }
 
 
@@ -72,19 +57,16 @@ trait HasTranslations
     /**
      * حذف ترجمه
      */
-    public function removeTranslation(
-        string $field,
-        ?string $locale = null,
-        int $version = 1
-    ): bool {
-
+    public function removeTranslation(string $field, ?string $locale = null, int $version = 1): bool {
         return TranslationService::manager()->delete(
             $this,
             $field,
             $locale,
             $version
         );
-
     }
+
+
+
 
 }

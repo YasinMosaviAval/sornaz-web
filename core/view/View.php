@@ -5,13 +5,13 @@ namespace Core\View;
 class View {
 
 
-
     protected string $view;
     protected array $data;
     protected ?string $layout = null;
     protected ?string $title = null;
     protected mixed $breadcrumb = null;
     protected mixed $toolbar = null;
+    protected ?string $resolvedPath = null;
 
 
     public function __construct(string $view, array $data = []) {
@@ -21,11 +21,55 @@ class View {
 
 
 
-    public function render(): string {
-        $path = base_path('views/' . str_replace('.', '/', $this->view) . '.php');
-        if (!file_exists($path)) {
-            throw new \Exception("View [{$this->view}] not found.");
+    protected function resolveViewPath(): string {
+        if ($this->resolvedPath !== null) {
+            return $this->resolvedPath;
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Module View
+        |--------------------------------------------------------------------------
+        */
+
+        if (str_contains($this->view, '::')) {
+            [$module, $view] = explode('::', $this->view, 2);
+            $view = str_replace('.', DIRECTORY_SEPARATOR, $view);
+            $path = base_path("Modules/{$module}/Resources/Views/{$view}.php");
+            if (file_exists($path)) {
+                return $this->resolvedPath = $path;
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | resources/views
+        |--------------------------------------------------------------------------
+        */
+
+        $view = str_replace('.', DIRECTORY_SEPARATOR, $this->view);
+        $path = base_path("resources/views/{$view}.php");
+        if (file_exists($path)) {
+            return $this->resolvedPath = $path;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | legacy views
+        |--------------------------------------------------------------------------
+        */
+
+        $path = base_path("views/{$view}.php");
+        if (file_exists($path)) {
+            return $this->resolvedPath = $path;
+        }
+        throw new \RuntimeException("View [{$this->view}] not found.");
+    }
+
+
+
+    public function render(): string {
+        $path = $this->resolveViewPath();
         extract($this->data);
         ob_start();
         require $path;
@@ -33,7 +77,10 @@ class View {
         if (!$this->layout) {
             return $content;
         }
-        $layoutPath = base_path('views/layouts/' . $this->layout . '.php');
+        $layoutPath = base_path("resources/views/layouts/{$this->layout}.php");
+        if (!file_exists($layoutPath)) {
+            $layoutPath = base_path("views/layouts/{$this->layout}.php");
+        }
         ob_start();
         $title = $this->title;
         $breadcrumb = $this->breadcrumb;
@@ -53,6 +100,9 @@ class View {
 
     public static function component(string $view, array $data = []): void {
         $path = base_path('resources/views/components/' . str_replace('.', '/', $view) . '.php');
+        if (!file_exists($path)) {
+            $path = base_path('views/components/' . str_replace('.', '/', $view) . '.php');
+        }
         if (!file_exists($path)) {
             throw new \Exception("Component [$view] not found.");
         }
@@ -96,6 +146,10 @@ class View {
             base_path('views/components/' . str_replace('.', '/', $component) . '.php')
         );
     }
+
+
+
+
 
 
 

@@ -32,9 +32,12 @@ class AcademyController {
         $items = $this->service->paginate($request);
         return ResponseFactory::view(
             'Academy::index',
-            ['academies' => (new ResourceCollection($items, AcademyResource::class))->resolve()]
-        );
+            ['academies'=>(new ResourceCollection($items, AcademyResource::class))->resolve()]
+        )
+        ->layout('dashboard')
+        ->title('مدیریت آموزشگاه‌ها');
     }
+
 
 
     public function show(int $id) {

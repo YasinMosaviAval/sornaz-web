@@ -11,13 +11,6 @@ trait HasAttributes {
 
     public function __construct(array $attributes = []){if ($attributes) {$this->forceFill($attributes);}}
 
-    // public function __get(string $key) {
-    //     $value = $this->attributes[$key] ?? null;
-    //     if ($this->relationLoaded($key)) {
-    //         return $this->getRelation($key);
-    //     }
-    //     return $this->castAttribute($key, $value);
-    // }
 
     public function __get(string $key) {
         /*
@@ -37,7 +30,7 @@ trait HasAttributes {
         */
 
         if ($this->isTranslatedAttribute($key)) {
-            $translated = $this->trans($key);
+            $translated = $this->translate($key);
 
             /*
             |--------------------------------------------------------------------------
@@ -131,6 +124,10 @@ trait HasAttributes {
         return in_array($key, $this->getTranslatedAttributes(), true);
     }
 
+
+    protected function setTranslatedAttribute(string $key, mixed $value): void {
+        $this->setTranslation($key, $value);
+    }
 
 
 }
