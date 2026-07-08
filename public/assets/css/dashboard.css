@@ -61,3 +61,49 @@ body{
 .sn-content{
     padding:30px;
 }
+
+.sn-table-wrapper{
+    overflow:auto;
+}
+
+.sn-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.sn-table th{
+    text-align:right;
+    padding:14px;
+    border-bottom:1px solid #e5e7eb;
+}
+
+.sn-table td{
+    padding:14px;
+    border-bottom:1px solid #f1f5f9;
+}
+
+.sn-table tr:hover{
+    background:#fafafa;
+}
+
+.sn-pagination{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin-top:24px;
+}
+
+.sn-page{
+    padding:8px 14px;
+    border-radius:8px;
+    text-decoration:none;
+    background:#fff;
+    border:1px solid #ddd;
+}
+
+.sn-page.active{
+    background:#2563eb;
+    color:#fff;
+    border-color:#2563eb;
+}
+

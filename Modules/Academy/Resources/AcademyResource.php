@@ -19,7 +19,7 @@ class AcademyResource extends JsonResource
             'avatar_file_id' => $this->avatar_file_id,
             'type' => $this->type,
             'type_label' => $this->typeLabel(),
-            
+            'created_at' => $this->created_at,
         ];
     }
 

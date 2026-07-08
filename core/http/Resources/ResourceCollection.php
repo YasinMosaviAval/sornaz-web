@@ -21,24 +21,54 @@ class ResourceCollection implements Countable, IteratorAggregate {
     }
 
 
-    public function resolve(): array
-    {
-        $result = [];
+    // public function resolve(): array {
+    //     $result = [];
+    //     foreach ($this->items as $item) {
+    //         $result[] =
+    //             new $this->resource(
+    //                 $item
+    //             );
+    //         $result[array_key_last($result)] =
+    //             $result[array_key_last($result)]
+    //                 ->resolve();
+    //     }
+    //     return $result;
+    // }
 
-        foreach ($this->items as $item) {
 
-            $result[] =
-                new $this->resource(
-                    $item
-                );
 
-            $result[array_key_last($result)] =
-                $result[array_key_last($result)]
-                    ->resolve();
+    public function resolve(): array {
+        /*
+        |--------------------------------------------------------------------------
+        | Paginated Result
+        |--------------------------------------------------------------------------
+        */
+        if (is_array($this->items) && isset($this->items['data'])) {
+            $rows = [];
+            foreach ($this->items['data'] as $item) {
+                $rows[] = (new $this->resource($item))->resolve();
+            }
+            return [
+                'data' => $rows,
+                'total' => $this->items['total'],
+                'page' => $this->items['page'],
+                'per_page' => $this->items['per_page'],
+                'last_page' => $this->items['last_page'],
+            ];
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Normal Collection
+        |--------------------------------------------------------------------------
+        */
+        $result = [];
+        foreach ($this->items as $item) {
+            $result[] = (new $this->resource($item))->resolve();
+        }
         return $result;
     }
+
 
 
     public function toArray(): array
@@ -79,3 +109,5 @@ class ResourceCollection implements Countable, IteratorAggregate {
         );
     }
 }
+
+
