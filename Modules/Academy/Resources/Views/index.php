@@ -19,6 +19,7 @@
 ob_start();
 ?>
 
+
 <table class="sn-table">
     <thead>
         <tr>
@@ -33,27 +34,27 @@ ob_start();
     <tbody>
     <?php foreach($academies['data'] as $academy): ?>
         <tr>
-            <td><?= $academy->user_id ?></td>
-            <td><?= e($academy->name) ?></td>
+            <td><?= $academy['id'] ?></td>
+            <td><?= e($academy['username']) ?></td>
             <td>
                 <?php
                 component(
                     'ui.badge',
                     [
-                        'type'=>$academy->status?'success':'danger',
-                        'text'=>$academy->status?'فعال':'غیرفعال'
+                        'type'=>$academy['status']?'success':'danger',
+                        'text'=>$academy['status']?'فعال':'غیرفعال'
                     ]
                 );
                 ?>
             </td>
-            <td><?= e($academy->city ?? '-') ?></td>
-            <td><?= e($academy->created_at) ?></td>
+            <td><?= e($academy['city'] ?? '-') ?></td>
+            <td><?= e($academy['created_at']) ?></td>
             <td>
                 <?php
                 component(
                     'ui.button',
                     [
-                        'url'=>"/dashboard/academies/{$academy->user_id}/edit",
+                        'url'=>"/dashboard/academies/{$academy['id']}/edit",
                         'text'=>'ویرایش',
                         'type'=>'primary'
                     ]
@@ -64,6 +65,22 @@ ob_start();
     <?php endforeach; ?>
     </tbody>
 </table>
+
+
+
+<?php
+component(
+    'ui.pagination',
+    [
+        'pagination' => [
+            'current_page' => $academies['page'],
+            'last_page'    => $academies['last_page']
+        ]
+    ]
+);
+?>
+
+
 
 <?php
 $table=ob_get_clean();
