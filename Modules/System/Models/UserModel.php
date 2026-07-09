@@ -8,7 +8,7 @@ use Core\Database\SoftDeletes;
 use Modules\Content\Models\Post;
 use Modules\System\Models\Role;
 
-class User extends Model {
+class UserModel extends Model {
     protected static string $table = 'users';
     protected static string $primaryKey = 'user_id';
     protected array $casts = [
@@ -22,8 +22,12 @@ class User extends Model {
     protected array $fillable = [
         'username',
         'email',
-        // 'password',
-        // 'status'
+        'phone',
+        'status',
+        'locale',
+        'timezone',
+        'avatar_file_id',
+        'type',
     ];
 
     use SoftDeletes;
@@ -73,11 +77,11 @@ class User extends Model {
     }
 
 
-    public function profile() {
-        return $this->hasOne(
-            Profile::class,
-            'user_id',
-            'user_id'
-        );
-    }
+    // public function profile() {
+    //     return $this->hasOne(
+    //         Profile::class,
+    //         'user_id',
+    //         'user_id'
+    //     );
+    // }
 }

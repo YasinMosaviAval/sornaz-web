@@ -18,7 +18,6 @@ class ViewResponse implements ResponseInterface {
         echo $this->view->render();
     }
 
-
     public function layout(string $layout): static {
         $this->view->layout($layout);
         return $this;

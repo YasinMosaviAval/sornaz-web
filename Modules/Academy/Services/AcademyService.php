@@ -4,11 +4,19 @@ namespace Modules\Academy\Services;
 
 use Modules\Academy\Models\AcademyModel;
 use Modules\Academy\Repositories\AcademyRepository;
+use Modules\System\Repositories\UserRepository;
 use Modules\Academy\Requests\AcademyIndexRequest;
+use Modules\System\Models\UserModel;
 
 class AcademyService {
 
-    public function __construct(protected AcademyRepository $repository) {}
+    protected AcademyRepository $academyRepository;
+    protected UserRepository $userRepository;
+
+    public function __construct(protected AcademyRepository $repository) {
+        $this->academyRepository = $repository;
+        $this->userRepository = app()->container()->make(UserRepository::class);
+    }
 
     public function list(): array{return $this->repository->getActive();}
 
@@ -18,10 +26,49 @@ class AcademyService {
 
     public function find(int $id) {return $this->repository->find($id);}
 
-    public function create(array $data): bool {
-        $data['type'] = 'academy';
-        return $this->repository->create($data);
+
+    public function create(array $data): mixed {
+        /*
+        |--------------------------------------------------------------------------
+        | ایجاد User
+        |--------------------------------------------------------------------------
+        */
+        // $user = $this->userRepository->create([
+        //     'username' => $data['username'],
+        //     'email'    => $data['email'] ?? null,
+        //     'phone'    => $data['phone'] ?? null,
+        //     'type'     => 'academy',
+        //     'status'   => $data['status'],
+        //     'locale'   => $data['locale'],
+        //     'timezone' => $data['timezone'],
+        // ]);
+
+        $this->userRepository->create([
+            'username' => $data['username'],
+            'email'    => $data['email'] ?? null,
+            'phone'    => $data['phone'] ?? null,
+            'type'     => 'academy',
+            'status'   => $data['status'],
+            'locale'   => $data['locale'],
+            'timezone' => $data['timezone'],
+        ]);
+
+        $user = UserModel::query()->where('username', $data['username'])->first();
+        if(!$user){
+            return false;
+        }
+        /*
+        |--------------------------------------------------------------------------
+        | ایجاد Academy
+        |--------------------------------------------------------------------------
+        */
+        // dump($user);
+        return $this->academyRepository->create(['user_id' => $user->user_id,]);
     }
+
+
+
+
 
     public function update(int $id, array $data): bool {return $this->repository->update($id, $data);}
 

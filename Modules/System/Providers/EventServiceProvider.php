@@ -6,9 +6,10 @@ use Modules\System\Events\UserCreated;
 use Modules\System\Listeners\SendWelcomeEmail;
 use Modules\System\Listeners\CreateTranslationRecord;
 use Modules\System\Listeners\WriteAuditLog;
-use Modules\System\Models\User;
+
 use Modules\System\Observers\UserObserver;
 use Core\Providers\ServiceProvider;
+use Modules\System\Models\UserModel;
 
 class EventServiceProvider extends ServiceProvider {
 
@@ -29,7 +30,7 @@ class EventServiceProvider extends ServiceProvider {
      * Model => Observer
      */
     protected array $observers = [
-        User::class => UserObserver::class,
+        UserModel::class => UserObserver::class,
         //     Role::class => RoleObserver::class,
         //     Post::class => PostObserver::class,
     ];
@@ -76,7 +77,7 @@ class EventServiceProvider extends ServiceProvider {
 
 
     public function boot(): void {
-        User::observe(UserObserver::class);
+        UserModel::observe(UserObserver::class);
     }
 
 }

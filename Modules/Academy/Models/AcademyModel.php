@@ -7,20 +7,26 @@ use Modules\Academy\Scopes\AcademyScope;
 
 class AcademyModel extends Model {
 
-    protected static string $table = 'users';
-    protected static string $primaryKey = 'user_id';
+    // protected static string $table = 'users';
+    // protected static string $primaryKey = 'user_id';
+    protected static string $table='academies';
+    protected static string $primaryKey='academy_id';
 
 
+
+    // protected array $fillable = [
+    //     'username',
+    //     'email',
+    //     'phone',
+    //     'status',
+    //     'locale',
+    //     'timezone',
+    //     'avatar_file_id',
+    //     'type'
+    // ];
 
     protected array $fillable = [
-        'username',
-        'email',
-        'phone',
-        'status',
-        'locale',
-        'timezone',
-        'avatar_file_id',
-        'type'
+        'user_id',
     ];
 
     protected array $translated = [
