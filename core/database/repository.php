@@ -38,7 +38,7 @@ abstract class Repository {
     /**
      * یافتن بر اساس کلید اصلی
      */
-    public function find(int|string $id): mixed {
+    public function find(int $id): ?array {
         return $this->query()->find($id, $this->primaryKey);
     }
 
@@ -58,7 +58,7 @@ abstract class Repository {
      */
     public function create(array $data): bool {
         if ($this->model !== null) {
-            return $this->model::create($data);
+            return $this->query()->insert($data);
         }
         return $this->query()->insert($data);
     }

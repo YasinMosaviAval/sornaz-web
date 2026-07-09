@@ -302,8 +302,6 @@ Router::group(
 );
 
 
-
-
 Router::get(
     '/admin/academies',
     [AcademyController::class,'index']

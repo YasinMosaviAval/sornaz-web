@@ -59,7 +59,7 @@ class AcademyController {
 
 
     public function create() {
-        return ResponseFactory::view('Academy::create');
+        return ResponseFactory::view('Academy::create')->layout('dashboard')->title('ایجاد آموزشگاه');
     }
 
 

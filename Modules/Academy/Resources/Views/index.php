@@ -7,7 +7,7 @@
     component(
         'ui.button',
         [
-            'url'=>'/dashboard/academies/create',
+            'url'=>'/academy/create',
             'text'=>'ایجاد آموزشگاه',
             'type'=>'success'
         ]

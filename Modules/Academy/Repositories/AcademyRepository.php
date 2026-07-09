@@ -8,10 +8,12 @@ use Modules\Academy\Requests\AcademyIndexRequest;
 
 class AcademyRepository extends Repository {
 
-    protected string $table = 'users';
-    protected string $primaryKey = 'user_id';
+    // protected string $table = 'users';
+    // protected string $primaryKey = 'user_id';
+    // protected ?string $model = AcademyModel::class;
+    protected string $table = 'academies';
+    protected string $primaryKey = 'academy_id';
     protected ?string $model = AcademyModel::class;
-
 
 
     public function getActive(): array {
@@ -43,9 +45,6 @@ class AcademyRepository extends Repository {
         );
     }
 
-    // public function findById(int $id) {
-    //     return $this->query()->where('user_id', $id)->first();
-    // }
 
     public function existsByUsername(string $username): bool {
         return $this->query()->where('username', $username)->exists();
@@ -60,15 +59,6 @@ class AcademyRepository extends Repository {
     public function findById(int $id): ?AcademyModel {
         return AcademyModel::find($id);
     }
-
-
-    // public function delete(int $id): bool
-    // {
-    //     return $this->update($id, [
-    //         'deleted_at' => date('Y-m-d H:i:s')
-    //     ]);
-    // }
-
 
 
 }

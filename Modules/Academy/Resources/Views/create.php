@@ -1,32 +1,103 @@
-<h1>ایجاد آموزشگاه</h1>
+<h1 class="page-title">ایجاد آموزشگاه</h1>
+<div class="page-toolbar">
+    <?
+    component(
+        'ui.button',
+        [
+            'url'  => '/academy',
+            'text' => 'بازگشت',
+            'type' => 'secondary'
+        ]
+    );
+    ?>
+</div>
 
 <form method="post" action="/academy">
-    <div>
-        <label>نام کاربری</label>
-        <input type="text" name="username">
+    <?
+    ob_start();
+    ?>
+    <?
+    component(
+        'ui.input',
+        [
+            'label' => 'نام کاربری',
+            'name'  => 'username'
+        ]
+    );
+    ?>
+    <?
+    component(
+        'ui.input',
+        [
+            'label' => 'ایمیل',
+            'name'  => 'email',
+            'type'  => 'email'
+        ]
+    );
+    ?>
+    <?
+    component(
+        'ui.input',
+        [
+            'label' => 'موبایل',
+            'name'  => 'phone'
+        ]
+    );
+    ?>
+    <?
+    component(
+        'ui.select',
+        [
+            'label' => 'وضعیت',
+            'name'  => 'status',
+            'value' => 'approved',
+            'options' => [
+                'approved' => 'فعال',
+                'pending' => 'غیرفعال'
+            ]
+        ]
+    );
+    ?>
+    <?
+    component(
+        'ui.input',
+        [
+            'label' => 'Locale',
+            'name'  => 'locale',
+            'value' => 'fa'
+        ]
+    );
+    ?>
+    <?
+    component(
+        'ui.input',
+        [
+            'label' => 'Timezone',
+            'name'  => 'timezone',
+            'value' => 'Asia/Tehran'
+        ]
+    );
+    ?>
+    <div style="margin-top:24px;">
+        <?
+        component(
+            'ui.button',
+            [
+                'text' => 'ذخیره آموزشگاه',
+                'type' => 'success',
+                'submit' => true
+            ]
+        );
+        ?>
     </div>
-    <div>
-        <label>ایمیل</label>
-        <input type="email" name="email">
-    </div>
-    <div>
-        <label>موبایل</label>
-        <input type="text" name="phone">
-    </div>
-    <div>
-        <label>وضعیت</label>
-        <select name="status">
-            <option value="approved">فعال</option>
-            <option value="pending">غیرفعال</option>
-        </select>
-    </div>
-    <div>
-        <label>Locale</label>
-        <input type="text" name="locale" value="fa">
-    </div>
-    <div>
-        <label>Timezone</label>
-        <input type="text" name="timezone" value="Asia/Tehran">
-    </div>
-    <button type="submit">ذخیره آموزشگاه</button>
+    <?
+    $form = ob_get_clean();
+    component(
+        'ui.card',
+        [
+            'title' => 'اطلاعات آموزشگاه',
+            'slot'  => $form
+        ]
+    );
+    ?>
 </form>
