@@ -2,33 +2,36 @@
 
 namespace Modules\Academy\Requests;
 
-use Core\Validation\Validator;
-use Core\Validation\ValidationException;
+use Core\Validation\FormRequest;
 
-class AcademyUpdateRequest
-{
-    protected array $data;
+class AcademyUpdateRequest extends FormRequest {
 
-    public function __construct(array $data)
-    {
-        $this->data = $data;
+
+
+    public function authorize(): bool {
+        return true;
     }
 
-    public function validate(): array
-    {
-        $validator = new Validator();
 
-        $rules = [
-            'username' => 'required|min:3',
-            'email'    => 'email',
+
+    public function rules(): array {
+        return [
+            'username'=>'required|min:3|max:100',
+            'email'=>'nullable|email',
+            'phone'=>'nullable',
+            'status'=>'required|in:approved,pending',
+            'locale'=>'nullable|max:10',
+            'timezone'=>'nullable|max:100',
         ];
-
-        if (!$validator->validate($this->data, $rules)) {
-            throw new ValidationException(
-                $validator->errors()
-            );
-        }
-
-        return $this->data;
     }
+
+
+
+    public function messages(): array {
+        return [];
+    }
+
+
+
+
 }
