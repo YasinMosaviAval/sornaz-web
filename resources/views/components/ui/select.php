@@ -1,3 +1,12 @@
+<?php
+
+$current = old(
+    $name ?? '',
+    $value ?? null
+);
+
+?>
+
 <div class="sn-form-group">
 
     <?php if (!empty($label)): ?>
@@ -8,7 +17,7 @@
     
     <select name="<?= e($name) ?>" class="sn-input">
         <?php foreach($options as $key=>$text): ?>
-            <option value="<?= e($key) ?>" <?= ($value ?? '') == $key ? 'selected' : '' ?>>
+            <option value="<?= e($key) ?>" <?= $current == $key ? 'selected' : '' ?>>
                 <?= e($text) ?>
             </option>
         <?php endforeach; ?>

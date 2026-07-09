@@ -166,3 +166,36 @@ body{
     background:#f1f5f9;
     color:#0f172a;
 }
+
+
+.sn-grid{
+    display:grid;
+    gap:20px;
+}
+
+.sn-grid-2{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+}
+
+.sn-form-group{
+    display:flex;
+    flex-direction:column;
+}
+
+.sn-divider{
+    margin:24px 0;
+    border:none;
+    border-top:1px solid #e5e7eb;
+}
+
+.sn-form-actions{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:24px;
+}
+
+@media(max-width:768px){
+    .sn-grid-2{
+        grid-template-columns:1fr;
+    }
+}

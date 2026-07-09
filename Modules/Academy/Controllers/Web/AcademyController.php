@@ -10,6 +10,7 @@ use Modules\Academy\Requests\AcademyStoreRequest;
 use Modules\Academy\Requests\AcademyUpdateRequest;
 
 use Core\Http\ResponseFactory;
+use Core\Validation\ValidationException;
 use Modules\Academy\Resources\AcademyResource;
 
 class AcademyController {
@@ -64,13 +65,23 @@ class AcademyController {
 
 
 
+    // public function store() {
+    //     $request = new AcademyStoreRequest($_POST);
+    //     $data = $request->validate();
+    //     $this->service->create($data);
+    //     return redirect('/academy');
+    // }
     public function store() {
-        $request = new AcademyStoreRequest($_POST);
-        $data = $request->validate();
-        $this->service->create($data);
-        return redirect('/academy');
+        try {
+            $request = new AcademyStoreRequest($_POST);
+            $data = $request->validate();
+            $this->service->create($data);
+            return redirect('/academy');
+        }
+        catch (ValidationException $e) {
+            return redirect('/academy/create')->withInput($_POST)->withErrors($e->getErrors());
+        }
     }
-
 
 
     public function edit(int $id) {

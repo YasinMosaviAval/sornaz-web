@@ -100,3 +100,17 @@ if (!function_exists('e')) {
         return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
     }
 }
+
+
+if (!function_exists('old')) {
+    function old(string $key, mixed $default = null): mixed {
+        $old = session()->get('_old_input', []);
+        return $old[$key] ?? $default;
+    }
+}
+
+if (!function_exists('errors')) {
+    function errors(): array {
+        return session()->get('_errors', []);
+    }
+}
