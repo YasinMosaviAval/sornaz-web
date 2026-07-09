@@ -1,6 +1,9 @@
-<h1 class="page-title">ایجاد آموزشگاه</h1>
+<h1 class="page-title">
+    ایجاد آموزشگاه
+</h1>
+
 <div class="page-toolbar">
-    <?
+    <?php
     component(
         'ui.button',
         [
@@ -12,92 +15,223 @@
     ?>
 </div>
 
-<form method="post" action="/academy">
-    <?
-    ob_start();
-    ?>
-    <?
-    component(
-        'ui.input',
-        [
-            'label' => 'نام کاربری',
-            'name'  => 'username'
-        ]
-    );
-    ?>
-    <?
-    component(
-        'ui.input',
-        [
-            'label' => 'ایمیل',
-            'name'  => 'email',
-            'type'  => 'email'
-        ]
-    );
-    ?>
-    <?
-    component(
-        'ui.input',
-        [
-            'label' => 'موبایل',
-            'name'  => 'phone'
-        ]
-    );
-    ?>
-    <?
-    component(
-        'ui.select',
-        [
-            'label' => 'وضعیت',
-            'name'  => 'status',
-            'value' => 'approved',
-            'options' => [
-                'approved' => 'فعال',
-                'pending' => 'غیرفعال'
-            ]
-        ]
-    );
-    ?>
-    <?
-    component(
-        'ui.input',
-        [
-            'label' => 'Locale',
-            'name'  => 'locale',
-            'value' => 'fa'
-        ]
-    );
-    ?>
-    <?
-    component(
-        'ui.input',
-        [
-            'label' => 'Timezone',
-            'name'  => 'timezone',
-            'value' => 'Asia/Tehran'
-        ]
-    );
-    ?>
-    <div style="margin-top:24px;">
-        <?
+<?php
+ob_start();
+?>
+
+<?php
+component(
+    'ui.form',
+    [
+        'action' => '/academy',
+        'method' => 'POST',
+        'slot' => (function () {
+
+            ob_start();
+?>
+
+<div class="sn-grid sn-grid-2">
+
+    <div class="sn-form-group">
+
+        <?php
         component(
-            'ui.button',
+            'ui.label',
             [
-                'text' => 'ذخیره آموزشگاه',
-                'type' => 'success',
-                'submit' => true
+                'for' => 'username',
+                'text' => 'نام کاربری',
+                'required' => true
+            ]
+        );
+
+        component(
+            'ui.input',
+            [
+                'name' => 'username',
+                'id' => 'username'
+            ]
+        );
+
+        component(
+            'ui.error',
+            [
+                'field' => 'username'
             ]
         );
         ?>
+
     </div>
-    <?
-    $form = ob_get_clean();
-    component(
-        'ui.card',
-        [
-            'title' => 'اطلاعات آموزشگاه',
-            'slot'  => $form
-        ]
-    );
-    ?>
-</form>
+
+    <div class="sn-form-group">
+
+        <?php
+        component(
+            'ui.label',
+            [
+                'for' => 'email',
+                'text' => 'ایمیل'
+            ]
+        );
+
+        component(
+            'ui.input',
+            [
+                'type' => 'email',
+                'name' => 'email',
+                'id' => 'email'
+            ]
+        );
+
+        component(
+            'ui.error',
+            [
+                'field' => 'email'
+            ]
+        );
+        ?>
+
+    </div>
+
+    <div class="sn-form-group">
+
+        <?php
+        component(
+            'ui.label',
+            [
+                'for' => 'phone',
+                'text' => 'موبایل'
+            ]
+        );
+
+        component(
+            'ui.input',
+            [
+                'name' => 'phone',
+                'id' => 'phone'
+            ]
+        );
+
+        ?>
+
+    </div>
+
+    <div class="sn-form-group">
+
+        <?php
+        component(
+            'ui.label',
+            [
+                'for' => 'status',
+                'text' => 'وضعیت'
+            ]
+        );
+
+        component(
+            'ui.select',
+            [
+                'name' => 'status',
+                'id' => 'status',
+                'value' => 'approved',
+                'options' => [
+                    'approved' => 'فعال',
+                    'pending'  => 'غیرفعال'
+                ]
+            ]
+        );
+        ?>
+
+    </div>
+
+</div>
+
+<hr class="sn-divider">
+
+<div class="sn-grid sn-grid-2">
+
+    <div class="sn-form-group">
+
+        <?php
+        component(
+            'ui.label',
+            [
+                'for' => 'locale',
+                'text' => 'Locale'
+            ]
+        );
+
+        component(
+            'ui.input',
+            [
+                'name' => 'locale',
+                'id' => 'locale',
+                'value' => 'fa'
+            ]
+        );
+        ?>
+
+    </div>
+
+    <div class="sn-form-group">
+
+        <?php
+        component(
+            'ui.label',
+            [
+                'for' => 'timezone',
+                'text' => 'Timezone'
+            ]
+        );
+
+        component(
+            'ui.input',
+            [
+                'name' => 'timezone',
+                'id' => 'timezone',
+                'value' => 'Asia/Tehran'
+            ]
+        );
+        ?>
+
+    </div>
+
+</div>
+
+<div class="sn-form-actions">
+
+<?php
+
+component(
+    'ui.button',
+    [
+        'text' => 'ذخیره آموزشگاه',
+        'type' => 'success',
+        'submit' => true
+    ]
+);
+
+?>
+
+</div>
+
+<?php
+
+            return ob_get_clean();
+
+        })()
+    ]
+);
+?>
+
+<?php
+
+$content = ob_get_clean();
+
+component(
+    'ui.card',
+    [
+        'title' => 'اطلاعات آموزشگاه',
+        'slot' => $content
+    ]
+);
+
+?>

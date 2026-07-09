@@ -4,12 +4,9 @@ use Core\Auth\Gate;
 use Core\Http\Request;
 use Core\Router\Router;
 use Modules\System\Controllers\UserController;
-use Modules\System\Models\User;
 
 use Core\Database\DB;
-use Core\Router\Route;
 use Modules\Academy\Controllers\Web\AcademyController;
-use Modules\Academy\Services\AcademyService;
 use Modules\Content\Models\Post;
 use Modules\System\Models\Role;
 
@@ -17,6 +14,7 @@ use Modules\System\Events\UserCreated;
 use Modules\System\Listeners\CreateTranslationRecord;
 use Modules\System\Listeners\SendWelcomeEmail;
 use Modules\System\Listeners\WriteAuditLog;
+use Modules\System\Models\UserModel;
 use Modules\System\Providers\EventServiceProvider;
 
 Router::group(
@@ -114,22 +112,22 @@ Router::get('/transaction-test', function () {
         return 'Transaction Success';
     }
 );
-Router::get('/model-test', function () {$user = User::find(1); return '<pre>' . print_r($user->toArray(), true) . '</pre>';});
-Router::get('/model-test-column', function () { $user = User::find(1); return $user->email;});
-Router::get('/model-test-save', function () {$user = new User(['email' => 'new@test.com']); $user->save();});
-Router::get('/model-test-create', function () {User::create(['email' => 'test@test.com']);});
-Router::get('/model-test-update', function () {$user = User::find(1); $user->update(['email' => 'updated@test.com']);});
-Router::get('/model-test-delete', function () { $user = User::find(1129); $user->delete();});
+Router::get('/model-test', function () {$user = UserModel::find(1); return '<pre>' . print_r($user->toArray(), true) . '</pre>';});
+Router::get('/model-test-column', function () { $user = UserModel::find(1); return $user->email;});
+Router::get('/model-test-save', function () {$user = new UserModel(['email' => 'new@test.com']); $user->save();});
+Router::get('/model-test-create', function () {UserModel::create(['email' => 'test@test.com']);});
+Router::get('/model-test-update', function () {$user = UserModel::find(1); $user->update(['email' => 'updated@test.com']);});
+Router::get('/model-test-delete', function () { $user = UserModel::find(1129); $user->delete();});
 Router::get('/relation-test', function () {$post = Post::find(1); $author = $post->author(); return $author->email;});
-Router::get('/relation-test1', function () {$user = User::find(1); $posts = $user->posts(); return count($posts);});
-Router::get('/many-test', function () {$user = User::find(1); $roles = $user->roles(); return '<pre>' . print_r(array_map(fn($role) => $role->toArray(), $roles), true) . '</pre>';});
+Router::get('/relation-test1', function () {$user = UserModel::find(1); $posts = $user->posts(); return count($posts);});
+Router::get('/many-test', function () {$user = UserModel::find(1); $roles = $user->roles(); return '<pre>' . print_r(array_map(fn($role) => $role->toArray(), $roles), true) . '</pre>';});
 Router::get('/many-test1', function () {$role = Role::find(1); $users = $role->users(); return '<pre>' . print_r(array_map(fn($user) => $user->toArray(), $users), true) . '</pre>';});
 Router::get('/event-test', function () {
         $logDir = base_path('storage/logs');
         if (!is_dir($logDir)) {
             mkdir($logDir, 0777, true);
         }
-        User::creating(function ($user) {
+        UserModel::creating(function ($user) {
                 file_put_contents(
                     base_path('storage/logs/events.log'),
                     'creating user' . PHP_EOL,
@@ -137,7 +135,7 @@ Router::get('/event-test', function () {
                 );
             }
         );
-        User::created(function ($user) {
+        UserModel::created(function ($user) {
                 file_put_contents(
                     base_path('storage/logs/events.log'),
                     'created user' . PHP_EOL,
@@ -145,7 +143,7 @@ Router::get('/event-test', function () {
                 );
             }
         );
-        User::create(['email' => 'event@test.com']);
+        UserModel::create(['email' => 'event@test.com']);
         return 'done';
     }
 );
@@ -154,7 +152,7 @@ Router::get('/dispatcher-test', function () {
         events()->listen(UserCreated::class, fn() => print 'Email Sent<br>');
         events()->listen(UserCreated::class, fn() => print 'Log Written<br>');
         events()->listen(UserCreated::class, fn() => print 'Notification Created<br>');
-        $user = User::find(1);
+        $user = UserModel::find(1);
         events()->dispatch(new UserCreated($user));
         return '';
     }
@@ -163,13 +161,13 @@ Router::get('/listener-test', function () {
         events()->listen(UserCreated::class, SendWelcomeEmail::class);
         events()->listen(UserCreated::class, CreateTranslationRecord::class);
         events()->listen(UserCreated::class, WriteAuditLog::class);
-        $user = User::find(1);
+        $user = UserModel::find(1);
         events()->dispatch(new UserCreated($user));
         return '';
     }
 );
 Router::get('/update-test', function () {
-        $user = User::find(1);
+        $user = UserModel::find(1);
         $user->update([
             'username' => 'Ali'
         ]);
@@ -186,13 +184,13 @@ Router::get('/provider-test', function () {
 );
 
 Router::get('/timestamp-test', function () {
-    User::create([
+    UserModel::create([
         'username' => 'Ali Ar',
         'email' => 'ali@test.com',
         'password' => '1234567890'
     ]);
 
-    $user = User::find(1140);
+    $user = UserModel::find(1140);
     sleep(3);
     $user->update([
         'username' => 'New Name'
@@ -202,7 +200,7 @@ Router::get('/timestamp-test', function () {
 );
 
 Router::get('/mass-assignment-test', function () {
-    $user = new User();
+    $user = new UserModel();
     $user->forceFill([
         'username' => 'Ali',
         'email' => 'ali@test.com',
@@ -213,7 +211,7 @@ Router::get('/mass-assignment-test', function () {
 );
 
 Router::get('/local-scopes-test', function () {
-    $users = User::active()->get();
+    $users = UserModel::active()->get();
     return '<pre>' .
     print_r($users, true) .
     '</pre>';
@@ -221,23 +219,23 @@ Router::get('/local-scopes-test', function () {
 );
 
 Router::get('/relations-test', function () {
-    print_r(User::query()->has('posts')->toSql());
+    print_r(UserModel::query()->has('posts')->toSql());
     echo '<br><br>';
-    print_r(User::query()->doesntHave('posts')->toSql());
+    print_r(UserModel::query()->doesntHave('posts')->toSql());
     echo '<br><br>';
-    print_r(User::query()->whereHas('posts', function ($q) {$q->where('status', 'published');}));
-    echo '<br><br>';
-    
-    print_r(User::query()->whereRelation('posts', 'status', 'published')->toSql());
+    print_r(UserModel::query()->whereHas('posts', function ($q) {$q->where('status', 'published');}));
     echo '<br><br>';
     
-    print_r(User::query()->where('status', 'active')->orWhereHas('posts', function ($q) {$q->where('status', 'published');})->toSql());
+    print_r(UserModel::query()->whereRelation('posts', 'status', 'published')->toSql());
+    echo '<br><br>';
+    
+    print_r(UserModel::query()->where('status', 'active')->orWhereHas('posts', function ($q) {$q->where('status', 'published');})->toSql());
     echo '<br><br>';
 
 
-    $service = new AcademyService();
-    $result = $service->list();
-    print_r($result);
+    // $service = new AcademyService();
+    // $result = $service->list();
+    // print_r($result);
 
     // dump(DB::table('users')->count());
     // echo '<hr><hr>';
@@ -254,18 +252,18 @@ Router::get('/relations-test', function () {
 
 });
 
-Router::get('/provider-test', function () {$user = User::find(1); events()->dispatch(new UserCreated($user)); return '<hr>Done';});
-Router::get('/find-user', function () {var_dump(User::find(1));});
-Router::get('/all-users', function () {return '<pre>' . print_r(User::all(), true) . '</pre>';});
-Router::get('/with-trashed', function () {return '<pre>' . print_r(User::withTrashed()->get(), true) . '</pre>';});
-Router::get('/only-trashed', function () {return '<pre>' . print_r(User::onlyTrashed()->get(), true) . '</pre>';});
-Router::get('/restore-test', function () {$user = User::withTrashed()->find(1120); if(!$user) {return 'User Not Found';} $user->restore(); return 'Restored';});
-Router::get('/force-delete-test', function () {$user = User::withTrashed()->find(1120); if(!$user) {return 'User Not Found';} $user->forceDelete(); return 'Deleted';});
-Router::get('/soft-delete-test', function () {$user = User::find(1120); $user->delete(); return 'Soft Deleted';});
+Router::get('/provider-test', function () {$user = UserModel::find(1); events()->dispatch(new UserCreated($user)); return '<hr>Done';});
+Router::get('/find-user', function () {var_dump(UserModel::find(1));});
+Router::get('/all-users', function () {return '<pre>' . print_r(UserModel::all(), true) . '</pre>';});
+Router::get('/with-trashed', function () {return '<pre>' . print_r(UserModel::withTrashed()->get(), true) . '</pre>';});
+Router::get('/only-trashed', function () {return '<pre>' . print_r(UserModel::onlyTrashed()->get(), true) . '</pre>';});
+Router::get('/restore-test', function () {$user = UserModel::withTrashed()->find(1120); if(!$user) {return 'User Not Found';} $user->restore(); return 'Restored';});
+Router::get('/force-delete-test', function () {$user = UserModel::withTrashed()->find(1120); if(!$user) {return 'User Not Found';} $user->forceDelete(); return 'Deleted';});
+Router::get('/soft-delete-test', function () {$user = UserModel::find(1120); $user->delete(); return 'Soft Deleted';});
 
 
 Router::get('/cast-test', function () {
-    $user = User::find(1);
+    $user = UserModel::find(1);
     print_r($user->user_id);
     print_r(gettype($user->user_id));
     print_r($user->status);
