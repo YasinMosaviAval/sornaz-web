@@ -8,36 +8,62 @@ use Modules\Academy\Requests\AcademyIndexRequest;
 
 class AcademyRepository extends Repository {
 
-    // protected string $table = 'users';
-    // protected string $primaryKey = 'user_id';
-    // protected ?string $model = AcademyModel::class;
-    protected string $table = 'academies';
-    protected string $primaryKey = 'academy_id';
-    protected ?string $model = AcademyModel::class;
+    protected string $table = 'users';
+    protected string $primaryKey = 'user_id';
+    protected ?string $model = null;
+
 
 
     public function getActive(): array {
-        return AcademyModel::query()->active()->latest('user_id')->get();
+        return $this->query()
+            ->leftJoin(
+                'academies',
+                'users.user_id',
+                '=',
+                'academies.user_id'
+            )
+            ->where('users.type', 'academy')
+            ->where('users.status', 1)
+            ->latest('users.user_id')
+            ->get();
     }
 
 
 
     public function getAll(): array {
-        return AcademyModel::query()->latest('user_id')->get();
+
+        return $this->query()
+            ->leftJoin(
+                'academies',
+                'users.user_id',
+                '=',
+                'academies.user_id'
+            )
+            ->where('users.type', 'academy')
+            ->latest('users.user_id')
+            ->get();
+
     }
 
 
 
     public function paginateList(AcademyIndexRequest $request): array {
-        $query = $this->query();
+        $query = $this->query()
+            ->leftJoin(
+                'academies',
+                'users.user_id',
+                '=',
+                'academies.user_id'
+            )
+            ->where('users.type', 'academy');
         if ($request->search()) {
             $query->where(function ($q) use ($request) {
-                $q->where('username', 'LIKE', '%' . $request->search() . '%')
-                    ->orWhere('email', 'LIKE', '%' . $request->search() . '%');
+                $q->where('users.username', 'LIKE', '%' . $request->search() . '%');
+                $q->orWhere('users.email', 'LIKE', '%' . $request->search() . '%');
             });
         }
         if ($request->status() !== null) {
-            $query->where('status', $request->status());
+            $query->where('users.status', $request->status());
         }
         return $query->paginate(
             page: $request->page(),
@@ -46,9 +72,12 @@ class AcademyRepository extends Repository {
     }
 
 
+
     public function existsByUsername(string $username): bool {
         return $this->query()->where('username', $username)->exists();
     }
+
+
 
     public function existsByEmail(string $email): bool {
         return $this->query()->where('email', $email)->exists();
