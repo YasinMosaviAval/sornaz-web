@@ -74,18 +74,17 @@ class AcademyService {
 
     public function delete(int $id): bool {return $this->repository->delete($id);}
 
-    public function paginate(AcademyIndexRequest $request) {
-        $query = AcademyModel::query()->academies();
-        if ($request->status() !== null) {
-            $query->where('status', $request->status());
-        }
-        /*
-        فعلاً Search را بعداً اضافه می‌کنیم
-        چون Builder هنوز whereLike ندارد.
-        */
-        return $query
-            ->orderBy($request->orderBy(), $request->direction())
-            ->paginate($request->page(), $request->perPage());
+    // public function paginate(AcademyIndexRequest $request) {
+    //     $query = AcademyModel::query()->academies();
+    //     if ($request->status() !== null) {
+    //         $query->where('status', $request->status());
+    //     }
+    //     return $query
+    //         ->orderBy($request->orderBy(), $request->direction())
+    //         ->paginate($request->page(), $request->perPage());
+    // }
+    public function paginate(AcademyIndexRequest $request): array {
+        return $this->repository->paginateList($request);
     }
 
 

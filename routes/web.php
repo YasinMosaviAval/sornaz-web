@@ -289,13 +289,12 @@ Router::delete('/users/{id}', fn($id) => "DELETE USER {$id}");
 Router::group(
     ['prefix' => '/academy'],
     function () {
-        Router::get('/create', [AcademyController::class,'create']);
-        Router::post('/', [AcademyController::class,'store']);
+        Router::get('/', [AcademyController::class, 'index']);
+        Router::get('/create', [AcademyController::class, 'create']);
+        Router::post('/', [AcademyController::class, 'store']);
         Router::get('/{id}/edit', [AcademyController::class, 'edit']);
         Router::put('/{id}', [AcademyController::class, 'update']);
         Router::delete('/{id}', [AcademyController::class, 'destroy']);
-        
-        
     }
 );
 
@@ -304,4 +303,5 @@ Router::get(
     '/admin/academies',
     [AcademyController::class,'index']
 );
+
 

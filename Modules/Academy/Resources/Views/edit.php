@@ -1,40 +1,100 @@
-<h1>ویرایش آموزشگاه</h1>
+<h1 class="page-title">
+    ویرایش آموزشگاه
+</h1>
 
-<?php
-// dd($academy);
-?>
+<div class="page-toolbar">
+    <?php
+        component(
+            'ui.button',
+            [
+                'url'=>'/academy',
+                'text'=>'بازگشت',
+                'type'=>'secondary'
+            ]
+        );
+    ?>
+</div>
 
-
-
-<form action="/academy/<?= $academy['id'] ?>" method="post">
+<form method="post" action="/academy/<?= $academy->academy_id ?>">
     <input type="hidden" name="_method" value="PUT">
+    <?php
+        ob_start();
+        component(
+            'ui.input',
+            [
+                'label'=>'نام کاربری',
+                'name'=>'username',
+                'value'=>$academy->username
+            ]
+        );
+        component(
+            'ui.input',
+            [
+                'label'=>'ایمیل',
+                'name'=>'email',
+                'type'=>'email',
+                'value'=>$academy->email
+            ]
+        );
+        component(
+            'ui.input',
+            [
+                'label'=>'موبایل',
+                'name'=>'phone',
+                'value'=>$academy->phone
+            ]
+        );
+        component(
+            'ui.select',
+            [
+                'label'=>'وضعیت',
+                'name'=>'status',
+                'value'=>$academy->status,
+                'options'=>[
+                    'approved'=>'فعال',
+                    'pending'=>'غیرفعال'
+                ]
+            ]
+        );
+        component(
+            'ui.input',
+            [
+                'label'=>'Locale',
+                'name'=>'locale',
+                'value'=>$academy->locale
+            ]
+        );
+        component(
+            'ui.input',
+            [
+                'label'=>'Timezone',
+                'name'=>'timezone',
+                'value'=>$academy->timezone
+            ]
+        );
+    ?>
 
-    <div>
-        <label>نام کاربری</label>
-        <input type="text" name="username" value="<?= $academy['username'] ?>">
+    <div style="margin-top:24px">
+        <?php
+            component(
+                'ui.button',
+                [
+                    'submit'=>true,
+                    'text'=>'ذخیره تغییرات',
+                    'type'=>'success'
+                ]
+            );
+        ?>
     </div>
-    <div>
-        <label>ایمیل</label>
-        <input type="email" name="email" value="<?= $academy['email'] ?>">
-    </div>
-    <div>
-        <label>موبایل</label>
-        <input type="text" name="phone" value="<?= $academy['phone'] ?>">
-    </div>
-    <div>
-        <label>وضعیت</label>
-        <select name="status">
-            <option value="approved">فعال</option>
-            <option value="pending">غیرفعال</option>
-        </select>
-    </div>
-    <div>
-        <label>Locale</label>
-        <input type="text" name="locale" value="<?= $academy['locale'] ?>">
-    </div>
-    <div>
-        <label>Timezone</label>
-        <input type="text" name="timezone" value="<?= $academy['timezone'] ?>">
-    </div>
-    <button type="submit">به روز رسانی آموزشگاه</button>
+
+    <?php
+        $form = ob_get_clean();
+        component(
+            'ui.card',
+            [
+                'title'=>'ویرایش آموزشگاه',
+                'slot'=>$form
+            ]
+        );
+    ?>
 </form>

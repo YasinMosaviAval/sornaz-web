@@ -77,11 +77,20 @@ class AcademyController {
     }
 
 
+    // public function edit(int $id) {
+    //     return ResponseFactory::view(
+    //         'Academy::edit',
+    //         ['academy' => AcademyResource::make($this->service->findById($id))->resolve()]
+    //     );
+    // }
     public function edit(int $id) {
-        return ResponseFactory::view(
-            'Academy::edit',
-            ['academy' => AcademyResource::make($this->service->findById($id))->resolve()]
-        );
+        $academy = $this->service->findById($id);
+        if (!$academy) {
+            abort(404);
+        }
+        return ResponseFactory::view('Academy::edit', ['academy' => $academy])
+            ->layout('dashboard')
+            ->title('ویرایش آموزشگاه');
     }
 
 
