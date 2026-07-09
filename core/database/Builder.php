@@ -235,5 +235,12 @@ class Builder {
     }
 
 
+    public function exists(): bool {
+        return $this->first() !== null;
+    }
+
+
+
+
 
 }
