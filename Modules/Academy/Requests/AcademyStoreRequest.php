@@ -2,19 +2,9 @@
 
 namespace Modules\Academy\Requests;
 
-use Core\Validation\ValidationException;
-use Core\Validation\Validator;
+use Core\Validation\FormRequest;
 
-class AcademyStoreRequest {
-
-
-    protected array $data;
-
-
-
-    public function __construct(array $data) {
-        $this->data = $data;
-    }
+class AcademyStoreRequest extends FormRequest {
 
 
 
@@ -25,16 +15,9 @@ class AcademyStoreRequest {
 
 
     public function rules(): array {
-        // return [
-        //     'username'=>'required',
-        //     'email'=>'email',
-        //     'status'=>'required',
-        // ];
         return [
-            // 'username' => 'required|min:3|max:100|unique:users,username',
-            'username' => 'required|min:3|max:100',
-            'email'    => 'nullable|email',
-            // 'email'    => 'nullable|email|unique:users,email',
+            'username' => 'required|min:3|max:100|unique:users,username',
+            'email'    => 'nullable|email|unique:users,email',
             'phone'    => 'nullable|unique:users,phone',
             'status'   => 'required|in:approved,pending',
             'locale'   => 'nullable|max:10',
@@ -56,16 +39,11 @@ class AcademyStoreRequest {
 
 
 
-    public function validate(): array {
-        $validator = new Validator();
-        if (!$validator->validate($this->data, $this->rules(), $this->messages())) {
-            throw new ValidationException($validator->errors());
-        }
-        $this->data['type'] = 'academy';
-        return $this->data;
+    public function validated(): array {
+        $data = parent::validated();
+        $data['type']='academy';
+        return $data;
     }
-
-
 
 
 

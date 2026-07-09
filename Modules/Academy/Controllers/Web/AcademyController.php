@@ -64,17 +64,10 @@ class AcademyController {
     }
 
 
-
-    // public function store() {
-    //     $request = new AcademyStoreRequest($_POST);
-    //     $data = $request->validate();
-    //     $this->service->create($data);
-    //     return redirect('/academy');
-    // }
     public function store() {
         try {
             $request = new AcademyStoreRequest($_POST);
-            $data = $request->validate();
+            $data = $request->validated();
             $this->service->create($data);
             return redirect('/academy');
         }
