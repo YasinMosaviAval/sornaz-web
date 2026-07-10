@@ -36,19 +36,47 @@ abstract class FormRequest {
 
 
 
+    // public function validate(): array {
+    //     if (!$this->authorize()) {
+    //         throw new \Exception('Unauthorized.');
+    //     }
+    //     $validator = new Validator();
+    //     if (!$validator->validate($this->data, $this->rules(), $this->messages())) {
+    //         throw new ValidationException($validator->errors());
+    //     }
+    //     return $this->data;
+    // }
+
+
     public function validate(): array {
         if (!$this->authorize()) {
             throw new \Exception('Unauthorized.');
         }
+
         $validator = new Validator();
-        if (!$validator->validate($this->data, $this->rules(), $this->messages())) {
-            throw new ValidationException($validator->errors());
+
+        if (
+            !$validator->validate(
+                $this->data,
+                $this->rules(),
+                $this->messages()
+            )
+        ) {
+            throw new ValidationException(
+                $validator->errors()
+            );
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | حذف فیلدهای سیستمی
+        |--------------------------------------------------------------------------
+        */
+        unset($this->data['_method']);
+        unset($this->data['_token']);
+
         return $this->data;
     }
-
-
-
 
 
 }

@@ -70,19 +70,27 @@ class AcademyService {
 
 
 
-    public function update(int $id, array $data): bool {return $this->repository->update($id, $data);}
+    // public function update(int $id, array $data): bool {return $this->repository->update($id, $data);}
+    public function update(int $academyId, array $data): bool {
+        $academy = $this->repository->findById($academyId);
+        if (!$academy) {
+            return false;
+        }
+        return $this->userRepository->update(
+            $academy['user_id'],
+            [
+                'username' => $data['username'],
+                'email'    => $data['email'],
+                'phone'    => $data['phone'],
+                'status'   => $data['status'],
+                'locale'   => $data['locale'],
+                'timezone' => $data['timezone'],
+            ]
+        );
+    }
 
     public function delete(int $id): bool {return $this->repository->delete($id);}
 
-    // public function paginate(AcademyIndexRequest $request) {
-    //     $query = AcademyModel::query()->academies();
-    //     if ($request->status() !== null) {
-    //         $query->where('status', $request->status());
-    //     }
-    //     return $query
-    //         ->orderBy($request->orderBy(), $request->direction())
-    //         ->paginate($request->page(), $request->perPage());
-    // }
     public function paginate(AcademyIndexRequest $request): array {
         return $this->repository->paginateList($request);
     }
