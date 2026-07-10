@@ -9,7 +9,6 @@ class AcademyScope implements Scope {
 
 
     public function apply(Builder $builder): void {
-        $builder->where('type', 'academy');
     }
 
 

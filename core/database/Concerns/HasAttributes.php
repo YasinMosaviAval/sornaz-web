@@ -67,7 +67,7 @@ trait HasAttributes {
     }
 
 
-    // public function __set(string $key, mixed $value): void {$this->attributes[$key] = $value;}
+
     public function __set(string $key, mixed $value): void {
 
         /*

@@ -88,7 +88,8 @@ class AcademyService {
     }
 
 
-    public function findById(int $id): ?AcademyModel {
+
+    public function findById(int $id): mixed {
         return $this->repository->findById($id);
     }
 

@@ -77,12 +77,7 @@ class AcademyController {
     }
 
 
-    // public function edit(int $id) {
-    //     return ResponseFactory::view(
-    //         'Academy::edit',
-    //         ['academy' => AcademyResource::make($this->service->findById($id))->resolve()]
-    //     );
-    // }
+    
     public function edit(int $id) {
         $academy = $this->service->findById($id);
         if (!$academy) {
@@ -92,6 +87,7 @@ class AcademyController {
             ->layout('dashboard')
             ->title('ویرایش آموزشگاه');
     }
+
 
 
 

@@ -39,14 +39,37 @@ trait ExecutesQueries
 
 
 
+    // public function count(): int {
+    //     $sql = "SELECT COUNT(*) AS total FROM {$this->table}";
+    //     if ($this->wheres) {
+    //         $sql .= ' WHERE ' . implode(' AND ', $this->wheres);
+    //     }
+    //     $stmt = $this->pdo->prepare($sql);
+    //     $stmt->execute($this->bindings);
+    //     return (int)$stmt->fetch()['total'];
+    // }
     public function count(): int {
         $sql = "SELECT COUNT(*) AS total FROM {$this->table}";
-        if ($this->wheres) {
+        /*
+        |--------------------------------------------------------------------------
+        | Joins
+        |--------------------------------------------------------------------------
+        */
+        if (!empty($this->joins)) {
+            $sql .= ' ' . implode(' ', $this->joins);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Wheres
+        |--------------------------------------------------------------------------
+        */
+        if (!empty($this->wheres)) {
             $sql .= ' WHERE ' . implode(' AND ', $this->wheres);
         }
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($this->bindings);
-        return (int)$stmt->fetch()['total'];
+        return (int) $stmt->fetch()['total'];
     }
 
 

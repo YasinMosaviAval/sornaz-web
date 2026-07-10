@@ -1,3 +1,7 @@
+<?php
+// dump($academies['data']);
+?>
+
 <h1 class="page-title">
     مدیریت آموزشگاه‌ها
 </h1>
@@ -33,6 +37,7 @@ ob_start();
     </thead>
     <tbody>
     <?php foreach($academies['data'] as $academy): ?>
+
         <tr>
             <td><?= $academy['id'] ?></td>
             <td><?= e($academy['username']) ?></td>
@@ -51,10 +56,11 @@ ob_start();
             <td><?= e($academy['created_at']) ?></td>
             <td>
                 <?php
+                // dump($academies['data'][0]);
                 component(
                     'ui.button',
                     [
-                        'url'=>"/dashboard/academies/{$academy['id']}/edit",
+                        'url'=>"/academy/{$academy['academy_id']}/edit",
                         'text'=>'ویرایش',
                         'type'=>'primary'
                     ]
