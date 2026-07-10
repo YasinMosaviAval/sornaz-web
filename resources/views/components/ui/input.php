@@ -9,7 +9,7 @@
     <input
         type="<?= $type ?? 'text' ?>"
         name="<?= e($name) ?>"
-        value="<?= e(old($name ?? '', $value ?? '')) ?>"
+        value="<?= e($value ?? '') ?>"
         placeholder="<?= e($placeholder ?? '') ?>"
         class="sn-input"
         autocomplete="off"
