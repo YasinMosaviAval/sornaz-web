@@ -56,15 +56,22 @@ ob_start();
             <td><?= e($academy['created_at']) ?></td>
             <td>
                 <?php
-                // dump($academies['data'][0]);
-                component(
-                    'ui.button',
-                    [
-                        'url'=>"/academy/{$academy['academy_id']}/edit",
-                        'text'=>'ویرایش',
-                        'type'=>'primary'
-                    ]
-                );
+                    component(
+                        'ui.button',
+                        [
+                            'url'=>"/academy/{$academy['academy_id']}/edit",
+                            'text'=>'ویرایش',
+                            'type'=>'primary'
+                        ]
+                    );
+                    component(
+                        'ui.button',
+                        [
+                            'url'=>"/academy/{$academy['academy_id']}",
+                            'text'=>'مشاهده',
+                            'type'=>'secondary'
+                        ]
+                    );
                 ?>
             </td>
         </tr>

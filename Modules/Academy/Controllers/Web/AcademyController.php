@@ -42,11 +42,15 @@ class AcademyController {
 
 
     public function show(int $id) {
-        return ResponseFactory::view(
-            'Academy::show',
-            ['academy' => AcademyResource::make($this->service->findById($id))->resolve()]
-        );
+        $academy = $this->service->findById($id);
+        if (!$academy) {
+            abort(404);
+        }
+        return ResponseFactory::view('Academy::show', ['academy'=>$academy])
+            ->layout('dashboard')
+            ->title('مشاهده آموزشگاه');
     }
+
 
 
 
