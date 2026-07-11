@@ -2,27 +2,23 @@
 // dump($academies['data']);
 ?>
 
-<h1 class="page-title">
-    مدیریت آموزشگاه‌ها
-</h1>
-
+<h1 class="page-title">مدیریت آموزشگاه‌ها</h1>
 <div class="page-toolbar">
     <?php
-    component(
-        'ui.button',
-        [
-            'url'=>'/academy/create',
-            'text'=>'ایجاد آموزشگاه',
-            'type'=>'success'
-        ]
-    );
+        component(
+            'ui.button',
+            [
+                'url'=>'/academy/create',
+                'text'=>'ایجاد آموزشگاه',
+                'type'=>'success'
+            ]
+        );
     ?>
 </div>
 
 <?php
 ob_start();
 ?>
-
 
 <table class="sn-table">
     <thead>
