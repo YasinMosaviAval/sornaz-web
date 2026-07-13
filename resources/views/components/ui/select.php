@@ -15,7 +15,7 @@ $current = old(
         </label>
     <?php endif; ?>
     
-    <select name="<?= e($name) ?>" class="sn-input">
+    <select id="<?= e($id ?? $name) ?>" name="<?= e($name) ?>" class="sn-input">
         <?php foreach($options as $key=>$text): ?>
             <option value="<?= e($key) ?>" <?= $current == $key ? 'selected' : '' ?>>
                 <?= e($text) ?>

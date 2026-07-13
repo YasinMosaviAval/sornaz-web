@@ -10,6 +10,13 @@ trait ExecutesQueries
     public function get(): array {
         $this->applyScopes();
         $stmt = $this->pdo->prepare($this->buildSelect());
+
+        // $sql = $this->buildSelect();
+        // dump($sql);
+        // dump($this->bindings);
+        // die;
+
+
         $stmt->execute($this->bindings);
         $rows = $stmt->fetchAll();
         if (!$this->modelClass) {return $rows;}

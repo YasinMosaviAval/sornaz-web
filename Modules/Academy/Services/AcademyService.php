@@ -7,15 +7,37 @@ use Modules\Academy\Repositories\AcademyRepository;
 use Modules\System\Repositories\UserRepository;
 use Modules\Academy\Requests\AcademyIndexRequest;
 use Modules\System\Models\UserModel;
+use Modules\Address\Services\AddressService;
+use Modules\Address\Repositories\AddressRepository;
+use Modules\Contact\Services\ContactService;
+use Modules\World\Services\ProvinceService;
 
 class AcademyService {
 
     protected AcademyRepository $academyRepository;
     protected UserRepository $userRepository;
+    protected AddressService $addressService;
+    protected ContactService $contactService;
+    protected ProvinceService $provinceService;
 
-    public function __construct(protected AcademyRepository $repository) {
+    public function __construct(protected AcademyRepository $repository)
+    {
         $this->academyRepository = $repository;
-        $this->userRepository = app()->container()->make(UserRepository::class);
+
+        $this->userRepository =
+            app()->container()->make(UserRepository::class);
+
+        $this->addressService =
+            app()->container()->make(AddressService::class);
+
+        $this->contactService =
+            app()->container()->make(
+                ContactService::class
+            );
+            
+        $this->provinceService = app()
+            ->container()
+            ->make(ProvinceService::class);
     }
 
     public function list(): array{return $this->repository->getActive();}
@@ -76,7 +98,7 @@ class AcademyService {
         if (!$academy) {
             return false;
         }
-        return $this->userRepository->update(
+        $userUpdated = $this->userRepository->update(
             $academy['user_id'],
             [
                 'username' => $data['username'],
@@ -87,6 +109,32 @@ class AcademyService {
                 'timezone' => $data['timezone'],
             ]
         );
+
+        $this->addressService->save(
+            $academy['user_id'],
+            [
+                'country_id'  => $data['country_id']  ?? null,
+                'province_id' => $data['province_id'] ?? null,
+                'city_id'     => $data['city_id']     ?? null,
+                'address'     => $data['address']     ?? null,
+                'postal_code' => $data['postal_code'] ?? null,
+                'latitude'    => $data['latitude']    ?? null,
+                'longitude'   => $data['longitude']   ?? null,
+            ]
+        );
+
+        $this->contactService->save(
+            $academy['user_id'],
+            [
+                'telephone'=>$data['telephone'] ?? null,
+                'whatsapp'=>$data['whatsapp'] ?? null,
+                'telegram'=>$data['telegram'] ?? null,
+                'instagram'=>$data['instagram'] ?? null,
+                'website'=>$data['website'] ?? null,
+            ]
+        );
+
+        return $userUpdated;
     }
 
     public function delete(int $id): bool {return $this->repository->delete($id);}
@@ -99,6 +147,33 @@ class AcademyService {
 
     public function findById(int $id): mixed {
         return $this->repository->findById($id);
+    }
+
+
+
+    // public function editData(int $academyId): array {
+    //     $academy = $this->repository->findById($academyId);
+    //     if (!$academy) {
+    //         return [];
+    //     }
+    //     return [
+    //         'academy' => $academy,
+    //         'address' => $this->addressService->findByUserId($academy['user_id']),
+    //         'contact' => $this->contactService->findByUserId($academy['user_id']),
+    //     ];
+    // }
+    public function editData(int $academyId): array {
+        $academy = $this->findById($academyId);
+        if (!$academy) {
+            return [];
+        }
+        return [
+            'academy'   => $academy,
+            'address'   => $this->addressService->findByUserId($academy['user_id']),
+            'contact'   => $this->contactService->findByUserId($academy['user_id']),
+            'provinces' => $this->provinceService->options(),
+            'counties'  => [],
+        ];
     }
 
 

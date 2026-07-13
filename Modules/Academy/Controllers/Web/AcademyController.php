@@ -32,11 +32,11 @@ class AcademyController {
         $request = new AcademyIndexRequest($_GET);
         $items = $this->service->paginate($request);
         return ResponseFactory::view(
-            'Academy::index',
-            ['academies'=>(new ResourceCollection($items, AcademyResource::class))->resolve()]
-        )
-        ->layout('dashboard')
-        ->title('مدیریت آموزشگاه‌ها');
+                'Academy::index',
+                ['academies'=>(new ResourceCollection($items, AcademyResource::class))->resolve()]
+            )
+            ->layout('dashboard')
+            ->title('مدیریت آموزشگاه‌ها');
     }
 
 
@@ -81,16 +81,37 @@ class AcademyController {
     }
 
 
-    
     public function edit(int $id) {
-        $academy = $this->service->findById($id);
-        if (!$academy) {
+        $data = $this->service->editData($id);
+        if (empty($data)) {
             abort(404);
         }
-        return ResponseFactory::view('Academy::edit', ['academy' => $academy])
+        return ResponseFactory::view('Academy::edit', $data)
             ->layout('dashboard')
             ->title('ویرایش آموزشگاه');
     }
+    // public function edit(int $id) {
+    //     $academy = $this->service->findById($id);
+    //     if (!$academy) {
+    //         abort(404);
+    //     }
+    //     $contact =
+    //         $this->contactService
+    //             ->findByUserId(
+    //                 $academy['user_id']
+    //             );
+    //             return ResponseFactory::view(
+    //             'Academy::edit',
+    //             [
+    //                 'academy'=>$academy,
+    //                 'address'=>$address,
+    //                 'contact'=>$contact
+    //             ]
+    //         );
+    //     // return ResponseFactory::view('Academy::edit', ['academy' => $academy])
+    //     //     ->layout('dashboard')
+    //     //     ->title('ویرایش آموزشگاه');
+    // }
 
 
 
