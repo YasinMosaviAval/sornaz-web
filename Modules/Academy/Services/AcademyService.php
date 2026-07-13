@@ -20,33 +20,32 @@ class AcademyService {
     protected ContactService $contactService;
     protected ProvinceService $provinceService;
 
-    public function __construct(protected AcademyRepository $repository)
-    {
+
+
+    public function __construct(protected AcademyRepository $repository) {
         $this->academyRepository = $repository;
-
-        $this->userRepository =
-            app()->container()->make(UserRepository::class);
-
-        $this->addressService =
-            app()->container()->make(AddressService::class);
-
-        $this->contactService =
-            app()->container()->make(
-                ContactService::class
-            );
-            
-        $this->provinceService = app()
-            ->container()
-            ->make(ProvinceService::class);
+        $this->userRepository = app()->container()->make(UserRepository::class);
+        $this->addressService = app()->container()->make(AddressService::class);
+        $this->contactService = app()->container()->make(ContactService::class);
+        $this->provinceService = app()->container()->make(ProvinceService::class);
     }
+
+
 
     public function list(): array{return $this->repository->getActive();}
 
+
+
     public function all(): array{return $this->repository->getAll();}
-    
+
+
+
     public function active(): array {return $this->repository->getActive();}
 
+
+
     public function find(int $id) {return $this->repository->find($id);}
+
 
 
     public function create(array $data): mixed {
@@ -64,7 +63,6 @@ class AcademyService {
             'locale'   => $data['locale'],
             'timezone' => $data['timezone'],
         ]);
-
         $user = UserModel::query()->where('username', $data['username'])->first();
         if(!$user){
             return false;
@@ -95,7 +93,6 @@ class AcademyService {
                 'timezone' => $data['timezone'],
             ]
         );
-
         $this->addressService->save(
             $academy['user_id'],
             [
@@ -108,7 +105,6 @@ class AcademyService {
                 'address'=>$data['address'],
             ]
         );
-
         $this->contactService->save(
             $academy['user_id'],
             [
@@ -120,44 +116,14 @@ class AcademyService {
                 'website'   => $data['website'] ?? null,
             ]
         );
-        // $this->contactService->save(
-        //     $academy['user_id'],
-        //     [
-        //         [
-        //             'mode'=>'phone',
-        //             'value'=>$data['telephone'],
-        //             'priority'=>'primary',
-        //         ],
-
-        //         [
-        //             'mode'=>'social',
-        //             'platform'=>'whats-app',
-        //             'value'=>$data['whatsapp'],
-        //         ],
-
-        //         [
-        //             'mode'=>'social',
-        //             'platform'=>'telegram',
-        //             'value'=>$data['telegram'],
-        //         ],
-
-        //         [
-        //             'mode'=>'social',
-        //             'platform'=>'instagram',
-        //             'value'=>$data['instagram'],
-        //         ],
-
-        //         [
-        //             'mode'=>'social',
-        //             'platform'=>'website',
-        //             'value'=>$data['website'],
-        //         ],
-        //     ]
-        // );
         return $userUpdated;
     }
 
+
+
     public function delete(int $id): bool {return $this->repository->delete($id);}
+
+
 
     public function paginate(AcademyIndexRequest $request): array {
         return $this->repository->paginateList($request);
@@ -184,6 +150,10 @@ class AcademyService {
             'counties'  => [],
         ];
     }
+
+
+
+
 
 
 

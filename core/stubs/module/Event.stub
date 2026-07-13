@@ -1,0 +1,7 @@
+<?php
+
+namespace Modules\{{module}}\Events;
+
+class {{module}}Created {
+
+}

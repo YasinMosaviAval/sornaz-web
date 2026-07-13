@@ -1,0 +1,13 @@
+<?php
+
+namespace Modules\{{module}}\Models;
+
+use Core\Database\Model;
+
+class {{module}}Model extends Model {
+
+    protected static string $table='{{table}}';
+
+    protected static string $primaryKey='{{primaryKey}}';
+
+}
