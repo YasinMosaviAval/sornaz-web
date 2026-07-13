@@ -9,7 +9,22 @@ class ModuleManager {
 
 
     public function scan(): void {
-
+        $modulesPath = base_path('Modules');
+        foreach(scandir($modulesPath) as $directory){
+            if($directory=='.' || $directory=='..'){
+                continue;
+            }
+            $path = $modulesPath.'/'.$directory;
+            if(!is_dir($path)){
+                continue;
+            }
+            $manifest = $path.'/module.php';
+            if(!file_exists($manifest)){
+                continue;
+            }
+            $config = require $manifest;
+            $this->modules[] = new Module($config, $path);
+        }
     }
 
 
