@@ -1,6 +1,4 @@
-<h1 class="page-title">
-    ایجاد آموزشگاه
-</h1>
+<!-- <h1 class="page-title">ایجاد آموزشگاه</h1> -->
 
 <div class="page-toolbar">
     <?php

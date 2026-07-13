@@ -2,9 +2,7 @@
 // dump($academy);
 ?>
 
-<h1 class="page-title">
-    ویرایش آموزشگاه
-</h1>
+<!-- <h1 class="page-title">ویرایش آموزشگاه</h1> -->
 
 <div class="page-toolbar">
 <?php
