@@ -1,0 +1,7 @@
+<?php
+
+namespace Modules\{{module}}\Policies;
+
+class {{module}}Policy {
+
+}

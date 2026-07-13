@@ -1,0 +1,3 @@
+<?php
+
+use Modules\{{module}}\Controllers\Web\{{module}}Controller;

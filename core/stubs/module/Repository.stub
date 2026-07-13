@@ -1,0 +1,13 @@
+<?php
+
+namespace Modules\{{module}}\Repositories;
+
+use Core\Database\Repository;
+
+class {{module}}Repository extends Repository {
+    
+    protected string $table='{{table}}';
+    protected string $primaryKey='{{primaryKey}}';
+    protected ?string $model=null;
+
+}

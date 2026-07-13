@@ -1,0 +1,7 @@
+<?php
+
+namespace Modules\{{module}}\Controllers\Web;
+
+class {{module}}Controller {
+
+}
