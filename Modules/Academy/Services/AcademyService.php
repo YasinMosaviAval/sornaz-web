@@ -55,16 +55,6 @@ class AcademyService {
         | ایجاد User
         |--------------------------------------------------------------------------
         */
-        // $user = $this->userRepository->create([
-        //     'username' => $data['username'],
-        //     'email'    => $data['email'] ?? null,
-        //     'phone'    => $data['phone'] ?? null,
-        //     'type'     => 'academy',
-        //     'status'   => $data['status'],
-        //     'locale'   => $data['locale'],
-        //     'timezone' => $data['timezone'],
-        // ]);
-
         $this->userRepository->create([
             'username' => $data['username'],
             'email'    => $data['email'] ?? null,
@@ -84,15 +74,11 @@ class AcademyService {
         | ایجاد Academy
         |--------------------------------------------------------------------------
         */
-        // dump($user);
         return $this->academyRepository->create(['user_id' => $user->user_id,]);
     }
 
 
 
-
-
-    // public function update(int $id, array $data): bool {return $this->repository->update($id, $data);}
     public function update(int $academyId, array $data): bool {
         $academy = $this->repository->findById($academyId);
         if (!$academy) {
@@ -113,27 +99,61 @@ class AcademyService {
         $this->addressService->save(
             $academy['user_id'],
             [
-                'country_id'  => $data['country_id']  ?? null,
-                'province_id' => $data['province_id'] ?? null,
-                'city_id'     => $data['city_id']     ?? null,
-                'address'     => $data['address']     ?? null,
-                'postal_code' => $data['postal_code'] ?? null,
-                'latitude'    => $data['latitude']    ?? null,
-                'longitude'   => $data['longitude']   ?? null,
+                'country_id'=>$data['country_id'],
+                'province_id'=>$data['province_id'],
+                'county_id'=>$data['county_id'],
+                'postal_code'=>$data['postal_code'],
+                'latitude'=>$data['latitude'],
+                'longitude'=>$data['longitude'],
+                'address'=>$data['address'],
             ]
         );
 
         $this->contactService->save(
             $academy['user_id'],
             [
-                'telephone'=>$data['telephone'] ?? null,
-                'whatsapp'=>$data['whatsapp'] ?? null,
-                'telegram'=>$data['telegram'] ?? null,
-                'instagram'=>$data['instagram'] ?? null,
-                'website'=>$data['website'] ?? null,
+                'telephone' => $data['telephone'] ?? null,
+                'mobile'    => $data['mobile'] ?? null,
+                'whatsapp'  => $data['whatsapp'] ?? null,
+                'telegram'  => $data['telegram'] ?? null,
+                'instagram' => $data['instagram'] ?? null,
+                'website'   => $data['website'] ?? null,
             ]
         );
+        // $this->contactService->save(
+        //     $academy['user_id'],
+        //     [
+        //         [
+        //             'mode'=>'phone',
+        //             'value'=>$data['telephone'],
+        //             'priority'=>'primary',
+        //         ],
 
+        //         [
+        //             'mode'=>'social',
+        //             'platform'=>'whats-app',
+        //             'value'=>$data['whatsapp'],
+        //         ],
+
+        //         [
+        //             'mode'=>'social',
+        //             'platform'=>'telegram',
+        //             'value'=>$data['telegram'],
+        //         ],
+
+        //         [
+        //             'mode'=>'social',
+        //             'platform'=>'instagram',
+        //             'value'=>$data['instagram'],
+        //         ],
+
+        //         [
+        //             'mode'=>'social',
+        //             'platform'=>'website',
+        //             'value'=>$data['website'],
+        //         ],
+        //     ]
+        // );
         return $userUpdated;
     }
 
@@ -151,17 +171,6 @@ class AcademyService {
 
 
 
-    // public function editData(int $academyId): array {
-    //     $academy = $this->repository->findById($academyId);
-    //     if (!$academy) {
-    //         return [];
-    //     }
-    //     return [
-    //         'academy' => $academy,
-    //         'address' => $this->addressService->findByUserId($academy['user_id']),
-    //         'contact' => $this->contactService->findByUserId($academy['user_id']),
-    //     ];
-    // }
     public function editData(int $academyId): array {
         $academy = $this->findById($academyId);
         if (!$academy) {

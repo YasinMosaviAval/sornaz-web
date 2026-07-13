@@ -24,9 +24,15 @@ class TranslationManager {
     }
 
 
+    // protected function table(Model|string $model): string {
+    //     if (is_string($model)) {
+    //         return $this->table($model);
+    //     }
+    //     return $this->table($model);
+    // }
     protected function table(Model|string $model): string {
         if (is_string($model)) {
-            return $model::getTable();
+            return $model;
         }
         return $model::getTable();
     }
@@ -42,28 +48,42 @@ class TranslationManager {
     }
 
 
+    public function get(
+        Model|string $model,
+        string|int|null $id,
+        string $field,
+        ?string $locale = null,
+        int $version = 1
+    ): mixed {
 
-    public function get(Model $model, string $field, ?string $locale = null, int $version = 1): mixed {
-        // $locale ??= app()->getLocale();
-        $locale ??= $locale ??= app()->getLocale();;
-        $key = $this->cacheKey(
-            $model,
+        if ($model instanceof Model) {
+            $id = $this->id($model);
+        }
+
+        $locale ??= app()->getLocale();
+
+        $key = implode(':', [
+            $this->table($model),
+            $id,
             $field,
             $locale,
             $version
-        );
+        ]);
+
         if (array_key_exists($key, $this->cache)) {
             return $this->cache[$key];
         }
-        $primaryKey = $model::getPrimaryKey();
+
         $translation = $this->repository->find(
-            $model::getTable(),
-            $model->{$primaryKey},
+            $this->table($model),
+            $id,
             $field,
             $locale,
             $version
         );
+
         $this->cache[$key] = $translation?->value;
+
         return $this->cache[$key];
     }
 
@@ -73,8 +93,8 @@ class TranslationManager {
         if ($model instanceof Model) {
             $id = $this->id($model);
         }
-        // $locale ??= app()->getLocale();
-        $locale ??= $locale ??= app()->getLocale();;
+        
+        $locale ??= app()->getLocale();
         $result = $this->repository->updateOrCreate(
             $this->table($model),
             $id,
@@ -101,8 +121,8 @@ class TranslationManager {
         if ($model instanceof Model) {
             $id = $this->id($model);
         }
-        // $locale ??= app()->getLocale();
-        $locale ??= $locale ??= app()->getLocale();
+        
+        $locale ??= app()->getLocale();
         return $this->repository->exists(
             $this->table($model),
             $id,
@@ -118,8 +138,8 @@ class TranslationManager {
         if ($model instanceof Model) {
             $id = $this->id($model);
         }
-        // $locale ??= app()->getLocale();
-        $locale ??= $locale ??= app()->getLocale();
+        
+        $locale ??= app()->getLocale();
         return $this->repository->delete(
             $this->table($model),
             $id,
@@ -135,7 +155,7 @@ class TranslationManager {
         return implode(
             ':',
             [
-                $model::getTable(),
+                $this->table($model),
                 $this->id($model),
                 $field,
                 $locale,
@@ -157,8 +177,8 @@ class TranslationManager {
             return;
         }
 
-        // $locale ??= app()->getLocale();
-        $locale ??= $locale ??= app()->getLocale();
+        
+        $locale ??= app()->getLocale();
 
         $ids = [];
 

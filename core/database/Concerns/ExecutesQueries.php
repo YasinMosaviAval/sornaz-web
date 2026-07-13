@@ -10,13 +10,6 @@ trait ExecutesQueries
     public function get(): array {
         $this->applyScopes();
         $stmt = $this->pdo->prepare($this->buildSelect());
-
-        // $sql = $this->buildSelect();
-        // dump($sql);
-        // dump($this->bindings);
-        // die;
-
-
         $stmt->execute($this->bindings);
         $rows = $stmt->fetchAll();
         if (!$this->modelClass) {return $rows;}
@@ -45,16 +38,6 @@ trait ExecutesQueries
     }
 
 
-
-    // public function count(): int {
-    //     $sql = "SELECT COUNT(*) AS total FROM {$this->table}";
-    //     if ($this->wheres) {
-    //         $sql .= ' WHERE ' . implode(' AND ', $this->wheres);
-    //     }
-    //     $stmt = $this->pdo->prepare($sql);
-    //     $stmt->execute($this->bindings);
-    //     return (int)$stmt->fetch()['total'];
-    // }
     public function count(): int {
         $sql = "SELECT COUNT(*) AS total FROM {$this->table}";
         /*

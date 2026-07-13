@@ -42,7 +42,7 @@ class TranslationRepository
     }
 
 
-
+    
     public function updateOrCreate(
         string $table,
         int|string $id,
@@ -68,7 +68,7 @@ class TranslationRepository
 
         }
 
-        return Translation::create([
+        Translation::create([
             'table_name' => $table,
             'table_id'   => $id,
             'field'      => $field,
@@ -77,8 +77,8 @@ class TranslationRepository
             'version'    => $version,
         ]);
 
+        return true;
     }
-
 
 
     public function delete(
