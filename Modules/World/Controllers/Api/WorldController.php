@@ -5,8 +5,7 @@ namespace Modules\World\Controllers\Api;
 use Modules\World\Services\CountyService;
 use Core\Http\ResponseFactory;
 
-class WorldController
-{
+class WorldController {
     protected CountyService $countyService;
 
     public function __construct() {
@@ -15,23 +14,14 @@ class WorldController
             ->make(CountyService::class);
     }
 
-    // public function counties(int $province) {
-    //     return ResponseFactory::json($this->countyService->options($province));
-    // }
+
 
     public function counties(int $provinceId) {
         return ResponseFactory::json($this->countyService->options($provinceId));
     }
 
 
-// public function counties(int $provinceId)
-// {
-//     dump($provinceId);
 
-//     $items = $this->countyService->byProvince($provinceId);
 
-//     dump($items);
 
-//     die;
-// }
 }

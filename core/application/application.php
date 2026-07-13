@@ -11,6 +11,8 @@ class Application {
     protected static ?Application $instance = null;
     protected Container $container;
     protected ProviderManager $providers;
+    protected string $locale='fa';
+
 
 
     public function __construct() {
@@ -47,6 +49,18 @@ class Application {
         $this->providers->load($providers);
         $this->providers->register();
         $this->providers->boot();
+    }
+
+
+
+    public function getLocale(): string {
+        return $this->locale;
+    }
+
+
+
+    public function setLocale(string $locale): void {
+        $this->locale=$locale;
     }
 
 

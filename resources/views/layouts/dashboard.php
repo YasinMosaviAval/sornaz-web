@@ -24,7 +24,7 @@
         </main>
     </div>
 </div>
-<script>
+<!-- <script>
 document.addEventListener("DOMContentLoaded", function () {
     const province = document.getElementById("province_id");
     const county = document.getElementById("county_id");
@@ -45,6 +45,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-</script>
+</script> -->
 </body>
 </html>

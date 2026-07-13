@@ -7,61 +7,42 @@ use Core\Database\Repository;
 class AddressRepository extends Repository
 {
     protected string $table = 'user_addresses';
-
     protected string $primaryKey = 'address_id';
-
     protected ?string $model = null;
 
-
-
-    public function findByUserId(int $userId): mixed
+    public function findByUserId(int $userId): ?array
     {
         return $this->query()
-            ->where(
-                'user_id',
-                $userId
-            )
+            ->where('user_id',$userId)
             ->first();
     }
 
-
-
-    public function updateOrCreate(
+    public function createForUser(
         int $userId,
         array $data
-    ): bool {
-
-        $address = $this->findByUserId($userId);
-
-        if ($address) {
-
-            return $this->query()
-                ->where(
-                    'user_id',
-                    $userId
-                )
-                ->update($data);
-
-        }
-
-        $data['user_id'] = $userId;
+    ): bool
+    {
+        $data['user_id']=$userId;
 
         return $this->create($data);
     }
 
-
-
-    public function deleteByUserId(
-        int $userId
-    ): bool {
-
+    public function updateForUser(
+        int $userId,
+        array $data
+    ): bool
+    {
         return $this->query()
-            ->where(
-                'user_id',
-                $userId
-            )
-            ->delete();
-
+            ->where('user_id',$userId)
+            ->update($data);
     }
 
+    public function deleteForUser(
+        int $userId
+    ): bool
+    {
+        return $this->query()
+            ->where('user_id',$userId)
+            ->delete();
+    }
 }
