@@ -4,6 +4,7 @@ namespace Core\Application;
 
 use Core\Container\Container;
 use Core\Providers\ProviderManager;
+use Core\Module\ModuleManager;
 
 class Application {
 
@@ -12,6 +13,7 @@ class Application {
     protected Container $container;
     protected ProviderManager $providers;
     protected string $locale='fa';
+    protected ModuleManager $modules;
 
 
 
@@ -19,6 +21,13 @@ class Application {
         self::$instance = $this;
         $this->container = new Container();
         $this->providers = new ProviderManager();
+        $this->modules = new ModuleManager();
+        $this->modules->scan();
+    }
+
+
+    public function modules(): ModuleManager {
+        return $this->modules;
     }
 
 
