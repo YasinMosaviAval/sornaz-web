@@ -307,3 +307,10 @@ Router::get(
 );
 
 
+
+use Modules\World\Controllers\Api\WorldController;
+
+Router::get(
+    '/api/world/provinces/{provinceId}/counties',
+    [WorldController::class,'counties']
+);

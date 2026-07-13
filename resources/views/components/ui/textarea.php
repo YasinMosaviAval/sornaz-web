@@ -6,6 +6,16 @@
         </label>
     <?php endif; ?>
 
-    <textarea name="<?= e($name) ?>" rows="<?= $rows ?? 5 ?>" class="sn-input"><?= e($value ?? '') ?></textarea>
+    <textarea
+        class="sn-input"
+        name="<?= e($name) ?>"
+        rows="<?= $rows ?? 4 ?>"
+    ><?= e($value ?? '') ?></textarea>
+
+    <?php if (!empty($error)): ?>
+        <div class="sn-error">
+            <?= e($error) ?>
+        </div>
+    <?php endif; ?>
 
 </div>

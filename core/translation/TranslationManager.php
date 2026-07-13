@@ -9,7 +9,7 @@ class TranslationManager {
 
     protected TranslationRepository $repository;
     protected array $cache = [];
-    protected ?Model $currentModel = null;
+    // protected ?Model $currentModel = null;
 
 
 
@@ -45,7 +45,7 @@ class TranslationManager {
 
     public function get(Model $model, string $field, ?string $locale = null, int $version = 1): mixed {
         // $locale ??= app()->getLocale();
-        $locale ??= $locale ??= 'fa';;
+        $locale ??= $locale ??= app()->getLocale();;
         $key = $this->cacheKey(
             $model,
             $field,
@@ -74,8 +74,8 @@ class TranslationManager {
             $id = $this->id($model);
         }
         // $locale ??= app()->getLocale();
-        $locale ??= $locale ??= 'fa';;
-        $result = $this->repository->save(
+        $locale ??= $locale ??= app()->getLocale();;
+        $result = $this->repository->updateOrCreate(
             $this->table($model),
             $id,
             $field,
@@ -102,7 +102,7 @@ class TranslationManager {
             $id = $this->id($model);
         }
         // $locale ??= app()->getLocale();
-        $locale ??= $locale ??= 'fa';
+        $locale ??= $locale ??= app()->getLocale();
         return $this->repository->exists(
             $this->table($model),
             $id,
@@ -119,7 +119,7 @@ class TranslationManager {
             $id = $this->id($model);
         }
         // $locale ??= app()->getLocale();
-        $locale ??= $locale ??= 'fa';
+        $locale ??= $locale ??= app()->getLocale();
         return $this->repository->delete(
             $this->table($model),
             $id,
@@ -158,7 +158,7 @@ class TranslationManager {
         }
 
         // $locale ??= app()->getLocale();
-        $locale ??= $locale ??= 'fa';
+        $locale ??= $locale ??= app()->getLocale();
 
         $ids = [];
 

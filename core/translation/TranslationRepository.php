@@ -43,7 +43,7 @@ class TranslationRepository
 
 
 
-    public function save(
+    public function updateOrCreate(
         string $table,
         int|string $id,
         string $field,

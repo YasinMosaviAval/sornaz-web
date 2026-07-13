@@ -8,12 +8,30 @@ trait BuildsWhereQueries {
 
 
 
-    public function where(string $column, mixed $value, string $operator = '='): static {
-        if (strtoupper($operator) === 'IS' && $value === null) {
+    // public function where(string $column, mixed $value, string $operator = '='): static {
+    //     if (strtoupper($operator) === 'IS' && $value === null) {
+    //         $this->wheres[] = "{$column} IS NULL";
+    //         return $this;
+    //     }
+    //     if (strtoupper($operator) === 'IS NOT' && $value === null) {
+    //         $this->wheres[] = "{$column} IS NOT NULL";
+    //         return $this;
+    //     }
+    //     $this->wheres[] = "{$column} {$operator} ?";
+    //     $this->bindings[] = $value;
+    //     return $this;
+    // }
+
+    public function where(string $column, mixed $operator, mixed $value = null): static {
+        if (func_num_args() === 2) {
+            $value = $operator;
+            $operator = '=';
+        }
+        if (strtoupper((string)$operator) === 'IS' && $value === null) {
             $this->wheres[] = "{$column} IS NULL";
             return $this;
         }
-        if (strtoupper($operator) === 'IS NOT' && $value === null) {
+        if (strtoupper((string)$operator) === 'IS NOT' && $value === null) {
             $this->wheres[] = "{$column} IS NOT NULL";
             return $this;
         }
@@ -23,8 +41,22 @@ trait BuildsWhereQueries {
     }
 
 
+    // public function orWhere(string $column, mixed $value, string $operator = '='): static {
+    //     $condition = "{$column} {$operator} ?";
+    //     if (empty($this->wheres) && empty($this->rawWheres)) {
+    //         $this->wheres[] = $condition;
+    //     } else {
+    //         $this->rawWheres[] = 'OR ' . $condition;
+    //     }
+    //     $this->bindings[] = $value;
+    //     return $this;
+    // }
 
-    public function orWhere(string $column, mixed $value, string $operator = '='): static {
+    public function orWhere(string $column, mixed $operator, mixed $value = null): static {
+        if (func_num_args() === 2) {
+            $value = $operator;
+            $operator = '=';
+        }
         $condition = "{$column} {$operator} ?";
         if (empty($this->wheres) && empty($this->rawWheres)) {
             $this->wheres[] = $condition;
@@ -34,7 +66,6 @@ trait BuildsWhereQueries {
         $this->bindings[] = $value;
         return $this;
     }
-
 
 
     public function whereRaw(string $sql, array $bindings = []): static {
