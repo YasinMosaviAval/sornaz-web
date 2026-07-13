@@ -46,17 +46,18 @@ class MakeModuleCommand extends Command {
     protected function files(): array {
         return [
             'Controller.stub' => 'Controllers/Web/{{module}}Controller.php',
-            'Service.stub' => 'Services/{{module}}Service.php',
+            'Service.stub'    => 'Services/{{module}}Service.php',
             'Repository.stub' => 'Repositories/{{module}}Repository.php',
-            'Model.stub' => 'Models/{{module}}Model.php',
-            'Provider.stub' => 'Providers/{{module}}ServiceProvider.php',
-            'Policy.stub' => 'Policies/{{module}}Policy.php',
-            'DTO.stub' => 'DTO/{{module}}DTO.php',
-            'Request.stub' => 'Requests/{{module}}StoreRequest.php',
-            'routes.stub' => 'routes.php',
-            'config.stub' => 'config.php',
-            'helpers.stub' => 'helpers.php',
-            'README.stub' => 'README.md',
+            'Model.stub'      => 'Models/{{module}}Model.php',
+            'Provider.stub'   => 'Providers/{{module}}ServiceProvider.php',
+            'Policy.stub'     => 'Policies/{{module}}Policy.php',
+            'DTO.stub'        => 'DTO/{{module}}DTO.php',
+            'Request.stub'    => 'Requests/{{module}}StoreRequest.php',
+            'routes.stub'     => 'routes.php',
+            'config.stub'     => 'config.php',
+            'helpers.stub'    => 'helpers.php',
+            'module.stub'     => 'module.php',
+            'README.stub'     => 'README.md',
         ];
     }
 
