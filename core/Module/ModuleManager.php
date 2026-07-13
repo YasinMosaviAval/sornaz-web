@@ -30,7 +30,9 @@ class ModuleManager {
 
 
     public function register(): void {
-
+        foreach($this->enabled() as $module){
+            app()->register($module->provider);
+        }
     }
 
 

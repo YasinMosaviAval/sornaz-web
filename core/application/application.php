@@ -23,6 +23,7 @@ class Application {
         $this->providers = new ProviderManager();
         $this->modules = new ModuleManager();
         $this->modules->scan();
+        $this->modules->register();
     }
 
 
