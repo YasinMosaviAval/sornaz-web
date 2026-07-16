@@ -212,6 +212,18 @@ component('ui.textarea',[
     'value'=>$academy['meta_description_en'] ?? ''
 ]);
 
+component(
+    'ui.file',
+    [
+
+        'label'=>'لوگو',
+
+        'name'=>'logo'
+
+    ]
+);
+
+
 $form=ob_get_clean();
 
 component(
