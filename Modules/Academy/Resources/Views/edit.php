@@ -105,7 +105,127 @@ component(
 |--------------------------------------------------------------------------
 */
 
+
 ob_start();
+
+
+component('ui.input',[
+    'label'=>'نام آموزشگاه (فارسی)',
+    'name'=>'name_fa',
+    'value'=>$academy['name_fa'] ?? ''
+]);
+
+component('ui.input',[
+    'label'=>'Academy Name',
+    'name'=>'name_en',
+    'dir'=>'ltr',
+    'value'=>$academy['name_en'] ?? ''
+]);
+
+
+
+
+
+component('ui.textarea',[
+    'label'=>'شعار (فارسی)',
+    'name'=>'slogan_fa',
+    'value'=>$academy['slogan_fa'] ?? ''
+]);
+
+component('ui.textarea',[
+    'label'=>'Slogan',
+    'name'=>'slogan_en',
+    'dir'=>'ltr',
+    'value'=>$academy['slogan_en'] ?? ''
+]);
+
+
+
+
+component('ui.textarea',[
+    'label'=>'توضیح کوتاه (فارسی)',
+    'name'=>'short_description_fa',
+    'rows'=>3,
+    'value'=>$academy['short_description_fa'] ?? ''
+]);
+
+component('ui.textarea',[
+    'label'=>'Short Description',
+    'name'=>'short_description_en',
+    'dir'=>'ltr',
+    'rows'=>3,
+    'value'=>$academy['short_description_en'] ?? ''
+]);
+
+
+
+
+component('ui.textarea',[
+    'label'=>'معرفی کامل (فارسی)',
+    'name'=>'description_fa',
+    'rows'=>8,
+    'value'=>$academy['description_fa'] ?? ''
+]);
+
+component('ui.textarea',[
+    'label'=>'Description',
+    'name'=>'description_en',
+    'dir'=>'ltr',
+    'rows'=>8,
+    'value'=>$academy['description_en'] ?? ''
+]);
+
+
+
+
+component(
+    'ui.input',
+    [
+        'label'=>'کلمات کلیدی',
+        'name'=>'keywords_fa',
+        'value'=>$academy['keywords_fa'] ?? ''
+    ]
+);
+component('ui.input',[
+    'label'=>'Keywords',
+    'name'=>'keywords_en',
+    'dir'=>'ltr',
+    'value'=>$academy['keywords_en'] ?? ''
+]);
+
+
+
+component(
+    'ui.textarea',
+    [
+        'label'=>'توضیحات متا',
+        'name'=>'meta_description_fa',
+        'rows'=>3,
+        'value'=>$academy['meta_description_fa'] ?? ''
+    ]
+);
+component('ui.textarea',[
+    'label'=>'Seo Description',
+    'name'=>'meta_description_en',
+    'rows'=>3,
+    'dir'=>'ltr',
+    'value'=>$academy['meta_description_en'] ?? ''
+]);
+
+$form=ob_get_clean();
+
+component(
+    'ui.card',
+    [
+        'title'=>'اطلاعات آموزشگاه',
+        'slot'=>$form
+    ]
+);
+
+
+
+ob_start();
+
 
 component(
     'ui.input',
