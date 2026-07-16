@@ -4,10 +4,18 @@ namespace Modules\Media\Repositories;
 
 use Core\Database\Repository;
 
-class MediaRepository extends Repository {
-    protected string $table = 'media_files';
-    protected string $primaryKey = 'media_id';
-    protected ?string $model = null;
+class MediaRepository extends Repository
+{
+    protected string $table='media_files';
+
+    protected string $primaryKey='media_file_id';
+
+    protected ?string $model=null;
+
+    public function create(array $data): bool
+    {
+        return parent::create($data);
+    }
 
     public function logo(int $userId): ?array
     {
@@ -32,13 +40,5 @@ class MediaRepository extends Repository {
             ->where('collection','gallery')
             ->orderBy('sort_order')
             ->get();
-    }
-
-    public function deleteCollection(int $userId,string $collection): bool
-    {
-        return $this->query()
-            ->where('user_id',$userId)
-            ->where('collection',$collection)
-            ->delete();
     }
 }

@@ -120,4 +120,127 @@ class MediaService
 
     }
 
+
+    protected function uploadDirectory(
+        string $collection
+    ): string
+    {
+        return config('media.directory').'/'.$collection;
+    }
+
+    protected function generateFilename(
+    array $file
+): string
+{
+    return uniqid().
+        '_' .
+        time().
+        '.'.
+        strtolower(
+            pathinfo(
+                $file['name'],
+                PATHINFO_EXTENSION
+            )
+        );
+}
+
+protected function moveUploadedFile(
+    array $file,
+    string $destination
+): bool
+{
+    return move_uploaded_file(
+        $file['tmp_name'],
+        $destination
+    );
+}
+
+protected function ensureDirectory(
+    string $directory
+): void
+{
+    if(!is_dir($directory)){
+        mkdir(
+            $directory,
+            0777,
+            true
+        );
+    }
+}
+
+
+protected function upload(
+    int $userId,
+    array $file,
+    string $collection
+): ?array
+{
+    if(empty($file['tmp_name'])){
+        return null;
+    }
+
+    $directory=$this->uploadDirectory($collection);
+
+    $absolute=
+        public_path($directory);
+
+    $this->ensureDirectory($absolute);
+
+    $filename=
+        $this->generateFilename($file);
+
+    $destination=
+        $absolute.'/'.$filename;
+
+    if(
+        !$this->moveUploadedFile(
+            $file,
+            $destination
+        )
+    ){
+        return null;
+    }
+
+    $path=
+        $directory.'/'.$filename;
+
+    $this->repository->create([
+
+        'user_id'=>$userId,
+
+        'collection'=>$collection,
+
+        'disk'=>'public',
+
+        'directory'=>$directory,
+
+        'filename'=>$filename,
+
+        'original_filename'=>$file['name'],
+
+        'extension'=>pathinfo(
+            $file['name'],
+            PATHINFO_EXTENSION
+        ),
+
+        'mime_type'=>$file['type'],
+
+        'size'=>$file['size'],
+
+        'path'=>$path,
+
+        'type'=>'image'
+
+    ]);
+
+    return $this->repository
+        ->logo($userId);
+}
+
+
+
+
+
+
+
 }
