@@ -1,0 +1,22 @@
+<?php
+
+namespace Core\Module;
+
+class ModuleLoader {
+
+
+    public static function load(ModuleManager $manager): void {
+        foreach (glob(base_path('Modules/*/Module.php')) as $file) {
+            // require_once $file;
+            $moduleName = basename(dirname($file));
+            $class = "Modules\\{$moduleName}\\Module";
+            if (class_exists($class)) {
+                $manager->register(new $class());
+            }
+        }
+    }
+
+
+
+
+}

@@ -116,6 +116,7 @@ class AcademyService {
                 'website'   => $data['website'] ?? null,
             ]
         );
+        $this->addressService->save($academy['user_id'], $data);
         return $userUpdated;
     }
 
@@ -137,17 +138,32 @@ class AcademyService {
 
 
 
+    // public function editData(int $academyId): array {
+    //     $academy = $this->findById($academyId);
+    //     if (!$academy) {
+    //         return [];
+    //     }
+    //     return [
+    //         'academy'   => $academy,
+    //         'address'   => $this->addressService->findByUserId($academy['user_id']),
+    //         'contact'   => $this->contactService->findByUserId($academy['user_id']),
+    //         'provinces' => $this->provinceService->options(),
+    //         'counties'  => [],
+    //     ];
+    // }
+
     public function editData(int $academyId): array {
         $academy = $this->findById($academyId);
         if (!$academy) {
             return [];
         }
+        $address = $this->addressService->findByUserId($academy['user_id']);
         return [
-            'academy'   => $academy,
-            'address'   => $this->addressService->findByUserId($academy['user_id']),
-            'contact'   => $this->contactService->findByUserId($academy['user_id']),
-            'provinces' => $this->provinceService->options(),
-            'counties'  => [],
+            'academy'=>$academy,
+            'address'=>$address,
+            'contact'=> $this->contactService->findByUserId($academy['user_id']),
+            'provinces'=> $this->provinceService->options(),
+            'counties'=> !empty($address['province_id']) ? $this->countyService->options((int)$address['province_id']) : []
         ];
     }
 
