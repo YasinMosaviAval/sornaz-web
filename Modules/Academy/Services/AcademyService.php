@@ -2,6 +2,7 @@
 
 namespace Modules\Academy\Services;
 
+use Core\Translation\TranslationService;
 use Modules\Academy\Repositories\AcademyRepository;
 use Modules\System\Repositories\UserRepository;
 use Modules\Academy\Requests\AcademyIndexRequest;
@@ -74,12 +75,82 @@ class AcademyService {
         | ایجاد Academy
         |--------------------------------------------------------------------------
         */
-        return $this->academyRepository->create(['user_id' => $user->user_id,]);
+        $academy = $this->academyRepository->create(['user_id'=>$user->user_id]);
+        $academy = $this->academyRepository->findByUserId($user->user_id);
+        $id = $academy['academy_id'];
+
+        $tr = TranslationService::manager();
+
+        $tr->set('academies',$id,'name',$data['name_fa'],'fa');
+        $tr->set('academies',$id,'name',$data['name_en'],'en');
+
+        $tr->set('academies',$id,'slogan',$data['slogan_fa'],'fa');
+        $tr->set('academies',$id,'slogan',$data['slogan_en'],'en');
+
+        $tr->set('academies',$id,'short_description',$data['short_description_fa'],'fa');
+        $tr->set('academies',$id,'short_description',$data['short_description_en'],'en');
+
+        $tr->set('academies',$id,'description',$data['description_fa'],'fa');
+        $tr->set('academies',$id,'description',$data['description_en'],'en');
+
+        $tr->set('academies',$id,'rules',$data['rules_fa'],'fa');
+        $tr->set('academies',$id,'rules',$data['rules_en'],'en');
+
+        $tr->set('academies',$id,'registration',$data['registration_fa'],'fa');
+        $tr->set('academies',$id,'registration',$data['registration_en'],'en');
+
+        $tr->set('academies',$id,'meta_title',$data['meta_title_fa'],'fa');
+        $tr->set('academies',$id,'meta_title',$data['meta_title_en'],'en');
+
+        $tr->set('academies',$id,'meta_description',$data['meta_description_fa'],'fa');
+        $tr->set('academies',$id,'meta_description',$data['meta_description_en'],'en');
+
+        $tr->set('academies',$id,'keywords',$data['keywords_fa'],'fa');
+        $tr->set('academies',$id,'keywords',$data['keywords_en'],'en');
+
+        if($academy){
+            $this->saveTranslations(
+                $academy['academy_id'],
+                $data
+            );
+        }
+        return $academy;
     }
 
 
     public function update(int $academyId, array $data): bool {
         $academy = $this->repository->findById($academyId);
+        // $academy = $this->academyRepository->findByUserId($user->user_id);
+        $id = $academy['academy_id'];
+
+        $tr = TranslationService::manager();
+
+        $tr->set('academies',$id,'name',$data['name_fa'],'fa');
+        $tr->set('academies',$id,'name',$data['name_en'],'en');
+
+        $tr->set('academies',$id,'slogan',$data['slogan_fa'],'fa');
+        $tr->set('academies',$id,'slogan',$data['slogan_en'],'en');
+
+        $tr->set('academies',$id,'short_description',$data['short_description_fa'],'fa');
+        $tr->set('academies',$id,'short_description',$data['short_description_en'],'en');
+
+        $tr->set('academies',$id,'description',$data['description_fa'],'fa');
+        $tr->set('academies',$id,'description',$data['description_en'],'en');
+
+        $tr->set('academies',$id,'rules',$data['rules_fa'],'fa');
+        $tr->set('academies',$id,'rules',$data['rules_en'],'en');
+
+        $tr->set('academies',$id,'registration',$data['registration_fa'],'fa');
+        $tr->set('academies',$id,'registration',$data['registration_en'],'en');
+
+        $tr->set('academies',$id,'meta_title',$data['meta_title_fa'],'fa');
+        $tr->set('academies',$id,'meta_title',$data['meta_title_en'],'en');
+
+        $tr->set('academies',$id,'meta_description',$data['meta_description_fa'],'fa');
+        $tr->set('academies',$id,'meta_description',$data['meta_description_en'],'en');
+
+        $tr->set('academies',$id,'keywords',$data['keywords_fa'],'fa');
+        $tr->set('academies',$id,'keywords',$data['keywords_en'],'en');
         if (!$academy) {
             return false;
         }
@@ -132,6 +203,9 @@ class AcademyService {
                 'website'   => $data['website'] ?? null,
             ]
         );
+        $this->saveTranslations($academyId, $data);
+
+
         return $userUpdated;
     }
 
@@ -153,19 +227,94 @@ class AcademyService {
 
     public function editData(int $academyId): array {
         $academy = $this->findById($academyId);
+        $tr = TranslationService::manager();
+
+        $academy['name_fa']=$tr->get('academies',$academyId,'name','fa');
+        $academy['name_en']=$tr->get('academies',$academyId,'name','en');
+
+        $academy['slogan_fa']=$tr->get('academies',$academyId,'slogan','fa');
+        $academy['slogan_en']=$tr->get('academies',$academyId,'slogan','en');
+
+        $academy['short_description_fa']=$tr->get('academies',$academyId,'short_description','fa');
+        $academy['short_description_en']=$tr->get('academies',$academyId,'short_description','en');
+
+        $academy['description_fa']=$tr->get('academies',$academyId,'description','fa');
+        $academy['description_en']=$tr->get('academies',$academyId,'description','en');
+
+        $academy['rules_fa']=$tr->get('academies',$academyId,'rules','fa');
+        $academy['rules_en']=$tr->get('academies',$academyId,'rules','en');
+
+        $academy['registration_fa']=$tr->get('academies',$academyId,'registration','fa');
+        $academy['registration_en']=$tr->get('academies',$academyId,'registration','en');
+
+        $academy['meta_title_fa']=$tr->get('academies',$academyId,'meta_title','fa');
+        $academy['meta_title_en']=$tr->get('academies',$academyId,'meta_title','en');
+
+        $academy['meta_description_fa']=$tr->get('academies',$academyId,'meta_description','fa');
+        $academy['meta_description_en']=$tr->get('academies',$academyId,'meta_description','en');
+
+        $academy['keywords_fa']=$tr->get('academies',$academyId,'keywords','fa');
+        $academy['keywords_en']=$tr->get('academies',$academyId,'keywords','en');
+
+        
         if (!$academy) {
             return [];
         }
         
         $address = $this->addressService->findByUserId($academy['user_id']);
+        $translation = \Core\Translation\TranslationService::manager();
+
+        $text=[];
+        foreach([
+            'title',
+            'title_en',
+            'short_description',
+            'description',
+            'slogan',
+            'seo_keywords',
+            'seo_description'
+        ] as $field){
+            $text[$field] = $translation->get(
+                'academies',
+                $academyId,
+                $field
+            );
+        }
         return [
             'academy'=>$academy,
             'address'=>$address,
+            'text'=>$text,
             'contact'=> $this->contactService->findByUserId($academy['user_id']),
             'provinces'=> $this->provinceService->options(),
             'counties'=> !empty($address['province_id']) ? $this->countyService->options((int)$address['province_id']) : []
         ];
     }
+
+
+
+    protected function saveTranslations(int $academyId,array $data): void {
+        $translation = \Core\Translation\TranslationService::manager();
+        $fields = [
+            'title',
+            'title_en',
+            'short_description',
+            'description',
+            'slogan',
+            'seo_keywords',
+            'seo_description',
+        ];
+        foreach ($fields as $field){
+            if(array_key_exists($field,$data)){
+                $translation->set(
+                    'academies',
+                    $academyId,
+                    $field,
+                    $data[$field]
+                );
+            }
+        }
+    }
+
 
 
 
