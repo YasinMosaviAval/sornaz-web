@@ -2,24 +2,25 @@
 
 namespace Modules\Academy\Services;
 
-use Modules\Academy\Models\AcademyModel;
 use Modules\Academy\Repositories\AcademyRepository;
 use Modules\System\Repositories\UserRepository;
 use Modules\Academy\Requests\AcademyIndexRequest;
 use Modules\System\Models\UserModel;
 use Modules\Address\Services\AddressService;
-use Modules\Address\Repositories\AddressRepository;
 use Modules\Contact\Services\ContactService;
+use Modules\World\Services\CountyService;
 use Modules\World\Services\ProvinceService;
 
+
 class AcademyService {
+
 
     protected AcademyRepository $academyRepository;
     protected UserRepository $userRepository;
     protected AddressService $addressService;
     protected ContactService $contactService;
     protected ProvinceService $provinceService;
-
+    protected CountyService $countyService;
 
 
     public function __construct(protected AcademyRepository $repository) {
@@ -28,6 +29,7 @@ class AcademyService {
         $this->addressService = app()->container()->make(AddressService::class);
         $this->contactService = app()->container()->make(ContactService::class);
         $this->provinceService = app()->container()->make(ProvinceService::class);
+        $this->countyService = app()->container()->make(CountyService::class);
     }
 
 
@@ -76,12 +78,16 @@ class AcademyService {
     }
 
 
-
     public function update(int $academyId, array $data): bool {
         $academy = $this->repository->findById($academyId);
         if (!$academy) {
             return false;
         }
+        /*
+        |--------------------------------------------------------------------------
+        | User
+        |--------------------------------------------------------------------------
+        */
         $userUpdated = $this->userRepository->update(
             $academy['user_id'],
             [
@@ -93,18 +99,28 @@ class AcademyService {
                 'timezone' => $data['timezone'],
             ]
         );
+        /*
+        |--------------------------------------------------------------------------
+        | Address
+        |--------------------------------------------------------------------------
+        */
         $this->addressService->save(
             $academy['user_id'],
             [
-                'country_id'=>$data['country_id'],
-                'province_id'=>$data['province_id'],
-                'county_id'=>$data['county_id'],
-                'postal_code'=>$data['postal_code'],
-                'latitude'=>$data['latitude'],
-                'longitude'=>$data['longitude'],
-                'address'=>$data['address'],
+                'country_id'  => $data['country_id'] ?? 1,
+                'province_id' => $data['province_id'] ?? null,
+                'county_id'   => $data['county_id'] ?? null,
+                'postal_code' => $data['postal_code'] ?? null,
+                'latitude'    => $data['latitude'] ?? null,
+                'longitude'   => $data['longitude'] ?? null,
+                'address'     => $data['address'] ?? '',
             ]
         );
+        /*
+        |--------------------------------------------------------------------------
+        | Contact
+        |--------------------------------------------------------------------------
+        */
         $this->contactService->save(
             $academy['user_id'],
             [
@@ -116,11 +132,8 @@ class AcademyService {
                 'website'   => $data['website'] ?? null,
             ]
         );
-        $this->addressService->save($academy['user_id'], $data);
         return $userUpdated;
     }
-
-
 
     public function delete(int $id): bool {return $this->repository->delete($id);}
 
@@ -138,25 +151,12 @@ class AcademyService {
 
 
 
-    // public function editData(int $academyId): array {
-    //     $academy = $this->findById($academyId);
-    //     if (!$academy) {
-    //         return [];
-    //     }
-    //     return [
-    //         'academy'   => $academy,
-    //         'address'   => $this->addressService->findByUserId($academy['user_id']),
-    //         'contact'   => $this->contactService->findByUserId($academy['user_id']),
-    //         'provinces' => $this->provinceService->options(),
-    //         'counties'  => [],
-    //     ];
-    // }
-
     public function editData(int $academyId): array {
         $academy = $this->findById($academyId);
         if (!$academy) {
             return [];
         }
+        
         $address = $this->addressService->findByUserId($academy['user_id']);
         return [
             'academy'=>$academy,
@@ -170,8 +170,8 @@ class AcademyService {
 
 
 
-
-
-
-
 }
+
+
+
+
