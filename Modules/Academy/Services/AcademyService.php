@@ -11,6 +11,7 @@ use Modules\Address\Services\AddressService;
 use Modules\Contact\Services\ContactService;
 use Modules\World\Services\CountyService;
 use Modules\World\Services\ProvinceService;
+use Modules\Media\Services\MediaService;
 
 
 class AcademyService {
@@ -22,6 +23,7 @@ class AcademyService {
     protected ContactService $contactService;
     protected ProvinceService $provinceService;
     protected CountyService $countyService;
+    protected MediaService $mediaService;
 
 
     public function __construct(protected AcademyRepository $repository) {
@@ -31,6 +33,7 @@ class AcademyService {
         $this->contactService = app()->container()->make(ContactService::class);
         $this->provinceService = app()->container()->make(ProvinceService::class);
         $this->countyService = app()->container()->make(CountyService::class);
+        $this->mediaService = app()->container()->make(MediaService::class);
     }
 
 
@@ -256,6 +259,7 @@ class AcademyService {
         $academy['keywords_fa']=$tr->get('academies',$academyId,'keywords','fa');
         $academy['keywords_en']=$tr->get('academies',$academyId,'keywords','en');
 
+
         
         if (!$academy) {
             return [];
@@ -286,7 +290,10 @@ class AcademyService {
             'text'=>$text,
             'contact'=> $this->contactService->findByUserId($academy['user_id']),
             'provinces'=> $this->provinceService->options(),
-            'counties'=> !empty($address['province_id']) ? $this->countyService->options((int)$address['province_id']) : []
+            'counties'=> !empty($address['province_id']) ? $this->countyService->options((int)$address['province_id']) : [],
+            'logo'=>$this->mediaService->logo($academy['user_id']),
+            'cover'=>$this->mediaService->cover($academy['user_id']),
+            'gallery'=>$this->mediaService->gallery($academy['user_id']),
         ];
     }
 

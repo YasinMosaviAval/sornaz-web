@@ -17,7 +17,7 @@ component(
 ?>
 </div>
 
-<form method="post" action="/academy/<?= $academy['academy_id'] ?>">
+<form method="post" action="/academy/<?= $academy['academy_id'] ?>" enctype="multipart/form-data">
 <input type="hidden" name="_method" value="PUT">
 
 <?php
@@ -221,6 +221,35 @@ component(
         'slot'=>$form
     ]
 );
+
+
+
+ob_start();
+
+component('ui.file',[
+    'label'=>'لوگو',
+    'name'=>'logo'
+]);
+
+component('ui.file',[
+    'label'=>'کاور',
+    'name'=>'cover'
+]);
+
+component('ui.file',[
+    'label'=>'گالری تصاویر',
+    'name'=>'gallery[]',
+    'multiple'=>true
+]);
+
+$mediaForm=ob_get_clean();
+
+component('ui.card',[
+    'title'=>'تصاویر آموزشگاه',
+    'slot'=>$mediaForm
+]);
+
+?>
 
 
 
