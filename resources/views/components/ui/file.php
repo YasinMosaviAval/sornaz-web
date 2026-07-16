@@ -7,15 +7,13 @@
 </label>
 
 <input
-
 type="file"
-
 name="<?=e($name)?>"
-
-<?=!empty($multiple)?'multiple':''?>
-
 class="sn-input"
 
->
+    <?php if(!empty($multiple)): ?>
+        multiple
+    <?php endif; ?>
+/>
 
 </div>
