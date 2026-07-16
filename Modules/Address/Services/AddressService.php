@@ -58,7 +58,7 @@ class AddressService {
 
 
     public function delete(int $userId): bool {
-        return $this->repository->deleteByUserId($userId);
+        return $this->repository->deleteForUser($userId);
     }
 
 
