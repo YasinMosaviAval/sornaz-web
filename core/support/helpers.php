@@ -69,13 +69,61 @@ function transaction(callable $callback) {
 }
 
 
-function config(string $key, mixed $default = null): mixed {
+// function config(string $key, mixed $default = null): mixed {
+//     static $configs = [];
+//     [$file, $item] = explode('.', $key, 2);
+//     if (!isset($configs[$file])) {
+//         $configs[$file] = require config_path($file . '.php');
+//     }
+//     return $configs[$file][$item] ?? $default;
+// }
+
+function config(string $key, mixed $default = null) {
     static $configs = [];
-    [$file, $item] = explode('.', $key, 2);
-    if (!isset($configs[$file])) {
-        $configs[$file] = require config_path($file . '.php');
+    $parts = explode('.', $key);
+    $module = ucfirst(array_shift($parts));
+    /*
+    |--------------------------------------------------------------------------
+    | Module Config
+    |--------------------------------------------------------------------------
+    */
+    $moduleConfig = base_path(
+        "Modules/{$module}/config.php"
+    );
+    if (file_exists($moduleConfig)) {
+        if (!isset($configs[$module])) {
+            $configs[$module] = require $moduleConfig;
+        }
+        $value = $configs[$module];
+        foreach ($parts as $part) {
+            if (!isset($value[$part])) {
+                return $default;
+            }
+            $value = $value[$part];
+        }
+        return $value;
     }
-    return $configs[$file][$item] ?? $default;
+    /*
+    |--------------------------------------------------------------------------
+    | Global Config
+    |--------------------------------------------------------------------------
+    */
+    $file = array_shift($parts);
+    $path = base_path("config/{$file}.php");
+    if (!file_exists($path)) {
+        return $default;
+    }
+    if (!isset($configs[$file])) {
+        $configs[$file] = require $path;
+    }
+    $value = $configs[$file];
+    foreach ($parts as $part) {
+        if (!isset($value[$part])) {
+            return $default;
+        }
+        $value = $value[$part];
+    }
+    return $value;
 }
 
 

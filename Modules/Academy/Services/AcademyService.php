@@ -14,6 +14,7 @@ use Modules\World\Services\ProvinceService;
 use Modules\Media\Services\MediaService;
 
 
+
 class AcademyService {
 
 
@@ -24,6 +25,7 @@ class AcademyService {
     protected ProvinceService $provinceService;
     protected CountyService $countyService;
     protected MediaService $mediaService;
+    
 
 
     public function __construct(protected AcademyRepository $repository) {
@@ -121,7 +123,7 @@ class AcademyService {
     }
 
 
-    public function update(int $academyId, array $data): bool {
+    public function update(int $academyId, array $data, array $files=[]): bool {
         $academy = $this->repository->findById($academyId);
         // $academy = $this->academyRepository->findByUserId($user->user_id);
         $id = $academy['academy_id'];
@@ -157,11 +159,6 @@ class AcademyService {
         if (!$academy) {
             return false;
         }
-        /*
-        |--------------------------------------------------------------------------
-        | User
-        |--------------------------------------------------------------------------
-        */
         $userUpdated = $this->userRepository->update(
             $academy['user_id'],
             [
@@ -173,11 +170,6 @@ class AcademyService {
                 'timezone' => $data['timezone'],
             ]
         );
-        /*
-        |--------------------------------------------------------------------------
-        | Address
-        |--------------------------------------------------------------------------
-        */
         $this->addressService->save(
             $academy['user_id'],
             [
@@ -190,11 +182,6 @@ class AcademyService {
                 'address'     => $data['address'] ?? '',
             ]
         );
-        /*
-        |--------------------------------------------------------------------------
-        | Contact
-        |--------------------------------------------------------------------------
-        */
         $this->contactService->save(
             $academy['user_id'],
             [
@@ -206,9 +193,16 @@ class AcademyService {
                 'website'   => $data['website'] ?? null,
             ]
         );
+        if (isset($files['logo']) && $files['logo']['error'] == UPLOAD_ERR_OK) {
+            $this->mediaService->uploadLogo($academy['user_id'], $files['logo']);
+        }
+        if (isset($files['cover']) && $files['cover']['error'] == UPLOAD_ERR_OK) {
+            $this->mediaService->uploadCover($academy['user_id'], $files['cover']);
+        }
+        if (isset($files['gallery']) && !empty($files['gallery']['name'][0])) {
+            $this->mediaService->uploadGallery($academy['user_id'], $files['gallery']);
+        }
         $this->saveTranslations($academyId, $data);
-
-
         return $userUpdated;
     }
 

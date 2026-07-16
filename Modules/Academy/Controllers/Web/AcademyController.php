@@ -53,11 +53,14 @@ class AcademyController {
 
 
 
-
     public function update(int $id) {
         $request = new AcademyUpdateRequest($_POST);
-        $data = $request->validate();
-        $this->service->update($id, $data);
+        $data = $request->validated();
+        $this->service->update(
+            $id,
+            $data,
+            $_FILES
+        );
         return redirect('/academy');
     }
 
@@ -90,28 +93,6 @@ class AcademyController {
             ->layout('dashboard')
             ->title('ویرایش آموزشگاه');
     }
-    // public function edit(int $id) {
-    //     $academy = $this->service->findById($id);
-    //     if (!$academy) {
-    //         abort(404);
-    //     }
-    //     $contact =
-    //         $this->contactService
-    //             ->findByUserId(
-    //                 $academy['user_id']
-    //             );
-    //             return ResponseFactory::view(
-    //             'Academy::edit',
-    //             [
-    //                 'academy'=>$academy,
-    //                 'address'=>$address,
-    //                 'contact'=>$contact
-    //             ]
-    //         );
-    //     // return ResponseFactory::view('Academy::edit', ['academy' => $academy])
-    //     //     ->layout('dashboard')
-    //     //     ->title('ویرایش آموزشگاه');
-    // }
 
 
 
