@@ -21,6 +21,8 @@ function app() {return Application::getInstance();}
 function container(): Container {return app()->container();}
 function auth(): Auth {return container()->make(Auth::class);}
 function csrf(): Csrf {return container()->make(Csrf::class);}
+function pushStyle(string $file): void {View::pushStyle($file);}
+function pushScript(string $file): void {View::pushScript($file);}
 function events() {return container()->make(EventDispatcher::class);}
 function errors(): array {return session()->peekFlash('_errors', []);}
 function asset(string $path): string {return '/' . ltrim($path, '/');}
@@ -67,16 +69,6 @@ function transaction(callable $callback) {
         throw $e;
     }
 }
-
-
-// function config(string $key, mixed $default = null): mixed {
-//     static $configs = [];
-//     [$file, $item] = explode('.', $key, 2);
-//     if (!isset($configs[$file])) {
-//         $configs[$file] = require config_path($file . '.php');
-//     }
-//     return $configs[$file][$item] ?? $default;
-// }
 
 function config(string $key, mixed $default = null) {
     static $configs = [];
@@ -162,3 +154,6 @@ if (!function_exists('errors')) {
         return session()->get('_errors', []);
     }
 }
+
+
+

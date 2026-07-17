@@ -12,7 +12,7 @@ use Modules\Contact\Services\ContactService;
 use Modules\World\Services\CountyService;
 use Modules\World\Services\ProvinceService;
 use Modules\Media\Services\MediaService;
-
+use Modules\Availability\Services\AvailabilityService;
 
 
 class AcademyService {
@@ -25,7 +25,7 @@ class AcademyService {
     protected ProvinceService $provinceService;
     protected CountyService $countyService;
     protected MediaService $mediaService;
-    
+    protected AvailabilityService $availabilityService;
 
 
     public function __construct(protected AcademyRepository $repository) {
@@ -36,6 +36,7 @@ class AcademyService {
         $this->provinceService = app()->container()->make(ProvinceService::class);
         $this->countyService = app()->container()->make(CountyService::class);
         $this->mediaService = app()->container()->make(MediaService::class);
+        $this->availabilityService = app()->container()->make(AvailabilityService::class);
     }
 
 
@@ -202,6 +203,21 @@ class AcademyService {
         if (isset($files['gallery']) && !empty($files['gallery']['name'][0])) {
             $this->mediaService->uploadGallery($academy['user_id'], $files['gallery']);
         }
+        if(isset($data['availability'])) {
+            $this->availabilityService->saveWeekly($academy['user_id'], $data['availability']);
+        }
+        if(!empty($data['exception_date'])){
+            $this->availabilityService->saveException(
+                $academy['user_id'],
+                [
+                    'date'=>$data['exception_date'],
+                    'start_time'=>$data['exception_start'],
+                    'end_time'=>$data['exception_end'],
+                    'type'=>$data['exception_type'],
+                    'note'=>$data['exception_note'],
+                ]
+            );
+        }
         $this->saveTranslations($academyId, $data);
         return $userUpdated;
     }
@@ -279,15 +295,21 @@ class AcademyService {
             );
         }
         return [
-            'academy'=>$academy,
-            'address'=>$address,
-            'text'=>$text,
-            'contact'=> $this->contactService->findByUserId($academy['user_id']),
-            'provinces'=> $this->provinceService->options(),
-            'counties'=> !empty($address['province_id']) ? $this->countyService->options((int)$address['province_id']) : [],
-            'logo'=>$this->mediaService->logo($academy['user_id']),
-            'cover'=>$this->mediaService->cover($academy['user_id']),
-            'gallery'=>$this->mediaService->gallery($academy['user_id']),
+            'academy' => $academy,
+            'address' => $address,
+            'text' => $text,
+            'contact' => $this->contactService->findByUserId($academy['user_id']),
+            'provinces' => $this->provinceService->options(),
+            'counties' => !empty($address['province_id']) ? $this->countyService->options((int)$address['province_id']) : [],
+            'logo' => $this->mediaService->logo($academy['user_id']),
+            'cover' => $this->mediaService->cover($academy['user_id']),
+            'gallery' => $this->mediaService->gallery($academy['user_id']),
+            
+            // 'availability' => $this->availabilityService->findByUser($academy['user_id']),
+            // 'availabilityExceptions' => $this->availabilityService->exceptions($academy['user_id']),
+            
+            'availability' => $this->availabilityService->weekly($academy['user_id']),
+            'availabilityExceptions' => $this->availabilityService->exceptions($academy['user_id']),
         ];
     }
 
