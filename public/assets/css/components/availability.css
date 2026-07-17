@@ -1,0 +1,31 @@
+.availability{
+    display:grid;
+    gap:20px;
+}
+
+.availability-day{
+    border:1px solid #ddd;
+    padding:15px;
+    border-radius:12px;
+}
+
+.availability-row{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-bottom:8px;
+    flex-wrap:wrap;
+}
+
+.availability-row input[type=time]{
+    width:140px;
+}
+
+.availability-add{
+    margin-top:10px;
+}
+
+.availability-remove{
+    width:32px;
+    height:32px;
+}

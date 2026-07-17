@@ -1,6 +1,6 @@
-<h1 class="page-title">
+<!-- <h1 class="page-title">
 ویرایش آموزشگاه
-</h1>
+</h1> -->
 
 <div class="page-toolbar">
 
@@ -36,6 +36,8 @@ require __DIR__.'/partials/account.php';
 require __DIR__.'/partials/academy.php';
 
 require __DIR__.'/partials/media.php';
+
+require __DIR__.'/partials/availability.php';
 
 require __DIR__.'/partials/address.php';
 

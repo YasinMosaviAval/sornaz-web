@@ -12,6 +12,9 @@ class View {
     protected mixed $breadcrumb = null;
     protected mixed $toolbar = null;
     protected ?string $resolvedPath = null;
+    protected static array $styles = [];
+    protected static array $scripts = [];
+
 
 
     public function __construct(string $view, array $data = []) {
@@ -148,6 +151,28 @@ class View {
     }
 
 
+
+    public static function pushStyle(string $file): void {
+        self::$styles[$file] = $file;
+    }
+
+
+
+    public static function pushScript(string $file): void {
+        self::$scripts[$file] = $file;
+    }
+
+
+
+    public static function styles(): array {
+        return self::$styles;
+    }
+
+
+
+    public static function scripts(): array {
+        return self::$scripts;
+    }
 
 
 
