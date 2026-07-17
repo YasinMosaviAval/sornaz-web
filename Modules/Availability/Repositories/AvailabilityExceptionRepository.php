@@ -57,17 +57,39 @@ class AvailabilityExceptionRepository extends Repository {
     public function exceptions(int $userId): array {
         return $this->query()
             ->where('user_id',$userId)
+            ->whereNull('deleted_at')
             ->orderBy('date')
             ->get();
     }
 
 
 
-    public function createException(int $userId, array $data): bool {
-        $data['user_id']=$userId;
-        return $this->create($data);
-    }
+    public function createException(
+        int $userId,
+        array $data
+    ): int|false
+    {
 
+        $data['user_id']=$userId;
+
+        if(!$this->create($data)){
+            return false;
+        }
+
+        $row=$this->query()
+            ->where('user_id',$userId)
+            ->whereNull('deleted_at')
+            ->orderBy(
+                'user_availability_exception_id',
+                'DESC'
+            )
+            ->first();
+
+        return $row
+            ? (int)$row['user_availability_exception_id']
+            : false;
+
+    }
 
 
     public function deleteException(int $id): bool {
@@ -82,6 +104,18 @@ class AvailabilityExceptionRepository extends Repository {
     }
 
 
+
+    public function softDeleteAllExceptions(int $userId): bool {
+        return $this->query()
+            ->where('user_id',$userId)
+            ->whereNull('deleted_at')
+            ->update([
+                'updated_at'=>date('Y-m-d H:i:s'),
+                'updated_by'=>auth()->id(),
+                'deleted_at'=>date('Y-m-d H:i:s'),
+                'deleted_by'=>auth()->id()
+            ]);
+    }
 
 
 

@@ -1,0 +1,118 @@
+.availability-exceptions{
+    margin-top:20px;
+}
+
+.availability-exceptions .toolbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+    gap:15px;
+    flex-wrap:wrap;
+}
+
+.availability-exceptions .exception-form{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:15px;
+    margin-bottom:25px;
+}
+
+.availability-exceptions .exception-form .full{
+    grid-column:1/-1;
+}
+
+.availability-exceptions table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.availability-exceptions thead{
+    background:#f5f5f5;
+}
+
+.availability-exceptions th,
+.availability-exceptions td{
+    padding:12px;
+    border:1px solid #e5e5e5;
+    text-align:center;
+    vertical-align:middle;
+}
+
+.availability-exceptions tbody tr:hover{
+    background:#fafafa;
+}
+
+.availability-exceptions .closed{
+    color:#d32f2f;
+    font-weight:600;
+}
+
+.availability-exceptions .holiday{
+    color:#1976d2;
+    font-weight:600;
+}
+
+.availability-exceptions .vacation{
+    color:#f57c00;
+    font-weight:600;
+}
+
+.availability-exceptions .busy{
+    color:#7b1fa2;
+    font-weight:600;
+}
+
+.availability-exceptions .actions{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+}
+
+.availability-exceptions .empty{
+    text-align:center;
+    padding:30px;
+    color:#888;
+}
+
+@media (max-width:768px){
+
+    .availability-exceptions table,
+    .availability-exceptions thead,
+    .availability-exceptions tbody,
+    .availability-exceptions tr,
+    .availability-exceptions td{
+        display:block;
+        width:100%;
+    }
+
+    .availability-exceptions thead{
+        display:none;
+    }
+
+    .availability-exceptions tr{
+        border:1px solid #ddd;
+        border-radius:10px;
+        margin-bottom:15px;
+        overflow:hidden;
+    }
+
+    .availability-exceptions td{
+        display:flex;
+        justify-content:space-between;
+        padding:10px 15px;
+        border:none;
+        border-bottom:1px solid #eee;
+    }
+
+    .availability-exceptions td:last-child{
+        border-bottom:none;
+    }
+
+    .availability-exceptions td::before{
+        content:attr(data-title);
+        font-weight:600;
+        color:#555;
+    }
+
+}

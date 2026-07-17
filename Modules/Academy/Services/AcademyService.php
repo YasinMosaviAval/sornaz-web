@@ -204,19 +204,8 @@ class AcademyService {
             $this->mediaService->uploadGallery($academy['user_id'], $files['gallery']);
         }
         if(isset($data['availability'])) {
-            $this->availabilityService->saveWeekly($academy['user_id'], $data['availability']);
-        }
-        if(!empty($data['exception_date'])){
-            $this->availabilityService->saveException(
-                $academy['user_id'],
-                [
-                    'date'=>$data['exception_date'],
-                    'start_time'=>$data['exception_start'],
-                    'end_time'=>$data['exception_end'],
-                    'type'=>$data['exception_type'],
-                    'note'=>$data['exception_note'],
-                ]
-            );
+            $this->availabilityService->saveWeekly($academy['user_id'], $data['availability'] ?? []);
+            $this->availabilityService->saveExceptions($academy['user_id'], $data['exceptions'] ?? []);
         }
         $this->saveTranslations($academyId, $data);
         return $userUpdated;
@@ -303,11 +292,7 @@ class AcademyService {
             'counties' => !empty($address['province_id']) ? $this->countyService->options((int)$address['province_id']) : [],
             'logo' => $this->mediaService->logo($academy['user_id']),
             'cover' => $this->mediaService->cover($academy['user_id']),
-            'gallery' => $this->mediaService->gallery($academy['user_id']),
-            
-            // 'availability' => $this->availabilityService->findByUser($academy['user_id']),
-            // 'availabilityExceptions' => $this->availabilityService->exceptions($academy['user_id']),
-            
+            'gallery' => $this->mediaService->gallery($academy['user_id']),            
             'availability' => $this->availabilityService->weekly($academy['user_id']),
             'availabilityExceptions' => $this->availabilityService->exceptions($academy['user_id']),
         ];

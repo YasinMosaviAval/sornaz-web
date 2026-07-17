@@ -85,83 +85,22 @@ class AvailabilityService {
         }
         return true;
     }
-        
-    public function saveWeekly7(int $userId, array $availability): bool {
-        foreach ($availability as $day => $rows) {
-            if (!is_array($rows)) {
-                continue;
-            }
-            foreach ($rows as $row) {
-                $start = trim($row['start_time'] ?? '');
-                $end   = trim($row['end_time'] ?? '');
-                if ($start==='' && $end==='' && empty($row['is_closed'])) {
-                    continue;
-                }
-                $data = [
-                    'user_id'       => $userId,
-                    'day_of_week'   => $day,
-                    'start_time'    => $start ?: null,
-                    'end_time'      => $end ?: null,
-                    'timezone'      => config('app.timezone'),
-                    'type'          => 'available',
-                    'is_repeating'  => 1,
-                    'repeat_period' => 'week',
-                    'is_closed'     => !empty($row['is_closed']) ? 1 : 0,
-                    'created_by'    => auth()->id(),
-                    'updated_by'    => auth()->id(),
-                ];
-                // dump(session()->all());
-                dump(auth()->id());
-                dump($data);
-                $this->repository->create($data);
-            }
-        }
-        die();
-    }
 
 
 
-
-    
     public function addException(int $userId,array $data): bool {
         return $this->exceptionRepository->createForUser($userId, $data);
     }
 
 
-    public function saveException(int $userId,array $data): bool
-    {
-        $note=$data['note'] ?? '';
 
-        unset($data['note']);
-
-        $data['created_by']=auth()->id();
-        $data['updated_by']=auth()->id();
-        $id=$this->exceptionRepository->createException($userId,$data);
-
-        if(!$id){
-            return false;
-        }
-
-        TranslationService::manager()->set(
-            'user_availability_exceptions',
-            $id,
-            'note',
-            $note
-        );
-
-        return true;
-    }
-
-
-    public function deleteException(int $id): bool
-    {
+    public function deleteException(int $id): bool {
         TranslationService::manager()->delete(
             'user_availability_exceptions',
             $id,
             'note'
         );
-
-        return $this->exceptionRepository->deleteException($id);
+        return $this->exceptionRepository->softDeleteAllExceptions($id);
     }
 
 
@@ -178,5 +117,41 @@ class AvailabilityService {
         }
         return $items;
     }
+
+
+    public function saveExceptions(int $userId,array $rows): void {
+        $this->exceptionRepository->softDeleteAllExceptions($userId);
+        foreach($rows as $row){
+            if(empty($row['date'])){
+                continue;
+            }
+            $this->saveException($userId, $row);
+        }
+    }
+
+
+
+    public function saveException(int $userId,array $data): bool {
+        $note=$data['note'] ?? '';
+        unset($data['note']);
+        $data['created_by']=auth()->id();
+        $data['updated_by']=auth()->id();
+        
+        $id=$this->exceptionRepository->createException(
+            $userId,
+            $data
+        );
+        if(!$id){
+            return false;
+        }
+        TranslationService::manager()->set(
+            'user_availability_exceptions',
+            $id,
+            'note',
+            $note
+        );
+        return true;
+    }
+
 
 }
