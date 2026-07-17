@@ -46,7 +46,14 @@ trait BuildsMutationQueries {
 
 
 
+    public function insertGetId(array $data): int|false
+    {
+        if (!$this->insert($data)) {
+            return false;
+        }
 
+        return (int)$this->pdo->lastInsertId();
+    }
 
 
 }
