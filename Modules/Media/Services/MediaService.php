@@ -2,6 +2,7 @@
 
 namespace Modules\Media\Services;
 
+use Core\Translation\TranslationService;
 use Modules\Media\Repositories\MediaRepository;
 
 class MediaService
@@ -94,7 +95,15 @@ class MediaService
 
     protected function uploadDirectory(string $collection): string
     {
-        return config('media.directory.' . $collection);
+        $directory = config('media.directory.' . $collection);
+
+        if ($directory === null) {
+            throw new \RuntimeException(
+                "Upload directory for collection [$collection] is not defined."
+            );
+        }
+
+        return $directory;
     }
 
 
@@ -190,6 +199,66 @@ class MediaService
         );
     }
 
+
+
+    public function uploadAcademyVideos(
+        int $userId,
+        array $files
+    ): array
+    {
+        $result = [];
+
+        foreach($files['tmp_name'] as $index=>$tmp){
+
+            if(empty($tmp)){
+                continue;
+            }
+
+            $file = [
+
+                'name'=>$files['name'][$index],
+
+                'type'=>$files['type'][$index],
+
+                'tmp_name'=>$tmp,
+
+                'error'=>$files['error'][$index],
+
+                'size'=>$files['size'][$index],
+
+            ];
+
+            $result[] = $this->upload(
+                $userId,
+                $file,
+                'academy_video'
+            );
+
+        }
+
+        return $result;
+    }
+
+
+
+    public function academyVideos(
+        int $userId
+    ): array
+    {
+        $items = $this->repository->academyVideos($userId);
+
+        foreach ($items as &$item) {
+
+            $item['note'] = TranslationService::manager()->get(
+                'media_files',
+                $item['media_file_id'],
+                'note'
+            );
+
+        }
+
+        return $items;
+    }
 
 
 

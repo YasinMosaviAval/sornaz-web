@@ -7,7 +7,8 @@ return [
         'cover' => 'uploads/cover',
         'gallery' => 'uploads/gallery',
         'video' => 'uploads/video',
-        'intro_video'=>'uploads/video',
+        'intro_video'=>'uploads/intro_video',
+        'academy_video' => 'uploads/academy_video',
         'document' => 'uploads/document',
     ],
     'image_extensions' => [

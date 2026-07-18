@@ -51,6 +51,16 @@ class MediaRepository extends Repository
             ->first();
     }
 
-
+    public function academyVideos(
+        int $userId
+    ): array
+    {
+        return $this->query()
+            ->where('user_id',$userId)
+            ->where('collection','academy_video')
+            ->whereNull('deleted_at')
+            ->orderBy('sort_order')
+            ->get();
+    }
 
 }
