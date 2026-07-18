@@ -1,0 +1,11 @@
+.sn-video-preview{
+    margin-top:15px;
+}
+
+.sn-video-preview video{
+    width:100%;
+    max-height:320px;
+    border-radius:10px;
+    border:1px solid #ddd;
+    background:#000;
+}

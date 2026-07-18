@@ -41,4 +41,16 @@ class MediaRepository extends Repository
             ->orderBy('sort_order')
             ->get();
     }
+
+
+    public function introVideo(int $userId): ?array
+    {
+        return $this->query()
+            ->where('user_id',$userId)
+            ->where('collection','intro_video')
+            ->first();
+    }
+
+
+
 }

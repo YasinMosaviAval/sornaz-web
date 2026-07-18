@@ -156,6 +156,7 @@ class MediaService
             return null;
         }
         $path = $directory.'/'.$filename;
+        $type = str_starts_with($file['type'],'video/') ? 'video' : 'image';
         $this->repository->create([
             'user_id'=>$userId,
             'collection'=>$collection,
@@ -167,7 +168,7 @@ class MediaService
             'mime_type'=>$file['type'],
             'size'=>$file['size'],
             'path'=>$path,
-            'type'=>'image'
+            'type'=>$type
         ]);
         return $this->repository->logo($userId);
     }
@@ -177,7 +178,17 @@ class MediaService
 
 
 
-
+    public function uploadIntroVideo(
+        int $userId,
+        array $file
+    ): ?array
+    {
+        return $this->upload(
+            $userId,
+            $file,
+            'intro_video'
+        );
+    }
 
 
 

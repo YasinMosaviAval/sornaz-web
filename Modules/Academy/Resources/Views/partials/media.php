@@ -48,6 +48,15 @@ component('ui.file',[
 'multiple'=>true
 ]);
 
+component(
+    'ui.video',
+    [
+        'label'=>'ویدئو معرفی',
+        'name'=>'intro_video',
+        'value'=>$academy['intro_video'] ?? ''
+    ]
+);
+
 $form=ob_get_clean();
 
 component(
