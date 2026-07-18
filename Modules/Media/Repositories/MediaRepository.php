@@ -63,4 +63,18 @@ class MediaRepository extends Repository
             ->get();
     }
 
+
+    public function documents(
+        int $userId
+    ): array
+    {
+        return $this->query()
+            ->where('user_id',$userId)
+            ->where('collection','document')
+            ->whereNull('deleted_at')
+            ->orderBy('sort_order')
+            ->get();
+    }
+
+
 }

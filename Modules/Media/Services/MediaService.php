@@ -262,4 +262,58 @@ class MediaService
 
 
 
+    public function documents(
+        int $userId
+    ): array
+    {
+        return $this->repository->documents($userId);
+    }
+
+
+    public function uploadDocuments(
+        int $userId,
+        array $files
+    ): array
+    {
+        $result=[];
+
+        foreach($files['tmp_name'] as $index=>$tmp){
+
+            if(empty($tmp)){
+                continue;
+            }
+
+            $file=[
+
+                'name'=>$files['name'][$index],
+
+                'type'=>$files['type'][$index],
+
+                'tmp_name'=>$tmp,
+
+                'error'=>$files['error'][$index],
+
+                'size'=>$files['size'][$index],
+
+            ];
+
+            $result[]=$this->upload(
+                $userId,
+                $file,
+                'document'
+            );
+
+        }
+
+        return $result;
+    }
+
+
+
+
+
+
+
+
+
 }

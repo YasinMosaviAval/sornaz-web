@@ -90,3 +90,4 @@ component(
         'slot'=>$videos
     ]
 );
+
