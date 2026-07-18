@@ -1,0 +1,29 @@
+/* .google-map{
+    width:100%;
+    height:420px;
+    border-radius:16px;
+    overflow:hidden;
+    margin-bottom:20px;
+    border:1px solid #ddd;
+} */
+
+.google-map-fields{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.google-map-component{
+    margin-top:20px;
+}
+
+#google-search{
+    margin-bottom:15px;
+}
+
+#google-map{
+    width:100%;
+    height:450px;
+    border-radius:12px;
+    border:1px solid #ddd;
+}

@@ -37,6 +37,8 @@ require __DIR__.'/partials/availability.php';
 
 require __DIR__.'/partials/address.php';
 
+require __DIR__.'/partials/google_map.php';
+
 require __DIR__.'/partials/contact.php';
 
 ?>
