@@ -7,6 +7,7 @@ return [
         'cover' => 'uploads/cover',
         'gallery' => 'uploads/gallery',
         'video' => 'uploads/video',
+        'intro_video'=>'uploads/video',
         'document' => 'uploads/document',
     ],
     'image_extensions' => [

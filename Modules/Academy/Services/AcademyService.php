@@ -126,7 +126,6 @@ class AcademyService {
 
     public function update(int $academyId, array $data, array $files=[]): bool {
         $academy = $this->repository->findById($academyId);
-        // $academy = $this->academyRepository->findByUserId($user->user_id);
         $id = $academy['academy_id'];
 
         $tr = TranslationService::manager();
@@ -202,6 +201,9 @@ class AcademyService {
         }
         if (isset($files['gallery']) && !empty($files['gallery']['name'][0])) {
             $this->mediaService->uploadGallery($academy['user_id'], $files['gallery']);
+        }
+        if (isset($files['intro_video']) && $files['intro_video']['error'] === UPLOAD_ERR_OK) {
+            $this->mediaService->uploadIntroVideo($academy['user_id'], $files['intro_video']);
         }
         if(isset($data['availability'])) {
             $this->availabilityService->saveWeekly($academy['user_id'], $data['availability'] ?? []);
