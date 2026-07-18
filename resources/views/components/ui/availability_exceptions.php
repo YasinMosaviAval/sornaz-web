@@ -15,6 +15,16 @@ $value = $value ?? [];
 
             <div class="availability-exception-row">
 
+
+            
+<input
+    type="hidden"
+    name="exceptions[<?= $index ?>][id]"
+    value="<?= e($item['user_availability_exception_id'] ?? '') ?>">
+
+
+
+
                 <input
                     type="date"
                     name="exceptions[<?= $index ?>][date]"

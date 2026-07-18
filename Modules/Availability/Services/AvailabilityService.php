@@ -100,7 +100,8 @@ class AvailabilityService {
             $id,
             'note'
         );
-        return $this->exceptionRepository->softDeleteAllExceptions($id);
+        // return $this->exceptionRepository->softDeleteAllExceptions($id);
+        return $this->exceptionRepository->deleteException($id);
     }
 
 
@@ -119,17 +120,55 @@ class AvailabilityService {
     }
 
 
-    public function saveExceptions(int $userId,array $rows): void {
-        $this->exceptionRepository->softDeleteAllExceptions($userId);
+    // public function saveExceptions(int $userId,array $rows): void {
+    //     $this->exceptionRepository->softDeleteAllExceptions($userId);
+    //     foreach($rows as $row){
+    //         if(empty($row['date'])){
+    //             continue;
+    //         }
+    //         $this->saveException($userId, $row);
+    //     }
+    // }
+    public function saveExceptions(int $userId, array $rows): void {
+        $old = $this->exceptions($userId);
+        $oldIds = [];
+        foreach($old as $item){
+            $oldIds[] = $item['user_availability_exception_id'];
+        }
+        $usedIds = [];
         foreach($rows as $row){
             if(empty($row['date'])){
                 continue;
             }
-            $this->saveException($userId, $row);
+            if(!empty($row['id'])){
+                $usedIds[] = $row['id'];
+                $this->updateException($row['id'], $row);
+            }else{
+                $this->saveException($userId, $row);
+            }
+        }
+        foreach($oldIds as $id){
+            if(!in_array($id,$usedIds)){
+                $this->deleteException($id);
+            }
         }
     }
 
-
+    public function updateException(int $id, array $data): bool {
+        $note = $data['note'] ?? '';
+        unset($data['note'], $data['id']);
+        $data['updated_by'] = auth()->id();
+        $ok = $this->exceptionRepository->updateException($id, $data);
+        if($ok){
+            TranslationService::manager()->set(
+                'user_availability_exceptions',
+                $id,
+                'note',
+                $note
+            );
+        }
+        return $ok;
+    }
 
     public function saveException(int $userId,array $data): bool {
         $note=$data['note'] ?? '';

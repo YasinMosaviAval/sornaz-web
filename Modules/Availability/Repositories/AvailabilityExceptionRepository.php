@@ -118,6 +118,31 @@ class AvailabilityExceptionRepository extends Repository {
     }
 
 
+    public function find(int $id): ?array
+    {
+        return $this->query()
+            ->where(
+                'user_availability_exception_id',
+                $id
+            )
+            ->whereNull('deleted_at')
+            ->first();
+    }
+
+
+    public function updateException(
+        int $id,
+        array $data
+    ): bool
+    {
+        return $this->query()
+            ->where(
+                'user_availability_exception_id',
+                $id
+            )
+            ->update($data);
+    }
+
 
 
 }
