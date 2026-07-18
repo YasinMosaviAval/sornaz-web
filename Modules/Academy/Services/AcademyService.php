@@ -205,6 +205,9 @@ class AcademyService {
         if (isset($files['intro_video']) && $files['intro_video']['error'] === UPLOAD_ERR_OK) {
             $this->mediaService->uploadIntroVideo($academy['user_id'], $files['intro_video']);
         }
+        if (isset($files['academy_video']) && !empty($files['academy_video']['name'][0])) {
+            $this->mediaService->uploadAcademyVideos($academy['user_id'], $files['academy_video']);
+        }
         if(isset($data['availability'])) {
             $this->availabilityService->saveWeekly($academy['user_id'], $data['availability'] ?? []);
             $this->availabilityService->saveExceptions($academy['user_id'], $data['exceptions'] ?? []);
@@ -297,6 +300,7 @@ class AcademyService {
             'gallery' => $this->mediaService->gallery($academy['user_id']),            
             'availability' => $this->availabilityService->weekly($academy['user_id']),
             'availabilityExceptions' => $this->availabilityService->exceptions($academy['user_id']),
+            'academyVideos'=>$this->mediaService->academyVideos($academy['user_id']),
         ];
     }
 

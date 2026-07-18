@@ -48,14 +48,8 @@ component('ui.file',[
 'multiple'=>true
 ]);
 
-component(
-    'ui.video',
-    [
-        'label'=>'ویدئو معرفی',
-        'name'=>'intro_video',
-        'value'=>$academy['intro_video'] ?? ''
-    ]
-);
+
+
 
 $form=ob_get_clean();
 
@@ -65,4 +59,34 @@ component(
 'title'=>'رسانه ها',
 'slot'=>$form
 ]
+);
+
+
+
+ob_start();
+
+component(
+    'ui.video',
+    [
+        'label'=>'ویدئو معرفی',
+        'name'=>'intro_video',
+        'value'=>$academy['intro_video'] ?? ''
+    ]
+);
+
+component(
+    'ui.academy_videos',
+    [
+        'value'=>$academyVideos ?? []
+    ]
+);
+
+$videos = ob_get_clean();
+
+component(
+    'ui.card',
+    [
+        'title'=>'ویدیوهای آموزشگاه',
+        'slot'=>$videos
+    ]
 );
