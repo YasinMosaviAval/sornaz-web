@@ -9,6 +9,7 @@ class DB {
         return (new Builder(db()))->table($table);
     }
 
+    
     public function lastInsertId(): string {
         return $this->connection
             ->pdo()

@@ -96,32 +96,18 @@ trait HasEvents {
     public static function usesTimestamps(): bool {return static::$timestamps ?? true;}
     public static function usesSoftDeletes(): bool {return in_array(SoftDeletes::class, class_uses(static::class));}
 
-public function setRelation(
-    string $name,
-    mixed $value
-): static {
+    public function setRelation(string $name, mixed $value): static {
+        $this->relations[$name] = $value;
+        return $this;
+    }
 
-    $this->relations[$name] = $value;
+    public function getRelation(string $name): mixed {
+        return $this->relations[$name] ?? null;
+    }
 
-    return $this;
-}
-
-public function getRelation(
-    string $name
-): mixed {
-
-    return $this->relations[$name] ?? null;
-}
-
-public function relationLoaded(
-    string $name
-): bool {
-
-    return array_key_exists(
-        $name,
-        $this->relations
-    );
-}
+    public function relationLoaded(string $name): bool {
+        return array_key_exists($name, $this->relations);
+    }
 
 
 }

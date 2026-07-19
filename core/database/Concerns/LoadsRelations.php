@@ -35,8 +35,11 @@ trait LoadsRelations {
         (new RelationLoader())->parse($relations)->load([$this]);
     }
 
+
     protected function loadRelationLoader(RelationLoader $loader): void {$loader->load([$this]);}
 
+
     protected function newRelationLoader(): RelationLoader {return new RelationLoader();}
+
 
 }

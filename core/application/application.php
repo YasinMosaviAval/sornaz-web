@@ -13,8 +13,7 @@ class Application {
     protected static ?Application $instance = null;
     protected Container $container;
     protected ProviderManager $providers;
-    protected string $locale='fa';
-    // protected ModuleManager $modules;
+    protected string $locale = 'fa';
     protected ModuleManager $moduleManager;
     
 
@@ -25,8 +24,6 @@ class Application {
         $this->container = new Container();
         $this->providers = new ProviderManager();
         $this->moduleManager = new ModuleManager();
-        // $this->modules->scan();
-        // $this->modules->register();
         ModuleLoader::load($this->moduleManager);
         $this->moduleManager->boot();
     }

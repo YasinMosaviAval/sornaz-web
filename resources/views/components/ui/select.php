@@ -8,13 +8,9 @@ $current = old(
 ?>
 
 <div class="sn-form-group">
-
     <?php if (!empty($label)): ?>
-        <label class="sn-label">
-            <?= e($label) ?>
-        </label>
+        <label class="sn-label"><?= e($label) ?></label>
     <?php endif; ?>
-    
     <select id="<?= e($id ?? $name) ?>" name="<?= e($name) ?>" class="sn-input">
         <?php foreach($options as $key=>$text): ?>
             <option value="<?= e($key) ?>" <?= $current == $key ? 'selected' : '' ?>>
@@ -22,5 +18,4 @@ $current = old(
             </option>
         <?php endforeach; ?>
     </select>
-
 </div>

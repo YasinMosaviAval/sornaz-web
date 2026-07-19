@@ -53,7 +53,9 @@ class MakeModuleCommand extends Command {
             'Policy.stub'     => 'Policies/{{module}}Policy.php',
             'DTO.stub'        => 'DTO/{{module}}DTO.php',
             'Request.stub'    => 'Requests/{{module}}StoreRequest.php',
-            'routes.stub'     => 'routes.php',
+            'api.stub'        => 'Routes/api.php',
+            'web.stub'        => 'Routes/web.php',
+            'routes.stub'     => 'Routes/routes.php',
             'config.stub'     => 'config.php',
             'helpers.stub'    => 'helpers.php',
             'module.stub'     => 'module.php',
@@ -76,6 +78,7 @@ class MakeModuleCommand extends Command {
             'Providers',
             'Repositories',
             'Requests',
+            'Routes',
             'Services',
             'Views',
         ];
@@ -88,15 +91,8 @@ class MakeModuleCommand extends Command {
 
     protected function createFiles(string $base, array $variables): void {
         foreach($this->files() as $stub=>$destination){
-            $destination=$this->replaceFilenameVariables(
-                $destination,
-                $variables
-            );
-            $this->generate(
-                base_path('core/Stubs/module/'.$stub),
-                $base.'/'.$destination,
-                $variables
-            );
+            $destination=$this->replaceFilenameVariables($destination, $variables);
+            $this->generate(base_path('core/Stubs/module/'.$stub), $base.'/'.$destination, $variables);
         }
     }
 
@@ -105,21 +101,14 @@ class MakeModuleCommand extends Command {
     protected function generate(string $stub, string $destination, array $variables): void {
         $stub = new Stub($stub);
         $content = $stub->replace($variables)->render();
-        $this->filesystem->put(
-            $destination,
-            $content
-        );
+        $this->filesystem->put($destination, $content);
     }
 
 
 
     protected function replaceFilenameVariables(string $path, array $variables): string {
         foreach($variables as $key=>$value){
-            $path=str_replace(
-                '{{'.$key.'}}',
-                $value,
-                $path
-            );
+            $path=str_replace('{{'.$key.'}}', $value, $path);
         }
         return $path;
     }

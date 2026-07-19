@@ -21,49 +21,31 @@ abstract class Relation {
         $this->localKey = $localKey;
     }
 
-    /**
-     * یک Query جدید از مدل مرتبط
-     */
+
     public function newQuery(): Builder {return $this->related::query();}
 
-    /**
-     * کلاس مدل مرتبط
-     */
+
     public function getRelated(): string {return $this->related;}
 
-    /**
-     * مدل والد
-     */
+
     public function getParent(): Model {return $this->parent;}
 
-    /**
-     * جدول والد
-     */
+
     public function getParentTable(): string {return $this->parent::getTable();}
 
-    /**
-     * جدول مدل مرتبط
-     */
+
     public function getRelatedTable(): string {return $this->related::getTable();}
 
-    /**
-     * کلید خارجی
-     */
+
     public function getForeignKey(): string {return $this->foreignKey;}
 
-    /**
-     * کلید محلی
-     */
+
     public function getLocalKey(): string {return $this->localKey;}
 
-    /**
-     * Lazy Loading
-     */
+
     abstract public function getResults();
 
-    /**
-     * Eager Loading
-     */
+
     abstract public function addEagerConstraints(array $models): void;
 
 

@@ -2,13 +2,8 @@
 
 namespace Core\Database\Concerns;
 
-use Core\Database\Builder;
-use Core\Database\DB;
-
 trait HasQueries {
 
-
-    // public static function query(): Builder {return DB::table(static::$table)->model(static::class);}
 
     public static function all(): array {return static::query()->get();}
 

@@ -2,17 +2,10 @@
 
 namespace Core\Translation;
 
-class TranslationRepository
-{
+class TranslationRepository {
 
-    public function find(
-        string $table,
-        int|string $id,
-        string $field,
-        string $locale,
-        int $version = 1
-    ): ?Translation {
 
+    public function find(string $table, int|string $id, string $field, string $locale, int $version = 1): ?Translation {
         return Translation::query()
             ->where('table_name', $table)
             ->where('table_id', $id)
@@ -24,14 +17,7 @@ class TranslationRepository
 
 
 
-    public function exists(
-        string $table,
-        int|string $id,
-        string $field,
-        string $locale,
-        int $version = 1
-    ): bool {
-
+    public function exists(string $table, int|string $id, string $field, string $locale, int $version = 1): bool {
         return $this->find(
             $table,
             $id,
@@ -42,16 +28,8 @@ class TranslationRepository
     }
 
 
-    
-    public function updateOrCreate(
-        string $table,
-        int|string $id,
-        string $field,
-        string $locale,
-        mixed $value,
-        int $version = 1
-    ): bool {
 
+    public function updateOrCreate(string $table, int|string $id, string $field, string $locale, mixed $value, int $version = 1): bool {
         $translation = $this->find(
             $table,
             $id,
@@ -59,15 +37,9 @@ class TranslationRepository
             $locale,
             $version
         );
-
         if ($translation) {
-
-            return $translation->update([
-                'value' => $value
-            ]);
-
+            return $translation->update(['value' => $value]);
         }
-
         Translation::create([
             'table_name' => $table,
             'table_id'   => $id,
@@ -76,19 +48,11 @@ class TranslationRepository
             'value'      => $value,
             'version'    => $version,
         ]);
-
         return true;
     }
 
 
-    public function delete(
-        string $table,
-        int|string $id,
-        string $field,
-        string $locale,
-        int $version = 1
-    ): bool {
-
+    public function delete(string $table, int|string $id, string $field, string $locale, int $version = 1): bool {
         $translation = $this->find(
             $table,
             $id,
@@ -96,29 +60,19 @@ class TranslationRepository
             $locale,
             $version
         );
-
         if (!$translation) {
             return false;
         }
-
         return $translation->delete();
     }
 
 
 
-    public function loadMany(
-        string $table,
-        array $ids,
-        ?string $locale = null,
-        int $version = 1
-    ): array {
-
+    public function loadMany(string $table, array $ids, ?string $locale = null, int $version = 1): array {
         if (empty($ids)) {
             return [];
         }
-
         $locale ??= app()->getLocale();
-
         return Translation::query()
             ->where('table_name', $table)
             ->whereIn('table_id', $ids)
@@ -126,4 +80,6 @@ class TranslationRepository
             ->where('version', $version)
             ->get();
     }
+
+
 }

@@ -11,23 +11,16 @@ abstract class HasOneOrMany extends Relation {
     }
 
 
-    public function addEagerConstraints(array $models): void
-    {
+    public function addEagerConstraints(array $models): void {
         $keys = [];
-
         foreach ($models as $model) {
             $keys[] = $model->{$this->localKey};
         }
-
-        $this->query->whereIn(
-            $this->foreignKey,
-            array_unique($keys)
-        );
+        $this->query->whereIn($this->foreignKey, array_unique($keys));
     }
 
 
-    public function getEager(): array
-    {
+    public function getEager(): array {
         return $this->query->get();
     }
 

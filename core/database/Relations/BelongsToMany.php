@@ -18,12 +18,7 @@ class BelongsToMany extends Relation {
 
 
     public function __construct(Model $parent, string $related, string $pivotTable, string $foreignPivotKey, string $relatedPivotKey, string $localKey, string $relatedKey) {
-        parent::__construct(
-            $parent,
-            $related,
-            $foreignPivotKey,
-            $localKey
-        );
+        parent::__construct($parent, $related, $foreignPivotKey, $localKey);
         $this->pivotTable = $pivotTable;
         $this->relatedPivotKey = $relatedPivotKey;
         $this->relatedKey = $relatedKey;

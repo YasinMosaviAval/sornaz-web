@@ -2,8 +2,9 @@
 
 namespace Core\Events;
 
-class EventDispatcher
-{
+class EventDispatcher {
+
+
     protected array $listeners = [];
 
 
@@ -16,9 +17,7 @@ class EventDispatcher
         $eventClass = get_class($event);
         foreach ($this->listeners[$eventClass] ?? [] as $listener) {
             if (is_string($listener)) {
-                $instance = app()
-                    ->container()
-                    ->make($listener);
+                $instance = app()->container()->make($listener);
                 try {
                     $instance->handle($event);
                 } catch (\Throwable $e) {

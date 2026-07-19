@@ -4,22 +4,14 @@ namespace Core\Auth;
 
 use Core\Http\Request;
 
-class GuestMiddleware
-{
-    public function handle(
-        Request $request,
-        callable $next
-    ) {
+class GuestMiddleware {
 
-        if (
-            auth()->check()
-        ) {
-
+    public function handle(Request $request, callable $next) {
+        if (auth()->check()) {
             return redirect('/');
         }
-
-        return $next(
-            $request
-        );
+        return $next($request);
     }
+
+
 }

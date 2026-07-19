@@ -94,24 +94,12 @@ class Validator {
 
 
     protected function makeRule(string $rule): Rule {
-        if ($rule === 'required') {
-            return new RequiredRule();
-        }
-        if ($rule === 'nullable') {
-            return new NullableRule();
-        }
-        if ($rule === 'email') {
-            return new EmailRule();
-        }
-        if ($rule === 'numeric') {
-            return new NumericRule();
-        }
-        if ($rule === 'integer') {
-            return new IntegerRule();
-        }
-        if ($rule === 'boolean') {
-            return new BooleanRule();
-        }
+        if ($rule === 'required') {return new RequiredRule();}
+        if ($rule === 'nullable') {return new NullableRule();}
+        if ($rule === 'email') {return new EmailRule();}
+        if ($rule === 'numeric') {return new NumericRule();}
+        if ($rule === 'integer') {return new IntegerRule();}
+        if ($rule === 'boolean') {return new BooleanRule();}
         if (str_starts_with($rule,'min:')) {
             [, $value] = explode(':',$rule,2);
             return new MinRule((int)$value);
