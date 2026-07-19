@@ -26,11 +26,8 @@ class Router {
 
     protected static function addRoute(string $method, string $uri, mixed $action): Route {
         $uri = static::currentPrefix() . $uri;
-
         $route = new Route($method, $uri, $action);
-
         static::$routes[$method][] = $route;
-
         return $route;
     }
 
@@ -39,36 +36,29 @@ class Router {
     //     return static::$routes;
     // }
     public static function dispatch(string $method, string $uri) {
+        // dump($uri);
+        // dump(static::$routes);
+        // die;
         $routes = static::$routes[$method] ?? [];
-
         foreach ($routes as $route) {
-
             preg_match_all(
                 '/\{([a-zA-Z0-9_]+)\}/',
                 $route->uri,
                 $parameterNames
             );
-
             $pattern = preg_replace(
                 '/\{([a-zA-Z0-9_]+)\}/',
                 '([^/]+)',
                 $route->uri
             );
-
             // $pattern = '#^' . $pattern . '$#';
             $pattern = '#^' . rtrim($pattern, '/') . '/?$#';
-
             if (preg_match($pattern, $uri, $matches)) {
-
                 array_shift($matches);
-
                 $params = [];
-
                 foreach ($parameterNames[1] as $index => $name) {
-
                     $params[$name] = $matches[$index];
                 }
-
                 return [
                     'action' => $route->action,
                     'params' => $params,
@@ -76,7 +66,6 @@ class Router {
                 ];
             }
         }
-
         return null;
     }
 

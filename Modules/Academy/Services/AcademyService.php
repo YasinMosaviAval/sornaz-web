@@ -335,6 +335,39 @@ class AcademyService {
 
 
 
+    // public function locationData(int $academyId):array
+    // {
+    //     $academy=$this->repository->findById($academyId);
+
+    //     $address=$this->addressService
+    //         ->findByUserId(
+    //             $academy['user_id']
+    //         );
+
+    //     return [
+    //         'academy'=>$academy,
+    //         'address'=>$address
+    //     ];
+    // }
+
+
+    // public function saveLocation(
+    //     int $academyId,
+    //     array $data
+    // ):void{
+
+    //     $academy=$this->repository
+    //         ->findById($academyId);
+
+    //     $this->addressService->save(
+    //         $academy['user_id'],
+    //         [
+    //             'latitude'=>$data['latitude'],
+    //             'longitude'=>$data['longitude']
+    //         ]
+    //     );
+
+    // }
 
 
 }
