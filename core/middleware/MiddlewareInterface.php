@@ -10,4 +10,6 @@ interface MiddlewareInterface {
         Request $request,
         callable $next
     );
+
+
 }

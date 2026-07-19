@@ -20,5 +20,5 @@ class NumericRule implements Rule {
 
 
 
-    
+
 }

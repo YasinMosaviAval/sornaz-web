@@ -13,12 +13,7 @@ class HasOne extends HasOneOrMany {
 
 
     public function __construct(Model $parent, string $related, string $foreignKey, string $localKey) {
-        parent::__construct(
-            $parent,
-            $related,
-            $foreignKey,
-            $localKey
-        );
+        parent::__construct($parent, $related, $foreignKey, $localKey);
     }
 
 

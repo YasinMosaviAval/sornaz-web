@@ -6,6 +6,7 @@ use Closure;
 use Core\Database\Builder;
 
 class AggregateLoader {
+
     protected Builder $builder;
 
     public function __construct(Builder $builder){$this->builder = $builder;}

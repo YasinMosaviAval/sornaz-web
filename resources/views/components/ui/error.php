@@ -5,9 +5,8 @@ if (is_array($message)) {
     $message = reset($message);
 }
 if ($message):
+
 ?>
 
-<div class="sn-error">
-    <?= e($message) ?>
-</div>
+<div class="sn-error"><?= e($message) ?></div>
 <?php endif; ?>

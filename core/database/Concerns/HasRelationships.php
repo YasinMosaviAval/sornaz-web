@@ -2,7 +2,6 @@
 
 namespace Core\Database\Concerns;
 
-use Core\Database\DB;
 use Core\Database\Relations\HasMany;
 use Core\Database\Relations\HasOne;
 use Core\Database\Relations\BelongsTo;

@@ -8,32 +8,15 @@ use ArrayIterator;
 
 class ResourceCollection implements Countable, IteratorAggregate {
 
+
     protected iterable $items;
     protected string $resource;
 
-    public function __construct(
-        iterable $items,
-        string $resource
-    ) {
 
+    public function __construct(iterable $items, string $resource) {
         $this->items = $items;
         $this->resource = $resource;
     }
-
-
-    // public function resolve(): array {
-    //     $result = [];
-    //     foreach ($this->items as $item) {
-    //         $result[] =
-    //             new $this->resource(
-    //                 $item
-    //             );
-    //         $result[array_key_last($result)] =
-    //             $result[array_key_last($result)]
-    //                 ->resolve();
-    //     }
-    //     return $result;
-    // }
 
 
 
@@ -56,7 +39,6 @@ class ResourceCollection implements Countable, IteratorAggregate {
                 'last_page' => $this->items['last_page'],
             ];
         }
-
         /*
         |--------------------------------------------------------------------------
         | Normal Collection
@@ -71,43 +53,30 @@ class ResourceCollection implements Countable, IteratorAggregate {
 
 
 
-    public function toArray(): array
-    {
+    public function toArray(): array {
         return $this->resolve();
     }
 
 
-    public function jsonSerialize(): array
-    {
+    public function jsonSerialize(): array {
         return $this->resolve();
     }
 
 
-    public function count(): int
-    {
-        return count(
-            $this->resolve()
-        );
+    public function count(): int {
+        return count($this->resolve());
     }
 
 
-    public function getIterator(): ArrayIterator
-    {
-        return new ArrayIterator(
-            $this->resolve()
-        );
+    public function getIterator(): ArrayIterator {
+        return new ArrayIterator($this->resolve());
     }
 
 
-    public function toJson(
-        int $flags = JSON_UNESCAPED_UNICODE
-    ): string {
-
-        return json_encode(
-            $this->resolve(),
-            $flags
-        );
+    public function toJson(int $flags = JSON_UNESCAPED_UNICODE): string {
+        return json_encode($this->resolve(), $flags);
     }
+
+
+
 }
-
-

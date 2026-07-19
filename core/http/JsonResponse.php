@@ -8,12 +8,9 @@ class JsonResponse implements ResponseInterface {
         protected int $status = 200
     ) {}
 
-    public function send(): void
-    {
+    public function send(): void {
         http_response_code($this->status);
-
         header('Content-Type: application/json; charset=utf-8');
-
         echo json_encode(
             [
                 'status' => $this->status,

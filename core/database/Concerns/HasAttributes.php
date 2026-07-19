@@ -18,48 +18,39 @@ trait HasAttributes {
         | Loaded Relation
         |--------------------------------------------------------------------------
         */
-
         if ($this->relationLoaded($key)) {
             return $this->getRelation($key);
         }
-
         /*
         |--------------------------------------------------------------------------
         | Translated Attribute
         |--------------------------------------------------------------------------
         */
-
         if ($this->isTranslatedAttribute($key)) {
             $translated = $this->translate($key);
-
             /*
             |--------------------------------------------------------------------------
             | اگر ترجمه وجود داشت همان برگردد
             |--------------------------------------------------------------------------
             */
-
             if ($translated !== null) {
                 return $translated;
             }
-
             /*
             |--------------------------------------------------------------------------
             | اگر ترجمه وجود نداشت از مقدار اصلی استفاده کن
             |--------------------------------------------------------------------------
             */
-
             if (array_key_exists($key, $this->attributes)) {
                 return $this->castAttribute($key, $this->attributes[$key]);
             }
             return null;
         }
-
         /*
         |--------------------------------------------------------------------------
         | Normal Attribute
         |--------------------------------------------------------------------------
         */
-
         if (array_key_exists($key, $this->attributes)) {
             return $this->castAttribute($key, $this->attributes[$key]);
         }
@@ -69,18 +60,15 @@ trait HasAttributes {
 
 
     public function __set(string $key, mixed $value): void {
-
         /*
         |--------------------------------------------------------------------------
         | Translation Attribute
         |--------------------------------------------------------------------------
         */
-
         if ($this->isTranslatedAttribute($key)) {
             $this->setTranslatedAttribute($key, $value);
             return;
         }
-
         /*
         |--------------------------------------------------------------------------
         | Normal Attribute

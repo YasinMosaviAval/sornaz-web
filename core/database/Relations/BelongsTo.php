@@ -13,12 +13,7 @@ class BelongsTo extends BelongsToRelation {
 
 
     public function __construct(Model $parent, string $related, string $foreignKey, string $ownerKey) {
-        parent::__construct(
-            $parent,
-            $related,
-            $foreignKey,
-            $ownerKey
-        );
+        parent::__construct($parent, $related, $foreignKey, $ownerKey);
     }
 
 

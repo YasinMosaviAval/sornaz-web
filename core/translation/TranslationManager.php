@@ -9,7 +9,6 @@ class TranslationManager {
 
     protected TranslationRepository $repository;
     protected array $cache = [];
-    // protected ?Model $currentModel = null;
 
 
 
@@ -24,12 +23,7 @@ class TranslationManager {
     }
 
 
-    // protected function table(Model|string $model): string {
-    //     if (is_string($model)) {
-    //         return $this->table($model);
-    //     }
-    //     return $this->table($model);
-    // }
+
     protected function table(Model|string $model): string {
         if (is_string($model)) {
             return $model;
@@ -48,20 +42,11 @@ class TranslationManager {
     }
 
 
-    public function get(
-        Model|string $model,
-        string|int|null $id,
-        string $field,
-        ?string $locale = null,
-        int $version = 1
-    ): mixed {
-
+    public function get(Model|string $model, string|int|null $id, string $field, ?string $locale = null, int $version = 1): mixed {
         if ($model instanceof Model) {
             $id = $this->id($model);
         }
-
         $locale ??= app()->getLocale();
-
         $key = implode(':', [
             $this->table($model),
             $id,
@@ -69,11 +54,9 @@ class TranslationManager {
             $locale,
             $version
         ]);
-
         if (array_key_exists($key, $this->cache)) {
             return $this->cache[$key];
         }
-
         $translation = $this->repository->find(
             $this->table($model),
             $id,
@@ -81,9 +64,7 @@ class TranslationManager {
             $locale,
             $version
         );
-
         $this->cache[$key] = $translation?->value;
-
         return $this->cache[$key];
     }
 
@@ -93,7 +74,6 @@ class TranslationManager {
         if ($model instanceof Model) {
             $id = $this->id($model);
         }
-        
         $locale ??= app()->getLocale();
         $result = $this->repository->updateOrCreate(
             $this->table($model),
@@ -104,12 +84,7 @@ class TranslationManager {
             $version
         );
         if ($result && $model instanceof Model) {
-            $key = $this->cacheKey(
-                $model,
-                $field,
-                $locale,
-                $version
-            );
+            $key = $this->cacheKey($model, $field, $locale, $version);
             $this->cache[$key] = $value;
         }
         return $result;
@@ -121,15 +96,14 @@ class TranslationManager {
         if ($model instanceof Model) {
             $id = $this->id($model);
         }
-        
         $locale ??= app()->getLocale();
         return $this->repository->exists(
-            $this->table($model),
-            $id,
-            $field,
-            $locale,
-            $version
-        );
+                $this->table($model),
+                $id,
+                $field,
+                $locale,
+                $version
+            );
     }
 
 
@@ -138,15 +112,14 @@ class TranslationManager {
         if ($model instanceof Model) {
             $id = $this->id($model);
         }
-        
         $locale ??= app()->getLocale();
         return $this->repository->delete(
-            $this->table($model),
-            $id,
-            $field,
-            $locale,
-            $version
-        );
+                $this->table($model),
+                $id,
+                $field,
+                $locale,
+                $version
+            );
     }
 
 
@@ -166,35 +139,17 @@ class TranslationManager {
 
 
 
-    public function warmup(
-        string $table,
-        array $models,
-        ?string $locale = null,
-        int $version = 1
-    ): void {
-
+    public function warmup(string $table, array $models, ?string $locale = null, int $version = 1): void {
         if (empty($models)) {
             return;
         }
-
-        
         $locale ??= app()->getLocale();
-
         $ids = [];
-
         foreach ($models as $model) {
             $ids[] = $this->id($model);
         }
-
-        $rows = $this->repository->loadMany(
-            $table,
-            $ids,
-            $locale,
-            $version
-        );
-
+        $rows = $this->repository->loadMany($table, $ids, $locale, $version);
         foreach ($rows as $row) {
-
             $key = implode(':',[
                 $row->table_name,
                 $row->table_id,
@@ -202,7 +157,6 @@ class TranslationManager {
                 $row->locale,
                 $row->version
             ]);
-
             $this->cache[$key] = $row->value;
         }
     }

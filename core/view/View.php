@@ -28,13 +28,11 @@ class View {
         if ($this->resolvedPath !== null) {
             return $this->resolvedPath;
         }
-
         /*
         |--------------------------------------------------------------------------
         | Module View
         |--------------------------------------------------------------------------
         */
-
         if (str_contains($this->view, '::')) {
             [$module, $view] = explode('::', $this->view, 2);
             $view = str_replace('.', DIRECTORY_SEPARATOR, $view);
@@ -43,25 +41,21 @@ class View {
                 return $this->resolvedPath = $path;
             }
         }
-
         /*
         |--------------------------------------------------------------------------
         | resources/views
         |--------------------------------------------------------------------------
         */
-
         $view = str_replace('.', DIRECTORY_SEPARATOR, $this->view);
         $path = base_path("resources/views/{$view}.php");
         if (file_exists($path)) {
             return $this->resolvedPath = $path;
         }
-
         /*
         |--------------------------------------------------------------------------
         | legacy views
         |--------------------------------------------------------------------------
         */
-
         $path = base_path("views/{$view}.php");
         if (file_exists($path)) {
             return $this->resolvedPath = $path;
@@ -137,17 +131,13 @@ class View {
 
 
     public static function exists(string $view): bool {
-        return file_exists(
-            base_path('views/' . str_replace('.', '/', $view) . '.php')
-        );
+        return file_exists(base_path('views/' . str_replace('.', '/', $view) . '.php'));
     }
 
 
 
     public static function componentExists(string $component): bool {
-        return file_exists(
-            base_path('views/components/' . str_replace('.', '/', $component) . '.php')
-        );
+        return file_exists(base_path('views/components/' . str_replace('.', '/', $component) . '.php'));
     }
 
 

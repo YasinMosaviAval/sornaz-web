@@ -1,17 +1,15 @@
 <?php
 
 $columns = [
-    ['title' => '#', 'field' => 'id'],
-    ['title' => 'عنوان', 'field' => 'title'],
-    ['title' => 'وضعیت', 'field' => 'status'],
-    ['title' => 'شهر', 'field' => 'city'],
+    ['title' => '#',         'field' => 'id'],
+    ['title' => 'عنوان',     'field' => 'title'],
+    ['title' => 'وضعیت',     'field' => 'status'],
+    ['title' => 'شهر',       'field' => 'city'],
     ['title' => 'تاریخ ثبت', 'field' => 'created_at'],
-    ['title' => '', 'field' => 'actions'],
+    ['title' => '',           'field' => 'actions'],
 ];
 
 ?>
-
-
 
 <?php
 

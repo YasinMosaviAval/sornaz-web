@@ -13,42 +13,25 @@ $value = $value ?? [];
             <div class="academy-video-item">
                 <div class="academy-video-preview">
                     <video controls preload="metadata">
-                        <source
-                            src="<?=asset($video['path'])?>"
-                            type="<?=e($video['mime_type'])?>">
+                        <source src="<?=asset($video['path'])?>" type="<?=e($video['mime_type'])?>">
                     </video>
                 </div>
                 <div class="academy-video-content">
                     <?php
-                    component('ui.textarea',[
-                        'label'=>'توضیح ویدیو',
-                        'name'=>'academy_video_note['.$video['media_file_id'].']',
-                        'value'=>$video['note'] ?? ''
-                    ]);
+                        component('ui.textarea',[
+                            'label'=>'توضیح ویدیو',
+                            'name'=>'academy_video_note['.$video['media_file_id'].']',
+                            'value'=>$video['note'] ?? ''
+                        ]);
                     ?>
-                    <input
-                        type="hidden"
-                        name="academy_video_id[]"
-                        value="<?=e($video['media_file_id'])?>">
-                    <button
-                        type="button"
-                        class="academy-video-remove"
-                        data-id="<?=e($video['media_file_id'])?>">
-                        حذف
-                    </button>
+                    <input type="hidden" name="academy_video_id[]" value="<?=e($video['media_file_id'])?>">
+                    <button type="button" class="academy-video-remove" data-id="<?=e($video['media_file_id'])?>">حذف</button>
                 </div>
             </div>
         <?php endforeach; ?>
     </div>
     <div class="academy-video-upload">
-        <label>
-            افزودن ویدیو
-        </label>
-        <input
-            type="file"
-            id="academy-video-upload"
-            name="academy_video[]"
-            accept="video/*"
-            multiple>
+        <label>افزودن ویدیو</label>
+        <input type="file" id="academy-video-upload" name="academy_video[]" accept="video/*" multiple>
     </div>
 </div>

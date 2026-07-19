@@ -14,7 +14,6 @@ class MiddlewarePipeline {
     }
 
     public function then(callable $destination) {
-
         $pipeline = array_reduce(
             array_reverse($this->middlewares),
             function ($next, $middleware) {
@@ -24,7 +23,6 @@ class MiddlewarePipeline {
             },
             $destination
         );
-
         return $pipeline($this->request);
     }
 }

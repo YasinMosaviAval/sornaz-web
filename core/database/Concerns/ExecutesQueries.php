@@ -4,8 +4,8 @@ namespace Core\Database\Concerns;
 
 use Core\Database\Aggregates\AggregateLoader;
 
-trait ExecutesQueries
-{
+trait ExecutesQueries {
+
 
     public function get(): array {
         $this->applyScopes();
@@ -15,10 +15,7 @@ trait ExecutesQueries
         if (!$this->modelClass) {return $rows;}
         $models = array_map(fn($row) => new $this->modelClass($row), $rows);
         $translator = new \Core\Translation\TranslationManager();
-        $translator->warmup(
-            $this->modelClass::getTable(),
-            $models
-        );
+        $translator->warmup($this->modelClass::getTable(), $models);
         $this->eagerLoadRelations($models);
         (new AggregateLoader($this))->load($models);
         return $models;
@@ -38,22 +35,12 @@ trait ExecutesQueries
     }
 
 
+
     public function count(): int {
         $sql = "SELECT COUNT(*) AS total FROM {$this->table}";
-        /*
-        |--------------------------------------------------------------------------
-        | Joins
-        |--------------------------------------------------------------------------
-        */
         if (!empty($this->joins)) {
             $sql .= ' ' . implode(' ', $this->joins);
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Wheres
-        |--------------------------------------------------------------------------
-        */
         if (!empty($this->wheres)) {
             $sql .= ' WHERE ' . implode(' AND ', $this->wheres);
         }

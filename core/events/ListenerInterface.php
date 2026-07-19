@@ -2,9 +2,11 @@
 
 namespace Core\Events;
 
-interface ListenerInterface
-{
+interface ListenerInterface {
+
+
     public function handle(
         object $event
     ): void;
+    
 }

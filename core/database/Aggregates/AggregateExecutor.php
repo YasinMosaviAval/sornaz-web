@@ -5,6 +5,8 @@ namespace Core\Database\Aggregates;
 use Core\Database\Builder;
 
 class AggregateExecutor {
+
+
     public function execute(Builder $query, string $aggregate): mixed {
         return match (strtolower($aggregate)) {
             'count' => $query->count(),

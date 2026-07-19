@@ -4,23 +4,17 @@ namespace Core\Validation\Rules;
 
 use Core\Validation\Rule;
 
-class RequiredRule implements Rule
-{
-    public function validate(
-        string $field,
-        mixed $value
-    ): bool {
+class RequiredRule implements Rule {
 
-        return !(
-            $value === null
-            || $value === ''
-        );
+
+    public function validate(string $field, mixed $value): bool {
+        return !($value === null || $value === '');
     }
 
-    public function message(
-        string $field
-    ): string {
 
+    public function message(string $field): string {
         return "{$field} is required.";
     }
+
+
 }

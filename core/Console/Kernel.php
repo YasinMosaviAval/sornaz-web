@@ -6,15 +6,11 @@ use Core\Commands\MakeModuleCommand;
 
 class Kernel {
 
-
-
-    protected array $commands=[
-        'make:module'=> MakeModuleCommand::class,
-    ];
+    protected array $commands = ['make:module'=> MakeModuleCommand::class,];
 
 
 
-    public function __construct(protected $app){
+    public function __construct(protected $app) {
     }
 
 

@@ -2,11 +2,9 @@
 
 namespace Core\Providers;
 
-abstract class ServiceProvider
-{
-    /**
-     * ثبت سرویس‌ها داخل Container
-     */
+abstract class ServiceProvider {
+
+
     public function register(): void {
         file_put_contents(
             storage_path('logs/provider.log'),
@@ -15,9 +13,7 @@ abstract class ServiceProvider
         );
     }
 
-    /**
-     * عملیات بعد از ثبت تمام Providerها
-     */
+
     public function boot(): void {
         file_put_contents(
             storage_path('logs/provider.log'),
