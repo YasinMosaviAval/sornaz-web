@@ -104,10 +104,28 @@ class AcademyController {
 
 
 
+    // public function location(int $id)
+    // {
+    //     $data=$this->service->locationData($id);
+
+    //     return view(
+    //         'Academy::location',
+    //         $data
+    //     );
+    // }
 
 
+    // public function saveLocation(int $id)
+    // {
+    //     $this->service->saveLocation(
+    //         $id,
+    //         $_POST
+    //     );
 
-
+    //     return redirect(
+    //         '/academy/'.$id.'/location'
+    //     );
+    // }
 
 
 }
