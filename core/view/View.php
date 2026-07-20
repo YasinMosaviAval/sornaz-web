@@ -14,6 +14,10 @@ class View {
     protected ?string $resolvedPath = null;
     protected static array $styles = [];
     protected static array $scripts = [];
+    // protected ?string $module = null;
+    // protected ?string $viewFile = null;
+    protected static ?string $currentModule = null;
+    protected static ?string $currentView = null;
 
 
 
@@ -35,10 +39,14 @@ class View {
         */
         if (str_contains($this->view, '::')) {
             [$module, $view] = explode('::', $this->view, 2);
+            // $this->module = $module;
+            // $this->viewFile = $view;
+            // $view = str_replace('.', DIRECTORY_SEPARATOR, $view);
+            // $path = base_path("Modules/{$module}/Resources/Views/{$view}.php");
+            self::$currentModule = $module;
+            self::$currentView = $view;
             $view = str_replace('.', DIRECTORY_SEPARATOR, $view);
             $path = base_path("Modules/{$module}/Resources/Views/{$view}.php");
-            // برای خواندن حالت جدید ساختار ماژول کامنت شده است ولی ساختار قبلی با این روش بود
-            // $path = base_path("Modules/{$module}/Views/{$view}.php");
             if (file_exists($path)) {
                 return $this->resolvedPath = $path;
             }
@@ -144,18 +152,6 @@ class View {
 
 
 
-    public static function pushStyle(string $file): void {
-        self::$styles[$file] = $file;
-    }
-
-
-
-    public static function pushScript(string $file): void {
-        self::$scripts[$file] = $file;
-    }
-
-
-
     public static function styles(): array {
         return self::$styles;
     }
@@ -168,6 +164,30 @@ class View {
 
 
 
+    public static function currentModule(): ?string {
+        return self::$currentModule;
+    }
+
+
+    public static function currentView(): ?string {
+        return self::$currentView;
+    }
+
+
+    public static function pushStyle(string $file): void {
+        if (self::$currentModule && !str_contains($file, '/')) {
+            $file = "Modules/" . self::$currentModule . "/Resources/Assets/css/" . $file;
+        }
+        self::$styles[$file] = $file;
+    }
+
+
+    public static function pushScript(string $file): void {
+        if (self::$currentModule && !str_contains($file, '/')) {
+            $file = "Modules/" . self::$currentModule . "/Resources/Assets/js/" . $file;
+        }
+        self::$scripts[$file] = $file;
+    }
 
 
 

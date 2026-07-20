@@ -1,7 +1,7 @@
 <?php
 
-pushStyle('Resources/Assets/css/edit.css');
-pushScript('Resources/Assets/js/edit.js');
+pushStyle('edit.css');
+pushScript('edit.js');
 
 ?>
 
