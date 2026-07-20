@@ -2,6 +2,124 @@
 
 namespace Modules\{{module}}\Controllers\Web;
 
+use Core\Http\ResponseFactory;
+use Modules\{{module}}\Services\{{module}}Service;
+use Modules\{{module}}\Repositories\{{module}}Repository;
+use Modules\{{module}}\Requests\{{module}}StoreRequest;
+use Modules\{{module}}\Requests\{{module}}UpdateRequest;
+
 class {{module}}Controller {
+
+    protected {{module}}Service $service;
+
+
+
+    public function __construct() {
+        $this->service = new {{module}}Service(new {{module}}Repository());
+    }
+
+
+
+    /**
+     * لیست
+     */
+    public function index() {
+        $items = $this->service->all();
+        return ResponseFactory::view(
+                '{{module}}::index',
+                [
+                    'items' => $items
+                ]
+            )
+            ->layout('main')
+            ->title('{{module}}');
+    }
+
+
+
+    /**
+     * فرم ایجاد
+     */
+    public function create() {
+        return ResponseFactory::view(
+                '{{module}}::create'
+            )
+            ->layout('main')
+            ->title('ایجاد {{module}}');
+    }
+
+
+
+    /**
+     * ذخیره
+     */
+    public function store() {
+        $request = new {{module}}StoreRequest($_POST);
+        $data = $request->validated();
+        $this->service->create($data);
+        return redirect('/{{table}}');
+    }
+
+
+
+    /**
+     * نمایش
+     */
+    public function show(int $id) {
+        $item = $this->service->findById($id);
+        if (!$item) {
+            abort(404);
+        }
+        return ResponseFactory::view(
+                '{{module}}::show',
+                [
+                    'item' => $item
+                ]
+            )
+            ->layout('main')
+            ->title('نمایش {{module}}');
+    }
+
+
+
+    /**
+     * فرم ویرایش
+     */
+    public function edit(int $id) {
+        $item = $this->service->findById($id);
+        if (!$item) {
+            abort(404);
+        }
+        return ResponseFactory::view(
+                '{{module}}::edit',
+                [
+                    'item' => $item
+                ]
+            )
+            ->layout('main')
+            ->title('ویرایش {{module}}');
+    }
+
+
+
+    /**
+     * بروزرسانی
+     */
+    public function update(int $id) {
+        $request = new {{module}}UpdateRequest($_POST);
+        $data = $request->validated();
+        $this->service->update($id, $data);
+        return redirect('/{{table}}');
+    }
+
+
+
+    /**
+     * حذف
+     */
+    public function destroy(int $id) {
+        $this->service->delete($id);
+        return redirect('/{{table}}');
+    }
 
 }
