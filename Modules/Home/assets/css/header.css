@@ -1,0 +1,127 @@
+.site-header{
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:999;
+    backdrop-filter:blur(20px);
+    background:rgba(255,255,255,.85);
+    border-bottom:1px solid rgba(0,0,0,.05);
+}
+
+.container{
+    max-width:1400px;
+    margin:auto;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 30px;
+}
+
+.logo{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    text-decoration:none;
+    color:#222;
+    font-weight:700;
+    font-size:20px;
+}
+
+.logo img{
+    width:42px;
+}
+
+.desktop-menu{
+    display:flex;
+    gap:28px;
+}
+
+.desktop-menu a{
+    text-decoration:none;
+    color:#555;
+    font-size:15px;
+    transition:.25s;
+    position:relative;
+}
+
+.desktop-menu a:hover{
+    color:#5c4cff;
+}
+
+.desktop-menu a.active{
+    color:#5c4cff;
+}
+
+.desktop-menu a.active::after{
+    content:"";
+    position:absolute;
+    bottom:-10px;
+    left:0;
+    right:0;
+    height:2px;
+    background:#5c4cff;
+}
+
+.header-right{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.search-btn, .favorite-btn{
+    width:42px;
+    height:42px;
+    border:none;
+    border-radius:50%;
+    background:#f3f3f3;
+    cursor:pointer;
+}
+
+.login-btn{
+    text-decoration:none;
+    padding:10px 22px;
+    border-radius:30px;
+    color:#444;
+    background:#eee;
+}
+
+.register-btn{
+    text-decoration:none;
+    padding:10px 24px;
+    border-radius:30px;
+    color:#fff;
+    background:#5c4cff;
+}
+
+.mobile-menu-btn{
+    display:none;
+}
+
+@media(max-width:991px){
+    .desktop-menu{
+        display:none;
+    }
+
+    .login-btn{
+        display:none;
+    }
+
+    .register-btn{
+        display:none;
+    }
+
+    .mobile-menu-btn{
+        display:block;
+        width:45px;
+        height:45px;
+        border:none;
+        background:#eee;
+        border-radius:12px;
+        font-size:22px;
+    }
+
+    .container{
+        padding:12px 16px;
+    }
+}
