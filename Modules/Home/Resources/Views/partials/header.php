@@ -23,7 +23,7 @@ $menu = [
         </div>
         <nav class="desktop-menu">
             <?php foreach($menu as $item): ?>
-                <a href="<?=$item['url']?>" class="<?=$current==$item['url']?'active':''?>"><?=$item['title']?></a>
+                <a href="<?=$item['url']?>" class="<?=is_active($item['url'])?>"><?=$item['title']?></a>
             <?php endforeach; ?>
         </nav>
         <div class="header-right">

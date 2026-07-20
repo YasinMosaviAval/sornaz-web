@@ -2,6 +2,9 @@
 
 namespace Core\View;
 
+use Exception;
+use Core\Support\AssetManager;
+
 class View {
 
 
@@ -14,8 +17,6 @@ class View {
     protected ?string $resolvedPath = null;
     protected static array $styles = [];
     protected static array $scripts = [];
-    // protected ?string $module = null;
-    // protected ?string $viewFile = null;
     protected static ?string $currentModule = null;
     protected static ?string $currentView = null;
 
@@ -84,14 +85,49 @@ class View {
         if (!$this->layout) {
             return $content;
         }
-        $layoutPath = base_path("resources/views/layouts/{$this->layout}.php");
-        if (!file_exists($layoutPath)) {
-            $layoutPath = base_path("views/layouts/{$this->layout}.php");
+        $layoutPath = null;
+        /*
+        |--------------------------------------------------------------------------
+        | Module Layout
+        |--------------------------------------------------------------------------
+        */
+        if (self::$currentModule) {
+            $moduleLayout = base_path("Modules/" . self::$currentModule . "/Resources/Views/layouts/{$this->layout}.php");
+            if (file_exists($moduleLayout)) {
+                $layoutPath = $moduleLayout;
+            }
+        }
+        /*
+        |--------------------------------------------------------------------------
+        | Global Layout
+        |--------------------------------------------------------------------------
+        */
+        if (!$layoutPath) {
+            $globalLayout = base_path("resources/views/layouts/{$this->layout}.php");
+            if (file_exists($globalLayout)) {
+                $layoutPath = $globalLayout;
+            }
+        }
+        /*
+        |--------------------------------------------------------------------------
+        | Legacy Layout
+        |--------------------------------------------------------------------------
+        */
+        if (!$layoutPath) {
+            $legacyLayout = base_path("views/layouts/{$this->layout}.php");
+            if (file_exists($legacyLayout)) {
+                $layoutPath = $legacyLayout;
+            }
+        }
+        if (!$layoutPath) {
+            throw new \RuntimeException("Layout [{$this->layout}] not found.");
         }
         ob_start();
         $title = $this->title;
         $breadcrumb = $this->breadcrumb;
         $toolbar = $this->toolbar;
+        $slot = $content;
+        // $content = $content; // برای سازگاری با Layoutهای قدیمی
         require $layoutPath;
         return ob_get_clean();
     }
@@ -106,18 +142,46 @@ class View {
 
 
     public static function component(string $view, array $data = []): void {
-        $path = base_path('resources/views/components/' . str_replace('.', '/', $view) . '.php');
-        if (!file_exists($path)) {
-            $path = base_path('views/components/' . str_replace('.', '/', $view) . '.php');
+        $paths = [];
+    /*
+    |--------------------------------------------------------------------------
+    | Module::component
+    |--------------------------------------------------------------------------
+    */
+        if (str_contains($view, '::')) {
+            [$module, $view] = explode('::', $view, 2);
+            $view = str_replace('.', DIRECTORY_SEPARATOR, $view);
+            $paths[] = base_path("Modules/{$module}/Resources/Views/{$view}.php");
         }
-        if (!file_exists($path)) {
-            throw new \Exception("Component [$view] not found.");
+        else {
+            $view = str_replace('.', DIRECTORY_SEPARATOR, $view);
+            /*
+            |--------------------------------------------------------------------------
+            | Current Module
+            |--------------------------------------------------------------------------
+            */
+            if (self::$currentModule) {
+                $paths[] = base_path("Modules/" . self::$currentModule . "/Resources/Views/partials/{$view}.php");
+                $paths[] = base_path("Modules/" . self::$currentModule . "/Resources/Views/sections/{$view}.php");
+                $paths[] = base_path("Modules/" . self::$currentModule . "/Resources/Views/components/{$view}.php");
+            }
         }
-        extract($data);
-        require $path;
+        /*
+        |--------------------------------------------------------------------------
+        | Global
+        |--------------------------------------------------------------------------
+        */
+        $paths[] = base_path("resources/views/components/{$view}.php");
+        $paths[] = base_path("views/components/{$view}.php");
+        foreach ($paths as $path) {
+            if (file_exists($path)) {
+                extract($data);
+                require $path;
+                return;
+            }
+        }
+        throw new Exception("Component [{$view}] not found.");
     }
-
-
 
     public function title(string $title): static {
         $this->title = $title;
@@ -146,8 +210,22 @@ class View {
 
 
 
-    public static function componentExists(string $component): bool {
-        return file_exists(base_path('views/components/' . str_replace('.', '/', $component) . '.php'));
+    public static function componentExists(string $view): bool {
+        $view = str_replace('.', DIRECTORY_SEPARATOR, $view);
+        $paths = [];
+        if (self::$currentModule) {
+            $paths[] = base_path("Modules/" . self::$currentModule . "/Resources/Views/partials/{$view}.php");
+            $paths[] = base_path("Modules/" . self::$currentModule . "/Resources/Views/sections/{$view}.php");
+            $paths[] = base_path("Modules/" . self::$currentModule . "/Resources/Views/components/{$view}.php");
+        }
+        $paths[] = base_path("resources/views/components/{$view}.php");
+        $paths[] = base_path("views/components/{$view}.php");
+        foreach ($paths as $path) {
+            if (file_exists($path)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 
@@ -175,19 +253,16 @@ class View {
 
 
     public static function pushStyle(string $file): void {
-        if (self::$currentModule && !str_contains($file, '/')) {
-            $file = "Modules/" . self::$currentModule . "/Resources/Assets/css/" . $file;
-        }
-        self::$styles[$file] = $file;
+        self::$styles[] = ['module'=>self::$currentModule, 'file'=>$file];
     }
+
 
 
     public static function pushScript(string $file): void {
-        if (self::$currentModule && !str_contains($file, '/')) {
-            $file = "Modules/" . self::$currentModule . "/Resources/Assets/js/" . $file;
-        }
-        self::$scripts[$file] = $file;
+        self::$scripts[] = ['module'=>self::$currentModule, 'file'=>$file];
     }
+
+
 
 
 

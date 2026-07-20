@@ -1,0 +1,12 @@
+.container{
+    width:min(1400px,95%);
+    margin:auto;
+}
+
+section{
+    padding:80px 0;
+}
+
+.site-content{
+    padding-top:90px;
+}
