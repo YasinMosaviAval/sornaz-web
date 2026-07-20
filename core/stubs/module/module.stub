@@ -1,11 +1,7 @@
 <?php
 
 return [
-
     'name' => '{{module}}',
-
     'enabled' => true,
-
     'provider' => Modules\{{module}}\Providers\{{module}}ServiceProvider::class,
-
 ];
