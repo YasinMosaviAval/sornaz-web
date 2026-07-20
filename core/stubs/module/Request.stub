@@ -1,9 +1,0 @@
-<?php
-
-namespace Modules\{{module}}\Requests;
-
-use Core\Http\FormRequest;
-
-class {{module}}StoreRequest extends FormRequest {
-
-}
