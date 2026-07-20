@@ -45,43 +45,139 @@ class MakeModuleCommand extends Command {
 
     protected function files(): array {
         return [
+            /*
+            |--------------------------------------------------------------------------
+            | Controllers
+            |--------------------------------------------------------------------------
+            */
             'Controller.stub' => 'Controllers/Web/{{module}}Controller.php',
-            'Service.stub'    => 'Services/{{module}}Service.php',
+            'ApiController.stub' => 'Controllers/Api/{{module}}Controller.php',
+            /*
+            |--------------------------------------------------------------------------
+            | Services
+            |--------------------------------------------------------------------------
+            */
+            'Service.stub' => 'Services/{{module}}Service.php',
+            /*
+            |--------------------------------------------------------------------------
+            | Repository
+            |--------------------------------------------------------------------------
+            */
             'Repository.stub' => 'Repositories/{{module}}Repository.php',
-            'Model.stub'      => 'Models/{{module}}Model.php',
-            'Provider.stub'   => 'Providers/{{module}}ServiceProvider.php',
-            'Policy.stub'     => 'Policies/{{module}}Policy.php',
-            'DTO.stub'        => 'DTO/{{module}}DTO.php',
-            'Request.stub'    => 'Requests/{{module}}StoreRequest.php',
-            'api.stub'        => 'Routes/api.php',
-            'web.stub'        => 'Routes/web.php',
-            'routes.stub'     => 'Routes/routes.php',
-            'config.stub'     => 'config.php',
-            'helpers.stub'    => 'helpers.php',
-            'module.stub'     => 'module.php',
-            'README.stub'     => 'README.md',
+            /*
+            |--------------------------------------------------------------------------
+            | Model
+            |--------------------------------------------------------------------------
+            */
+            'Model.stub' => 'Models/{{module}}Model.php',
+            /*
+            |--------------------------------------------------------------------------
+            | DTO
+            |--------------------------------------------------------------------------
+            */
+            'DTO.stub' => 'DTO/{{module}}DTO.php',
+            /*
+            |--------------------------------------------------------------------------
+            | Requests
+            |--------------------------------------------------------------------------
+            */
+            'StoreRequest.stub' => 'Requests/{{module}}StoreRequest.php',
+            'UpdateRequest.stub' => 'Requests/{{module}}UpdateRequest.php',
+            /*
+            |--------------------------------------------------------------------------
+            | Policy
+            |--------------------------------------------------------------------------
+            */
+            'Policy.stub' => 'Policies/{{module}}Policy.php',
+            /*
+            |--------------------------------------------------------------------------
+            | Provider
+            |--------------------------------------------------------------------------
+            */
+            'Provider.stub' => 'Providers/{{module}}ServiceProvider.php',
+            /*
+            |--------------------------------------------------------------------------
+            | Routes
+            |--------------------------------------------------------------------------
+            */
+            'web.stub' => 'Routes/web.php',
+            'api.stub' => 'Routes/api.php',
+            'routes.stub' => 'Routes/routes.php',
+            /*
+            |--------------------------------------------------------------------------
+            | View
+            |--------------------------------------------------------------------------
+            */
+            'index.stub' => 'Resources/Views/index.php',
+            'create.stub' => 'Resources/Views/create.php',
+            'edit.stub' => 'Resources/Views/edit.php',
+            'show.stub' => 'Resources/Views/show.php',
+            /*
+            |--------------------------------------------------------------------------
+            | Layout
+            |--------------------------------------------------------------------------
+            */
+            'layout.stub' => 'Resources/Views/layouts/main.php',
+            /*
+            |--------------------------------------------------------------------------
+            | Assets
+            |--------------------------------------------------------------------------
+            */
+            'style.stub' => 'Resources/Assets/css/style.css',
+            'script.stub' => 'Resources/Assets/js/script.js',
+            /*
+            |--------------------------------------------------------------------------
+            | Module Files
+            |--------------------------------------------------------------------------
+            */
+            'config.stub' => 'config.php',
+            'helpers.stub' => 'helpers.php',
+            'module.stub' => 'module.php',
+            'README.stub' => 'README.md',
         ];
     }
 
 
 
     protected function createDirectories(string $base): void {
-        $folders=[
+        $folders = [
             'Controllers',
             'Controllers/Web',
             'Controllers/Api',
+
             'DTO',
+
             'Events',
             'Listeners',
+
             'Models',
+
             'Policies',
+
             'Providers',
+
             'Repositories',
+
             'Requests',
+
+            'Resources',
+            'Resources/Assets',
+            'Resources/Assets/css',
+            'Resources/Assets/js',
+            'Resources/Assets/images',
+            'Resources/Assets/fonts',
+
+            'Resources/Views',
+            'Resources/Views/layouts',
+            'Resources/Views/partials',
+            'Resources/Views/components',
+            'Resources/Views/sections',
+
             'Routes',
+
             'Services',
-            'Views',
         ];
+
         foreach($folders as $folder){
             $this->filesystem->ensureDirectory($base . '/' . $folder);
         }

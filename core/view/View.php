@@ -37,6 +37,8 @@ class View {
             [$module, $view] = explode('::', $this->view, 2);
             $view = str_replace('.', DIRECTORY_SEPARATOR, $view);
             $path = base_path("Modules/{$module}/Resources/Views/{$view}.php");
+            // برای خواندن حالت جدید ساختار ماژول کامنت شده است ولی ساختار قبلی با این روش بود
+            // $path = base_path("Modules/{$module}/Views/{$view}.php");
             if (file_exists($path)) {
                 return $this->resolvedPath = $path;
             }
