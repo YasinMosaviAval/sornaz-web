@@ -1,7 +1,7 @@
 <?php
 
-pushStyle('Resources/Assets/css/index.css');
-pushScript('Resources/Assets/js/index.js');
+pushStyle('index.css');
+pushScript('index.js');
 
 ?>
 

@@ -1,7 +1,7 @@
 <?php
 
-pushStyle('Resources/Assets/css/create.css');
-pushScript('Resources/Assets/js/create.js');
+pushStyle('create.css');
+pushScript('create.js');
 
 ?>
 
