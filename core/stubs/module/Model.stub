@@ -9,10 +9,11 @@ class {{module}}Model extends Model {
     protected string $table = '{{table}}';
     protected string $primaryKey = '{{primaryKey}}';
     protected array $fillable = [
-
+        // 'title',
+        // 'status',
     ];
     protected array $casts = [
-
+        // 'created_at' => 'datetime',
     ];
     protected bool $timestamps = true;
     protected bool $softDeletes = true;
