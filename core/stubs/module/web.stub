@@ -1,0 +1,20 @@
+<?php
+
+use Core\Router\Router;
+use Modules\{{module}}\Controllers\Web\{{module}}Controller;
+
+Router::group(
+    ['prefix' => '/{{table}}'],
+    function () {
+        Router::get('/',            [{{module}}Controller::class,'index']);
+        Router::get('/create',      [{{module}}Controller::class,'create']);
+        Router::post('/',           [{{module}}Controller::class,'store']);
+        Router::get('/{id}',        [{{module}}Controller::class,'show']);
+        Router::get('/{id}/edit',   [{{module}}Controller::class,'edit']);
+        Router::put('/{id}',        [{{module}}Controller::class,'update']);
+        Router::delete('/{id}',     [{{module}}Controller::class,'destroy']);
+    }
+
+
+
+);
