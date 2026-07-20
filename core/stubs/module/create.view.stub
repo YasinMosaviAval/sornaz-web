@@ -1,0 +1,14 @@
+<?php
+
+pushStyle('Resources/Assets/css/create.css');
+pushScript('Resources/Assets/js/create.js');
+
+?>
+
+<div class="{{table}}-create-page">
+    <div class="page-header">
+        <h1>Create {{module}}</h1>
+    </div>
+    <div class="page-content">
+    </div>
+</div>
