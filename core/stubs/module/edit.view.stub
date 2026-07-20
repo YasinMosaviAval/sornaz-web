@@ -1,0 +1,14 @@
+<?php
+
+pushStyle('Resources/Assets/css/edit.css');
+pushScript('Resources/Assets/js/edit.js');
+
+?>
+
+<div class="{{table}}-edit-page">
+    <div class="page-header">
+        <h1>Edit {{module}}</h1>
+    </div>
+    <div class="page-content">
+    </div>
+</div>
