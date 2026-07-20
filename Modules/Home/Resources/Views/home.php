@@ -1,5 +1,7 @@
 <?php
 
-component('website.hero');
-
-component('website.categories');
+component('hero');
+component('categories');
+component('featured');
+component('teachers');
+component('statistics');

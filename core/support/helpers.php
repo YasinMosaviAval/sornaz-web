@@ -12,6 +12,7 @@ use Core\Session\Session;
 use Core\Http\RedirectResponse;
 use Core\Http\Request;
 use Core\Http\Response;
+use Core\Support\AssetManager;
 use Core\View\View;
 
 function query(): DB {return new DB();}
@@ -79,9 +80,7 @@ function config(string $key, mixed $default = null) {
     | Module Config
     |--------------------------------------------------------------------------
     */
-    $moduleConfig = base_path(
-        "Modules/{$module}/config.php"
-    );
+    $moduleConfig = base_path("Modules/{$module}/config.php");
     if (file_exists($moduleConfig)) {
         if (!isset($configs[$module])) {
             $configs[$module] = require $moduleConfig;
@@ -157,3 +156,46 @@ if (!function_exists('errors')) {
 
 
 
+if (!function_exists('styles')) {
+    function styles(): string {
+        $html='';
+        foreach(View::styles() as $style){
+            $url=AssetManager::publish($style['module'], 'css', $style['file']);
+            $html.='<link rel="stylesheet" href="'.$url.'?v='.time().'">'."\n";
+        }
+        return $html;
+    }
+}
+
+
+
+if (!function_exists('scripts')) {
+    function scripts(): string {
+        $html='';
+        foreach(View::scripts() as $script){
+            $url=AssetManager::publish($script['module'], 'js', $script['file']);
+            $html.='<script src="'.$url.'?v='.time().'"></script>'."\n";
+        }
+        return $html;
+    }
+}
+
+
+
+if (!function_exists('current_url')) {
+    function current_url(): string {
+        $uri = $_SERVER['REQUEST_URI'] ?? '/';
+        $uri = parse_url($uri, PHP_URL_PATH);
+        if ($uri === '') {
+            $uri = '/';
+        }
+        return rtrim($uri, '/') ?: '/';
+    }
+}
+
+
+if (!function_exists('is_active')) {
+    function is_active(string $url, string $class = 'active'): string {
+        return current_url() === $url ? $class : '';
+    }
+}
