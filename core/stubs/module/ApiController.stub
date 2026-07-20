@@ -1,0 +1,67 @@
+<?php
+
+namespace Modules\{{module}}\Controllers\Api;
+
+use Core\Http\ResponseFactory;
+use Modules\{{module}}\Requests\{{module}}StoreRequest;
+use Modules\{{module}}\Requests\{{module}}UpdateRequest;
+use Modules\{{module}}\Services\{{module}}Service;
+
+class {{module}}Controller {
+
+    protected {{module}}Service $service;
+
+    public function __construct() {
+        $this->service = new {{module}}Service();
+    }
+
+    /**
+     * GET /api/{{table}}
+     */
+    public function index() {
+        return ResponseFactory::json($this->service->all());
+    }
+
+    /**
+     * GET /api/{{table}}/{id}
+     */
+    public function show(int $id) {
+        $item = $this->service->findById($id);
+        if (!$item) {
+            return ResponseFactory::json(['message' => '{{module}} not found.'], 404);
+        }
+        return ResponseFactory::json($item);
+    }
+
+    /**
+     * POST /api/{{table}}
+     */
+    public function store() {
+        $request = new {{module}}StoreRequest($_POST);
+        $id = $this->service->create($request->validated());
+        return ResponseFactory::json([
+            'success' => true,
+            'id' => $id
+        ], 201);
+    }
+
+    /**
+     * PUT /api/{{table}}/{id}
+     */
+    public function update(int $id) {
+        $request = new {{module}}UpdateRequest($_POST);
+        $result = $this->service->update($id, $request->validated());
+        return ResponseFactory::json(['success'=>$result]);
+    }
+
+    /**
+     * DELETE /api/{{table}}/{id}
+     */
+    public function destroy(int $id) {
+        $result = $this->service->delete($id);
+        return ResponseFactory::json(['success'=>$result]);
+    }
+
+
+
+}
