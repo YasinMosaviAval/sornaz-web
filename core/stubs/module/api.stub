@@ -1,0 +1,16 @@
+<?php
+
+use Core\Router\Router;
+use Modules\{{module}}\Controllers\Api\{{module}}Controller;
+
+Router::group(
+    ['prefix' => '/api/{{table}}'],
+    function () {
+        Router::get('/',        [{{module}}Controller::class,'index']);
+        Router::post('/',       [{{module}}Controller::class,'store']);
+        Router::get('/{id}',    [{{module}}Controller::class,'show']);
+        Router::put('/{id}',    [{{module}}Controller::class,'update']);
+        Router::delete('/{id}', [{{module}}Controller::class,'destroy']);
+    }
+
+);

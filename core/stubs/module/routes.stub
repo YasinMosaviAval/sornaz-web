@@ -1,3 +1,12 @@
 <?php
 
-use Modules\{{module}}\Controllers\Web\{{module}}Controller;
+use Core\Router\Router;
+
+/*
+|--------------------------------------------------------------------------
+| Custom Routes
+|--------------------------------------------------------------------------
+|
+| Register custom routes for this module here.
+|
+*/

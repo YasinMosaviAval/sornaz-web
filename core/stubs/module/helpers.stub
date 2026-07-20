@@ -1,1 +1,8 @@
 <?php
+
+if (!function_exists('{{table}}')) {
+
+    function {{table}}() {
+    }
+
+}
