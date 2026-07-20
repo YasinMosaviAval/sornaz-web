@@ -2,6 +2,11 @@
 
 namespace Modules\{{module}}\Services;
 
+use Modules\{{module}}\Repositories\{{module}}Repository;
+
 class {{module}}Service {
+
+    public function __construct(protected {{module}}Repository $repository) {
+    }
 
 }

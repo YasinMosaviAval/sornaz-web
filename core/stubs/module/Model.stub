@@ -6,8 +6,16 @@ use Core\Database\Model;
 
 class {{module}}Model extends Model {
 
-    protected static string $table='{{table}}';
+    protected string $table = '{{table}}';
+    protected string $primaryKey = '{{primaryKey}}';
+    protected array $fillable = [
 
-    protected static string $primaryKey='{{primaryKey}}';
+    ];
+    protected array $casts = [
+
+    ];
+    protected bool $timestamps = true;
+    protected bool $softDeletes = true;
+
 
 }

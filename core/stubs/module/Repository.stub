@@ -3,11 +3,12 @@
 namespace Modules\{{module}}\Repositories;
 
 use Core\Database\Repository;
+use Modules\{{module}}\Models\{{module}}Model;
 
 class {{module}}Repository extends Repository {
-    
-    protected string $table='{{table}}';
-    protected string $primaryKey='{{primaryKey}}';
-    protected ?string $model=null;
+
+    protected ?string $model = {{module}}Model::class;
+    protected string $table = '{{table}}';
+    protected string $primaryKey = '{{primaryKey}}';
 
 }
