@@ -2,17 +2,25 @@
 
 namespace Modules\Blog\Repositories;
 
+use Core\Localization\Contracts\TranslationRepositoryInterface;
 use Modules\Blog\Contracts\BlogRepositoryInterface;
 use Modules\Blog\DTO\BlogDTO;
 use Modules\Blog\Services\TranslationMapper;
+use PDO;
 
 class BlogRepository implements BlogRepositoryInterface {
 
-    protected $db;
+    protected PDO $db;
 
+    protected TranslationRepositoryInterface $translations;
 
-    public function __construct() {
-        $this->db = db();
+    public function __construct(
+        PDO $db,
+        TranslationRepositoryInterface $translations
+    )
+    {
+        $this->db = $db;
+        $this->translations = $translations;
     }
     /*
     |--------------------------------------------------------------------------
