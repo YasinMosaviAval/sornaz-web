@@ -2,6 +2,7 @@
 
 use Core\Router\Router;
 use Modules\Blog\Controllers\Web\BlogController;
+use Modules\Blog\Repositories\BlogRepository;
 
 Router::group(
     ['prefix' => '/blogs'],
@@ -18,3 +19,14 @@ Router::group(
 
 
 );
+
+
+Router::get('/blog-test', function () {
+
+    $repo = app()->container()->make(BlogRepository::class);
+
+    dd(
+        $repo->find(1)
+    );
+
+});

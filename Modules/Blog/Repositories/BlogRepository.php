@@ -27,10 +27,12 @@ class BlogRepository implements BlogRepositoryInterface {
         $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
         $stmt->execute();
         $posts = $stmt->fetchAll();
-        foreach ($posts as &$post) {
+        $result = [];
+        foreach ($posts as $post) {
             $post = $this->attachTranslations($post);
+            $result[] = BlogDTO::fromArray($post);
         }
-        return $posts;
+        return $result;
     }
     /*
     |--------------------------------------------------------------------------
@@ -43,10 +45,12 @@ class BlogRepository implements BlogRepositoryInterface {
         $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
         $stmt->execute();
         $posts = $stmt->fetchAll();
-        foreach ($posts as &$post) {
+        $result = [];
+        foreach ($posts as $post) {
             $post = $this->attachTranslations($post);
+            $result[] = BlogDTO::fromArray($post);
         }
-        return $posts;
+        return $result;
     }
     /*
     |--------------------------------------------------------------------------
@@ -59,10 +63,12 @@ class BlogRepository implements BlogRepositoryInterface {
         $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
         $stmt->execute();
         $posts = $stmt->fetchAll();
-        foreach ($posts as &$post) {
+        $result = [];
+        foreach ($posts as $post) {
             $post = $this->attachTranslations($post);
+            $result[] = BlogDTO::fromArray($post);
         }
-        return $posts;
+        return $result;
     }
     /*
     |--------------------------------------------------------------------------
@@ -76,7 +82,8 @@ class BlogRepository implements BlogRepositoryInterface {
         if(!$post){
             return null;
         }
-        return $this->toDTO($this->attachTranslations($post));
+        $post = $this->attachTranslations($post);
+        return BlogDTO::fromArray($post);
     }
     /*
     |--------------------------------------------------------------------------
@@ -90,7 +97,8 @@ class BlogRepository implements BlogRepositoryInterface {
         if(!$post){
             return null;
         }
-        return $this->toDTO($this->attachTranslations($post));
+        $post = $this->attachTranslations($post);
+        return BlogDTO::fromArray($post);
     }
     /*
     |--------------------------------------------------------------------------
@@ -147,19 +155,6 @@ class BlogRepository implements BlogRepositoryInterface {
         $rows=$stmt->fetchAll();
         $post['translations'] = TranslationMapper::map($rows);
         return $post;
-    }
-
-
-
-    protected function toDTO(array $post): BlogDTO {
-        $dto=new BlogDTO();
-        foreach($post as $key=>$value){
-            if(property_exists($dto,$key)){
-                $dto->$key=$value;
-            }
-        }
-        $dto->translations = $post['translations'] ?? [];
-        return $dto;
     }
 
 
