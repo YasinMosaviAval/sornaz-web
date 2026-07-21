@@ -2,9 +2,7 @@
 
 namespace Modules\Blog\Requests;
 
-use Core\Validation\FormRequest;
-
-class BlogStoreRequest extends FormRequest {
+class BlogStoreRequest {
 
     /**
      * آیا کاربر اجازه اجرای این درخواست را دارد؟
@@ -16,8 +14,43 @@ class BlogStoreRequest extends FormRequest {
     /**
      * قوانین اعتبارسنجی
      */
-    public function rules(): array {
+    public function rules(): array
+    {
         return [
+
+            'slug' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'status' => [
+                'required',
+            ],
+
+            'visibility' => [
+                'required',
+            ],
+
+            'category_id' => [
+                'required',
+            ],
+
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'excerpt' => [
+                'nullable',
+                'string',
+            ],
+
+            'content' => [
+                'required',
+                'string',
+            ],
 
         ];
     }
@@ -25,11 +58,19 @@ class BlogStoreRequest extends FormRequest {
     /**
      * پیام‌های اعتبارسنجی
      */
-    public function messages(): array {
+    public function messages(): array
+    {
         return [
+
+            'slug.required' => 'اسلاگ الزامی است.',
+
+            'title.required' => 'عنوان الزامی است.',
+
+            'content.required' => 'متن مقاله الزامی است.',
 
         ];
     }
+
 
     /**
      * نام‌های فارسی فیلدها
@@ -39,5 +80,9 @@ class BlogStoreRequest extends FormRequest {
 
         ];
     }
+
+
+
+
 
 }

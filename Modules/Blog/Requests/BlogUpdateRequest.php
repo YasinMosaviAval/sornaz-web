@@ -2,30 +2,28 @@
 
 namespace Modules\Blog\Requests;
 
-use Core\Validation\FormRequest;
+class BlogUpdateRequest extends BlogStoreRequest
+{
+    // public function authorize(): bool {
+    //     return true;
+    // }
 
-class BlogUpdateRequest extends FormRequest {
+    // public function rules(): array {
+    //     return [
 
-    public function authorize(): bool {
-        return true;
-    }
+    //     ];
+    // }
 
-    public function rules(): array {
-        return [
+    // public function messages(): array {
+    //     return [
 
-        ];
-    }
+    //     ];
+    // }
 
-    public function messages(): array {
-        return [
+    // public function attributes(): array {
+    //     return [
 
-        ];
-    }
-
-    public function attributes(): array {
-        return [
-
-        ];
-    }
+    //     ];
+    // }
 
 }
