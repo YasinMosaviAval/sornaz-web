@@ -2,6 +2,7 @@
 
 namespace Core\Database\Relations;
 
+use Closure;
 use Core\Database\Builder;
 
 class RelationSubQuery {
@@ -26,7 +27,7 @@ class RelationSubQuery {
     }
 
 
-    public function whereExists(Relation $relation, ?\Closure $callback = null): Builder {
+    public function whereExists(Relation $relation, ?Closure $callback = null): Builder {
         $query = $this->exists($relation);
         if ($callback) {
             $callback($query);

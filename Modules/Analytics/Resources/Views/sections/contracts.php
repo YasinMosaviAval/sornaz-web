@@ -1,0 +1,41 @@
+<div id="contracts" class="section">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-3xl font-bold">مدیریت قراردادها</h1>
+            <p class="text-gray-500 mt-1">قراردادهای هنرجویان، اساتید و پیمانکاران</p>
+        </div>
+        <button onclick="openAddContractModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
+            <i class="fas fa-plus"></i> ثبت قرارداد جدید
+        </button>
+    </div>
+
+    <!-- تاپ‌بار شعبه‌ها -->
+    <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
+        <div class="flex gap-2 min-w-max" id="contractsBranchTabs">
+            <button onclick="filterContractsByBranch('all')" 
+                    class="contract-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium bg-indigo-600 text-white">
+                همه شعبه‌ها
+            </button>
+        </div>
+    </div>
+
+    <!-- جدول قراردادها -->
+    <div class="bg-white rounded-3xl shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[1100px]" id="contractsTable">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="text-right py-5 px-5 font-medium">عنوان قرارداد</th>
+                        <th class="text-right py-5 px-5 font-medium">طرف قرارداد</th>
+                        <th class="text-right py-5 px-5 font-medium">شعبه</th>
+                        <th class="text-right py-5 px-5 font-medium">نوع</th>
+                        <th class="text-right py-5 px-5 font-medium">تاریخ شروع</th>
+                        <th class="text-right py-5 px-5 font-medium">وضعیت</th>
+                        <th class="w-32 py-5 px-5"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y text-sm"></tbody>
+            </table>
+        </div>
+    </div>
+</div>

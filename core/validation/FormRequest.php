@@ -2,6 +2,8 @@
 
 namespace Core\Validation;
 
+use Exception;
+
 abstract class FormRequest {
 
 
@@ -38,7 +40,7 @@ abstract class FormRequest {
 
     public function validate(): array {
         if (!$this->authorize()) {
-            throw new \Exception('Unauthorized.');
+            throw new Exception('Unauthorized.');
         }
         $validator = new Validator();
         if (!$validator->validate($this->data, $this->rules(), $this->messages())) {

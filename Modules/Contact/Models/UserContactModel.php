@@ -20,5 +20,4 @@ class UserContactModel extends Model {
     ];
 
 
-
 }

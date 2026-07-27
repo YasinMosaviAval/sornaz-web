@@ -11,6 +11,7 @@ abstract class HasOneOrMany extends Relation {
     }
 
 
+
     public function addEagerConstraints(array $models): void {
         $keys = [];
         foreach ($models as $model) {
@@ -18,6 +19,7 @@ abstract class HasOneOrMany extends Relation {
         }
         $this->query->whereIn($this->foreignKey, array_unique($keys));
     }
+
 
 
     public function getEager(): array {

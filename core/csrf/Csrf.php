@@ -4,7 +4,6 @@ namespace Core\Csrf;
 
 class Csrf {
 
-
     public function token(): string {
         if (!session()->has('_csrf_token')) {
             session()->put('_csrf_token', bin2hex(random_bytes(32)));

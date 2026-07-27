@@ -1,0 +1,51 @@
+<header class="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-center justify-between h-16 md:h-18">
+            <!-- لوگو -->
+            <a href="/analytics/home" class="flex items-center gap-2 shrink-0">
+                <span class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
+                    <i class="fas fa-music"></i>
+                </span>
+                <span class="font-bold text-lg hidden sm:block">برنامه موسیقی سُرناز</span>
+            </a>
+
+            <!-- منوی دسکتاپ -->
+            <nav class="hidden lg:flex items-center gap-1 text-sm">
+                <a href="/analytics/home" data-page="home" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">خانه</a>
+                <a href="/analytics/articles" data-page="articles" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">مقاله‌های آموزشی</a>
+                <!-- <a href="/analytics/users" data-page="users" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">کاربران</a>
+                <a href="/analytics/academies" data-page="academies" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">آموزشگاه‌ها</a> -->
+                <a href="/analytics/admin-panel" data-page="contact" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">پنل ادمین</a>
+
+                <a href="/analytics/about-us" data-page="about" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">درباره ما</a>
+                <a href="/analytics/contact-us" data-page="contact" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">تماس با ما</a>
+            </nav>
+
+            <!-- ورود / ثبت‌نام -->
+            <div class="hidden lg:flex items-center gap-2">
+                <a href="/analytics/login" class="text-sm px-4 py-2 rounded-xl text-indigo-600 hover:bg-indigo-50">ورود</a>
+                <a href="/analytics/register" class="text-sm px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">ثبت نام</a>
+            </div>
+
+            <!-- منوی موبایل -->
+            <button type="button" onclick="toggleMobileMenu()" class="lg:hidden p-2 text-gray-600">
+                <i class="fas fa-bars text-xl" id="mobileMenuIcon"></i>
+            </button>
+        </div>
+
+        <!-- منوی کشویی موبایل -->
+        <div id="mobileMenu" class="hidden lg:hidden pb-4 border-t border-gray-100 pt-3 space-y-1">
+            <a href="/analytics/home" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">خانه</a>
+            <a href="/analytics/articles" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">مقاله‌های آموزشی</a>
+            <!-- <a href="/analytics/users" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">کاربران</a>
+            <a href="/analytics/academies" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">آموزشگاه‌ها</a> -->
+            <a href="/analytics/admin-panel" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">پنل ادمین</a>
+            <a href="/analytics/about-us" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">درباره ما</a>
+            <a href="/analytics/contact-us" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">تماس با ما</a>
+            <div class="flex gap-2 pt-3 border-t border-gray-100 mt-2">
+                <a href="/analytics/login" onclick="closeMobileMenu();" class="flex-1 text-center text-sm py-2.5 rounded-xl border border-indigo-200 text-indigo-600">ورود</a>
+                <a href="/analytics/register" onclick="closeMobileMenu();" class="flex-1 text-center text-sm py-2.5 rounded-xl bg-indigo-600 text-white">ثبت نام</a>
+            </div>
+        </div>
+    </div>
+</header>

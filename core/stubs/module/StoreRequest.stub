@@ -40,4 +40,5 @@ class {{module}}StoreRequest extends FormRequest {
         ];
     }
 
+
 }

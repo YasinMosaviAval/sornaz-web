@@ -8,7 +8,6 @@ use Core\Database\Builder;
 
 class BelongsToMany extends Relation {
 
-
     protected string $pivotTable;
     protected string $relatedPivotKey;
     protected string $relatedKey;

@@ -3,7 +3,7 @@
 namespace Core\View;
 
 use Exception;
-use Core\Support\AssetManager;
+use RuntimeException;
 
 class View {
 
@@ -71,7 +71,7 @@ class View {
         if (file_exists($path)) {
             return $this->resolvedPath = $path;
         }
-        throw new \RuntimeException("View [{$this->view}] not found.");
+        throw new RuntimeException("View [{$this->view}] not found.");
     }
 
 
@@ -120,7 +120,7 @@ class View {
             }
         }
         if (!$layoutPath) {
-            throw new \RuntimeException("Layout [{$this->layout}] not found.");
+            throw new RuntimeException("Layout [{$this->layout}] not found.");
         }
         ob_start();
         $title = $this->title;

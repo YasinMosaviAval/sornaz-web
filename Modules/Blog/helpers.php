@@ -1,10 +1,5 @@
 <?php
 
-// if (!function_exists('blogs')) {
-//     function blogs() {
-//     }
-// }
-
 
 if (!function_exists('blog_categories')) {
     function blog_categories(?string $categories): array {

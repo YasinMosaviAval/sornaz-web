@@ -3,6 +3,7 @@
 namespace Core\Router;
 
 class Router {
+
     protected static array $groupStack = [];
     protected static array $routes = [];
 

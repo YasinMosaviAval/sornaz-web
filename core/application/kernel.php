@@ -8,6 +8,9 @@ use Core\Middleware\MiddlewarePipeline;
 use Core\Router\Router;
 use Core\Http\ResponseInterface;
 use Core\Validation\ValidationException;
+use Exception;
+use ReflectionFunction;
+use ReflectionMethod;
 
 class Kernel {
 
@@ -65,7 +68,7 @@ class Kernel {
 
 
     protected function invokeControllerMethod(object $controller, string $method, array $routeParams) {
-        $reflection = new \ReflectionMethod($controller, $method);
+        $reflection = new ReflectionMethod($controller, $method);
         $arguments = [];
         foreach ($reflection->getParameters() as $parameter) {
             $name = $parameter->getName();
@@ -82,7 +85,7 @@ class Kernel {
                 $arguments[] = $parameter->getDefaultValue();
                 continue;
             }
-            throw new \Exception("Cannot resolve parameter {$name}");
+            throw new Exception("Cannot resolve parameter {$name}");
         }
         return $reflection->invokeArgs($controller, $arguments);
     }
@@ -90,7 +93,7 @@ class Kernel {
 
 
     protected function invokeCallable(callable $callable, array $routeParams = []) {
-        $reflection = new \ReflectionFunction($callable);
+        $reflection = new ReflectionFunction($callable);
         $arguments = [];
         foreach ($reflection->getParameters() as $parameter) {
             $name = $parameter->getName();
@@ -107,7 +110,7 @@ class Kernel {
                 $arguments[] = $parameter->getDefaultValue();
                 continue;
             }
-            throw new \Exception("Cannot resolve parameter {$name}");
+            throw new Exception("Cannot resolve parameter {$name}");
         }
         return $reflection->invokeArgs($arguments);
     }

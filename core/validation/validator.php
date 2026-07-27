@@ -15,6 +15,7 @@ use Core\Validation\Rules\IntegerRule;
 use Core\Validation\Rules\BooleanRule;
 use Core\Validation\Rules\SameRule;
 use Core\Validation\Rules\ConfirmedRule;
+use Exception;
 
 class Validator {
 
@@ -129,7 +130,7 @@ class Validator {
         if ($rule === 'confirmed') {
             return new ConfirmedRule();
         }
-        throw new \Exception("Rule {$rule} not found");
+        throw new Exception("Rule {$rule} not found");
     }
 
 

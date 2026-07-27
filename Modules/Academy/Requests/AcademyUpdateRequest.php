@@ -6,11 +6,8 @@ use Core\Validation\FormRequest;
 
 class AcademyUpdateRequest extends FormRequest {
 
-
-
-    public function authorize(): bool {
-        return true;
-    }
+    public function authorize(): bool { return true; }
+    public function messages(): array { return []; }
 
 
 
@@ -50,12 +47,6 @@ class AcademyUpdateRequest extends FormRequest {
             'keywords_fa' => 'nullable|max:255',
             'keywords_en' => 'nullable|max:255',
         ];
-    }
-
-
-
-    public function messages(): array {
-        return [];
     }
 
 

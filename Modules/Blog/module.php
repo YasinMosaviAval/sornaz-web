@@ -1,13 +1,16 @@
 <?php
 
-container()->bind(
-    \Modules\Blog\Contracts\BlogRepositoryInterface::class,
-    \Modules\Blog\Repositories\BlogRepository::class
-);
+namespace Modules\Blog;
 
-return [
-    'name' => 'Blog',
-    'enabled' => true,
-    'provider' => Modules\Blog\Providers\BlogServiceProvider::class,
-];
+use Core\Module\Module as CoreModule;
+use Modules\Blog\Providers\BlogServiceProvider;
 
+class Module extends CoreModule {
+    public function name(): string {
+        return 'Blog';
+    }
+
+    public function providers(): array {
+        return [BlogServiceProvider::class];
+    }
+}

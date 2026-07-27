@@ -4,7 +4,6 @@ namespace Core\Http\Resources;
 
 abstract class Resource {
 
-
     protected mixed $resource;
 
 

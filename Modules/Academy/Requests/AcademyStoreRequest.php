@@ -6,11 +6,7 @@ use Core\Validation\FormRequest;
 
 class AcademyStoreRequest extends FormRequest {
 
-
-
-    public function authorize(): bool {
-        return true;
-    }
+    public function authorize(): bool { return true; }
 
 
 
@@ -77,6 +73,3 @@ class AcademyStoreRequest extends FormRequest {
 
 
 }
-
-
-

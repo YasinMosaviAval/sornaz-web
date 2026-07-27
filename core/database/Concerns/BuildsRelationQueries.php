@@ -2,6 +2,7 @@
 
 namespace Core\Database\Concerns;
 
+use Closure;
 use Core\Database\Relations\RelationExistence;
 use Core\Database\Relations\RelationLoader;
 use Core\Database\Relations\RelationPath;
@@ -89,7 +90,7 @@ trait BuildsRelationQueries {
 
 
 
-    public function whereHas(string $relation, \Closure $callback): static {return $this->relationExistence()->whereHas($relation, $callback);}
+    public function whereHas(string $relation, Closure $callback): static {return $this->relationExistence()->whereHas($relation, $callback);}
 
 
 
@@ -99,9 +100,10 @@ trait BuildsRelationQueries {
 
 
 
-    public function orWhereHas(string $relation, \Closure $callback): static {
+    public function orWhereHas(string $relation, Closure $callback): static {
         return $this->relationExistence()->orWhereHas($relation, $callback);
     }
+
 
 
 

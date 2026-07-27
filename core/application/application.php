@@ -15,7 +15,7 @@ class Application {
     protected ProviderManager $providers;
     protected string $locale = 'fa';
     protected ModuleManager $moduleManager;
-    
+
 
 
 

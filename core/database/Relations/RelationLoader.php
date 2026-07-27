@@ -2,6 +2,9 @@
 
 namespace Core\Database\Relations;
 
+use Closure;
+use RuntimeException;
+
 class RelationLoader {
 
 
@@ -33,12 +36,12 @@ class RelationLoader {
             $constraint = $children['_constraint'] ?? null;
             unset($children['_constraint']);
             if (!method_exists($models[0], $relationName)) {
-                throw new \RuntimeException("Relation [{$relationName}] does not exist on model [" . get_class($models[0]) . "].");
+                throw new RuntimeException("Relation [{$relationName}] does not exist on model [" . get_class($models[0]) . "].");
             }
             $relation = $models[0]->{$relationName}();
             $relation->initRelation($models, $relationName);
             $relation->addEagerConstraints($models);
-            if ($constraint instanceof \Closure) {
+            if ($constraint instanceof Closure) {
                 $constraint($relation->getQuery());
             }
             $results = $relation->getEager();
@@ -105,6 +108,7 @@ class RelationLoader {
         return $this;
     }
 
+
     protected function filterNode(array $tree, callable $callback): array {
         $result = [];
         foreach ($tree as $relation => $children) {
@@ -123,8 +127,8 @@ class RelationLoader {
     }
 
 
-
     public function hasTree(): bool {return !empty($this->parsedTree);}
+
 
     public function clear(): static {$this->parsedTree = []; return $this;}
 

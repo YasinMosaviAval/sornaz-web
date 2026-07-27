@@ -2,7 +2,9 @@
 
 namespace Core\Validation;
 
-class ValidationException extends \Exception {
+use Exception;
+
+class ValidationException extends Exception {
 
 
     protected array $errors;
@@ -25,7 +27,6 @@ class ValidationException extends \Exception {
     public function getErrors(): array {
         return $this->errors;
     }
-
 
 
 

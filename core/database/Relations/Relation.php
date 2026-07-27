@@ -57,4 +57,5 @@ abstract class Relation {
 
     abstract public function getExistenceQuery(Builder $query): Builder;
 
+
 }

@@ -61,4 +61,5 @@ trait Conditionable {
     protected function value(mixed $value): mixed {
         return is_callable($value) ? $value() : $value;
     }
+
 }

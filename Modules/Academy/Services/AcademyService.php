@@ -17,7 +17,6 @@ use Modules\Availability\Services\AvailabilityService;
 
 class AcademyService {
 
-
     protected AcademyRepository $academyRepository;
     protected UserRepository $userRepository;
     protected AddressService $addressService;
@@ -338,7 +337,3 @@ class AcademyService {
 
 
 }
-
-
-
-

@@ -3,7 +3,6 @@
 
 namespace Core\Http;
 
-interface ResponseInterface
-{
+interface ResponseInterface {
     public function send(): void;
 }

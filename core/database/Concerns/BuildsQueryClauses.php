@@ -20,7 +20,6 @@ trait BuildsQueryClauses {
 
 
 
-
     public function orderBy(string $column, string $direction = 'ASC'): static {
         $this->orders[] = "{$column} {$direction}";
         return $this;
@@ -28,11 +27,17 @@ trait BuildsQueryClauses {
 
 
 
-    public function latest(?string $column = null): static {$column ??= $this->modelClass::getPrimaryKey(); return $this->orderBy($column, 'DESC');}
+    public function latest(?string $column = null): static {
+        $column ??= $this->modelClass::getPrimaryKey();
+        return $this->orderBy($column, 'DESC');
+    }
 
 
 
-    public function oldest(?string $column = null): static {$column ??= $this->modelClass::getPrimaryKey(); return $this->orderBy($column, 'ASC');}
+    public function oldest(?string $column = null): static {
+        $column ??= $this->modelClass::getPrimaryKey();
+        return $this->orderBy($column, 'ASC');
+    }
 
 
 
@@ -47,7 +52,6 @@ trait BuildsQueryClauses {
         $this->offset = $offset;
         return $this;
     }
-
 
 
 

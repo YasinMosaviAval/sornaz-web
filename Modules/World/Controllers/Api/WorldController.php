@@ -16,7 +16,6 @@ class WorldController {
     }
 
 
-
     public function counties(int $provinceId) {
         return ResponseFactory::json($this->countyService->options($provinceId));
     }
@@ -32,5 +31,6 @@ class WorldController {
             $mapper->map($data ?? [])
         );
     }
+
 
 }

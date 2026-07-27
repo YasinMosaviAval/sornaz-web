@@ -7,7 +7,6 @@ use Core\Database\Builder;
 
 class HasOne extends HasOneOrMany {
 
-
     protected array $eagerKeys = [];
 
 
@@ -68,7 +67,6 @@ class HasOne extends HasOneOrMany {
             $this->getParentTable().'.'.$this->localKey
         );
     }
-
 
 
 

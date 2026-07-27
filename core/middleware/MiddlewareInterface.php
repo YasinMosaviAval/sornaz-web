@@ -11,5 +11,4 @@ interface MiddlewareInterface {
         callable $next
     );
 
-
 }

@@ -3,6 +3,7 @@
 namespace Core\Http;
 
 class Response implements ResponseInterface {
+
     protected string $content = '';
 
     public function __construct(string $content = '') {
@@ -21,4 +22,7 @@ class Response implements ResponseInterface {
             JSON_UNESCAPED_SLASHES
         );
     }
+
+
+
 }

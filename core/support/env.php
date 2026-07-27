@@ -5,7 +5,6 @@ namespace Core\Support;
 class Env {
 
 
-
     protected static array $data = [];
 
 

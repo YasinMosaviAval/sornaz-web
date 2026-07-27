@@ -2,8 +2,6 @@
 
 namespace Core\Database\Concerns;
 
-use Core\Database\Builder;
-
 trait BuildsWhereQueries {
 
 
@@ -91,6 +89,7 @@ trait BuildsWhereQueries {
         $this->wheres[] = "{$column} IS NOT NULL";
         return $this;
     }
+
 
 
 

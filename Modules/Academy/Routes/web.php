@@ -15,4 +15,3 @@ Router::group(
         Router::delete('/{id}', [AcademyController::class, 'destroy']);
     }
 );
-

@@ -19,5 +19,4 @@ class Translation extends Model {
 
 
 
-
 }

@@ -11,28 +11,22 @@ use PDO;
 class BlogRepository implements BlogRepositoryInterface {
 
     protected PDO $db;
-
     protected TranslationRepositoryInterface $translations;
 
-    public function __construct(
-        PDO $db,
-        TranslationRepositoryInterface $translations
-    )
-    {
+
+    public function __construct(PDO $db, TranslationRepositoryInterface $translations) {
         $this->db = $db;
         $this->translations = $translations;
     }
-    /*
-    |--------------------------------------------------------------------------
-    | Pagination
-    |--------------------------------------------------------------------------
-    */
+
+
+
     public function paginate(int $page = 1, int $perPage = 15) {
         $offset = ($page - 1) * $perPage;
         $sql = "SELECT posts.* FROM posts WHERE posts.type='post' AND posts.status='published' AND posts.deleted_at IS NULL ORDER BY posts.published_at DESC LIMIT :limit OFFSET :offset";
         $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':limit', $perPage, \PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
         $posts = $stmt->fetchAll();
         $result = [];
@@ -42,15 +36,13 @@ class BlogRepository implements BlogRepositoryInterface {
         }
         return $result;
     }
-    /*
-    |--------------------------------------------------------------------------
-    | Latest Posts
-    |--------------------------------------------------------------------------
-    */
+
+
+
     public function latest(int $limit = 10) {
         $sql = "SELECT * FROM posts WHERE type='post' AND status='published' AND deleted_at IS NULL ORDER BY published_at DESC LIMIT :limit";
         $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         $posts = $stmt->fetchAll();
         $result = [];
@@ -60,15 +52,13 @@ class BlogRepository implements BlogRepositoryInterface {
         }
         return $result;
     }
-    /*
-    |--------------------------------------------------------------------------
-    | Popular Posts
-    |--------------------------------------------------------------------------
-    */
+
+
+
     public function popular(int $limit = 10) {
         $sql = "SELECT * FROM posts WHERE type='post' AND status='published' AND deleted_at IS NULL ORDER BY views_count DESC LIMIT :limit";
         $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         $posts = $stmt->fetchAll();
         $result = [];
@@ -78,11 +68,9 @@ class BlogRepository implements BlogRepositoryInterface {
         }
         return $result;
     }
-    /*
-    |--------------------------------------------------------------------------
-    | Find
-    |--------------------------------------------------------------------------
-    */
+
+
+
     public function find(int $id): ?BlogDTO {
         $stmt = $this->db->prepare("SELECT * FROM posts WHERE post_id=:id AND deleted_at IS NULL LIMIT 1");
         $stmt->execute(['id'=>$id]);
@@ -93,11 +81,9 @@ class BlogRepository implements BlogRepositoryInterface {
         $post = $this->attachTranslations($post);
         return BlogDTO::fromArray($post);
     }
-    /*
-    |--------------------------------------------------------------------------
-    | Find By Slug
-    |--------------------------------------------------------------------------
-    */
+
+
+
     public function findBySlug(string $slug): ?BlogDTO {
         $stmt = $this->db->prepare("SELECT * FROM posts WHERE slug=:slug AND status='published' AND deleted_at IS NULL LIMIT 1");
         $stmt->execute(['slug'=>$slug]);
@@ -108,11 +94,9 @@ class BlogRepository implements BlogRepositoryInterface {
         $post = $this->attachTranslations($post);
         return BlogDTO::fromArray($post);
     }
-    /*
-    |--------------------------------------------------------------------------
-    | Create
-    |--------------------------------------------------------------------------
-    */
+
+
+
     public function create(BlogDTO $dto): int {
         $stmt=$this->db->prepare("INSERT INTO posts (author_id, slug, type, status, visibility) VALUES (:author, :slug, :type, :status, :visibility)");
         $stmt->execute([
@@ -129,12 +113,7 @@ class BlogRepository implements BlogRepositoryInterface {
 
     public function update(int $id, BlogDTO $dto): bool {
         $stmt=$this->db->prepare("UPDATE posts SET slug=:slug, status=:status, visibility=:visibility WHERE post_id=:id");
-        return $stmt->execute([
-            'slug'=>$dto->slug,
-            'status'=>$dto->status,
-            'visibility'=>$dto->visibility,
-            'id'=>$id
-        ]);
+        return $stmt->execute(['slug'=>$dto->slug, 'status'=>$dto->status, 'visibility'=>$dto->visibility, 'id'=>$id]);
     }
 
 
@@ -143,27 +122,17 @@ class BlogRepository implements BlogRepositoryInterface {
         $stmt=$this->db->prepare("UPDATE posts SET deleted_at=NOW() WHERE post_id=:id");
         return $stmt->execute(['id'=>$id]);
     }
-    /*
-    |--------------------------------------------------------------------------
-    | Translation Loader
-    |--------------------------------------------------------------------------
-    */
+
+
+
     protected function attachTranslations(array $post): array {
-        $stmt=$this->db->prepare("
-            SELECT
-            field,
-            value
-            FROM translations
-            WHERE table_name='posts'
-            AND table_id=:id
-            AND locale='fa'
-            AND deleted_at IS NULL
-        ");
+        $stmt=$this->db->prepare("SELECT field, value FROM translations WHERE table_name='posts' AND table_id=:id AND locale='fa' AND deleted_at IS NULL");
         $stmt->execute(['id'=>$post['post_id']]);
         $rows=$stmt->fetchAll();
         $post['translations'] = TranslationMapper::map($rows);
         return $post;
     }
+
 
 
 

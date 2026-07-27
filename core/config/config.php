@@ -4,7 +4,6 @@ namespace Core\Config;
 
 class Config {
 
-
     protected static array $items = [];
 
 

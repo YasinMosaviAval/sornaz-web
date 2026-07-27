@@ -29,5 +29,3 @@ foreach ($academies['data'] as $academy) {
         )
     ];
 }
-
-

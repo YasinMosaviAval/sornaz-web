@@ -15,4 +15,5 @@ interface BlogRepositoryInterface {
     public function update(int $id, BlogDTO $dto): bool;
     public function delete(int $id): bool;
 
+
 }

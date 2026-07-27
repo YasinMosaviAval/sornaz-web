@@ -20,4 +20,5 @@ class IntegerRule implements Rule {
 
 
 
+
 }

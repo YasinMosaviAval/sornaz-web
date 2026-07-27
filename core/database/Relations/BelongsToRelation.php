@@ -22,6 +22,7 @@ abstract class BelongsToRelation extends Relation {
     }
 
 
+
     abstract public function match(
         array $models,
         array $results,

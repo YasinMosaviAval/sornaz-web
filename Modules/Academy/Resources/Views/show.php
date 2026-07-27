@@ -1,6 +1,4 @@
 <style>
-    
-
 
     .academy-card{
         display:flex;

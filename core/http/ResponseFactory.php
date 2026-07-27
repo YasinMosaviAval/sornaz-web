@@ -12,4 +12,5 @@ class ResponseFactory {
         return new ViewResponse($view, $data);
     }
 
+
 }
