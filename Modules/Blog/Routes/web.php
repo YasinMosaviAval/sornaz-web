@@ -2,7 +2,6 @@
 
 use Core\Router\Router;
 use Modules\Blog\Controllers\Web\BlogController;
-use Modules\Blog\Repositories\BlogRepository;
 
 Router::group(
     ['prefix' => '/blogs'],
@@ -15,18 +14,8 @@ Router::group(
         Router::put('/{id}',        [BlogController::class,'update']);
         Router::delete('/{id}',     [BlogController::class,'destroy']);
     }
-
-
-
 );
 
 
-Router::get('/blog-test', function () {
-
-    $repo = app()->container()->make(BlogRepository::class);
-
-    dd(
-        $repo->find(1)
-    );
-
-});
+Router::get('/blog', [BlogController::class, 'index']);
+Router::get('/blog/{slug}', [BlogController::class, 'show']);

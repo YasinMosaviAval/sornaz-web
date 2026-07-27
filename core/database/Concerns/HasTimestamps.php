@@ -3,6 +3,7 @@
 namespace Core\Database\Concerns;
 
 trait HasTimestamps {
+
     protected bool $timestamps = true;
     protected string $createdAtColumn = 'created_at';
     protected string $updatedAtColumn = 'updated_at';

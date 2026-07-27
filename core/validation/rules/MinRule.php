@@ -20,4 +20,5 @@ class MinRule implements Rule {
     }
 
 
+
 }

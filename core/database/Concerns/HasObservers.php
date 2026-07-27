@@ -3,6 +3,7 @@
 namespace Core\Database\Concerns;
 
 trait HasObservers {
+
     protected static array $observers = [];
 
     public static function observe(string $observer): void{

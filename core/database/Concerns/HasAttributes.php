@@ -2,8 +2,9 @@
 
 namespace Core\Database\Concerns;
 
-trait HasAttributes {
+use DateTime;
 
+trait HasAttributes {
 
     protected array $attributes = [];
     protected array $casts = [];
@@ -93,7 +94,7 @@ trait HasAttributes {
             'array' => (array) $value,
             'json' => json_decode($value, true),
             'object' => json_decode($value),
-            'datetime' => new \DateTime($value),
+            'datetime' => new DateTime($value),
             default => $value
         };
     }

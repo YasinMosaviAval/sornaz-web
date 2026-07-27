@@ -3,7 +3,7 @@
 namespace Modules\Content\Models;
 
 use Core\Database\Model;
-use Modules\System\Models\User;
+use Modules\System\Models\UserModel;
 
 class Post extends Model {
     protected static string $table = 'posts';
@@ -12,12 +12,11 @@ class Post extends Model {
 
     public function author() {
         return $this->belongsTo(
-            User::class,
+            UserModel::class,
             'author_id',
             'user_id'
         );
     }
-
 
 
 }

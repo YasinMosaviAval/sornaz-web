@@ -9,7 +9,6 @@ class Role extends Model {
     protected static string $table = 'access_system_roles';
     protected static string $primaryKey = 'role_id';
 
-
     public function users() {
         return $this->belongsToMany(
             User::class,
@@ -20,7 +19,5 @@ class Role extends Model {
             'user_id'
         );
     }
-
-
 
 }

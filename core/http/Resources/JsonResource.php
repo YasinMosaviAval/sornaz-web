@@ -53,4 +53,5 @@ abstract class JsonResource extends Resource {
     public function jsonSerialize(): array {
         return $this->resolve();
     }
+
 }

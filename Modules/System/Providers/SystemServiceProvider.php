@@ -1,8 +1,6 @@
 <?
 
-
 class AcademyServiceProvider {
-
     public function register() {
     }
 

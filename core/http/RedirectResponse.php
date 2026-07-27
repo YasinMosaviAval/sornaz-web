@@ -2,7 +2,6 @@
 
 namespace Core\Http;
 
-
 class RedirectResponse implements ResponseInterface {
 
 

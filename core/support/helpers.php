@@ -58,7 +58,6 @@ function value($value) {return is_callable($value) ? $value() : $value;}
 function dump(...$vars): void {foreach ($vars as $var) {echo '<pre>'; var_dump($var); echo '</pre>';}}
 function dd(...$vars): never {foreach ($vars as $var) {echo '<pre>'; var_dump($var); echo '</pre>';} exit;}
 
-
 function transaction(callable $callback) {
     db()->beginTransaction();
     try {

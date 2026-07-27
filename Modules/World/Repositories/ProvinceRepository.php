@@ -17,5 +17,4 @@ class ProvinceRepository extends Repository {
 
 
 
-
 }

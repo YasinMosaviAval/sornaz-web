@@ -4,7 +4,6 @@ namespace Modules\Availability\Controllers\Web;
 
 use Modules\Availability\Services\AvailabilityService;
 
-
 class AvailabilityController {
 
 

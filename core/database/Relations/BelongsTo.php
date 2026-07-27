@@ -7,7 +7,6 @@ use Core\Database\Builder;
 
 class BelongsTo extends BelongsToRelation {
 
-
     protected array $eagerKeys = [];
 
 

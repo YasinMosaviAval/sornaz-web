@@ -4,50 +4,20 @@ namespace Modules\Contact\Services;
 
 use Modules\Contact\Repositories\ContactRepository;
 
-class ContactService
-{
+class ContactService {
 
     protected array $map = [
-
-        'telephone'=>[
-            'mode'=>'phone',
-            'platform'=>'other'
-        ],
-
-        'mobile'=>[
-            'mode'=>'phone',
-            'platform'=>'other'
-        ],
-
-        'whatsapp'=>[
-            'mode'=>'social',
-            'platform'=>'whats-app'
-        ],
-
-        'telegram'=>[
-            'mode'=>'social',
-            'platform'=>'telegram'
-        ],
-
-        'instagram'=>[
-            'mode'=>'social',
-            'platform'=>'instagram'
-        ],
-
-        'website'=>[
-            'mode'=>'social',
-            'platform'=>'website'
-        ],
-
+        'telephone' => ['mode'=>'phone', 'platform'=>'other'],
+        'mobile'    => ['mode'=>'phone', 'platform'=>'other'],
+        'whatsapp'  => ['mode'=>'social', 'platform'=>'whats-app'],
+        'telegram'  => ['mode'=>'social', 'platform'=>'telegram'],
+        'instagram' => ['mode'=>'social', 'platform'=>'instagram'],
+        'website'   => ['mode'=>'social', 'platform'=>'website'],
     ];
     protected ContactRepository $repository;
 
-    public function __construct(
-        ContactRepository $repository
-    ){
-
+    public function __construct(ContactRepository $repository){
         $this->repository=$repository;
-
     }
 
 
@@ -103,7 +73,6 @@ class ContactService
         }
         return true;
     }
-
 
 
 

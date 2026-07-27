@@ -12,8 +12,6 @@ use Modules\Blog\Repositories\BlogRepository;
 use Core\Localization\Contracts\TranslationRepositoryInterface;
 use Core\Localization\Repositories\TranslationRepository;
 
-
-
 $app = new Application();
 
 $app->container()->instance(Session::class, new Session());

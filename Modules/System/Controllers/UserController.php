@@ -5,8 +5,8 @@ namespace Modules\System\Controllers;
 use Modules\System\Services\UserService;
 
 class UserController {
-    public function __construct(protected UserService $service) {
 
+    public function __construct(protected UserService $service) {
     }
 
     public function index() {

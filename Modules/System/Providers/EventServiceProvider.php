@@ -14,9 +14,6 @@ use Modules\System\Models\UserModel;
 class EventServiceProvider extends ServiceProvider {
 
 
-    /**
-     * Event => Listeners
-     */
     protected array $listen = [
         UserCreated::class => [
             SendWelcomeEmail::class,
@@ -26,21 +23,12 @@ class EventServiceProvider extends ServiceProvider {
     ];
 
 
-    /**
-     * Model => Observer
-     */
     protected array $observers = [
         UserModel::class => UserObserver::class,
-        //     Role::class => RoleObserver::class,
-        //     Post::class => PostObserver::class,
     ];
 
 
-    /**
-     * Event Subscribers
-     */
     protected array $subscribers = [
-        // UserSubscriber::class,
     ];
 
 

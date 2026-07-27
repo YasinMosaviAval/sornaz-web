@@ -1,8 +1,3 @@
-<?php
-// dump($academies['data']);
-?>
-
-<!-- <h1 class="page-title">مدیریت آموزشگاه‌ها</h1> -->
 <div class="page-toolbar">
     <?php
         component(

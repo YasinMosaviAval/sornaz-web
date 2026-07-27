@@ -20,4 +20,3 @@ class JsonResponse implements ResponseInterface {
         );
     }
 }
-

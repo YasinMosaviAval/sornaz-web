@@ -8,7 +8,6 @@ use ArrayIterator;
 
 class ResourceCollection implements Countable, IteratorAggregate {
 
-
     protected iterable $items;
     protected string $resource;
 

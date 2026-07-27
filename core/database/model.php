@@ -34,6 +34,7 @@ abstract class Model {
     use LoadsRelations;
     use HasTranslations;
 
+
     protected static string $table;
     protected static string $primaryKey = 'id';
     protected array $relations = [];

@@ -4,7 +4,6 @@ namespace Core\Module;
 
 class ModuleLoader {
 
-
     public static function load(ModuleManager $manager): void {
         foreach (glob(base_path('Modules/*/Module.php')) as $file) {
             $moduleName = basename(dirname($file));

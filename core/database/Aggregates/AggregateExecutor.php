@@ -3,6 +3,7 @@
 namespace Core\Database\Aggregates;
 
 use Core\Database\Builder;
+use RuntimeException;
 
 class AggregateExecutor {
 
@@ -11,7 +12,7 @@ class AggregateExecutor {
         return match (strtolower($aggregate)) {
             'count' => $query->count(),
             'exists' => $query->count() > 0,
-            default => throw new \RuntimeException("Aggregate [{$aggregate}] is not supported."),
+            default => throw new RuntimeException("Aggregate [{$aggregate}] is not supported."),
         };
     }
 
