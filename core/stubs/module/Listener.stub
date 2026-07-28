@@ -2,6 +2,6 @@
 
 namespace Modules\{{module}}\Listeners;
 
-class Send{{module}}Notification {
+class Send{{module}}Listener {
 
 }
