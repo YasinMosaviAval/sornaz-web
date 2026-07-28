@@ -2,6 +2,6 @@
 
 namespace Modules\{{module}}\Events;
 
-class {{module}}Created {
+class {{module}}Event {
 
 }

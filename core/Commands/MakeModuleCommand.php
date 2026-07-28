@@ -60,6 +60,18 @@ class MakeModuleCommand extends Command {
             'Service.stub' => 'Services/{{module}}Service.php',
             /*
             |--------------------------------------------------------------------------
+            | Events
+            |--------------------------------------------------------------------------
+            */
+            'Event.stub' => 'Events/{{module}}Event.php',
+            /*
+            |--------------------------------------------------------------------------
+            | Listeners
+            |--------------------------------------------------------------------------
+            */
+            'Listener.stub' => 'Listeners/{{module}}Listener.php',
+            /*
+            |--------------------------------------------------------------------------
             | Repository
             |--------------------------------------------------------------------------
             */
@@ -100,9 +112,9 @@ class MakeModuleCommand extends Command {
             | Routes
             |--------------------------------------------------------------------------
             */
-            'web.stub' => 'Routes/web.php',
-            'api.stub' => 'Routes/api.php',
-            'routes.stub' => 'Routes/routes.php',
+            'web.stub' => 'routes/web.php',
+            'api.stub' => 'routes/api.php',
+            'routes.stub' => 'routes/routes.php',
             /*
             |--------------------------------------------------------------------------
             | View
@@ -186,7 +198,7 @@ class MakeModuleCommand extends Command {
             'Resources/Views/components',
             'Resources/Views/sections',
 
-            'Routes',
+            'routes',
 
             'Services',
         ];
@@ -201,7 +213,7 @@ class MakeModuleCommand extends Command {
     protected function createFiles(string $base, array $variables): void {
         foreach($this->files() as $stub=>$destination){
             $destination=$this->replaceFilenameVariables($destination, $variables);
-            $this->generate(base_path('core/Stubs/module/'.$stub), $base.'/'.$destination, $variables);
+            $this->generate(base_path('core/stubs/module/'.$stub), $base.'/'.$destination, $variables);
         }
     }
 
