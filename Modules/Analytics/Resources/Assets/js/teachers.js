@@ -405,12 +405,12 @@ window.exportStaffToPDF = function() {
 window.openPDFOptionsModal = function() {
     const modalHTML = `
     <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
-        <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl" onclick="event.stopPropagation()">
+        <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
             <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl">
                 <h2 class="text-2xl font-bold">تنظیمات خروجی PDF</h2>
                 <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500 leading-none">×</button>
             </div>
-            <div class="p-8 space-y-6">
+            <div class="p-8 space-y-6" style="max-height: calc(100vh - 10rem); overflow-y: auto;">
                 <div class="grid grid-cols-1 gap-5">
                     <div>
                         <label class="block text-sm font-medium mb-2">عنوان گزارش</label>
@@ -509,22 +509,18 @@ window.generateStaffPDF = async function() {
         return;
     }
 
-    const wrapper = document.createElement('div');
-    wrapper.style.direction = 'rtl';
-    wrapper.style.position = 'fixed';
-    wrapper.style.top = '-9999px';
-    wrapper.style.left = '-9999px';
-    wrapper.style.width = orientation === 'portrait' ? '900px' : '1400px';
-    wrapper.style.padding = '30px';
-    wrapper.style.backgroundColor = '#ffffff';
-    wrapper.style.fontFamily = 'Vazirmatn, Tahoma, sans-serif';
-    wrapper.innerHTML = `
+    const rowsPerPage = orientation === 'portrait' ? 18 : 15;
+    const totalPages = Math.max(1, Math.ceil(data.length / rowsPerPage));
+
+    const renderPageHTML = (pageNumber, rows, isFirstPage) => `
         <div style="width:100%; padding: 24px; border-radius: 20px; box-shadow: 0 10px 30px rgba(15,23,42,.08); background: #fff;">
+            ${isFirstPage ? `
             <div style="text-align: right; direction: rtl;">
                 <h1 style="margin: 0 0 6px; font-size: 28px; font-weight: 700;">${title}</h1>
                 <p style="margin: 0 0 16px; color: #4b5563; font-size: 14px;">${subtitle}</p>
                 ${includeDate ? `<p style="margin: 0 0 16px; color: #6b7280; font-size: 12px;">تاریخ استخراج: ${date}</p>` : ''}
             </div>
+            ` : ''}
             <div style="width: 100%; overflow-x: auto;">
                 <table style="width:100%; border-collapse: collapse; direction: rtl;">
                     <thead style="background: ${headerColor}; color: #000000;">
@@ -533,10 +529,10 @@ window.generateStaffPDF = async function() {
                         </tr>
                     </thead>
                     <tbody>
-                        ${data.map((item, index) => `
+                        ${rows.map((item, index) => `
                             <tr style="background: ${index % 2 === 0 ? evenRowColor : oddRowColor};">
                                 ${selectedColumns.map(col => {
-                                    const value = col.field === 'index' ? index + 1 : (col.field === 'price' ? `${item.price.toLocaleString('fa-IR')} ${item.currency}` : item[col.field]);
+                                    const value = col.field === 'index' ? (pageNumber - 1) * rowsPerPage + index + 1 : (col.field === 'price' ? `${item.price.toLocaleString('fa-IR')} ${item.currency}` : item[col.field]);
                                     return `<td style="padding: 12px 14px; text-align: right;">${value}</td>`;
                                 }).join('')}
                             </tr>
@@ -544,41 +540,51 @@ window.generateStaffPDF = async function() {
                     </tbody>
                 </table>
             </div>
-            ${footer ? `<p style="margin-top: 16px; color: #6b7280; font-size: 12px;">${footer}</p>` : ''}
+            ${isFirstPage && footer ? `<p style="margin-top: 16px; color: #6b7280; font-size: 12px;">${footer}</p>` : ''}
+            <div style="margin-top: 16px; display: flex; justify-content: flex-end; color: #6b7280; font-size: 12px;">صفحه ${pageNumber} / ${totalPages}</div>
         </div>
     `;
-    document.body.appendChild(wrapper);
 
-    const canvas = await html2canvas(wrapper, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        scrollY: -window.scrollY
-    });
+    const canvasPages = [];
+    for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+        const pageRows = data.slice(pageIndex * rowsPerPage, (pageIndex + 1) * rowsPerPage);
+        const pageWrapper = document.createElement('div');
+        pageWrapper.style.direction = 'rtl';
+        pageWrapper.style.position = 'fixed';
+        pageWrapper.style.top = '-9999px';
+        pageWrapper.style.left = '-9999px';
+        pageWrapper.style.width = orientation === 'portrait' ? '900px' : '1400px';
+        pageWrapper.style.padding = pageIndex === 0 ? '20px 30px 30px' : '30px';
+        pageWrapper.style.backgroundColor = '#ffffff';
+        pageWrapper.style.fontFamily = 'Vazirmatn, Tahoma, sans-serif';
+        pageWrapper.innerHTML = renderPageHTML(pageIndex + 1, pageRows, pageIndex === 0);
+        document.body.appendChild(pageWrapper);
 
-    const imgData = canvas.toDataURL('image/png');
+        const canvas = await html2canvas(pageWrapper, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            scrollY: -window.scrollY
+        });
+        canvasPages.push(canvas);
+        pageWrapper.remove();
+    }
+
     const doc = new window.jspdf.jsPDF({ orientation, unit: 'pt', format });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 40;
+    const margin = 20;
     const imgWidth = pageWidth - margin * 2;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    const pageContentHeight = pageHeight - margin * 2;
-    let heightLeft = imgHeight;
-    let position = margin;
 
-    doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-    heightLeft -= pageContentHeight;
-
-    while (heightLeft > 0) {
-        position -= pageContentHeight;
-        doc.addPage();
-        doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-        heightLeft -= pageContentHeight;
-    }
+    canvasPages.forEach((canvas, index) => {
+        if (index > 0) {
+            doc.addPage();
+        }
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        doc.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin, imgWidth, imgHeight);
+    });
 
     doc.save(`پرسنل_${date}.pdf`);
-    wrapper.remove();
     closeModal();
 };
 
