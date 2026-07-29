@@ -120,10 +120,14 @@ class MakeModuleCommand extends Command {
             | View
             |--------------------------------------------------------------------------
             */
-            'index.stub' => 'Resources/Views/index.php',
-            'create.stub' => 'Resources/Views/create.php',
-            'edit.stub' => 'Resources/Views/edit.php',
-            'show.stub' => 'Resources/Views/show.php',
+            // 'index.stub' => 'Resources/Views/index.php',
+            // 'create.stub' => 'Resources/Views/create.php',
+            // 'edit.stub' => 'Resources/Views/edit.php',
+            // 'show.stub' => 'Resources/Views/show.php',
+            'index.view.stub' => 'Resources/Views/index.php',
+            'create.view.stub' => 'Resources/Views/create.php',
+            'edit.view.stub' => 'Resources/Views/edit.php',
+            'show.view.stub' => 'Resources/Views/show.php',
             /*
             |--------------------------------------------------------------------------
             | Layout

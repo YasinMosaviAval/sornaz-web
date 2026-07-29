@@ -35,6 +35,7 @@
     pushScript('add-user-modal.js');
     // pushScript('users.js');
     pushScript('students.js');
+    pushScript('staff-templates.js');
     pushScript('teachers.js');
     pushScript('branches.js');
     pushScript('classrooms.js');
