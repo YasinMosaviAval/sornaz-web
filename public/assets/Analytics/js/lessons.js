@@ -1,3 +1,4 @@
+(() => {
 // نمونه درسها (معادل translation)
 const sampleLessons = [
     { id: 1, title: "پیانو" },
@@ -289,4 +290,6 @@ window.deleteLesson = function(id) {
             filterLessonsByBranch('all');
         }
     }, 200);
+})();
+
 })();
