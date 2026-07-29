@@ -15,9 +15,9 @@
         <ul class="space-y-2">
             <li><a href="#" onclick="showSection('dashboard')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-home w-5"></i> داشبورد</a></li>
             <li><a href="#" onclick="showSection('account')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-user-cog w-5"></i> حساب کاربری</a></li>
+            <li><a href="#" onclick="showSection('branches')" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-building w-5"></i> شعبه‌ها</a></li>
             <li><a href="#" onclick="showSection('profiles')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-id-card w-5"></i> پروفایل‌ها</a></li>
             
-            <li><a href="#" onclick="showSection('branches')" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-building w-5"></i> شعبه‌ها</a></li>
             <li><a href="#" onclick="showSection('gallery')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-images w-5"></i> گالری</a></li>
             <li><a href="#" onclick="showSection('classrooms')" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-door-open w-5"></i> کلاس‌ها</a></li>
             <li><a href="#" onclick="showSection('teachers')" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-chalkboard-teacher w-5"></i> پرسنل</a></li>

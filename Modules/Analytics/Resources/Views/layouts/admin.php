@@ -37,6 +37,7 @@
     pushScript('students.js');
     pushScript('staff-templates.js');
     pushScript('teachers.js');
+    pushScript('branch-templates.js');
     pushScript('branches.js');
     pushScript('classrooms.js');
     pushScript('courses.js');
