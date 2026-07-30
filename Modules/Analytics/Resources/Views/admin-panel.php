@@ -12,6 +12,7 @@
             <? component('teachers'); ?>
             <? component('branches'); ?>
             <? component('classrooms'); ?>
+            <? component('classrooms'); ?>
             <? component('courses'); ?>
             <? component('terms'); ?>
             <? component('gallery'); ?>
