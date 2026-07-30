@@ -279,7 +279,7 @@ window.openAddStudentModal = function() {
                     <h3 class="font-semibold mb-4 text-indigo-700">اطلاعات آموزشی</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <label class="block text-sm font-medium mb-2">ساز اصلی *</label>
+                            <label class="block text-sm font-medium mb-2">ترم آموزشی *</label>
                             <select id="stuInstrument" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                                 ${instruments.map(i => `<option value="${i}">${i}</option>`).join('')}
                             </select>
@@ -406,7 +406,7 @@ window.viewStudent = function(id) {
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                         <div class="flex justify-between border-b pb-2">
-                            <span class="text-gray-500">ساز اصلی</span>
+                            <span class="text-gray-500">ترم آموزشی</span>
                             <span class="font-medium">${stu.instrument}</span>
                         </div>
                         <div class="flex justify-between border-b pb-2">
@@ -511,7 +511,7 @@ window.editStudent = function(id) {
                     <h3 class="font-semibold mb-4 text-indigo-700">اطلاعات آموزشی</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <label class="block text-sm font-medium mb-2">ساز اصلی *</label>
+                            <label class="block text-sm font-medium mb-2">ترم آموزشی *</label>
                             <select id="editInstrument" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                                 ${instruments.map(i => `<option value="${i}" ${i === stu.instrument ? 'selected' : ''}>${i}</option>`).join('')}
                             </select>
