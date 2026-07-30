@@ -1,189 +1,533 @@
-// ==================== داده کلاس‌ها ====================
-let allClassrooms = [
-    { id: 1, name: "کلاس پیانو ۱", branchId: 1, branchName: "شعبه مرکزی", capacity: 8, equipment: "۲ پیانو، صندلی، تخته", status: "فعال" },
-    { id: 2, name: "کلاس گیتار A", branchId: 1, branchName: "شعبه مرکزی", capacity: 10, equipment: "گیتار، آمپلی‌فایر، میکروفون", status: "فعال" },
-    { id: 3, name: "سالن تمرین گروهی", branchId: 1, branchName: "شعبه مرکزی", capacity: 20, equipment: "پیانو، درام، سیستم صوتی", status: "فعال" },
-    { id: 4, name: "کلاس ویولن", branchId: 2, branchName: "شعبه ونک", capacity: 6, equipment: "ویولن، پایه نت", status: "فعال" },
-    { id: 5, name: "کلاس آواز", branchId: 2, branchName: "شعبه ونک", capacity: 8, equipment: "پیانو، میکروفون، آینه", status: "فعال" },
-    { id: 6, name: "کلاس پیانو ۲", branchId: 3, branchName: "شعبه سعادت‌آباد", capacity: 6, equipment: "پیانو دیجیتال، هدفون", status: "فعال" },
-    { id: 7, name: "کلاس درام", branchId: 3, branchName: "شعبه سعادت‌آباد", capacity: 4, equipment: "درام ست، پد تمرین", status: "تعمیر" },
-    { id: 8, name: "کلاس عمومی", branchId: 4, branchName: "شعبه کرج", capacity: 12, equipment: "پیانو، وایت‌برد", status: "فعال" }
+// ==================== انواع کلاس و وضعیت‌ها ====================
+let allClassroomTypes = [
+    { id: 1, name: 'پیانو' },
+    { id: 2, name: 'گیتار' },
+    { id: 3, name: 'ویولن' },
+    { id: 4, name: 'آواز' },
+    { id: 5, name: 'درام' },
+    { id: 6, name: 'عمومی' },
+    { id: 7, name: 'تمرین گروهی' },
+    { id: 8, name: 'سایر' }
+];
+const classroomStatuses = ['فعال', 'تعمیر', 'غیرفعال'];
+const sampleEquipmentPool = [
+    { name: 'پیانو', qty: 1 }, { name: 'پیانو دیجیتال', qty: 2 }, { name: 'گیتار', qty: 4 },
+    { name: 'آمپلی‌فایر', qty: 1 }, { name: 'میکروفون', qty: 2 }, { name: 'ویولن', qty: 3 },
+    { name: 'پایه نت', qty: 6 }, { name: 'درام ست', qty: 1 }, { name: 'پد تمرین', qty: 2 },
+    { name: 'صندلی', qty: 10 }, { name: 'تخته', qty: 1 }, { name: 'سیستم صوتی', qty: 1 },
+    { name: 'آینه', qty: 2 }, { name: 'هدفون', qty: 8 }, { name: 'وایت‌برد', qty: 1 }
 ];
 
-let currentBranchFilter = 'all';
+const classroomNames = [
+    'کلاس پیانو', 'کلاس گیتار', 'کلاس ویولن', 'کلاس آواز', 'کلاس درام',
+    'سالن تمرین', 'کلاس عمومی', 'اتاق تئوری', 'استودیو ضبط', 'کلاس سلفژ'
+];
 
-// ==================== ساخت تب‌های شعبه ====================
-window.renderBranchTabs = function() {
-    const container = document.getElementById('branchTabs');
+function pickEquipment() {
+    const count = 1 + Math.floor(Math.random() * 3);
+    const shuffled = [...sampleEquipmentPool].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count).map(e => ({ name: e.name, qty: e.qty + Math.floor(Math.random() * 2) }));
+}
+
+function getBranchesList() {
+    if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
+    return [
+        { id: 1, name: 'شعبه مرکزی', classrooms: 0 },
+        { id: 2, name: 'شعبه ونک', classrooms: 0 },
+        { id: 3, name: 'شعبه سعادت‌آباد', classrooms: 0 },
+        { id: 4, name: 'شعبه کرج', classrooms: 0 }
+    ];
+}
+
+// ==================== نمونه داده — ۴۰ کلاس ====================
+let allClassrooms = [];
+(function buildSampleClassrooms() {
+    const branches = getBranchesList();
+    for (let i = 1; i <= 40; i++) {
+        const branch = branches[Math.floor(Math.random() * branches.length)];
+        const type = allClassroomTypes[Math.floor(Math.random() * allClassroomTypes.length)];
+        const baseName = classroomNames[Math.floor(Math.random() * classroomNames.length)];
+        allClassrooms.push({
+            id: i,
+            name: `${baseName} ${i}`,
+            type: type.name,
+            typeLabel: type.name,
+            branchId: branch.id,
+            branchName: branch.name,
+            capacity: 4 + Math.floor(Math.random() * 16),
+            equipment: pickEquipment(),
+            status: classroomStatuses[Math.floor(Math.random() * classroomStatuses.length)]
+        });
+    }
+})();
+
+// ==================== صفحه‌بندی / مرتب‌سازی / فیلتر ====================
+let classroomCurrentPage = 1;
+const classroomPerPage = 10;
+let filteredClassrooms = [...allClassrooms];
+let currentClassroomBranchFilter = 'all';
+let editingClassroomRowId = null;
+let classroomSortField = '';
+let classroomSortDirection = 'asc';
+
+const classroomPdfColumns = [
+    { field: 'index', label: 'ردیف' },
+    { field: 'name', label: 'نام کلاس' },
+    { field: 'typeLabel', label: 'نوع کلاس' },
+    { field: 'branchName', label: 'شعبه' },
+    { field: 'capacity', label: 'ظرفیت' },
+    { field: 'equipment', label: 'تجهیزات' },
+    { field: 'status', label: 'وضعیت' }
+];
+
+function sortClassroomItems() {
+    if (!classroomSortField) return;
+    filteredClassrooms.sort((a, b) => {
+        let aValue = a[classroomSortField];
+        let bValue = b[classroomSortField];
+        if (classroomSortField === 'capacity') {
+            aValue = Number(aValue);
+            bValue = Number(bValue);
+        } else if (classroomSortField === 'equipment') {
+            aValue = (a.equipment || []).map(e => e.name).join('، ').toLowerCase();
+            bValue = (b.equipment || []).map(e => e.name).join('، ').toLowerCase();
+        } else {
+            aValue = String(aValue || '').toLowerCase();
+            bValue = String(bValue || '').toLowerCase();
+        }
+        if (aValue < bValue) return classroomSortDirection === 'asc' ? -1 : 1;
+        if (aValue > bValue) return classroomSortDirection === 'asc' ? 1 : -1;
+        return 0;
+    });
+}
+
+window.updateClassroomSortIcons = function () {
+    const fields = ['name', 'typeLabel', 'branchName', 'capacity', 'equipment', 'status'];
+    fields.forEach(field => {
+        const icon = document.getElementById(`classroomSortIcon-${field}`);
+        if (!icon) return;
+        icon.textContent = classroomSortField === field
+            ? (classroomSortDirection === 'asc' ? '↑' : '↓')
+            : '↕';
+    });
+};
+
+window.sortClassroomsBy = function (field) {
+    if (classroomSortField === field) {
+        classroomSortDirection = classroomSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        classroomSortField = field;
+        classroomSortDirection = 'asc';
+    }
+    sortClassroomItems();
+    renderClassroomsTable(filteredClassrooms);
+    updateClassroomSortIcons();
+};
+
+// ==================== تب شعبه‌ها ====================
+window.renderClassroomBranchTabs = function () {
+    const container = document.getElementById('classroomBranchTabs') || document.getElementById('branchTabs');
     if (!container) return;
-
-    // دکمه همه شعبه‌ها از قبل در HTML هست، فقط شعبه‌ها را اضافه می‌کنیم
-    const existingTabs = container.querySelectorAll('.branch-tab:not(:first-child)');
-    existingTabs.forEach(t => t.remove());
-
-    allBranches.forEach(b => {
+    container.querySelectorAll('.branch-tab:not(:first-child)').forEach(t => t.remove());
+    getBranchesList().forEach(b => {
         const btn = document.createElement('button');
-        btn.className = `branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border border-gray-200 hover:bg-gray-50 ${currentBranchFilter == b.id ? 'bg-indigo-600 text-white border-indigo-600' : ''}`;
+        const active = currentClassroomBranchFilter == b.id;
+        btn.className = `branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ${active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50'}`;
         btn.textContent = b.name;
         btn.onclick = () => filterClassroomsByBranch(b.id);
         container.appendChild(btn);
     });
 };
+window.renderBranchTabs = window.renderClassroomBranchTabs;
 
-// ==================== فیلتر بر اساس شعبه ====================
-window.filterClassroomsByBranch = function(branchId) {
-    currentBranchFilter = branchId;
-
-    // به‌روزرسانی استایل تب‌ها
+window.filterClassroomsByBranch = function (branchId) {
+    currentClassroomBranchFilter = branchId;
     document.querySelectorAll('.branch-tab').forEach(tab => {
         tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
         tab.classList.add('border', 'border-gray-200');
     });
-
-    // فعال کردن تب انتخاب‌شده
     const tabs = document.querySelectorAll('.branch-tab');
-    if (branchId === 'all') {
+    if (branchId === 'all' && tabs[0]) {
         tabs[0].classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
         tabs[0].classList.remove('border-gray-200');
     } else {
-        // پیدا کردن تب مربوطه
+        const name = getBranchesList().find(b => b.id == branchId)?.name;
         tabs.forEach(tab => {
-            if (tab.textContent === allBranches.find(b => b.id == branchId)?.name) {
+            if (tab.textContent === name) {
                 tab.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
                 tab.classList.remove('border-gray-200');
             }
         });
     }
-
-    renderClassroomsTable();
+    filterClassrooms();
 };
 
-// ==================== رندر جدول کلاس‌ها ====================
-window.renderClassroomsTable = function() {
+// ==================== فیلتر تجهیزات ====================
+window.renderClassroomEquipmentFilter = function () {
+    const select = document.getElementById('filterClassroomEquipment');
+    if (!select) return;
+    const names = new Set();
+    allClassrooms.forEach(c => (c.equipment || []).forEach(e => names.add(e.name)));
+    const current = select.value;
+    select.innerHTML = '<option value="">همه تجهیزات</option>' +
+        [...names].sort().map(n => `<option value="${n}" ${n === current ? 'selected' : ''}>${n}</option>`).join('');
+};
+
+window.filterClassrooms = function () {
+    const search = (document.getElementById('classroomSearch')?.value || '').trim().toLowerCase();
+    const status = document.getElementById('filterClassroomStatus')?.value || '';
+    const equipment = document.getElementById('filterClassroomEquipment')?.value || '';
+
+    filteredClassrooms = allClassrooms.filter(item => {
+        const matchBranch = currentClassroomBranchFilter === 'all' || item.branchId == currentClassroomBranchFilter;
+        const matchSearch = !search || (item.name || '').toLowerCase().includes(search);
+        const matchStatus = !status || item.status === status;
+        const matchEquip = !equipment || (item.equipment || []).some(e => e.name === equipment);
+        return matchBranch && matchSearch && matchStatus && matchEquip;
+    });
+
+    classroomCurrentPage = 1;
+    sortClassroomItems();
+    renderClassroomsTable(filteredClassrooms);
+};
+
+// ==================== رندر جدول ====================
+window.renderClassroomsTable = function (list = filteredClassrooms) {
     const tbody = document.querySelector('#classroomsTable tbody');
     if (!tbody) return;
 
-    let list = allClassrooms;
-    if (currentBranchFilter !== 'all') {
-        list = allClassrooms.filter(c => c.branchId == currentBranchFilter);
-    }
+    const totalPages = Math.ceil(list.length / classroomPerPage) || 1;
+    if (classroomCurrentPage > totalPages) classroomCurrentPage = totalPages;
+
+    const start = (classroomCurrentPage - 1) * classroomPerPage;
+    const end = start + classroomPerPage;
+    const pageItems = list.slice(start, end);
 
     tbody.innerHTML = '';
 
-    if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-gray-400">کلاسی یافت نشد</td></tr>`;
-        return;
+    if (!pageItems.length) {
+        tbody.innerHTML = window.getClassroomEmptyRowHTML ? window.getClassroomEmptyRowHTML() : '';
+    } else {
+        pageItems.forEach(item => {
+            const statusClass = item.status === 'فعال'
+                ? 'bg-green-100 text-green-700'
+                : item.status === 'تعمیر'
+                    ? 'bg-orange-100 text-orange-700'
+                    : 'bg-red-100 text-red-700';
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50 transition';
+            tr.innerHTML = window.getClassroomRowHTML ? window.getClassroomRowHTML(item, statusClass) : '';
+            tbody.appendChild(tr);
+
+            if (editingClassroomRowId === item.id) {
+                const expandRow = document.createElement('tr');
+                expandRow.className = 'bg-gray-50 classroom-inline-expand';
+                expandRow.innerHTML = window.getClassroomInlineExpandRowHTML
+                    ? window.getClassroomInlineExpandRowHTML(item) : '';
+                tbody.appendChild(expandRow);
+            }
+        });
     }
 
-    list.forEach(c => {
-        const statusClass = c.status === 'فعال' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700';
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-gray-50";
-        tr.innerHTML = `
-            <td class="py-4 px-5 font-medium">${c.name}</td>
-            <td class="py-4 px-5">${c.branchName}</td>
-            <td class="py-4 px-5">${c.capacity} نفر</td>
-            <td class="py-4 px-5 text-sm text-gray-600">${c.equipment}</td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusClass}">${c.status}</span></td>
-            <td class="py-4 px-5 text-left">
-                <button onclick="editClassroom(${c.id})" class="text-indigo-600 hover:underline text-sm ml-3">ویرایش</button>
-                <button onclick="deleteClassroom(${c.id})" class="text-red-500 hover:underline text-sm">حذف</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
+    updateClassroomPagination(list.length, start, end, totalPages);
+    updateClassroomSortIcons();
+};
+
+function updateClassroomPagination(total, start, end, totalPages) {
+    const info = document.getElementById('classroomPaginationInfo');
+    if (info) {
+        const from = total === 0 ? 0 : start + 1;
+        const to = Math.min(end, total);
+        info.textContent = `نمایش ${from} تا ${to} از ${total} کلاس`;
+    }
+
+    const pagination = document.getElementById('classroomPaginationButtons');
+    if (!pagination) return;
+
+    let html = `
+        <button onclick="changeClassroomPage(1)" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ${classroomCurrentPage === 1 ? 'disabled' : ''}>اول</button>
+        <button onclick="changeClassroomPage(${classroomCurrentPage - 1})" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ${classroomCurrentPage === 1 ? 'disabled' : ''}>قبلی</button>
+    `;
+
+    let startPage = Math.max(1, classroomCurrentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+
+    for (let i = startPage; i <= endPage; i++) {
+        html += `<button onclick="changeClassroomPage(${i})" class="px-3 py-1.5 rounded-lg ${i === classroomCurrentPage ? 'bg-indigo-600 text-white' : 'border hover:bg-gray-50'}">${i}</button>`;
+    }
+
+    html += `
+        <button onclick="changeClassroomPage(${classroomCurrentPage + 1})" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ${classroomCurrentPage === totalPages ? 'disabled' : ''}>بعدی</button>
+        <button onclick="changeClassroomPage(${totalPages})" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ${classroomCurrentPage === totalPages ? 'disabled' : ''}>آخر</button>
+    `;
+    pagination.innerHTML = html;
+}
+
+window.changeClassroomPage = function (page) {
+    const totalPages = Math.ceil(filteredClassrooms.length / classroomPerPage) || 1;
+    if (page < 1 || page > totalPages) return;
+    classroomCurrentPage = page;
+    renderClassroomsTable(filteredClassrooms);
+};
+
+// ==================== نوع کلاس ====================
+window.promptAddClassroomType = function () {
+    const name = prompt('نام نوع کلاس جدید را وارد کنید:')?.trim();
+    if (!name) return;
+    if (allClassroomTypes.some(t => t.name === name)) return alert('این نوع قبلاً وجود دارد');
+    allClassroomTypes.push({ id: Date.now(), name });
+    document.querySelectorAll('select[id$="Type"], select[id*="ClassroomType"], #classroomType, #editClassroomType').forEach(sel => {
+        if (!sel) return;
+        const current = sel.value;
+        const options = allClassroomTypes.map(t => `<option value="${t.name}" ${t.name === current || t.name === name ? 'selected' : ''}>${t.name}</option>`).join('');
+        // فقط selectهای نوع کلاس را هدف بگیر
+        if (sel.id.includes('Type') && !sel.id.includes('Status')) {
+            sel.innerHTML = options;
+        }
+    });
+    // آپدیت دقیق‌تر فیلدهای شناخته‌شده
+    ['classroomType', 'editClassroomType'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (sel) {
+            const current = sel.value;
+            sel.innerHTML = allClassroomTypes.map(t =>
+                `<option value="${t.name}" ${t.name === name || t.name === current ? 'selected' : ''}>${t.name}</option>`
+            ).join('');
+            sel.value = name;
+        }
+    });
+    // inline forms
+    document.querySelectorAll('[id^="inlineClassroom"][id$="Type"]').forEach(sel => {
+        const current = sel.value;
+        sel.innerHTML = allClassroomTypes.map(t =>
+            `<option value="${t.name}" ${t.name === name || t.name === current ? 'selected' : ''}>${t.name}</option>`
+        ).join('');
     });
 };
 
-// ==================== افزودن کلاس ====================
-window.openAddClassroomModal = function() {
-    const branchOptions = allBranches.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-    
-    const html = `
-    <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onclick="if(event.target===this) closeModal()">
-        <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl" onclick="event.stopPropagation()">
-            <div class="px-8 py-5 border-b flex justify-between items-center">
-                <h2 class="text-2xl font-bold">افزودن کلاس جدید</h2>
-                <button onclick="closeModal()" class="text-3xl text-gray-300">×</button>
-            </div>
-            <div class="p-8 space-y-5">
-                <div>
-                    <label class="block text-sm font-medium mb-2">نام کلاس *</label>
-                    <input id="classroomName" type="text" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">شعبه *</label>
-                    <select id="classroomBranch" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${branchOptions}
-                    </select>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">ظرفیت</label>
-                        <input id="classroomCapacity" type="number" value="8" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">وضعیت</label>
-                        <select id="classroomStatus" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                            <option value="فعال">فعال</option>
-                            <option value="تعمیر">تعمیر</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">تجهیزات</label>
-                    <input id="classroomEquipment" type="text" placeholder="پیانو، صندلی، ..." class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                </div>
-                <div class="flex gap-4 pt-4">
-                    <button onclick="saveClassroom()" class="flex-1 bg-indigo-600 text-white py-3.5 rounded-2xl">ذخیره</button>
-                    <button onclick="closeModal()" class="flex-1 border py-3.5 rounded-2xl">انصراف</button>
-                </div>
-            </div>
-        </div>
-    </div>`;
-    document.getElementById('modalContainer').innerHTML = html;
+// ==================== تجهیزات ====================
+window.addClassroomEquipmentField = function (containerId) {
+    const el = document.getElementById(containerId);
+    if (!el || !window.getClassroomEquipmentFieldHTML) return;
+    el.insertAdjacentHTML('beforeend', window.getClassroomEquipmentFieldHTML());
 };
 
-window.saveClassroom = function() {
-    const name = document.getElementById('classroomName')?.value.trim();
-    const branchId = parseInt(document.getElementById('classroomBranch').value);
-    if (!name) return alert('نام کلاس الزامی است');
+function readEquipmentFromContainer(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return [];
+    return [...container.querySelectorAll('.equipment-item')].map(div => {
+        const name = div.querySelector('.equip-name')?.value.trim();
+        const qty = parseInt(div.querySelector('.equip-qty')?.value || '1', 10) || 1;
+        return name ? { name, qty } : null;
+    }).filter(Boolean);
+}
 
-    const branch = allBranches.find(b => b.id === branchId);
-    
-    allClassrooms.push({
-        id: Date.now(),
+function readClassroomForm(prefix) {
+    // prefix: '' | 'editClassroom' | 'inlineClassroom{id}'
+    const field = (suffix) => document.getElementById(prefix ? `${prefix}${suffix}` : `classroom${suffix}`);
+    const name = field('Name')?.value.trim();
+    const type = field('Type')?.value;
+    const branchId = parseInt(field('Branch')?.value, 10);
+    const capacity = parseInt(field('Capacity')?.value || '8', 10) || 8;
+    const status = field('Status')?.value || 'فعال';
+    const equipContainerId = prefix
+        ? (prefix.startsWith('inline') ? `${prefix}EquipmentContainer` : `${prefix}EquipmentContainer`)
+        : 'classroomEquipmentContainer';
+    // fix for add form
+    const equipment = readEquipmentFromContainer(
+        prefix === '' ? 'classroomEquipmentContainer' : `${prefix}EquipmentContainer`
+    );
+    const branch = getBranchesList().find(b => b.id === branchId);
+    return {
         name,
+        type,
+        typeLabel: type,
         branchId,
         branchName: branch ? branch.name : '',
-        capacity: parseInt(document.getElementById('classroomCapacity').value) || 8,
-        equipment: document.getElementById('classroomEquipment').value || '—',
-        status: document.getElementById('classroomStatus').value
-    });
+        capacity,
+        status,
+        equipment
+    };
+}
 
-    // افزایش تعداد کلاس شعبه
-    if (branch) branch.classrooms++;
+// ==================== CRUD ====================
+window.openAddClassroomModal = function () {
+    if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد');
+    document.getElementById('modalContainer').innerHTML = window.getClassroomAddModalHTML
+        ? window.getClassroomAddModalHTML() : '';
+};
 
-    renderClassroomsTable();
+window.saveClassroom = function () {
+    const data = readClassroomForm('');
+    if (!data.name) return alert('نام کلاس الزامی است');
+    if (!data.branchId) return alert('شعبه الزامی است');
+
+    allClassrooms.unshift({ id: Date.now(), ...data });
+    const branch = getBranchesList().find(b => b.id === data.branchId);
+    if (branch) branch.classrooms = (branch.classrooms || 0) + 1;
+
+    renderClassroomEquipmentFilter();
+    filterClassrooms();
     closeModal();
     alert('✅ کلاس اضافه شد');
 };
 
-window.deleteClassroom = function(id) {
+window.viewClassroom = function (id) {
+    const item = allClassrooms.find(x => x.id === id);
+    if (!item) return;
+    document.getElementById('modalContainer').innerHTML = window.getClassroomDetailsModalHTML
+        ? window.getClassroomDetailsModalHTML(item) : '';
+};
+
+window.editClassroom = function (id) {
+    const item = allClassrooms.find(x => x.id === id);
+    if (!item) return;
+    document.getElementById('modalContainer').innerHTML = window.getClassroomEditModalHTML
+        ? window.getClassroomEditModalHTML(item) : '';
+};
+
+window.saveEditedClassroom = function (id) {
+    const data = readClassroomForm('editClassroom');
+    if (!data.name) return alert('نام کلاس الزامی است');
+    const index = allClassrooms.findIndex(x => x.id === id);
+    if (index === -1) return;
+    allClassrooms[index] = { ...allClassrooms[index], ...data };
+    editingClassroomRowId = null;
+    renderClassroomEquipmentFilter();
+    filterClassrooms();
+    closeModal();
+    alert('✅ تغییرات ذخیره شد');
+};
+
+window.toggleClassroomInlineEdit = function (id) {
+    editingClassroomRowId = editingClassroomRowId === id ? null : id;
+    renderClassroomsTable(filteredClassrooms);
+};
+
+window.saveInlineClassroom = function (id) {
+    const data = readClassroomForm(`inlineClassroom${id}`);
+    if (!data.name) return alert('نام کلاس الزامی است');
+    const index = allClassrooms.findIndex(x => x.id === id);
+    if (index === -1) return;
+    allClassrooms[index] = { ...allClassrooms[index], ...data };
+    editingClassroomRowId = null;
+    renderClassroomEquipmentFilter();
+    filterClassrooms();
+    alert('✅ تغییرات با موفقیت ذخیره شد');
+};
+
+window.deleteClassroom = function (id) {
     if (!confirm('آیا از حذف این کلاس مطمئن هستید؟')) return;
     allClassrooms = allClassrooms.filter(c => c.id !== id);
-    renderClassroomsTable();
+    if (editingClassroomRowId === id) editingClassroomRowId = null;
+    renderClassroomEquipmentFilter();
+    filterClassrooms();
 };
 
-window.editClassroom = function(id) {
-    alert('ویرایش کلاس (مشابه بقیه بخش‌ها قابل پیاده‌سازی است)');
+// ==================== خروجی اکسل ====================
+window.exportClassroomsToExcel = function () {
+    const data = filteredClassrooms.length ? filteredClassrooms : allClassrooms;
+    let csv = '\uFEFF';
+    csv += 'ردیف,نام کلاس,نوع کلاس,شعبه,ظرفیت,تجهیزات,وضعیت\n';
+    data.forEach((item, index) => {
+        const equip = (item.equipment || []).map(e => `${e.name}(${e.qty})`).join('؛ ');
+        csv += `${index + 1},"${item.name}","${item.typeLabel || item.type}","${item.branchName}",${item.capacity},"${equip}","${item.status}"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `کلاس‌ها_${new Date().toLocaleDateString('fa-IR')}.csv`;
+    link.click();
 };
 
-// Init
-(function() {
+// ==================== خروجی PDF ====================
+window.exportClassroomsToPDF = function () {
+    openClassroomsPDFOptionsModal();
+};
+
+window.openClassroomsPDFOptionsModal = function () {
+    document.getElementById('modalContainer').innerHTML = window.getClassroomPDFModalHTML
+        ? window.getClassroomPDFModalHTML(classroomPdfColumns) : '';
+};
+
+window.generateClassroomsPDF = async function () {
+    if (!window.html2canvas) {
+        alert('ابزار تولید PDF بارگذاری نشده است. لطفاً صفحه را مجدداً بارگذاری کنید.');
+        return;
+    }
+
+    const title = document.getElementById('classroomPdfTitle')?.value || 'گزارش کلاس‌های فیزیکی';
+    const subtitle = document.getElementById('classroomPdfSubtitle')?.value || 'لیست کلاس‌ها، تجهیزات و وضعیت';
+    const footer = document.getElementById('classroomPdfFooter')?.value || '';
+    const format = document.getElementById('classroomPdfFormat')?.value || 'a4';
+    const orientation = document.getElementById('classroomPdfOrientation')?.value || 'landscape';
+    const includeDate = document.getElementById('classroomPdfIncludeDate')?.checked;
+    const headerColor = document.getElementById('classroomPdfHeaderColor')?.value || '#eff6ff';
+    const evenRowColor = document.getElementById('classroomPdfEvenRowColor')?.value || '#ffffff';
+    const oddRowColor = document.getElementById('classroomPdfOddRowColor')?.value || '#f8fafc';
+    const selectedColumns = classroomPdfColumns.filter(col =>
+        document.getElementById(`classroomPdfCol-${col.field}`)?.checked
+    );
+    const date = new Date().toLocaleDateString('fa-IR');
+    const data = filteredClassrooms.length ? filteredClassrooms : allClassrooms;
+
+    if (!selectedColumns.length) {
+        alert('لطفاً حداقل یک ستون برای خروجی PDF انتخاب کنید.');
+        return;
+    }
+
+    const rowsPerPage = orientation === 'portrait' ? 18 : 15;
+    const totalPages = Math.max(1, Math.ceil(data.length / rowsPerPage));
+    const canvasPages = [];
+
+    for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+        const pageRows = data.slice(pageIndex * rowsPerPage, (pageIndex + 1) * rowsPerPage);
+        const pageWrapper = document.createElement('div');
+        pageWrapper.style.direction = 'rtl';
+        pageWrapper.style.position = 'fixed';
+        pageWrapper.style.top = '-9999px';
+        pageWrapper.style.left = '-9999px';
+        pageWrapper.style.width = orientation === 'portrait' ? '900px' : '1400px';
+        pageWrapper.style.padding = pageIndex === 0 ? '20px 30px 30px' : '30px';
+        pageWrapper.style.backgroundColor = '#ffffff';
+        pageWrapper.style.fontFamily = 'Vazirmatn, Tahoma, sans-serif';
+        pageWrapper.innerHTML = window.getClassroomPDFPageHTML
+            ? window.getClassroomPDFPageHTML(pageIndex + 1, pageRows, pageIndex === 0, {
+                title, subtitle, footer, includeDate, date,
+                headerColor, evenRowColor, oddRowColor,
+                selectedColumns, rowsPerPage, totalPages
+            }) : '';
+        document.body.appendChild(pageWrapper);
+        const canvas = await html2canvas(pageWrapper, {
+            scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: -window.scrollY
+        });
+        canvasPages.push(canvas);
+        pageWrapper.remove();
+    }
+
+    const doc = new window.jspdf.jsPDF({ orientation, unit: 'pt', format });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+    const imgWidth = pageWidth - margin * 2;
+
+    canvasPages.forEach((canvas, index) => {
+        if (index > 0) doc.addPage();
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        doc.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin, imgWidth, imgHeight);
+    });
+
+    doc.save(`کلاس‌ها_${date}.pdf`);
+    closeModal();
+};
+
+// ==================== Init ====================
+(function initClassrooms() {
     setTimeout(() => {
-        if (document.getElementById('classroomsTable')) {
-            renderBranchTabs();
-            renderClassroomsTable();
+        if (document.querySelector('#classroomsTable tbody')) {
+            renderClassroomBranchTabs();
+            renderClassroomEquipmentFilter();
+            filterClassrooms();
         }
     }, 150);
 })();

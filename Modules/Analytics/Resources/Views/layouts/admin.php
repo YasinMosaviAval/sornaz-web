@@ -39,9 +39,11 @@
     pushScript('teachers.js');
     pushScript('branch-templates.js');
     pushScript('branches.js');
+    pushScript('classroom-templates.js');
     pushScript('classrooms.js');
     pushScript('courses.js');
     pushScript('terms.js');
+    pushScript('gallery-templates.js');
     pushScript('gallery.js');
     pushScript('reports.js');
     pushScript('finance.js');
