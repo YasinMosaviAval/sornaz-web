@@ -35,7 +35,7 @@
     pushScript('add-user-modal.js');
     // pushScript('users.js');
     pushScript('students.js');
-    pushScript('staff-templates.js');
+    pushScript('teacher-templates.js');
     pushScript('teachers.js');
     pushScript('branch-templates.js');
     pushScript('branches.js');
@@ -43,6 +43,7 @@
     pushScript('classrooms.js');
     pushScript('course-templates.js');
     pushScript('courses.js');
+    pushScript('term-templates.js');
     pushScript('terms.js');
     pushScript('gallery-templates.js');
     pushScript('gallery.js');
