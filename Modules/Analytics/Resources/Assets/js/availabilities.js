@@ -1,268 +1,493 @@
-const dayLabels = {
-    saturday: 'شنبه', sunday: 'یکشنبه', monday: 'دوشنبه', tuesday: 'سه‌شنبه',
-    wednesday: 'چهارشنبه', thursday: 'پنج‌شنبه', friday: 'جمعه'
-};
-const repeatLabels = {
-    week: 'هفتگی', '2-week': 'دو هفته‌ای', '3-week': 'سه هفته‌ای',
-    '4-week': 'چهار هفته‌ای', month: 'ماهانه', year: 'سالانه'
-};
-const availTypeLabels = { available: 'در دسترس', unavailable: 'خارج از دسترس' };
-
-let allAvailabilities = [
-    { id: 1, title: "کلاس‌های عصر شنبه", summary: "بازه اصلی تدریس", description: "زمان ثابت کلاس‌های پیانو.", user_id: 1, date: null, day_of_week: "saturday", start_time: "16:00", end_time: "20:00", timezone: "Asia/Tehran", type: "available", is_repeating: 1, repeat_period: "week", is_closed: 0, branchId: 1, branchName: "شعبه مرکزی" },
-    { id: 2, title: "صبح‌های دوشنبه", summary: "تمرین گروهی", description: "آماده‌سازی گروه کر.", user_id: 2, date: null, day_of_week: "monday", start_time: "09:00", end_time: "12:00", timezone: "Asia/Tehran", type: "available", is_repeating: 1, repeat_period: "week", is_closed: 0, branchId: 2, branchName: "شعبه ونک" },
-    { id: 3, title: "پنج‌شنبه تعطیل", summary: "روز استراحت", description: "عدم پذیرش کلاس در پنج‌شنبه.", user_id: 1, date: null, day_of_week: "thursday", start_time: "00:00", end_time: "23:59", timezone: "Asia/Tehran", type: "unavailable", is_repeating: 1, repeat_period: "week", is_closed: 1, branchId: 1, branchName: "شعبه مرکزی" }
+(function () {
+'use strict';
+// ==================== برنامه زمانی شعبه‌ها (ایزوله) ====================
+window.branchScheduleDaysList = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه'];
+window.branchScheduleStatusesList = ['فعال', 'غیرفعال', 'پر شده', 'در انتظار تأیید'];
+window.branchScheduleRepeatList = ['هفتگی', 'دو هفته', 'سه هفته', 'چهار هفته', 'ماهانه', 'سالانه', 'بی‌تکرار'];
+window.branchScheduleTimezoneList = [
+    { value: 'Asia/Tehran', label: 'تهران (Asia/Tehran)' },
+    { value: 'Asia/Dubai', label: 'دبی (Asia/Dubai)' },
+    { value: 'Asia/Istanbul', label: 'استانبول (Asia/Istanbul)' },
+    { value: 'Europe/London', label: 'لندن (Europe/London)' },
+    { value: 'Europe/Paris', label: 'پاریس (Europe/Paris)' },
+    { value: 'Europe/Berlin', label: 'برلین (Europe/Berlin)' },
+    { value: 'Europe/Rome', label: 'رم (Europe/Rome)' },
+    { value: 'Europe/Amsterdam', label: 'آمستردام (Europe/Amsterdam)' },
+    { value: 'America/New_York', label: 'نیویورک (America/New_York)' },
+    { value: 'America/Chicago', label: 'شیکاگو (America/Chicago)' },
+    { value: 'America/Los_Angeles', label: 'لس‌آنجلس (America/Los_Angeles)' },
+    { value: 'America/Toronto', label: 'تورنتو (America/Toronto)' },
+    { value: 'UTC', label: 'UTC' }
 ];
-let currentAvailBranch = 'all';
 
-window.renderAvailabilitiesBranchTabs = function() {
-    const container = document.getElementById('availabilitiesBranchTabs');
-    if (!container) return;
-    container.querySelectorAll('.avail-branch-tab:not(:first-child)').forEach(t => t.remove());
-    if (typeof allBranches !== 'undefined') {
-        allBranches.forEach(b => {
-            const btn = document.createElement('button');
-            btn.className = 'avail-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border border-gray-200 hover:bg-gray-50';
-            btn.textContent = b.name;
-            btn.onclick = () => filterAvailabilitiesByBranch(b.id);
-            container.appendChild(btn);
+window.toggleBranchScheduleRepeatDate = function (wrapId, repeatValue) {
+    const wrap = document.getElementById(wrapId);
+    if (!wrap) return;
+    const show = (repeatValue === 'ماهانه' || repeatValue === 'سالانه');
+    wrap.classList.toggle('hidden', !show);
+};
+
+window.getBranchScheduleBranches = function () {
+    if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
+    return [
+        { id: 1, name: 'شعبه مرکزی' }, { id: 2, name: 'شعبه ونک' },
+        { id: 3, name: 'شعبه سعادت‌آباد' }, { id: 4, name: 'شعبه کرج' }
+    ];
+};
+
+function timeToMinutes(t) {
+    if (!t) return 0;
+    const p = String(t).split(':');
+    return parseInt(p[0], 10) * 60 + parseInt(p[1] || 0, 10);
+}
+function minutesToTime(m) {
+    // تا 24:00 برای پایان بازه مجاز است؛ برای اسلات‌های انتخابی فقط 00:00–23:30
+    const h = Math.floor(m / 60);
+    const mm = m % 60;
+    return String(h).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+}
+/** کل ۲۴ ساعت روز به‌صورت استاتیک (هر نیم‌ساعت از 00:00 تا 23:30) */
+function getFullDaySlots() {
+    const slots = [];
+    for (let m = 0; m < 24 * 60; m += 30) slots.push(minutesToTime(m));
+    return slots;
+}
+function mergeConsecutiveSlots(slots) {
+    if (!slots || !slots.length) return [];
+    const mins = slots.map(timeToMinutes).sort(function (a, b) { return a - b; });
+    const ranges = [];
+    let rangeStart = mins[0], prev = mins[0];
+    for (let i = 1; i < mins.length; i++) {
+        if (mins[i] === prev + 30) prev = mins[i];
+        else {
+            ranges.push({ start: minutesToTime(rangeStart), end: minutesToTime(prev + 30) });
+            rangeStart = mins[i]; prev = mins[i];
+        }
+    }
+    ranges.push({ start: minutesToTime(rangeStart), end: minutesToTime(prev + 30) });
+    return ranges;
+}
+function rangeLabel(range) { return range.start + '-' + range.end; }
+
+window.buildBranchScheduleTimeSlotsHTML = function (containerId, branchId, selectedSlots) {
+    const slots = getFullDaySlots();
+    const selected = (selectedSlots || []).map(String);
+    return '<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">' +
+        slots.map(function (s) {
+            const checked = selected.indexOf(s) !== -1 ? 'checked' : '';
+            return '<label class="inline-flex items-center gap-2 text-sm border border-gray-200 rounded-xl px-2 py-1.5 hover:bg-gray-50 cursor-pointer">' +
+                '<input type="checkbox" class="bs-time-slot" value="' + s + '" ' + checked + '> ' + s +
+                '</label>';
+        }).join('') + '</div>';
+};
+
+window.refreshBranchScheduleTimeSlots = function (containerId, branchId, selectedSlots) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = window.buildBranchScheduleTimeSlotsHTML(containerId, branchId, selectedSlots || []);
+};
+
+let allBranchSchedules = [];
+(function buildSample() {
+    const branches = window.getBranchScheduleBranches();
+    const allSlots = getFullDaySlots();
+    let id = 1;
+    for (let i = 0; i < 100 && allBranchSchedules.length < 100; i++) {
+        const day = window.branchScheduleDaysList[Math.floor(Math.random() * window.branchScheduleDaysList.length)];
+        const status = window.branchScheduleStatusesList[Math.floor(Math.random() * window.branchScheduleStatusesList.length)];
+        const branch = branches[Math.floor(Math.random() * branches.length)];
+        const count = 2 + Math.floor(Math.random() * 6);
+        const startIdx = Math.floor(Math.random() * Math.max(1, allSlots.length - count - 4));
+        let picked = [];
+        if (Math.random() > 0.4) {
+            for (let k = 0; k < count; k++) picked.push(allSlots[startIdx + k]);
+        } else {
+            const c1 = 1 + Math.floor(Math.random() * 3);
+            for (let k = 0; k < c1; k++) picked.push(allSlots[startIdx + k]);
+            const gap = 3 + Math.floor(Math.random() * 4);
+            const s2 = startIdx + c1 + gap;
+            const c2 = 1 + Math.floor(Math.random() * 3);
+            for (let k = 0; k < c2 && s2 + k < allSlots.length; k++) picked.push(allSlots[s2 + k]);
+        }
+        picked = picked.filter(Boolean);
+        mergeConsecutiveSlots(picked).forEach(function (range) {
+            const rangeSlots = [];
+            for (let m = timeToMinutes(range.start); m < timeToMinutes(range.end); m += 30) rangeSlots.push(minutesToTime(m));
+            const repeatPeriod = window.branchScheduleRepeatList[Math.floor(Math.random() * window.branchScheduleRepeatList.length)];
+            const tz = window.branchScheduleTimezoneList[Math.floor(Math.random() * window.branchScheduleTimezoneList.length)];
+            let repeatDate = '';
+            if (repeatPeriod === 'ماهانه' || repeatPeriod === 'سالانه') {
+                const d = new Date();
+                d.setDate(1 + Math.floor(Math.random() * 28));
+                repeatDate = d.toISOString().split('T')[0];
+            }
+            allBranchSchedules.push({
+                id: id++, day: day,
+                slots: rangeSlots, timeLabel: rangeLabel(range), time: rangeLabel(range),
+                branchId: branch.id, branchName: branch.name, status: status,
+                repeatPeriod: repeatPeriod, repeatDate: repeatDate, timezone: tz.value,
+                summary: 'ساعات کاری ' + branch.name + ' در ' + day,
+                description: 'زمان‌بندی شعبه ' + branch.name + ' — ' + rangeLabel(range)
+            });
         });
     }
+    allBranchSchedules = allBranchSchedules.slice(0, 100);
+})();
+
+let currentBranchScheduleBranch = 'all';
+let branchSchedulesCurrentPage = 1;
+const branchSchedulesPerPage = 10;
+let filteredBranchSchedules = allBranchSchedules.slice();
+let editingBranchScheduleRowId = null;
+let bsSortField = '';
+let bsSortDirection = 'asc';
+
+const bsPdfColumns = [
+    { field: 'index', label: 'ردیف' },
+    { field: 'day', label: 'روز' },
+    { field: 'timeLabel', label: 'ساعت' },
+    { field: 'repeatPeriod', label: 'دوره تکرار' },
+    { field: 'timezone', label: 'منطقه زمانی' },
+    { field: 'branchName', label: 'شعبه' },
+    { field: 'status', label: 'وضعیت' }
+];
+
+function sortBranchScheduleItems() {
+    if (!bsSortField) return;
+    filteredBranchSchedules.sort(function (a, b) {
+        let av = a[bsSortField], bv = b[bsSortField];
+        if (bsSortField === 'timeLabel' || bsSortField === 'time') {
+            av = (a.slots && a.slots[0]) || a.timeLabel || '';
+            bv = (b.slots && b.slots[0]) || b.timeLabel || '';
+        } else {
+            av = String(av || '').toLowerCase();
+            bv = String(bv || '').toLowerCase();
+        }
+        if (av < bv) return bsSortDirection === 'asc' ? -1 : 1;
+        if (av > bv) return bsSortDirection === 'asc' ? 1 : -1;
+        return 0;
+    });
+}
+
+window.updateBranchScheduleSortIcons = function () {
+    ['day', 'timeLabel', 'repeatPeriod', 'timezone', 'branchName', 'status'].forEach(function (f) {
+        const icon = document.getElementById('bsSortIcon-' + f);
+        if (!icon) return;
+        icon.textContent = bsSortField === f ? (bsSortDirection === 'asc' ? '↑' : '↓') : '↕';
+    });
 };
 
-window.filterAvailabilitiesByBranch = function(branchId) {
-    currentAvailBranch = branchId;
-    document.querySelectorAll('.avail-branch-tab').forEach(tab => {
+window.sortBranchSchedulesBy = function (field) {
+    if (bsSortField === field) bsSortDirection = bsSortDirection === 'asc' ? 'desc' : 'asc';
+    else { bsSortField = field; bsSortDirection = 'asc'; }
+    sortBranchScheduleItems();
+    window.renderBranchSchedulesTable(filteredBranchSchedules);
+    window.updateBranchScheduleSortIcons();
+};
+
+window.renderBranchSchedulesBranchTabs = function () {
+    const container = document.getElementById('branchSchedulesBranchTabs');
+    if (!container) return;
+    container.querySelectorAll('.branch-schedule-branch-tab:not(:first-child)').forEach(function (t) { t.remove(); });
+    window.getBranchScheduleBranches().forEach(function (b) {
+        const active = currentBranchScheduleBranch == b.id;
+        const btn = document.createElement('button');
+        btn.className = 'branch-schedule-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ' +
+            (active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50') + ' transition';
+        btn.textContent = b.name;
+        btn.onclick = function () { window.filterBranchSchedulesByBranch(b.id); };
+        container.appendChild(btn);
+    });
+};
+
+window.filterBranchSchedulesByBranch = function (branchId) {
+    currentBranchScheduleBranch = branchId;
+    document.querySelectorAll('.branch-schedule-branch-tab').forEach(function (tab) {
         tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
         tab.classList.add('border', 'border-gray-200');
     });
-    const tabs = document.querySelectorAll('.avail-branch-tab');
+    const tabs = document.querySelectorAll('.branch-schedule-branch-tab');
     if (branchId === 'all' && tabs[0]) {
         tabs[0].classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
         tabs[0].classList.remove('border-gray-200');
     } else {
-        tabs.forEach(tab => {
-            const branch = allBranches?.find(b => b.id == branchId);
-            if (branch && tab.textContent === branch.name) {
+        const name = window.getBranchScheduleBranches().find(function (b) { return b.id == branchId; });
+        tabs.forEach(function (tab) {
+            if (name && tab.textContent === name.name) {
                 tab.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
                 tab.classList.remove('border-gray-200');
             }
         });
     }
-    renderAvailabilitiesTable();
+    window.filterBranchSchedules();
 };
 
-window.renderAvailabilitiesTable = function() {
-    const tbody = document.querySelector('#availabilitiesTable tbody');
-    if (!tbody) return;
-    const list = currentAvailBranch === 'all' ? allAvailabilities : allAvailabilities.filter(a => a.branchId == currentAvailBranch);
-    tbody.innerHTML = list.length === 0
-        ? `<tr><td colspan="7" class="py-12 text-center text-gray-400">موردی یافت نشد</td></tr>`
-        : list.map(a => `
-            <tr class="hover:bg-gray-50">
-                <td class="py-4 px-5 font-medium">${a.title}</td>
-                <td class="py-4 px-5">${dayLabels[a.day_of_week] || a.day_of_week || '—'}</td>
-                <td class="py-4 px-5">${a.start_time || '—'} – ${a.end_time || '—'}</td>
-                <td class="py-4 px-5">
-                    <span class="px-3 py-1 rounded-full text-xs ${a.type === 'available' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${availTypeLabels[a.type] || a.type}</span>
-                </td>
-                <td class="py-4 px-5 text-sm">${a.is_repeating ? (repeatLabels[a.repeat_period] || a.repeat_period) : 'بدون تکرار'}</td>
-                <td class="py-4 px-5">${a.branchName}</td>
-                <td class="py-4 px-5 text-left">
-                    <button onclick="viewAvailability(${a.id})" class="text-indigo-600 text-sm ml-3">جزئیات</button>
-                    <button onclick="editAvailability(${a.id})" class="text-indigo-600 text-sm ml-3">ویرایش</button>
-                    <button onclick="deleteAvailability(${a.id})" class="text-red-500 text-sm">حذف</button>
-                </td>
-            </tr>`).join('');
-};
+window.filterBranchSchedules = function () {
+    const day = document.getElementById('filterBranchDay') && document.getElementById('filterBranchDay').value || '';
+    const status = document.getElementById('filterBranchStatus') && document.getElementById('filterBranchStatus').value || '';
+    const repeat = document.getElementById('filterBranchRepeat') && document.getElementById('filterBranchRepeat').value || '';
+    const timezone = document.getElementById('filterBranchTimezone') && document.getElementById('filterBranchTimezone').value || '';
 
-window.openAddAvailabilityModal = function() {
-    if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
-    const branchOptions = (typeof allBranches !== 'undefined' ? allBranches : []).map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-    const dayOptions = Object.entries(dayLabels).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
-    const repeatOptions = Object.entries(repeatLabels).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
-    document.getElementById('modalContainer').innerHTML = `
-    <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
-        <div class="bg-white rounded-3xl w-full max-w-lg my-8 shadow-2xl" onclick="event.stopPropagation()">
-            <div class="px-8 py-5 border-b flex justify-between items-center">
-                <h2 class="text-2xl font-bold">افزودن زمان در دسترس</h2>
-                <button onclick="closeModal()" class="text-3xl text-gray-300">×</button>
-            </div>
-            <div class="p-8 space-y-5">
-                <input id="availTitle" type="text" placeholder="عنوان *" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                <input id="availSummary" type="text" placeholder="خلاصه" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                <textarea id="availDesc" rows="2" placeholder="توضیحات" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"></textarea>
-                <div class="grid grid-cols-2 gap-4">
-                    <select id="availDay" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${dayOptions}</select>
-                    <select id="availType" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        <option value="available">در دسترس</option>
-                        <option value="unavailable">خارج از دسترس</option>
-                    </select>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <input id="availStart" type="text" placeholder="شروع (مثلاً 16:00)" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                    <input id="availEnd" type="text" placeholder="پایان (مثلاً 20:00)" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                </div>
-                <input id="availTimezone" type="text" value="Asia/Tehran" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                <div class="grid grid-cols-2 gap-4">
-                    <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="availRepeating" checked> تکرارشونده</label>
-                    <select id="availRepeat" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${repeatOptions}</select>
-                </div>
-                <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="availClosed"> بسته (is_closed)</label>
-                <select id="availBranch" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${branchOptions}</select>
-                <div class="flex gap-4">
-                    <button onclick="saveAvailability()" class="flex-1 bg-indigo-600 text-white py-3.5 rounded-2xl">ذخیره</button>
-                    <button onclick="closeModal()" class="flex-1 border py-3.5 rounded-2xl">انصراف</button>
-                </div>
-            </div>
-        </div>
-    </div>`;
-};
-
-window.saveAvailability = function() {
-    const title = document.getElementById('availTitle')?.value.trim();
-    if (!title) return alert('عنوان الزامی است');
-    const branchId = parseInt(document.getElementById('availBranch').value);
-    const branch = allBranches?.find(b => b.id === branchId);
-    allAvailabilities.unshift({
-        id: Date.now(), title,
-        summary: document.getElementById('availSummary').value.trim(),
-        description: document.getElementById('availDesc').value.trim(),
-        user_id: 1, date: null,
-        day_of_week: document.getElementById('availDay').value,
-        start_time: document.getElementById('availStart').value.trim() || null,
-        end_time: document.getElementById('availEnd').value.trim() || null,
-        timezone: document.getElementById('availTimezone').value.trim() || 'Asia/Tehran',
-        type: document.getElementById('availType').value,
-        is_repeating: document.getElementById('availRepeating').checked ? 1 : 0,
-        repeat_period: document.getElementById('availRepeat').value,
-        is_closed: document.getElementById('availClosed').checked ? 1 : 0,
-        branchId, branchName: branch ? branch.name : 'نامشخص'
+    filteredBranchSchedules = allBranchSchedules.filter(function (s) {
+        const matchBranch = currentBranchScheduleBranch === 'all' || s.branchId == currentBranchScheduleBranch;
+        const matchDay = !day || s.day === day;
+        const matchStatus = !status || s.status === status;
+        const matchRepeat = !repeat || s.repeatPeriod === repeat;
+        const matchTz = !timezone || s.timezone === timezone;
+        return matchBranch && matchDay && matchStatus && matchRepeat && matchTz;
     });
-    filterAvailabilitiesByBranch(currentAvailBranch);
-    closeModal();
-    alert('✅ ثبت شد');
+
+    branchSchedulesCurrentPage = 1;
+    sortBranchScheduleItems();
+    window.renderBranchSchedulesTable(filteredBranchSchedules);
 };
 
-window.viewAvailability = function(id) {
-    const a = allAvailabilities.find(x => x.id === id);
-    if (!a) return;
-    document.getElementById('modalContainer').innerHTML = `
-    <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onclick="if(event.target===this) closeModal()">
-        <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl" onclick="event.stopPropagation()">
-            <div class="px-8 py-5 border-b flex justify-between items-center">
-                <div>
-                    <h2 class="text-2xl font-bold">${a.title}</h2>
-                    <p class="text-sm text-gray-500">${dayLabels[a.day_of_week]} — ${a.start_time} تا ${a.end_time}</p>
-                </div>
-                <div class="flex gap-3">
-                    <button onclick="editAvailability(${a.id})" class="bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm">ویرایش</button>
-                    <button onclick="closeModal()" class="text-3xl text-gray-300">×</button>
-                </div>
-            </div>
-            <div class="p-8 space-y-4">
-                ${a.summary ? `<p class="text-indigo-600 font-medium">${a.summary}</p>` : ''}
-                ${a.description ? `<p class="text-gray-600">${a.description}</p>` : ''}
-                <div class="text-sm space-y-2">
-                    <div class="flex justify-between border-b pb-2"><span class="text-gray-500">نوع</span><span>${availTypeLabels[a.type]}</span></div>
-                    <div class="flex justify-between border-b pb-2"><span class="text-gray-500">تکرار</span><span>${a.is_repeating ? repeatLabels[a.repeat_period] : 'خیر'}</span></div>
-                    <div class="flex justify-between border-b pb-2"><span class="text-gray-500">منطقه زمانی</span><span>${a.timezone}</span></div>
-                    <div class="flex justify-between border-b pb-2"><span class="text-gray-500">بسته</span><span>${a.is_closed ? 'بله' : 'خیر'}</span></div>
-                    <div class="flex justify-between border-b pb-2"><span class="text-gray-500">شعبه</span><span>${a.branchName}</span></div>
-                </div>
-            </div>
-        </div>
-    </div>`;
-};
+window.renderBranchSchedulesTable = function (list) {
+    list = list || filteredBranchSchedules;
+    const tbody = document.querySelector('#branchSchedulesTable tbody');
+    if (!tbody) return;
 
-window.editAvailability = function(id) {
-    const a = allAvailabilities.find(x => x.id === id);
-    if (!a) return;
-    const branchOptions = (typeof allBranches !== 'undefined' ? allBranches : []).map(b =>
-        `<option value="${b.id}" ${b.id === a.branchId ? 'selected' : ''}>${b.name}</option>`
-    ).join('');
-    const dayOptions = Object.entries(dayLabels).map(([k, v]) =>
-        `<option value="${k}" ${a.day_of_week === k ? 'selected' : ''}>${v}</option>`
-    ).join('');
-    const repeatOptions = Object.entries(repeatLabels).map(([k, v]) =>
-        `<option value="${k}" ${a.repeat_period === k ? 'selected' : ''}>${v}</option>`
-    ).join('');
-    document.getElementById('modalContainer').innerHTML = `
-    <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
-        <div class="bg-white rounded-3xl w-full max-w-lg my-8 shadow-2xl" onclick="event.stopPropagation()">
-            <div class="px-8 py-5 border-b flex justify-between items-center">
-                <h2 class="text-2xl font-bold">ویرایش زمان</h2>
-                <button onclick="closeModal()" class="text-3xl text-gray-300">×</button>
-            </div>
-            <div class="p-8 space-y-5">
-                <input id="editAvailTitle" type="text" value="${a.title}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                <input id="editAvailSummary" type="text" value="${a.summary || ''}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                <textarea id="editAvailDesc" rows="2" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${a.description || ''}</textarea>
-                <div class="grid grid-cols-2 gap-4">
-                    <select id="editAvailDay" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${dayOptions}</select>
-                    <select id="editAvailType" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        <option value="available" ${a.type==='available'?'selected':''}>در دسترس</option>
-                        <option value="unavailable" ${a.type==='unavailable'?'selected':''}>خارج از دسترس</option>
-                    </select>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <input id="editAvailStart" type="text" value="${a.start_time || ''}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                    <input id="editAvailEnd" type="text" value="${a.end_time || ''}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                </div>
-                <input id="editAvailTimezone" type="text" value="${a.timezone || 'Asia/Tehran'}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                <div class="grid grid-cols-2 gap-4">
-                    <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="editAvailRepeating" ${a.is_repeating?'checked':''}> تکرارشونده</label>
-                    <select id="editAvailRepeat" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${repeatOptions}</select>
-                </div>
-                <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="editAvailClosed" ${a.is_closed?'checked':''}> بسته</label>
-                <select id="editAvailBranch" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${branchOptions}</select>
-                <div class="flex gap-4">
-                    <button onclick="saveEditedAvailability(${a.id})" class="flex-1 bg-indigo-600 text-white py-3.5 rounded-2xl">ذخیره</button>
-                    <button onclick="closeModal()" class="flex-1 border py-3.5 rounded-2xl">انصراف</button>
-                </div>
-            </div>
-        </div>
-    </div>`;
-};
+    const totalPages = Math.ceil(list.length / branchSchedulesPerPage) || 1;
+    if (branchSchedulesCurrentPage > totalPages) branchSchedulesCurrentPage = totalPages;
 
-window.saveEditedAvailability = function(id) {
-    const title = document.getElementById('editAvailTitle')?.value.trim();
-    if (!title) return alert('عنوان الزامی است');
-    const index = allAvailabilities.findIndex(x => x.id === id);
-    if (index === -1) return;
-    const branchId = parseInt(document.getElementById('editAvailBranch').value);
-    const branch = allBranches?.find(b => b.id === branchId);
-    allAvailabilities[index] = {
-        ...allAvailabilities[index], title,
-        summary: document.getElementById('editAvailSummary').value.trim(),
-        description: document.getElementById('editAvailDesc').value.trim(),
-        day_of_week: document.getElementById('editAvailDay').value,
-        start_time: document.getElementById('editAvailStart').value.trim() || null,
-        end_time: document.getElementById('editAvailEnd').value.trim() || null,
-        timezone: document.getElementById('editAvailTimezone').value.trim(),
-        type: document.getElementById('editAvailType').value,
-        is_repeating: document.getElementById('editAvailRepeating').checked ? 1 : 0,
-        repeat_period: document.getElementById('editAvailRepeat').value,
-        is_closed: document.getElementById('editAvailClosed').checked ? 1 : 0,
-        branchId, branchName: branch ? branch.name : 'نامشخص'
-    };
-    filterAvailabilitiesByBranch(currentAvailBranch);
-    closeModal();
-    alert('✅ ذخیره شد');
-};
+    const start = (branchSchedulesCurrentPage - 1) * branchSchedulesPerPage;
+    const end = start + branchSchedulesPerPage;
+    const pageItems = list.slice(start, end);
 
-window.deleteAvailability = function(id) {
-    if (confirm('حذف این مورد؟')) {
-        allAvailabilities = allAvailabilities.filter(a => a.id !== id);
-        filterAvailabilitiesByBranch(currentAvailBranch);
+    tbody.innerHTML = '';
+    if (!pageItems.length) {
+        tbody.innerHTML = window.getBranchScheduleEmptyRowHTML ? window.getBranchScheduleEmptyRowHTML() : '';
+    } else {
+        pageItems.forEach(function (item) {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50 transition';
+            tr.innerHTML = window.getBranchScheduleRowHTML ? window.getBranchScheduleRowHTML(item) : '';
+            tbody.appendChild(tr);
+            if (editingBranchScheduleRowId === item.id) {
+                const expand = document.createElement('tr');
+                expand.className = 'bg-gray-50';
+                expand.innerHTML = window.getBranchScheduleInlineExpandRowHTML ? window.getBranchScheduleInlineExpandRowHTML(item) : '';
+                tbody.appendChild(expand);
+            }
+        });
     }
+    updateBranchSchedulesPagination(list.length, start, end, totalPages);
+    window.updateBranchScheduleSortIcons();
 };
 
-(function() {
-    setTimeout(() => {
-        if (document.querySelector('#availabilitiesTable tbody')) {
-            renderAvailabilitiesBranchTabs();
-            filterAvailabilitiesByBranch('all');
-        }
-    }, 200);
+function updateBranchSchedulesPagination(total, start, end, totalPages) {
+    const info = document.getElementById('branchSchedulesPaginationInfo');
+    if (info) {
+        info.textContent = 'نمایش ' + (total === 0 ? 0 : start + 1) + ' تا ' + Math.min(end, total) + ' از ' + total + ' زمان‌بندی';
+    }
+    const pagination = document.getElementById('branchSchedulesPaginationButtons');
+    if (!pagination) return;
+    let html = '<button onclick="changeBranchSchedulesPage(1)" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' + (branchSchedulesCurrentPage === 1 ? 'disabled' : '') + '>اول</button>'
+        + '<button onclick="changeBranchSchedulesPage(' + (branchSchedulesCurrentPage - 1) + ')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' + (branchSchedulesCurrentPage === 1 ? 'disabled' : '') + '>قبلی</button>';
+    let sp = Math.max(1, branchSchedulesCurrentPage - 2), ep = Math.min(totalPages, sp + 4);
+    if (ep - sp < 4) sp = Math.max(1, ep - 4);
+    for (let i = sp; i <= ep; i++) {
+        html += '<button onclick="changeBranchSchedulesPage(' + i + ')" class="px-3 py-1.5 rounded-lg ' + (i === branchSchedulesCurrentPage ? 'bg-indigo-600 text-white' : 'border hover:bg-gray-50') + '">' + i + '</button>';
+    }
+    html += '<button onclick="changeBranchSchedulesPage(' + (branchSchedulesCurrentPage + 1) + ')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' + (branchSchedulesCurrentPage === totalPages ? 'disabled' : '') + '>بعدی</button>'
+        + '<button onclick="changeBranchSchedulesPage(' + totalPages + ')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' + (branchSchedulesCurrentPage === totalPages ? 'disabled' : '') + '>آخر</button>';
+    pagination.innerHTML = html;
+}
+
+window.changeBranchSchedulesPage = function (page) {
+    const totalPages = Math.ceil(filteredBranchSchedules.length / branchSchedulesPerPage) || 1;
+    if (page < 1 || page > totalPages) return;
+    branchSchedulesCurrentPage = page;
+    window.renderBranchSchedulesTable(filteredBranchSchedules);
+};
+
+function readSelectedSlots(prefix) {
+    const containerId = prefix ? prefix + 'TimeSlots' : 'bsTimeSlots';
+    const container = document.getElementById(containerId);
+    if (!container) return [];
+    return Array.from(container.querySelectorAll('.bs-time-slot:checked')).map(function (cb) { return cb.value; });
+}
+
+function readBranchScheduleForm(prefix) {
+    const f = function (s) { return document.getElementById(prefix ? prefix + s : 'bs' + s); };
+    const branchId = parseInt(f('Branch') && f('Branch').value, 10);
+    const branch = window.getBranchScheduleBranches().find(function (b) { return b.id === branchId; });
+    const slots = readSelectedSlots(prefix);
+    const ranges = mergeConsecutiveSlots(slots);
+    const repeatPeriod = f('Repeat') && f('Repeat').value || 'هفتگی';
+    return {
+        branchId: branchId, branchName: branch ? branch.name : 'نامشخص',
+        day: f('Day') && f('Day').value || '',
+        status: f('Status') && f('Status').value || 'فعال',
+        repeatPeriod: repeatPeriod,
+        repeatDate: (repeatPeriod === 'ماهانه' || repeatPeriod === 'سالانه')
+            ? (f('RepeatDate') && f('RepeatDate').value || '') : '',
+        timezone: f('Timezone') && f('Timezone').value || 'Asia/Tehran',
+        summary: f('Summary') && f('Summary').value.trim() || '',
+        description: f('Description') && f('Description').value.trim() || '',
+        slots: slots, ranges: ranges
+    };
+}
+
+function expandRangesToRows(base, ranges) {
+    return ranges.map(function (range, idx) {
+        const rangeSlots = [];
+        for (let m = timeToMinutes(range.start); m < timeToMinutes(range.end); m += 30) rangeSlots.push(minutesToTime(m));
+        return Object.assign({}, base, {
+            id: Date.now() + idx, slots: rangeSlots,
+            timeLabel: rangeLabel(range), time: rangeLabel(range)
+        });
+    });
+}
+
+window.openAddBranchScheduleModal = function () {
+    if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
+    document.getElementById('modalContainer').innerHTML = window.getBranchScheduleAddModalHTML
+        ? window.getBranchScheduleAddModalHTML() : '';
+};
+
+window.saveBranchSchedule = function () {
+    const data = readBranchScheduleForm('');
+    if (!data.day) return alert('روز الزامی است');
+    if (!data.ranges.length) return alert('حداقل یک بازه ساعتی انتخاب کنید');
+    expandRangesToRows({
+        day: data.day,
+        branchId: data.branchId, branchName: data.branchName, status: data.status,
+        repeatPeriod: data.repeatPeriod, repeatDate: data.repeatDate, timezone: data.timezone,
+        summary: data.summary, description: data.description
+    }, data.ranges).forEach(function (r) { allBranchSchedules.unshift(r); });
+    window.filterBranchSchedules();
+    closeModal();
+    alert('✅ بازه(های) زمانی ثبت شد');
+};
+
+window.viewBranchSchedule = function (id) {
+    const item = allBranchSchedules.find(function (x) { return x.id === id; });
+    if (!item) return;
+    document.getElementById('modalContainer').innerHTML = window.getBranchScheduleDetailsModalHTML
+        ? window.getBranchScheduleDetailsModalHTML(item) : '';
+};
+
+window.editBranchSchedule = function (id) {
+    const item = allBranchSchedules.find(function (x) { return x.id === id; });
+    if (!item) return;
+    document.getElementById('modalContainer').innerHTML = window.getBranchScheduleEditModalHTML
+        ? window.getBranchScheduleEditModalHTML(item) : '';
+};
+
+window.saveEditedBranchSchedule = function (id) {
+    const data = readBranchScheduleForm('editBs');
+    if (!data.day) return alert('روز الزامی است');
+    if (!data.ranges.length) return alert('حداقل یک بازه ساعتی انتخاب کنید');
+    allBranchSchedules = allBranchSchedules.filter(function (x) { return x.id !== id; });
+    expandRangesToRows({
+        day: data.day,
+        branchId: data.branchId, branchName: data.branchName, status: data.status,
+        repeatPeriod: data.repeatPeriod, repeatDate: data.repeatDate, timezone: data.timezone,
+        summary: data.summary, description: data.description
+    }, data.ranges).forEach(function (r) { allBranchSchedules.unshift(r); });
+    editingBranchScheduleRowId = null;
+    window.filterBranchSchedules();
+    closeModal();
+    alert('✅ تغییرات ذخیره شد');
+};
+
+window.toggleBranchScheduleInlineEdit = function (id) {
+    editingBranchScheduleRowId = editingBranchScheduleRowId === id ? null : id;
+    window.renderBranchSchedulesTable(filteredBranchSchedules);
+};
+
+window.saveInlineBranchSchedule = function (id) {
+    const data = readBranchScheduleForm('inlineBs' + id);
+    if (!data.day) return alert('روز الزامی است');
+    if (!data.ranges.length) return alert('حداقل یک بازه ساعتی انتخاب کنید');
+    allBranchSchedules = allBranchSchedules.filter(function (x) { return x.id !== id; });
+    expandRangesToRows({
+        day: data.day,
+        branchId: data.branchId, branchName: data.branchName, status: data.status,
+        repeatPeriod: data.repeatPeriod, repeatDate: data.repeatDate, timezone: data.timezone,
+        summary: data.summary, description: data.description
+    }, data.ranges).forEach(function (r) { allBranchSchedules.unshift(r); });
+    editingBranchScheduleRowId = null;
+    window.filterBranchSchedules();
+    alert('✅ تغییرات ذخیره شد');
+};
+
+window.deleteBranchSchedule = function (id) {
+    if (!confirm('حذف این زمان‌بندی؟')) return;
+    allBranchSchedules = allBranchSchedules.filter(function (s) { return s.id !== id; });
+    if (editingBranchScheduleRowId === id) editingBranchScheduleRowId = null;
+    window.filterBranchSchedules();
+};
+
+window.exportBranchSchedulesToExcel = function () {
+    const data = filteredBranchSchedules.length ? filteredBranchSchedules : allBranchSchedules;
+    let csv = '\uFEFFردیف,روز,ساعت,دوره تکرار,منطقه زمانی,شعبه,وضعیت,خلاصه\n';
+    data.forEach(function (item, i) {
+        csv += (i + 1) + ',"' + item.day + '","' +
+            (item.timeLabel || item.time || '') + '","' + (item.repeatPeriod || '') + '","' + (item.timezone || '') + '","' +
+            item.branchName + '","' + item.status + '","' + (item.summary || '') + '"\n';
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'زمانبندی_شعبه_ها_' + new Date().toLocaleDateString('fa-IR') + '.csv';
+    link.click();
+};
+
+window.exportBranchSchedulesToPDF = function () {
+    document.getElementById('modalContainer').innerHTML = window.getBranchSchedulePDFModalHTML
+        ? window.getBranchSchedulePDFModalHTML(bsPdfColumns) : '';
+};
+
+window.generateBranchSchedulesPDF = async function () {
+    if (!window.html2canvas) return alert('ابزار PDF بارگذاری نشده است.');
+    const title = document.getElementById('bsPdfTitle') && document.getElementById('bsPdfTitle').value || 'گزارش برنامه زمانی شعبه‌ها';
+    const subtitle = document.getElementById('bsPdfSubtitle') && document.getElementById('bsPdfSubtitle').value || '';
+    const footer = document.getElementById('bsPdfFooter') && document.getElementById('bsPdfFooter').value || '';
+    const format = document.getElementById('bsPdfFormat') && document.getElementById('bsPdfFormat').value || 'a4';
+    const orientation = document.getElementById('bsPdfOrientation') && document.getElementById('bsPdfOrientation').value || 'landscape';
+    const includeDate = document.getElementById('bsPdfIncludeDate') && document.getElementById('bsPdfIncludeDate').checked;
+    const headerColor = document.getElementById('bsPdfHeaderColor') && document.getElementById('bsPdfHeaderColor').value || '#eff6ff';
+    const evenRowColor = document.getElementById('bsPdfEvenRowColor') && document.getElementById('bsPdfEvenRowColor').value || '#ffffff';
+    const oddRowColor = document.getElementById('bsPdfOddRowColor') && document.getElementById('bsPdfOddRowColor').value || '#f8fafc';
+    const selectedColumns = bsPdfColumns.filter(function (c) {
+        return document.getElementById('bsPdfCol-' + c.field) && document.getElementById('bsPdfCol-' + c.field).checked;
+    });
+    if (!selectedColumns.length) return alert('حداقل یک ستون انتخاب کنید.');
+    const date = new Date().toLocaleDateString('fa-IR');
+    const data = filteredBranchSchedules.length ? filteredBranchSchedules : allBranchSchedules;
+    const rowsPerPage = orientation === 'portrait' ? 18 : 15;
+    const totalPages = Math.max(1, Math.ceil(data.length / rowsPerPage));
+    const canvasPages = [];
+    for (let p = 0; p < totalPages; p++) {
+        const pageRows = data.slice(p * rowsPerPage, (p + 1) * rowsPerPage);
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'direction:rtl;position:fixed;top:-9999px;left:-9999px;width:' + (orientation === 'portrait' ? '900' : '1400') + 'px;padding:30px;background:#fff;font-family:Vazirmatn,Tahoma,sans-serif;';
+        wrap.innerHTML = window.getBranchSchedulePDFPageHTML(p + 1, pageRows, p === 0, {
+            title: title, subtitle: subtitle, footer: footer, includeDate: includeDate, date: date,
+            headerColor: headerColor, evenRowColor: evenRowColor, oddRowColor: oddRowColor,
+            selectedColumns: selectedColumns, rowsPerPage: rowsPerPage, totalPages: totalPages
+        });
+        document.body.appendChild(wrap);
+        canvasPages.push(await html2canvas(wrap, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }));
+        wrap.remove();
+    }
+    const doc = new window.jspdf.jsPDF({ orientation: orientation, unit: 'pt', format: format });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20, imgWidth = pageWidth - margin * 2;
+    canvasPages.forEach(function (canvas, i) {
+        if (i > 0) doc.addPage();
+        doc.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin, imgWidth, (canvas.height * imgWidth) / canvas.width);
+    });
+    doc.save('زمانبندی_شعبه_ها_' + date + '.pdf');
+    closeModal();
+};
+
+setTimeout(function () {
+    if (document.getElementById('branchSchedulesTable')) {
+        window.renderBranchSchedulesBranchTabs();
+        window.filterBranchSchedules();
+    }
+}, 200);
 })();

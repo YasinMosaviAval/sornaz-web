@@ -63,8 +63,9 @@
     pushScript('lessons.js');
     pushScript('member-schedule-templates.js');
     pushScript('member-schedules.js');
-    
+    pushScript('availability-templates.js');
     pushScript('availabilities.js');
+    
     pushScript('availability-exceptions.js');
     // pushScript('users.js');
     
