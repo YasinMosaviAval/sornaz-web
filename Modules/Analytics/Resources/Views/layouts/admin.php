@@ -31,6 +31,7 @@
     </main>
     <?// component('footer'); ?>
     <?
+    pushScript('sidebar.js');
     pushScript('dashboard.js');
     pushScript('add-user-modal.js');
     // pushScript('users.js');
@@ -56,6 +57,7 @@
     pushScript('account.js');
     pushScript('roles.js');
     pushScript('permissions.js');
+    pushScript('scheduling-rule-templates.js');
     pushScript('scheduling-rules.js');
     pushScript('schedule-templates.js');
     pushScript('schedules.js');
