@@ -25,9 +25,11 @@
                 </ul>
             </li>
             <li><a href="#" onclick="showSection('gallery')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-images w-5"></i> گالری</a></li>
-            <li><a href="#" onclick="showSection('classrooms')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-door-open w-5"></i> کلاس‌ها</a></li>
             <li><a href="#" onclick="showSection('teachers')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-chalkboard-teacher w-5"></i> پرسنل</a></li>
             <li><a href="#" onclick="showSection('students')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-users w-5"></i> هنرجویان</a></li>
+            <li><a href="#" onclick="showSection('classrooms')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-door-open w-5"></i> کلاس‌ها</a></li>
+            <li><a href="#" onclick="showSection('instruments')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-guitar w-5"></i> سازها</a></li>
+            <li><a href="#" onclick="showSection('lessons')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-book w-5"></i> درس‌ها</a></li>
             <li><a href="#" onclick="showSection('courses')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-book-open w-5"></i> دوره‌ها</a></li>
             <li><a href="#" onclick="showSection('terms')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-calendar-check w-5"></i> ترم‌ها</a></li>
             <li>
@@ -37,16 +39,14 @@
                 </button>
                 <ul id="scheduleSubmenu" class="mt-1 mr-4 space-y-1 hidden border-r border-indigo-700/60 pr-2">
                     <li><a href="#" onclick="showSection('scheduling-rules')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm text-indigo-100"><i class="fas fa-gavel w-4"></i>قوانین زمانبندی</a></li>
+                    <li><a href="#" onclick="showSection('availabilities')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm text-indigo-100"><i class="fas fa-clock w-4"></i>برنامه زمانی شعبه‌ها</a></li>
                     <li><a href="#" onclick="showSection('member-schedules')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm text-indigo-100"><i class="fas fa-user-clock w-4"></i>برنامه زمانی اعضا</a></li>
-                    <li><a href="#" onclick="showSection('availabilities')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm text-indigo-100"><i class="fas fa-clock w-4"></i>زمان‌های در دسترس و خارج از دسترس</a></li>
-                    <li><a href="#" onclick="showSection('schedules')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm text-indigo-100"><i class="fas fa-chalkboard w-4"></i>برنامه زمانی کلاس‌ها</a></li>
                     <li><a href="#" onclick="showSection('availabilities-exceptions')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm text-indigo-100"><i class="fas fa-umbrella-beach w-4"></i>مرخصی و ماموریت</a></li>
+                    <li><a href="#" onclick="showSection('schedules')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm text-indigo-100"><i class="fas fa-chalkboard w-4"></i>برنامه زمانی کلاس‌ها</a></li>
                 </ul>
             </li>
-            <li><a href="#" onclick="showSection('reports')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-chart-bar w-5"></i> گزارش‌ها</a></li>
             <li><a href="#" onclick="showSection('finance')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-money-bill-wave w-5"></i> امور مالی</a></li>
-            <li><a href="#" onclick="showSection('instruments')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-guitar w-5"></i> سازها</a></li>
-            <li><a href="#" onclick="showSection('lessons')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-book w-5"></i> درس‌ها</a></li>
+            <li><a href="#" onclick="showSection('reports')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-chart-bar w-5"></i> گزارش‌ها</a></li>
         </ul>
     </nav>
 </div>

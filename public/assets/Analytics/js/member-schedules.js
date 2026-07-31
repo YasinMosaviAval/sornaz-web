@@ -4,6 +4,29 @@
 window.memberScheduleDaysList = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه'];
 window.memberScheduleRolesList = ['استاد', 'منشی', 'مدیر', 'پرسنل'];
 window.memberScheduleStatusesList = ['فعال', 'غیرفعال', 'پر شده', 'در انتظار تأیید'];
+window.memberScheduleRepeatList = ['هفتگی', 'دو هفته', 'سه هفته', 'چهار هفته', 'ماهانه', 'سالانه', 'بی‌تکرار'];
+window.memberScheduleTimezoneList = [
+    { value: 'Asia/Tehran', label: 'تهران (Asia/Tehran)' },
+    { value: 'Asia/Dubai', label: 'دبی (Asia/Dubai)' },
+    { value: 'Asia/Istanbul', label: 'استانبول (Asia/Istanbul)' },
+    { value: 'Europe/London', label: 'لندن (Europe/London)' },
+    { value: 'Europe/Paris', label: 'پاریس (Europe/Paris)' },
+    { value: 'Europe/Berlin', label: 'برلین (Europe/Berlin)' },
+    { value: 'Europe/Rome', label: 'رم (Europe/Rome)' },
+    { value: 'Europe/Amsterdam', label: 'آمستردام (Europe/Amsterdam)' },
+    { value: 'America/New_York', label: 'نیویورک (America/New_York)' },
+    { value: 'America/Chicago', label: 'شیکاگو (America/Chicago)' },
+    { value: 'America/Los_Angeles', label: 'لس‌آنجلس (America/Los_Angeles)' },
+    { value: 'America/Toronto', label: 'تورنتو (America/Toronto)' },
+    { value: 'UTC', label: 'UTC' }
+];
+
+window.toggleMemberScheduleRepeatDate = function (wrapId, repeatValue) {
+    const wrap = document.getElementById(wrapId);
+    if (!wrap) return;
+    const show = (repeatValue === 'ماهانه' || repeatValue === 'سالانه');
+    wrap.classList.toggle('hidden', !show);
+};
 
 const branchWorkingHours = {
     1: { start: '08:00', end: '22:00' },
@@ -130,10 +153,19 @@ let allMemberSchedules = [];
         mergeConsecutiveSlots(picked).forEach(function (range) {
             const rangeSlots = [];
             for (let m = timeToMinutes(range.start); m < timeToMinutes(range.end); m += 30) rangeSlots.push(minutesToTime(m));
+            const repeatPeriod = window.memberScheduleRepeatList[Math.floor(Math.random() * window.memberScheduleRepeatList.length)];
+            const tz = window.memberScheduleTimezoneList[Math.floor(Math.random() * window.memberScheduleTimezoneList.length)];
+            let repeatDate = '';
+            if (repeatPeriod === 'ماهانه' || repeatPeriod === 'سالانه') {
+                const d = new Date();
+                d.setDate(1 + Math.floor(Math.random() * 28));
+                repeatDate = d.toISOString().split('T')[0];
+            }
             allMemberSchedules.push({
                 id: id++, memberId: member.id, name: member.name, role: role, day: day,
                 slots: rangeSlots, timeLabel: rangeLabel(range), time: rangeLabel(range),
                 branchId: branch.id, branchName: branch.name, status: status,
+                repeatPeriod: repeatPeriod, repeatDate: repeatDate, timezone: tz.value,
                 summary: 'حضور ' + member.name + ' در ' + day,
                 description: 'زمان‌بندی ' + role + ' در ' + branch.name + ' — ' + rangeLabel(range)
             });
@@ -153,7 +185,8 @@ let msSortDirection = 'asc';
 const msPdfColumns = [
     { field: 'index', label: 'ردیف' }, { field: 'name', label: 'نام عضو' },
     { field: 'role', label: 'نقش' }, { field: 'day', label: 'روز' },
-    { field: 'timeLabel', label: 'ساعت' }, { field: 'branchName', label: 'شعبه' },
+    { field: 'timeLabel', label: 'ساعت' }, { field: 'repeatPeriod', label: 'دوره تکرار' },
+    { field: 'timezone', label: 'منطقه زمانی' }, { field: 'branchName', label: 'شعبه' },
     { field: 'status', label: 'وضعیت' }
 ];
 
@@ -175,7 +208,7 @@ function sortMemberScheduleItems() {
 }
 
 window.updateMemberScheduleSortIcons = function () {
-    ['name', 'role', 'day', 'timeLabel', 'branchName', 'status'].forEach(function (f) {
+    ['name', 'role', 'day', 'timeLabel', 'repeatPeriod', 'timezone', 'branchName', 'status'].forEach(function (f) {
         const icon = document.getElementById('msSortIcon-' + f);
         if (!icon) return;
         icon.textContent = msSortField === f ? (msSortDirection === 'asc' ? '↑' : '↓') : '↕';
@@ -232,6 +265,8 @@ window.filterMemberSchedules = function () {
     const role = document.getElementById('filterMemberRole') && document.getElementById('filterMemberRole').value || '';
     const day = document.getElementById('filterMemberDay') && document.getElementById('filterMemberDay').value || '';
     const status = document.getElementById('filterMemberStatus') && document.getElementById('filterMemberStatus').value || '';
+    const repeat = document.getElementById('filterMemberRepeat') && document.getElementById('filterMemberRepeat').value || '';
+    const timezone = document.getElementById('filterMemberTimezone') && document.getElementById('filterMemberTimezone').value || '';
 
     filteredMemberSchedules = allMemberSchedules.filter(function (s) {
         const matchBranch = currentMemberScheduleBranch === 'all' || s.branchId == currentMemberScheduleBranch;
@@ -239,7 +274,9 @@ window.filterMemberSchedules = function () {
         const matchRole = !role || s.role === role;
         const matchDay = !day || s.day === day;
         const matchStatus = !status || s.status === status;
-        return matchBranch && matchSearch && matchRole && matchDay && matchStatus;
+        const matchRepeat = !repeat || s.repeatPeriod === repeat;
+        const matchTz = !timezone || s.timezone === timezone;
+        return matchBranch && matchSearch && matchRole && matchDay && matchStatus && matchRepeat && matchTz;
     });
 
     memberSchedulesCurrentPage = 1;
@@ -323,12 +360,17 @@ function readMemberScheduleForm(prefix) {
         ? memberSel.selectedOptions[0].textContent : '';
     const slots = readSelectedSlots(prefix);
     const ranges = mergeConsecutiveSlots(slots);
+    const repeatPeriod = f('Repeat') && f('Repeat').value || 'هفتگی';
     return {
         branchId: branchId, branchName: branch ? branch.name : 'نامشخص',
         memberId: memberId, name: memberName,
         role: f('Role') && f('Role').value || 'استاد',
         day: f('Day') && f('Day').value || '',
         status: f('Status') && f('Status').value || 'فعال',
+        repeatPeriod: repeatPeriod,
+        repeatDate: (repeatPeriod === 'ماهانه' || repeatPeriod === 'سالانه')
+            ? (f('RepeatDate') && f('RepeatDate').value || '') : '',
+        timezone: f('Timezone') && f('Timezone').value || 'Asia/Tehran',
         summary: f('Summary') && f('Summary').value.trim() || '',
         description: f('Description') && f('Description').value.trim() || '',
         slots: slots, ranges: ranges
@@ -360,6 +402,7 @@ window.saveMemberSchedule = function () {
     expandRangesToRows({
         memberId: data.memberId, name: data.name, role: data.role, day: data.day,
         branchId: data.branchId, branchName: data.branchName, status: data.status,
+        repeatPeriod: data.repeatPeriod, repeatDate: data.repeatDate, timezone: data.timezone,
         summary: data.summary, description: data.description
     }, data.ranges).forEach(function (r) { allMemberSchedules.unshift(r); });
     window.filterMemberSchedules();
@@ -390,6 +433,7 @@ window.saveEditedMemberSchedule = function (id) {
     expandRangesToRows({
         memberId: data.memberId, name: data.name, role: data.role, day: data.day,
         branchId: data.branchId, branchName: data.branchName, status: data.status,
+        repeatPeriod: data.repeatPeriod, repeatDate: data.repeatDate, timezone: data.timezone,
         summary: data.summary, description: data.description
     }, data.ranges).forEach(function (r) { allMemberSchedules.unshift(r); });
     editingMemberScheduleRowId = null;
@@ -412,6 +456,7 @@ window.saveInlineMemberSchedule = function (id) {
     expandRangesToRows({
         memberId: data.memberId, name: data.name, role: data.role, day: data.day,
         branchId: data.branchId, branchName: data.branchName, status: data.status,
+        repeatPeriod: data.repeatPeriod, repeatDate: data.repeatDate, timezone: data.timezone,
         summary: data.summary, description: data.description
     }, data.ranges).forEach(function (r) { allMemberSchedules.unshift(r); });
     editingMemberScheduleRowId = null;
@@ -428,10 +473,11 @@ window.deleteMemberSchedule = function (id) {
 
 window.exportMemberSchedulesToExcel = function () {
     const data = filteredMemberSchedules.length ? filteredMemberSchedules : allMemberSchedules;
-    let csv = '\uFEFFردیف,نام عضو,نقش,روز,ساعت,شعبه,وضعیت,خلاصه\n';
+    let csv = '\uFEFFردیف,نام عضو,نقش,روز,ساعت,دوره تکرار,منطقه زمانی,شعبه,وضعیت,خلاصه\n';
     data.forEach(function (item, i) {
         csv += (i + 1) + ',"' + item.name + '","' + item.role + '","' + item.day + '","' +
-            (item.timeLabel || item.time || '') + '","' + item.branchName + '","' + item.status + '","' + (item.summary || '') + '"\n';
+            (item.timeLabel || item.time || '') + '","' + (item.repeatPeriod || '') + '","' + (item.timezone || '') + '","' +
+            item.branchName + '","' + item.status + '","' + (item.summary || '') + '"\n';
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');

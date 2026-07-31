@@ -31,13 +31,19 @@
         const roles = (window.memberScheduleRolesList || []).map(function (r) { return { value: r, label: r }; });
         const days = (window.memberScheduleDaysList || []).map(function (d) { return { value: d, label: d }; });
         const statuses = (window.memberScheduleStatusesList || []).map(function (s) { return { value: s, label: s }; });
+        const repeats = (window.memberScheduleRepeatList || []).map(function (r) { return { value: r, label: r }; });
+        const timezones = (window.memberScheduleTimezoneList || []).map(function (tz) {
+            return { value: tz.value, label: tz.label };
+        });
         const branchId = item.branchId || (branches[0] && branches[0].value) || 1;
+        const repeatVal = item.repeatPeriod || 'هفتگی';
+        const showDate = (repeatVal === 'ماهانه' || repeatVal === 'سالانه');
         const slotsHtml = typeof window.buildMemberScheduleTimeSlotsHTML === 'function'
             ? window.buildMemberScheduleTimeSlotsHTML(id('TimeSlots'), branchId, item.slots || [])
             : '';
 
         return `
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 <div>
                     <label class="block text-sm font-medium mb-2">شعبه *</label>
                     <select id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
@@ -67,23 +73,41 @@
                     </select>
                 </div>
                 <div>
+                    <label class="block text-sm font-medium mb-2">دوره تکرار</label>
+                    <select id="${id('Repeat')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
+                            onchange="window.toggleMemberScheduleRepeatDate('${id('RepeatDateWrap')}', this.value)">
+                        ${renderOptions(repeats, repeatVal)}
+                    </select>
+                </div>
+                <div id="${id('RepeatDateWrap')}" class="${showDate ? '' : 'hidden'}">
+                    <label class="block text-sm font-medium mb-2">تاریخ مرجع (ماهانه/سالانه)</label>
+                    <input id="${id('RepeatDate')}" type="date" value="${escapeHtml(item.repeatDate || '')}"
+                           class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                </div>
+                <div>
                     <label class="block text-sm font-medium mb-2">وضعیت</label>
                     <select id="${id('Status')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                         ${renderOptions(statuses, item.status || 'فعال')}
                     </select>
                 </div>
-                <div class="sm:col-span-2">
+                <div>
+                    <label class="block text-sm font-medium mb-2">منطقه زمانی</label>
+                    <select id="${id('Timezone')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                        ${renderOptions(timezones, item.timezone || 'Asia/Tehran')}
+                    </select>
+                </div>
+                <div class="sm:col-span-3">
                     <label class="block text-sm font-medium mb-2">ساعات کاری (هر نیم‌ساعت)</label>
                     <div id="${id('TimeSlots')}" class="border border-gray-200 rounded-2xl p-4 max-h-48 overflow-y-auto">
                         ${slotsHtml}
                     </div>
                     <p class="text-xs text-gray-400 mt-1">ساعات پیاپی به‌صورت یک بازه ذخیره می‌شوند؛ بازه‌های با فاصله به‌صورت آیتم جدا در جدول نمایش داده می‌شوند.</p>
                 </div>
-                <div class="sm:col-span-2">
+                <div class="sm:col-span-3">
                     <label class="block text-sm font-medium mb-2">خلاصه</label>
                     <input id="${id('Summary')}" type="text" value="${escapeHtml(item.summary || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                 </div>
-                <div class="sm:col-span-2">
+                <div class="sm:col-span-3">
                     <label class="block text-sm font-medium mb-2">توضیحات</label>
                     <textarea id="${id('Description')}" rows="3" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${escapeHtml(item.description || '')}</textarea>
                 </div>
@@ -96,6 +120,8 @@
             <td class="py-4 px-5">${escapeHtml(item.role)}</td>
             <td class="py-4 px-5">${escapeHtml(item.day)}</td>
             <td class="py-4 px-5 font-mono text-sm">${escapeHtml(item.timeLabel || item.time || '—')}</td>
+            <td class="py-4 px-5 text-sm">${escapeHtml(item.repeatPeriod || 'هفتگی')}</td>
+            <td class="py-4 px-5 text-xs text-gray-500">${escapeHtml(item.timezone || 'Asia/Tehran')}</td>
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
             <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td>
             <td class="py-4 px-5 text-left">
@@ -107,10 +133,10 @@
             </td>`;
     };
     window.getMemberScheduleEmptyRowHTML = function () {
-        return `<tr><td colspan="7" class="py-12 text-center text-gray-400">زمان‌بندی‌ای یافت نشد</td></tr>`;
+        return `<tr><td colspan="9" class="py-12 text-center text-gray-400">زمان‌بندی‌ای یافت نشد</td></tr>`;
     };
     window.getMemberScheduleInlineExpandRowHTML = function (item) {
-        return `<td colspan="7" class="p-5 border-t">${window.getMemberScheduleInlineEditRowHTML(item)}</td>`;
+        return `<td colspan="9" class="p-5 border-t">${window.getMemberScheduleInlineEditRowHTML(item)}</td>`;
     };
     window.getMemberScheduleInlineEditRowHTML = function (item) {
         return `<div class="space-y-6">
@@ -123,7 +149,7 @@
     };
     window.getMemberScheduleAddModalHTML = function () {
         return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
-            <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+            <div class="bg-white rounded-3xl w-full max-w-3xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                 <div class="px-8 py-5 border-b flex justify-between items-center">
                     <h2 class="text-2xl font-bold">افزودن زمان‌بندی عضو</h2>
                     <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
@@ -140,7 +166,7 @@
     };
     window.getMemberScheduleEditModalHTML = function (item) {
         return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
-            <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+            <div class="bg-white rounded-3xl w-full max-w-3xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                 <div class="px-8 py-5 border-b flex justify-between items-center">
                     <h2 class="text-2xl font-bold">ویرایش زمان‌بندی عضو</h2>
                     <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
@@ -176,6 +202,10 @@
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">نقش</span><span class="font-medium">${escapeHtml(item.role)}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">روز</span><span class="font-medium">${escapeHtml(item.day)}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ساعت</span><span class="font-medium">${escapeHtml(item.timeLabel || item.time || '—')}</span></div>
+                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">دوره تکرار</span><span class="font-medium">${escapeHtml(item.repeatPeriod || 'هفتگی')}</span></div>
+                        ${(item.repeatPeriod === 'ماهانه' || item.repeatPeriod === 'سالانه') && item.repeatDate
+                            ? `<div class="flex justify-between border-b pb-2"><span class="text-gray-500">تاریخ مرجع</span><span class="font-medium">${escapeHtml(item.repeatDate)}</span></div>` : ''}
+                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">منطقه زمانی</span><span class="font-medium">${escapeHtml(item.timezone || 'Asia/Tehran')}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">وضعیت</span><span class="font-medium">${escapeHtml(item.status)}</span></div>
                     </div>
                 </div>
