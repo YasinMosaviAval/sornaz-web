@@ -13,10 +13,9 @@ const galleryPlaceholders = [
     '4F46E5', '10B981', 'F59E0B', 'EC4899', '8B5CF6', '06B6D4', 'EF4444', '14B8A6', 'F97316', '6366F1'
 ];
 
-function galleryPlaceholderUrl(label, colorIndex, type) {
+function galleryPlaceholderUrl(label, colorIndex) {
     const color = galleryPlaceholders[colorIndex % galleryPlaceholders.length];
-    const text = encodeURIComponent(label);
-    return `https://via.placeholder.com/600x400/${color}/FFFFFF?text=${text}`;
+    return 'https://via.placeholder.com/600x400/' + color + '/FFFFFF?text=' + encodeURIComponent(label);
 }
 
 function getGalleryOwnersList() {
@@ -28,7 +27,9 @@ function getGalleryOwnersList() {
             { id: 3, name: 'شعبه سعادت‌آباد' },
             { id: 4, name: 'شعبه کرج' }
         ];
-    return [{ id: 'academy', name: 'آموزشگاه' }, ...branches.map(function (b) { return { id: b.id, name: b.name }; })];
+    return [{ id: 'academy', name: 'آموزشگاه' }].concat(branches.map(function (b) {
+        return { id: b.id, name: b.name };
+    }));
 }
 
 let allGalleryItems = [];
@@ -38,55 +39,51 @@ let allGalleryItems = [];
     const relativeDates = ['همین الان', '۱ روز پیش', '۲ روز پیش', '۵ روز پیش', '۱ هفته پیش', '۱۰ روز پیش', '۲ هفته پیش', '۳ هفته پیش', '۱ ماه پیش'];
 
     owners.forEach(function (owner, ownerIdx) {
-        // کاور — چند نمونه
         allGalleryItems.push({
             id: id++, ownerId: owner.id, ownerName: owner.name, category: 'cover', type: 'image',
             title: 'کاور اصلی ' + owner.name, summary: 'تصویر هدر صفحه',
             description: 'تصویر اصلی استفاده‌شده در بالای صفحه ' + owner.name + '.',
-            url: galleryPlaceholderUrl('Cover+' + owner.name, ownerIdx, 'image'),
+            url: galleryPlaceholderUrl('Cover ' + owner.name, ownerIdx),
             date: relativeDates[ownerIdx % relativeDates.length]
         });
         allGalleryItems.push({
             id: id++, ownerId: owner.id, ownerName: owner.name, category: 'cover', type: 'image',
             title: 'کاور فصلی ' + owner.name, summary: 'کاور مناسبت‌ها',
             description: 'کاور جایگزین برای کمپین‌ها و مناسبت‌های خاص.',
-            url: galleryPlaceholderUrl('Seasonal+Cover', ownerIdx + 1, 'image'),
+            url: galleryPlaceholderUrl('Seasonal Cover', ownerIdx + 1),
             date: relativeDates[(ownerIdx + 2) % relativeDates.length]
         });
 
-        // لوگو
         allGalleryItems.push({
             id: id++, ownerId: owner.id, ownerName: owner.name, category: 'logo', type: 'image',
             title: 'لوگوی اصلی ' + owner.name, summary: 'هویت بصری',
             description: 'نسخه اصلی لوگوی ' + owner.name + ' برای استفاده در وب و چاپ.',
-            url: galleryPlaceholderUrl('Logo+' + owner.name, ownerIdx + 2, 'image'),
+            url: galleryPlaceholderUrl('Logo ' + owner.name, ownerIdx + 2),
             date: relativeDates[(ownerIdx + 1) % relativeDates.length]
         });
         allGalleryItems.push({
             id: id++, ownerId: owner.id, ownerName: owner.name, category: 'logo', type: 'image',
             title: 'لوگوی افقی ' + owner.name, summary: 'نسخه عریض',
             description: 'لوگوی افقی مناسب هدر سایت و بنر.',
-            url: galleryPlaceholderUrl('Logo+Wide', ownerIdx + 3, 'image'),
+            url: galleryPlaceholderUrl('Logo Wide', ownerIdx + 3),
             date: relativeDates[(ownerIdx + 3) % relativeDates.length]
         });
 
-        // ویدیو معرفی
         allGalleryItems.push({
             id: id++, ownerId: owner.id, ownerName: owner.name, category: 'intro_video', type: 'video',
             title: 'ویدیوی معرفی ' + owner.name, summary: 'تور کوتاه',
             description: 'مروری کوتاه بر فضای آموزشی و خدمات ' + owner.name + '.',
-            url: galleryPlaceholderUrl('Intro+Video', ownerIdx + 4, 'video'),
+            url: galleryPlaceholderUrl('Intro Video', ownerIdx + 4),
             date: relativeDates[(ownerIdx + 2) % relativeDates.length]
         });
         allGalleryItems.push({
             id: id++, ownerId: owner.id, ownerName: owner.name, category: 'intro_video', type: 'video',
             title: 'مصاحبه با مدیر ' + owner.name, summary: 'گفت‌وگو',
             description: 'مصاحبه کوتاه درباره اهداف و برنامه‌های آینده.',
-            url: galleryPlaceholderUrl('Manager+Talk', ownerIdx + 5, 'video'),
+            url: galleryPlaceholderUrl('Manager Talk', ownerIdx + 5),
             date: relativeDates[(ownerIdx + 4) % relativeDates.length]
         });
 
-        // مجموعه عکس‌ها و ویدیوها — چند آیتم بیشتر
         const gallerySamples = [
             { title: 'کنسرت پایان ترم', summary: 'گالری رویداد', desc: 'اجرای هنرجویان در سالن اصلی.', type: 'image' },
             { title: 'کلاس گروهی پیانو', summary: 'فضای کلاس', desc: 'نمایی از کلاس‌های گروهی پیانو.', type: 'image' },
@@ -102,7 +99,7 @@ let allGalleryItems = [];
                 id: id++, ownerId: owner.id, ownerName: owner.name, category: 'gallery', type: sample.type,
                 title: sample.title + ' — ' + owner.name, summary: sample.summary,
                 description: sample.desc,
-                url: galleryPlaceholderUrl(sample.title, ownerIdx + si, sample.type),
+                url: galleryPlaceholderUrl(sample.title, ownerIdx + si),
                 date: relativeDates[(ownerIdx + si) % relativeDates.length]
             });
         });
@@ -111,6 +108,7 @@ let allGalleryItems = [];
 
 let currentGalleryOwner = 'academy';
 let currentGalleryCategory = 'cover';
+let currentGallerySectionId = 'gallery-cover';
 
 window.getGalleryCategory = function (value) {
     return galleryCategories.find(function (item) { return item.value === value; }) || galleryCategories[3];
@@ -129,8 +127,9 @@ window.getGalleryOwnerOptions = function (selected) {
     }).join('');
 };
 
-function setActiveGalleryTab(selector, value) {
-    document.querySelectorAll(selector).forEach(function (tab) {
+function setActiveOwnerTabsInContainer(container, value) {
+    if (!container) return;
+    container.querySelectorAll('.gallery-owner-tab').forEach(function (tab) {
         const active = String(tab.dataset.value) === String(value);
         tab.classList.toggle('bg-indigo-600', active);
         tab.classList.toggle('text-white', active);
@@ -144,8 +143,7 @@ function setActiveGalleryTab(selector, value) {
 }
 
 window.renderGalleryOwnerTabs = function () {
-    const container = document.getElementById('galleryOwnerTabs');
-    if (!container) return;
+    const containers = document.querySelectorAll('.gallery-owner-tabs');
     const owners = getGalleryOwnersList().map(function (owner) {
         return {
             id: owner.id,
@@ -153,46 +151,44 @@ window.renderGalleryOwnerTabs = function () {
             icon: owner.id === 'academy' ? 'fa-school' : 'fa-building'
         };
     });
-    container.innerHTML = owners.map(function (owner) {
-        return '<button data-value="' + owner.id + '" onclick="filterGalleryByOwner(\'' + owner.id + '\')" ' +
-            'class="gallery-owner-tab px-5 py-2.5 rounded-2xl text-sm font-medium border transition-colors">' +
-            '<i class="fas ' + owner.icon + ' ml-1"></i>' + owner.name + '</button>';
-    }).join('');
-    setActiveGalleryTab('.gallery-owner-tab', currentGalleryOwner);
+    containers.forEach(function (container) {
+        container.innerHTML = owners.map(function (owner) {
+            return '<button type="button" data-value="' + owner.id + '" ' +
+                'onclick="filterGalleryByOwner(\'' + owner.id + '\')" ' +
+                'class="gallery-owner-tab px-5 py-2.5 rounded-2xl text-sm font-medium border transition-colors">' +
+                '<i class="fas ' + owner.icon + ' ml-1"></i>' + owner.name + '</button>';
+        }).join('');
+        setActiveOwnerTabsInContainer(container, currentGalleryOwner);
+    });
 };
 
-window.renderGalleryCategoryTabs = function () {
-    const container = document.getElementById('galleryCategoryTabs');
-    if (!container) return;
-    container.innerHTML = galleryCategories.map(function (category) {
-        return '<button data-value="' + category.value + '" onclick="filterGalleryByCategory(\'' + category.value + '\')" ' +
-            'class="gallery-category-tab px-4 py-2 rounded-xl text-sm font-medium border transition-colors">' +
-            '<i class="fas ' + category.icon + ' ml-1"></i>' + category.label + '</button>';
-    }).join('');
-    setActiveGalleryTab('.gallery-category-tab', currentGalleryCategory);
+/** فراخوانی از sidebar هنگام باز شدن زیربخش گالری */
+window.setGalleryCategory = function (category, sectionId) {
+    currentGalleryCategory = category;
+    if (sectionId) currentGallerySectionId = sectionId;
+    window.renderGalleryOwnerTabs();
+    window.renderGallery();
 };
 
 window.filterGalleryByOwner = function (ownerId) {
     currentGalleryOwner = ownerId === 'academy' ? 'academy' : (isNaN(Number(ownerId)) ? ownerId : Number(ownerId));
-    setActiveGalleryTab('.gallery-owner-tab', currentGalleryOwner);
-    window.renderGallery();
-};
-
-window.filterGalleryByCategory = function (category) {
-    currentGalleryCategory = category;
-    setActiveGalleryTab('.gallery-category-tab', category);
+    document.querySelectorAll('.gallery-owner-tabs').forEach(function (container) {
+        setActiveOwnerTabsInContainer(container, currentGalleryOwner);
+    });
     window.renderGallery();
 };
 
 window.renderGallery = function () {
-    const grid = document.getElementById('galleryGrid');
-    if (!grid) return;
-    const list = allGalleryItems.filter(function (item) {
-        return String(item.ownerId) === String(currentGalleryOwner) && item.category === currentGalleryCategory;
+    const grids = document.querySelectorAll('.gallery-grid');
+    grids.forEach(function (grid) {
+        const cat = grid.getAttribute('data-gallery-category') || currentGalleryCategory;
+        const list = allGalleryItems.filter(function (item) {
+            return String(item.ownerId) === String(currentGalleryOwner) && item.category === cat;
+        });
+        grid.innerHTML = list.length
+            ? list.map(function (item) { return window.getGalleryCardHTML(item); }).join('')
+            : (window.getGalleryEmptyHTML ? window.getGalleryEmptyHTML() : '');
     });
-    grid.innerHTML = list.length
-        ? list.map(function (item) { return window.getGalleryCardHTML(item); }).join('')
-        : (window.getGalleryEmptyHTML ? window.getGalleryEmptyHTML() : '');
 };
 
 function readGalleryForm(existing) {
@@ -209,7 +205,8 @@ function readGalleryForm(existing) {
     } else if (urlValue) {
         type = /\.(mp4|webm|mov|avi|mkv)(\?.*)?$/i.test(urlValue) ? 'video' : 'image';
     }
-    const category = (document.getElementById('galleryCategory') && document.getElementById('galleryCategory').value) || 'gallery';
+    const categorySelect = document.getElementById('galleryCategory');
+    const category = (categorySelect && categorySelect.value) || currentGalleryCategory || 'gallery';
     const title = (document.getElementById('galleryTitle') && document.getElementById('galleryTitle').value || '').trim();
     if (!title || !owner) return null;
     return {
@@ -220,14 +217,14 @@ function readGalleryForm(existing) {
         title: title,
         summary: (document.getElementById('gallerySummary') && document.getElementById('gallerySummary').value || '').trim(),
         description: (document.getElementById('galleryDesc') && document.getElementById('galleryDesc').value || '').trim(),
-        url: urlValue || (file ? URL.createObjectURL(file) : existing.url || galleryPlaceholderUrl('New+' + type, 0, type))
+        url: urlValue || (file ? URL.createObjectURL(file) : existing.url || galleryPlaceholderUrl('New ' + type, 0))
     };
 }
 
 window.openAddGalleryModal = function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = window.getGalleryAddModalHTML
-        ? window.getGalleryAddModalHTML() : '';
+        ? window.getGalleryAddModalHTML(currentGalleryCategory) : '';
 };
 
 window.saveGalleryItem = function () {
@@ -236,8 +233,14 @@ window.saveGalleryItem = function () {
     allGalleryItems.unshift(Object.assign({}, item, { id: Date.now(), date: 'همین الان' }));
     currentGalleryOwner = item.ownerId;
     currentGalleryCategory = item.category;
+    const sectionMap = {
+        cover: 'gallery-cover',
+        logo: 'gallery-logo',
+        intro_video: 'gallery-intro-video',
+        gallery: 'gallery-collection'
+    };
+    if (sectionMap[item.category]) currentGallerySectionId = sectionMap[item.category];
     window.renderGalleryOwnerTabs();
-    window.renderGalleryCategoryTabs();
     window.renderGallery();
     closeModal();
     alert('✅ آیتم با موفقیت اضافه شد');
@@ -261,7 +264,6 @@ window.saveEditedGalleryItem = function (id) {
     currentGalleryOwner = data.ownerId;
     currentGalleryCategory = data.category;
     window.renderGalleryOwnerTabs();
-    window.renderGalleryCategoryTabs();
     window.renderGallery();
     closeModal();
     alert('✅ تغییرات ذخیره شد');
@@ -274,9 +276,8 @@ window.deleteGalleryItem = function (id) {
 };
 
 setTimeout(function () {
-    if (document.getElementById('galleryGrid')) {
+    if (document.querySelector('.gallery-grid')) {
         window.renderGalleryOwnerTabs();
-        window.renderGalleryCategoryTabs();
         window.renderGallery();
     }
 }, 200);
