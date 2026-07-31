@@ -66,6 +66,7 @@
     pushScript('availability-templates.js');
     pushScript('availabilities.js');
     
+    pushScript('availability-exception-templates.js');
     pushScript('availability-exceptions.js');
     // pushScript('users.js');
     
