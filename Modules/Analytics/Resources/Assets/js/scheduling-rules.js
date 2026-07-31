@@ -1,6 +1,8 @@
-// ==================== قوانین زمان‌بندی ====================
-let ruleTypes = ['لغو', 'جبرانی', 'رزرو', 'زمان‌بندی'];
-const ruleStatuses = ['فعال', 'غیرفعال', 'در انتظار تأیید', 'حذف‌شده'];
+(function () {
+'use strict';
+// ==================== قوانین زمان‌بندی (ایزوله) ====================
+window.ruleTypesList = ['لغو', 'جبرانی', 'رزرو', 'زمان‌بندی'];
+window.ruleStatusesList = ['فعال', 'غیرفعال', 'در انتظار تأیید', 'حذف‌شده'];
 
 const ruleTitlePool = [
     'حداقل زمان لغو کلاس', 'حداکثر جلسات جبرانی در ماه', 'ساعت شروع رزرو آنلاین',
@@ -25,26 +27,21 @@ window.getRuleBranches = function () {
     ];
 };
 
-// ۳۰ قانون نمونه
 let allRules = [];
 (function buildSampleRules() {
-    const branches = getRuleBranches();
+    const branches = window.getRuleBranches();
     for (let i = 1; i <= 30; i++) {
         const title = ruleTitlePool[Math.floor(Math.random() * ruleTitlePool.length)] + (i > 15 ? ' #' + i : '');
-        const type = ruleTypes[Math.floor(Math.random() * ruleTypes.length)];
+        const type = window.ruleTypesList[Math.floor(Math.random() * window.ruleTypesList.length)];
         const value = ruleValuePool[Math.floor(Math.random() * ruleValuePool.length)];
-        const status = ruleStatuses[Math.floor(Math.random() * ruleStatuses.length)];
+        const status = window.ruleStatusesList[Math.floor(Math.random() * window.ruleStatusesList.length)];
         const branch = branches[Math.floor(Math.random() * branches.length)];
         allRules.push({
-            id: i,
-            title: title,
+            id: i, title: title,
             summary: 'خلاصه قانون ' + title,
             description: 'توضیحات مربوط به «' + title + '» در ' + branch.name + ' با مقدار ' + value,
-            branchId: branch.id,
-            branchName: branch.name,
-            type: type,
-            value: value,
-            status: status
+            branchId: branch.id, branchName: branch.name,
+            type: type, value: value, status: status
         });
     }
 })();
@@ -66,23 +63,21 @@ const rulePdfColumns = [
     { field: 'status', label: 'وضعیت' }
 ];
 
-// ==================== افزودن نوع جدید ====================
 window.promptAddRuleType = function (selectId) {
     const name = prompt('نام نوع قانون جدید را وارد کنید:');
     const sel = document.getElementById(selectId);
     if (!name || !name.trim()) {
-        if (sel) sel.value = ruleTypes[0] || '';
+        if (sel) sel.value = window.ruleTypesList[0] || '';
         return;
     }
     const t = name.trim();
-    if (ruleTypes.indexOf(t) === -1) {
-        ruleTypes.push(t);
-        renderRuleTypeFilter();
+    if (window.ruleTypesList.indexOf(t) === -1) {
+        window.ruleTypesList.push(t);
+        window.renderRuleTypeFilter();
     }
     if (sel) {
         const opt = document.createElement('option');
-        opt.value = t;
-        opt.textContent = t;
+        opt.value = t; opt.textContent = t;
         sel.insertBefore(opt, sel.lastElementChild);
         sel.value = t;
     }
@@ -93,12 +88,11 @@ window.renderRuleTypeFilter = function () {
     if (!sel) return;
     const cur = sel.value;
     sel.innerHTML = '<option value="">همه انواع</option>' +
-        ruleTypes.map(function (t) {
+        window.ruleTypesList.map(function (t) {
             return '<option value="' + t + '"' + (t === cur ? ' selected' : '') + '>' + t + '</option>';
         }).join('');
 };
 
-// ==================== مرتب‌سازی ====================
 function sortRuleItems() {
     if (!ruleSortField) return;
     filteredRules.sort(function (a, b) {
@@ -122,22 +116,21 @@ window.sortRulesBy = function (field) {
     if (ruleSortField === field) ruleSortDirection = ruleSortDirection === 'asc' ? 'desc' : 'asc';
     else { ruleSortField = field; ruleSortDirection = 'asc'; }
     sortRuleItems();
-    renderRulesTable(filteredRules);
-    updateRuleSortIcons();
+    window.renderRulesTable(filteredRules);
+    window.updateRuleSortIcons();
 };
 
-// ==================== تب شعبه‌ها ====================
 window.renderRulesBranchTabs = function () {
     const container = document.getElementById('rulesBranchTabs');
     if (!container) return;
     container.querySelectorAll('.rule-branch-tab:not(:first-child)').forEach(function (t) { t.remove(); });
-    getRuleBranches().forEach(function (b) {
+    window.getRuleBranches().forEach(function (b) {
         const active = currentRuleBranch == b.id;
         const btn = document.createElement('button');
         btn.className = 'rule-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ' +
             (active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50') + ' transition';
         btn.textContent = b.name;
-        btn.onclick = function () { filterRulesByBranch(b.id); };
+        btn.onclick = function () { window.filterRulesByBranch(b.id); };
         container.appendChild(btn);
     });
 };
@@ -153,7 +146,7 @@ window.filterRulesByBranch = function (branchId) {
         tabs[0].classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
         tabs[0].classList.remove('border-gray-200');
     } else {
-        const name = getRuleBranches().find(function (b) { return b.id == branchId; });
+        const name = window.getRuleBranches().find(function (b) { return b.id == branchId; });
         tabs.forEach(function (tab) {
             if (name && tab.textContent === name.name) {
                 tab.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
@@ -161,10 +154,9 @@ window.filterRulesByBranch = function (branchId) {
             }
         });
     }
-    filterRules();
+    window.filterRules();
 };
 
-// ==================== فیلتر ====================
 window.filterRules = function () {
     const search = (document.getElementById('ruleSearch') && document.getElementById('ruleSearch').value || '').trim().toLowerCase();
     const status = document.getElementById('filterRuleStatus') && document.getElementById('filterRuleStatus').value || '';
@@ -183,10 +175,9 @@ window.filterRules = function () {
 
     rulesCurrentPage = 1;
     sortRuleItems();
-    renderRulesTable(filteredRules);
+    window.renderRulesTable(filteredRules);
 };
 
-// ==================== جدول ====================
 window.renderRulesTable = function (list) {
     list = list || filteredRules;
     const tbody = document.querySelector('#rulesTable tbody');
@@ -217,7 +208,7 @@ window.renderRulesTable = function (list) {
         });
     }
     updateRulesPagination(list.length, start, end, totalPages);
-    updateRuleSortIcons();
+    window.updateRuleSortIcons();
 };
 
 function updateRulesPagination(total, start, end, totalPages) {
@@ -243,14 +234,13 @@ window.changeRulesPage = function (page) {
     const totalPages = Math.ceil(filteredRules.length / rulesPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     rulesCurrentPage = page;
-    renderRulesTable(filteredRules);
+    window.renderRulesTable(filteredRules);
 };
 
-// ==================== فرم ====================
 function readRuleForm(prefix) {
     const f = function (s) { return document.getElementById(prefix ? prefix + s : 'rule' + s); };
     const branchId = parseInt(f('Branch') && f('Branch').value, 10);
-    const branch = getRuleBranches().find(function (b) { return b.id === branchId; });
+    const branch = window.getRuleBranches().find(function (b) { return b.id === branchId; });
     return {
         branchId: branchId,
         branchName: branch ? branch.name : 'نامشخص',
@@ -273,7 +263,7 @@ window.saveRule = function () {
     if (!data.title) return alert('عنوان قانون الزامی است');
     if (data.type === '__new__') return alert('لطفاً یک نوع قانون انتخاب کنید');
     allRules.unshift(Object.assign({ id: Date.now() }, data));
-    filterRules();
+    window.filterRules();
     closeModal();
     alert('✅ قانون ثبت شد');
 };
@@ -300,14 +290,14 @@ window.saveEditedRule = function (id) {
     if (index === -1) return;
     allRules[index] = Object.assign({}, allRules[index], data);
     editingRuleRowId = null;
-    filterRules();
+    window.filterRules();
     closeModal();
     alert('✅ تغییرات ذخیره شد');
 };
 
 window.toggleRuleInlineEdit = function (id) {
     editingRuleRowId = editingRuleRowId === id ? null : id;
-    renderRulesTable(filteredRules);
+    window.renderRulesTable(filteredRules);
 };
 
 window.saveInlineRule = function (id) {
@@ -318,7 +308,7 @@ window.saveInlineRule = function (id) {
     if (index === -1) return;
     allRules[index] = Object.assign({}, allRules[index], data);
     editingRuleRowId = null;
-    filterRules();
+    window.filterRules();
     alert('✅ تغییرات ذخیره شد');
 };
 
@@ -326,10 +316,9 @@ window.deleteRule = function (id) {
     if (!confirm('حذف این قانون؟')) return;
     allRules = allRules.filter(function (r) { return r.id !== id; });
     if (editingRuleRowId === id) editingRuleRowId = null;
-    filterRules();
+    window.filterRules();
 };
 
-// ==================== اکسل / PDF ====================
 window.exportRulesToExcel = function () {
     const data = filteredRules.length ? filteredRules : allRules;
     let csv = '\uFEFFردیف,عنوان,شعبه,نوع,مقدار,وضعیت,خلاصه\n';
@@ -393,13 +382,11 @@ window.generateRulesPDF = async function () {
     closeModal();
 };
 
-// ==================== Init ====================
-(function initRules() {
-    setTimeout(function () {
-        if (document.getElementById('rulesTable')) {
-            renderRulesBranchTabs();
-            renderRuleTypeFilter();
-            filterRules();
-        }
-    }, 200);
+setTimeout(function () {
+    if (document.getElementById('rulesTable')) {
+        window.renderRulesBranchTabs();
+        window.renderRuleTypeFilter();
+        window.filterRules();
+    }
+}, 200);
 })();

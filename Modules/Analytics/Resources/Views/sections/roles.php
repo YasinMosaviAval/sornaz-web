@@ -4,14 +4,6 @@
             <h1 class="text-3xl font-bold">مدیریت نقش‌ها</h1>
             <p class="text-gray-500 mt-1">نقش‌های کاربران در شعبه‌های مختلف</p>
         </div>
-
-        <button onclick="showSection('profiles')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
-            <i class="fas fa-id-card"></i> پروفایل‌ها
-        </button>
-        <button onclick="showSection('permissions')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
-            <i class="fas fa-key"></i> دسترسی‌ها
-        </button>
-
         <button onclick="openAddRoleModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
             <i class="fas fa-plus"></i> افزودن نقش
         </button>

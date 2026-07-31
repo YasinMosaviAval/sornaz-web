@@ -34,8 +34,11 @@
     pushScript('sidebar.js');
     pushScript('dashboard.js');
     pushScript('add-user-modal.js');
-    // pushScript('users.js');
     pushScript('students.js');
+    pushScript('reports.js');
+    pushScript('messages.js');
+    pushScript('notifications.js');
+    
     pushScript('teacher-templates.js');
     pushScript('teachers.js');
     pushScript('branch-templates.js');
@@ -48,38 +51,40 @@
     pushScript('terms.js');
     pushScript('gallery-templates.js');
     pushScript('gallery.js');
-    pushScript('reports.js');
     pushScript('finance-templates.js');
     pushScript('finance.js');
-    pushScript('messages.js');
-    pushScript('notifications.js');
-    // pushScript('contracts.js');
-    pushScript('account.js');
-    pushScript('roles.js');
-    pushScript('permissions.js');
     pushScript('scheduling-rule-templates.js');
     pushScript('scheduling-rules.js');
     pushScript('schedule-templates.js');
     pushScript('schedules.js');
+    pushScript('instrument-templates.js');
+    pushScript('instruments.js');
+    pushScript('lesson-templates.js');
+    pushScript('lessons.js');
+    pushScript('member-schedule-templates.js');
     pushScript('member-schedules.js');
+    
+    pushScript('availabilities.js');
+    pushScript('availability-exceptions.js');
+    // pushScript('users.js');
+    
+    // pushScript('contracts.js');
+    pushScript('account.js');
+    pushScript('profiles.js');
+    pushScript('roles.js');
+    pushScript('permissions.js');
+
     pushScript('awards.js');
     pushScript('certificates.js');
     pushScript('educations.js');
     pushScript('events.js');
     pushScript('polls.js');
     pushScript('favorites.js');
-    pushScript('lesson-templates.js');
-    pushScript('lessons.js');
-    pushScript('instrument-templates.js');
-    pushScript('instruments.js');
     pushScript('publications.js');
     pushScript('ratings.js');
     pushScript('points.js');
-    pushScript('availabilities.js');
-    pushScript('availability-exceptions.js');
     pushScript('badges.js');
     pushScript('approvals.js');
-    pushScript('profiles.js');
     pushScript('rating-summaries.js');
     pushScript('posts.js');
     pushScript('about-us.js');
@@ -88,10 +93,8 @@
     pushScript('academies.js');
     pushScript('academy-enroll.js');
     pushScript('academy-requests.js');
-    // pushScript('home.js');
-    // pushScript('auth.js');
-    
     pushScript('experiences.js');
+    
     pushScript('admin.js');
     ?>
     <div id="modalContainer"></div>
