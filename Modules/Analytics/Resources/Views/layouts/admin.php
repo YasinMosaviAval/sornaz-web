@@ -64,8 +64,10 @@
     pushScript('events.js');
     pushScript('polls.js');
     pushScript('favorites.js');
-    pushScript('instruments.js');
+    pushScript('lesson-templates.js');
     pushScript('lessons.js');
+    pushScript('instrument-templates.js');
+    pushScript('instruments.js');
     pushScript('publications.js');
     pushScript('ratings.js');
     pushScript('points.js');
