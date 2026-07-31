@@ -1,3 +1,4 @@
+
 window.toggleSidebarSubmenu = function (id, btn) {
     const menu = document.getElementById(id);
     if (!menu) return;
@@ -9,21 +10,38 @@ window.toggleSidebarSubmenu = function (id, btn) {
     }
 };
 
-// باز نگه داشتن زیرمنو وقتی یکی از بخش‌های برنامه زمانی فعال است
+// باز نگه داشتن زیرمنو وقتی یکی از بخش‌های مربوطه فعال است
 (function () {
     const originalShowSection = window.showSection;
     if (typeof originalShowSection !== 'function') return;
+
+    const submenuMap = {
+        profilesSubmenu: ['profiles', 'roles', 'permissions'],
+        scheduleSubmenu: [
+            'schedules',
+            'member-schedules',
+            'scheduling-rules',
+            'availabilities',
+            'availabilities-exceptions'
+        ]
+    };
+
     window.showSection = function (sectionId) {
         originalShowSection(sectionId);
-        const scheduleSections = ['schedules', 'memberSchedules', 'schedulingRules', 'availabilities'];
-        const submenu = document.getElementById('scheduleSubmenu');
-        const btn = submenu && submenu.previousElementSibling;
-        if (submenu && scheduleSections.indexOf(sectionId) !== -1) {
+
+        Object.keys(submenuMap).forEach(function (submenuId) {
+            const sections = submenuMap[submenuId];
+            if (sections.indexOf(sectionId) === -1) return;
+
+            const submenu = document.getElementById(submenuId);
+            if (!submenu) return;
+
             submenu.classList.remove('hidden');
+            const btn = submenu.previousElementSibling;
             if (btn) {
                 const chevron = btn.querySelector('.submenu-chevron');
                 if (chevron) chevron.style.transform = 'rotate(180deg)';
             }
-        }
+        });
     };
 })();
