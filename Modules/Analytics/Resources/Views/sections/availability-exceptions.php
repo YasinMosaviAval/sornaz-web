@@ -4,20 +4,6 @@
             <h1 class="text-3xl font-bold">زمان‌های خارج از دسترس</h1>
             <p class="text-gray-500 mt-1">تعطیلات، مرخصی و استثناهای زمانی</p>
         </div>
-
-        <button onclick="showSection('schedules')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
-            <i class="fas fa-calendar-alt w-5"></i> برنامه زمانی
-        </button>
-        <button onclick="showSection('scheduling-rules')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
-            <i class="fas fa-sliders-h w-5"></i> قوانین زمان‌بندی
-        </button>
-        <button onclick="showSection('member-schedules')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
-            <i class="fas fa-user-clock w-5"></i> زمان‌بندی اعضا
-        </button>
-        <button onclick="showSection('availabilities')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
-            <i class="fas fa-clock w-5"></i> زمان‌های در دسترس
-        </button>
-
         <button onclick="openAddExceptionModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
             <i class="fas fa-plus"></i> افزودن استثنا
         </button>

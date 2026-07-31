@@ -57,6 +57,7 @@
     pushScript('roles.js');
     pushScript('permissions.js');
     pushScript('scheduling-rules.js');
+    pushScript('schedule-templates.js');
     pushScript('schedules.js');
     pushScript('member-schedules.js');
     pushScript('awards.js');
