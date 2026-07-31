@@ -32,6 +32,19 @@ function getGalleryOwnersList() {
     }));
 }
 
+/** محدودیت نوع فایل بر اساس بخش رسانه */
+window.getGalleryAcceptForCategory = function (category) {
+    if (category === 'cover' || category === 'logo') return 'image/*';
+    if (category === 'intro_video') return 'video/*';
+    return 'image/*,video/*';
+};
+
+window.getGalleryAllowedTypeLabel = function (category) {
+    if (category === 'cover' || category === 'logo') return 'فقط تصویر';
+    if (category === 'intro_video') return 'فقط ویدیو';
+    return 'تصویر یا ویدیو';
+};
+
 let allGalleryItems = [];
 (function buildSampleGallery() {
     const owners = getGalleryOwnersList();
@@ -106,7 +119,7 @@ let allGalleryItems = [];
     });
 })();
 
-let currentGalleryOwner = 'academy';
+let currentGalleryOwner = 'all';
 let currentGalleryCategory = 'cover';
 let currentGallerySectionId = 'gallery-cover';
 
@@ -144,13 +157,15 @@ function setActiveOwnerTabsInContainer(container, value) {
 
 window.renderGalleryOwnerTabs = function () {
     const containers = document.querySelectorAll('.gallery-owner-tabs');
-    const owners = getGalleryOwnersList().map(function (owner) {
-        return {
-            id: owner.id,
-            name: owner.name,
-            icon: owner.id === 'academy' ? 'fa-school' : 'fa-building'
-        };
-    });
+    const owners = [{ id: 'all', name: 'همه', icon: 'fa-layer-group' }].concat(
+        getGalleryOwnersList().map(function (owner) {
+            return {
+                id: owner.id,
+                name: owner.name,
+                icon: owner.id === 'academy' ? 'fa-school' : 'fa-building'
+            };
+        })
+    );
     containers.forEach(function (container) {
         container.innerHTML = owners.map(function (owner) {
             return '<button type="button" data-value="' + owner.id + '" ' +
@@ -162,7 +177,6 @@ window.renderGalleryOwnerTabs = function () {
     });
 };
 
-/** فراخوانی از sidebar هنگام باز شدن زیربخش گالری */
 window.setGalleryCategory = function (category, sectionId) {
     currentGalleryCategory = category;
     if (sectionId) currentGallerySectionId = sectionId;
@@ -171,7 +185,11 @@ window.setGalleryCategory = function (category, sectionId) {
 };
 
 window.filterGalleryByOwner = function (ownerId) {
-    currentGalleryOwner = ownerId === 'academy' ? 'academy' : (isNaN(Number(ownerId)) ? ownerId : Number(ownerId));
+    if (ownerId === 'all' || ownerId === 'academy') {
+        currentGalleryOwner = ownerId;
+    } else {
+        currentGalleryOwner = isNaN(Number(ownerId)) ? ownerId : Number(ownerId);
+    }
     document.querySelectorAll('.gallery-owner-tabs').forEach(function (container) {
         setActiveOwnerTabsInContainer(container, currentGalleryOwner);
     });
@@ -183,7 +201,8 @@ window.renderGallery = function () {
     grids.forEach(function (grid) {
         const cat = grid.getAttribute('data-gallery-category') || currentGalleryCategory;
         const list = allGalleryItems.filter(function (item) {
-            return String(item.ownerId) === String(currentGalleryOwner) && item.category === cat;
+            const matchOwner = currentGalleryOwner === 'all' || String(item.ownerId) === String(currentGalleryOwner);
+            return matchOwner && item.category === cat;
         });
         grid.innerHTML = list.length
             ? list.map(function (item) { return window.getGalleryCardHTML(item); }).join('')
@@ -199,14 +218,26 @@ function readGalleryForm(existing) {
     const fileInput = document.getElementById('galleryFile');
     const file = fileInput && fileInput.files && fileInput.files[0];
     const urlValue = (document.getElementById('galleryUrl') && document.getElementById('galleryUrl').value || '').trim();
+    // دسته همیشه از بخش فعلی (بدون دراپ‌داون)
+    const category = currentGalleryCategory || existing.category || 'gallery';
+
     let type = existing.type || 'image';
     if (file) {
         type = file.type && file.type.indexOf('video/') === 0 ? 'video' : 'image';
     } else if (urlValue) {
         type = /\.(mp4|webm|mov|avi|mkv)(\?.*)?$/i.test(urlValue) ? 'video' : 'image';
     }
-    const categorySelect = document.getElementById('galleryCategory');
-    const category = (categorySelect && categorySelect.value) || currentGalleryCategory || 'gallery';
+
+    // محدودیت نوع بر اساس بخش
+    if ((category === 'cover' || category === 'logo') && type === 'video') {
+        alert('در بخش کاور و لوگو فقط تصویر مجاز است.');
+        return null;
+    }
+    if (category === 'intro_video' && type === 'image') {
+        alert('در بخش ویدیو معرفی فقط ویدیو مجاز است.');
+        return null;
+    }
+
     const title = (document.getElementById('galleryTitle') && document.getElementById('galleryTitle').value || '').trim();
     if (!title || !owner) return null;
     return {
@@ -231,7 +262,8 @@ window.saveGalleryItem = function () {
     const item = readGalleryForm();
     if (!item) return alert('آموزشگاه/شعبه و عنوان الزامی هستند');
     allGalleryItems.unshift(Object.assign({}, item, { id: Date.now(), date: 'همین الان' }));
-    currentGalleryOwner = item.ownerId;
+    // اگر فیلتر «همه» نبود، owner فعلی را به مورد جدید تنظیم کن
+    if (currentGalleryOwner !== 'all') currentGalleryOwner = item.ownerId;
     currentGalleryCategory = item.category;
     const sectionMap = {
         cover: 'gallery-cover',
@@ -249,6 +281,8 @@ window.saveGalleryItem = function () {
 window.editGalleryItem = function (id) {
     const item = allGalleryItems.find(function (entry) { return entry.id === id; });
     if (!item) return;
+    // هنگام ویرایش، دسته آیتم را مبنا قرار بده
+    currentGalleryCategory = item.category || currentGalleryCategory;
     document.getElementById('modalContainer').innerHTML = window.getGalleryEditModalHTML
         ? window.getGalleryEditModalHTML(item) : '';
 };
@@ -256,13 +290,16 @@ window.editGalleryItem = function (id) {
 window.saveEditedGalleryItem = function (id) {
     const existing = allGalleryItems.find(function (entry) { return entry.id === id; });
     if (!existing) return;
+    // دسته از خود آیتم (نه دراپ‌داون)
+    const prevCategory = currentGalleryCategory;
+    currentGalleryCategory = existing.category || currentGalleryCategory;
     const data = readGalleryForm(existing);
-    if (!data) return alert('آموزشگاه/شعبه و عنوان الزامی هستند');
+    currentGalleryCategory = prevCategory;
+    if (!data) return;
     const index = allGalleryItems.findIndex(function (entry) { return entry.id === id; });
     if (index === -1) return;
     allGalleryItems[index] = Object.assign({}, allGalleryItems[index], data);
-    currentGalleryOwner = data.ownerId;
-    currentGalleryCategory = data.category;
+    if (currentGalleryOwner !== 'all') currentGalleryOwner = data.ownerId;
     window.renderGalleryOwnerTabs();
     window.renderGallery();
     closeModal();
