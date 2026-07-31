@@ -32,7 +32,7 @@
 
     <!-- فیلترها -->
     <div class="bg-white rounded-3xl p-5 mb-6 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             <input type="text" id="memberScheduleSearch" placeholder="جستجو نام عضو..."
                    class="w-full border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500"
                    onkeyup="filterMemberSchedules()">
@@ -55,6 +55,34 @@
                 <option value="پنجشنبه">پنجشنبه</option>
                 <option value="جمعه">جمعه</option>
             </select>
+            <select id="filterMemberRepeat" onchange="filterMemberSchedules()"
+                    class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                <option value="">همه دوره‌های تکرار</option>
+                <option value="هفتگی">هفتگی</option>
+                <option value="دو هفته">دو هفته</option>
+                <option value="سه هفته">سه هفته</option>
+                <option value="چهار هفته">چهار هفته</option>
+                <option value="ماهانه">ماهانه</option>
+                <option value="سالانه">سالانه</option>
+                <option value="بی‌تکرار">بی‌تکرار</option>
+            </select>
+            <select id="filterMemberTimezone" onchange="filterMemberSchedules()"
+                    class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                <option value="">همه مناطق زمانی</option>
+                <option value="Asia/Tehran">تهران</option>
+                <option value="Asia/Dubai">دبی</option>
+                <option value="Asia/Istanbul">استانبول</option>
+                <option value="Europe/London">لندن</option>
+                <option value="Europe/Paris">پاریس</option>
+                <option value="Europe/Berlin">برلین</option>
+                <option value="Europe/Rome">رم</option>
+                <option value="Europe/Amsterdam">آمستردام</option>
+                <option value="America/New_York">نیویورک</option>
+                <option value="America/Chicago">شیکاگو</option>
+                <option value="America/Los_Angeles">لس‌آنجلس</option>
+                <option value="America/Toronto">تورنتو</option>
+                <option value="UTC">UTC</option>
+            </select>
             <select id="filterMemberStatus" onchange="filterMemberSchedules()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه وضعیت‌ها</option>
@@ -69,7 +97,7 @@
     <!-- جدول -->
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1100px]" id="memberSchedulesTable">
+            <table class="w-full min-w-[1300px]" id="memberSchedulesTable">
                 <thead class="bg-gray-50 border-b">
                     <tr>
                         <th class="text-right py-5 px-5 font-medium">
@@ -83,6 +111,12 @@
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortMemberSchedulesBy('timeLabel')" class="flex items-center gap-1">ساعت <span id="msSortIcon-timeLabel">↕</span></button>
+                        </th>
+                        <th class="text-right py-5 px-5 font-medium">
+                            <button onclick="sortMemberSchedulesBy('repeatPeriod')" class="flex items-center gap-1">دوره تکرار <span id="msSortIcon-repeatPeriod">↕</span></button>
+                        </th>
+                        <th class="text-right py-5 px-5 font-medium">
+                            <button onclick="sortMemberSchedulesBy('timezone')" class="flex items-center gap-1">منطقه زمانی <span id="msSortIcon-timezone">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortMemberSchedulesBy('branchName')" class="flex items-center gap-1">شعبه <span id="msSortIcon-branchName">↕</span></button>
