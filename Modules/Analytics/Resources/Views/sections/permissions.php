@@ -4,14 +4,6 @@
             <h1 class="text-3xl font-bold">مدیریت دسترسی‌ها</h1>
             <p class="text-gray-500 mt-1">مجوزها و دسترسی‌های نقش‌ها در شعبه‌ها</p>
         </div>
-
-        <button onclick="showSection('profiles')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
-            <i class="fas fa-id-card"></i> پروفایل‌ها
-        </button>
-        <button onclick="showSection('roles')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
-            <i class="fas fa-user-tag"></i> نقش‌ها
-        </button>
-
         <button onclick="openAddPermissionModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
             <i class="fas fa-plus"></i> افزودن دسترسی
         </button>

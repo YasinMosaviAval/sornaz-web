@@ -1,4 +1,5 @@
 (function () {
+    'use strict';
     function escapeHtml(value) {
         return String(value ?? '')
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -21,41 +22,13 @@
         }[status] || 'bg-gray-100 text-gray-600';
     }
 
-    window.getRuleRowHTML = function (item) {
-        return `
-            <td class="py-4 px-5 font-medium">${escapeHtml(item.title)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.type)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.value)}</td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td>
-            <td class="py-4 px-5 text-left">
-                <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
-                    <button onclick="viewRule(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
-                    <button onclick="toggleRuleInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
-                    <button onclick="deleteRule(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>
-                </div>
-            </td>`;
-    };
-
-    window.getRuleEmptyRowHTML = function () {
-        return `<tr><td colspan="6" class="py-12 text-center text-gray-400">قانونی یافت نشد</td></tr>`;
-    };
-
-    window.getRuleInlineExpandRowHTML = function (item) {
-        return `<td colspan="6" class="p-5 border-t">${window.getRuleInlineEditRowHTML ? window.getRuleInlineEditRowHTML(item) : ''}</td>`;
-    };
-
     function formFields(item, prefix) {
         const id = function (n) { return prefix ? prefix + n : 'rule' + n; };
-        const branches = (typeof getRuleBranches === 'function' ? getRuleBranches() : []).map(function (b) {
+        const branches = (typeof window.getRuleBranches === 'function' ? window.getRuleBranches() : []).map(function (b) {
             return { value: b.id, label: b.name };
         });
-        const types = (typeof ruleTypes !== 'undefined' ? ruleTypes : []).map(function (t) {
-            return { value: t, label: t };
-        });
-        const statuses = (typeof ruleStatuses !== 'undefined' ? ruleStatuses : []).map(function (s) {
-            return { value: s, label: s };
-        });
+        const types = (window.ruleTypesList || []).map(function (t) { return { value: t, label: t }; });
+        const statuses = (window.ruleStatusesList || []).map(function (s) { return { value: s, label: s }; });
         return `
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
@@ -71,7 +44,7 @@
                 <div>
                     <label class="block text-sm font-medium mb-2">نوع قانون</label>
                     <select id="${id('Type')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
-                            onchange="if(this.value==='__new__'){promptAddRuleType('${id('Type')}');}">
+                            onchange="if(this.value==='__new__'){window.promptAddRuleType('${id('Type')}');}">
                         ${renderOptions(types, item.type || '')}
                         <option value="__new__">+ افزودن نوع جدید</option>
                     </select>
@@ -97,6 +70,27 @@
             </div>`;
     }
 
+    window.getRuleRowHTML = function (item) {
+        return `
+            <td class="py-4 px-5 font-medium">${escapeHtml(item.title)}</td>
+            <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
+            <td class="py-4 px-5">${escapeHtml(item.type)}</td>
+            <td class="py-4 px-5">${escapeHtml(item.value)}</td>
+            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td>
+            <td class="py-4 px-5 text-left">
+                <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
+                    <button onclick="viewRule(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
+                    <button onclick="toggleRuleInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
+                    <button onclick="deleteRule(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>
+                </div>
+            </td>`;
+    };
+    window.getRuleEmptyRowHTML = function () {
+        return `<tr><td colspan="6" class="py-12 text-center text-gray-400">قانونی یافت نشد</td></tr>`;
+    };
+    window.getRuleInlineExpandRowHTML = function (item) {
+        return `<td colspan="6" class="p-5 border-t">${window.getRuleInlineEditRowHTML(item)}</td>`;
+    };
     window.getRuleInlineEditRowHTML = function (item) {
         return `<div class="space-y-6">
             ${formFields(item, 'inlineRule' + item.id)}
@@ -106,7 +100,6 @@
             </div>
         </div>`;
     };
-
     window.getRuleAddModalHTML = function () {
         return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
@@ -124,7 +117,6 @@
             </div>
         </div>`;
     };
-
     window.getRuleEditModalHTML = function (item) {
         return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
@@ -142,7 +134,6 @@
             </div>
         </div>`;
     };
-
     window.getRuleDetailsModalHTML = function (item) {
         return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl" onclick="event.stopPropagation()">
@@ -169,7 +160,6 @@
             </div>
         </div>`;
     };
-
     window.getRulePDFModalHTML = function (cols) {
         return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
@@ -186,7 +176,7 @@
                     </div>
                     <input id="rulePdfFooter" type="text" value="تولید شده توسط سیستم مدیریت آموزشگاه" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                     <div class="grid grid-cols-2 gap-2">
-                        ${cols.map(function (c) {
+                        ${(cols || []).map(function (c) {
                             return `<label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" id="rulePdfCol-${c.field}" checked> ${c.label}</label>`;
                         }).join('')}
                     </div>
@@ -204,7 +194,6 @@
             </div>
         </div>`;
     };
-
     window.getRulePDFPageHTML = function (pageNumber, rows, isFirstPage, options) {
         const o = options;
         return `<div style="width:100%;padding:24px;background:#fff;direction:rtl;">
