@@ -28,7 +28,7 @@
 
             <li><a href="#" onclick="showSection('reports')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-chart-bar w-5"></i> گزارش‌ها</a></li>
             <li><a href="#" onclick="showSection('finance')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-money-bill-wave w-5"></i> امور مالی</a></li>
-            <li><a href="#" onclick="showSection('instruments')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-guitar w-5"></i> ابزارها</a></li>
+            <li><a href="#" onclick="showSection('instruments')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-guitar w-5"></i> سازها</a></li>
             <li><a href="#" onclick="showSection('lessons')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-book w-5"></i> درس‌ها</a></li>
             <!-- Rev 2
                 <li><a href="#" onclick="showSection('awards')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-trophy w-5"></i> جایزه‌ها</a></li>
