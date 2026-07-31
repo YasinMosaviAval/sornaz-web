@@ -1,4 +1,3 @@
-
 window.toggleSidebarSubmenu = function (id, btn) {
     const menu = document.getElementById(id);
     if (!menu) return;
@@ -17,16 +16,35 @@ window.toggleSidebarSubmenu = function (id, btn) {
 
     const submenuMap = {
         profilesSubmenu: ['profiles', 'roles', 'permissions'],
+        gallerySubmenu: [
+            'gallery-cover',
+            'gallery-logo',
+            'gallery-intro-video',
+            'gallery-collection'
+        ],
         scheduleSubmenu: [
             'schedules',
             'member-schedules',
             'scheduling-rules',
             'availabilities',
-            'availabilities-exceptions'
+            'availability-exceptions'
         ]
     };
 
+    // نگاشت بخش‌های گالری به دسته رسانه
+    const gallerySectionCategoryMap = {
+        'gallery-cover': 'cover',
+        'gallery-logo': 'logo',
+        'gallery-intro-video': 'intro_video',
+        'gallery-collection': 'gallery'
+    };
+
     window.showSection = function (sectionId) {
+        // اگر یکی از زیربخش‌های گالری باشد، دسته را تنظیم کن
+        if (gallerySectionCategoryMap[sectionId] && typeof window.setGalleryCategory === 'function') {
+            window.setGalleryCategory(gallerySectionCategoryMap[sectionId], sectionId);
+        }
+
         originalShowSection(sectionId);
 
         Object.keys(submenuMap).forEach(function (submenuId) {
