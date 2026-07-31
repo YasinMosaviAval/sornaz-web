@@ -2,9 +2,8 @@
     <div class="flex items-center gap-4">
         <button onclick="toggleSidebar()" class="lg:hidden text-2xl"><i class="fas fa-bars"></i></button>
         <div class="relative w-80">
-            <input type="text" placeholder="جستجو هنرجو، کلاس..." 
-                class="w-full bg-gray-100 border border-gray-300 rounded-2xl py-3 px-5 pl-12 focus:outline-none focus:border-indigo-500">
-            <i class="fas fa-search absolute left-5 top-3.5 text-gray-400"></i>
+            <!-- <input type="text" placeholder="جستجو هنرجو، کلاس..." class="w-full bg-gray-100 border border-gray-300 rounded-2xl py-3 px-5 pl-12 focus:outline-none focus:border-indigo-500"> -->
+            <!-- <i class="fas fa-search absolute left-5 top-3.5 text-gray-400"></i> -->
         </div>
     </div>
     
