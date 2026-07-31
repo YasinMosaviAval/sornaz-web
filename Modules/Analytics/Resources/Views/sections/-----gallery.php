@@ -1,4 +1,4 @@
-<div id="gallery" class="section hidden">
+<div id="gallery" class="section">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-3xl font-bold">مدیریت رسانه</h1>
@@ -19,7 +19,7 @@
         <div class="flex gap-2 min-w-max" id="galleryCategoryTabs"></div>
     </div>
 
-    <!-- گرید گالری -->
+    <!-- گرید گالری (شبیه اینستاگرام / یوتیوب) -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="galleryGrid">
         <!-- توسط JS پر می‌شود -->
     </div>
