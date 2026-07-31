@@ -48,6 +48,7 @@
     pushScript('gallery-templates.js');
     pushScript('gallery.js');
     pushScript('reports.js');
+    pushScript('finance-templates.js');
     pushScript('finance.js');
     pushScript('messages.js');
     pushScript('notifications.js');
