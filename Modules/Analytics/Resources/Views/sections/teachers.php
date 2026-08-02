@@ -28,6 +28,12 @@
         </div>
     </div>
 
+    <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
+        <div class="flex gap-2 min-w-max" id="staffBranchTabs">
+            <button onclick="filterStaffByBranch('all')" class="staff-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium bg-indigo-600 text-white">همه شعبه‌ها</button>
+        </div>
+    </div>
+
     <!-- فیلترها -->
     <div class="bg-white rounded-3xl p-5 mb-6 shadow-sm">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -46,20 +52,19 @@
                 </select>
             </div>
             <div>
-                <select id="filterStaffBranch" onchange="filterStaff()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
-                    <option value="">همه شعب</option>
-                    <option value="شعبه مرکزی">شعبه مرکزی</option>
-                    <option value="شعبه ونک">شعبه ونک</option>
-                    <option value="شعبه سعادت‌آباد">شعبه سعادت‌آباد</option>
-                    <option value="شعبه کرج">شعبه کرج</option>
-                </select>
-            </div>
-            <div>
                 <select id="filterStaffStatus" onchange="filterStaff()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                     <option value="">همه وضعیت‌ها</option>
                     <option value="فعال">فعال</option>
                     <option value="مرخصی">مرخصی</option>
                     <option value="غیرفعال">غیرفعال</option>
+                </select>
+            </div>
+            <div>
+                <select id="filterStaffCurrency" onchange="filterStaff()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                    <option value="">همه انواع پول</option>
+                    <option value="تومان">تومان</option>
+                    <option value="دلار">دلار</option>
+                    <option value="یورو">یورو</option>
                 </select>
             </div>
         </div>
