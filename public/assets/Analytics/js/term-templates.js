@@ -329,7 +329,7 @@
 
         return `
             <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
-                <div class="bg-white rounded-3xl w-full max-w-3xl my-8 shadow-2xl" onclick="event.stopPropagation()">
+                <div class="bg-white rounded-3xl w-full max-w-6xl my-4 shadow-2xl" onclick="event.stopPropagation()">
                     <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl">
                         <div>
                             <h2 class="text-2xl font-bold">${escapeHtml(item.name)}</h2>
@@ -341,7 +341,7 @@
                             <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                         </div>
                     </div>
-                    <div class="p-8 space-y-8">
+                    <div class="p-6 md:p-8 space-y-6">
                         <div>
                             <h3 class="font-semibold text-indigo-700 mb-4">اطلاعات ترم</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
@@ -366,7 +366,7 @@
                             <div><h3 class="font-semibold text-indigo-700 mb-3">استادها</h3><p class="text-sm">${teachers}</p></div>
                             <div><h3 class="font-semibold text-indigo-700 mb-3">هنرجویان</h3><p class="text-sm">${students}</p></div>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                             <div><h3 class="font-semibold text-indigo-700 mb-3">جلسات</h3><div class="space-y-2">${sessions}</div></div>
                             <div><h3 class="font-semibold text-indigo-700 mb-3">اقساط</h3><div class="space-y-2">${installments}</div></div>
                         </div>

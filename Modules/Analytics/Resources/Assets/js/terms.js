@@ -486,17 +486,77 @@ window.renderTermCourseFilter = function () {
         }).join('');
 };
 
+window.renderTermCurrencyFilter = function () {
+    const select = document.getElementById('filterTermCurrency');
+    if (!select) return;
+    const values = new Set(allTerms.map(function (t) { return t.currency; }).filter(Boolean));
+    const current = select.value;
+    select.innerHTML = '<option value="">همه نوع پول</option>' +
+        Array.from(values).sort().map(function (value) {
+            return '<option value="' + value + '"' + (value === current ? ' selected' : '') + '>' + value + '</option>';
+        }).join('');
+};
+
+window.renderTermDiscountFilter = function () {
+    const select = document.getElementById('filterTermDiscount');
+    if (!select) return;
+    const values = new Set(allTerms.map(function (t) { return t.discount; }).filter(Boolean));
+    const current = select.value;
+    select.innerHTML = '<option value="">همه تخفیف‌ها</option>' +
+        Array.from(values).sort().map(function (value) {
+            return '<option value="' + value + '"' + (value === current ? ' selected' : '') + '>' + value + '</option>';
+        }).join('');
+};
+
+window.renderTermClassroomFilter = function () {
+    const select = document.getElementById('filterTermClassroom');
+    if (!select) return;
+    const values = new Set(allTerms.map(function (t) { return t.classroom; }).filter(Boolean));
+    const current = select.value;
+    select.innerHTML = '<option value="">همه کلاس‌ها</option>' +
+        Array.from(values).sort().map(function (value) {
+            return '<option value="' + value + '"' + (value === current ? ' selected' : '') + '>' + value + '</option>';
+        }).join('');
+};
+
+window.renderTermInstallmentCountFilter = function () {
+    const select = document.getElementById('filterTermInstallmentCount');
+    if (!select) return;
+    const values = new Set(allTerms.map(function (t) { return (t.installments && t.installments.length) ? String(t.installments.length) : '1'; }).filter(Boolean));
+    const current = select.value;
+    select.innerHTML = '<option value="">همه تعداد اقساط</option>' +
+        Array.from(values).sort(function (a, b) { return Number(a) - Number(b); }).map(function (value) {
+            return '<option value="' + value + '"' + (value === current ? ' selected' : '') + '>' + value + ' قسط</option>';
+        }).join('');
+};
+
+window.renderTermFilters = function () {
+    window.renderTermCourseFilter();
+    window.renderTermCurrencyFilter();
+    window.renderTermDiscountFilter();
+    window.renderTermClassroomFilter();
+    window.renderTermInstallmentCountFilter();
+};
+
 window.filterTerms = function () {
     const search = (document.getElementById('termSearch') && document.getElementById('termSearch').value || '').trim().toLowerCase();
     const status = document.getElementById('filterTermStatus') && document.getElementById('filterTermStatus').value || '';
     const course = document.getElementById('filterTermCourse') && document.getElementById('filterTermCourse').value || '';
+    const currency = document.getElementById('filterTermCurrency') && document.getElementById('filterTermCurrency').value || '';
+    const discount = document.getElementById('filterTermDiscount') && document.getElementById('filterTermDiscount').value || '';
+    const classroom = document.getElementById('filterTermClassroom') && document.getElementById('filterTermClassroom').value || '';
+    const installmentCount = document.getElementById('filterTermInstallmentCount') && document.getElementById('filterTermInstallmentCount').value || '';
 
     filteredTerms = allTerms.filter(function (item) {
         const matchBranch = currentTermBranch === 'all' || item.branchId == currentTermBranch;
         const matchSearch = !search || (item.name || '').toLowerCase().includes(search);
         const matchStatus = !status || item.status === status;
         const matchCourse = !course || item.course === course;
-        return matchBranch && matchSearch && matchStatus && matchCourse;
+        const matchCurrency = !currency || item.currency === currency;
+        const matchDiscount = !discount || item.discount === discount;
+        const matchClassroom = !classroom || item.classroom === classroom;
+        const matchInstallmentCount = !installmentCount || (item.installments && item.installments.length === Number(installmentCount));
+        return matchBranch && matchSearch && matchStatus && matchCourse && matchCurrency && matchDiscount && matchClassroom && matchInstallmentCount;
     });
 
     termsCurrentPage = 1;
@@ -804,7 +864,7 @@ window.saveTerm = function () {
     const data = readTermForm('');
     if (!validateTermData(data)) return;
     allTerms.unshift(Object.assign({ id: Date.now(), attendance: {} }, data));
-    renderTermCourseFilter();
+    renderTermFilters();
     filterTerms();
     closeModal();
     alert('✅ ترم با موفقیت اضافه شد');
@@ -829,7 +889,7 @@ window.saveEditedTerm = function (id) {
     if (index === -1) return;
     allTerms[index] = Object.assign({}, allTerms[index], data);
     editingTermRowId = null;
-    renderTermCourseFilter();
+    renderTermFilters();
     filterTerms();
     closeModal();
     alert('✅ تغییرات ذخیره شد');
@@ -848,7 +908,7 @@ window.saveInlineTerm = function (id) {
     if (index === -1) return;
     allTerms[index] = Object.assign({}, allTerms[index], data);
     editingTermRowId = null;
-    renderTermCourseFilter();
+    renderTermFilters();
     filterTerms();
     alert('✅ تغییرات با موفقیت ذخیره شد');
 };
@@ -858,7 +918,7 @@ window.deleteTerm = function (id) {
     allTerms = allTerms.filter(function (t) { return t.id !== id; });
     if (editingTermRowId === id) editingTermRowId = null;
     if (attendanceTermRowId === id) attendanceTermRowId = null;
-    renderTermCourseFilter();
+    renderTermFilters();
     filterTerms();
 };
 
@@ -1014,7 +1074,7 @@ window.generateTermsPDF = async function () {
     setTimeout(function () {
         if (document.getElementById('termsTable')) {
             renderTermsBranchTabs();
-            renderTermCourseFilter();
+            renderTermFilters();
             filterTerms();
         }
     }, 200);
