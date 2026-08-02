@@ -6,7 +6,6 @@
         <main class="flex-1 overflow-auto p-8" id="mainContent">
             <? component('account'); ?>
             <? component('dashboard'); ?>
-            <?// component('users'); ?>
             <?// component('contracts'); ?>
             <? component('students'); ?>
             <? component('teachers'); ?>
@@ -19,6 +18,7 @@
             <? component('finance'); ?>
             <? component('messages'); ?>
             <? component('notifications'); ?>
+            <? component('users'); ?>
             <? component('roles'); ?>
             <? component('permissions'); ?>
             <? component('scheduling-rules'); ?>
@@ -39,7 +39,7 @@
             <? component('availability-exceptions'); ?>
             <? component('badges'); ?>
             <? component('approvals'); ?>
-            <? component('profiles'); ?>
+            <?// component('profiles'); ?>
             <? component('rating-summaries'); ?>
             <? component('posts'); ?>
             <? component('about-us'); ?>
