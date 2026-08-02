@@ -7,7 +7,7 @@
     <!-- کاور پروفایل ۱۶:۹ (معادل ۱۹۲۰×۱۰۸۰) -->
     <div class="bg-white rounded-3xl shadow overflow-hidden mb-8">
         <div class="relative">
-            <div id="accountCoverPreview" class="w-full aspect-video max-h-[360px] bg-gradient-to-br from-indigo-600 via-indigo-500 to-violet-600 flex items-center justify-center overflow-hidden">
+            <div id="accountCoverPreview" class="w-full aspect-video max-h-[640px] bg-gradient-to-br from-indigo-600 via-indigo-500 to-violet-600 flex items-center justify-center overflow-hidden">
                 <div id="accountCoverPlaceholder" class="text-center text-white/90 px-4 pointer-events-none">
                     <i class="fas fa-image text-4xl mb-2 opacity-80"></i>
                     <p class="text-sm">کاور پروفایل آموزشگاه</p>

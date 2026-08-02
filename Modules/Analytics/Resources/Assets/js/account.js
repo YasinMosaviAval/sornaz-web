@@ -102,18 +102,6 @@ window.renderAccountInfo = function () {
     window.renderAccountBackupStatus();
 };
 
-window.onAccountAvatarChange = function (event) {
-    const file = event.target && event.target.files && event.target.files[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-        alert('فقط فایل تصویری مجاز است.');
-        return;
-    }
-    academyProfile.avatarUrl = URL.createObjectURL(file);
-    window.renderAccountInfo();
-    alert('✅ عکس پروفایل به‌روزرسانی شد');
-};
-
 window.renderAccountCover = function () {
     const coverImg = document.getElementById('accountCoverImg');
     const placeholder = document.getElementById('accountCoverPlaceholder');
@@ -132,26 +120,264 @@ window.renderAccountCover = function () {
     }
 };
 
-window.onAccountCoverChange = function (event) {
-    const file = event.target && event.target.files && event.target.files[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-        alert('فقط فایل تصویری مجاز است.');
-        return;
-    }
-    // قالب پیشنهادی ۱۹۲۰×۱۰۸۰ (۱۶:۹ افقی)
-    academyProfile.coverUrl = URL.createObjectURL(file);
-    window.renderAccountCover();
-    if (event.target) event.target.value = '';
-    alert('✅ کاور پروفایل به‌روزرسانی شد');
-};
-
 window.removeAccountCover = function () {
     if (!academyProfile.coverUrl) return;
     if (!confirm('حذف کاور پروفایل؟')) return;
     academyProfile.coverUrl = '';
     window.renderAccountCover();
     alert('✅ کاور حذف شد');
+};
+
+// ---------- کراپ تصویر (آواتار ۱:۱ دایره‌ای / کاور ۱۶:۹) ----------
+let cropState = null;
+
+window.onAccountAvatarChange = function (event) {
+    const file = event.target && event.target.files && event.target.files[0];
+    if (event.target) event.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return alert('فقط فایل تصویری مجاز است.');
+    openImageCropModal(file, 'avatar');
+};
+
+window.onAccountCoverChange = function (event) {
+    const file = event.target && event.target.files && event.target.files[0];
+    if (event.target) event.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return alert('فقط فایل تصویری مجاز است.');
+    openImageCropModal(file, 'cover');
+};
+
+function openImageCropModal(file, mode) {
+    if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+            const aspect = mode === 'avatar' ? 1 : 16 / 9;
+            const title = mode === 'avatar' ? 'کراپ عکس پروفایل (۱×۱ دایره‌ای)' : 'کراپ کاور (۱۶×۹ افقی)';
+            document.getElementById('modalContainer').innerHTML = window.getAccountCropModalHTML
+                ? window.getAccountCropModalHTML(mode, title) : '';
+            const canvas = document.getElementById('accountCropCanvas');
+            if (!canvas) return;
+            cropState = {
+                mode: mode,
+                img: img,
+                aspect: aspect,
+                // مختصات کادر کراپ روی تصویر اصلی
+                cx: 0,
+                cy: 0,
+                cw: 0,
+                ch: 0,
+                scale: 1,
+                offsetX: 0,
+                offsetY: 0,
+                dragging: false,
+                lastX: 0,
+                lastY: 0
+            };
+            initCropFrame();
+            drawCropCanvas();
+            bindCropEvents(canvas);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function initCropFrame() {
+    const s = cropState;
+    const img = s.img;
+    // بزرگ‌ترین کادر با نسبت aspect داخل تصویر
+    if (img.width / img.height > s.aspect) {
+        s.ch = img.height;
+        s.cw = img.height * s.aspect;
+        s.cx = (img.width - s.cw) / 2;
+        s.cy = 0;
+    } else {
+        s.cw = img.width;
+        s.ch = img.width / s.aspect;
+        s.cx = 0;
+        s.cy = (img.height - s.ch) / 2;
+    }
+    s.minCrop = Math.min(img.width, img.height) * 0.15;
+}
+
+function drawCropCanvas() {
+    const s = cropState;
+    if (!s) return;
+    const canvas = document.getElementById('accountCropCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const maxW = Math.min(720, window.innerWidth - 64);
+    const maxH = Math.min(420, window.innerHeight * 0.5);
+    const scale = Math.min(maxW / s.img.width, maxH / s.img.height, 1);
+    s.viewScale = scale;
+    canvas.width = Math.round(s.img.width * scale);
+    canvas.height = Math.round(s.img.height * scale);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(s.img, 0, 0, canvas.width, canvas.height);
+
+    // لایه تیره
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const rx = s.cx * scale;
+    const ry = s.cy * scale;
+    const rw = s.cw * scale;
+    const rh = s.ch * scale;
+
+    // ناحیه روشن کراپ
+    ctx.save();
+    if (s.mode === 'avatar') {
+        ctx.beginPath();
+        ctx.arc(rx + rw / 2, ry + rh / 2, rw / 2, 0, Math.PI * 2);
+        ctx.clip();
+    } else {
+        ctx.beginPath();
+        ctx.rect(rx, ry, rw, rh);
+        ctx.clip();
+    }
+    ctx.drawImage(s.img, 0, 0, canvas.width, canvas.height);
+    ctx.restore();
+
+    // حاشیه کادر
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    if (s.mode === 'avatar') {
+        ctx.beginPath();
+        ctx.arc(rx + rw / 2, ry + rh / 2, rw / 2, 0, Math.PI * 2);
+        ctx.stroke();
+    } else {
+        ctx.strokeRect(rx, ry, rw, rh);
+    }
+
+    // دستگیره‌های گوشه (فقط برای نمایش)
+    const hs = 6;
+    ctx.fillStyle = '#6366f1';
+    [[rx, ry], [rx + rw, ry], [rx, ry + rh], [rx + rw, ry + rh]].forEach(function (p) {
+        ctx.fillRect(p[0] - hs / 2, p[1] - hs / 2, hs, hs);
+    });
+
+    const info = document.getElementById('accountCropInfo');
+    if (info) {
+        info.textContent = Math.round(s.cw) + ' × ' + Math.round(s.ch) + ' px · نسبت ' +
+            (s.mode === 'avatar' ? '۱:۱' : '۱۶:۹');
+    }
+}
+
+function bindCropEvents(canvas) {
+    canvas.onmousedown = function (e) {
+        if (!cropState) return;
+        cropState.dragging = true;
+        cropState.lastX = e.clientX;
+        cropState.lastY = e.clientY;
+    };
+    window.onmousemove = function (e) {
+        if (!cropState || !cropState.dragging) return;
+        const dx = (e.clientX - cropState.lastX) / cropState.viewScale;
+        const dy = (e.clientY - cropState.lastY) / cropState.viewScale;
+        cropState.lastX = e.clientX;
+        cropState.lastY = e.clientY;
+        cropState.cx = clamp(cropState.cx + dx, 0, cropState.img.width - cropState.cw);
+        cropState.cy = clamp(cropState.cy + dy, 0, cropState.img.height - cropState.ch);
+        drawCropCanvas();
+    };
+    window.onmouseup = function () {
+        if (cropState) cropState.dragging = false;
+    };
+    canvas.ontouchstart = function (e) {
+        if (!cropState || !e.touches[0]) return;
+        cropState.dragging = true;
+        cropState.lastX = e.touches[0].clientX;
+        cropState.lastY = e.touches[0].clientY;
+        e.preventDefault();
+    };
+    canvas.ontouchmove = function (e) {
+        if (!cropState || !cropState.dragging || !e.touches[0]) return;
+        const dx = (e.touches[0].clientX - cropState.lastX) / cropState.viewScale;
+        const dy = (e.touches[0].clientY - cropState.lastY) / cropState.viewScale;
+        cropState.lastX = e.touches[0].clientX;
+        cropState.lastY = e.touches[0].clientY;
+        cropState.cx = clamp(cropState.cx + dx, 0, cropState.img.width - cropState.cw);
+        cropState.cy = clamp(cropState.cy + dy, 0, cropState.img.height - cropState.ch);
+        drawCropCanvas();
+        e.preventDefault();
+    };
+    canvas.ontouchend = function () {
+        if (cropState) cropState.dragging = false;
+    };
+}
+
+function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+}
+
+window.zoomCrop = function (delta) {
+    const s = cropState;
+    if (!s) return;
+    const factor = delta > 0 ? 0.92 : 1.08; // + زوم این (کادر کوچکتر) / - زوم اوت
+    let newW = s.cw * factor;
+    let newH = newW / s.aspect;
+
+    // محدودیت اندازه
+    const maxW = s.img.width;
+    const maxH = s.img.height;
+    if (newW > maxW) { newW = maxW; newH = newW / s.aspect; }
+    if (newH > maxH) { newH = maxH; newW = newH * s.aspect; }
+    const minSide = s.minCrop;
+    if (s.mode === 'avatar') {
+        if (newW < minSide) { newW = minSide; newH = minSide; }
+    } else {
+        if (newW < minSide * s.aspect) { newW = minSide * s.aspect; newH = minSide; }
+        if (newH < minSide) { newH = minSide; newW = newH * s.aspect; }
+    }
+
+    // مرکز کادر حفظ شود
+    const centerX = s.cx + s.cw / 2;
+    const centerY = s.cy + s.ch / 2;
+    s.cw = newW;
+    s.ch = newH;
+    s.cx = clamp(centerX - s.cw / 2, 0, s.img.width - s.cw);
+    s.cy = clamp(centerY - s.ch / 2, 0, s.img.height - s.ch);
+    drawCropCanvas();
+};
+
+window.applyImageCrop = function () {
+    const s = cropState;
+    if (!s) return;
+    const out = document.createElement('canvas');
+    let outW, outH;
+    if (s.mode === 'avatar') {
+        outW = outH = 512;
+    } else {
+        outW = 1920;
+        outH = 1080;
+    }
+    out.width = outW;
+    out.height = outH;
+    const ctx = out.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(s.img, s.cx, s.cy, s.cw, s.ch, 0, 0, outW, outH);
+
+    const dataUrl = out.toDataURL('image/jpeg', 0.92);
+    if (s.mode === 'avatar') {
+        academyProfile.avatarUrl = dataUrl;
+        window.renderAccountInfo();
+        alert('✅ عکس پروفایل ذخیره شد');
+    } else {
+        academyProfile.coverUrl = dataUrl;
+        window.renderAccountCover();
+        alert('✅ کاور ذخیره شد');
+    }
+    cropState = null;
+    closeModal();
+};
+
+window.cancelImageCrop = function () {
+    cropState = null;
+    closeModal();
 };
 
 window.openEditProfileModal = function () {
