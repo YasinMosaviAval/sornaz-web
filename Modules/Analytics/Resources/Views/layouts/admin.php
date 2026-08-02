@@ -35,10 +35,11 @@
     pushScript('dashboard.js');
     pushScript('add-user-modal.js');
     pushScript('reports.js');
+    
     pushScript('message-templates.js');
     pushScript('messages.js');
+    pushScript('notification-templates.js');
     pushScript('notifications.js');
-    
     pushScript('student-templates.js');
     pushScript('students.js');
     pushScript('teacher-templates.js');
@@ -67,11 +68,10 @@
     pushScript('member-schedules.js');
     pushScript('availability-templates.js');
     pushScript('availabilities.js');
-    
     pushScript('availability-exception-templates.js');
     pushScript('availability-exceptions.js');
-    // pushScript('users.js');
     
+    // pushScript('users.js');
     // pushScript('contracts.js');
     pushScript('account.js');
     pushScript('profiles.js');
