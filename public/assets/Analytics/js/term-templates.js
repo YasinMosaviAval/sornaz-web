@@ -72,7 +72,7 @@
                             ${renderOptions(teachers, item.id || item.name || '')}
                         </select>
                     </div>
-                    <button type="button" onclick="this.closest('.term-teacher-item').remove()" class="text-red-500 text-sm px-3 py-2 hover:underline">حذف</button>
+                    <button type="button" onclick="if (document.querySelectorAll('.term-teacher-item').length > 1) this.closest('.term-teacher-item').remove(); else alert('حداقل یک استاد لازم است')" class="text-red-500 text-sm px-3 py-2 hover:underline">حذف</button>
                 </div>
             </div>`;
     };
@@ -90,7 +90,7 @@
                             ${renderOptions(students, item.id || item.name || '')}
                         </select>
                     </div>
-                    <button type="button" onclick="this.closest('.term-student-item').remove()" class="text-red-500 text-sm px-3 py-2 hover:underline">حذف</button>
+                    <button type="button" onclick="if (document.querySelectorAll('.term-student-item').length > 1) this.closest('.term-student-item').remove(); else alert('حداقل یک هنرجو لازم است')" class="text-red-500 text-sm px-3 py-2 hover:underline">حذف</button>
                 </div>
             </div>`;
     };
@@ -104,7 +104,7 @@
                         <label class="text-xs text-gray-500 mb-1 block">مبلغ قسط</label>
                         <input type="number" min="0" class="term-installment-amount w-full border border-gray-300 rounded-2xl py-3 px-4" value="${escapeHtml(item.amount ?? '')}" placeholder="مبلغ">
                     </div>
-                    <button type="button" onclick="this.closest('.term-installment-item').remove()" class="text-red-500 text-sm px-3 py-2 hover:underline">حذف</button>
+                    <button type="button" onclick="if (document.querySelectorAll('.term-installment-item').length > 1) this.closest('.term-installment-item').remove(); else alert('حداقل یک قسط لازم است')" class="text-red-500 text-sm px-3 py-2 hover:underline">حذف</button>
                 </div>
             </div>`;
     };
@@ -166,7 +166,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">دوره مرتبط *</label>
-                    <select id="${id('Course')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <select id="${id('Course')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5" onchange="window.updateTermCourseCapacityHint('${prefix}')">
                         <option value="">انتخاب دوره</option>
                         ${renderOptions(courses, item.courseId || item.course || '')}
                     </select>
@@ -196,7 +196,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">هزینه ترم</label>
-                    <input id="${id('Cost')}" type="number" min="0" value="${escapeHtml(item.cost ?? '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <input id="${id('Cost')}" type="number" min="0" value="${escapeHtml(item.cost ?? '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5" onchange="window.syncTermInstallments('${prefix}')" oninput="window.syncTermInstallments('${prefix}')">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">وضعیت</label>
@@ -237,12 +237,14 @@
             <div class="mt-6">
                 <label class="block text-sm font-medium mb-2">هنرجویان</label>
                 <div id="${sContainer}">${students.map(function (s) { return window.getTermStudentFieldHTML(s); }).join('')}</div>
+                <div id="${prefix ? (prefix + 'CourseCapacityHint') : 'termCourseCapacityHint'}" class="text-xs text-gray-500 mb-2">${item.course ? `ظرفیت هنرجویان این دوره ${window.getTermCourseCapacity(item.courseId || item.course)} نفر است` : 'ظرفیت دوره بعد از انتخاب دوره نمایش داده می‌شود'}</div>
                 <button type="button" onclick="addTermStudentField('${sContainer}')" class="mt-2 text-sm text-indigo-600">+ افزودن هنرجو</button>
             </div>
 
             <div class="mt-6">
                 <label class="block text-sm font-medium mb-2">اقساط</label>
                 <div id="${iContainer}">${installments.map(function (x) { return window.getTermInstallmentFieldHTML(x); }).join('')}</div>
+                <div class="text-xs text-gray-500 mb-2">قسط اول همیشه برابر مبلغ کل هزینه ترم است و قسط آخر به‌صورت خودکار محاسبه می‌شود.</div>
                 <button type="button" onclick="addTermInstallmentField('${iContainer}')" class="mt-2 text-sm text-indigo-600">+ افزودن قسط</button>
             </div>
         `;

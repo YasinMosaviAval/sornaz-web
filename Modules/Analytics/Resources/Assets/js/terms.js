@@ -115,6 +115,66 @@ function pickN(arr, n) {
 }
 
 // ==================== ۴۰ ترم نمونه ====================
+const termCourseCapacities = { 1: 8, 2: 10, 3: 12, 4: 6, 5: 7, 6: 9, 7: 8, 8: 10 };
+window.getTermCourseCapacity = function (courseId) {
+    if (!courseId && courseId !== 0) return 8;
+    const normalized = Number(courseId);
+    return termCourseCapacities[normalized] || 8;
+};
+
+window.updateTermCourseCapacityHint = function (prefix) {
+    const courseField = document.getElementById(prefix ? (prefix + 'Course') : 'termCourse');
+    const hint = document.getElementById(prefix ? (prefix + 'CourseCapacityHint') : 'termCourseCapacityHint');
+    if (!hint) return;
+    const courseId = courseField ? courseField.value : '';
+    hint.textContent = `ظرفیت هنرجویان این دوره ${window.getTermCourseCapacity(courseId)} نفر است`;
+};
+
+window.syncTermInstallments = function (prefix) {
+    const costField = document.getElementById(prefix ? (prefix + 'Cost') : 'termCost');
+    const container = document.getElementById(prefix ? (prefix + 'InstallmentsContainer') : 'termInstallmentsContainer');
+    if (!costField || !container) return;
+    const cost = Number(costField.value || 0);
+    const items = container.querySelectorAll('.term-installment-item');
+    if (!items.length) return;
+    const firstInput = items[0].querySelector('.term-installment-amount');
+    if (firstInput && !firstInput.value) firstInput.value = cost;
+};
+
+function validateTermData(data) {
+    if (!data.name) {
+        alert('نام ترم الزامی است');
+        return false;
+    }
+    if (!data.teachers || data.teachers.length < 1) {
+        alert('حداقل یک استاد باید انتخاب شود');
+        return false;
+    }
+    if (!data.students || data.students.length < 1) {
+        alert('حداقل یک هنرجو باید انتخاب شود');
+        return false;
+    }
+    const courseCapacity = window.getTermCourseCapacity(data.courseId);
+    if (data.students.length > courseCapacity) {
+        alert('تعداد هنرجویان برای این دوره بیش از ظرفیت مجاز است');
+        return false;
+    }
+    const installments = (data.installments || []).filter(Boolean);
+    if (!installments.length) {
+        alert('حداقل یک قسط باید ثبت شود');
+        return false;
+    }
+    const totalCost = Number(data.cost || 0);
+    const installmentSum = installments.reduce(function (sum, item) {
+        return sum + Number(item.amount || 0);
+    }, 0);
+    if (installmentSum !== totalCost) {
+        alert('جمع اقساط باید برابر مبلغ کل هزینه ترم باشد');
+        return false;
+    }
+    return true;
+}
+
 let allTerms = [];
 (function buildSampleTerms() {
     const branches = getTermBranches();
@@ -616,7 +676,7 @@ window.openAddTermModal = function () {
 
 window.saveTerm = function () {
     const data = readTermForm('');
-    if (!data.name) return alert('نام ترم الزامی است');
+    if (!validateTermData(data)) return;
     allTerms.unshift(Object.assign({ id: Date.now(), attendance: {} }, data));
     renderTermCourseFilter();
     filterTerms();
@@ -638,7 +698,7 @@ window.editTerm = function (id) {
 
 window.saveEditedTerm = function (id) {
     const data = readTermForm('editTerm');
-    if (!data.name) return alert('نام ترم الزامی است');
+    if (!validateTermData(data)) return;
     const index = allTerms.findIndex(function (x) { return x.id === id; });
     if (index === -1) return;
     allTerms[index] = Object.assign({}, allTerms[index], data);
@@ -657,7 +717,7 @@ window.toggleTermInlineEdit = function (id) {
 
 window.saveInlineTerm = function (id) {
     const data = readTermForm('inlineTerm' + id);
-    if (!data.name) return alert('نام ترم الزامی است');
+    if (!validateTermData(data)) return;
     const index = allTerms.findIndex(function (x) { return x.id === id; });
     if (index === -1) return;
     allTerms[index] = Object.assign({}, allTerms[index], data);
