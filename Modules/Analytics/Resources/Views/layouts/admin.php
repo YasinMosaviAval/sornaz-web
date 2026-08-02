@@ -35,6 +35,8 @@
     pushScript('dashboard.js');
     pushScript('add-user-modal.js');
     
+    pushScript('account-templates.js');
+    pushScript('account.js');
     pushScript('report-templates.js');
     pushScript('reports.js');
     pushScript('message-templates.js');
@@ -82,7 +84,6 @@
     pushScript('permission-templates.js');
     pushScript('permissions.js');
     // pushScript('contracts.js');
-    pushScript('account.js');
 
     pushScript('awards.js');
     pushScript('certificates.js');
