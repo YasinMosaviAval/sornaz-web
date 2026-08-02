@@ -39,6 +39,64 @@
         }).join('');
     }
 
+
+    function lessonTypeOptions(selected) {
+        return renderOptions((window.lessonTypes || []), selected);
+    }
+    function lessonLevelOptions(selected) {
+        return renderOptions((window.lessonLevels || []), selected);
+    }
+    function profileVisibilityOptions(selected) {
+        return renderOptions((window.profileVisibilities || [
+            { value: 'public', label: 'عمومی' },
+            { value: 'private', label: 'خصوصی' }
+        ]), selected || 'public');
+    }
+    function getLessonTypeLabel(value) {
+        const t = (window.lessonTypes || []).find(x => x.value === value);
+        return t ? t.label : (value || '—');
+    }
+    function getLessonLevelLabel(value) {
+        const t = (window.lessonLevels || []).find(x => x.value === value);
+        return t ? t.label : (value || '—');
+    }
+
+    window.getStaffLessonRowHTML = function (prefix, index, lesson, isFirst) {
+        lesson = lesson || {};
+        const removeBtn = isFirst
+            ? '<button type="button" disabled class="opacity-40 cursor-not-allowed text-gray-400 text-sm px-3 py-2" title="مورد اول قابل حذف نیست">حذف</button>'
+            : `<button type="button" onclick="removeStaffLessonRow(this)" class="text-red-500 hover:underline text-sm px-3 py-2">حذف</button>`;
+        return `<div data-lesson-row class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end border border-gray-100 rounded-2xl p-3 bg-gray-50/50">
+            <div class="sm:col-span-5">
+                <label class="block text-xs font-medium mb-1 text-gray-500">نوع درس *</label>
+                <select data-lesson-type class="w-full border border-gray-300 rounded-2xl py-3 px-4">${lessonTypeOptions(lesson.type)}</select>
+            </div>
+            <div class="sm:col-span-5">
+                <label class="block text-xs font-medium mb-1 text-gray-500">سطح درس *</label>
+                <select data-lesson-level class="w-full border border-gray-300 rounded-2xl py-3 px-4">${lessonLevelOptions(lesson.level)}</select>
+            </div>
+            <div class="sm:col-span-2 flex justify-end">${removeBtn}</div>
+        </div>`;
+    };
+
+    function staffLessonsBlock(prefix, item, typeSelectId) {
+        const isTeacher = (item && item.type === 'teacher') || false;
+        const lessons = (item && item.lessons && item.lessons.length) ? item.lessons : [{ type: 'piano', level: 'beginner' }];
+        const rows = lessons.map((l, i) => window.getStaffLessonRowHTML(prefix, i, l, i === 0)).join('');
+        return `<div id="${prefix}LessonsBox" class="${isTeacher ? '' : 'hidden'} space-y-3 border border-indigo-100 rounded-2xl p-4 bg-indigo-50/30">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <p class="text-sm font-semibold text-indigo-700">دروس و سطوح (ویژه استاد)</p>
+                    <p class="text-xs text-gray-500 mt-0.5">حداقل یک مورد الزامی است؛ مورد اول قابل حذف نیست.</p>
+                </div>
+                <button type="button" onclick="addStaffLessonRow('${prefix}')" class="text-sm bg-white border border-indigo-200 text-indigo-700 px-3 py-2 rounded-xl hover:bg-indigo-50">
+                    <i class="fas fa-plus ml-1"></i> افزودن درس
+                </button>
+            </div>
+            <div id="${prefix}LessonsContainer" class="space-y-3">${rows}</div>
+        </div>`;
+    }
+
     window.getStaffEmptyRowHTML = function () {
         return `<tr><td colspan="9" class="py-12 text-center text-gray-400">هیچ پرسنلی یافت نشد</td></tr>`;
     };
@@ -61,7 +119,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-2">نوع قرارداد *</label>
-                        <select id="inlineStaffType-${item.id}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                        <select id="inlineStaffType-${item.id}" onchange="toggleStaffLessonFields('inlineStaffType-${item.id}', 'inlineStaff${item.id}LessonsBox')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                             ${renderOptions(staffTypes, item.type)}
                         </select>
                     </div>
@@ -98,12 +156,27 @@
                         <textarea id="inlineStaffContractDescription-${item.id}" rows="4" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${escapeHtml(item.contractDescription)}</textarea>
                     </div>
                     <div>
+                        <label class="block text-sm font-medium mb-2">شروع فعالیت</label>
+                        <input id="inlineStaffActivityStart-${item.id}" type="date" value="${escapeHtml(item.activityStart || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">نمایش پروفایل</label>
+                        <select id="inlineStaffProfileVisibility-${item.id}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                            ${profileVisibilityOptions(item.profileVisibility)}
+                        </select>
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium mb-2">وضعیت</label>
                         <select id="inlineStaffStatus-${item.id}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                             ${renderOptions(staffStatuses.map(status => ({ value: status, label: status })), item.status)}
                         </select>
                     </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-2">نوع قرارداد (تأثیر روی دروس)</label>
+                        <p class="text-xs text-gray-400 mb-2">با تغییر نوع به «استاد»، بخش دروس نمایش داده می‌شود.</p>
+                    </div>
                 </div>
+                ${staffLessonsBlock('inlineStaff' + item.id, item)}
                 <div class="flex flex-col sm:flex-row gap-4 pt-4">
                     <button onclick="saveInlineStaff(${item.id})" class="w-full sm:w-auto min-w-[140px] bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-4 rounded-2xl font-medium">ذخیره</button>
                     <button onclick="toggleStaffInlineEdit(${item.id})" class="w-full sm:w-auto min-w-[140px] border border-gray-300 px-5 py-4 rounded-2xl hover:bg-gray-50">انصراف</button>
@@ -262,7 +335,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-2">نوع قرارداد *</label>
-                                <select id="staffType" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                                <select id="staffType" onchange="toggleStaffLessonFields('staffType', 'staffLessonsBox')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                                     ${renderOptions(staffTypes)}
                                 </select>
                             </div>
@@ -298,7 +371,18 @@
                                 <label class="block text-sm font-medium mb-2">شرح قرارداد</label>
                                 <textarea id="staffContractDescription" rows="4" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"></textarea>
                             </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">شروع فعالیت</label>
+                                <input id="staffActivityStart" type="date" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">نمایش پروفایل</label>
+                                <select id="staffProfileVisibility" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                                    ${profileVisibilityOptions('public')}
+                                </select>
+                            </div>
                         </div>
+                        ${staffLessonsBlock('staff', { type: 'teacher', lessons: [{ type: 'piano', level: 'beginner' }] })}
                         <div class="flex gap-4 pt-4">
                             <button onclick="saveStaff()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-medium">ذخیره پرسنل</button>
                             <button onclick="closeModal()" class="flex-1 border border-gray-300 py-4 rounded-2xl hover:bg-gray-50">انصراف</button>
@@ -330,8 +414,19 @@
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">شماره تماس</span><span class="font-medium">${escapeHtml(item.phone)}</span></div>
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">نوع پرسنل</span><span class="font-medium">${escapeHtml(item.typeLabel)}</span></div>
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">وضعیت</span><span class="font-medium">${escapeHtml(item.status)}</span></div>
+                                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">شروع فعالیت</span><span class="font-medium">${escapeHtml(item.activityStart || '—')}</span></div>
+                                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">نمایش پروفایل</span><span class="font-medium">${item.profileVisibility === 'private' ? 'خصوصی' : 'عمومی'}</span></div>
                             </div>
                         </div>
+                        ${item.type === 'teacher' ? `
+                        <div>
+                            <h3 class="font-semibold text-indigo-700 mb-4 flex items-center gap-2"><i class="fas fa-music"></i> دروس و سطوح</h3>
+                            <div class="flex flex-wrap gap-2">
+                                ${(item.lessons && item.lessons.length ? item.lessons : []).map(l =>
+                                    `<span class="px-3 py-1.5 rounded-full text-xs bg-indigo-50 text-indigo-700 border border-indigo-100">${escapeHtml(getLessonTypeLabel(l.type))} · ${escapeHtml(getLessonLevelLabel(l.level))}</span>`
+                                ).join('') || '<span class="text-sm text-gray-400">درسی ثبت نشده</span>'}
+                            </div>
+                        </div>` : ''}
                         <div>
                             <h3 class="font-semibold text-indigo-700 mb-4 flex items-center gap-2"><i class="fas fa-file-contract"></i> اطلاعات قرارداد</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
@@ -372,7 +467,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-2">نوع قرارداد *</label>
-                                <select id="editStaffType" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                                <select id="editStaffType" onchange="toggleStaffLessonFields('editStaffType', 'editStaffLessonsBox')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                                     ${renderOptions(staffTypes, item.type)}
                                 </select>
                             </div>
@@ -409,12 +504,23 @@
                                 <textarea id="editStaffContractDescription" rows="4" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${escapeHtml(item.contractDescription)}</textarea>
                             </div>
                             <div>
+                                <label class="block text-sm font-medium mb-2">شروع فعالیت</label>
+                                <input id="editStaffActivityStart" type="date" value="${escapeHtml(item.activityStart || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">نمایش پروفایل</label>
+                                <select id="editStaffProfileVisibility" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                                    ${profileVisibilityOptions(item.profileVisibility)}
+                                </select>
+                            </div>
+                            <div>
                                 <label class="block text-sm font-medium mb-2">وضعیت</label>
                                 <select id="editStaffStatus" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                                     ${renderOptions(staffStatuses.map(status => ({ value: status, label: status })), item.status)}
                                 </select>
                             </div>
                         </div>
+                        ${staffLessonsBlock('editStaff', item)}
                         <div class="flex gap-4 pt-4">
                             <button onclick="saveEditedStaff(${item.id})" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-medium">ذخیره تغییرات</button>
                             <button onclick="closeModal()" class="flex-1 border border-gray-300 py-4 rounded-2xl hover:bg-gray-50">انصراف</button>
