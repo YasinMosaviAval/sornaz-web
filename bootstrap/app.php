@@ -1,10 +1,10 @@
 <?php
 
-use Core\Application\Application;
-use Core\Csrf\Csrf;
-use Core\Database\Connection;
-use Core\Events\EventDispatcher;
-use Core\Session\Session;
+use Core\application\application;
+use Core\csrf\Csrf;
+use Core\database\Connection;
+use Core\events\EventDispatcher;
+use Core\session\Session;
 use Modules\System\Contracts\UserRepositoryInterface;
 use Modules\System\Repositories\UserRepository;
 use Modules\Blog\Contracts\BlogRepositoryInterface;

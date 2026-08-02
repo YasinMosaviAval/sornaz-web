@@ -1,10 +1,9 @@
 <?php
+namespace Core\application;
 
-namespace Core\Application;
-
-use Core\Container\Container;
+use Core\container\container;
 use Core\Module\ModuleLoader;
-use Core\Providers\ProviderManager;
+use Core\providers\ProviderManager;
 use Core\Module\ModuleManager;
 
 class Application {
@@ -47,7 +46,7 @@ class Application {
     public function run() {
         $this->bootstrap();
         require base_path('routes/web.php');
-        (new Kernel())->handle();
+        (new kernel())->handle();
     }
 
 

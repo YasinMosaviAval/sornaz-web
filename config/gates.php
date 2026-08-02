@@ -1,6 +1,6 @@
 <?php
 
-use Core\Auth\Gate;
+use Core\auth\Gate;
 
 Gate::define(
     'edit-post',
