@@ -63,6 +63,35 @@ function getTermBranches() {
     ];
 }
 
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function buildOptionMarkup(options, selectedValue) {
+    return (options || []).map(function (option) {
+        const value = option.value ?? option.id ?? option.name ?? option;
+        const label = option.label ?? option.name ?? option;
+        const isSelected = String(value) === String(selectedValue) ? 'selected' : '';
+        return '<option value="' + escapeHtml(value) + '" ' + isSelected + '>' + escapeHtml(label) + '</option>';
+    }).join('');
+}
+
+function getTermPrefixFromContainer(containerId) {
+    if (!containerId) return '';
+    return containerId.replace(/(TeachersContainer|StudentsContainer|InstallmentsContainer)$/, '');
+}
+
+function getTermCourseCapacityFromContext(prefix) {
+    const courseField = document.getElementById(prefix ? (prefix + 'Course') : 'termCourse');
+    const courseId = courseField ? courseField.value : '';
+    return window.getTermCourseCapacity(courseId);
+}
+
 window.getTermCourseOptions = function () {
     if (typeof allCourses !== 'undefined' && allCourses.length) {
         return allCourses.map(function (c) { return { value: c.id, label: c.name, id: c.id, name: c.name }; });
@@ -127,7 +156,10 @@ window.updateTermCourseCapacityHint = function (prefix) {
     const hint = document.getElementById(prefix ? (prefix + 'CourseCapacityHint') : 'termCourseCapacityHint');
     if (!hint) return;
     const courseId = courseField ? courseField.value : '';
-    hint.textContent = `ظرفیت هنرجویان این دوره ${window.getTermCourseCapacity(courseId)} نفر است`;
+    const capacity = window.getTermCourseCapacity(courseId);
+    hint.textContent = `ظرفیت هنرجویان این دوره ${capacity} نفر است`;
+    window.refreshTermStudentFieldLimit(prefix);
+    window.refreshTermStudentSelectionOptions(prefix ? (prefix + 'StudentsContainer') : 'termStudentsContainer');
 };
 
 window.syncTermInstallments = function (prefix) {
@@ -137,8 +169,69 @@ window.syncTermInstallments = function (prefix) {
     const cost = Number(costField.value || 0);
     const items = container.querySelectorAll('.term-installment-item');
     if (!items.length) return;
-    const firstInput = items[0].querySelector('.term-installment-amount');
-    if (firstInput && !firstInput.value) firstInput.value = cost;
+};
+
+window.refreshTermSelectionOptionsForInput = function (selectEl) {
+    if (!selectEl) return;
+    const containerEl = selectEl.closest('[id$="TeachersContainer"], [id$="StudentsContainer"]');
+    if (!containerEl) return;
+    if (containerEl.id.endsWith('TeachersContainer')) {
+        window.refreshTermTeacherSelectionOptions(containerEl.id);
+    } else if (containerEl.id.endsWith('StudentsContainer')) {
+        window.refreshTermStudentSelectionOptions(containerEl.id);
+    }
+};
+
+window.refreshTermTeacherSelectionOptions = function (containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const selects = Array.from(container.querySelectorAll('.term-teacher-select'));
+    const options = (typeof window.getTermTeacherOptions === 'function') ? window.getTermTeacherOptions() : [];
+    selects.forEach(function (selectEl) {
+        const currentValue = selectEl.value;
+        const usedValues = selects.filter(function (item) { return item !== selectEl && item.value; }).map(function (item) { return String(item.value); });
+        const filtered = options.filter(function (option) {
+            const optionValue = String(option.value ?? option.id ?? option.name ?? option);
+            return !usedValues.includes(optionValue) || optionValue === String(currentValue);
+        });
+        selectEl.innerHTML = '<option value="">انتخاب استاد</option>' + buildOptionMarkup(filtered, currentValue);
+        if (!filtered.some(function (option) { return String(option.value ?? option.id ?? option.name ?? option) === String(currentValue); })) {
+            selectEl.value = '';
+        }
+    });
+};
+
+window.refreshTermStudentSelectionOptions = function (containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const selects = Array.from(container.querySelectorAll('.term-student-select'));
+    const options = (typeof window.getTermStudentOptions === 'function') ? window.getTermStudentOptions() : [];
+    selects.forEach(function (selectEl) {
+        const currentValue = selectEl.value;
+        const usedValues = selects.filter(function (item) { return item !== selectEl && item.value; }).map(function (item) { return String(item.value); });
+        const filtered = options.filter(function (option) {
+            const optionValue = String(option.value ?? option.id ?? option.name ?? option);
+            return !usedValues.includes(optionValue) || optionValue === String(currentValue);
+        });
+        selectEl.innerHTML = '<option value="">انتخاب هنرجو</option>' + buildOptionMarkup(filtered, currentValue);
+        if (!filtered.some(function (option) { return String(option.value ?? option.id ?? option.name ?? option) === String(currentValue); })) {
+            selectEl.value = '';
+        }
+    });
+};
+
+window.refreshTermStudentFieldLimit = function (prefix) {
+    const containerId = prefix ? (prefix + 'StudentsContainer') : 'termStudentsContainer';
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const capacity = getTermCourseCapacityFromContext(prefix);
+    const currentCount = container.querySelectorAll('.term-student-item').length;
+    const buttons = Array.from(document.querySelectorAll('button')).filter(function (btn) {
+        return btn.getAttribute('onclick') && btn.getAttribute('onclick').indexOf('addTermStudentField(\'' + containerId + '\'') !== -1;
+    });
+    buttons.forEach(function (btn) {
+        btn.disabled = currentCount >= capacity;
+    });
 };
 
 function validateTermData(data) {
@@ -154,6 +247,16 @@ function validateTermData(data) {
         alert('حداقل یک هنرجو باید انتخاب شود');
         return false;
     }
+    const teacherIds = (data.teachers || []).map(function (teacher) { return String(teacher && teacher.id ? teacher.id : ''); }).filter(Boolean);
+    if (teacherIds.length !== new Set(teacherIds).size) {
+        alert('هر استاد فقط یک بار قابل انتخاب است');
+        return false;
+    }
+    const studentIds = (data.students || []).map(function (student) { return String(student && student.id ? student.id : ''); }).filter(Boolean);
+    if (studentIds.length !== new Set(studentIds).size) {
+        alert('هر هنرجو فقط یک بار قابل انتخاب است');
+        return false;
+    }
     const courseCapacity = window.getTermCourseCapacity(data.courseId);
     if (data.students.length > courseCapacity) {
         alert('تعداد هنرجویان برای این دوره بیش از ظرفیت مجاز است');
@@ -164,12 +267,11 @@ function validateTermData(data) {
         alert('حداقل یک قسط باید ثبت شود');
         return false;
     }
-    const totalCost = Number(data.cost || 0);
-    const installmentSum = installments.reduce(function (sum, item) {
-        return sum + Number(item.amount || 0);
-    }, 0);
-    if (installmentSum !== totalCost) {
-        alert('جمع اقساط باید برابر مبلغ کل هزینه ترم باشد');
+    const hasPositiveAmounts = installments.every(function (item) {
+        return Number(item.amount || 0) > 0;
+    });
+    if (!hasPositiveAmounts) {
+        alert('هر قسط باید مبلغی مثبت داشته باشد');
         return false;
     }
     return true;
@@ -563,11 +665,24 @@ window.promptAddTermClassroom = function () {
 // ==================== multi fields helpers ====================
 window.addTermTeacherField = function (containerId) {
     const el = document.getElementById(containerId);
-    if (el && window.getTermTeacherFieldHTML) el.insertAdjacentHTML('beforeend', window.getTermTeacherFieldHTML({}));
+    if (el && window.getTermTeacherFieldHTML) {
+        el.insertAdjacentHTML('beforeend', window.getTermTeacherFieldHTML({}));
+        window.refreshTermTeacherSelectionOptions(containerId);
+    }
 };
 window.addTermStudentField = function (containerId) {
     const el = document.getElementById(containerId);
-    if (el && window.getTermStudentFieldHTML) el.insertAdjacentHTML('beforeend', window.getTermStudentFieldHTML({}));
+    if (!el) return;
+    const prefix = getTermPrefixFromContainer(containerId);
+    const capacity = getTermCourseCapacityFromContext(prefix);
+    const currentCount = el.querySelectorAll('.term-student-item').length;
+    if (currentCount >= capacity) {
+        alert('حداکثر ' + capacity + ' هنرجو برای این دوره قابل انتخاب است');
+        return;
+    }
+    if (window.getTermStudentFieldHTML) el.insertAdjacentHTML('beforeend', window.getTermStudentFieldHTML({}));
+    window.refreshTermStudentSelectionOptions(containerId);
+    window.refreshTermStudentFieldLimit(prefix);
 };
 window.addTermInstallmentField = function (containerId) {
     const el = document.getElementById(containerId);
@@ -625,11 +740,15 @@ function readTermForm(prefix) {
         const sel = div.querySelector('.term-teacher-select');
         if (!sel || !sel.value) return null;
         return { id: sel.value, name: sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : sel.value };
+    }).filter(function (item, index, arr) {
+        return item && arr.findIndex(function (candidate) { return candidate && String(candidate.id) === String(item.id); }) === index;
     });
     const students = readCollection(sContainer, '.term-student-item', function (div) {
         const sel = div.querySelector('.term-student-select');
         if (!sel || !sel.value) return null;
         return { id: sel.value, name: sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : sel.value };
+    }).filter(function (item, index, arr) {
+        return item && arr.findIndex(function (candidate) { return candidate && String(candidate.id) === String(item.id); }) === index;
     });
     const installments = readCollection(iContainer, '.term-installment-item', function (div) {
         const amount = parseFloat(div.querySelector('.term-installment-amount') && div.querySelector('.term-installment-amount').value || 0);
