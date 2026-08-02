@@ -28,6 +28,33 @@ const contractDescriptions = [
     'قرارداد شامل انجام وظایف مدیریتی، گزارش‌دهی و هماهنگی داخلی می‌باشد.'
 ];
 const staffStatuses = ["فعال", "مرخصی", "غیرفعال"];
+const lessonTypes = [
+    { value: 'piano', label: 'پیانو' },
+    { value: 'guitar', label: 'گیتار' },
+    { value: 'violin', label: 'ویولن' },
+    { value: 'vocal', label: 'آواز' },
+    { value: 'drums', label: 'درام' },
+    { value: 'flute', label: 'فلوت' },
+    { value: 'theory', label: 'تئوری موسیقی' },
+    { value: 'other', label: 'سایر' }
+];
+const lessonLevels = [
+    { value: 'beginner', label: 'مبتدی' },
+    { value: 'intermediate', label: 'متوسط' },
+    { value: 'advanced', label: 'پیشرفته' },
+    { value: 'professional', label: 'حرفه‌ای' }
+];
+const profileVisibilities = [
+    { value: 'public', label: 'عمومی' },
+    { value: 'private', label: 'خصوصی' }
+];
+window.staffTypes = staffTypes;
+window.branches = branches;
+window.contractCurrencies = contractCurrencies;
+window.staffStatuses = staffStatuses;
+window.lessonTypes = lessonTypes;
+window.lessonLevels = lessonLevels;
+window.profileVisibilities = profileVisibilities;
 
 const pdfExportColumns = [
     { field: 'index', label: 'ردیف' },
@@ -58,6 +85,16 @@ for (let i = 1; i <= 28; i++) {
     const endDate = getRandomDate(startDate, '2025-12-31');
     const currency = contractCurrencies[Math.floor(Math.random() * contractCurrencies.length)];
 
+    const lessons = type.value === 'teacher' ? [{
+        type: lessonTypes[Math.floor(Math.random() * lessonTypes.length)].value,
+        level: lessonLevels[Math.floor(Math.random() * lessonLevels.length)].value
+    }] : [];
+    if (type.value === 'teacher' && Math.random() > 0.5) {
+        lessons.push({
+            type: lessonTypes[Math.floor(Math.random() * lessonTypes.length)].value,
+            level: lessonLevels[Math.floor(Math.random() * lessonLevels.length)].value
+        });
+    }
     allStaff.push({
         id: i,
         name: `${first} ${last}`,
@@ -72,7 +109,10 @@ for (let i = 1; i <= 28; i++) {
         currencyId: currency.id,
         currency: currency.label,
         status: staffStatuses[Math.floor(Math.random() * staffStatuses.length)],
-        phone: `۰۹۱${Math.floor(10000000 + Math.random() * 89999999)}`
+        phone: `۰۹۱${Math.floor(10000000 + Math.random() * 89999999)}`,
+        activityStart: getRandomDate('2018-01-01', '2023-12-31'),
+        profileVisibility: Math.random() > 0.3 ? 'public' : 'private',
+        lessons: lessons
     });
 }
 
@@ -132,6 +172,57 @@ window.sortStaffBy = function(field) {
     sortStaffItems();
     renderStaffTable(filteredStaff);
     updateSortIcons();
+};
+
+
+function getLessonTypeLabel(value) {
+    const t = lessonTypes.find(x => x.value === value);
+    return t ? t.label : value || '—';
+}
+function getLessonLevelLabel(value) {
+    const t = lessonLevels.find(x => x.value === value);
+    return t ? t.label : value || '—';
+}
+function formatLessonsSummary(lessons) {
+    if (!lessons || !lessons.length) return '—';
+    return lessons.map(l => getLessonTypeLabel(l.type) + ' / ' + getLessonLevelLabel(l.level)).join(' · ');
+}
+function readLessonsFromPrefix(prefix) {
+    const container = document.getElementById(prefix + 'LessonsContainer');
+    if (!container) return [];
+    const rows = container.querySelectorAll('[data-lesson-row]');
+    const list = [];
+    rows.forEach(row => {
+        const typeSel = row.querySelector('[data-lesson-type]');
+        const levelSel = row.querySelector('[data-lesson-level]');
+        if (!typeSel || !levelSel) return;
+        list.push({ type: typeSel.value, level: levelSel.value });
+    });
+    return list;
+}
+window.toggleStaffLessonFields = function(selectId, containerId) {
+    const sel = document.getElementById(selectId);
+    const box = document.getElementById(containerId);
+    if (!sel || !box) return;
+    const isTeacher = sel.value === 'teacher';
+    box.classList.toggle('hidden', !isTeacher);
+};
+window.addStaffLessonRow = function(prefix) {
+    const container = document.getElementById(prefix + 'LessonsContainer');
+    if (!container || !window.getStaffLessonRowHTML) return;
+    const idx = container.querySelectorAll('[data-lesson-row]').length;
+    container.insertAdjacentHTML('beforeend', window.getStaffLessonRowHTML(prefix, idx, null, idx === 0));
+};
+window.removeStaffLessonRow = function(btn) {
+    const row = btn.closest('[data-lesson-row]');
+    if (!row) return;
+    const container = row.parentElement;
+    if (!container) return;
+    if (container.querySelectorAll('[data-lesson-row]').length <= 1) {
+        alert('حداقل یک درس باید باقی بماند.');
+        return;
+    }
+    row.remove();
 };
 
 // ==================== رندر جدول ====================
@@ -311,6 +402,16 @@ window.saveInlineStaff = function(id) {
     const currencyId = parseInt(document.getElementById(`inlineStaffCurrency-${id}`).value, 10);
     const currency = contractCurrencies.find(c => c.id === currencyId)?.label || 'تومان';
     const status = document.getElementById(`inlineStaffStatus-${id}`).value;
+    const activityStart = document.getElementById(`inlineStaffActivityStart-${id}`)?.value || '';
+    const profileVisibility = document.getElementById(`inlineStaffProfileVisibility-${id}`)?.value || 'public';
+    let lessons = [];
+    if (type.value === 'teacher') {
+        lessons = readLessonsFromPrefix('inlineStaff' + id);
+        if (!lessons.length) {
+            alert('برای استاد حداقل یک نوع درس و سطح باید انتخاب شود.');
+            return;
+        }
+    }
 
     const index = allStaff.findIndex(x => x.id === id);
     if (index === -1) return;
@@ -329,7 +430,10 @@ window.saveInlineStaff = function(id) {
         price: price,
         currencyId: currencyId,
         currency: currency,
-        status: status
+        status: status,
+        activityStart: activityStart,
+        profileVisibility: profileVisibility,
+        lessons: lessons
     };
 
     editingRowId = null;
@@ -341,10 +445,12 @@ window.saveInlineStaff = function(id) {
 window.exportStaffToExcel = function() {
     const data = filteredStaff.length ? filteredStaff : allStaff;
     let csv = '\uFEFF';
-    csv += 'ردیف,نام,نوع پرسنل,عنوان قرارداد,شعبه,تاریخ شروع,تاریخ خاتمه,مبلغ قرارداد,واحد پول,وضعیت,شماره تماس\n';
+    csv += 'ردیف,نام,نوع پرسنل,عنوان قرارداد,شعبه,تاریخ شروع,تاریخ خاتمه,مبلغ قرارداد,واحد پول,وضعیت,شماره تماس,شروع فعالیت,نمایش پروفایل,دروس\n';
 
     data.forEach((item, index) => {
-        csv += `${index + 1},"${item.name}","${item.typeLabel}","${item.contractTitle}","${item.branch}",${item.startDate},${item.endDate},${item.price},"${item.currency}","${item.status}","${item.phone}"\n`;
+        const lessonsText = formatLessonsSummary(item.lessons).replace(/"/g, '""');
+        const vis = item.profileVisibility === 'private' ? 'خصوصی' : 'عمومی';
+        csv += `${index + 1},"${item.name}","${item.typeLabel}","${item.contractTitle}","${item.branch}",${item.startDate},${item.endDate},${item.price},"${item.currency}","${item.status}","${item.phone}","${item.activityStart || ''}","${vis}","${lessonsText}"\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -473,6 +579,17 @@ window.saveStaff = function() {
     const currencyId = parseInt(document.getElementById('staffCurrency').value, 10);
     const currency = contractCurrencies.find(c => c.id === currencyId)?.label || 'تومان';
 
+    const activityStart = document.getElementById('staffActivityStart')?.value || '';
+    const profileVisibility = document.getElementById('staffProfileVisibility')?.value || 'public';
+    let lessons = [];
+    if (type.value === 'teacher') {
+        lessons = readLessonsFromPrefix('staff');
+        if (!lessons.length) {
+            alert('برای استاد حداقل یک نوع درس و سطح باید انتخاب شود.');
+            return;
+        }
+    }
+
     allStaff.unshift({
         id: Date.now(),
         name: name,
@@ -487,7 +604,10 @@ window.saveStaff = function() {
         price: price,
         currencyId: currencyId,
         currency: currency,
-        status: 'فعال'
+        status: 'فعال',
+        activityStart: activityStart,
+        profileVisibility: profileVisibility,
+        lessons: lessons
     });
 
     filterStaff();
@@ -536,6 +656,16 @@ window.saveEditedStaff = function(id) {
     const currencyId = parseInt(document.getElementById('editStaffCurrency').value, 10);
     const currency = contractCurrencies.find(c => c.id === currencyId)?.label || 'تومان';
     const status = document.getElementById('editStaffStatus').value;
+    const activityStart = document.getElementById('editStaffActivityStart')?.value || '';
+    const profileVisibility = document.getElementById('editStaffProfileVisibility')?.value || 'public';
+    let lessons = [];
+    if (type.value === 'teacher') {
+        lessons = readLessonsFromPrefix('editStaff');
+        if (!lessons.length) {
+            alert('برای استاد حداقل یک نوع درس و سطح باید انتخاب شود.');
+            return;
+        }
+    }
 
     allStaff[index] = {
         ...allStaff[index],
@@ -551,7 +681,10 @@ window.saveEditedStaff = function(id) {
         price: price,
         currencyId: currencyId,
         currency: currency,
-        status: status
+        status: status,
+        activityStart: activityStart,
+        profileVisibility: profileVisibility,
+        lessons: lessons
     };
 
     filterStaff();
