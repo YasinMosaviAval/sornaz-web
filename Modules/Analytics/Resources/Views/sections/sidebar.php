@@ -15,7 +15,7 @@
             <li><a href="#" onclick="showSection('branches')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-building w-5"></i> شعبه‌ها</a></li>
             <li>
                 <button type="button" onclick="toggleSidebarSubmenu('profilesSubmenu', this)" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 text-right">
-                    <span class="flex items-center gap-3"><i class="fas fa-id-card w-5"></i> پروفایل‌ها</span>
+                    <span class="flex items-center gap-3"><i class="fas fa-id-card w-5"></i> نقش‌ها و دسترسی‌ها</span>
                     <i class="fas fa-chevron-down text-xs transition-transform duration-200 submenu-chevron"></i>
                 </button>
                 <ul id="profilesSubmenu" class="mt-1 mr-4 space-y-1 hidden border-r border-indigo-700/60 pr-2">
