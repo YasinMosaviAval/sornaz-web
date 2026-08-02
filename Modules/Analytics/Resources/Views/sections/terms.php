@@ -38,7 +38,7 @@
     </div>
 
     <div class="bg-white rounded-3xl p-5 mb-6 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             <div>
                 <input type="text" id="termSearch" placeholder="جستجو نام ترم..."
                        class="w-full border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500"
@@ -58,6 +58,32 @@
                 <select id="filterTermCourse" onchange="filterTerms()"
                         class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                     <option value="">همه دوره‌ها</option>
+                </select>
+            </div>
+            <div>
+                <select id="filterTermCurrency" onchange="filterTerms()"
+                        class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                    <option value="">همه نوع پول</option>
+                </select>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
+            <div>
+                <select id="filterTermDiscount" onchange="filterTerms()"
+                        class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                    <option value="">همه تخفیف‌ها</option>
+                </select>
+            </div>
+            <div>
+                <select id="filterTermClassroom" onchange="filterTerms()"
+                        class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                    <option value="">همه کلاس‌ها</option>
+                </select>
+            </div>
+            <div>
+                <select id="filterTermInstallmentCount" onchange="filterTerms()"
+                        class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                    <option value="">همه تعداد اقساط</option>
                 </select>
             </div>
         </div>
