@@ -70,6 +70,8 @@
     pushScript('availabilities.js');
     pushScript('availability-exception-templates.js');
     pushScript('availability-exceptions.js');
+    pushScript('point-templates.js');
+    pushScript('points.js');
     
     // pushScript('users.js');
     // pushScript('contracts.js');
@@ -86,7 +88,6 @@
     pushScript('favorites.js');
     pushScript('publications.js');
     pushScript('ratings.js');
-    pushScript('points.js');
     pushScript('badges.js');
     pushScript('approvals.js');
     pushScript('rating-summaries.js');
