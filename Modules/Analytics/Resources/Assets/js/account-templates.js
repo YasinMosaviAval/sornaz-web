@@ -178,4 +178,42 @@
             </label>`;
         }).join('');
     };
+
+    window.getAccountCropModalHTML = function (mode, title) {
+        const hint = mode === 'avatar'
+            ? 'کادر دایره‌ای ۱×۱ را جابه‌جا کنید و با دکمه‌های زوم اندازه را تغییر دهید. نسبت همیشه مربعی می‌ماند.'
+            : 'کادر ۱۶×۹ را جابه‌جا کنید و با زوم کوچک/بزرگ کنید. نسبت افقی ثابت می‌ماند و به هم نمی‌ریزد.';
+        return `<div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) cancelImageCrop()">
+            <div class="bg-white rounded-3xl w-full max-w-3xl my-6 shadow-2xl" onclick="event.stopPropagation()">
+                <div class="px-6 py-4 border-b flex justify-between items-center gap-3">
+                    <div>
+                        <h2 class="text-xl font-bold">${escapeHtml(title || 'کراپ تصویر')}</h2>
+                        <p class="text-xs text-gray-500 mt-1">${escapeHtml(hint)}</p>
+                    </div>
+                    <button type="button" onclick="cancelImageCrop()" class="text-3xl text-gray-300 leading-none">×</button>
+                </div>
+                <div class="p-4 sm:p-6">
+                    <div class="bg-gray-900 rounded-2xl overflow-hidden flex items-center justify-center min-h-[200px]">
+                        <canvas id="accountCropCanvas" class="max-w-full cursor-move touch-none"></canvas>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
+                        <p id="accountCropInfo" class="text-sm text-gray-500"></p>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="zoomCrop(1)" class="px-4 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-sm" title="کوچک‌تر کردن کادر (زوم این)">
+                                <i class="fas fa-search-plus"></i> زوم +
+                            </button>
+                            <button type="button" onclick="zoomCrop(-1)" class="px-4 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-sm" title="بزرگ‌تر کردن کادر (زوم اوت)">
+                                <i class="fas fa-search-minus"></i> زوم −
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 mt-5">
+                        <button type="button" onclick="applyImageCrop()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-2xl font-medium">تأیید و ذخیره</button>
+                        <button type="button" onclick="cancelImageCrop()" class="flex-1 border border-gray-300 py-3.5 rounded-2xl hover:bg-gray-50">انصراف</button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    };
 })();
+
