@@ -32,9 +32,10 @@
     <?// component('footer'); ?>
     <?
     pushScript('sidebar.js');
-    pushScript('dashboard.js');
     pushScript('add-user-modal.js');
     
+    pushScript('dashboard-templates.js');
+    pushScript('dashboard.js');
     pushScript('account-templates.js');
     pushScript('account.js');
     pushScript('report-templates.js');
