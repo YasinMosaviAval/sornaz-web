@@ -29,6 +29,7 @@
         });
         const members = (typeof window.getHolidayLeaveMemberOptions === 'function' ? window.getHolidayLeaveMemberOptions() : []);
         const statuses = (window.holidayLeaveStatusesList || []).map(function (s) { return { value: s, label: s }; });
+        const types = (window.holidayLeaveTypeList || []).map(function (t) { return { value: t.value, label: t.label }; });
         const timezones = (window.holidayLeaveTimezoneList || []).map(function (tz) {
             return { value: tz.value, label: tz.label };
         });
@@ -59,6 +60,12 @@
                     <label class="block text-sm font-medium mb-2">تاریخ *</label>
                     <input id="${id('Date')}" type="date" value="${escapeHtml(item.date || '')}"
                            class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">نوع</label>
+                    <select id="${id('Type')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                        ${renderOptions(types, item.type || 'leave')}
+                    </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">وضعیت</label>
@@ -95,6 +102,7 @@
             <td class="py-4 px-5 font-medium">${escapeHtml(item.name)}</td>
             <td class="py-4 px-5">${escapeHtml(item.date || '—')}</td>
             <td class="py-4 px-5 font-mono text-sm">${escapeHtml(item.timeLabel || item.time || '—')}</td>
+            <td class="py-4 px-5">${escapeHtml(item.typeLabel || '—')}</td>
             <td class="py-4 px-5 text-xs text-gray-500">${escapeHtml(item.timezone || 'Asia/Tehran')}</td>
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
             <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td>
@@ -107,10 +115,10 @@
             </td>`;
     };
     window.getHolidayLeaveEmptyRowHTML = function () {
-        return `<tr><td colspan="7" class="py-12 text-center text-gray-400">موردی یافت نشد</td></tr>`;
+        return `<tr><td colspan="8" class="py-12 text-center text-gray-400">موردی یافت نشد</td></tr>`;
     };
     window.getHolidayLeaveInlineExpandRowHTML = function (item) {
-        return `<td colspan="7" class="p-5 border-t">${window.getHolidayLeaveInlineEditRowHTML(item)}</td>`;
+        return `<td colspan="8" class="p-5 border-t">${window.getHolidayLeaveInlineEditRowHTML(item)}</td>`;
     };
     window.getHolidayLeaveInlineEditRowHTML = function (item) {
         return `<div class="space-y-6">
@@ -174,6 +182,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">شعبه</span><span class="font-medium">${escapeHtml(item.branchName)}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">تاریخ</span><span class="font-medium">${escapeHtml(item.date || '—')}</span></div>
+                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">نوع</span><span class="font-medium">${escapeHtml(item.typeLabel || '—')}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ساعت</span><span class="font-medium">${escapeHtml(item.timeLabel || item.time || '—')}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">منطقه زمانی</span><span class="font-medium">${escapeHtml(item.timezone || 'Asia/Tehran')}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">وضعیت</span><span class="font-medium">${escapeHtml(item.status)}</span></div>

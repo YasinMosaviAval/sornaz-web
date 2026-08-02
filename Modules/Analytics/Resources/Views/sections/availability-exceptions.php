@@ -32,7 +32,7 @@
 
     <!-- فیلترها -->
     <div class="bg-white rounded-3xl p-5 mb-6 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             <input type="text" id="holidayLeaveSearch" placeholder="جستجو نام عضو..."
                    class="w-full border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500"
                    onkeyup="filterHolidayLeaves()">
@@ -64,6 +64,13 @@
                 <option value="پر شده">پر شده</option>
                 <option value="در انتظار تأیید">در انتظار تأیید</option>
             </select>
+            <select id="filterHolidayLeaveType" onchange="filterHolidayLeaves()"
+                    class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                <option value="">همه انواع</option>
+                <option value="leave">مرخصی</option>
+                <option value="official-holiday">تعطیل رسمی</option>
+                <option value="mission">ماموریت</option>
+            </select>
         </div>
     </div>
 
@@ -81,6 +88,9 @@
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortHolidayLeavesBy('timeLabel')" class="flex items-center gap-1">ساعت <span id="hlSortIcon-timeLabel">↕</span></button>
+                        </th>
+                        <th class="text-right py-5 px-5 font-medium">
+                            <button onclick="sortHolidayLeavesBy('typeLabel')" class="flex items-center gap-1">نوع <span id="hlSortIcon-typeLabel">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortHolidayLeavesBy('timezone')" class="flex items-center gap-1">منطقه زمانی <span id="hlSortIcon-timezone">↕</span></button>

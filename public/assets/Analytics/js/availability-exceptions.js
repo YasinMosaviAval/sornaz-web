@@ -17,6 +17,11 @@ window.holidayLeaveTimezoneList = [
     { value: 'America/Toronto', label: 'تورنتو (America/Toronto)' },
     { value: 'UTC', label: 'UTC' }
 ];
+window.holidayLeaveTypeList = [
+    { value: 'leave', label: 'مرخصی' },
+    { value: 'official-holiday', label: 'تعطیل رسمی' },
+    { value: 'mission', label: 'ماموریت' }
+];
 
 const hlBranchWorkingHours = {
     1: { start: '08:00', end: '22:00' },
@@ -122,6 +127,7 @@ let allHolidayLeaves = [];
     for (let i = 0; i < 100 && allHolidayLeaves.length < 100; i++) {
         const member = holidayLeaveMembers[Math.floor(Math.random() * holidayLeaveMembers.length)];
         const status = window.holidayLeaveStatusesList[Math.floor(Math.random() * window.holidayLeaveStatusesList.length)];
+        const type = window.holidayLeaveTypeList[Math.floor(Math.random() * window.holidayLeaveTypeList.length)];
         const branch = branches[Math.floor(Math.random() * branches.length)];
         const allSlots = getHolidayLeaveBranchSlots(branch.id);
         const count = 2 + Math.floor(Math.random() * 6);
@@ -149,6 +155,7 @@ let allHolidayLeaves = [];
                 id: id++, memberId: member.id, name: member.name, date: dateStr,
                 slots: rangeSlots, timeLabel: hlRangeLabel(range), time: hlRangeLabel(range),
                 branchId: branch.id, branchName: branch.name, status: status,
+                type: type.value, typeLabel: type.label,
                 timezone: tz.value,
                 summary: 'مرخصی / تعطیل ' + member.name + ' در ' + dateStr,
                 description: 'ثبت تعطیل یا مرخصی در ' + branch.name + ' — ' + hlRangeLabel(range)
@@ -169,8 +176,8 @@ let hlSortDirection = 'asc';
 const hlPdfColumns = [
     { field: 'index', label: 'ردیف' }, { field: 'name', label: 'نام عضو' },
     { field: 'date', label: 'تاریخ' }, { field: 'timeLabel', label: 'ساعت' },
-    { field: 'timezone', label: 'منطقه زمانی' }, { field: 'branchName', label: 'شعبه' },
-    { field: 'status', label: 'وضعیت' }
+    { field: 'typeLabel', label: 'نوع' }, { field: 'timezone', label: 'منطقه زمانی' },
+    { field: 'branchName', label: 'شعبه' }, { field: 'status', label: 'وضعیت' }
 ];
 
 function sortHolidayLeaveItems() {
@@ -191,7 +198,7 @@ function sortHolidayLeaveItems() {
 }
 
 window.updateHolidayLeaveSortIcons = function () {
-    ['name', 'date', 'timeLabel', 'timezone', 'branchName', 'status'].forEach(function (f) {
+    ['name', 'date', 'timeLabel', 'typeLabel', 'timezone', 'branchName', 'status'].forEach(function (f) {
         const icon = document.getElementById('hlSortIcon-' + f);
         if (!icon) return;
         icon.textContent = hlSortField === f ? (hlSortDirection === 'asc' ? '↑' : '↓') : '↕';
@@ -248,6 +255,7 @@ window.filterHolidayLeaves = function () {
     const date = document.getElementById('filterHolidayLeaveDate') && document.getElementById('filterHolidayLeaveDate').value || '';
     const status = document.getElementById('filterHolidayLeaveStatus') && document.getElementById('filterHolidayLeaveStatus').value || '';
     const timezone = document.getElementById('filterHolidayLeaveTimezone') && document.getElementById('filterHolidayLeaveTimezone').value || '';
+    const type = document.getElementById('filterHolidayLeaveType') && document.getElementById('filterHolidayLeaveType').value || '';
 
     filteredHolidayLeaves = allHolidayLeaves.filter(function (s) {
         const matchBranch = currentHolidayLeaveBranch === 'all' || s.branchId == currentHolidayLeaveBranch;
@@ -255,7 +263,8 @@ window.filterHolidayLeaves = function () {
         const matchDate = !date || s.date === date;
         const matchStatus = !status || s.status === status;
         const matchTz = !timezone || s.timezone === timezone;
-        return matchBranch && matchSearch && matchDate && matchStatus && matchTz;
+        const matchType = !type || s.type === type;
+        return matchBranch && matchSearch && matchDate && matchStatus && matchTz && matchType;
     });
 
     holidayLeavesCurrentPage = 1;
@@ -344,6 +353,8 @@ function readHolidayLeaveForm(prefix) {
         memberId: memberId, name: memberName,
         date: f('Date') && f('Date').value || '',
         status: f('Status') && f('Status').value || 'فعال',
+        type: f('Type') && f('Type').value || 'leave',
+        typeLabel: (window.holidayLeaveTypeList || []).find(function (item) { return item.value === (f('Type') && f('Type').value || 'leave'); })?.label || 'مرخصی',
         timezone: f('Timezone') && f('Timezone').value || 'Asia/Tehran',
         summary: f('Summary') && f('Summary').value.trim() || '',
         description: f('Description') && f('Description').value.trim() || '',
