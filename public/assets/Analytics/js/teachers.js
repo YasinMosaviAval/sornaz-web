@@ -83,6 +83,7 @@ let filteredStaff = [...allStaff];
 let editingRowId = null;
 let staffSortField = '';
 let staffSortDirection = 'asc';
+let currentStaffBranch = 'all';
 
 function sortStaffItems() {
     if (!staffSortField) return;
@@ -215,18 +216,56 @@ window.changeStaffPage = function(page) {
 };
 
 // ==================== فیلترها ====================
+window.renderStaffBranchTabs = function () {
+    const container = document.getElementById('staffBranchTabs');
+    if (!container) return;
+    container.querySelectorAll('.staff-branch-tab:not(:first-child)').forEach(function (tab) { tab.remove(); });
+    const branchesList = (typeof allBranches !== 'undefined' && allBranches.length) ? allBranches : [{ id: 1, name: 'شعبه مرکزی' }, { id: 2, name: 'شعبه ونک' }, { id: 3, name: 'شعبه سعادت‌آباد' }, { id: 4, name: 'شعبه کرج' }];
+    branchesList.forEach(function (branch) {
+        const active = currentStaffBranch === branch.name;
+        const btn = document.createElement('button');
+        btn.className = 'staff-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ' + (active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50') + ' transition';
+        btn.textContent = branch.name;
+        btn.onclick = function () { window.filterStaffByBranch(branch.name); };
+        container.appendChild(btn);
+    });
+};
+
+window.filterStaffByBranch = function (branchName) {
+    currentStaffBranch = branchName;
+    document.querySelectorAll('.staff-branch-tab').forEach(function (tab) {
+        tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
+        tab.classList.add('border', 'border-gray-200');
+    });
+    const tabs = document.querySelectorAll('.staff-branch-tab');
+    if (branchName === 'all' && tabs[0]) {
+        tabs[0].classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
+        tabs[0].classList.remove('border-gray-200');
+    } else {
+        tabs.forEach(function (tab) {
+            if (tab.textContent === branchName) {
+                tab.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
+                tab.classList.remove('border-gray-200');
+            }
+        });
+    }
+    window.filterStaff();
+};
+
 window.filterStaff = function() {
     const search = (document.getElementById('staffSearch')?.value || '').trim().toLowerCase();
     const type = document.getElementById('filterStaffType')?.value || '';
-    const branch = document.getElementById('filterStaffBranch')?.value || '';
     const status = document.getElementById('filterStaffStatus')?.value || '';
+    const currency = document.getElementById('filterStaffCurrency')?.value || '';
+    const branch = currentStaffBranch === 'all' ? '' : currentStaffBranch;
 
     filteredStaff = allStaff.filter(item => {
         const matchSearch = !search || item.name.toLowerCase().includes(search) || item.contractTitle.toLowerCase().includes(search) || (item.phone && item.phone.includes(search));
         const matchType = !type || item.type === type;
         const matchBranch = !branch || item.branch === branch;
         const matchStatus = !status || item.status === status;
-        return matchSearch && matchType && matchBranch && matchStatus;
+        const matchCurrency = !currency || item.currency === currency;
+        return matchSearch && matchType && matchBranch && matchStatus && matchCurrency;
     });
 
     staffCurrentPage = 1;
@@ -523,10 +562,12 @@ window.saveEditedStaff = function(id) {
 // ==================== اجرای اولیه ====================
 (function initStaff() {
     if (document.querySelector('#staffTable tbody')) {
+        window.renderStaffBranchTabs();
         renderStaffTable();
     } else {
-        setTimeout(() => {
+        setTimeout(function () {
             if (document.querySelector('#staffTable tbody')) {
+                window.renderStaffBranchTabs();
                 renderStaffTable();
             }
         }, 150);
