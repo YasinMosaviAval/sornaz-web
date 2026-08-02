@@ -40,7 +40,7 @@
 
     <!-- فیلترها -->
     <div class="bg-white rounded-3xl p-5 mb-6 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
             <div>
                 <input type="text" id="classroomSearch" placeholder="جستجو نام کلاس..."
                        class="w-full border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500"
@@ -53,6 +53,18 @@
                     <option value="فعال">فعال</option>
                     <option value="تعمیر">تعمیر</option>
                     <option value="غیرفعال">غیرفعال</option>
+                </select>
+            </div>
+            <div>
+                <select id="filterClassroomType" onchange="filterClassrooms()"
+                        class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                    <option value="">همه انواع</option>
+                </select>
+            </div>
+            <div>
+                <select id="filterClassroomCapacity" onchange="filterClassrooms()"
+                        class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                    <option value="">همه ظرفیت‌ها</option>
                 </select>
             </div>
             <div>
