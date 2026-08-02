@@ -11,9 +11,11 @@
     window.getGalleryCardHTML = function (item) {
         const category = window.getGalleryCategory ? window.getGalleryCategory(item.category) : { label: item.category };
         const isVideo = item.type === 'video';
+        const isLogo = item.category === 'logo';
         return `<div class="bg-white rounded-3xl overflow-hidden shadow border border-transparent transition-shadow duration-300 hover:shadow-xl">
-            <div class="relative">
-                <img src="${escapeHtml(item.url)}" alt="${escapeHtml(item.title)}" class="w-full h-52 object-cover">
+            <div class="relative ${isLogo ? 'bg-gray-50 flex items-center justify-center p-6' : ''}">
+                <img src="${escapeHtml(item.url)}" alt="${escapeHtml(item.title)}"
+                     class="${isLogo ? 'w-32 h-32 object-cover rounded-full shadow' : 'w-full h-52 object-cover'}">
                 ${isVideo ? '<div class="absolute inset-0 flex items-center justify-center bg-black/40"><i class="fas fa-play-circle text-white text-5xl"></i></div>' : ''}
                 <span class="absolute top-3 right-3 px-3 py-1 rounded-full text-xs bg-black/60 text-white">${isVideo ? 'ویدیو' : 'تصویر'}</span>
             </div>
@@ -56,6 +58,10 @@
             ? window.getGalleryAllowedTypeLabel(category)
             : 'تصویر یا ویدیو';
         const categoryLabel = (window.getGalleryCategory && window.getGalleryCategory(category).label) || category;
+        const cropHint = category === 'cover' ? 'پس از انتخاب تصویر، کراپ ۱۶×۹ باز می‌شود.'
+            : category === 'logo' ? 'پس از انتخاب تصویر، کراپ ۱×۱ (دایره‌ای) باز می‌شود.'
+            : category === 'intro_video' ? 'فقط ویدیو — بدون کراپ.'
+            : 'برای تصاویر، مودال کراپ باز می‌شود.';
 
         return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl" onclick="event.stopPropagation()">
@@ -75,9 +81,10 @@
                         <div>
                             <label class="block text-sm font-medium mb-2">فایل رسانه ${isEdit ? '(اختیاری)' : '*'}</label>
                             <input id="galleryFile" type="file" accept="${accept}" class="${fieldClass}">
-                            <p class="text-xs text-gray-400 mt-1">${escapeHtml(typeHint)} — نوع از فایل تشخیص داده می‌شود.</p>
+                            <p class="text-xs text-gray-400 mt-1">${escapeHtml(typeHint)} — ${escapeHtml(cropHint)}</p>
                         </div>
                     </div>
+                    <div id="galleryCropPreviewBox" class="hidden"></div>
                     <div>
                         <label class="block text-sm font-medium mb-2">عنوان *</label>
                         <input id="galleryTitle" type="text" value="${escapeHtml(item.title || '')}" class="${fieldClass}">
@@ -106,4 +113,43 @@
 
     window.getGalleryAddModalHTML = function (defaultCategory) { return galleryForm({}, defaultCategory); };
     window.getGalleryEditModalHTML = function (item) { return galleryForm(item); };
+
+    window.getGalleryCropModalHTML = function (category, title, circular) {
+        const hint = category === 'cover'
+            ? 'کادر ۱۶×۹ را جابه‌جا کنید و با زوم کوچک/بزرگ کنید. نسبت ثابت می‌ماند.'
+            : category === 'logo'
+            ? 'کادر مربعی ۱×۱ (نمایش دایره‌ای) را تنظیم کنید. نسبت ثابت می‌ماند.'
+            : 'ناحیه مورد نظر را جابه‌جا و زوم کنید، سپس تأیید کنید.';
+        return `<div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) cancelGalleryCrop()">
+            <div class="bg-white rounded-3xl w-full max-w-3xl my-6 shadow-2xl" onclick="event.stopPropagation()">
+                <div class="px-6 py-4 border-b flex justify-between items-center gap-3">
+                    <div>
+                        <h2 class="text-xl font-bold">${escapeHtml(title || 'کراپ تصویر')}</h2>
+                        <p class="text-xs text-gray-500 mt-1">${escapeHtml(hint)}</p>
+                    </div>
+                    <button type="button" onclick="cancelGalleryCrop()" class="text-3xl text-gray-300 leading-none">×</button>
+                </div>
+                <div class="p-4 sm:p-6">
+                    <div class="bg-gray-900 rounded-2xl overflow-hidden flex items-center justify-center min-h-[200px]">
+                        <canvas id="galleryCropCanvas" class="max-w-full cursor-move touch-none"></canvas>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
+                        <p id="galleryCropInfo" class="text-sm text-gray-500"></p>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="zoomGalleryCrop(1)" class="px-4 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-sm">
+                                <i class="fas fa-search-plus"></i> زوم +
+                            </button>
+                            <button type="button" onclick="zoomGalleryCrop(-1)" class="px-4 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-sm">
+                                <i class="fas fa-search-minus"></i> زوم −
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 mt-5">
+                        <button type="button" onclick="applyGalleryCrop()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-2xl font-medium">تأیید کراپ</button>
+                        <button type="button" onclick="cancelGalleryCrop()" class="flex-1 border border-gray-300 py-3.5 rounded-2xl hover:bg-gray-50">انصراف</button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    };
 })();

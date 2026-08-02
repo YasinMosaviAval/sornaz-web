@@ -2,7 +2,7 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-3xl font-bold">کاور</h1>
-            <p class="text-gray-500 mt-1">تصاویر کاور آموزشگاه و شعبه‌ها</p>
+            <p class="text-gray-500 mt-1">تصاویر کاور آموزشگاه و شعبه‌ها — کراپ ۱۶×۹</p>
         </div>
         <button onclick="openAddGalleryModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
             <i class="fas fa-plus"></i> افزودن آیتم جدید
@@ -18,7 +18,7 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-3xl font-bold">لوگو</h1>
-            <p class="text-gray-500 mt-1">لوگو و هویت بصری آموزشگاه و شعبه‌ها</p>
+            <p class="text-gray-500 mt-1">لوگو و هویت بصری — کراپ ۱×۱ دایره‌ای</p>
         </div>
         <button onclick="openAddGalleryModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
             <i class="fas fa-plus"></i> افزودن آیتم جدید
@@ -50,7 +50,7 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-3xl font-bold">مجموعه عکس‌ها و ویدیوها</h1>
-            <p class="text-gray-500 mt-1">گالری تصاویر و ویدیوهای آموزشگاه و شعبه‌ها</p>
+            <p class="text-gray-500 mt-1">گالری تصاویر و ویدیوها — کراپ برای تصاویر</p>
         </div>
         <button onclick="openAddGalleryModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
             <i class="fas fa-plus"></i> افزودن آیتم جدید
