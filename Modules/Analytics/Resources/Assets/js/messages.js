@@ -1,167 +1,291 @@
-// ==================== داده نمونه پیام‌ها ====================
-let allMessages = [
-    { id: 1, title: "یادآوری جلسه اولیا", sender: "مدیر شعبه", branchId: 1, branchName: "شعبه مرکزی", receiver: "همه والدین", date: "۱۴۰۴/۰۵/۱۲", status: "خوانده‌شده" },
-    { id: 2, title: "تأخیر در پرداخت شهریه", sender: "سیستم", branchId: 1, branchName: "شعبه مرکزی", receiver: "سارا احمدی", date: "۱۴۰۴/۰۵/۱۰", status: "خوانده‌نشده" },
-    { id: 3, title: "تغییر ساعت کلاس گیتار", sender: "استاد رضایی", branchId: 2, branchName: "شعبه ونک", receiver: "هنرجویان گیتار", date: "۱۴۰۴/۰۵/۰۹", status: "خوانده‌شده" },
-    { id: 4, title: "درخواست مرخصی استاد", sender: "استاد موسوی", branchId: 3, branchName: "شعبه سعادت‌آباد", receiver: "مدیریت", date: "۱۴۰۴/۰۵/۰۸", status: "خوانده‌نشده" },
-    { id: 5, title: "اطلاعیه تعطیلی موقت", sender: "مدیریت", branchId: 4, branchName: "شعبه کرج", receiver: "همه", date: "۱۴۰۴/۰۵/۰۷", status: "خوانده‌شده" },
-    { id: 6, title: "نتیجه آزمون تئوری", sender: "استاد بهرامی", branchId: 1, branchName: "شعبه مرکزی", receiver: "هنرجویان سطح متوسط", date: "۱۴۰۴/۰۵/۰۵", status: "خوانده‌شده" }
+(function () {
+'use strict';
+// ==================== مدیریت پیام‌ها ====================
+
+window.messageStatusesList = ['خوانده‌نشده', 'خوانده‌شده'];
+window.messagePrioritiesList = ['عادی', 'مهم', 'فوری'];
+window.messageTypesList = ['اطلاعیه', 'یادآوری', 'هشدار', 'شخصی'];
+
+window.getMessageBranches = function () {
+    if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
+    return [
+        { id: 1, name: 'شعبه مرکزی' },
+        { id: 2, name: 'شعبه ونک' },
+        { id: 3, name: 'شعبه سعادت‌آباد' },
+        { id: 4, name: 'شعبه کرج' }
+    ];
+};
+
+const sampleTitles = [
+    'یادآوری جلسه اولیا', 'تأخیر در پرداخت شهریه', 'تغییر ساعت کلاس', 'درخواست مرخصی استاد',
+    'اطلاعیه تعطیلی موقت', 'نتیجه آزمون تئوری', 'برنامه کنسرت پایان ترم', 'ثبت‌نام ترم جدید',
+    'هشدار ظرفیت کلاس', 'پیام شخصی به هنرجو', 'هماهنگی تمرین گروهی', 'به‌روزرسانی قوانین آموزشگاه'
+];
+const sampleSenders = ['مدیر سیستم', 'مدیر شعبه', 'استاد رضایی', 'استاد موسوی', 'استاد بهرامی', 'پذیرش', 'سیستم'];
+const sampleReceivers = ['همه', 'همه والدین', 'همه هنرجویان', 'هنرجویان گیتار', 'هنرجویان سطح متوسط', 'سارا احمدی', 'مدیریت', 'اساتید'];
+const sampleBodies = [
+    'با سلام، لطفاً در جلسه پیش‌رو حضور به‌موقع داشته باشید.',
+    'شهریه ترم جاری هنوز پرداخت نشده است. لطفاً در اسرع وقت اقدام فرمایید.',
+    'ساعت کلاس به دلیل تداخل برنامه‌ها تغییر کرده است. جزئیات در متن آمده است.',
+    'استاد محترم درخواست مرخصی برای تاریخ اعلام‌شده ثبت کرده است.',
+    'به اطلاع می‌رساند شعبه در تاریخ مشخص‌شده تعطیل خواهد بود.',
+    'نتایج آزمون تئوری در پنل قابل مشاهده است. موفق باشید.',
+    'برنامه کنسرت پایان ترم نهایی شد. لطفاً برای هماهنگی با پذیرش تماس بگیرید.',
+    'ثبت‌نام ترم جدید از فردا آغاز می‌شود. ظرفیت محدود است.'
 ];
 
-let currentMessageBranch = 'all';
+let allMessages = [];
+(function buildSample() {
+    const branches = window.getMessageBranches();
+    for (let i = 1; i <= 48; i++) {
+        const branch = branches[Math.floor(Math.random() * branches.length)];
+        const d = new Date();
+        d.setDate(d.getDate() - Math.floor(Math.random() * 40));
+        allMessages.push({
+            id: i,
+            title: sampleTitles[Math.floor(Math.random() * sampleTitles.length)],
+            body: sampleBodies[Math.floor(Math.random() * sampleBodies.length)],
+            sender: sampleSenders[Math.floor(Math.random() * sampleSenders.length)],
+            receiver: sampleReceivers[Math.floor(Math.random() * sampleReceivers.length)],
+            branchId: branch.id,
+            branchName: branch.name,
+            type: window.messageTypesList[Math.floor(Math.random() * window.messageTypesList.length)],
+            priority: window.messagePrioritiesList[Math.floor(Math.random() * window.messagePrioritiesList.length)],
+            status: window.messageStatusesList[Math.floor(Math.random() * window.messageStatusesList.length)],
+            date: d.toLocaleDateString('fa-IR'),
+            dateISO: d.toISOString().split('T')[0]
+        });
+    }
+})();
 
-window.renderMessagesBranchTabs = function() {
+let currentMessageBranch = 'all';
+let messagesCurrentPage = 1;
+const messagesPerPage = 10;
+let filteredMessages = allMessages.slice();
+let msgSortField = '';
+let msgSortDirection = 'asc';
+
+function sortMessageItems() {
+    if (!msgSortField) return;
+    filteredMessages.sort(function (a, b) {
+        let av = a[msgSortField], bv = b[msgSortField];
+        if (msgSortField === 'date') {
+            av = a.dateISO || '';
+            bv = b.dateISO || '';
+        } else {
+            av = String(av || '').toLowerCase();
+            bv = String(bv || '').toLowerCase();
+        }
+        if (av < bv) return msgSortDirection === 'asc' ? -1 : 1;
+        if (av > bv) return msgSortDirection === 'asc' ? 1 : -1;
+        return 0;
+    });
+}
+
+window.updateMessageSortIcons = function () {
+    ['title', 'sender', 'branchName', 'receiver', 'type', 'date', 'status'].forEach(function (f) {
+        const icon = document.getElementById('msgSortIcon-' + f);
+        if (!icon) return;
+        icon.textContent = msgSortField === f ? (msgSortDirection === 'asc' ? '↑' : '↓') : '↕';
+    });
+};
+
+window.sortMessagesBy = function (field) {
+    if (msgSortField === field) msgSortDirection = msgSortDirection === 'asc' ? 'desc' : 'asc';
+    else { msgSortField = field; msgSortDirection = 'asc'; }
+    sortMessageItems();
+    window.renderMessagesTable(filteredMessages);
+    window.updateMessageSortIcons();
+};
+
+window.renderMessagesBranchTabs = function () {
     const container = document.getElementById('messagesBranchTabs');
     if (!container) return;
-    container.querySelectorAll('.message-branch-tab:not(:first-child)').forEach(t => t.remove());
-
-    if (typeof allBranches !== 'undefined') {
-        allBranches.forEach(b => {
-            const btn = document.createElement('button');
-            btn.className = 'message-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border border-gray-200 hover:bg-gray-50 transition';
-            btn.textContent = b.name;
-            btn.onclick = () => filterMessagesByBranch(b.id);
-            container.appendChild(btn);
-        });
+    container.querySelectorAll('.message-branch-tab:not([data-value="all"])').forEach(function (t) { t.remove(); });
+    window.getMessageBranches().forEach(function (b) {
+        const active = String(currentMessageBranch) === String(b.id);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'message-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border transition ' +
+            (active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50');
+        btn.dataset.value = b.id;
+        btn.textContent = b.name;
+        btn.onclick = function () { window.filterMessagesByBranch(b.id); };
+        container.appendChild(btn);
+    });
+    const allTab = container.querySelector('[data-value="all"]');
+    if (allTab) {
+        const isAll = currentMessageBranch === 'all';
+        allTab.classList.toggle('bg-indigo-600', isAll);
+        allTab.classList.toggle('text-white', isAll);
+        allTab.classList.toggle('border-indigo-600', isAll);
+        if (!isAll) {
+            allTab.classList.add('border', 'border-gray-200');
+            allTab.classList.remove('bg-indigo-600', 'text-white');
+        }
     }
 };
 
-window.filterMessagesByBranch = function(branchId) {
+window.filterMessagesByBranch = function (branchId) {
     currentMessageBranch = branchId;
+    document.querySelectorAll('.message-branch-tab').forEach(function (tab) {
+        const active = String(tab.dataset.value) === String(branchId);
+        tab.classList.toggle('bg-indigo-600', active);
+        tab.classList.toggle('text-white', active);
+        tab.classList.toggle('border-indigo-600', active);
+        if (!active) {
+            tab.classList.add('border', 'border-gray-200');
+            tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
+        } else {
+            tab.classList.remove('border-gray-200');
+        }
+    });
+    window.filterMessages();
+};
 
-    document.querySelectorAll('.message-branch-tab').forEach(tab => {
-        tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
-        tab.classList.add('border', 'border-gray-200');
+window.filterMessages = function () {
+    const search = (document.getElementById('messageSearch') && document.getElementById('messageSearch').value || '').trim().toLowerCase();
+    const status = document.getElementById('filterMessageStatus') && document.getElementById('filterMessageStatus').value || '';
+    const priority = document.getElementById('filterMessagePriority') && document.getElementById('filterMessagePriority').value || '';
+    const type = document.getElementById('filterMessageType') && document.getElementById('filterMessageType').value || '';
+
+    filteredMessages = allMessages.filter(function (m) {
+        const matchBranch = currentMessageBranch === 'all' || String(m.branchId) === String(currentMessageBranch);
+        const matchSearch = !search ||
+            (m.title || '').toLowerCase().includes(search) ||
+            (m.sender || '').toLowerCase().includes(search) ||
+            (m.receiver || '').toLowerCase().includes(search) ||
+            (m.body || '').toLowerCase().includes(search);
+        const matchStatus = !status || m.status === status;
+        const matchPriority = !priority || m.priority === priority;
+        const matchType = !type || m.type === type;
+        return matchBranch && matchSearch && matchStatus && matchPriority && matchType;
     });
 
-    const tabs = document.querySelectorAll('.message-branch-tab');
-    if (branchId === 'all') {
-        if (tabs[0]) {
-            tabs[0].classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
-            tabs[0].classList.remove('border-gray-200');
-        }
-    } else {
-        tabs.forEach(tab => {
-            const branch = allBranches?.find(b => b.id == branchId);
-            if (branch && tab.textContent === branch.name) {
-                tab.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
-                tab.classList.remove('border-gray-200');
-            }
-        });
-    }
-
-    renderMessagesTable();
+    messagesCurrentPage = 1;
+    sortMessageItems();
+    window.renderMessagesTable(filteredMessages);
 };
 
-window.renderMessagesTable = function() {
+window.renderMessagesTable = function (list) {
+    list = list || filteredMessages;
     const tbody = document.querySelector('#messagesTable tbody');
     if (!tbody) return;
 
-    const list = currentMessageBranch === 'all' 
-        ? allMessages 
-        : allMessages.filter(m => m.branchId == currentMessageBranch);
+    const totalPages = Math.ceil(list.length / messagesPerPage) || 1;
+    if (messagesCurrentPage > totalPages) messagesCurrentPage = totalPages;
 
-    tbody.innerHTML = list.length === 0 
-        ? `<tr><td colspan="7" class="py-12 text-center text-gray-400">پیامی یافت نشد</td></tr>`
-        : list.map(m => {
-            const statusClass = m.status === 'خوانده‌شده' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
-            return `
-            <tr class="hover:bg-gray-50">
-                <td class="py-4 px-5 font-medium">${m.title}</td>
-                <td class="py-4 px-5">${m.sender}</td>
-                <td class="py-4 px-5">${m.branchName}</td>
-                <td class="py-4 px-5">${m.receiver}</td>
-                <td class="py-4 px-5">${m.date}</td>
-                <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusClass}">${m.status}</span></td>
-                <td class="py-4 px-5 text-left">
-                    <button onclick="viewMessage(${m.id})" class="text-indigo-600 hover:underline text-sm ml-3">مشاهده</button>
-                    <button onclick="deleteMessage(${m.id})" class="text-red-500 hover:underline text-sm">حذف</button>
-                </td>
-            </tr>`;
-        }).join('');
-};
+    const start = (messagesCurrentPage - 1) * messagesPerPage;
+    const end = start + messagesPerPage;
+    const pageItems = list.slice(start, end);
 
-window.openAddMessageModal = function() {
-    if (!document.getElementById('modalContainer')) {
-        alert('modalContainer پیدا نشد!');
-        return;
+    tbody.innerHTML = '';
+    if (!pageItems.length) {
+        tbody.innerHTML = window.getMessageEmptyRowHTML ? window.getMessageEmptyRowHTML() : '';
+    } else {
+        pageItems.forEach(function (item) {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50 transition' + (item.status === 'خوانده‌نشده' ? ' bg-indigo-50/40' : '');
+            tr.innerHTML = window.getMessageRowHTML ? window.getMessageRowHTML(item) : '';
+            tbody.appendChild(tr);
+        });
     }
-
-    const branchOptions = (typeof allBranches !== 'undefined' ? allBranches : [])
-        .map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-
-    document.getElementById('modalContainer').innerHTML = `
-    <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onclick="if(event.target === this) closeModal()">
-        <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl" onclick="event.stopPropagation()">
-            <div class="px-8 py-5 border-b flex justify-between items-center">
-                <h2 class="text-2xl font-bold">ارسال پیام جدید</h2>
-                <button onclick="closeModal()" class="text-3xl text-gray-300">×</button>
-            </div>
-            <div class="p-8 space-y-5">
-                <div>
-                    <label class="block text-sm font-medium mb-2">عنوان پیام *</label>
-                    <input id="msgTitle" type="text" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">شعبه</label>
-                    <select id="msgBranch" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${branchOptions}</select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">گیرنده</label>
-                    <input id="msgReceiver" type="text" placeholder="نام هنرجو / همه / والدین" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">متن پیام</label>
-                    <textarea id="msgBody" rows="4" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"></textarea>
-                </div>
-                <div class="flex gap-4 pt-2">
-                    <button onclick="saveMessage()" class="flex-1 bg-indigo-600 text-white py-3.5 rounded-2xl">ارسال</button>
-                    <button onclick="closeModal()" class="flex-1 border py-3.5 rounded-2xl">انصراف</button>
-                </div>
-            </div>
-        </div>
-    </div>`;
+    updateMessagesPagination(list.length, start, end, totalPages);
+    window.updateMessageSortIcons();
 };
 
-window.saveMessage = function() {
-    const title = document.getElementById('msgTitle')?.value.trim();
-    if (!title) return alert('عنوان پیام الزامی است');
+function updateMessagesPagination(total, start, end, totalPages) {
+    const info = document.getElementById('messagesPaginationInfo');
+    if (info) {
+        info.textContent = 'نمایش ' + (total === 0 ? 0 : start + 1) + ' تا ' + Math.min(end, total) + ' از ' + total + ' پیام';
+    }
+    const pagination = document.getElementById('messagesPaginationButtons');
+    if (!pagination) return;
+    let html = '<button onclick="changeMessagesPage(1)" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' + (messagesCurrentPage === 1 ? 'disabled' : '') + '>اول</button>'
+        + '<button onclick="changeMessagesPage(' + (messagesCurrentPage - 1) + ')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' + (messagesCurrentPage === 1 ? 'disabled' : '') + '>قبلی</button>';
+    let sp = Math.max(1, messagesCurrentPage - 2), ep = Math.min(totalPages, sp + 4);
+    if (ep - sp < 4) sp = Math.max(1, ep - 4);
+    for (let i = sp; i <= ep; i++) {
+        html += '<button onclick="changeMessagesPage(' + i + ')" class="px-3 py-1.5 rounded-lg ' + (i === messagesCurrentPage ? 'bg-indigo-600 text-white' : 'border hover:bg-gray-50') + '">' + i + '</button>';
+    }
+    html += '<button onclick="changeMessagesPage(' + (messagesCurrentPage + 1) + ')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' + (messagesCurrentPage === totalPages ? 'disabled' : '') + '>بعدی</button>'
+        + '<button onclick="changeMessagesPage(' + totalPages + ')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' + (messagesCurrentPage === totalPages ? 'disabled' : '') + '>آخر</button>';
+    pagination.innerHTML = html;
+}
 
-    const branchId = parseInt(document.getElementById('msgBranch').value);
-    const branch = allBranches?.find(b => b.id === branchId);
+window.changeMessagesPage = function (page) {
+    const totalPages = Math.ceil(filteredMessages.length / messagesPerPage) || 1;
+    if (page < 1 || page > totalPages) return;
+    messagesCurrentPage = page;
+    window.renderMessagesTable(filteredMessages);
+};
+
+window.openAddMessageModal = function () {
+    if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
+    document.getElementById('modalContainer').innerHTML = window.getMessageAddModalHTML
+        ? window.getMessageAddModalHTML() : '';
+};
+
+window.saveMessage = function () {
+    const title = (document.getElementById('msgTitle') && document.getElementById('msgTitle').value || '').trim();
+    const body = (document.getElementById('msgBody') && document.getElementById('msgBody').value || '').trim();
+    if (!title) return alert('عنوان پیام الزامی است');
+    if (!body) return alert('متن پیام الزامی است');
+
+    const branchId = parseInt(document.getElementById('msgBranch') && document.getElementById('msgBranch').value, 10);
+    const branch = window.getMessageBranches().find(function (b) { return b.id === branchId; });
+    const now = new Date();
 
     allMessages.unshift({
         id: Date.now(),
-        title,
-        sender: "مدیر سیستم",
-        branchId,
+        title: title,
+        body: body,
+        sender: 'مدیر سیستم',
+        branchId: branchId,
         branchName: branch ? branch.name : 'نامشخص',
-        receiver: document.getElementById('msgReceiver').value || 'همه',
-        date: new Date().toLocaleDateString('fa-IR'),
-        status: "خوانده‌نشده"
+        receiver: (document.getElementById('msgReceiver') && document.getElementById('msgReceiver').value || '').trim() || 'همه',
+        type: document.getElementById('msgType') && document.getElementById('msgType').value || 'اطلاعیه',
+        priority: document.getElementById('msgPriority') && document.getElementById('msgPriority').value || 'عادی',
+        date: now.toLocaleDateString('fa-IR'),
+        dateISO: now.toISOString().split('T')[0],
+        status: 'خوانده‌نشده'
     });
 
-    filterMessagesByBranch(currentMessageBranch);
+    window.filterMessages();
     closeModal();
     alert('✅ پیام ارسال شد');
 };
 
-window.viewMessage = function(id) {
-    const m = allMessages.find(x => x.id === id);
-    if (m) alert(`عنوان: ${m.title}\nفرستنده: ${m.sender}\nگیرنده: ${m.receiver}\nتاریخ: ${m.date}`);
-};
-
-window.deleteMessage = function(id) {
-    if (confirm('حذف این پیام؟')) {
-        allMessages = allMessages.filter(m => m.id !== id);
-        filterMessagesByBranch(currentMessageBranch);
+window.viewMessage = function (id) {
+    const item = allMessages.find(function (x) { return x.id === id; });
+    if (!item) return;
+    // علامت‌گذاری به‌عنوان خوانده‌شده
+    if (item.status === 'خوانده‌نشده') {
+        item.status = 'خوانده‌شده';
+        window.filterMessages();
     }
+    document.getElementById('modalContainer').innerHTML = window.getMessageDetailsModalHTML
+        ? window.getMessageDetailsModalHTML(item) : '';
 };
 
-// Init
-setTimeout(() => {
+window.markMessageUnread = function (id) {
+    const item = allMessages.find(function (x) { return x.id === id; });
+    if (!item) return;
+    item.status = 'خوانده‌نشده';
+    window.filterMessages();
+    closeModal();
+};
+
+window.deleteMessage = function (id) {
+    if (!confirm('حذف این پیام؟')) return;
+    allMessages = allMessages.filter(function (m) { return m.id !== id; });
+    window.filterMessages();
+};
+
+setTimeout(function () {
     if (document.getElementById('messagesTable')) {
-        renderMessagesBranchTabs();
-        filterMessagesByBranch('all');
+        window.renderMessagesBranchTabs();
+        window.filterMessages();
     }
 }, 200);
+})();
