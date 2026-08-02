@@ -73,7 +73,7 @@ function renderUsersTable() {
 
 // Init
 window.onload = () => {
-    showSection('users');
+    showSection('dashboard');
     // داده نمونه
     users = [
         {name: "سارا احمدی", type: "هنرجو", phone: "۰۹۱۲۳۴۵۶۷۸۹", status: "فعال"},
