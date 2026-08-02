@@ -19,7 +19,7 @@
                     <i class="fas fa-chevron-down text-xs transition-transform duration-200 submenu-chevron"></i>
                 </button>
                 <ul id="profilesSubmenu" class="mt-1 mr-4 space-y-1 hidden border-r border-indigo-700/60 pr-2">
-                    <li><a href="#" onclick="showSection('profiles')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm text-indigo-100"><i class="fas fa-users w-4"></i>کاربران</a></li>
+                    <li><a href="#" onclick="showSection('users')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm text-indigo-100"><i class="fas fa-users w-4"></i>کاربران</a></li>
                     <li><a href="#" onclick="showSection('roles')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm text-indigo-100"><i class="fas fa-user-tag w-4"></i>نقش‌ها</a></li>
                     <li><a href="#" onclick="showSection('permissions')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm text-indigo-100"><i class="fas fa-key w-4"></i>دسترسی‌ها</a></li>
                 </ul>

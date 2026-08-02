@@ -73,13 +73,13 @@
     pushScript('point-templates.js');
     pushScript('points.js');
     
-    // pushScript('profile-templates.js');
-    pushScript('profiles.js');
+    pushScript('user-templates.js');
+    pushScript('users.js');
+    // pushScript('profiles.js');
     pushScript('role-templates.js');
     pushScript('roles.js');
     pushScript('permission-templates.js');
     pushScript('permissions.js');
-    // pushScript('users.js');
     // pushScript('contracts.js');
     pushScript('account.js');
 
