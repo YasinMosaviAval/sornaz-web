@@ -1,176 +1,293 @@
-// ==================== داده نمونه اعلان‌ها ====================
-let allNotifications = [
-    { id: 1, title: "تعطیلی شعبه در روز جمعه", branchId: 1, branchName: "شعبه مرکزی", priority: "بالا", date: "۱۴۰۴/۰۵/۱۲", status: "منتشر شده" },
-    { id: 2, title: "شروع ثبت‌نام ترم جدید", branchId: 1, branchName: "شعبه مرکزی", priority: "متوسط", date: "۱۴۰۴/۰۵/۱۰", status: "منتشر شده" },
-    { id: 3, title: "تغییر ساعت کلاس‌های عصر", branchId: 2, branchName: "شعبه ونک", priority: "بالا", date: "۱۴۰۴/۰۵/۰۹", status: "منتشر شده" },
-    { id: 4, title: "برگزاری مستر کلاس رایگان", branchId: 3, branchName: "شعبه سعادت‌آباد", priority: "کم", date: "۱۴۰۴/۰۵/۰۸", status: "پیش‌نویس" },
-    { id: 5, title: "اطلاعیه پرداخت شهریه", branchId: 4, branchName: "شعبه کرج", priority: "بالا", date: "۱۴۰۴/۰۵/۰۷", status: "منتشر شده" },
-    { id: 6, title: "جشن پایان ترم تابستان", branchId: 1, branchName: "شعبه مرکزی", priority: "متوسط", date: "۱۴۰۴/۰۵/۰۵", status: "منتشر شده" }
+(function () {
+'use strict';
+// ==================== مدیریت اعلان‌های سیستم ====================
+
+window.notificationStatusesList = ['منتشر شده', 'پیش‌نویس', 'منقضی'];
+window.notificationPrioritiesList = ['بالا', 'متوسط', 'کم'];
+window.notificationAudiencesList = ['همه', 'هنرجویان', 'اساتید', 'والدین', 'پرسنل'];
+
+window.getNotificationBranches = function () {
+    if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
+    return [
+        { id: 1, name: 'شعبه مرکزی' },
+        { id: 2, name: 'شعبه ونک' },
+        { id: 3, name: 'شعبه سعادت‌آباد' },
+        { id: 4, name: 'شعبه کرج' }
+    ];
+};
+
+const notifSampleTitles = [
+    'تعطیلی شعبه در روز جمعه', 'شروع ثبت‌نام ترم جدید', 'تغییر ساعت کلاس‌های عصر',
+    'برگزاری مستر کلاس رایگان', 'اطلاعیه پرداخت شهریه', 'جشن پایان ترم تابستان',
+    'به‌روزرسانی قوانین حضور و غیاب', 'ظرفیت کلاس‌های سطح پیشرفته تکمیل شد',
+    'برنامه کنسرت هنرجویان', 'هشدار تأخیر پرداخت شهریه', 'زمان‌بندی آزمون تئوری',
+    'افتتاح کلاس جدید گیتار کلاسیک'
+];
+const notifSampleBodies = [
+    'به اطلاع می‌رساند در تاریخ اعلام‌شده شعبه تعطیل خواهد بود. کلاس‌ها به هفته بعد منتقل می‌شوند.',
+    'ثبت‌نام ترم جدید از امروز آغاز شده است. برای رزرو جا با پذیرش تماس بگیرید.',
+    'ساعت کلاس‌های عصر از این هفته تغییر کرده است. جزئیات در پنل هنرجو قابل مشاهده است.',
+    'مستر کلاس رایگان ویژه هنرجویان سطح متوسط برگزار می‌شود. ظرفیت محدود.',
+    'مهلت پرداخت شهریه ترم جاری رو به اتمام است. لطفاً در اسرع وقت اقدام فرمایید.',
+    'جشن پایان ترم با حضور هنرجویان و خانواده‌ها برگزار خواهد شد. دعوت‌نامه ارسال می‌شود.',
+    'قوانین حضور و غیاب به‌روزرسانی شد. مطالعه آیین‌نامه جدید الزامی است.',
+    'ظرفیت کلاس‌های پیشرفته تکمیل شده است. لیست انتظار در پذیرش فعال است.',
+    'برنامه کنسرت هنرجویان نهایی شد. زمان تمرین‌های گروهی اعلام خواهد شد.',
+    'برای جلوگیری از قطع دسترسی، شهریه معوق را تا پایان هفته پرداخت نمایید.'
 ];
 
-let currentNotificationBranch = 'all';
+let allNotifications = [];
+(function buildSample() {
+    const branches = window.getNotificationBranches();
+    for (let i = 1; i <= 42; i++) {
+        const branch = branches[Math.floor(Math.random() * branches.length)];
+        const d = new Date();
+        d.setDate(d.getDate() - Math.floor(Math.random() * 45));
+        allNotifications.push({
+            id: i,
+            title: notifSampleTitles[Math.floor(Math.random() * notifSampleTitles.length)],
+            body: notifSampleBodies[Math.floor(Math.random() * notifSampleBodies.length)],
+            branchId: branch.id,
+            branchName: branch.name,
+            audience: window.notificationAudiencesList[Math.floor(Math.random() * window.notificationAudiencesList.length)],
+            priority: window.notificationPrioritiesList[Math.floor(Math.random() * window.notificationPrioritiesList.length)],
+            status: window.notificationStatusesList[Math.floor(Math.random() * window.notificationStatusesList.length)],
+            date: d.toLocaleDateString('fa-IR'),
+            dateISO: d.toISOString().split('T')[0],
+            source: Math.random() > 0.4 ? 'سیستم' : 'مدیریت'
+        });
+    }
+})();
 
-window.renderNotificationsBranchTabs = function() {
+let currentNotificationBranch = 'all';
+let notificationsCurrentPage = 1;
+const notificationsPerPage = 10;
+let filteredNotifications = allNotifications.slice();
+let notifSortField = '';
+let notifSortDirection = 'asc';
+
+function sortNotificationItems() {
+    if (!notifSortField) return;
+    filteredNotifications.sort(function (a, b) {
+        let av = a[notifSortField], bv = b[notifSortField];
+        if (notifSortField === 'date') {
+            av = a.dateISO || '';
+            bv = b.dateISO || '';
+        } else {
+            av = String(av || '').toLowerCase();
+            bv = String(bv || '').toLowerCase();
+        }
+        if (av < bv) return notifSortDirection === 'asc' ? -1 : 1;
+        if (av > bv) return notifSortDirection === 'asc' ? 1 : -1;
+        return 0;
+    });
+}
+
+window.updateNotificationSortIcons = function () {
+    ['title', 'branchName', 'audience', 'priority', 'date', 'status'].forEach(function (f) {
+        const icon = document.getElementById('notifSortIcon-' + f);
+        if (!icon) return;
+        icon.textContent = notifSortField === f ? (notifSortDirection === 'asc' ? '↑' : '↓') : '↕';
+    });
+};
+
+window.sortNotificationsBy = function (field) {
+    if (notifSortField === field) notifSortDirection = notifSortDirection === 'asc' ? 'desc' : 'asc';
+    else { notifSortField = field; notifSortDirection = 'asc'; }
+    sortNotificationItems();
+    window.renderNotificationsTable(filteredNotifications);
+    window.updateNotificationSortIcons();
+};
+
+window.renderNotificationsBranchTabs = function () {
     const container = document.getElementById('notificationsBranchTabs');
     if (!container) return;
-    container.querySelectorAll('.notification-branch-tab:not(:first-child)').forEach(t => t.remove());
-
-    if (typeof allBranches !== 'undefined') {
-        allBranches.forEach(b => {
-            const btn = document.createElement('button');
-            btn.className = 'notification-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border border-gray-200 hover:bg-gray-50 transition';
-            btn.textContent = b.name;
-            btn.onclick = () => filterNotificationsByBranch(b.id);
-            container.appendChild(btn);
-        });
+    container.querySelectorAll('.notification-branch-tab:not([data-value="all"])').forEach(function (t) { t.remove(); });
+    window.getNotificationBranches().forEach(function (b) {
+        const active = String(currentNotificationBranch) === String(b.id);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'notification-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border transition ' +
+            (active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50');
+        btn.dataset.value = b.id;
+        btn.textContent = b.name;
+        btn.onclick = function () { window.filterNotificationsByBranch(b.id); };
+        container.appendChild(btn);
+    });
+    const allTab = container.querySelector('[data-value="all"]');
+    if (allTab) {
+        const isAll = currentNotificationBranch === 'all';
+        allTab.classList.toggle('bg-indigo-600', isAll);
+        allTab.classList.toggle('text-white', isAll);
+        allTab.classList.toggle('border-indigo-600', isAll);
+        if (!isAll) {
+            allTab.classList.add('border', 'border-gray-200');
+            allTab.classList.remove('bg-indigo-600', 'text-white');
+        }
     }
 };
 
-window.filterNotificationsByBranch = function(branchId) {
+window.filterNotificationsByBranch = function (branchId) {
     currentNotificationBranch = branchId;
+    document.querySelectorAll('.notification-branch-tab').forEach(function (tab) {
+        const active = String(tab.dataset.value) === String(branchId);
+        tab.classList.toggle('bg-indigo-600', active);
+        tab.classList.toggle('text-white', active);
+        tab.classList.toggle('border-indigo-600', active);
+        if (!active) {
+            tab.classList.add('border', 'border-gray-200');
+            tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
+        } else {
+            tab.classList.remove('border-gray-200');
+        }
+    });
+    window.filterNotifications();
+};
 
-    document.querySelectorAll('.notification-branch-tab').forEach(tab => {
-        tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
-        tab.classList.add('border', 'border-gray-200');
+window.filterNotifications = function () {
+    const search = (document.getElementById('notificationSearch') && document.getElementById('notificationSearch').value || '').trim().toLowerCase();
+    const status = document.getElementById('filterNotificationStatus') && document.getElementById('filterNotificationStatus').value || '';
+    const priority = document.getElementById('filterNotificationPriority') && document.getElementById('filterNotificationPriority').value || '';
+    const audience = document.getElementById('filterNotificationAudience') && document.getElementById('filterNotificationAudience').value || '';
+
+    filteredNotifications = allNotifications.filter(function (n) {
+        const matchBranch = currentNotificationBranch === 'all' || String(n.branchId) === String(currentNotificationBranch);
+        const matchSearch = !search ||
+            (n.title || '').toLowerCase().includes(search) ||
+            (n.body || '').toLowerCase().includes(search);
+        const matchStatus = !status || n.status === status;
+        const matchPriority = !priority || n.priority === priority;
+        const matchAudience = !audience || n.audience === audience;
+        return matchBranch && matchSearch && matchStatus && matchPriority && matchAudience;
     });
 
-    const tabs = document.querySelectorAll('.notification-branch-tab');
-    if (branchId === 'all') {
-        if (tabs[0]) {
-            tabs[0].classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
-            tabs[0].classList.remove('border-gray-200');
-        }
-    } else {
-        tabs.forEach(tab => {
-            const branch = allBranches?.find(b => b.id == branchId);
-            if (branch && tab.textContent === branch.name) {
-                tab.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
-                tab.classList.remove('border-gray-200');
-            }
-        });
-    }
-
-    renderNotificationsTable();
+    notificationsCurrentPage = 1;
+    sortNotificationItems();
+    window.renderNotificationsTable(filteredNotifications);
 };
 
-window.renderNotificationsTable = function() {
+window.renderNotificationsTable = function (list) {
+    list = list || filteredNotifications;
     const tbody = document.querySelector('#notificationsTable tbody');
     if (!tbody) return;
 
-    const list = currentNotificationBranch === 'all' 
-        ? allNotifications 
-        : allNotifications.filter(n => n.branchId == currentNotificationBranch);
+    const totalPages = Math.ceil(list.length / notificationsPerPage) || 1;
+    if (notificationsCurrentPage > totalPages) notificationsCurrentPage = totalPages;
 
-    tbody.innerHTML = list.length === 0 
-        ? `<tr><td colspan="6" class="py-12 text-center text-gray-400">اعلانی یافت نشد</td></tr>`
-        : list.map(n => {
-            const priorityClass = {
-                'بالا': 'bg-red-100 text-red-700',
-                'متوسط': 'bg-yellow-100 text-yellow-700',
-                'کم': 'bg-blue-100 text-blue-700'
-            }[n.priority] || 'bg-gray-100';
+    const start = (notificationsCurrentPage - 1) * notificationsPerPage;
+    const end = start + notificationsPerPage;
+    const pageItems = list.slice(start, end);
 
-            const statusClass = n.status === 'منتشر شده' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600';
-
-            return `
-            <tr class="hover:bg-gray-50">
-                <td class="py-4 px-5 font-medium">${n.title}</td>
-                <td class="py-4 px-5">${n.branchName}</td>
-                <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${priorityClass}">${n.priority}</span></td>
-                <td class="py-4 px-5">${n.date}</td>
-                <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusClass}">${n.status}</span></td>
-                <td class="py-4 px-5 text-left">
-                    <button onclick="viewNotification(${n.id})" class="text-indigo-600 hover:underline text-sm ml-3">مشاهده</button>
-                    <button onclick="deleteNotification(${n.id})" class="text-red-500 hover:underline text-sm">حذف</button>
-                </td>
-            </tr>`;
-        }).join('');
-};
-
-window.openAddNotificationModal = function() {
-    if (!document.getElementById('modalContainer')) {
-        alert('modalContainer پیدا نشد!');
-        return;
+    tbody.innerHTML = '';
+    if (!pageItems.length) {
+        tbody.innerHTML = window.getNotificationEmptyRowHTML ? window.getNotificationEmptyRowHTML() : '';
+    } else {
+        pageItems.forEach(function (item) {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50 transition';
+            tr.innerHTML = window.getNotificationRowHTML ? window.getNotificationRowHTML(item) : '';
+            tbody.appendChild(tr);
+        });
     }
-
-    const branchOptions = (typeof allBranches !== 'undefined' ? allBranches : [])
-        .map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-
-    document.getElementById('modalContainer').innerHTML = `
-    <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onclick="if(event.target === this) closeModal()">
-        <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl" onclick="event.stopPropagation()">
-            <div class="px-8 py-5 border-b flex justify-between items-center">
-                <h2 class="text-2xl font-bold">ثبت اعلان جدید</h2>
-                <button onclick="closeModal()" class="text-3xl text-gray-300">×</button>
-            </div>
-            <div class="p-8 space-y-5">
-                <div>
-                    <label class="block text-sm font-medium mb-2">عنوان اعلان *</label>
-                    <input id="notifTitle" type="text" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">شعبه</label>
-                    <select id="notifBranch" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${branchOptions}</select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">اولویت</label>
-                    <select id="notifPriority" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        <option value="بالا">بالا</option>
-                        <option value="متوسط">متوسط</option>
-                        <option value="کم">کم</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">متن اعلان</label>
-                    <textarea id="notifBody" rows="4" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"></textarea>
-                </div>
-                <div class="flex gap-4 pt-2">
-                    <button onclick="saveNotification()" class="flex-1 bg-indigo-600 text-white py-3.5 rounded-2xl">انتشار</button>
-                    <button onclick="closeModal()" class="flex-1 border py-3.5 rounded-2xl">انصراف</button>
-                </div>
-            </div>
-        </div>
-    </div>`;
+    updateNotificationsPagination(list.length, start, end, totalPages);
+    window.updateNotificationSortIcons();
 };
 
-window.saveNotification = function() {
-    const title = document.getElementById('notifTitle')?.value.trim();
-    if (!title) return alert('عنوان اعلان الزامی است');
+function updateNotificationsPagination(total, start, end, totalPages) {
+    const info = document.getElementById('notificationsPaginationInfo');
+    if (info) {
+        info.textContent = 'نمایش ' + (total === 0 ? 0 : start + 1) + ' تا ' + Math.min(end, total) + ' از ' + total + ' اعلان';
+    }
+    const pagination = document.getElementById('notificationsPaginationButtons');
+    if (!pagination) return;
+    let html = '<button onclick="changeNotificationsPage(1)" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' + (notificationsCurrentPage === 1 ? 'disabled' : '') + '>اول</button>'
+        + '<button onclick="changeNotificationsPage(' + (notificationsCurrentPage - 1) + ')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' + (notificationsCurrentPage === 1 ? 'disabled' : '') + '>قبلی</button>';
+    let sp = Math.max(1, notificationsCurrentPage - 2), ep = Math.min(totalPages, sp + 4);
+    if (ep - sp < 4) sp = Math.max(1, ep - 4);
+    for (let i = sp; i <= ep; i++) {
+        html += '<button onclick="changeNotificationsPage(' + i + ')" class="px-3 py-1.5 rounded-lg ' + (i === notificationsCurrentPage ? 'bg-indigo-600 text-white' : 'border hover:bg-gray-50') + '">' + i + '</button>';
+    }
+    html += '<button onclick="changeNotificationsPage(' + (notificationsCurrentPage + 1) + ')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' + (notificationsCurrentPage === totalPages ? 'disabled' : '') + '>بعدی</button>'
+        + '<button onclick="changeNotificationsPage(' + totalPages + ')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' + (notificationsCurrentPage === totalPages ? 'disabled' : '') + '>آخر</button>';
+    pagination.innerHTML = html;
+}
 
-    const branchId = parseInt(document.getElementById('notifBranch').value);
-    const branch = allBranches?.find(b => b.id === branchId);
+window.changeNotificationsPage = function (page) {
+    const totalPages = Math.ceil(filteredNotifications.length / notificationsPerPage) || 1;
+    if (page < 1 || page > totalPages) return;
+    notificationsCurrentPage = page;
+    window.renderNotificationsTable(filteredNotifications);
+};
+
+window.openAddNotificationModal = function () {
+    if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
+    document.getElementById('modalContainer').innerHTML = window.getNotificationAddModalHTML
+        ? window.getNotificationAddModalHTML() : '';
+};
+
+window.saveNotification = function (asDraft) {
+    const title = (document.getElementById('notifTitle') && document.getElementById('notifTitle').value || '').trim();
+    const body = (document.getElementById('notifBody') && document.getElementById('notifBody').value || '').trim();
+    if (!title) return alert('عنوان اعلان الزامی است');
+    if (!body) return alert('متن اعلان الزامی است');
+
+    const branchId = parseInt(document.getElementById('notifBranch') && document.getElementById('notifBranch').value, 10);
+    const branch = window.getNotificationBranches().find(function (b) { return b.id === branchId; });
+    const now = new Date();
 
     allNotifications.unshift({
         id: Date.now(),
-        title,
-        branchId,
+        title: title,
+        body: body,
+        branchId: branchId,
         branchName: branch ? branch.name : 'نامشخص',
-        priority: document.getElementById('notifPriority').value,
-        date: new Date().toLocaleDateString('fa-IR'),
-        status: "منتشر شده"
+        audience: document.getElementById('notifAudience') && document.getElementById('notifAudience').value || 'همه',
+        priority: document.getElementById('notifPriority') && document.getElementById('notifPriority').value || 'متوسط',
+        date: now.toLocaleDateString('fa-IR'),
+        dateISO: now.toISOString().split('T')[0],
+        status: asDraft ? 'پیش‌نویس' : 'منتشر شده',
+        source: 'مدیریت'
     });
 
-    filterNotificationsByBranch(currentNotificationBranch);
+    window.filterNotifications();
     closeModal();
-    alert('✅ اعلان ثبت شد');
+    alert(asDraft ? '✅ پیش‌نویس ذخیره شد' : '✅ اعلان منتشر شد');
 };
 
-window.viewNotification = function(id) {
-    const n = allNotifications.find(x => x.id === id);
-    if (n) alert(`عنوان: ${n.title}\nاولویت: ${n.priority}\nتاریخ: ${n.date}`);
+window.viewNotification = function (id) {
+    const item = allNotifications.find(function (x) { return x.id === id; });
+    if (!item) return;
+    document.getElementById('modalContainer').innerHTML = window.getNotificationDetailsModalHTML
+        ? window.getNotificationDetailsModalHTML(item) : '';
 };
 
-window.deleteNotification = function(id) {
-    if (confirm('حذف این اعلان؟')) {
-        allNotifications = allNotifications.filter(n => n.id !== id);
-        filterNotificationsByBranch(currentNotificationBranch);
-    }
+window.publishNotification = function (id) {
+    const item = allNotifications.find(function (x) { return x.id === id; });
+    if (!item) return;
+    item.status = 'منتشر شده';
+    window.filterNotifications();
+    closeModal();
+    alert('✅ اعلان منتشر شد');
 };
 
-// Init
-setTimeout(() => {
+window.expireNotification = function (id) {
+    const item = allNotifications.find(function (x) { return x.id === id; });
+    if (!item) return;
+    item.status = 'منقضی';
+    window.filterNotifications();
+    closeModal();
+};
+
+window.deleteNotification = function (id) {
+    if (!confirm('حذف این اعلان؟')) return;
+    allNotifications = allNotifications.filter(function (n) { return n.id !== id; });
+    window.filterNotifications();
+};
+
+setTimeout(function () {
     if (document.getElementById('notificationsTable')) {
-        renderNotificationsBranchTabs();
-        filterNotificationsByBranch('all');
+        window.renderNotificationsBranchTabs();
+        window.filterNotifications();
     }
 }, 200);
+})();
