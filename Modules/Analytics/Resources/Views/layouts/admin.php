@@ -34,8 +34,9 @@
     pushScript('sidebar.js');
     pushScript('dashboard.js');
     pushScript('add-user-modal.js');
-    pushScript('reports.js');
     
+    pushScript('report-templates.js');
+    pushScript('reports.js');
     pushScript('message-templates.js');
     pushScript('messages.js');
     pushScript('notification-templates.js');
