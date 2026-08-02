@@ -156,6 +156,12 @@ function readBranchForm(prefix = '') {
 function makeOnlyMain(id) { allBranches.forEach(branch => { branch.is_main = branch.id === id; }); }
 
 window.openAddBranchModal = function () { document.getElementById('modalContainer').innerHTML = window.getBranchAddModalHTML(); };
+window.deleteBranch = function (id) {
+    if (!confirm('آیا از حذف این شعبه مطمئن هستید؟')) return;
+    allBranches = allBranches.filter(item => item.id !== id);
+    filteredBranches = filteredBranches.filter(item => item.id !== id);
+    window.filterBranches();
+};
 window.saveBranch = function () {
     const branch = readBranchForm();
     if (!branch.name) return alert('نام شعبه الزامی است');
