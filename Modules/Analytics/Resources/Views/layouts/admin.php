@@ -76,35 +76,36 @@
     pushScript('availability-exceptions.js');
     pushScript('point-templates.js');
     pushScript('points.js');
-    
     pushScript('user-templates.js');
     pushScript('users.js');
-    // pushScript('profiles.js');
     pushScript('role-templates.js');
     pushScript('roles.js');
     pushScript('permission-templates.js');
     pushScript('permissions.js');
+    
+    // pushScript('profiles.js');
     // pushScript('contracts.js');
-
     pushScript('awards.js');
     pushScript('certificates.js');
     pushScript('educations.js');
     pushScript('events.js');
-    pushScript('polls.js');
-    pushScript('favorites.js');
     pushScript('publications.js');
-    pushScript('ratings.js');
     pushScript('badges.js');
     pushScript('approvals.js');
+    pushScript('experiences.js');
+
+    pushScript('polls.js');
+    pushScript('favorites.js');
+    pushScript('ratings.js');
     pushScript('rating-summaries.js');
     pushScript('posts.js');
+    pushScript('articles.js');
+    
     pushScript('about-us.js');
     pushScript('contact-us.js');
-    pushScript('articles.js');
     pushScript('academies.js');
     pushScript('academy-enroll.js');
     pushScript('academy-requests.js');
-    pushScript('experiences.js');
     
     pushScript('admin.js');
     ?>

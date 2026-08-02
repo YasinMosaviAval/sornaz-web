@@ -14,6 +14,7 @@ let academyProfile = {
     students: 248,
     teachers: 28,
     avatarUrl: '',
+    coverUrl: '',
     shortIntro: 'آموزش تخصصی موسیقی برای همه سنین با اساتید مجرب در چندین شعبه.',
     biography: 'موزیک آکادمی از سال ۱۳۹۵ با هدف ارتقای آموزش موسیقی استاندارد در تهران تأسیس شد.\n\nما دوره‌های پیانو، گیتار، ویولن، آواز و سایر سازها را به‌صورت خصوصی و گروهی ارائه می‌دهیم و با برگزاری کنسرت‌ها و مسترکلاس‌ها مسیر رشد هنرجویان را هموار می‌کنیم.',
     privacy: {
@@ -90,6 +91,9 @@ window.renderAccountInfo = function () {
         }
     }
 
+    // cover
+    window.renderAccountCover();
+
     window.renderAccountDocuments();
     window.renderAccountDevices();
     window.renderAccountLoginHistory();
@@ -108,6 +112,46 @@ window.onAccountAvatarChange = function (event) {
     academyProfile.avatarUrl = URL.createObjectURL(file);
     window.renderAccountInfo();
     alert('✅ عکس پروفایل به‌روزرسانی شد');
+};
+
+window.renderAccountCover = function () {
+    const coverImg = document.getElementById('accountCoverImg');
+    const placeholder = document.getElementById('accountCoverPlaceholder');
+    const removeBtn = document.getElementById('accountCoverRemoveBtn');
+    if (!coverImg) return;
+    if (academyProfile.coverUrl) {
+        coverImg.src = academyProfile.coverUrl;
+        coverImg.classList.remove('hidden');
+        if (placeholder) placeholder.classList.add('hidden');
+        if (removeBtn) removeBtn.classList.remove('hidden');
+    } else {
+        coverImg.src = '';
+        coverImg.classList.add('hidden');
+        if (placeholder) placeholder.classList.remove('hidden');
+        if (removeBtn) removeBtn.classList.add('hidden');
+    }
+};
+
+window.onAccountCoverChange = function (event) {
+    const file = event.target && event.target.files && event.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+        alert('فقط فایل تصویری مجاز است.');
+        return;
+    }
+    // توصیه نسبت افقی عریض (مشابه کاور یوتیوب ~16:9 تا 21:9)
+    academyProfile.coverUrl = URL.createObjectURL(file);
+    window.renderAccountCover();
+    if (event.target) event.target.value = '';
+    alert('✅ کاور پروفایل به‌روزرسانی شد');
+};
+
+window.removeAccountCover = function () {
+    if (!academyProfile.coverUrl) return;
+    if (!confirm('حذف کاور پروفایل؟')) return;
+    academyProfile.coverUrl = '';
+    window.renderAccountCover();
+    alert('✅ کاور حذف شد');
 };
 
 window.openEditProfileModal = function () {
