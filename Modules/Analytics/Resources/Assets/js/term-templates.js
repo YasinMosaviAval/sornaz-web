@@ -67,7 +67,7 @@
                 <div class="flex flex-col sm:flex-row gap-3 items-end">
                     <div class="flex-1 w-full">
                         <label class="text-xs text-gray-500 mb-1 block">استاد</label>
-                        <select class="term-teacher-select w-full border border-gray-300 rounded-2xl py-3 px-4">
+                        <select onchange="window.refreshTermSelectionOptionsForInput(this)" class="term-teacher-select w-full border border-gray-300 rounded-2xl py-3 px-4">
                             <option value="">انتخاب استاد</option>
                             ${renderOptions(teachers, item.id || item.name || '')}
                         </select>
@@ -85,7 +85,7 @@
                 <div class="flex flex-col sm:flex-row gap-3 items-end">
                     <div class="flex-1 w-full">
                         <label class="text-xs text-gray-500 mb-1 block">هنرجو</label>
-                        <select class="term-student-select w-full border border-gray-300 rounded-2xl py-3 px-4">
+                        <select onchange="window.refreshTermSelectionOptionsForInput(this)" class="term-student-select w-full border border-gray-300 rounded-2xl py-3 px-4">
                             <option value="">انتخاب هنرجو</option>
                             ${renderOptions(students, item.id || item.name || '')}
                         </select>
@@ -244,7 +244,7 @@
             <div class="mt-6">
                 <label class="block text-sm font-medium mb-2">اقساط</label>
                 <div id="${iContainer}">${installments.map(function (x) { return window.getTermInstallmentFieldHTML(x); }).join('')}</div>
-                <div class="text-xs text-gray-500 mb-2">قسط اول همیشه برابر مبلغ کل هزینه ترم است و قسط آخر به‌صورت خودکار محاسبه می‌شود.</div>
+                <div class="text-xs text-gray-500 mb-2">می‌توانید چند قسط با مبلغ‌های دلخواه اضافه کنید و هر قسط را جداگانه وارد نمایید.</div>
                 <button type="button" onclick="addTermInstallmentField('${iContainer}')" class="mt-2 text-sm text-indigo-600">+ افزودن قسط</button>
             </div>
         `;
