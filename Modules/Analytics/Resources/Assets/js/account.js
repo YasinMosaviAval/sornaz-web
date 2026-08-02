@@ -139,7 +139,7 @@ window.onAccountCoverChange = function (event) {
         alert('فقط فایل تصویری مجاز است.');
         return;
     }
-    // توصیه نسبت افقی عریض (مشابه کاور یوتیوب ~16:9 تا 21:9)
+    // قالب پیشنهادی ۱۹۲۰×۱۰۸۰ (۱۶:۹ افقی)
     academyProfile.coverUrl = URL.createObjectURL(file);
     window.renderAccountCover();
     if (event.target) event.target.value = '';
