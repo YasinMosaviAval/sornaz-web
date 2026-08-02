@@ -173,17 +173,39 @@ window.renderClassroomEquipmentFilter = function () {
         [...names].sort().map(n => `<option value="${n}" ${n === current ? 'selected' : ''}>${n}</option>`).join('');
 };
 
+window.renderClassroomTypeFilter = function () {
+    const select = document.getElementById('filterClassroomType');
+    if (!select) return;
+    const current = select.value;
+    const types = [...new Set(allClassrooms.map(c => c.typeLabel || c.type).filter(Boolean))].sort();
+    select.innerHTML = '<option value="">همه انواع</option>' +
+        types.map(t => `<option value="${t}" ${t === current ? 'selected' : ''}>${t}</option>`).join('');
+};
+
+window.renderClassroomCapacityFilter = function () {
+    const select = document.getElementById('filterClassroomCapacity');
+    if (!select) return;
+    const current = select.value;
+    const capacities = [...new Set(allClassrooms.map(c => Number(c.capacity || 0)).filter(Boolean))].sort((a, b) => a - b);
+    select.innerHTML = '<option value="">همه ظرفیت‌ها</option>' +
+        capacities.map(cap => `<option value="${cap}" ${cap === Number(current) ? 'selected' : ''}>${cap} نفر</option>`).join('');
+};
+
 window.filterClassrooms = function () {
     const search = (document.getElementById('classroomSearch')?.value || '').trim().toLowerCase();
     const status = document.getElementById('filterClassroomStatus')?.value || '';
     const equipment = document.getElementById('filterClassroomEquipment')?.value || '';
+    const type = document.getElementById('filterClassroomType')?.value || '';
+    const capacity = document.getElementById('filterClassroomCapacity')?.value || '';
 
     filteredClassrooms = allClassrooms.filter(item => {
         const matchBranch = currentClassroomBranchFilter === 'all' || item.branchId == currentClassroomBranchFilter;
         const matchSearch = !search || (item.name || '').toLowerCase().includes(search);
         const matchStatus = !status || item.status === status;
         const matchEquip = !equipment || (item.equipment || []).some(e => e.name === equipment);
-        return matchBranch && matchSearch && matchStatus && matchEquip;
+        const matchType = !type || (item.typeLabel || item.type) === type;
+        const matchCapacity = !capacity || Number(item.capacity || 0) === Number(capacity);
+        return matchBranch && matchSearch && matchStatus && matchEquip && matchType && matchCapacity;
     });
 
     classroomCurrentPage = 1;
@@ -311,6 +333,14 @@ window.addClassroomEquipmentField = function (containerId) {
     const el = document.getElementById(containerId);
     if (!el || !window.getClassroomEquipmentFieldHTML) return;
     el.insertAdjacentHTML('beforeend', window.getClassroomEquipmentFieldHTML());
+};
+
+window.removeClassroomEquipmentField = function (button) {
+    const item = button?.closest('.equipment-item');
+    if (!item) return;
+    const container = item.parentElement;
+    if (!container) return;
+    item.remove();
 };
 
 function readEquipmentFromContainer(containerId) {
@@ -527,6 +557,8 @@ window.generateClassroomsPDF = async function () {
         if (document.querySelector('#classroomsTable tbody')) {
             renderClassroomBranchTabs();
             renderClassroomEquipmentFilter();
+            renderClassroomTypeFilter();
+            renderClassroomCapacityFilter();
             filterClassrooms();
         }
     }, 150);

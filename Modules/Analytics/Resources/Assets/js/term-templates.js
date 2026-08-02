@@ -213,14 +213,6 @@
                            class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
                            onchange="rebuildTermSessions('${prefix}')">
                 </div>
-                <div class="sm:col-span-2 lg:col-span-3">
-                    <label class="block text-sm font-medium mb-2">خلاصه ترم</label>
-                    <input id="${id('Summary')}" type="text" value="${escapeHtml(item.summary || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                </div>
-                <div class="sm:col-span-2 lg:col-span-3">
-                    <label class="block text-sm font-medium mb-2">شرح ترم</label>
-                    <textarea id="${id('Description')}" rows="3" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${escapeHtml(item.description || '')}</textarea>
-                </div>
             </div>
 
             <div class="mt-6">
@@ -228,6 +220,18 @@
                 <p class="text-xs text-gray-400 mb-2">تاریخ اولین جلسه = شروع ترم · تاریخ آخرین جلسه = پایان ترم</p>
                 <div id="${sessContainer}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     ${window.getTermSessionFieldsHTML(sessionList)}
+                </div>
+            </div>
+
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div class="sm:col-span-2 lg:col-span-3">
+                    <label class="block text-sm font-medium mb-2">خلاصه ترم</label>
+                    <input id="${id('Summary')}" type="text" value="${escapeHtml(item.summary || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                </div>
+                <div class="sm:col-span-2 lg:col-span-3">
+                    <label class="block text-sm font-medium mb-2">شرح ترم</label>
+                    <textarea id="${id('Description')}" rows="3" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${escapeHtml(item.description || '')}</textarea>
                 </div>
             </div>
 

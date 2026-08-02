@@ -62,6 +62,9 @@
                         <label class="text-xs text-gray-500 mb-1 block">تعداد</label>
                         <input type="number" min="1" class="equip-qty w-full border border-gray-300 rounded-2xl py-3 px-4" value="${escapeHtml(item.qty || 1)}">
                     </div>
+                    <div class="sm:col-span-3 flex justify-end">
+                        <button type="button" onclick="window.removeClassroomEquipmentField(this)" class="text-red-500 hover:text-red-700 text-sm">حذف تجهیز</button>
+                    </div>
                 </div>
             </div>`;
     };
@@ -174,7 +177,7 @@
 
         return `
             <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
-                <div class="bg-white rounded-3xl w-full max-w-3xl my-8 shadow-2xl" onclick="event.stopPropagation()">
+                <div class="bg-white rounded-3xl w-full max-w-5xl my-8 shadow-2xl" onclick="event.stopPropagation()">
                     <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl">
                         <div>
                             <h2 class="text-2xl font-bold">${escapeHtml(item.name)}</h2>
