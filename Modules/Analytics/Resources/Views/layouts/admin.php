@@ -35,6 +35,7 @@
     pushScript('dashboard.js');
     pushScript('add-user-modal.js');
     pushScript('reports.js');
+    pushScript('message-templates.js');
     pushScript('messages.js');
     pushScript('notifications.js');
     
