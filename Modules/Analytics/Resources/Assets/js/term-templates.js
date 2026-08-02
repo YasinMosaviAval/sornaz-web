@@ -141,13 +141,12 @@
 
         const teachers = (item.teachers && item.teachers.length) ? item.teachers : [{}];
         const students = (item.students && item.students.length) ? item.students : [{}];
-        const installments = (item.installments && item.installments.length) ? item.installments : [{}];
+        const installmentCount = (item.installments && item.installments.length) ? item.installments.length : 1;
         const sessions = item.sessions || [];
         const sessionCount = sessions.length || 8;
 
         const tContainer = prefix ? (prefix + 'TeachersContainer') : 'termTeachersContainer';
         const sContainer = prefix ? (prefix + 'StudentsContainer') : 'termStudentsContainer';
-        const iContainer = prefix ? (prefix + 'InstallmentsContainer') : 'termInstallmentsContainer';
         const sessContainer = prefix ? (prefix + 'SessionsContainer') : 'termSessionsContainer';
 
         const sessionList = sessions.length ? sessions : Array.from({ length: sessionCount }, function () { return { date: '' }; });
@@ -199,6 +198,10 @@
                     <input id="${id('Cost')}" type="number" min="0" value="${escapeHtml(item.cost ?? '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5" onchange="window.syncTermInstallments('${prefix}')" oninput="window.syncTermInstallments('${prefix}')">
                 </div>
                 <div>
+                    <label class="block text-sm font-medium mb-2">تعداد اقساط</label>
+                    <input id="${id('InstallmentCount')}" type="number" min="1" value="${installmentCount}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                </div>
+                <div>
                     <label class="block text-sm font-medium mb-2">وضعیت</label>
                     <select id="${id('Status')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                         ${renderOptions(statuses, item.status || 'در حال برگزاری')}
@@ -242,10 +245,7 @@
             </div>
 
             <div class="mt-6">
-                <label class="block text-sm font-medium mb-2">اقساط</label>
-                <div id="${iContainer}">${installments.map(function (x) { return window.getTermInstallmentFieldHTML(x); }).join('')}</div>
-                <div class="text-xs text-gray-500 mb-2">می‌توانید چند قسط با مبلغ‌های دلخواه اضافه کنید و هر قسط را جداگانه وارد نمایید.</div>
-                <button type="button" onclick="addTermInstallmentField('${iContainer}')" class="mt-2 text-sm text-indigo-600">+ افزودن قسط</button>
+                <div class="text-xs text-gray-500">تعداد اقساط را مشخص کنید و مبلغ کل ترم به‌صورت خودکار میان اقساط تقسیم می‌شود.</div>
             </div>
         `;
     }

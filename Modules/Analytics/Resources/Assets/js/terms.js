@@ -234,6 +234,16 @@ window.refreshTermStudentFieldLimit = function (prefix) {
     });
 };
 
+function buildInstallmentsFromCount(totalCost, count) {
+    const safeCount = Math.max(1, parseInt(count || '1', 10) || 1);
+    const safeCost = Number(totalCost || 0);
+    const base = Math.floor(safeCost / safeCount);
+    const remainder = safeCost % safeCount;
+    return Array.from({ length: safeCount }, function (_, index) {
+        return { amount: index === safeCount - 1 ? base + remainder : base };
+    });
+}
+
 function validateTermData(data) {
     if (!data.name) {
         alert('نام ترم الزامی است');
@@ -727,13 +737,13 @@ function readTermForm(prefix) {
     const classroomSelect = field('Classroom');
     const classroomLabel = classroomSelect && classroomSelect.selectedOptions[0] ? classroomSelect.selectedOptions[0].textContent : '';
     const cost = parseFloat(field('Cost') && field('Cost').value || 0) || 0;
+    const installmentCount = parseInt(field('InstallmentCount') && field('InstallmentCount').value || 1, 10) || 1;
     const status = field('Status') && field('Status').value || 'در حال برگزاری';
     const summary = field('Summary') && field('Summary').value.trim() || '';
     const description = field('Description') && field('Description').value.trim() || '';
 
     const tContainer = prefix ? (prefix + 'TeachersContainer') : 'termTeachersContainer';
     const sContainer = prefix ? (prefix + 'StudentsContainer') : 'termStudentsContainer';
-    const iContainer = prefix ? (prefix + 'InstallmentsContainer') : 'termInstallmentsContainer';
     const sessContainer = prefix ? (prefix + 'SessionsContainer') : 'termSessionsContainer';
 
     const teachers = readCollection(tContainer, '.term-teacher-item', function (div) {
@@ -750,10 +760,7 @@ function readTermForm(prefix) {
     }).filter(function (item, index, arr) {
         return item && arr.findIndex(function (candidate) { return candidate && String(candidate.id) === String(item.id); }) === index;
     });
-    const installments = readCollection(iContainer, '.term-installment-item', function (div) {
-        const amount = parseFloat(div.querySelector('.term-installment-amount') && div.querySelector('.term-installment-amount').value || 0);
-        return amount ? { amount: amount } : null;
-    });
+    const installments = buildInstallmentsFromCount(cost, installmentCount);
     const sessions = readCollection(sessContainer, '.term-session-date', function (inp) {
         return { date: inp.value || '' };
     });
