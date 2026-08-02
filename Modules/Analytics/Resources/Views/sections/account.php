@@ -4,47 +4,48 @@
         <p class="text-gray-500 mt-1">مدیریت پروفایل، امنیت، حریم خصوصی و پشتیبان‌گیری</p>
     </div>
 
-    <!-- کاور پروفایل (افقی مانند یوتیوب) -->
+    <!-- کاور پروفایل ۱۶:۹ (معادل ۱۹۲۰×۱۰۸۰) -->
     <div class="bg-white rounded-3xl shadow overflow-hidden mb-8">
-        <div class="relative group">
-            <div id="accountCoverPreview" class="w-full aspect-[21/6] min-h-[140px] max-h-[280px] bg-gradient-to-br from-indigo-600 via-indigo-500 to-violet-600 flex items-center justify-center overflow-hidden">
-                <div id="accountCoverPlaceholder" class="text-center text-white/90 px-4">
+        <div class="relative">
+            <div id="accountCoverPreview" class="w-full aspect-video max-h-[360px] bg-gradient-to-br from-indigo-600 via-indigo-500 to-violet-600 flex items-center justify-center overflow-hidden">
+                <div id="accountCoverPlaceholder" class="text-center text-white/90 px-4 pointer-events-none">
                     <i class="fas fa-image text-4xl mb-2 opacity-80"></i>
                     <p class="text-sm">کاور پروفایل آموزشگاه</p>
-                    <p class="text-xs opacity-75 mt-1">نسبت پیشنهادی حدود ۲۱:۶ (افقی عریض)</p>
+                    <p class="text-xs opacity-75 mt-1">قالب پیشنهادی ۱۹۲۰×۱۰۸۰ (۱۶:۹ افقی)</p>
                 </div>
-                <img id="accountCoverImg" src="" alt="کاور" class="absolute inset-0 w-full h-full object-cover hidden">
+                <img id="accountCoverImg" src="" alt="کاور" class="absolute inset-0 w-full h-full object-cover hidden pointer-events-none">
             </div>
-            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition flex items-end justify-end p-4 gap-2">
-                <label class="opacity-0 group-hover:opacity-100 transition bg-white text-gray-800 px-4 py-2.5 rounded-xl text-sm cursor-pointer shadow flex items-center gap-2 hover:bg-gray-50">
+            <!-- دکمه‌ها همیشه قابل کلیک (بدون hover محو) -->
+            <div class="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-2">
+                <label class="bg-white/95 hover:bg-white text-gray-800 px-4 py-2.5 rounded-xl text-sm cursor-pointer shadow-md flex items-center gap-2 border border-gray-100">
                     <i class="fas fa-camera"></i> تغییر کاور
                     <input type="file" id="accountCoverInput" accept="image/*" class="hidden" onchange="onAccountCoverChange(event)">
                 </label>
                 <button type="button" id="accountCoverRemoveBtn" onclick="removeAccountCover()"
-                        class="hidden opacity-0 group-hover:opacity-100 transition bg-red-500 text-white px-4 py-2.5 rounded-xl text-sm shadow hover:bg-red-600">
-                    <i class="fas fa-trash-alt"></i> حذف
+                        class="hidden bg-red-500 hover:bg-red-600 text-white px-4 py-2.5 rounded-xl text-sm shadow-md">
+                    <i class="fas fa-trash-alt"></i> حذف کاور
                 </button>
             </div>
         </div>
-        <!-- نوار زیر کاور: آواتار + نام (پیش‌نمایش سبک پروفایل عمومی) -->
-        <div class="px-6 pb-5 pt-0 relative">
-            <div class="flex flex-col sm:flex-row sm:items-end gap-4 -mt-10 sm:-mt-12">
+        <!-- نام و آواتار روی پس‌زمینه سفید جدا از کاور -->
+        <div class="bg-white border-t border-gray-100 px-6 py-5">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div class="relative shrink-0 self-center sm:self-auto">
-                    <div id="accountAvatarPreview" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+                    <div id="accountAvatarPreview" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg ring-1 ring-gray-100">
                         <i class="fas fa-music text-3xl sm:text-4xl text-indigo-600" id="accountAvatarIcon"></i>
                         <img id="accountAvatarImg" src="" alt="" class="w-full h-full object-cover hidden">
                     </div>
-                    <label class="absolute bottom-1 left-1 w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-indigo-700 shadow">
+                    <label class="absolute bottom-1 left-1 w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-indigo-700 shadow z-10">
                         <i class="fas fa-camera text-xs"></i>
                         <input type="file" id="accountAvatarInput" accept="image/*" class="hidden" onchange="onAccountAvatarChange(event)">
                     </label>
                 </div>
-                <div class="flex-1 text-center sm:text-right pt-2 sm:pb-1">
-                    <h2 class="text-xl sm:text-2xl font-bold" id="academyName">موزیک آکادمی</h2>
+                <div class="flex-1 min-w-0 text-center sm:text-right rounded-2xl bg-slate-50 px-4 py-3 border border-slate-100">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900" id="academyName">موزیک آکادمی</h2>
                     <p class="text-gray-500 text-sm mt-0.5" id="academyTypeLabel">آموزشگاه موسیقی</p>
                     <p class="text-sm text-gray-600 mt-2 line-clamp-2" id="academyShortIntro">—</p>
                 </div>
-                <div class="shrink-0 self-center sm:self-end pb-1">
+                <div class="shrink-0 self-center">
                     <button onclick="openEditProfileModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm">
                         ویرایش پروفایل
                     </button>
