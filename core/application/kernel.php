@@ -1,12 +1,12 @@
 <?php
 
-namespace Core\Application;
+namespace Core\application;
 
-use Core\Http\Request;
-use Core\Http\Response;
+use Core\http\Request;
+use Core\http\Response;
 use Core\Middleware\MiddlewarePipeline;
-use Core\Router\Router;
-use Core\Http\ResponseInterface;
+use Core\router\router;
+use Core\http\ResponseInterface;
 use Core\Validation\ValidationException;
 use Exception;
 use ReflectionFunction;

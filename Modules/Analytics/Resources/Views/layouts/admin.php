@@ -34,11 +34,12 @@
     pushScript('sidebar.js');
     pushScript('dashboard.js');
     pushScript('add-user-modal.js');
-    pushScript('students.js');
     pushScript('reports.js');
     pushScript('messages.js');
     pushScript('notifications.js');
     
+    pushScript('student-templates.js');
+    pushScript('students.js');
     pushScript('teacher-templates.js');
     pushScript('teachers.js');
     pushScript('branch-templates.js');
