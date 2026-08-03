@@ -1,9 +1,9 @@
 <?php
 
-namespace Core\Database\Concerns;
+namespace Core\database\Concerns;
 
-use Core\Database\Builder;
-use Core\Database\DB;
+use Core\database\Builder;
+use Core\database\DB;
 
 trait HasGlobalScopes {
 

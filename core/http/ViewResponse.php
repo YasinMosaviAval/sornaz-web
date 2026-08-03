@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Http;
+namespace Core\http;
 
-use Core\View\View;
+use Core\view\View;
 
 class ViewResponse implements ResponseInterface {
 

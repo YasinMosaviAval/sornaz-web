@@ -1,9 +1,9 @@
 <?php
 
-namespace Core\Database\Concerns;
+namespace Core\database\Concerns;
 
-use Core\Database\Aggregates\AggregateLoader;
-use Core\Translation\TranslationManager;
+use Core\database\Aggregates\AggregateLoader;
+use Core\translation\TranslationManager;
 
 trait ExecutesQueries {
 

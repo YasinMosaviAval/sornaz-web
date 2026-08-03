@@ -1,9 +1,9 @@
 <?php
 
-namespace Core\Validation\Rules;
+namespace Core\validation\Rules;
 
-use Core\Database\DB;
-use Core\Validation\Rule;
+use Core\database\DB;
+use Core\validation\Rule;
 
 class UniqueRule implements Rule {
 

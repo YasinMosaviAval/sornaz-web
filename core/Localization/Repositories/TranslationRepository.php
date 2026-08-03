@@ -1,10 +1,10 @@
 <?php
 
-namespace Core\Localization\Repositories;
+namespace Core\localization\Repositories;
 
-use Core\Localization\Contracts\TranslationRepositoryInterface;
-use Core\Localization\DTO\TranslationDTO;
-use Core\Localization\TranslationCollection;
+use Core\localization\Contracts\TranslationRepositoryInterface;
+use Core\localization\DTO\TranslationDTO;
+use Core\localization\TranslationCollection;
 use PDO;
 
 class TranslationRepository implements TranslationRepositoryInterface {

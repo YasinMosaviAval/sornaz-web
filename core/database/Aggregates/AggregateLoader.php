@@ -1,9 +1,9 @@
 <?php
 
-namespace Core\Database\Aggregates;
+namespace Core\database\Aggregates;
 
 use Closure;
-use Core\Database\Builder;
+use Core\database\Builder;
 
 class AggregateLoader {
 

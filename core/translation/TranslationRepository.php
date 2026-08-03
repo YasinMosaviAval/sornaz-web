@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Translation;
+namespace Core\translation;
 
 class TranslationRepository {
 

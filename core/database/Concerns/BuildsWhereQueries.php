@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Database\Concerns;
+namespace Core\database\Concerns;
 
 trait BuildsWhereQueries {
 

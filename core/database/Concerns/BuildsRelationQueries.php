@@ -1,11 +1,11 @@
 <?php
 
-namespace Core\Database\Concerns;
+namespace Core\database\Concerns;
 
 use Closure;
-use Core\Database\Relations\RelationExistence;
-use Core\Database\Relations\RelationLoader;
-use Core\Database\Relations\RelationPath;
+use Core\database\Relations\RelationExistence;
+use Core\database\Relations\RelationLoader;
+use Core\database\Relations\RelationPath;
 
 trait BuildsRelationQueries {
 

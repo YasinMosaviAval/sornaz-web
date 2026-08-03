@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Events;
+namespace Core\events;
 
 interface ListenerInterface {
 

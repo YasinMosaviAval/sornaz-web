@@ -1,9 +1,9 @@
 <?php
 
-namespace Core\Http\Resources\Concerns;
+namespace Core\http\Resources\Concerns;
 
-use Core\Http\Resources\MergeValue;
-use Core\Http\Resources\MissingValue;
+use Core\http\Resources\MergeValue;
+use Core\http\Resources\MissingValue;
 
 trait Conditionable {
     protected function when(bool $condition, mixed $value, mixed $default = null): mixed {

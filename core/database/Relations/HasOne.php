@@ -1,9 +1,9 @@
 <?php
 
-namespace Core\Database\Relations;
+namespace Core\database\Relations;
 
-use Core\Database\Model;
-use Core\Database\Builder;
+use Core\database\Model;
+use Core\database\Builder;
 
 class HasOne extends HasOneOrMany {
 

@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Auth;
+namespace Core\auth;
 
-use Core\Http\Request;
+use Core\http\Request;
 
 class GuestMiddleware {
 

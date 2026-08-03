@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Support;
+namespace Core\support;
 
 use Exception;
 
@@ -9,11 +9,11 @@ class AssetManager {
     protected static array $published = [];
 
     public static function publish(string $module, string $type, string $file): string {
-        $source = base_path("Modules/{$module}/Resources/Assets/{$type}/{$file}");
+        $source = base_path("assets/{$module}/{$type}/{$file}");
         if (!file_exists($source)) {
             throw new Exception("Asset not found : {$source}");
         }
-        $targetDir = public_path("assets/{$module}/{$type}");
+        $targetDir = asset_path("/{$module}/{$type}");
         if (!is_dir($targetDir)) {
             mkdir($targetDir,0777,true);
         }

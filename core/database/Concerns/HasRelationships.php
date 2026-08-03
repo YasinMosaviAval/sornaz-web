@@ -1,11 +1,11 @@
 <?php
 
-namespace Core\Database\Concerns;
+namespace Core\database\Concerns;
 
-use Core\Database\Relations\HasMany;
-use Core\Database\Relations\HasOne;
-use Core\Database\Relations\BelongsTo;
-use Core\Database\Relations\BelongsToMany;
+use Core\database\Relations\HasMany;
+use Core\database\Relations\HasOne;
+use Core\database\Relations\BelongsTo;
+use Core\database\Relations\BelongsToMany;
 
 trait HasRelationships {
 

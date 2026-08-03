@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Csrf;
+namespace Core\csrf;
 
-use Core\Http\Request;
+use Core\http\Request;
 use Exception;
 
 class CsrfMiddleware {

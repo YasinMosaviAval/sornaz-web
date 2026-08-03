@@ -24,12 +24,9 @@
     <?//=styles()?>
 </head>
 <body class="bg-gray-100">
-    <?//= baseUrl() ?>
-    <?// component('header'); ?>
     <main class="site-content">
         <?=$slot?>
     </main>
-    <?// component('footer'); ?>
     <?
     pushScript('sidebar.js');
     pushScript('add-user-modal.js');
@@ -85,27 +82,29 @@
     
     // pushScript('profiles.js');
     // pushScript('contracts.js');
-    pushScript('awards.js');
-    pushScript('certificates.js');
-    pushScript('educations.js');
-    pushScript('events.js');
-    pushScript('publications.js');
-    pushScript('badges.js');
-    pushScript('approvals.js');
-    pushScript('experiences.js');
 
-    pushScript('polls.js');
-    pushScript('favorites.js');
-    pushScript('ratings.js');
-    pushScript('rating-summaries.js');
-    pushScript('posts.js');
-    pushScript('articles.js');
+
+    // pushScript('awards.js');
+    // pushScript('certificates.js');
+    // pushScript('educations.js');
+    // pushScript('events.js');
+    // pushScript('publications.js');
+    // pushScript('badges.js');
+    // pushScript('approvals.js');
+    // pushScript('experiences.js');
+
+    // pushScript('polls.js');
+    // pushScript('favorites.js');
+    // pushScript('ratings.js');
+    // pushScript('rating-summaries.js');
+    // pushScript('posts.js');
+    // pushScript('articles.js');
     
-    pushScript('about-us.js');
-    pushScript('contact-us.js');
-    pushScript('academies.js');
-    pushScript('academy-enroll.js');
-    pushScript('academy-requests.js');
+    // pushScript('about-us.js');
+    // pushScript('contact-us.js');
+    // pushScript('academies.js');
+    // pushScript('academy-enroll.js');
+    // pushScript('academy-requests.js');
     
     pushScript('admin.js');
     ?>

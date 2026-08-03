@@ -1,9 +1,9 @@
 <?php
 
-namespace Core\Database\Relations;
+namespace Core\database\Relations;
 
-use Core\Database\Builder;
-use Core\Database\Model;
+use Core\database\Builder;
+use Core\database\Model;
 
 abstract class Relation {
 

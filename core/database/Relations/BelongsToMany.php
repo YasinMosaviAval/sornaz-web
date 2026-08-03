@@ -1,10 +1,10 @@
 <?php
 
-namespace Core\Database\Relations;
+namespace Core\database\Relations;
 
-use Core\Database\DB;
-use Core\Database\Model;
-use Core\Database\Builder;
+use Core\database\DB;
+use Core\database\Model;
+use Core\database\Builder;
 
 class BelongsToMany extends Relation {
 

@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Database\Concerns;
+namespace Core\database\Concerns;
 
-use Core\Database\Relations\RelationLoader;
+use Core\database\Relations\RelationLoader;
 
 trait LoadsRelations {
 

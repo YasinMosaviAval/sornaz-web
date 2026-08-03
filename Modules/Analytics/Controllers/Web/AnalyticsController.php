@@ -2,7 +2,7 @@
 
 namespace Modules\Analytics\Controllers\Web;
 
-use Core\Http\ResponseFactory;
+use Core\http\ResponseFactory;
 
 class AnalyticsController {
 

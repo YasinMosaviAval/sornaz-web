@@ -1,9 +1,9 @@
 <?php
 
-namespace Core\Database\Concerns;
+namespace Core\database\Concerns;
 
-use Core\Database\Model;
-use Core\Database\SoftDeletes;
+use Core\database\Model;
+use Core\database\SoftDeletes;
 
 trait HasEvents {
     /**

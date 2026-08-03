@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Middleware;
+namespace Core\middleware;
 
-use Core\Http\Request;
+use Core\http\Request;
 
 interface MiddlewareInterface {
 

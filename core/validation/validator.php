@@ -1,20 +1,20 @@
 <?php
 
-namespace Core\Validation;
+namespace Core\validation;
 
-use Core\Validation\Rules\RequiredRule;
-use Core\Validation\Rules\NullableRule;
-use Core\Validation\Rules\MinRule;
-use Core\Validation\Rules\MaxRule;
-use Core\Validation\Rules\EmailRule;
-use Core\Validation\Rules\InRule;
-use Core\Validation\Rules\UniqueRule;
-use Core\Validation\Rules\ExistsRule;
-use Core\Validation\Rules\NumericRule;
-use Core\Validation\Rules\IntegerRule;
-use Core\Validation\Rules\BooleanRule;
-use Core\Validation\Rules\SameRule;
-use Core\Validation\Rules\ConfirmedRule;
+use Core\validation\Rules\RequiredRule;
+use Core\validation\Rules\NullableRule;
+use Core\validation\Rules\MinRule;
+use Core\validation\Rules\MaxRule;
+use Core\validation\Rules\EmailRule;
+use Core\validation\Rules\InRule;
+use Core\validation\Rules\UniqueRule;
+use Core\validation\Rules\ExistsRule;
+use Core\validation\Rules\NumericRule;
+use Core\validation\Rules\IntegerRule;
+use Core\validation\Rules\BooleanRule;
+use Core\validation\Rules\SameRule;
+use Core\validation\Rules\ConfirmedRule;
 use Exception;
 
 class Validator {

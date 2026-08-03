@@ -1,9 +1,9 @@
 <?php
 
-namespace Core\Database\Relations;
+namespace Core\database\Relations;
 
 use Closure;
-use Core\Database\Builder;
+use Core\database\Builder;
 
 class RelationSubQuery {
 

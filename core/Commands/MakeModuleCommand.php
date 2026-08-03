@@ -1,10 +1,10 @@
 <?php
 
-namespace Core\Commands;
+namespace Core\commands;
 
-use Core\Console\Command;
-use Core\Console\Filesystem;
-use Core\Console\Stub;
+use Core\console\Command;
+use Core\console\Filesystem;
+use Core\console\Stub;
 
 class MakeModuleCommand extends Command {
     protected Filesystem $filesystem;
@@ -112,18 +112,14 @@ class MakeModuleCommand extends Command {
             | Routes
             |--------------------------------------------------------------------------
             */
-            'web.stub' => 'routes/web.php',
-            'api.stub' => 'routes/api.php',
-            'routes.stub' => 'routes/routes.php',
+            'web.stub' => 'Routes/web.php',
+            'api.stub' => 'Routes/api.php',
+            'routes.stub' => 'Routes/routes.php',
             /*
             |--------------------------------------------------------------------------
             | View
             |--------------------------------------------------------------------------
             */
-            // 'index.stub' => 'Resources/Views/index.php',
-            // 'create.stub' => 'Resources/Views/create.php',
-            // 'edit.stub' => 'Resources/Views/edit.php',
-            // 'show.stub' => 'Resources/Views/show.php',
             'index.view.stub' => 'Resources/Views/index.php',
             'create.view.stub' => 'Resources/Views/create.php',
             'edit.view.stub' => 'Resources/Views/edit.php',
@@ -139,21 +135,21 @@ class MakeModuleCommand extends Command {
             | CSS
             |--------------------------------------------------------------------------
             */
-            'style.stub'       => 'Resources/Assets/css/style.css',
-            'index.css.stub'   => 'Resources/Assets/css/index.css',
-            'create.css.stub'  => 'Resources/Assets/css/create.css',
-            'edit.css.stub'    => 'Resources/Assets/css/edit.css',
-            'show.css.stub'    => 'Resources/Assets/css/show.css',
+            // 'style.stub'       => 'Resources/Assets/css/style.css',
+            // 'index.css.stub'   => 'Resources/Assets/css/index.css',
+            // 'create.css.stub'  => 'Resources/Assets/css/create.css',
+            // 'edit.css.stub'    => 'Resources/Assets/css/edit.css',
+            // 'show.css.stub'    => 'Resources/Assets/css/show.css',
             /*
             |--------------------------------------------------------------------------
             | Javascript
             |--------------------------------------------------------------------------
             */
-            'script.stub'     => 'Resources/Assets/js/script.js',
-            'index.js.stub'   => 'Resources/Assets/js/index.js',
-            'create.js.stub'  => 'Resources/Assets/js/create.js',
-            'edit.js.stub'    => 'Resources/Assets/js/edit.js',
-            'show.js.stub'    => 'Resources/Assets/js/show.js',
+            // 'script.stub'     => 'Resources/Assets/js/script.js',
+            // 'index.js.stub'   => 'Resources/Assets/js/index.js',
+            // 'create.js.stub'  => 'Resources/Assets/js/create.js',
+            // 'edit.js.stub'    => 'Resources/Assets/js/edit.js',
+            // 'show.js.stub'    => 'Resources/Assets/js/show.js',
             /*
             |--------------------------------------------------------------------------
             | Module Files
@@ -190,11 +186,11 @@ class MakeModuleCommand extends Command {
             'Requests',
 
             'Resources',
-            'Resources/Assets',
-            'Resources/Assets/css',
-            'Resources/Assets/js',
-            'Resources/Assets/images',
-            'Resources/Assets/fonts',
+            // 'Resources/Assets',
+            // 'Resources/Assets/css',
+            // 'Resources/Assets/js',
+            // 'Resources/Assets/images',
+            // 'Resources/Assets/fonts',
 
             'Resources/Views',
             'Resources/Views/layouts',
@@ -202,7 +198,7 @@ class MakeModuleCommand extends Command {
             'Resources/Views/components',
             'Resources/Views/sections',
 
-            'routes',
+            'Routes',
 
             'Services',
         ];

@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Auth;
+namespace Core\auth;
 
 class Gate {
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Console;
+namespace Core\console;
 
 class Stub {
     protected string $contents;

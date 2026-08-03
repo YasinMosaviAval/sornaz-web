@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Database\Relations;
+namespace Core\database\Relations;
 
 abstract class HasOneOrMany extends Relation {
 

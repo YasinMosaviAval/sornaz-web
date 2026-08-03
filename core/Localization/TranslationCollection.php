@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Localization;
+namespace Core\localization;
 
-use Core\Localization\DTO\TranslationDTO;
+use Core\localization\DTO\TranslationDTO;
 
 class TranslationCollection {
     /**
