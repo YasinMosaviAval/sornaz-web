@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Database\Concerns;
+namespace Core\database\Concerns;
 
-use Core\Translation\TranslationService;
+use Core\translation\TranslationService;
 
 trait HasTranslations {
 

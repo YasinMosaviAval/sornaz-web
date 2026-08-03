@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Http\Resources;
+namespace Core\http\Resources;
 
-use Core\Http\Resources\Concerns\Conditionable;
+use Core\http\Resources\Concerns\Conditionable;
 use Core\http\Resources\ResourceCollection;
 
 abstract class JsonResource extends Resource {

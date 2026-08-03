@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Database;
+namespace Core\database;
 
-use Core\Database\Scopes\SoftDeletingScope;
+use Core\database\Scopes\SoftDeletingScope;
 
 trait SoftDeletes {
 

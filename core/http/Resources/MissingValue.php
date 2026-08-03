@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Http\Resources;
+namespace Core\http\Resources;
 
 final class MissingValue {
 

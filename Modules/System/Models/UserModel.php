@@ -2,9 +2,9 @@
 
 namespace Modules\System\Models;
 
-use Core\Database\Builder;
-use Core\Database\Model;
-use Core\Database\SoftDeletes;
+use Core\database\Builder;
+use Core\database\Model;
+use Core\database\SoftDeletes;
 use Modules\Content\Models\Post;
 use Modules\System\Models\Role;
 

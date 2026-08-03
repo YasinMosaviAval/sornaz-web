@@ -1,21 +1,21 @@
 <?php
 
-namespace Core\Database;
+namespace Core\database;
 
-use Core\Database\Concerns\HasAttributes;
-use Core\Database\Concerns\HasBooting;
-use Core\Database\Concerns\HasCRUD;
-use Core\Database\Concerns\HasEvents;
-use Core\Database\Concerns\HasGlobalScopes;
-use Core\Database\Concerns\HasQueries;
-use Core\Database\Concerns\HasRelationships;
-use Core\Database\Concerns\HasObservers;
-use Core\Database\Concerns\HasTimestamps;
-use Core\Database\Concerns\GuardsAttributes;
-use Core\Database\Concerns\HasMagicMethods;
-use Core\Database\Concerns\LoadsRelations;
-use Core\Database\Concerns\HasTranslations;
-use Core\Translation\TranslationManager;
+use Core\database\Concerns\HasAttributes;
+use Core\database\Concerns\HasBooting;
+use Core\database\Concerns\HasCRUD;
+use Core\database\Concerns\HasEvents;
+use Core\database\Concerns\HasGlobalScopes;
+use Core\database\Concerns\HasQueries;
+use Core\database\Concerns\HasRelationships;
+use Core\database\Concerns\HasObservers;
+use Core\database\Concerns\HasTimestamps;
+use Core\database\Concerns\GuardsAttributes;
+use Core\database\Concerns\HasMagicMethods;
+use Core\database\Concerns\LoadsRelations;
+use Core\database\Concerns\HasTranslations;
+use Core\translation\TranslationManager;
 
 abstract class Model {
 

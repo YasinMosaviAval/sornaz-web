@@ -1,9 +1,9 @@
 <?php
 
-namespace Core\Database\Concerns;
+namespace Core\database\Concerns;
 
 use Closure;
-use Core\Database\Relations\HasMany;
+use Core\database\Relations\HasMany;
 
 trait BuildsRelationAggregates {
 

@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Database\Scopes;
+namespace Core\database\Scopes;
 
-use Core\Database\Builder;
+use Core\database\Builder;
 
 interface Scope {
 

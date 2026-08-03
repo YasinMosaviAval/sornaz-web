@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Console;
+namespace Core\console;
 
-use Core\Commands\MakeModuleCommand;
+use Core\commands\MakeModuleCommand;
 
 class Kernel {
 

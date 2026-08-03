@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Http;
+namespace Core\http;
 
 class JsonResponse implements ResponseInterface {
     public function __construct(

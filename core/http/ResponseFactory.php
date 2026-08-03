@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Http;
+namespace Core\http;
 
 class ResponseFactory {
 

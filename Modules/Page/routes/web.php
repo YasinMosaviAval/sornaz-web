@@ -1,6 +1,6 @@
 <?php
 
-use Core\Router\Router;
+use Core\router\Router;
 use Modules\Page\Controllers\Web\PageController;
 
 Router::group(

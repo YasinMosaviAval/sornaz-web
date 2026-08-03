@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Validation\Rules;
+namespace Core\validation\Rules;
 
-use Core\Validation\Rule;
+use Core\validation\Rule;
 
 class EmailRule implements Rule {
 

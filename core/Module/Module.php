@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Module;
+namespace Core\module;
 
 abstract class Module {
     abstract public function name(): string;

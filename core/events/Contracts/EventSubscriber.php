@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Events\Contracts;
+namespace Core\events\Contracts;
 
-use Core\Events\EventDispatcher;
+use Core\events\EventDispatcher;
 
 interface EventSubscriber {
 

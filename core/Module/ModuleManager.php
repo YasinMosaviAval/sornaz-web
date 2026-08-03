@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Core\Module;
+namespace Core\module;
 
 class ModuleManager {
     protected array $modules = [];

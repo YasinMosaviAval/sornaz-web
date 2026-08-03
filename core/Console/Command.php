@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Console;
+namespace Core\console;
 
 abstract class Command {
     abstract public function handle(array $arguments): int;

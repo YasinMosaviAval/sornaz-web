@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Providers;
+namespace Core\providers;
 
 class ProviderManager {
     /**

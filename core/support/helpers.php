@@ -1,19 +1,19 @@
 <?php
 
-use Core\Application\Application;
-use Core\Auth\Auth;
-use Core\Auth\Gate;
-use Core\Container\Container;
-use Core\Csrf\Csrf;
-use Core\Database\Connection;
-use Core\Database\DB;
-use Core\Events\EventDispatcher;
-use Core\Session\Session;
-use Core\Http\RedirectResponse;
-use Core\Http\Request;
-use Core\Http\Response;
-use Core\Support\AssetManager;
-use Core\View\View;
+use Core\application\Application;
+use Core\auth\Auth;
+use Core\auth\Gate;
+use Core\container\Container;
+use Core\csrf\Csrf;
+use Core\database\Connection;
+use Core\database\DB;
+use Core\events\EventDispatcher;
+use Core\session\Session;
+use Core\http\RedirectResponse;
+use Core\http\Request;
+use Core\http\Response;
+use Core\support\AssetManager;
+use Core\view\View;
 
 function query(): DB {return new DB();}
 function user_id(): ?int {return auth()->id();}
@@ -38,6 +38,8 @@ function app_path(string $path = ''): string {return base_path('app/' . ltrim($p
 function lang_path(string $path = ''): string {return base_path('lang/' . ltrim($path, '/\\'));}
 function back(): RedirectResponse {return new RedirectResponse($_SERVER['HTTP_REFERER'] ?? '/');}
 function public_path(string $path = ''): string {return base_path('public/' . ltrim($path, '/'));}
+function asset_path(string $path = ''): string {return base_path('assets/' . ltrim($path, '/'));}
+
 function config_path(string $path = ''): string {return base_path('config/' . ltrim($path, '/'));}
 function storage_path(string $path = ''): string {return base_path('storage/' . ltrim($path, '/'));}
 function module_path(string $path = ''): string {return base_path('Modules/' . ltrim($path, '/\\'));}

@@ -2,9 +2,9 @@
 namespace Core\application;
 
 use Core\container\container;
-use Core\Module\ModuleLoader;
 use Core\providers\ProviderManager;
-use Core\Module\ModuleManager;
+use Core\module\ModuleLoader;
+use Core\module\ModuleManager;
 
 class Application {
 

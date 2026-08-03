@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Localization\DTO;
+namespace Core\localization\DTO;
 
 class TranslationDTO {
     public ?int $translation_id = null;

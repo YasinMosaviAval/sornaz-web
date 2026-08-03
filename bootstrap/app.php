@@ -9,8 +9,8 @@ use Modules\System\Contracts\UserRepositoryInterface;
 use Modules\System\Repositories\UserRepository;
 use Modules\Blog\Contracts\BlogRepositoryInterface;
 use Modules\Blog\Repositories\BlogRepository;
-use Core\Localization\Contracts\TranslationRepositoryInterface;
-use Core\Localization\Repositories\TranslationRepository;
+use Core\localization\Contracts\TranslationRepositoryInterface;
+use Core\localization\Repositories\TranslationRepository;
 
 $app = new Application();
 

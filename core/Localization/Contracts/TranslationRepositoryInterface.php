@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Localization\Contracts;
+namespace Core\localization\Contracts;
 
-use Core\Localization\TranslationCollection;
+use Core\localization\TranslationCollection;
 
 interface TranslationRepositoryInterface {
 

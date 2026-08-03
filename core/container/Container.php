@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Container;
+namespace Core\container;
 
 use ReflectionClass;
 use ReflectionParameter;

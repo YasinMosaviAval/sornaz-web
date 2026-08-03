@@ -4,10 +4,10 @@ namespace Core\application;
 
 use Core\http\Request;
 use Core\http\Response;
-use Core\Middleware\MiddlewarePipeline;
+use Core\middleware\MiddlewarePipeline;
 use Core\router\router;
 use Core\http\ResponseInterface;
-use Core\Validation\ValidationException;
+use Core\validation\ValidationException;
 use Exception;
 use ReflectionFunction;
 use ReflectionMethod;

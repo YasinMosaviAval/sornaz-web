@@ -1,9 +1,9 @@
 <?php
 
-namespace Core\Database\Concerns;
+namespace Core\database\Concerns;
 
-use Core\Database\DB;
-use Core\Database\SoftDeletes;
+use Core\database\DB;
+use Core\database\SoftDeletes;
 
 trait HasCRUD {
 

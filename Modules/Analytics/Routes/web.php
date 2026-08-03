@@ -1,6 +1,6 @@
 <?php
 
-use Core\Router\Router;
+use Core\router\Router;
 use Modules\Analytics\Controllers\Web\AnalyticsController;
 
 Router::get('/analytics/home', [AnalyticsController::class, 'home']);

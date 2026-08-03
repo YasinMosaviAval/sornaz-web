@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Translation;
+namespace Core\translation;
 
-use Core\Database\Model;
+use Core\database\Model;
 
 class Translation extends Model {
 

@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Database\Aggregates;
+namespace Core\database\Aggregates;
 
-use Core\Database\Builder;
+use Core\database\Builder;
 use RuntimeException;
 
 class AggregateExecutor {

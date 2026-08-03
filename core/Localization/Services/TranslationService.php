@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Localization;
+namespace Core\localization;
 
-use Core\Translation\TranslationManager;
+use Core\translation\TranslationManager;
 
 class TranslationService {
 

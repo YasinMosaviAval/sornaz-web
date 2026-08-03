@@ -1,9 +1,9 @@
 <?php
 
-namespace Core\Http;
+namespace Core\http;
 
-use Core\Validation\ValidationException;
-use Core\Validation\Validator;
+use Core\validation\ValidationException;
+use Core\validation\Validator;
 
 class Request {
 

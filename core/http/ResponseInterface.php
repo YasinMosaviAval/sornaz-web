@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Core\Http;
+namespace Core\http;
 
 interface ResponseInterface {
     public function send(): void;

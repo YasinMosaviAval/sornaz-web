@@ -8,7 +8,7 @@ use Modules\System\Listeners\CreateTranslationRecord;
 use Modules\System\Listeners\WriteAuditLog;
 
 use Modules\System\Observers\UserObserver;
-use Core\Providers\ServiceProvider;
+use Core\providers\ServiceProvider;
 use Modules\System\Models\UserModel;
 
 class EventServiceProvider extends ServiceProvider {

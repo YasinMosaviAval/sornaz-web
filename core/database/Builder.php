@@ -1,18 +1,17 @@
 <?php
 
-namespace Core\Database;
+namespace Core\database;
 
 use PDO;
-use Core\Database\Relations\RelationExistence;
-
-use Core\Database\Concerns\BuildsWhereQueries;
-use Core\Database\Concerns\BuildsRelationQueries;
-use Core\Database\Concerns\BuildsRelationAggregates;
-use Core\Database\Concerns\BuildsSelectQueries;
-use Core\Database\Concerns\BuildsQueryCompiler;
-use Core\Database\Concerns\BuildsMutationQueries;
-use Core\Database\Concerns\ExecutesQueries;
-use Core\Database\Concerns\BuildsQueryClauses;
+use Core\database\Relations\RelationExistence;
+use Core\database\Concerns\BuildsWhereQueries;
+use Core\database\Concerns\BuildsRelationQueries;
+use Core\database\Concerns\BuildsRelationAggregates;
+use Core\database\Concerns\BuildsSelectQueries;
+use Core\database\Concerns\BuildsQueryCompiler;
+use Core\database\Concerns\BuildsMutationQueries;
+use Core\database\Concerns\ExecutesQueries;
+use Core\database\Concerns\BuildsQueryClauses;
 
 class Builder {
 
