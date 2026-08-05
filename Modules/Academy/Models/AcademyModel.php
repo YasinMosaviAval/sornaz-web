@@ -2,39 +2,21 @@
 
 namespace Modules\Academy\Models;
 
-use Core\Database\Model;
-use Modules\Academy\Scopes\AcademyScope;
+use Core\database\Model;
 
 class AcademyModel extends Model {
 
-    protected static string $table='academies';
-    protected static string $primaryKey='academy_id';
-
+    protected string $table = 'academys';
+    protected string $primaryKey = 'academy_id';
     protected array $fillable = [
-        'user_id',
+        // 'title',
+        // 'status',
     ];
-
-    protected array $translated = [
-        'title',
-        'summary',
-        'description',
+    protected array $casts = [
+        // 'created_at' => 'datetime',
     ];
+    protected bool $timestamps = true;
+    protected bool $softDeletes = true;
 
-    /*
-    |--------------------------------------------------------------------------
-    | Local Scopes
-    |--------------------------------------------------------------------------
-    */
-
-    public function scopeAcademies($query) {return $query->where('type', 'academy');}
-
-    public function scopeActive($query) {return $query->where('status', 1);}
-
-    public function scopeInactive($query) {return $query->where('status', 0);}
-
-
-    protected static function bootModel(): void {
-        static::addGlobalScope(new AcademyScope());
-    }
 
 }

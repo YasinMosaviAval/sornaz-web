@@ -2,34 +2,64 @@
 
 namespace Modules\World\Controllers\Api;
 
-use Modules\World\Services\CountyService;
-use Core\Http\ResponseFactory;
-use Modules\World\Services\GoogleAddressMapper;
+use Core\http\ResponseFactory;
+use Modules\World\Requests\WorldStoreRequest;
+use Modules\World\Requests\WorldUpdateRequest;
+use Modules\World\Services\WorldService;
 
 class WorldController {
-    protected CountyService $countyService;
+
+    protected WorldService $service;
 
     public function __construct() {
-        $this->countyService = app()
-            ->container()
-            ->make(CountyService::class);
+        $this->service = new WorldService();
     }
 
-
-    public function counties(int $provinceId) {
-        return ResponseFactory::json($this->countyService->options($provinceId));
+    /**
+     * GET /api/worlds
+     */
+    public function index() {
+        return ResponseFactory::json($this->service->all());
     }
 
+    /**
+     * GET /api/worlds/{id}
+     */
+    public function show(int $id) {
+        $item = $this->service->findById($id);
+        if (!$item) {
+            return ResponseFactory::json(['message' => 'World not found.'], 404);
+        }
+        return ResponseFactory::json($item);
+    }
 
-    public function googleAddress() {
-        $data = json_decode(
-            file_get_contents('php://input'),
-            true
-        );
-        $mapper = new GoogleAddressMapper();
-        return ResponseFactory::json(
-            $mapper->map($data ?? [])
-        );
+    /**
+     * POST /api/worlds
+     */
+    public function store() {
+        $request = new WorldStoreRequest($_POST);
+        $id = $this->service->create($request->validated());
+        return ResponseFactory::json([
+            'success' => true,
+            'id' => $id
+        ], 201);
+    }
+
+    /**
+     * PUT /api/worlds/{id}
+     */
+    public function update(int $id) {
+        $request = new WorldUpdateRequest($_POST);
+        $result = $this->service->update($id, $request->validated());
+        return ResponseFactory::json(['success'=>$result]);
+    }
+
+    /**
+     * DELETE /api/worlds/{id}
+     */
+    public function destroy(int $id) {
+        $result = $this->service->delete($id);
+        return ResponseFactory::json(['success'=>$result]);
     }
 
 

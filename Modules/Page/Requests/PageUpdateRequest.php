@@ -2,7 +2,7 @@
 
 namespace Modules\Page\Requests;
 
-use Core\Validation\FormRequest;
+use Core\validation\FormRequest;
 
 class PageUpdateRequest extends FormRequest {
 

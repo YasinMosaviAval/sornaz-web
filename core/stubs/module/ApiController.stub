@@ -2,7 +2,7 @@
 
 namespace Modules\{{module}}\Controllers\Api;
 
-use Core\Http\ResponseFactory;
+use Core\http\ResponseFactory;
 use Modules\{{module}}\Requests\{{module}}StoreRequest;
 use Modules\{{module}}\Requests\{{module}}UpdateRequest;
 use Modules\{{module}}\Services\{{module}}Service;

@@ -2,7 +2,7 @@
 
 namespace Modules\Page\Repositories;
 
-use Core\Database\Repository;
+use Core\database\Repository;
 use Modules\Page\Models\PageModel;
 
 class PageRepository extends Repository {

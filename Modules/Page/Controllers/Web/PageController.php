@@ -2,14 +2,20 @@
 
 namespace Modules\Page\Controllers\Web;
 
-use Core\Http\ResponseFactory;
-use Modules\Page\Services\PageService;
-use Modules\Page\Repositories\PageRepository;
-use Modules\Page\Requests\PageStoreRequest;
-use Modules\Page\Requests\PageUpdateRequest;
+use Core\http\ResponseFactory;
+// use Modules\Page\Services\PageService;
+// use Modules\Page\Repositories\PageRepository;
+// use Modules\Page\Requests\PageStoreRequest;
+// use Modules\Page\Requests\PageUpdateRequest;
 
 class PageController {
 
+    public function home() { return ResponseFactory::view('Page::home')->layout('main')->title('سُرناز | رابط کاربری'); }
+    public function aboutUs() { return ResponseFactory::view('Page::about-us')->layout('main')->title('سُرناز | صفحه اصلی'); }
+    public function contactUs() { return ResponseFactory::view('Page::contact-us')->layout('main')->title('سُرناز | صفحه اصلی'); }
+
+
+/*
     protected PageService $service;
 
 
@@ -20,9 +26,7 @@ class PageController {
 
 
 
-    /**
-     * لیست
-     */
+
     public function index() {
         $items = $this->service->all();
         return ResponseFactory::view(
@@ -37,9 +41,7 @@ class PageController {
 
 
 
-    /**
-     * فرم ایجاد
-     */
+
     public function create() {
         return ResponseFactory::view(
                 'Page::create'
@@ -50,9 +52,7 @@ class PageController {
 
 
 
-    /**
-     * ذخیره
-     */
+
     public function store() {
         $request = new PageStoreRequest($_POST);
         $data = $request->validated();
@@ -62,9 +62,7 @@ class PageController {
 
 
 
-    /**
-     * نمایش
-     */
+
     public function show(int $id) {
         $item = $this->service->findById($id);
         if (!$item) {
@@ -82,9 +80,7 @@ class PageController {
 
 
 
-    /**
-     * فرم ویرایش
-     */
+
     public function edit(int $id) {
         $item = $this->service->findById($id);
         if (!$item) {
@@ -102,9 +98,7 @@ class PageController {
 
 
 
-    /**
-     * بروزرسانی
-     */
+
     public function update(int $id) {
         $request = new PageUpdateRequest($_POST);
         $data = $request->validated();
@@ -114,12 +108,12 @@ class PageController {
 
 
 
-    /**
-     * حذف
-     */
+
     public function destroy(int $id) {
         $this->service->delete($id);
         return redirect('/pages');
     }
+*/
+
 
 }
