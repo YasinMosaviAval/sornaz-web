@@ -2,7 +2,7 @@
 
 namespace Modules\Page\Controllers\Api;
 
-use Core\Http\ResponseFactory;
+use Core\http\ResponseFactory;
 use Modules\Page\Requests\PageStoreRequest;
 use Modules\Page\Requests\PageUpdateRequest;
 use Modules\Page\Services\PageService;

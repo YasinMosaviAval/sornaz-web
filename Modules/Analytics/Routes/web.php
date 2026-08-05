@@ -3,15 +3,8 @@
 use Core\router\Router;
 use Modules\Analytics\Controllers\Web\AnalyticsController;
 
-Router::get('/analytics/home', [AnalyticsController::class, 'home']);
-Router::get('/analytics/login', [AnalyticsController::class, 'login']);
-Router::get('/analytics/register', [AnalyticsController::class, 'register']);
-Router::get('/analytics/forgot-password', [AnalyticsController::class, 'forgotPassword']);
 
 
-
-Router::get('/analytics/about-us', [AnalyticsController::class, 'aboutUs']);
-Router::get('/analytics/contact-us', [AnalyticsController::class, 'contactUs']);
 Router::get('/analytics/admin-panel', [AnalyticsController::class, 'adminPanel']);
 
 

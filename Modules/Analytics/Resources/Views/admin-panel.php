@@ -53,18 +53,19 @@
             //component('contracts');
             //component('profiles');
             //component('rating-summaries');
-            //component('posts');
-            //component('about-us');
-            //component('contact-us');
-            //component('articles');
-            //component('academies');
-            //component('academy-enroll');
-            //component('academy-requests');
 
 
-            //component('home');
-            //component('login');
-            //component('register');
+
+            component('posts');
+            component('about-us');
+            component('contact-us');
+            component('articles');
+            component('academies');
+            component('academy-enroll');
+            component('academy-requests');
+            // component('home');
+            // component('login');
+            // component('register');
             
             
             ?>

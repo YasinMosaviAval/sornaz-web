@@ -47,7 +47,7 @@
                        class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 focus:outline-none focus:border-indigo-500">
             </div>
             <div>
-                <label class="block text-sm font-medium mb-2">توضیح کوتاه</label>
+                <label class="block text-sm font-medium mb-2">شعار</label>
                 <input id="siteReqShortDesc" type="text" placeholder="یک جمله درباره آموزشگاه"
                        class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 focus:outline-none focus:border-indigo-500">
             </div>

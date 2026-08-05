@@ -2,7 +2,7 @@
 
 namespace Modules\{{module}}\Models;
 
-use Core\Database\Model;
+use Core\database\Model;
 
 class {{module}}Model extends Model {
 

@@ -2,6 +2,14 @@
 
 namespace Modules\Media\Providers;
 
-class MediaServiceProvider {
+use Core\providers\ServiceProvider;
+
+class MediaServiceProvider extends ServiceProvider {
+
+    public function register(): void {
+    }
+
+    public function boot(): void {
+    }
 
 }

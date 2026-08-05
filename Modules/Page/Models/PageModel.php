@@ -2,7 +2,7 @@
 
 namespace Modules\Page\Models;
 
-use Core\Database\Model;
+use Core\database\Model;
 
 class PageModel extends Model {
 

@@ -2,7 +2,7 @@
 
 namespace Modules\{{module}}\Repositories;
 
-use Core\Database\Repository;
+use Core\database\Repository;
 use Modules\{{module}}\Models\{{module}}Model;
 
 class {{module}}Repository extends Repository {

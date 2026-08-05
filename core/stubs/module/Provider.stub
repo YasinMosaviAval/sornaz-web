@@ -2,7 +2,7 @@
 
 namespace Modules\{{module}}\Providers;
 
-use Core\Providers\ServiceProvider;
+use Core\providers\ServiceProvider;
 
 class {{module}}ServiceProvider extends ServiceProvider {
 

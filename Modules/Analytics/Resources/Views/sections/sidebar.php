@@ -4,7 +4,7 @@
         <div class="flex items-center gap-3">
             <i class="fas fa-music text-3xl"></i>
             <div class="sidebar-text">
-                <a href="/analytics/home"><h1 class="text-xl font-bold">برنامه سرناز</h1></a>
+                <a href="/page/home"><h1 class="text-xl font-bold">برنامه سرناز</h1></a>
                 <p class="text-xs text-indigo-300">پنل مدیریت آموزشگاه</p>
             </div>
         </div>
@@ -62,6 +62,25 @@
             </li>
             <li><a href="#" onclick="showSection('finance')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-money-bill-wave w-5 text-center"></i> امور مالی</a></li>
             <li><a href="#" onclick="showSection('reports')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-chart-bar w-5 text-center"></i> گزارش‌ها</a></li>
+            
+            
+            
+            
+            
+            <li>--------------------------------</li>
+            <li><a href="#" onclick="showSection('posts')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-chart-bar w-5 text-center"></i> posts</a></li>
+            <li><a href="#" onclick="showSection('articles')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-chart-bar w-5 text-center"></i> articles</a></li>
+            <li><a href="#" onclick="showSection('about-us')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-chart-bar w-5 text-center"></i> about-us</a></li>
+            <li><a href="#" onclick="showSection('contact-us')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-chart-bar w-5 text-center"></i> contact-us</a></li>
+            <li><a href="#" onclick="showSection('academies')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-chart-bar w-5 text-center"></i> academies</a></li>
+            <li><a href="#" onclick="showSection('academy-enroll')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-chart-bar w-5 text-center"></i> academy-enroll</a></li>
+            <li><a href="#" onclick="showSection('academy-requests')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-chart-bar w-5 text-center"></i> academy-requests</a></li>
+
+            <!--
+                component('home');
+                component('login');
+                component('register');
+            -->
         </ul>
     </nav>
     <!-- Footer -->

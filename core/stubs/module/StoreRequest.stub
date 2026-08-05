@@ -2,7 +2,7 @@
 
 namespace Modules\{{module}}\Requests;
 
-use Core\Validation\FormRequest;
+use Core\validation\FormRequest;
 
 class {{module}}StoreRequest extends FormRequest {
 

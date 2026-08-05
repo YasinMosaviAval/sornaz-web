@@ -2,7 +2,7 @@
 
 namespace Modules\{{module}}\Controllers\Web;
 
-use Core\Http\ResponseFactory;
+use Core\http\ResponseFactory;
 use Modules\{{module}}\Services\{{module}}Service;
 use Modules\{{module}}\Repositories\{{module}}Repository;
 use Modules\{{module}}\Requests\{{module}}StoreRequest;

@@ -1,9 +1,8 @@
 <?php
 
-if(!function_exists('public_path')){
+if (!function_exists('medias')) {
 
-    function public_path(string $path=''): string{
-        return base_path('public/'.$path);
+    function medias() {
     }
 
 }

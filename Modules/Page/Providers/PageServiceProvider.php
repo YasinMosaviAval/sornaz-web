@@ -2,7 +2,7 @@
 
 namespace Modules\Page\Providers;
 
-use Core\Providers\ServiceProvider;
+use Core\providers\ServiceProvider;
 
 class PageServiceProvider extends ServiceProvider {
 

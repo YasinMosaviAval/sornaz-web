@@ -1,9 +1,15 @@
-<?
+<?php
 
-class AcademyServiceProvider {
-    public function register() {
+namespace Modules\System\Providers;
+
+use Core\providers\ServiceProvider;
+
+class SystemServiceProvider extends ServiceProvider {
+
+    public function register(): void {
     }
 
-    public function boot() {
+    public function boot(): void {
     }
+
 }

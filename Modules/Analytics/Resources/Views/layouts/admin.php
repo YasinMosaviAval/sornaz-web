@@ -97,14 +97,16 @@
     // pushScript('favorites.js');
     // pushScript('ratings.js');
     // pushScript('rating-summaries.js');
-    // pushScript('posts.js');
-    // pushScript('articles.js');
-    
-    // pushScript('about-us.js');
-    // pushScript('contact-us.js');
-    // pushScript('academies.js');
-    // pushScript('academy-enroll.js');
-    // pushScript('academy-requests.js');
+
+
+
+    pushScript('posts.js');
+    pushScript('articles.js');
+    pushScript('about-us.js');
+    pushScript('contact-us.js');
+    pushScript('academies.js');
+    pushScript('academy-enroll.js');
+    pushScript('academy-requests.js');
     
     pushScript('admin.js');
     ?>
