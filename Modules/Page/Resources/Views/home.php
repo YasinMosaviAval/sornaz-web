@@ -1,3 +1,14 @@
+<?
+
+$home_array = getFilteredList(setIndexforDataArray($home, 'variable_name'), 'home_main_title');
+$header_array = setIndexforDataArray($header, 'variable_name');
+$footer_array = setIndexforDataArray($footer, 'variable_name');
+// dump($home_array);
+// dump($header_array);
+// dump($footer_array);
+
+?>
+
 <div id="home" class="">
     <!-- ========== HERO ========== -->
     <section class="relative overflow-hidden rounded-3xl bg-gradient-to-bl from-indigo-700 via-indigo-600 to-violet-700 text-white mb-10">

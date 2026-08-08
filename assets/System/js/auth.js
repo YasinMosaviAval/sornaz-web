@@ -11,48 +11,26 @@ window.togglePassword = function(inputId, btn) {
     }
 };
 
-window.handleLogin = function() {
-    const user = document.getElementById('loginUser')?.value.trim();
-    const pass = document.getElementById('loginPassword')?.value;
-    if (!user || !pass) return alert('ایمیل/نام کاربری و رمز عبور الزامی است');
 
-    // شبیه‌سازی ورود — در نسخه واقعی درخواست به سرور می‌رود
-    const remember = document.getElementById('loginRemember')?.checked;
-    try {
-        const session = { user, loggedIn: true, at: Date.now() };
-        if (remember) localStorage.setItem('academyAuth', JSON.stringify(session));
-        else sessionStorage.setItem('academyAuth', JSON.stringify(session));
-    } catch (e) {}
 
-    alert('✅ ورود موفق');
-    if (typeof showSection === 'function') showSection('dashboard');
-    else if (typeof showSection === 'function') showSection('home');
-};
+window.validateRegisterForm = function(form) {
+    const pass = form.querySelector('[name="password"]').value;
+    const pass2 = form.querySelector('[name="password2"]').value;
+    const terms = form.querySelector('[name="terms"]').checked;
 
-window.handleRegister = function() {
-    const email = document.getElementById('regEmail')?.value.trim();
-    const username = document.getElementById('regUsername')?.value.trim();
-    const pass = document.getElementById('regPassword')?.value;
-    const pass2 = document.getElementById('regPassword2')?.value;
-    const terms = document.getElementById('regTerms')?.checked;
-
-    if (!email || !username || !pass) return alert('فیلدهای ستاره‌دار الزامی است');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert('ایمیل معتبر نیست');
-    if (pass.length < 8) return alert('رمز عبور حداقل ۸ کاراکتر باشد');
-    if (pass !== pass2) return alert('رمز عبور و تکرار آن یکسان نیست');
-    if (!terms) return alert('پذیرش قوانین الزامی است');
-
-    // شبیه‌سازی ثبت‌نام
-    alert('✅ ثبت‌نام با موفقیت انجام شد. اکنون وارد شوید.');
-    // پاک کردن فرم
-    ['regEmail', 'regUsername', 'regDisplayName', 'regPassword', 'regPassword2'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-    });
-    const t = document.getElementById('regTerms');
-    if (t) t.checked = false;
-
-    if (typeof showSection === 'function') showSection('login');
+    if (pass.length < 8) {
+        alert('رمز عبور حداقل ۸ کاراکتر باشد');
+        return false;
+    }
+    if (pass !== pass2) {
+        alert('رمز عبور و تکرار آن یکسان نیست');
+        return false;
+    }
+    if (!terms) {
+        alert('پذیرش قوانین الزامی است');
+        return false;
+    }
+    return true;
 };
 
 window.showForgotPassword = function() {

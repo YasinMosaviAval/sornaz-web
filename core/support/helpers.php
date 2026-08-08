@@ -200,3 +200,33 @@ if (!function_exists('is_active')) {
         return current_url() === $url ? $class : '';
     }
 }
+
+
+
+// ── Data Helpers ──────────────────────────────────────────────────────────
+
+function setIndexforDataArray(array $array, string $index): array {
+  $data = [];
+  foreach ($array as $value) {
+    $data[$value[$index]] = $value;
+  }
+  return $data;
+}
+
+// function setVariableNameforDataArray(array $array): array {
+//   $data = [];
+//   foreach ($array as $value) {
+//     $data[$value['variable_name']] = $value;
+//   }
+//   return $data;
+// }
+
+function getFilteredList(array $listArray, string $filterString): array {
+  $result = [];
+  foreach ($listArray as $value) {
+    if (str_contains($value['variable_name'], $filterString)) {
+      $result[$value['variable_name']] = $value;
+    }
+  }
+  return $result;
+}

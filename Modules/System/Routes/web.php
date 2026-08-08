@@ -1,12 +1,24 @@
 <?php
 
 use Core\router\Router;
+use Modules\System\Controllers\Web\UserController;
 use Modules\System\Controllers\Web\SystemController;
-
 
 Router::get('/system/login', [SystemController::class, 'login']);
 Router::get('/system/register', [SystemController::class, 'register']);
 Router::get('/system/forgot-password', [SystemController::class, 'forgotPassword']);
+
+Router::get('/login', [SystemController::class, 'login']);
+Router::get('/register', [SystemController::class, 'register']);
+Router::get('/forgot-password', [SystemController::class, 'forgotPassword']);
+
+Router::post('/register', [UserController::class, 'store']);
+Router::post('/login', [UserController::class, 'login']);
+Router::post('/logout', [UserController::class, 'logout']);
+
+
+
+
 
 /*
     Router::group(
