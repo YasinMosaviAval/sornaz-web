@@ -11,20 +11,25 @@
 
             <!-- منوی دسکتاپ -->
             <nav class="hidden lg:flex items-center gap-1 text-sm">
-                <a href="/page/home" data-page="home" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">خانه</a>
+                <!-- <a href="/page/home" data-page="home" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">خانه</a> -->
                 <a href="/analytics/articles" data-page="articles" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">مقاله‌های آموزشی</a>
-                <!-- <a href="/analytics/users" data-page="users" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">کاربران</a>
-                <a href="/analytics/academies" data-page="academies" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">آموزشگاه‌ها</a> -->
                 <a href="/analytics/admin-panel" data-page="contact" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">پنل ادمین</a>
 
                 <a href="/page/about-us" data-page="about" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">درباره ما</a>
                 <a href="/page/contact-us" data-page="contact" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">تماس با ما</a>
             </nav>
 
-            <!-- ورود / ثبت‌نام -->
+            <!-- ورود / ثبت‌نام / خروج -->
             <div class="hidden lg:flex items-center gap-2">
-                <a href="/system/login" class="text-sm px-4 py-2 rounded-xl text-indigo-600 hover:bg-indigo-50">ورود</a>
-                <a href="/system/register" class="text-sm px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">ثبت نام</a>
+                <?php if (auth()->check()): ?>
+                    <form method="POST" action="/logout" class="inline">
+                        <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\Csrf\Csrf::class)->token() ?>">
+                        <button type="submit" class="text-sm px-4 py-2 rounded-xl text-red-600 hover:bg-red-50">خروج</button>
+                    </form>
+                <?php else: ?>
+                    <a href="/system/login" class="text-sm px-4 py-2 rounded-xl text-indigo-600 hover:bg-indigo-50">ورود</a>
+                    <a href="/system/register" class="text-sm px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">ثبت نام</a>
+                <?php endif; ?>
             </div>
 
             <!-- منوی موبایل -->
@@ -35,16 +40,21 @@
 
         <!-- منوی کشویی موبایل -->
         <div id="mobileMenu" class="hidden lg:hidden pb-4 border-t border-gray-100 pt-3 space-y-1">
-            <a href="/page/home" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">خانه</a>
+            <!-- <a href="/page/home" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">خانه</a> -->
             <a href="/analytics/articles" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">مقاله‌های آموزشی</a>
-            <!-- <a href="/analytics/users" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">کاربران</a>
-            <a href="/analytics/academies" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">آموزشگاه‌ها</a> -->
             <a href="/analytics/admin-panel" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">پنل ادمین</a>
             <a href="/page/about-us" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">درباره ما</a>
             <a href="/page/contact-us" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">تماس با ما</a>
             <div class="flex gap-2 pt-3 border-t border-gray-100 mt-2">
-                <a href="/system/login" onclick="closeMobileMenu();" class="flex-1 text-center text-sm py-2.5 rounded-xl border border-indigo-200 text-indigo-600">ورود</a>
-                <a href="/system/register" onclick="closeMobileMenu();" class="flex-1 text-center text-sm py-2.5 rounded-xl bg-indigo-600 text-white">ثبت نام</a>
+                <?php if (auth()->check()): ?>
+                    <form method="POST" action="/logout" class="flex-1">
+                        <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\Csrf\Csrf::class)->token() ?>">
+                        <button type="submit" class="w-full text-center text-sm py-2.5 rounded-xl border border-red-200 text-red-600">خروج</button>
+                    </form>
+                    <a href="/system/login" onclick="closeMobileMenu();" class="flex-1 text-center text-sm py-2.5 rounded-xl border border-indigo-200 text-indigo-600">ورود</a>
+                    <a href="/system/register" onclick="closeMobileMenu();" class="flex-1 text-center text-sm py-2.5 rounded-xl bg-indigo-600 text-white">ثبت نام</a>
+                <?php else: ?>
+                <?php endif; ?>
             </div>
         </div>
     </div>

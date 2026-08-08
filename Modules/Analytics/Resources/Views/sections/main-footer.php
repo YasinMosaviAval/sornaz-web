@@ -28,10 +28,17 @@
             <div>
                 <h4 class="font-bold text-white mb-4">لینک‌های برنامه</h4>
                 <ul class="space-y-2 text-sm">
-                    <!-- <li><a href="/analytics/academies" class="hover:text-white transition">آموزشگاه‌ها</a></li>
-                    <li><a href="/analytics/users" class="hover:text-white transition">کاربران</a></li> -->
-                    <li><a href="/system/login" class="hover:text-white transition">ورود</a></li>
-                    <li><a href="/system/register" class="hover:text-white transition">ثبت نام</a></li>
+                    <?php if (auth()->check()): ?>
+                        <li>
+                            <form method="POST" action="/logout" class="inline">
+                                <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\Csrf\Csrf::class)->token() ?>">
+                                <button type="submit" class="hover:text-white transition text-red-600">خروج</button>
+                            </form>
+                        </li>
+                    <?php else: ?>
+                        <li><a href="/system/login" class="hover:text-white transition">ورود</a></li>
+                        <li><a href="/system/register" class="hover:text-white transition">ثبت نام</a></li>
+                    <?php endif; ?>
                 </ul>
             </div>
         </div>

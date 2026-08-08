@@ -3,18 +3,29 @@
 namespace Modules\System\Controllers\Web;
 
 use Core\http\ResponseFactory;
-// use Modules\System\Services\SystemService;
-// use Modules\System\Repositories\SystemRepository;
-// use Modules\System\Requests\SystemStoreRequest;
-// use Modules\System\Requests\SystemUpdateRequest;
+use Modules\System\Services\SystemService;
+
 
 class SystemController {
 
 
-    public function login() { return ResponseFactory::view('System::login')->layout('auth')->title('سُرناز | صفحه اصلی'); }
-    public function register() { return ResponseFactory::view('System::register')->layout('auth')->title('سُرناز | صفحه اصلی'); }
-    public function forgotPassword() { return ResponseFactory::view('System::forgot-password')->layout('auth')->title('سُرناز | صفحه اصلی'); }
 
+    public function __construct(protected SystemService $service) {
+    }
+
+    public function login() {
+        return ResponseFactory::view('System::login', ['authentication' => $this->service->getByPage('authentication')])->layout('auth')->title('سُرناز | ورود');
+    }
+
+    public function register() {
+        return ResponseFactory::view('System::register', ['authentication' => $this->service->getByPage('authentication')])->layout('auth')->title('سُرناز | ثبت نام');
+    }
+
+    public function forgotPassword() {
+        return ResponseFactory::view('System::forgot-password', ['authentication' => $this->service->getByPage('authentication')])->layout('auth')->title('سُرناز | فراموشی رمز عبور');
+    }
+
+}
 
 /*
     protected SystemService $service;
@@ -115,4 +126,3 @@ class SystemController {
         return redirect('/systems');
     }
 */
-}

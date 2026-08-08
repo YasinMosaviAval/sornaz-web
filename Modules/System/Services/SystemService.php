@@ -9,4 +9,10 @@ class SystemService {
     public function __construct(protected SystemRepository $repository) {
     }
 
+
+    public function getByPage(string $page): array {
+        return $this->repository->findByPage($page);
+    }
+
+
 }
