@@ -155,7 +155,7 @@ $footer_array = setIndexforDataArray($footer, 'variable_name');
             <div class="flex flex-wrap justify-center gap-4">
                 <a href="/analytics/academy-enroll"><button class="bg-white text-indigo-700 hover:bg-indigo-50 px-8 py-3.5 rounded-2xl font-bold transition">ثبت‌نام در کلاس</button></a>
                 <a href="/analytics/send-academy-request"><button class="border-2 border-white/50 hover:bg-white/10 px-8 py-3.5 rounded-2xl font-medium transition">ثبت آموزشگاه</button></a>
-                <a href="/analytics/contact-us"><button class="border-2 border-white/50 hover:bg-white/10 px-8 py-3.5 rounded-2xl font-medium transition">تماس با ما</button></a>
+                <a href="/page/contact-us"><button class="border-2 border-white/50 hover:bg-white/10 px-8 py-3.5 rounded-2xl font-medium transition">تماس با ما</button></a>
             </div>
         </section>
     </div>

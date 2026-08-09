@@ -5,12 +5,15 @@ use Core\csrf\Csrf;
 use Core\database\Connection;
 use Core\events\EventDispatcher;
 use Core\session\Session;
+use Core\support\Environment;
 use Modules\System\Contracts\UserRepositoryInterface;
 use Modules\System\Repositories\UserRepository;
 use Modules\Blog\Contracts\BlogRepositoryInterface;
 use Modules\Blog\Repositories\BlogRepository;
 use Core\localization\Contracts\TranslationRepositoryInterface;
 use Core\localization\Repositories\TranslationRepository;
+
+Environment::load(base_path('.env'));
 
 $app = new Application();
 

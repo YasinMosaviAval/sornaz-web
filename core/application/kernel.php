@@ -9,6 +9,7 @@ use Core\router\router;
 use Core\http\ResponseInterface;
 use Core\validation\ValidationException;
 use Exception;
+use Throwable;
 use ReflectionFunction;
 use ReflectionMethod;
 
@@ -62,6 +63,18 @@ class Kernel {
             session()->flash('_errors', $e->errors());
             session()->flash('_old', $_POST);
             back()->send();
+        } catch (Throwable $e) {
+            $expectsJson = str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json')
+                || strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest';
+            if ($expectsJson) {
+                error_log('[JSON Request Error] ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+                \Core\http\ResponseFactory::json([
+                    'success' => false,
+                    'message' => 'خطایی در پردازش درخواست رخ داد. لطفاً دوباره تلاش کنید.',
+                ], 500)->send();
+                return;
+            }
+            throw $e;
         }
     }
 

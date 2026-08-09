@@ -13,6 +13,7 @@ Router::get('/register', [SystemController::class, 'register']);
 Router::get('/forgot-password', [SystemController::class, 'forgotPassword']);
 
 Router::post('/register', [UserController::class, 'store']);
+Router::post('/register/send-otp', [UserController::class, 'sendRegistrationOtp']);
 Router::post('/login', [UserController::class, 'login']);
 Router::post('/logout', [UserController::class, 'logout']);
 

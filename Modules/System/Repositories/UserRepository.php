@@ -29,7 +29,7 @@ class UserRepository extends Repository implements UserRepositoryInterface {
     
     public function findForLogin(string $identifier): ?array {
         return $this->query()
-            ->whereRaw('(username = ? OR email = ?)', [$identifier, $identifier])
+            ->whereRaw('(username = ? OR email = ? OR phone = ?)', [$identifier, $identifier, $identifier])
             ->whereNull('deleted_at')
             ->first();
     }
