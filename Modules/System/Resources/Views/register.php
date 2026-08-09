@@ -3,7 +3,10 @@ $authentication_array = getFilteredList(setIndexforDataArray($authentication, 'v
 
 $oldInput = session()->getFlash('_old_input', []);
 $errors   = session()->getFlash('_errors', []);
+$firstError = !empty($errors) ? reset($errors) : '';
 ?>
+
+<div id="authFlashMessage" class="hidden" data-success="" data-error="<?= e(is_array($firstError) ? (reset($firstError) ?: '') : $firstError) ?>"></div>
 
 <div id="register" class="min-h-[80vh] flex items-center justify-center py-10">
     <div class="w-full max-w-md">
@@ -15,7 +18,7 @@ $errors   = session()->getFlash('_errors', []);
             <p class="text-gray-500 mt-2"><?= $authentication_array["authentication_register_welcome"]["translated_value"] ?></p>
         </div>
 
-        <form id="registerForm" method="POST" action="/register" class="bg-white rounded-3xl shadow-sm p-8 border border-gray-100" onsubmit="return handleRegisterSubmit(this)">
+        <form id="registerForm" method="POST" action="/register" novalidate class="bg-white rounded-3xl shadow-sm p-8 border border-gray-100" onsubmit="return handleRegisterSubmit(this)">
             <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\csrf\Csrf::class)->token() ?>">
             <input type="hidden" name="register_method" id="regMethod" value="<?= e($oldInput['register_method'] ?? 'email') ?>">
             <input type="hidden" name="otp" id="regOtp" value="">
@@ -124,7 +127,7 @@ $errors   = session()->getFlash('_errors', []);
 
             <div id="regOtpStep" class="hidden space-y-5">
                 <p class="text-sm text-gray-500 text-center">کد ۶ رقمی ارسال‌شده به <strong id="regSentTo" class="text-gray-800"></strong> را وارد کنید.</p>
-                <div class="flex justify-center gap-1 sm:gap-2 dir-rtl" id="regOtpInputs">
+                <div class="flex justify-center gap-1 sm:gap-2" id="regOtpInputs" dir="ltr">
                     <?php for ($i = 0; $i < 6; $i++): ?>
                         <input maxlength="1" class="reg-otp w-10 h-12 sm:w-12 sm:h-14 text-center text-xl font-bold border border-gray-300 rounded-xl focus:border-indigo-500 focus:outline-none" inputmode="numeric">
                     <?php endfor; ?>

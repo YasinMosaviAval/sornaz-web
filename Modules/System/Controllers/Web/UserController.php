@@ -33,6 +33,7 @@ class UserController {
                 ->withErrors(['identifier' => 'نام‌کاربری، ایمیل، شماره موبایل یا رمز عبور اشتباه است.']);
         }
         auth()->login((int)$user['user_id'], !empty($_POST['remember']));
+        session()->flash('auth_success', 'ورود به حساب کاربری با موفقیت انجام شد.');
         return redirect('/page/home');
     }
 
@@ -65,6 +66,7 @@ class UserController {
                     ->withErrors(['username' => 'ثبت‌نام ناموفق بود.']);
             }
             $this->registrationOtp->clear();
+            session()->flash('auth_success', 'ثبت‌نام شما با موفقیت انجام شد. اکنون می‌توانید وارد شوید.');
             return redirect('/login');
         } catch (ValidationException $e) {
             return redirect('/register')
@@ -132,6 +134,7 @@ class UserController {
             return ResponseFactory::json(['success' => false, 'message' => 'رمز عبور و تکرار آن یکسان نیست.'], 422);
         }
         $result = $this->passwordResetOtp->reset($password);
+        if ($result['ok']) session()->flash('auth_success', $result['message']);
         return ResponseFactory::json(['success' => $result['ok']] + $result, $result['ok'] ? 200 : 422);
     }
 

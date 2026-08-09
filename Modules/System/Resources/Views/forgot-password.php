@@ -48,7 +48,7 @@ $authentication_array = getFilteredList(setIndexforDataArray($authentication, 'v
                     <strong id="fpSentTo" class="text-gray-800"></strong>
                     <?= $authentication_array["authentication_forgot_password_sent_otp_last_text"]["translated_value"] ?>
                 </p>
-                <div class="flex justify-center gap-2 dir-rtl" id="fpOtpInputs">
+                <div class="flex justify-center gap-2" id="fpOtpInputs" dir="ltr">
                     <input maxlength="1" class="fp-otp w-12 h-14 text-center text-xl font-bold border border-gray-300 rounded-xl focus:border-indigo-500 focus:outline-none" inputmode="numeric">
                     <input maxlength="1" class="fp-otp w-12 h-14 text-center text-xl font-bold border border-gray-300 rounded-xl focus:border-indigo-500 focus:outline-none" inputmode="numeric">
                     <input maxlength="1" class="fp-otp w-12 h-14 text-center text-xl font-bold border border-gray-300 rounded-xl focus:border-indigo-500 focus:outline-none" inputmode="numeric">
