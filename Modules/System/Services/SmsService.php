@@ -10,7 +10,7 @@ class SmsService {
     }
 
     public function sendRegistrationOtp(string $phone, string $code, int $validMinutes): bool {
-        $message = "کد فعال‌سازی شما: {$code}\nاین کد تا {$validMinutes} دقیقه معتبر است.";
+        $message = "کد فعال‌سازی برنامه آموزشی سرناز: {$code}\nاین کد تا {$validMinutes} دقیقه معتبر است.";
         return match (strtolower((string)config('system.sms.provider', 'kavenegar'))) {
             'kavenegar' => $this->sendKavenegar($phone, $message, $code),
             'melipayamak' => $this->sendMeliPayamak($phone, $message),
@@ -18,13 +18,22 @@ class SmsService {
         };
     }
 
-    private function sendKavenegar(string $phone, string $message, string $code): bool {
+    public function sendPasswordResetOtp(string $phone, string $code, int $validMinutes): bool {
+        $message = "کد بازیابی رمز عبور برنامه آموزشی سرناز: {$code}";
+        return match (strtolower((string)config('system.sms.provider', 'kavenegar'))) {
+            'kavenegar' => $this->sendKavenegar($phone, $message, $code, (string)config('system.sms.kavenegar_forgot_template', 'sornazforget')),
+            'melipayamak' => $this->sendMeliPayamak($phone, $message),
+            default => false,
+        };
+    }
+
+    private function sendKavenegar(string $phone, string $message, string $code, ?string $templateOverride = null): bool {
         $apiKey = trim((string)config('system.sms.api_key', ''));
         if ($apiKey === '') {
             $this->lastError = 'کلید SMS_API_KEY تنظیم نشده است.';
             return false;
         }
-        $template = trim((string)config('system.sms.kavenegar_template', ''));
+        $template = trim($templateOverride ?? (string)config('system.sms.kavenegar_template', ''));
         if ($template !== '') {
             $url = "https://api.kavenegar.com/v1/{$apiKey}/verify/lookup.json";
             $params = ['receptor' => $phone, 'template' => $template, 'token' => $code];

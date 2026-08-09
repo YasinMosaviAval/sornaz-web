@@ -18,6 +18,7 @@ return [
         'api_key' => env('SMS_API_KEY', ''),
         'sender' => env('SMS_SENDER', ''),
         'kavenegar_template' => env('SMS_KAVENEGAR_TEMPLATE', ''),
+        'kavenegar_forgot_template' => env('SMS_KAVENEGAR_FORGOT_TEMPLATE', 'sornazforget'),
         'username' => env('SMS_USERNAME', ''),
         'password' => env('SMS_PASSWORD', ''),
         'from' => env('SMS_FROM', ''),

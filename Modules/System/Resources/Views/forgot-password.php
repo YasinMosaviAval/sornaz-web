@@ -13,6 +13,8 @@ $authentication_array = getFilteredList(setIndexforDataArray($authentication, 'v
         </div>
 
         <div class="bg-white rounded-3xl shadow-sm p-8 border border-gray-100">
+            <input type="hidden" id="fpCsrf" value="<?= e(csrf_token()) ?>">
+            <p id="fpError" class="hidden text-red-500 text-sm text-center mb-4"></p>
 
             <!-- مرحله ۱: انتخاب روش + ورود شناسه -->
             <div id="fpStep1" class="space-y-5">

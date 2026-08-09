@@ -7,16 +7,24 @@ use Throwable;
 
 class MailService {
     public function sendRegistrationOtp(string $email, string $code, int $validMinutes): bool {
-        $appName = e((string)config('system.mail.from_name', 'Sornaz Academy'));
+        return $this->sendOtpTemplate($email, $code, $validMinutes, 'کد فعال‌سازی حساب', 'کد تأیید ثبت‌نام شما:');
+    }
+
+    public function sendPasswordResetOtp(string $email, string $code, int $validMinutes): bool {
+        return $this->sendOtpTemplate($email, $code, $validMinutes, 'کد بازیابی رمز عبور', 'کد بازیابی رمز عبور شما:');
+    }
+
+    private function sendOtpTemplate(string $email, string $code, int $validMinutes, string $title, string $description): bool {
+        $appName = 'برنامه آموزشی سرناز';
         $safeCode = e($code);
-        $subject = "کد فعال‌سازی حساب — {$appName}";
+        $subject = "{$title} — {$appName}";
         $body = <<<HTML
 <!doctype html><html lang="fa" dir="rtl"><head><meta charset="UTF-8"></head>
 <body style="margin:0;background:#f4f4f8;font-family:Tahoma,Arial,sans-serif;direction:rtl">
 <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08)">
 <div style="background:#4f46e5;padding:32px 40px;text-align:center;color:#fff;font-size:22px;font-weight:bold">{$appName}</div>
 <div style="padding:40px;color:#333;line-height:1.9;font-size:15px">
-<h2 style="color:#4f46e5;margin-top:0">کد فعال‌سازی حساب</h2><p>کد تأیید ثبت‌نام شما:</p>
+<h2 style="color:#4f46e5;margin-top:0">{$title}</h2><p>{$description}</p>
 <div style="text-align:center;margin:32px 0;font-size:42px;font-weight:900;letter-spacing:12px;color:#4f46e5;font-family:monospace">{$safeCode}</div>
 <p style="color:#888;font-size:13px">این کد تا {$validMinutes} دقیقه معتبر است.</p>
 <p style="color:#888;font-size:13px">اگر این درخواست را شما ارسال نکرده‌اید، این ایمیل را نادیده بگیرید.</p>

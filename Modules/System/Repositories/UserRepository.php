@@ -34,4 +34,13 @@ class UserRepository extends Repository implements UserRepositoryInterface {
             ->first();
     }
 
+    public function findByContact(string $method, string $value): ?array {
+        $column = $method === 'phone' ? 'phone' : 'email';
+        return $this->query()->where($column, $value)->whereNull('deleted_at')->first();
+    }
+
+    public function updatePassword(int $userId, string $passwordHash): bool {
+        return $this->query()->where('user_id', $userId)->update(['password' => $passwordHash]);
+    }
+
 }

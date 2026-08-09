@@ -14,6 +14,9 @@ Router::get('/forgot-password', [SystemController::class, 'forgotPassword']);
 
 Router::post('/register', [UserController::class, 'store']);
 Router::post('/register/send-otp', [UserController::class, 'sendRegistrationOtp']);
+Router::post('/forgot-password/send-otp', [UserController::class, 'sendPasswordResetOtp']);
+Router::post('/forgot-password/verify-otp', [UserController::class, 'verifyPasswordResetOtp']);
+Router::post('/forgot-password/reset', [UserController::class, 'resetPassword']);
 Router::post('/login', [UserController::class, 'login']);
 Router::post('/logout', [UserController::class, 'logout']);
 

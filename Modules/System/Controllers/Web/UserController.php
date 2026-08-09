@@ -6,10 +6,15 @@ use Core\validation\ValidationException;
 use Modules\System\Services\UserService;
 use Modules\System\Requests\UserStoreRequest;
 use Modules\System\Services\RegistrationOtpService;
+use Modules\System\Services\PasswordResetOtpService;
 
 class UserController {
 
-    public function __construct(protected UserService $service, protected RegistrationOtpService $registrationOtp) {
+    public function __construct(
+        protected UserService $service,
+        protected RegistrationOtpService $registrationOtp,
+        protected PasswordResetOtpService $passwordResetOtp
+    ) {
     }
 
 
@@ -27,7 +32,7 @@ class UserController {
                 ->withInput($_POST)
                 ->withErrors(['identifier' => 'نام‌کاربری، ایمیل، شماره موبایل یا رمز عبور اشتباه است.']);
         }
-        auth()->login($user['user_id']);
+        auth()->login((int)$user['user_id'], !empty($_POST['remember']));
         return redirect('/page/home');
     }
 
@@ -85,6 +90,49 @@ class UserController {
         } catch (ValidationException $e) {
             return ResponseFactory::json(['success' => false, 'message' => 'اطلاعات فرم را بررسی کنید.', 'errors' => $e->getErrors()], 422);
         }
+    }
+
+    public function sendPasswordResetOtp() {
+        $method = $_POST['method'] ?? '';
+        $destination = trim((string)($_POST['destination'] ?? ''));
+        if ($method === 'email') {
+            $destination = strtolower($destination);
+            if (!filter_var($destination, FILTER_VALIDATE_EMAIL)) {
+                return ResponseFactory::json(['success' => false, 'message' => 'ایمیل معتبر نیست.'], 422);
+            }
+        } elseif ($method === 'phone') {
+            $destination = preg_replace('/\D+/', '', $destination);
+            if (!preg_match('/^09\d{9}$/', $destination)) {
+                return ResponseFactory::json(['success' => false, 'message' => 'شماره موبایل معتبر نیست.'], 422);
+            }
+        } else {
+            return ResponseFactory::json(['success' => false, 'message' => 'روش ارسال معتبر نیست.'], 422);
+        }
+        $result = $this->passwordResetOtp->send($method, $destination);
+        $status = $result['ok'] ? 200 : (isset($result['retry_after']) ? 429 : 422);
+        return ResponseFactory::json(['success' => $result['ok']] + $result, $status);
+    }
+
+    public function verifyPasswordResetOtp() {
+        $code = trim((string)($_POST['code'] ?? ''));
+        if (!preg_match('/^\d{6}$/', $code)) {
+            return ResponseFactory::json(['success' => false, 'message' => 'کد ۶ رقمی را کامل وارد کنید.'], 422);
+        }
+        $result = $this->passwordResetOtp->verify($code);
+        return ResponseFactory::json(['success' => $result['ok']] + $result, $result['ok'] ? 200 : 422);
+    }
+
+    public function resetPassword() {
+        $password = (string)($_POST['password'] ?? '');
+        $confirmation = (string)($_POST['password_confirmation'] ?? '');
+        if (strlen($password) < 8) {
+            return ResponseFactory::json(['success' => false, 'message' => 'رمز عبور باید حداقل ۸ کاراکتر باشد.'], 422);
+        }
+        if (!hash_equals($password, $confirmation)) {
+            return ResponseFactory::json(['success' => false, 'message' => 'رمز عبور و تکرار آن یکسان نیست.'], 422);
+        }
+        $result = $this->passwordResetOtp->reset($password);
+        return ResponseFactory::json(['success' => $result['ok']] + $result, $result['ok'] ? 200 : 422);
     }
 
     private function validRegistrationIdentifier(array &$data): bool {

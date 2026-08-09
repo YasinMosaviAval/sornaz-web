@@ -5,4 +5,5 @@ return [
         'APP_NAME',
         'Framework'
     ),
+    'key' => env('APP_KEY', ''),
 ];
