@@ -17,7 +17,7 @@ $menu = [
     <div class="container">
         <div class="header-left">
             <a href="/" class="logo">
-                <img src="/assets/images/logo.svg" alt="Sornaz">
+                <img src="/assets/images/logo/cropped-favicon_512x512.jpg" alt="لوگوی سرناز">
                 <span>Sornaz</span>
             </a>
         </div>

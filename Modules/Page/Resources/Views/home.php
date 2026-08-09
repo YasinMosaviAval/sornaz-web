@@ -11,23 +11,34 @@ $footer_array = setIndexforDataArray($footer, 'variable_name');
 
 <div id="home" class="">
     <!-- ========== HERO ========== -->
-    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-bl from-indigo-700 via-indigo-600 to-violet-700 text-white mb-10">
-        <div class="absolute inset-0 opacity-10">
-            <div class="absolute top-10 right-10 w-64 h-64 rounded-full bg-white blur-3xl"></div>
-            <div class="absolute bottom-0 left-20 w-80 h-80 rounded-full bg-violet-300 blur-3xl"></div>
+    <section class="home-hero relative min-h-[620px] md:min-h-[680px] overflow-hidden mb-10 flex items-center" aria-label="معرفی برنامه آموزشی سرناز">
+        <div id="homeHeroSlider" class="home-hero-slider absolute inset-0" aria-roledescription="carousel">
+            <?php foreach ([1, 2, 3] as $index): ?>
+                <div class="home-hero-slide absolute inset-0 <?= $index === 1 ? 'is-active' : '' ?>" data-slide="<?= $index - 1 ?>">
+                    <img src="/assets/images/banner/slider_<?= $index ?>-copyright.webp" alt="<?= ['کودک در حال گوش دادن به موسیقی', 'نوازنده ساز بادی', 'ساز سنتور ایرانی'][$index - 1] ?>" class="w-full h-full object-cover" <?= $index === 1 ? 'fetchpriority="high"' : 'loading="lazy"' ?>>
+                </div>
+            <?php endforeach; ?>
+            <div class="absolute inset-0 bg-gradient-to-l from-black/75 via-black/45 to-black/20 pointer-events-none"></div>
+            <button type="button" class="hero-slider-prev absolute z-20 right-4 md:right-8 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/85 hover:bg-white text-gray-800 shadow transition" aria-label="اسلاید قبلی"><i class="fas fa-chevron-right"></i></button>
+            <button type="button" class="hero-slider-next absolute z-20 left-4 md:left-8 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/85 hover:bg-white text-gray-800 shadow transition" aria-label="اسلاید بعدی"><i class="fas fa-chevron-left"></i></button>
+            <div class="hero-slider-dots absolute z-20 bottom-6 inset-x-0 flex justify-center gap-2" aria-label="انتخاب اسلاید"></div>
         </div>
-        <div class="relative px-8 py-16 md:px-16 md:py-24 max-w-4xl">
-            <p class="text-indigo-200 text-sm font-medium mb-4 tracking-wide">برنامه موسیقی سُرناز</p>
-            <h1 class="text-3xl md:text-5xl font-bold leading-tight mb-6">
-                به ساده‌ترین شکل ممکن<br>
-                با مفاهیم سخت و پیچیده دنیای موسیقی آشنا می‌شوید
-            </h1>
-            <p class="text-indigo-100 text-lg md:text-xl leading-relaxed mb-8 max-w-2xl">
-                آموزش تئوری موسیقی ایرانی و جهانی، ردیف، دستگاه‌ها، گوشه‌ها و مقایسه موسیقی ملل مختلف
-            </p>
-            <div class="flex flex-wrap gap-4">
-                <a href="/analytics/articles"><button class="bg-white text-indigo-700 hover:bg-indigo-50 px-8 py-4 rounded-2xl font-bold text-lg shadow-lg transition">شروع آموزش</button></a>
-                <a href="/analytics/academies"><button class="border-2 border-white/40 hover:bg-white/10 px-8 py-4 rounded-2xl font-medium text-lg transition">آموزشگاه‌ها</button></a>
+
+        <div class="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-16 py-16 pointer-events-none">
+            <div class="max-w-4xl text-center lg:text-right pointer-events-auto">
+                    <span class="inline-flex px-5 py-2.5 rounded-full bg-white/95 text-indigo-600 text-sm shadow-sm mb-7">بزرگ‌ترین مرجع آموزش موسیقی ایران</span>
+                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.35] text-white drop-shadow-lg mb-5">بهترین آموزشگاه موسیقی را<br class="hidden sm:block"> پیدا کنید</h1>
+                    <p class="text-white/90 md:text-lg leading-8 mb-8 drop-shadow">آموزشگاه‌ها، اساتید، کلاس‌ها و دوره‌های موسیقی سراسر ایران را جستجو و مقایسه کنید.</p>
+
+                    <form action="/analytics/academies" method="GET" class="grid grid-cols-1 sm:grid-cols-[1fr_100px_1fr_108px] gap-3 bg-white/95 backdrop-blur rounded-3xl p-4 shadow-2xl">
+                        <input name="name" type="search" placeholder="نام آموزشگاه" class="bg-gray-50 rounded-2xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-400">
+                        <select name="instrument" aria-label="ساز" class="bg-gray-50 rounded-2xl px-3 py-3.5 outline-none focus:ring-2 focus:ring-indigo-400">
+                            <option value="">ساز</option>
+                            <option>پیانو</option><option>گیتار</option><option>تار</option><option>سنتور</option>
+                        </select>
+                        <input name="city" type="search" placeholder="شهر" class="bg-gray-50 rounded-2xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-400">
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-5 py-3.5 transition">جستجو</button>
+                    </form>
             </div>
         </div>
     </section>

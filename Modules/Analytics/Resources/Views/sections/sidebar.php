@@ -2,7 +2,7 @@
     <!-- Header -->
     <div class="flex items-center justify-between p-6 border-b border-indigo-800">
         <div class="flex items-center gap-3">
-            <i class="fas fa-music text-3xl"></i>
+            <img src="/assets/images/logo/white_logo_transparent.png" alt="لوگوی سرناز" class="w-11 h-11 object-contain shrink-0">
             <div class="sidebar-text">
                 <a href="/page/home"><h1 class="text-xl font-bold">برنامه سرناز</h1></a>
                 <p class="text-xs text-indigo-300">پنل مدیریت آموزشگاه</p>

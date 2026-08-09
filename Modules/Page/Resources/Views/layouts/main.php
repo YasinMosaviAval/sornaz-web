@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>آموزشگاه موسیقی</title>
+    <link rel="icon" type="image/jpeg" href="/assets/images/logo/cropped-favicon_512x512.jpg">
+    <link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
     <script src="/assets/vendor/tailwind/tailwindcss.js"></script>
     <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="/assets/vendor/sweetalert2/sweetalert2.min.css">
     <script src="/assets/vendor/sweetalert2/sweetalert2.all.min.js"></script>
     <style>
-        body { font-family: Tahoma, Arial, sans-serif; }
+        body { font-family: Vazirmatn, Tahoma, Arial, sans-serif; }
         .site-page { display: none; }
         .site-page.active { display: block; }
         .nav-link-site.active { color: #4f46e5; font-weight: 600; }
@@ -19,7 +21,12 @@
         .accordion-icon.open { transform: rotate(180deg); }
         .auth-toast-success { background:#ecfdf5 !important; color:#065f46 !important; border:1px solid #a7f3d0 !important; }
         .auth-toast-error { background:#fef2f2 !important; color:#991b1b !important; border:1px solid #fecaca !important; }
-        .swal2-popup { font-family:Tahoma,Arial,sans-serif; direction:rtl; }
+        .swal2-popup { font-family:Vazirmatn,Tahoma,Arial,sans-serif; direction:rtl; }
+        .home-hero-slide { opacity:0; visibility:hidden; transform:scale(1.035); transition:opacity .7s ease,visibility .7s ease,transform 5.5s ease; }
+        .home-hero-slide.is-active { opacity:1; visibility:visible; transform:scale(1); }
+        .hero-slider-dot { width:.65rem; height:.65rem; border-radius:9999px; background:rgba(255,255,255,.55); transition:width .3s,background .3s; }
+        .hero-slider-dot.is-active { width:2rem; background:#fff; }
+        @media (prefers-reduced-motion:reduce) { .home-hero-slide { transition:none; } }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
