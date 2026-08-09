@@ -4,6 +4,7 @@ use Core\router\Router;
 use Modules\Page\Controllers\Web\PageController;
 
 
+Router::get('/', [PageController::class, 'home']);
 Router::get('/page/home', [PageController::class, 'home']);
 Router::get('/page/about-us', [PageController::class, 'aboutUs']);
 Router::get('/page/contact-us', [PageController::class, 'contactUs']);

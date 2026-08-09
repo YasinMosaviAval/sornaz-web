@@ -13,9 +13,7 @@ $success  = session()->getFlash('auth_success');
 <div id="login" class="min-h-[80vh] flex items-center justify-center py-10">
     <div class="w-full max-w-md">
         <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 text-white text-2xl mb-4 shadow-lg">
-                <i class="fas fa-music"></i>
-            </div>
+            <img src="/assets/images/logo/cropped-favicon_512x512.jpg" alt="لوگوی سرناز" class="inline-block w-20 h-20 rounded-2xl object-cover mb-4 shadow-lg">
             <h1 class="text-3xl font-bold"><?= $authentication_array["authentication_login_page_title"]["translated_value"] ?></h1>
             <p class="text-gray-500 mt-2"><?= $authentication_array["authentication_login_welcome"]["translated_value"] ?></p>
         </div>

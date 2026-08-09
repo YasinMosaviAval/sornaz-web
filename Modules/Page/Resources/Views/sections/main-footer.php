@@ -4,9 +4,7 @@
             <!-- درباره -->
             <div>
                 <div class="flex items-center gap-2 mb-4">
-                    <span class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-sm">
-                        <i class="fas fa-music"></i>
-                    </span>
+                    <img src="/assets/images/logo/white_logo_transparent.png" alt="لوگوی سرناز" class="w-10 h-10 object-contain">
                     <span class="font-bold text-white text-lg">برنامه موسیقی سُرناز</span>
                 </div>
                 <p class="text-sm text-gray-400 leading-relaxed">

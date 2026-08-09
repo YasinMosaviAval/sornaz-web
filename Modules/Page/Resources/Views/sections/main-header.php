@@ -3,9 +3,7 @@
         <div class="flex items-center justify-between h-16 md:h-18">
             <!-- لوگو -->
             <a href="/page/home" class="flex items-center gap-2 shrink-0">
-                <span class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
-                    <i class="fas fa-music"></i>
-                </span>
+                <img src="/assets/images/logo/cropped-favicon_512x512.jpg" alt="لوگوی سرناز" class="w-11 h-11 rounded-xl object-cover">
                 <span class="font-bold text-lg hidden sm:block">برنامه موسیقی سُرناز</span>
             </a>
 
