@@ -7,6 +7,13 @@ class Session {
 
     public function start(): void {
         if (session_status() === PHP_SESSION_NONE) {
+            $sessionPath = storage_path('sessions');
+            if (!is_dir($sessionPath)) {
+                mkdir($sessionPath, 0775, true);
+            }
+            if (is_writable($sessionPath)) {
+                session_save_path($sessionPath);
+            }
             session_start();
         }
     }

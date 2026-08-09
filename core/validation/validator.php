@@ -70,6 +70,12 @@ class Validator {
 
 
 
+    public function errors(): array {
+        return $this->errors;
+    }
+
+
+
     public function passes(): bool {
         return empty($this->errors);
     }

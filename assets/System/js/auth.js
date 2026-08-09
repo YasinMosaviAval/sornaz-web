@@ -33,6 +33,137 @@ window.validateRegisterForm = function(form) {
     return true;
 };
 
+let registerStep = 1;
+let registerTimerInterval = null;
+
+window.setRegisterMethod = function(method) {
+    document.getElementById('regMethod').value = method;
+    document.getElementById('regEmailBox')?.classList.toggle('hidden', method !== 'email');
+    document.getElementById('regPhoneBox')?.classList.toggle('hidden', method !== 'phone');
+    document.querySelectorAll('.reg-method').forEach(btn => {
+        btn.classList.remove('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+        btn.classList.add('border-gray-200', 'text-gray-600');
+    });
+    const active = document.getElementById(method === 'email' ? 'regMethodEmail' : 'regMethodPhone');
+    active?.classList.add('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+    active?.classList.remove('border-gray-200', 'text-gray-600');
+};
+
+window.handleRegisterSubmit = function(form) {
+    if (registerStep === 1) {
+        if (!validateRegisterForm(form)) return false;
+        sendRegistrationOtp();
+        return false;
+    }
+    const code = Array.from(document.querySelectorAll('.reg-otp')).map(input => input.value).join('');
+    if (!/^\d{6}$/.test(code)) {
+        showRegisterError('regOtpError', 'کد ۶ رقمی را کامل وارد کنید.');
+        return false;
+    }
+    document.getElementById('regOtp').value = code;
+    return true;
+};
+
+window.sendRegistrationOtp = async function() {
+    const form = document.getElementById('registerForm');
+    if (!form || !validateRegisterForm(form)) return;
+    const button = document.getElementById('regSendOtpBtn');
+    if (button) button.disabled = true;
+    showRegisterError('regFormError', '');
+    try {
+        const response = await fetch('/register/send-otp', {
+            method: 'POST',
+            headers: {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json'},
+            body: new FormData(form)
+        });
+        const rawResponse = await response.text();
+        let payload;
+        try {
+            payload = JSON.parse(rawResponse);
+        } catch (parseError) {
+            console.error('Invalid registration OTP response:', rawResponse);
+            throw new Error('پاسخ نامعتبر از سرور دریافت شد. لطفاً گزارش خطای سرور را بررسی کنید.');
+        }
+        const data = payload.data || {};
+        if (!response.ok || !data.success) {
+            const firstError = data.errors ? Object.values(data.errors).flat()[0] : null;
+            throw new Error(firstError || data.message || 'ارسال کد انجام نشد.');
+        }
+        const method = document.getElementById('regMethod').value;
+        const destination = form.querySelector(`[name="${method}"]`).value.trim();
+        document.getElementById('regSentTo').textContent = destination;
+        document.getElementById('regDetailsStep').classList.add('hidden');
+        document.getElementById('regOtpStep').classList.remove('hidden');
+        document.querySelectorAll('.reg-otp').forEach(input => input.value = '');
+        registerStep = 2;
+        setupRegisterOtpInputs();
+        startRegisterTimer(data.expires_in || 120);
+    } catch (error) {
+        showRegisterError(registerStep === 1 ? 'regFormError' : 'regOtpError', error.message);
+    } finally {
+        if (button) button.disabled = false;
+    }
+};
+
+window.showRegisterDetails = function() {
+    registerStep = 1;
+    document.getElementById('regDetailsStep')?.classList.remove('hidden');
+    document.getElementById('regOtpStep')?.classList.add('hidden');
+    document.getElementById('regOtp').value = '';
+    if (registerTimerInterval) clearInterval(registerTimerInterval);
+};
+
+function showRegisterError(id, message) {
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.textContent = message;
+    element.classList.toggle('hidden', !message);
+}
+
+function setupRegisterOtpInputs() {
+    const inputs = document.querySelectorAll('.reg-otp');
+    inputs.forEach((input, index) => {
+        input.oninput = () => {
+            input.value = input.value.replace(/\D/g, '').slice(0, 1);
+            if (input.value && index < inputs.length - 1) inputs[index + 1].focus();
+        };
+        input.onkeydown = event => {
+            if (event.key === 'Backspace' && !input.value && index > 0) inputs[index - 1].focus();
+        };
+        input.onpaste = event => {
+            event.preventDefault();
+            const code = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+            code.split('').forEach((digit, i) => { if (inputs[i]) inputs[i].value = digit; });
+        };
+    });
+    inputs[0]?.focus();
+}
+
+function startRegisterTimer(seconds) {
+    if (registerTimerInterval) clearInterval(registerTimerInterval);
+    const timer = document.getElementById('regTimer');
+    const resend = document.getElementById('regResendBtn');
+    if (resend) resend.disabled = true;
+    let remaining = seconds;
+    const tick = () => {
+        const minutes = String(Math.floor(remaining / 60)).padStart(2, '0');
+        const secs = String(remaining % 60).padStart(2, '0');
+        if (timer) timer.textContent = minutes + ':' + secs;
+        if (remaining-- <= 0) {
+            clearInterval(registerTimerInterval);
+            registerTimerInterval = null;
+            if (resend) resend.disabled = false;
+        }
+    };
+    tick();
+    registerTimerInterval = setInterval(tick, 1000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const method = document.getElementById('regMethod')?.value || 'email';
+    if (document.getElementById('registerForm')) setRegisterMethod(method);
+});
+
 window.showForgotPassword = function() {
     if (!document.getElementById('modalContainer')) {
         return alert('برای بازیابی رمز، ایمیل خود را به پشتیبانی ارسال کنید.');

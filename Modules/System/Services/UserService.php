@@ -20,7 +20,7 @@ class UserService {
             'status'          => 'pending',
             'locale'          => $data['locale'] ?? 'fa',
             'timezone'        => $data['timezone'] ?? 'Asia/Tehran',
-            'register_method' => 'email',
+            'register_method' => $data['register_method'],
         ]);
 
         if (!$userId) {
