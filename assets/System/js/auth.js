@@ -1,3 +1,22 @@
+window.showAuthToast = function(type, message) {
+    if (!message) return;
+    if (typeof Swal === 'undefined') {
+        console[type === 'error' ? 'error' : 'log'](message);
+        return;
+    }
+    Swal.fire({
+        toast: true, position: 'top', icon: type === 'success' ? 'success' : 'error',
+        title: message, showConfirmButton: false, showCloseButton: true,
+        timer: type === 'success' ? 4500 : 6000, timerProgressBar: true,
+        customClass: {popup: type === 'success' ? 'auth-toast-success' : 'auth-toast-error'}
+    });
+};
+
+window.alert = function(message) {
+    if (String(message).includes('موفق')) return;
+    showAuthToast('error', String(message));
+};
+
 window.togglePassword = function(inputId, btn) {
     const input = document.getElementById(inputId);
     if (!input) return;
@@ -13,21 +32,75 @@ window.togglePassword = function(inputId, btn) {
 
 
 
-window.validateRegisterForm = function(form) {
-    const pass = form.querySelector('[name="password"]').value;
-    const pass2 = form.querySelector('[name="password2"]').value;
-    const terms = form.querySelector('[name="terms"]').checked;
+window.validateLoginForm = function(form) {
+    const identifierInput = form.querySelector('[name="identifier"]');
+    const passwordInput = form.querySelector('[name="password"]');
+    if (!identifierInput?.value.trim()) {
+        showAuthToast('error', 'نام کاربری، ایمیل یا شماره موبایل را وارد کنید.');
+        identifierInput?.focus();
+        return false;
+    }
+    if (!passwordInput?.value) {
+        showAuthToast('error', 'رمز عبور را وارد کنید.');
+        passwordInput?.focus();
+        return false;
+    }
+    return true;
+};
 
+window.validateRegisterForm = function(form) {
+    const method = form.querySelector('[name="register_method"]')?.value || 'email';
+    const identifierInput = form.querySelector(`[name="${method}"]`);
+    const identifier = identifierInput?.value.trim() || '';
+    const usernameInput = form.querySelector('[name="username"]');
+    const passwordInput = form.querySelector('[name="password"]');
+    const confirmationInput = form.querySelector('[name="password2"]');
+    const pass = passwordInput?.value || '';
+    const pass2 = confirmationInput?.value || '';
+    const terms = form.querySelector('[name="terms"]')?.checked;
+
+    if (!identifier) {
+        showAuthToast('error', method === 'email' ? 'ایمیل را وارد کنید.' : 'شماره موبایل را وارد کنید.');
+        identifierInput?.focus();
+        return false;
+    }
+    if (method === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) {
+        showAuthToast('error', 'ایمیل واردشده معتبر نیست.');
+        identifierInput?.focus();
+        return false;
+    }
+    if (method === 'phone' && !/^09\d{9}$/.test(identifier.replace(/\s/g, ''))) {
+        showAuthToast('error', 'شماره موبایل معتبر نیست.');
+        identifierInput?.focus();
+        return false;
+    }
+    if (!usernameInput?.value.trim()) {
+        showAuthToast('error', 'نام کاربری را وارد کنید.');
+        usernameInput?.focus();
+        return false;
+    }
+    if (!pass) {
+        showAuthToast('error', 'رمز عبور را وارد کنید.');
+        passwordInput?.focus();
+        return false;
+    }
     if (pass.length < 8) {
-        alert('رمز عبور حداقل ۸ کاراکتر باشد');
+        showAuthToast('error', 'رمز عبور حداقل ۸ کاراکتر باشد.');
+        passwordInput?.focus();
+        return false;
+    }
+    if (!pass2) {
+        showAuthToast('error', 'تکرار رمز عبور را وارد کنید.');
+        confirmationInput?.focus();
         return false;
     }
     if (pass !== pass2) {
-        alert('رمز عبور و تکرار آن یکسان نیست');
+        showAuthToast('error', 'رمز عبور و تکرار آن یکسان نیست.');
+        confirmationInput?.focus();
         return false;
     }
     if (!terms) {
-        alert('پذیرش قوانین الزامی است');
+        showAuthToast('error', 'پذیرش قوانین الزامی است.');
         return false;
     }
     return true;
@@ -118,6 +191,7 @@ function showRegisterError(id, message) {
     if (!element) return;
     element.textContent = message;
     element.classList.toggle('hidden', !message);
+    if (message) showAuthToast('error', message);
 }
 
 function setupRegisterOtpInputs() {
@@ -162,6 +236,9 @@ function startRegisterTimer(seconds) {
 document.addEventListener('DOMContentLoaded', () => {
     const method = document.getElementById('regMethod')?.value || 'email';
     if (document.getElementById('registerForm')) setRegisterMethod(method);
+    const flash = document.getElementById('authFlashMessage');
+    if (flash?.dataset.success) showAuthToast('success', flash.dataset.success);
+    if (flash?.dataset.error) showAuthToast('error', flash.dataset.error);
 });
 
 window.showForgotPassword = function() {
@@ -392,6 +469,7 @@ function showFpError(message) {
     if (!element) return;
     element.textContent = message;
     element.classList.toggle('hidden', !message);
+    if (message) showAuthToast('error', message);
 }
 
 // لینک فراموشی در صفحه ورود

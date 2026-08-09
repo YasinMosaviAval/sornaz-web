@@ -3,7 +3,12 @@ $authentication_array = getFilteredList(setIndexforDataArray($authentication, 'v
 
 $oldInput = session()->getFlash('_old_input', []);
 $errors   = session()->getFlash('_errors', []);
+$success  = session()->getFlash('auth_success');
 ?>
+
+<div id="authFlashMessage" class="hidden"
+     data-success="<?= e($success ?? '') ?>"
+     data-error="<?= e(!empty($errors['identifier']) ? $errors['identifier'] : '') ?>"></div>
 
 <div id="login" class="min-h-[80vh] flex items-center justify-center py-10">
     <div class="w-full max-w-md">
@@ -15,29 +20,23 @@ $errors   = session()->getFlash('_errors', []);
             <p class="text-gray-500 mt-2"><?= $authentication_array["authentication_login_welcome"]["translated_value"] ?></p>
         </div>
 
-        <form method="POST" action="/login" class="bg-white rounded-3xl shadow-sm p-8 border border-gray-100">
+        <form id="loginForm" method="POST" action="/login" novalidate onsubmit="return validateLoginForm(this)" class="bg-white rounded-3xl shadow-sm p-8 border border-gray-100">
             <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\csrf\Csrf::class)->token() ?>">
-
-            <?php if (!empty($errors['identifier'])): ?>
-                <div class="bg-red-50 text-red-600 text-sm rounded-2xl px-5 py-3 mb-5">
-                    <?= e($errors['identifier']) ?>
-                </div>
-            <?php endif; ?>
 
             <div class="space-y-5">
                 <div>
                     <label class="block text-sm font-medium mb-2">نام کاربری، ایمیل یا شماره موبایل</label>
                     <input name="identifier" type="text" autocomplete="username"
-                           value="<?= e($oldInput['identifier'] ?? '') ?>"
-                           class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 focus:outline-none focus:border-indigo-500">
-                           <!-- placeholder="username، email@example.com یا 09123456789"> -->
+                            value="<?= e($oldInput['identifier'] ?? '') ?>"
+                            class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 focus:outline-none focus:border-indigo-500">
+                            <!-- placeholder="username، email@example.com یا 09123456789"> -->
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2"><?= $authentication_array["authentication_password_label"]["translated_value"] ?></label>
                     <div class="relative">
                         <input id="loginPassword" name="password" type="password" autocomplete="current-password"
-                               class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 focus:outline-none focus:border-indigo-500"
-                               placeholder="<?= $authentication_array["authentication_password_placeholder"]["translated_value"] ?>">
+                                class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 focus:outline-none focus:border-indigo-500"
+                                placeholder="<?= $authentication_array["authentication_password_placeholder"]["translated_value"] ?>">
                         <button type="button" onclick="togglePassword('loginPassword', this)" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                             <i class="fas fa-eye"></i>
                         </button>
