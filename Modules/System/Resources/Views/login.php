@@ -26,11 +26,11 @@ $errors   = session()->getFlash('_errors', []);
 
             <div class="space-y-5">
                 <div>
-                    <label class="block text-sm font-medium mb-2"><?= $authentication_array["authentication_email_label"]["translated_value"] ?></label>
+                    <label class="block text-sm font-medium mb-2">نام کاربری، ایمیل یا شماره موبایل</label>
                     <input name="identifier" type="text" autocomplete="username"
                            value="<?= e($oldInput['identifier'] ?? '') ?>"
-                           class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 focus:outline-none focus:border-indigo-500"
-                           placeholder="<?= $authentication_array["authentication_email_placeholder"]["translated_value"] ?>">
+                           class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 focus:outline-none focus:border-indigo-500">
+                           <!-- placeholder="username، email@example.com یا 09123456789"> -->
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2"><?= $authentication_array["authentication_password_label"]["translated_value"] ?></label>
@@ -45,7 +45,7 @@ $errors   = session()->getFlash('_errors', []);
                 </div>
                 <div class="flex items-center justify-between text-sm">
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" name="remember" class="rounded border-gray-300 text-indigo-600">
+                        <input type="checkbox" name="remember" value="1" <?= !empty($oldInput['remember']) ? 'checked' : '' ?> class="rounded border-gray-300 text-indigo-600">
                         <span class="text-gray-600"><?= $authentication_array["authentication_remember"]["translated_value"] ?></span>
                     </label>
                     <a href="/system/forgot-password" class="text-indigo-600 hover:underline"><?= $authentication_array["authentication_forgot_password"]["translated_value"] ?></a>

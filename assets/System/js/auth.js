@@ -253,7 +253,6 @@ window.acceptTerms = function() {
 
 let fpMethod = 'email'; // 'email' | 'phone'
 let fpTimerInterval = null;
-let fpDemoOtp = '123456'; // فقط برای دمو — در سرور تولید می‌شود
 
 window.setFpMethod = function(method) {
     fpMethod = method;
@@ -280,32 +279,28 @@ window.fpGoStep = function(step) {
     }
 };
 
-window.sendFpOtp = function() {
+window.sendFpOtp = async function() {
+    let destination;
     if (fpMethod === 'email') {
         const email = document.getElementById('fpEmail')?.value.trim();
         if (!email) return alert('ایمیل را وارد کنید');
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert('ایمیل معتبر نیست');
         document.getElementById('fpSentTo').textContent = email;
+        destination = email;
     } else {
         const phone = document.getElementById('fpPhone')?.value.trim();
         if (!phone) return alert('شماره موبایل را وارد کنید');
         if (!/^09\d{9}$/.test(phone.replace(/\s/g, ''))) return alert('شماره موبایل معتبر نیست (مثال: 09123456789)');
         document.getElementById('fpSentTo').textContent = phone;
+        destination = phone.replace(/\s/g, '');
     }
-
-    // در نسخه واقعی: fetch('/api/auth/send-otp', { method, email/phone })
-    fpDemoOtp = String(Math.floor(100000 + Math.random() * 900000));
-    console.log('OTP دمو:', fpDemoOtp); // فقط توسعه
-
-    // پاک کردن اینپوت‌های OTP
-    document.querySelectorAll('.fp-otp').forEach(inp => { inp.value = ''; });
-    setupOtpInputs();
-
-    fpGoStep(2);
-    startFpTimer(120);
-    alert(fpMethod === 'email'
-        ? 'کد تأیید به ایمیل ارسال شد (در دمو در Console ببینید)'
-        : 'کد تأیید پیامک شد (در دمو در Console ببینید)');
+    try {
+        const data = await fpRequest('/forgot-password/send-otp', {method: fpMethod, destination});
+        document.querySelectorAll('.fp-otp').forEach(inp => { inp.value = ''; });
+        setupOtpInputs();
+        fpGoStep(2);
+        startFpTimer(data.expires_in || 120);
+    } catch (error) { showFpError(error.message); }
 };
 
 function startFpTimer(seconds) {
@@ -352,30 +347,52 @@ function setupOtpInputs() {
     if (inputs[0]) inputs[0].focus();
 }
 
-window.verifyFpOtp = function() {
+window.verifyFpOtp = async function() {
     const code = Array.from(document.querySelectorAll('.fp-otp')).map(i => i.value).join('');
     if (code.length !== 6) return alert('کد ۶ رقمی را کامل وارد کنید');
-
-    // در نسخه واقعی: verify با سرور
-    if (code !== fpDemoOtp) return alert('کد نادرست است');
-
-    if (fpTimerInterval) clearInterval(fpTimerInterval);
-    fpGoStep(3);
+    try {
+        await fpRequest('/forgot-password/verify-otp', {code});
+        if (fpTimerInterval) clearInterval(fpTimerInterval);
+        fpGoStep(3);
+    } catch (error) { showFpError(error.message); }
 };
 
-window.resetPassword = function() {
+window.resetPassword = async function() {
     const p1 = document.getElementById('fpNewPass')?.value;
     const p2 = document.getElementById('fpNewPass2')?.value;
     if (!p1 || p1.length < 8) return alert('رمز عبور حداقل ۸ کاراکتر باشد');
     if (p1 !== p2) return alert('رمز عبور و تکرار آن یکسان نیست');
 
-    // در نسخه واقعی: POST رمز جدید + توکن OTP
-    alert('✅ رمز عبور با موفقیت تغییر کرد. اکنون وارد شوید.');
-    document.getElementById('fpNewPass').value = '';
-    document.getElementById('fpNewPass2').value = '';
-    fpGoStep(1);
-    if (typeof showSection === 'function') showSection('login');
+    try {
+        await fpRequest('/forgot-password/reset', {password: p1, password_confirmation: p2});
+        alert('رمز عبور با موفقیت تغییر کرد. اکنون وارد شوید.');
+        window.location.href = '/system/login';
+    } catch (error) { showFpError(error.message); }
 };
+
+async function fpRequest(url, fields) {
+    showFpError('');
+    const body = new FormData();
+    body.append('_token', document.getElementById('fpCsrf')?.value || '');
+    Object.entries(fields).forEach(([key, value]) => body.append(key, value));
+    const response = await fetch(url, {
+        method: 'POST', headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}, body
+    });
+    const raw = await response.text();
+    let payload;
+    try { payload = JSON.parse(raw); }
+    catch (error) { console.error('Invalid password reset response:', raw); throw new Error('پاسخ نامعتبر از سرور دریافت شد.'); }
+    const data = payload.data || {};
+    if (!response.ok || !data.success) throw new Error(data.message || 'انجام درخواست ناموفق بود.');
+    return data;
+}
+
+function showFpError(message) {
+    const element = document.getElementById('fpError');
+    if (!element) return;
+    element.textContent = message;
+    element.classList.toggle('hidden', !message);
+}
 
 // لینک فراموشی در صفحه ورود
 window.showForgotPassword = function() {
