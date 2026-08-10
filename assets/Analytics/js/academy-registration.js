@@ -51,7 +51,7 @@ window.sendAcademyRegistrationOtp = async function() {
     const button = document.getElementById('academySendOtpBtn');
     if (button) button.disabled = true;
     try {
-        const response = await fetch('/analytics/send-academy-request/send-otp', {method: 'POST', headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}, body: new FormData(form)});
+        const response = await fetch('/academy/send-academy-request/send-otp', {method: 'POST', headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}, body: new FormData(form)});
         const payload = await response.json();
         const data = payload.data || {};
         if (!response.ok || !data.success) throw new Error(data.errors ? Object.values(data.errors).flat()[0] : (data.message || 'ارسال کد انجام نشد.'));

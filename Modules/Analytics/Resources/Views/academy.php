@@ -2,7 +2,7 @@
     <div class="max-w-5xl mx-auto px-4 py-8 md:py-12">
 
         <!-- بازگشت -->
-        <a href="/analytics/academies" class="text-indigo-600 text-sm mb-6 hover:underline flex items-center gap-2">
+        <a href="/academy/academies" class="text-indigo-600 text-sm mb-6 hover:underline flex items-center gap-2">
             <div><i class="fas fa-arrow-right"></i> &nbsp; بازگشت به لیست آموزشگاه‌ها</div>
         </a>
 
@@ -28,7 +28,7 @@
                         <p id="apLocation" class="text-sm text-gray-500 mt-1"></p>
                     </div>
                     <div class="flex flex-wrap gap-2 shrink-0">
-                        <a href="/analytics/academy-enroll" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm font-medium text-center block">ثبت‌نام در کلاس</a>
+                        <a href="/academy/academy-enroll" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm font-medium text-center block">ثبت‌نام در کلاس</a>
                         <a href="#" class="border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl text-sm">تماس</a>
                     </div>
                 </div>

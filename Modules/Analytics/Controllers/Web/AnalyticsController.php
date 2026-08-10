@@ -19,7 +19,6 @@ class AnalyticsController {
     public function academy() { return ResponseFactory::view('Analytics::academy')->layout('main')->title('سُرناز | صفحه اصلی'); }
     public function academies() { return ResponseFactory::view('Analytics::academies')->layout('main')->title('سُرناز | صفحه اصلی'); }
     public function academyEnroll() { return ResponseFactory::view('Analytics::academy-enroll')->layout('main')->title('سُرناز | صفحه اصلی'); }
-    public function sendAcademyRequest() { return ResponseFactory::view('Analytics::send-academy-request')->layout('main')->title('سُرناز | صفحه اصلی'); }
 
 
 

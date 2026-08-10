@@ -16,14 +16,14 @@ class AcademyController {
     }
 
     /**
-     * GET /api/academys
+     * GET /api/academy
      */
     public function index() {
         return ResponseFactory::json($this->service->all());
     }
 
     /**
-     * GET /api/academys/{id}
+     * GET /api/academy/{id}
      */
     public function show(int $id) {
         $item = $this->service->findById($id);
@@ -34,7 +34,7 @@ class AcademyController {
     }
 
     /**
-     * POST /api/academys
+     * POST /api/academy
      */
     public function store() {
         $request = new AcademyStoreRequest($_POST);
@@ -46,7 +46,7 @@ class AcademyController {
     }
 
     /**
-     * PUT /api/academys/{id}
+     * PUT /api/academy/{id}
      */
     public function update(int $id) {
         $request = new AcademyUpdateRequest($_POST);
@@ -55,7 +55,7 @@ class AcademyController {
     }
 
     /**
-     * DELETE /api/academys/{id}
+     * DELETE /api/academy/{id}
      */
     public function destroy(int $id) {
         $result = $this->service->delete($id);

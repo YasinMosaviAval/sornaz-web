@@ -57,7 +57,7 @@ class AcademyController {
         $request = new AcademyStoreRequest($_POST);
         $data = $request->validated();
         $this->service->create($data);
-        return redirect('/academys');
+        return redirect('/academy');
     }
 
 
@@ -109,7 +109,7 @@ class AcademyController {
         $request = new AcademyUpdateRequest($_POST);
         $data = $request->validated();
         $this->service->update($id, $data);
-        return redirect('/academys');
+        return redirect('/academy');
     }
 
 
@@ -119,7 +119,7 @@ class AcademyController {
      */
     public function destroy(int $id) {
         $this->service->delete($id);
-        return redirect('/academys');
+        return redirect('/academy');
     }
 
 }
