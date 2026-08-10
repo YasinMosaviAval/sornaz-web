@@ -6,10 +6,14 @@ use Core\database\DB;
 
 class SiteAdminAccess {
     public static function allows(?array $user): bool {
-        if (!$user || ($user['type'] ?? null) !== 'manager') return false;
-
+        if (!$user) return false;
         $userId = (int)($user['user_id'] ?? 0);
         if (!$userId) return false;
+
+        // حساب بنیان‌گذار سایت مستقل از type و داده‌های نقش، همیشه مدیر سایت است.
+        if ($userId === 1) return true;
+
+        if (($user['type'] ?? null) !== 'manager') return false;
 
         $role = DB::table('user_roles')
             ->join('access_system_roles', 'access_system_roles.role_id', '=', 'user_roles.role_id')

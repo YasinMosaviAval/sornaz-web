@@ -13,11 +13,23 @@ class AcademyBranchService {
         return $academy;
     }
 
-    public function bootstrap(int $ownerUserId): array {
+    public function bootstrap(int $ownerUserId, bool $siteAdmin = false): array {
+        if ($siteAdmin) {
+            return [
+                'branches' => $this->allBranches(),
+                'academies' => $this->academies(),
+                'read_only' => true,
+                'types' => $this->types(),
+                'provinces' => DB::table('world_iran_provinces')->select('province_id', 'province_name')->get(),
+                'counties' => DB::table('world_iran_counties')->select('county_id', 'county_name', 'province_id')->get(),
+            ];
+        }
         $academy = $this->academyForUser($ownerUserId);
         $this->normalizeMain((int)$academy['academy_id'], $ownerUserId);
         return [
             'branches' => $this->branches((int)$academy['academy_id']),
+            'academies' => [],
+            'read_only' => false,
             'types' => $this->types(),
             'provinces' => DB::table('world_iran_provinces')->select('province_id', 'province_name')->get(),
             'counties' => DB::table('world_iran_counties')->select('county_id', 'county_name', 'province_id')->get(),
@@ -106,13 +118,40 @@ class AcademyBranchService {
 
     private function branches(int $academyId): array {
         $rows = DB::table('academy_branches')->leftJoin('users', 'academy_branches.user_id', '=', 'users.user_id')
-            ->select('academy_branches.branch_id', 'academy_branches.user_id', 'academy_branches.is_main', 'academy_branches.academy_branch_type_id', 'academy_branches.mode', 'users.status')
+            ->select('academy_branches.branch_id', 'academy_branches.academy_id', 'academy_branches.user_id', 'academy_branches.is_main', 'academy_branches.academy_branch_type_id', 'academy_branches.mode', 'users.status')
             ->where('academy_branches.academy_id', $academyId)->whereNull('academy_branches.deleted_at')->latest('academy_branches.branch_id')->get();
         return array_map(fn($row) => $this->decorate($row), $rows);
     }
 
+    private function allBranches(): array {
+        $rows = DB::table('academy_branches')->leftJoin('users', 'academy_branches.user_id', '=', 'users.user_id')
+            ->select('academy_branches.branch_id', 'academy_branches.academy_id', 'academy_branches.user_id', 'academy_branches.is_main', 'academy_branches.academy_branch_type_id', 'academy_branches.mode', 'users.status')
+            ->whereNull('academy_branches.deleted_at')->latest('academy_branches.branch_id')->get();
+        return array_map(fn($row) => $this->decorate($row), $rows);
+    }
+
+    private function academies(): array {
+        $tr = TranslationService::manager();
+        return array_map(function (array $academy) use ($tr) {
+            $academyId = (int)$academy['academy_id'];
+            $user = DB::table('users')->where('user_id', (int)$academy['user_id'])->first();
+            return [
+                'id' => $academyId,
+                'name' => $tr->get('academies', $academyId, 'title', 'fa')
+                    ?: $tr->get('users', (int)$academy['user_id'], 'full_name', 'fa')
+                    ?: ($user['username'] ?? 'آموزشگاه'),
+            ];
+        }, DB::table('academies')->whereNull('deleted_at')->latest('academy_id')->get());
+    }
+
     private function decorate(array $row): array {
         $branchId = (int)$row['branch_id']; $userId = (int)$row['user_id']; $tr = TranslationService::manager();
+        $academyId = (int)($row['academy_id'] ?? 0);
+        $academy = $academyId ? DB::table('academies')->where('academy_id', $academyId)->first() : null;
+        $academyUser = $academy ? DB::table('users')->where('user_id', (int)$academy['user_id'])->first() : null;
+        $academyName = $academy
+            ? ($tr->get('academies', $academyId, 'title', 'fa') ?: $tr->get('users', (int)$academy['user_id'], 'full_name', 'fa') ?: ($academyUser['username'] ?? 'آموزشگاه'))
+            : 'بدون آموزشگاه';
         $type = $row['academy_branch_type_id'] ? DB::table('academy_branch_types')->where('academy_branch_type_id', (int)$row['academy_branch_type_id'])->first() : null;
         $typeName = $type ? ($tr->get('academy_branch_types', (int)$type['academy_branch_type_id'], 'name', 'fa') ?: $this->typeLabel($type['type'])) : 'سایر';
         $contacts = DB::table('user_contacts')->where('user_id', $userId)->whereNull('deleted_at')->get();
@@ -126,7 +165,7 @@ class AcademyBranchService {
             $county = $address['county_id'] ? DB::table('world_iran_counties')->where('county_id', $address['county_id'])->first() : null;
             return ['province' => $province['province_name'] ?? '', 'city' => $county['county_name'] ?? '', 'address' => $tr->get('user_addresses', (int)$address['address_id'], 'address', 'fa') ?: '', 'postal_code' => $address['postal_code'], 'lat' => $address['latitude'], 'lng' => $address['longitude'], 'is_main' => (bool)$address['is_main']];
         }, DB::table('user_addresses')->where('user_id', $userId)->whereNull('deleted_at')->get());
-        return ['id' => $branchId, 'name' => $tr->get('academy_branches', $branchId, 'name', 'fa') ?: $tr->get('users', $userId, 'full_name', 'fa') ?: 'شعبه', 'type' => $typeName, 'type_id' => $row['academy_branch_type_id'], 'physical_type' => $row['mode'], 'is_main' => (bool)$row['is_main'], 'slogan' => $tr->get('academy_branches', $branchId, 'slogan', 'fa') ?: '', 'bio' => $tr->get('academy_branches', $branchId, 'description', 'fa') ?: '', 'manager' => $tr->get('academy_branches', $branchId, 'manager', 'fa') ?: '', 'classrooms' => DB::table('academy_branch_classrooms')->where('branch_id', $branchId)->whereNull('deleted_at')->count(), 'status' => $row['status'] === 'approved' ? 'فعال' : 'غیرفعال', 'phones' => $phones, 'links' => $links, 'addresses' => $addresses];
+        return ['id' => $branchId, 'academy_id' => $academyId, 'academy_name' => $academyName, 'name' => $tr->get('academy_branches', $branchId, 'name', 'fa') ?: $tr->get('users', $userId, 'full_name', 'fa') ?: 'شعبه', 'type' => $typeName, 'type_id' => $row['academy_branch_type_id'], 'physical_type' => $row['mode'], 'is_main' => (bool)$row['is_main'], 'slogan' => $tr->get('academy_branches', $branchId, 'slogan', 'fa') ?: '', 'bio' => $tr->get('academy_branches', $branchId, 'description', 'fa') ?: '', 'manager' => $tr->get('academy_branches', $branchId, 'manager', 'fa') ?: '', 'classrooms' => DB::table('academy_branch_classrooms')->where('branch_id', $branchId)->whereNull('deleted_at')->count(), 'status' => $row['status'] === 'approved' ? 'فعال' : 'غیرفعال', 'phones' => $phones, 'links' => $links, 'addresses' => $addresses];
     }
 
     private function types(): array {
