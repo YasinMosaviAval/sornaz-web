@@ -40,7 +40,7 @@ window.submitAcademyRequest = function() {
         .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
 
     renderAcademyRequestsTable();
-    alert('✅ درخواست ثبت آموزشگاه ارسال شد و پس از بررسی نتیجه اعلام می‌شود.');
+    alert('✅ ثبت آموزشگاه انجام شد و پس از بررسی نتیجه اعلام می‌شود.');
 };
 
 window.renderAcademyRequestsTable = function() {

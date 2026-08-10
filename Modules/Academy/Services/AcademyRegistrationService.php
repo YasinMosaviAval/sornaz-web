@@ -96,6 +96,7 @@ class AcademyRegistrationService {
             'phone' => sprintf('0911%07d', 2000000 + $index + 1),
             'type' => 'manager',
             'full_name' => $sample['manager_name'],
+            'visibility' => 'public',
         ]);
         DB::table('users')->where('user_id', $managerId)->update(['created_by' => $managerId, 'updated_by' => $managerId]);
         $this->auditTranslations('users', $managerId, $managerId);
@@ -106,6 +107,7 @@ class AcademyRegistrationService {
             'phone' => $sample['phone'],
             'type' => 'manager',
             'full_name' => $sample['academy_name'],
+            'visibility' => 'unlisted',
         ], $managerId);
 
         $academyId = DB::table('academies')->insertGetId([
@@ -150,6 +152,7 @@ class AcademyRegistrationService {
             'phone' => sprintf('0935%07d', 3000000 + $serial),
             'type' => 'branch',
             'full_name' => $branchName,
+            'visibility' => 'unlisted',
         ], $managerId);
         $this->ensureProfile($branchUserId, $managerId);
 
@@ -204,7 +207,7 @@ class AcademyRegistrationService {
         $values = [
             'email' => $data['email'], 'phone' => $data['phone'], 'password' => password_hash('123456789', PASSWORD_DEFAULT),
             'type' => $data['type'], 'status' => 'approved', 'locale' => 'fa', 'timezone' => 'Asia/Tehran',
-            'register_method' => 'email', 'visibility' => 'public', 'deleted_at' => null,
+            'register_method' => 'email', 'visibility' => $data['visibility'] ?? 'unlisted', 'deleted_at' => null,
             'created_by' => $creatorId, 'updated_by' => $creatorId,
         ];
         if ($user) {

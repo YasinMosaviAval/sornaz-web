@@ -47,7 +47,7 @@ class AcademyRegistrationController {
             if (!$verification['ok']) return $this->back(['otp' => $verification['message']]);
             $this->service->register($data);
             $this->otp->clear();
-            session()->flash('auth_success', 'درخواست ثبت آموزشگاه با موفقیت ثبت شد. پس از تأیید می‌توانید وارد پنل مدیریت شوید.');
+            session()->flash('auth_success', 'ثبت آموزشگاه با موفقیت انجام شد. پس از تأیید می‌توانید وارد پنل مدیریت شوید.');
             return redirect('/login');
         } catch (ValidationException $e) {
             return $this->back($e->getErrors());

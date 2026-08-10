@@ -1,7 +1,7 @@
 <div id="academy-requests" class="section hidden">
     <div class="max-w-xl mx-auto mb-12">
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold">فرم درخواست ثبت آموزشگاه</h1>
+            <h1 class="text-3xl font-bold">فرم ثبت آموزشگاه</h1>
             <p class="text-gray-500 mt-2">پس از بررسی، نتیجه از طریق ایمیل اعلام می‌شود.</p>
         </div>
 
