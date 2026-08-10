@@ -20,6 +20,12 @@ class AcademyRegistrationController {
             ->title('سُرناز | ثبت آموزشگاه');
     }
 
+    public function index() {
+        return ResponseFactory::view('Analytics::academies', ['academies' => $this->service->all()])
+            ->layout('main')
+            ->title('سُرناز | آموزشگاه‌ها');
+    }
+
     public function store() {
         try {
             $data = $this->validatedData();

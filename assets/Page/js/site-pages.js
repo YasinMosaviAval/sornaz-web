@@ -18,6 +18,7 @@ function getSiteArticles() {
 }
 
 function getSiteAcademies() {
+    if (Array.isArray(window.siteAcademiesData)) return window.siteAcademiesData;
     if (typeof allAcademiesList !== 'undefined' && allAcademiesList.length) return allAcademiesList;
     return [
         {
