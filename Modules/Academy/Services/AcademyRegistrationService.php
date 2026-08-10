@@ -42,6 +42,57 @@ class AcademyRegistrationService {
         });
     }
 
+    public function deleteSamples(): array {
+        return transaction(function () {
+            $users = DB::table('users')->whereRaw(
+                "username LIKE 'sample_academy_%' OR username LIKE 'sample_manager_%' OR username LIKE 'sample_branch_%'"
+            )->get();
+            $userIds = array_map(fn(array $user) => (int)$user['user_id'], $users);
+            if (!$userIds) return ['deleted' => 0, 'message' => 'هیچ اطلاعات آزمایشی برای حذف وجود ندارد.'];
+
+            $academies = DB::table('academies')->whereIn('user_id', $userIds)->get();
+            $academyIds = array_map(fn(array $academy) => (int)$academy['academy_id'], $academies);
+            $branches = $academyIds ? DB::table('academy_branches')->whereIn('academy_id', $academyIds)->get() : [];
+            $branchIds = array_map(fn(array $branch) => (int)$branch['branch_id'], $branches);
+            $members = $branchIds ? DB::table('academy_branch_members')->whereIn('branch_id', $branchIds)->get() : [];
+            $memberIds = array_map(fn(array $member) => (int)$member['member_id'], $members);
+
+            if ($memberIds) {
+                DB::table('academy_branch_member_roles')->whereIn('member_id', $memberIds)->delete();
+                DB::table('academy_branch_member_contracts')->whereIn('member_id', $memberIds)->delete();
+            }
+            if ($branchIds) DB::table('academy_branch_members')->whereIn('branch_id', $branchIds)->delete();
+
+            $contacts = DB::table('user_contacts')->whereIn('user_id', $userIds)->get();
+            $addresses = DB::table('user_addresses')->whereIn('user_id', $userIds)->get();
+            $this->deleteTranslations('user_contacts', array_map(fn(array $row) => (int)$row['user_contact_id'], $contacts));
+            $this->deleteTranslations('user_addresses', array_map(fn(array $row) => (int)$row['address_id'], $addresses));
+            $this->deleteTranslations('academy_branches', $branchIds);
+            $this->deleteTranslations('academies', $academyIds);
+            $this->deleteTranslations('users', $userIds);
+
+            DB::table('user_contacts')->whereIn('user_id', $userIds)->delete();
+            DB::table('user_addresses')->whereIn('user_id', $userIds)->delete();
+            DB::table('user_profiles')->whereIn('user_id', $userIds)->delete();
+            DB::table('financial_system_accounts')->whereIn('user_id', $userIds)->delete();
+            DB::table('user_roles')->whereIn('user_id', $userIds)->delete();
+            DB::table('user_sessions')->whereIn('user_id', $userIds)->delete();
+            if ($branchIds) DB::table('academy_branches')->whereIn('branch_id', $branchIds)->delete();
+            if ($academyIds) DB::table('academies')->whereIn('academy_id', $academyIds)->delete();
+            DB::table('users')->whereIn('user_id', $userIds)->delete();
+
+            return [
+                'deleted' => count($academyIds),
+                'message' => count($academyIds) . ' آموزشگاه و تمام اطلاعات آزمایشی مرتبط با آن‌ها حذف شد.',
+            ];
+        });
+    }
+
+    private function deleteTranslations(string $table, array $ids): void {
+        if (!$ids) return;
+        DB::table('translations')->where('table_name', $table)->whereIn('table_id', $ids)->delete();
+    }
+
     private function createAcademy(array $data): int {
         $data['type'] = 'academy';
         $data['full_name'] = $data['academy_name'];
@@ -105,7 +156,7 @@ class AcademyRegistrationService {
             'username' => $sample['username'],
             'email' => $sample['email'],
             'phone' => $sample['phone'],
-            'type' => 'manager',
+            'type' => 'academy',
             'full_name' => $sample['academy_name'],
             'visibility' => 'unlisted',
         ], $managerId);

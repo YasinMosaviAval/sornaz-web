@@ -30,13 +30,25 @@ class AcademyRegistrationController {
         if (env('APP_ENV', 'production') !== 'local') abort(404);
 
         try {
-            return ResponseFactory::json(['success' => true] + $this->service->seedSamples());
+            $result = $this->service->seedSamples();
+            session()->flash('admin_test_message', $result['message']);
+            return redirect('/analytics/admin-panel');
         } catch (\Throwable $e) {
-            return ResponseFactory::json([
-                'success' => false,
-                'message' => 'ایجاد آموزشگاه‌های نمونه ناموفق بود.',
-                'error' => $e->getMessage(),
-            ], 500);
+            session()->flash('admin_test_error', 'ایجاد آموزشگاه‌های نمونه ناموفق بود: ' . $e->getMessage());
+            return redirect('/analytics/admin-panel');
+        }
+    }
+
+    public function deleteSamples() {
+        if (env('APP_ENV', 'production') !== 'local') abort(404);
+
+        try {
+            $result = $this->service->deleteSamples();
+            session()->flash('admin_test_message', $result['message']);
+            return redirect('/analytics/admin-panel');
+        } catch (\Throwable $e) {
+            session()->flash('admin_test_error', 'حذف اطلاعات نمونه ناموفق بود: ' . $e->getMessage());
+            return redirect('/analytics/admin-panel');
         }
     }
 
