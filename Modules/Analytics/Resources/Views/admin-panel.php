@@ -6,6 +6,12 @@
         <div class="flex-1 flex flex-col overflow-hidden">
         <? component('header'); ?>
         <main class="flex-1 overflow-auto p-8" id="mainContent">
+            <?php if ($message = session()->getFlash('admin_test_message')): ?>
+                <div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800"><?= e($message) ?></div>
+            <?php endif; ?>
+            <?php if ($error = session()->getFlash('admin_test_error')): ?>
+                <div class="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800"><?= e($error) ?></div>
+            <?php endif; ?>
             <?
             component('add-user-modal');
 
