@@ -243,6 +243,8 @@ function toggleSidebar() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    const requestedSection = window.location.hash.replace('#', '');
+    if (requestedSection && document.getElementById(requestedSection)) showSection(requestedSection);
 
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
