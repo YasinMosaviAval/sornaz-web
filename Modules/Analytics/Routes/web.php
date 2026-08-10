@@ -5,7 +5,7 @@ use Modules\Analytics\Controllers\Web\AnalyticsController;
 
 
 
-Router::get('/analytics/admin-panel', [AnalyticsController::class, 'adminPanel']);
+Router::get('/analytics/admin-panel', [AnalyticsController::class, 'adminPanel'])->middleware('academy');
 
 
 

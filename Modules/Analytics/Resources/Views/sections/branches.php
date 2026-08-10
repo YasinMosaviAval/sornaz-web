@@ -1,4 +1,4 @@
-<div id="branches" class="section hidden">
+<div id="branches" class="section hidden" data-csrf="<?= e(csrf_token()) ?>">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
             <h1 class="text-3xl font-bold">مدیریت شعبه‌ها</h1>
