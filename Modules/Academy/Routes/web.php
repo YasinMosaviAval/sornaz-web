@@ -6,7 +6,7 @@ use Modules\Academy\Controllers\Web\AcademyRegistrationController;
 use Modules\Analytics\Controllers\Web\AnalyticsController;
 
 Router::get('/academy/academy', [AnalyticsController::class, 'academy']);
-Router::get('/academy/academies', [AnalyticsController::class, 'academies']);
+Router::get('/academy/academies', [AcademyRegistrationController::class, 'index']);
 Router::get('/academy/academy-enroll', [AnalyticsController::class, 'academyEnroll']);
 Router::get('/academy/send-academy-request', [AcademyRegistrationController::class, 'create']);
 Router::post('/academy/send-academy-request', [AcademyRegistrationController::class, 'store']);

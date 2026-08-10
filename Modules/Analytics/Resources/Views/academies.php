@@ -9,12 +9,16 @@
         </div>
 
         <div class="mb-6">
-            <input type="text" id="siteAcademySearch" placeholder="جستجو نام یا شهر..." onkeyup="renderSiteAcademies()" class="w-full md:w-80 border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500">
+            <input type="text" id="siteAcademySearch" placeholder="جستجو نام یا معرفی آموزشگاه..." onkeyup="renderSiteAcademies()" class="w-full md:w-80 border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500">
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="siteAcademiesGrid"></div>
     </div>
 </div>
+
+<script>
+window.siteAcademiesData = <?= json_encode($academies ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+</script>
 
 <!-- جزئیات آموزشگاه -->
 <!-- <div id="page-academy-detail" class="site-page">

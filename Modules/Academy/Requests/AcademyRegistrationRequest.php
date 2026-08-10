@@ -17,6 +17,7 @@ class AcademyRegistrationRequest extends FormRequest {
             'password2' => 'required|same:password',
             'academy_name' => 'required|max:255',
             'slogan' => 'nullable|max:255',
+            'short_description' => 'nullable|max:500',
             'biography' => 'nullable|max:5000',
         ];
     }

@@ -18,6 +18,7 @@ function getSiteArticles() {
 }
 
 function getSiteAcademies() {
+    if (Array.isArray(window.siteAcademiesData)) return window.siteAcademiesData;
     if (typeof allAcademiesList !== 'undefined' && allAcademiesList.length) return allAcademiesList;
     return [
         {
@@ -405,7 +406,8 @@ window.renderSiteAcademies = function() {
     let list = getSiteAcademies();
     if (q) list = list.filter(a =>
         (a.name || '').toLowerCase().includes(q) ||
-        (a.city || '').toLowerCase().includes(q)
+        (a.city || '').toLowerCase().includes(q) ||
+        (a.summary || '').toLowerCase().includes(q)
     );
 
     box.innerHTML = list.length === 0
@@ -413,9 +415,13 @@ window.renderSiteAcademies = function() {
         : list.map(a => `
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-50 hover:shadow-md transition">
                 <h3 class="text-xl font-bold mb-1">${a.name}</h3>
-                <p class="text-sm text-gray-500 mb-3">📍 ${a.city || '—'} ${a.rating ? '· ⭐ ' + a.rating : ''}</p>
+                <p class="text-sm text-gray-500 mb-3">${a.slogan || (a.status === 'approved' ? 'آموزشگاه فعال' : 'در انتظار تأیید')}</p>
                 ${a.summary ? `<p class="text-sm text-gray-600 mb-4 line-clamp-2">${a.summary}</p>` : ''}
-                <div class="grid grid-cols-2 gap-2 text-center mb-5">
+                <div class="grid grid-cols-3 gap-2 text-center mb-5">
+                    <div class="bg-gray-50 rounded-2xl py-3">
+                        <div class="text-xs text-gray-400">شعب</div>
+                        <div class="font-bold mt-0.5">${a.branches ?? 0}</div>
+                    </div>
                     <div class="bg-gray-50 rounded-2xl py-3">
                         <div class="text-xs text-gray-400">کلاس‌ها</div>
                         <div class="font-bold mt-0.5">${a.classes ?? '—'}</div>
