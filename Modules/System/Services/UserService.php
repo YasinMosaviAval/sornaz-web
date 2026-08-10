@@ -17,7 +17,7 @@ class UserService {
             'phone'           => $data['phone'] ?? null,
             'password'        => password_hash($data['password'], PASSWORD_DEFAULT),
             'type'            => $data['type'] ?? 'student',
-            'status'          => 'pending',
+            'status'          => $data['status'] ?? 'pending',
             'locale'          => $data['locale'] ?? 'fa',
             'timezone'        => $data['timezone'] ?? 'Asia/Tehran',
             'register_method' => $data['register_method'],

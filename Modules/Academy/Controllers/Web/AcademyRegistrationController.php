@@ -26,6 +26,20 @@ class AcademyRegistrationController {
             ->title('سُرناز | آموزشگاه‌ها');
     }
 
+    public function seedSamples() {
+        if (env('APP_ENV', 'production') !== 'local') abort(404);
+
+        try {
+            return ResponseFactory::json(['success' => true] + $this->service->seedSamples());
+        } catch (\Throwable $e) {
+            return ResponseFactory::json([
+                'success' => false,
+                'message' => 'ایجاد آموزشگاه‌های نمونه ناموفق بود.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function store() {
         try {
             $data = $this->validatedData();
