@@ -17,4 +17,15 @@ class AdminTestController {
         }
         return redirect('/analytics/admin-panel#tests');
     }
+
+    public function deleteAcademyManagers() {
+        if (env('APP_ENV', 'production') !== 'local') abort(404);
+        try {
+            $result = $this->tests->deleteAcademyManagers();
+            session()->flash('admin_test_message', $result['message']);
+        } catch (\Throwable $e) {
+            session()->flash('admin_test_error', 'حذف مدیران آموزشگاه آزمایشی ناموفق بود: ' . $e->getMessage());
+        }
+        return redirect('/analytics/admin-panel#tests');
+    }
 }
