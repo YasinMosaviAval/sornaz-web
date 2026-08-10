@@ -70,7 +70,7 @@
 
         <p class="text-center text-sm text-gray-400 mt-8">
             آموزشگاه دارید؟
-            <a href="/analytics/academy" class="text-indigo-600 hover:underline">بازگشت به آموزشگاه</a>
+            <a href="/academy/academy" class="text-indigo-600 hover:underline">بازگشت به آموزشگاه</a>
         </p>
     </div>
 </div>

@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Analytics\Services;
+namespace Modules\Academy\Services;
 
 use Core\database\DB;
 use Core\translation\TranslationService;
@@ -19,6 +19,23 @@ class AcademyRegistrationService {
 
             $academyId = DB::table('academies')->insertGetId(['user_id' => $userId]);
             if (!$academyId) throw new RuntimeException('ایجاد آموزشگاه ناموفق بود.');
+
+            $profileId = DB::table('user_profiles')->insertGetId(['user_id' => $userId]);
+            $accountId = DB::table('financial_system_accounts')->insertGetId([
+                'user_id' => $userId,
+                'type' => 'academy_main',
+                'balance' => 0,
+                'status' => 'active',
+            ]);
+            $branchId = DB::table('academy_branches')->insertGetId([
+                'academy_id' => $academyId,
+                'user_id' => $userId,
+                'is_main' => 1,
+                'timezone' => $data['timezone'] ?? 'Asia/Tehran',
+            ]);
+            if (!$profileId || !$accountId || !$branchId) {
+                throw new RuntimeException('ایجاد اطلاعات پایه آموزشگاه ناموفق بود.');
+            }
 
             $locale = $data['locale'] ?? 'fa';
             $translations = TranslationService::manager();

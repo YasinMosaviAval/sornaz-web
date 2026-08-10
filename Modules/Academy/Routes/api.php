@@ -4,7 +4,7 @@ use Core\router\Router;
 use Modules\Academy\Controllers\Api\AcademyController;
 
 Router::group(
-    ['prefix' => '/api/academys'],
+    ['prefix' => '/api/academy'],
     function () {
         Router::get('/',        [AcademyController::class,'index']);
         Router::post('/',       [AcademyController::class,'store']);

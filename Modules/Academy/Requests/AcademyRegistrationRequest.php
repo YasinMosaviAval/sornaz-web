@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Analytics\Requests;
+namespace Modules\Academy\Requests;
 
 use Core\validation\FormRequest;
 

@@ -10,10 +10,10 @@ $firstError = !empty($errors) ? reset($errors) : '';
         <div class="text-center mb-10">
             <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-100 text-indigo-600 mb-5"><i class="fas fa-school text-2xl"></i></div>
             <h1 class="text-3xl md:text-4xl font-bold mb-3">آموزشگاهتان را به سُرناز بیاورید</h1>
-            <p class="text-gray-500 leading-7 max-w-xl mx-auto">به جمع آموزشگاه‌های سُرناز خوش آمدید؛ با ثبت آموزشگاه به پنل مدیریت، معرفی دوره‌ها و اساتید، مدیریت شعب و ارتباط با هنرجویان دسترسی خواهید داشت.</p>
+            <p class="text-gray-500 leading-7 max-w-xl mx-auto">به جمع آموزشگاه‌های سُرناز خوش آمدید؛ با ثبت آموزشگاه به مدیریت شعب و امور مالی، زمان‌بندی کلاس‌ها و دریافت گزارش‌های خروجی متنوع دسترسی خواهید داشت.</p>
         </div>
 
-        <form id="academyRegistrationForm" method="POST" action="/analytics/send-academy-request" novalidate class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8" onsubmit="return handleAcademyRegistrationSubmit(this)">
+        <form id="academyRegistrationForm" method="POST" action="/academy/send-academy-request" novalidate class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8" onsubmit="return handleAcademyRegistrationSubmit(this)">
             <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\csrf\Csrf::class)->token() ?>">
             <input type="hidden" name="register_method" id="academyRegMethod" value="<?= e($oldInput['register_method'] ?? 'email') ?>">
             <input type="hidden" name="otp" id="academyRegOtp" value="">
@@ -55,7 +55,10 @@ $firstError = !empty($errors) ? reset($errors) : '';
                 <button type="button" onclick="showAcademyRegistrationDetails()" class="w-full text-sm text-gray-500 hover:text-indigo-600">تغییر اطلاعات درخواست</button>
             </div>
         </form>
-        <p class="text-center text-sm text-gray-400 mt-8">قبلاً حساب ساخته‌اید؟ <a href="/system/login" class="text-indigo-600 hover:underline">ورود به حساب</a></p>
+        <p class="text-center text-sm text-gray-400 mt-8">
+            قبلاً آموزشگاه خود را ثبت کرده‌اید؟
+            <a href="/academy/academies" class="text-indigo-600 hover:underline">بازگشت به لیست</a>
+        </p>
     </div>
 </div>
 <?php pushScript('academy-registration.js'); ?>

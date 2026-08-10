@@ -30,7 +30,7 @@ $footer_array = setIndexforDataArray($footer, 'variable_name');
                     <h1 class="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.35] text-white drop-shadow-lg mb-5">بهترین آموزشگاه موسیقی را<br class="hidden sm:block"> پیدا کنید</h1>
                     <p class="text-white/90 md:text-lg leading-8 mb-8 drop-shadow">آموزشگاه‌ها، اساتید، کلاس‌ها و دوره‌های موسیقی سراسر ایران را جستجو و مقایسه کنید.</p>
 
-                    <form action="/analytics/academies" method="GET" class="grid grid-cols-1 sm:grid-cols-[1fr_100px_1fr_108px] gap-3 bg-white/95 backdrop-blur rounded-3xl p-4 shadow-2xl">
+                    <form action="/academy/academies" method="GET" class="grid grid-cols-1 sm:grid-cols-[1fr_100px_1fr_108px] gap-3 bg-white/95 backdrop-blur rounded-3xl p-4 shadow-2xl">
                         <input name="name" type="search" placeholder="نام آموزشگاه" class="bg-gray-50 rounded-2xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-400">
                         <select name="instrument" aria-label="ساز" class="bg-gray-50 rounded-2xl px-3 py-3.5 outline-none focus:ring-2 focus:ring-indigo-400">
                             <option value="">ساز</option>
@@ -164,8 +164,8 @@ $footer_array = setIndexforDataArray($footer, 'variable_name');
             <h2 class="text-2xl md:text-3xl font-bold mb-4">آماده شروع یادگیری هستید؟</h2>
             <p class="text-indigo-100 mb-8 max-w-xl mx-auto">در کلاس‌ها ثبت‌نام کنید یا آموزشگاه خود را به جمع ما اضافه کنید.</p>
             <div class="flex flex-wrap justify-center gap-4">
-                <a href="/analytics/academy-enroll"><button class="bg-white text-indigo-700 hover:bg-indigo-50 px-8 py-3.5 rounded-2xl font-bold transition">ثبت‌نام در کلاس</button></a>
-                <a href="/analytics/send-academy-request"><button class="border-2 border-white/50 hover:bg-white/10 px-8 py-3.5 rounded-2xl font-medium transition">ثبت آموزشگاه</button></a>
+                <a href="/academy/academy-enroll"><button class="bg-white text-indigo-700 hover:bg-indigo-50 px-8 py-3.5 rounded-2xl font-bold transition">ثبت‌نام در کلاس</button></a>
+                <a href="/academy/send-academy-request"><button class="border-2 border-white/50 hover:bg-white/10 px-8 py-3.5 rounded-2xl font-medium transition">ثبت آموزشگاه</button></a>
                 <a href="/page/contact-us"><button class="border-2 border-white/50 hover:bg-white/10 px-8 py-3.5 rounded-2xl font-medium transition">تماس با ما</button></a>
             </div>
         </section>

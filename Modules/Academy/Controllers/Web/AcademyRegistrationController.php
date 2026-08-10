@@ -1,11 +1,11 @@
 <?php
 
-namespace Modules\Analytics\Controllers\Web;
+namespace Modules\Academy\Controllers\Web;
 
 use Core\http\ResponseFactory;
 use Core\validation\ValidationException;
-use Modules\Analytics\Requests\AcademyRegistrationRequest;
-use Modules\Analytics\Services\AcademyRegistrationService;
+use Modules\Academy\Requests\AcademyRegistrationRequest;
+use Modules\Academy\Services\AcademyRegistrationService;
 use Modules\System\Services\RegistrationOtpService;
 
 class AcademyRegistrationController {
@@ -13,6 +13,12 @@ class AcademyRegistrationController {
         protected AcademyRegistrationService $service,
         protected RegistrationOtpService $otp
     ) {}
+
+    public function create() {
+        return ResponseFactory::view('Analytics::send-academy-request')
+            ->layout('main')
+            ->title('سُرناز | ثبت آموزشگاه');
+    }
 
     public function store() {
         try {
@@ -64,6 +70,6 @@ class AcademyRegistrationController {
     }
 
     private function back(array $errors) {
-        return redirect('/analytics/send-academy-request')->withInput($_POST)->withErrors($errors);
+        return redirect('/academy/send-academy-request')->withInput($_POST)->withErrors($errors);
     }
 }
