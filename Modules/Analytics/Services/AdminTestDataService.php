@@ -37,6 +37,7 @@ class AdminTestDataService {
                     'updated_by' => $userId,
                 ]);
                 $this->setFullNameTranslation($userId, $person['name'], $createdAt);
+                $this->syncAddresses($userId, $index, $createdAt);
             }
 
             return [
@@ -50,7 +51,8 @@ class AdminTestDataService {
 
     public function statistics(): array {
         $users = DB::table('users')->whereRaw("username LIKE '" . self::USERNAME_PREFIX . "%'")->get();
-        $stats = ['total' => count($users), 'pending' => 0, 'approved' => 0, 'other' => 0];
+        $userIds = array_map(fn(array $user) => (int)$user['user_id'], $users);
+        $stats = ['total' => count($users), 'addresses' => $userIds ? DB::table('user_addresses')->whereIn('user_id', $userIds)->count() : 0, 'pending' => 0, 'approved' => 0, 'other' => 0];
         foreach ($users as $user) {
             $status = $user['status'] ?? '';
             if ($status === 'pending') $stats['pending']++;
@@ -68,6 +70,12 @@ class AdminTestDataService {
                 return ['deleted' => 0, 'message' => 'هیچ مدیر آموزشگاه آزمایشی برای حذف وجود ندارد.'];
             }
 
+            $addresses = DB::table('user_addresses')->whereIn('user_id', $userIds)->get();
+            $addressIds = array_map(fn(array $address) => (int)$address['address_id'], $addresses);
+            if ($addressIds) {
+                DB::table('translations')->where('table_name', 'user_addresses')->whereIn('table_id', $addressIds)->delete();
+                DB::table('user_addresses')->whereIn('address_id', $addressIds)->delete();
+            }
             DB::table('translations')->where('table_name', 'users')->whereIn('table_id', $userIds)->delete();
             DB::table('users')->whereIn('user_id', $userIds)->delete();
 
@@ -76,6 +84,87 @@ class AdminTestDataService {
                 'message' => count($userIds) . ' مدیر آموزشگاه آزمایشی و ترجمه‌های مرتبط با موفقیت حذف شدند.',
             ];
         });
+    }
+
+    private function syncAddresses(int $userId, int $userIndex, string $registeredAt): void {
+        $locations = $this->locations();
+        $addressCount = ($userIndex % 3) + 1;
+        $registrationTimestamp = strtotime($registeredAt);
+
+        for ($addressIndex = 0; $addressIndex < $addressCount; $addressIndex++) {
+            $location = $locations[($userIndex * 3 + $addressIndex) % count($locations)];
+            $province = DB::table('world_iran_provinces')->where('province_name', $location['province'])->first();
+            if (!$province) throw new RuntimeException('استان آدرس آزمایشی یافت نشد: ' . $location['province']);
+            $county = DB::table('world_iran_counties')
+                ->where('county_name', $location['county'])
+                ->where('province_id', (int)$province['province_id'])
+                ->first();
+            if (!$county) throw new RuntimeException('شهرستان آدرس آزمایشی با استان انتخاب‌شده تطابق ندارد: ' . $location['county']);
+
+            $addressCreatedAt = date('Y-m-d H:i:s', $registrationTimestamp + ($addressIndex + 1) * 86400 + ($userIndex % 12) * 3600);
+            $addressUpdatedAt = date('Y-m-d H:i:s', strtotime($addressCreatedAt) + (($addressIndex + 1) * 5) * 3600);
+            $existing = DB::table('user_addresses')->where('user_id', $userId)->where('postal_code', $location['postal_code'])->first();
+            $values = [
+                'country_id' => 0,
+                'province_id' => (int)$province['province_id'],
+                'county_id' => (int)$county['county_id'],
+                'is_main' => $addressIndex === 0 ? 1 : 0,
+                'latitude' => $location['latitude'],
+                'longitude' => $location['longitude'],
+                'postal_code' => $location['postal_code'],
+                'created_at' => $addressCreatedAt,
+                'created_by' => $userId,
+                'updated_at' => $addressUpdatedAt,
+                'updated_by' => $userId,
+                'deleted_at' => null,
+                'deleted_by' => null,
+            ];
+
+            if ($existing) {
+                $addressId = (int)$existing['address_id'];
+                DB::table('user_addresses')->where('address_id', $addressId)->update($values);
+            } else {
+                $addressId = DB::table('user_addresses')->insertGetId(['user_id' => $userId] + $values);
+                if (!$addressId) throw new RuntimeException('ایجاد آدرس آزمایشی کاربر ناموفق بود.');
+            }
+
+            $this->setAddressTranslation($addressId, $userId, 'address', $location['address'], $addressCreatedAt, $addressUpdatedAt);
+            $this->setAddressTranslation($addressId, $userId, 'note', $location['note'], $addressCreatedAt, $addressUpdatedAt);
+        }
+    }
+
+    private function setAddressTranslation(int $addressId, int $userId, string $field, string $value, string $createdAt, string $updatedAt): void {
+        $translation = DB::table('translations')->where('table_name', 'user_addresses')->where('table_id', $addressId)
+            ->where('locale', 'fa')->where('field', $field)->first();
+        $values = [
+            'code' => null, 'value' => $value, 'version' => 1,
+            'created_at' => $createdAt, 'created_by' => $userId,
+            'updated_at' => $updatedAt, 'updated_by' => $userId,
+            'deleted_at' => null, 'deleted_by' => null,
+        ];
+        if ($translation) {
+            DB::table('translations')->where('translation_id', (int)$translation['translation_id'])->update($values);
+            return;
+        }
+        $translationId = DB::table('translations')->insertGetId([
+            'table_name' => 'user_addresses', 'table_id' => $addressId, 'locale' => 'fa', 'field' => $field,
+        ] + $values);
+        if (!$translationId) throw new RuntimeException('ثبت ترجمه آدرس آزمایشی ناموفق بود.');
+    }
+
+    private function locations(): array {
+        return [
+            ['province'=>'تهران','county'=>'تهران','address'=>'تهران، بزرگراه شیخ فضل‌الله نوری، ورودی بزرگراه شهید همت، برج میلاد','latitude'=>35.7448416,'longitude'=>51.3753212,'postal_code'=>'1449614531','note'=>'نشانی اصلی آزمایشی؛ مراجعه حضوری بهتر است پیش از ساعت ۱۸ هماهنگ شود.'],
+            ['province'=>'فارس','county'=>'شیراز','address'=>'شیراز، بلوار گلستان، حدفاصل چهارراه ادبیات و چهارراه حافظیه، آرامگاه حافظ','latitude'=>29.6259365,'longitude'=>52.5585667,'postal_code'=>'7136419151','note'=>'نشانی دوم آزمایشی در محدوده گردشگری؛ در روزهای تعطیل احتمال شلوغی وجود دارد.'],
+            ['province'=>'اصفهان','county'=>'اصفهان','address'=>'اصفهان، میدان امام حسین، خیابان سپه، میدان نقش جهان','latitude'=>32.6573073,'longitude'=>51.6775612,'postal_code'=>'8146414848','note'=>'محل در محدوده تاریخی است و دسترسی خودرو در بعضی ساعت‌ها محدود می‌شود.'],
+            ['province'=>'آذربایجان شرقی','county'=>'تبریز','address'=>'تبریز، محله ششگلان، خیابان ثقةالاسلام، جنب خیابان عارف، مقبره‌الشعرا','latitude'=>38.0820297,'longitude'=>46.2919108,'postal_code'=>'5138663411','note'=>'نشانی اجاره‌ای آزمایشی؛ ممکن است بین ساعت ۱۳ تا ۱۵ پاسخ‌گویی حضوری انجام نشود.'],
+            ['province'=>'خراسان رضوی','county'=>'مشهد','address'=>'مشهد، خیابان امام رضا، میدان بیت‌المقدس، ورودی باب‌الرضا حرم مطهر رضوی','latitude'=>36.2879029,'longitude'=>59.6157291,'postal_code'=>'9137913316','note'=>'به علت محدودیت ترافیکی مرکز شهر، استفاده از حمل‌ونقل عمومی پیشنهاد می‌شود.'],
+            ['province'=>'گیلان','county'=>'رشت','address'=>'رشت، میدان شهرداری، مجموعه تاریخی شهرداری رشت','latitude'=>37.2759338,'longitude'=>49.5883064,'postal_code'=>'4136934364','note'=>'این نشانی برای تحویل مرسوله در ساعات اداری مناسب‌تر است.'],
+            ['province'=>'یزد','county'=>'یزد','address'=>'یزد، خیابان امام خمینی، میدان امیرچخماق، مجموعه تاریخی امیرچخماق','latitude'=>31.8972362,'longitude'=>54.3686977,'postal_code'=>'8916736918','note'=>'نشانی در بافت تاریخی قرار دارد؛ پیش از مراجعه تلفنی هماهنگ شود.'],
+            ['province'=>'کرمان','county'=>'کرمان','address'=>'کرمان، میدان ارگ، بازار گنجعلی‌خان، مجموعه گنجعلی‌خان','latitude'=>30.2924087,'longitude'=>57.0671107,'postal_code'=>'7616914111','note'=>'دسترسی مستقیم خودرو تا ورودی بازار ممکن نیست و بخشی از مسیر پیاده است.'],
+            ['province'=>'همدان','county'=>'همدان','address'=>'همدان، میدان بوعلی سینا، آرامگاه بوعلی سینا','latitude'=>34.7988575,'longitude'=>48.5146239,'postal_code'=>'6516738695','note'=>'خانه آزمایشی نزدیک میدان است؛ ممکن است عصرها کسی در محل حضور نداشته باشد.'],
+            ['province'=>'خوزستان','county'=>'اهواز','address'=>'اهواز، بلوار ساحلی شرقی، حدفاصل خیابان سلمان فارسی و میدان شهدا، پل سفید','latitude'=>31.3282914,'longitude'=>48.6706183,'postal_code'=>'6135714387','note'=>'برای ملاقات حضوری، ساعات خنک‌تر روز انتخاب شود و هماهنگی قبلی انجام گیرد.'],
+        ];
     }
 
     private function userValues(array $person, int $index, string $createdAt, string $passwordHash): array {
