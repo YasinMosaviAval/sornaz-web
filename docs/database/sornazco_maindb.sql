@@ -1029,7 +1029,7 @@ CREATE TABLE `users` (
   `password` varchar(255) DEFAULT NULL,
   `national_code` varchar(20) DEFAULT NULL,
   `gender` enum('male','female','academy','branch','other') DEFAULT NULL,
-  `type` enum('academy','branch','teacher','student','parent','employee','company') DEFAULT NULL,
+  `type` enum('academy','branch','manager','teacher','student','parent','employee','company') DEFAULT NULL,
   `role_id_later_removed` bigint(20) UNSIGNED DEFAULT NULL,
   `status` enum('pending','approved','rejected','inactive','banned') DEFAULT NULL,
   `locale` varchar(255) DEFAULT NULL,
