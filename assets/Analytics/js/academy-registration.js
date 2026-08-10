@@ -1,6 +1,41 @@
 let academyRegistrationStep = 1;
 let academyRegistrationTimer = null;
 
+function academyPasswordStrength(password) {
+    const criteria = {
+        upper: /[A-Z]/.test(password), lower: /[a-z]/.test(password),
+        number: /[0-9]/.test(password), special: /[!@#$%^&*()\-_+=\[\]{}|;:,.<>?\/~]/.test(password),
+        length: password.length > 8
+    };
+    return {criteria, score: Object.values(criteria).filter(Boolean).length};
+}
+
+function setupAcademyPasswordStrength() {
+    const input = document.getElementById('academyPassword');
+    const container = document.querySelector('[data-password-strength="academyPassword"]');
+    if (!input || !container) return;
+    const update = () => {
+        const result = academyPasswordStrength(input.value);
+        const hue = result.score <= 1 ? 0 : (result.score - 1) * 30;
+        const labels = ['بسیار ضعیف', 'بسیار ضعیف', 'بسیار ضعیف', 'متوسط', 'قوی', 'بسیار قوی'];
+        const bar = container.querySelector('[data-strength-bar]');
+        const label = container.querySelector('[data-strength-label]');
+        bar.style.width = `${result.score * 20}%`;
+        bar.style.backgroundColor = `hsl(${hue} 75% 42%)`;
+        label.textContent = labels[result.score];
+        label.style.color = `hsl(${hue} 75% 35%)`;
+        Object.entries(result.criteria).forEach(([key, met]) => {
+            const item = container.querySelector(`[data-criterion="${key}"]`);
+            if (!item) return;
+            item.classList.toggle('text-green-600', met);
+            item.classList.toggle('text-gray-400', !met);
+            item.textContent = `${met ? '✓' : '○'} ${item.textContent.slice(2)}`;
+        });
+    };
+    input.addEventListener('input', update);
+    update();
+}
+
 function academyToast(message) {
     const el = document.getElementById(academyRegistrationStep === 1 ? 'academyFormError' : 'academyOtpError');
     if (el) { el.textContent = message; el.classList.toggle('hidden', !message); }
@@ -31,6 +66,7 @@ function validateAcademyRegistration(form) {
         if (!form.elements[name]?.value.trim()) { form.elements[name]?.focus(); academyToast(message); return false; }
     }
     if (form.elements.password.value.length < 8) { academyToast('رمز عبور باید حداقل ۸ کاراکتر باشد.'); return false; }
+    if (academyPasswordStrength(form.elements.password.value).score < 3) { form.elements.password.focus(); academyToast('رمز عبور بسیار ضعیف است؛ حداقل ۳ مورد از معیارهای قدرت رمز را رعایت کنید.'); return false; }
     if (form.elements.password.value !== form.elements.password2.value) { academyToast('رمز عبور و تکرار آن یکسان نیست.'); return false; }
     if (!form.elements.terms.checked) { academyToast('پذیرش قوانین ثبت آموزشگاه الزامی است.'); return false; }
     academyToast('');
@@ -116,6 +152,7 @@ window.acceptAcademyTerms = function() { const terms = document.getElementById('
 document.addEventListener('DOMContentLoaded', () => {
     if (!document.getElementById('academyRegistrationForm')) return;
     setAcademyRegistrationMethod(document.getElementById('academyRegMethod').value || 'email');
+    setupAcademyPasswordStrength();
     const message = document.getElementById('academyFlashMessage')?.dataset.error;
     if (message) academyToast(message);
 });

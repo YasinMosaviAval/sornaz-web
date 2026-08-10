@@ -40,6 +40,13 @@ $firstError = !empty($errors) ? reset($errors) : '';
                     <div><label class="block text-sm font-medium mb-2">رمز عبور *</label><div class="relative"><input id="academyPassword" name="password" type="password" autocomplete="new-password" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 focus:outline-none focus:border-indigo-500" placeholder="حداقل ۸ کاراکتر"><button type="button" onclick="togglePassword('academyPassword', this)" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fas fa-eye"></i></button></div></div>
                     <div><label class="block text-sm font-medium mb-2">تکرار رمز عبور *</label><div class="relative"><input id="academyPassword2" name="password2" type="password" autocomplete="new-password" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 focus:outline-none focus:border-indigo-500"><button type="button" onclick="togglePassword('academyPassword2', this)" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fas fa-eye"></i></button></div></div>
                 </div>
+                <div data-password-strength="academyPassword">
+                    <div class="flex items-center justify-between text-xs mb-1.5"><span class="text-gray-500">قدرت رمز عبور</span><span data-strength-label class="font-medium text-red-600">بسیار ضعیف</span></div>
+                    <div class="h-2.5 overflow-hidden rounded-full bg-gray-200" dir="ltr"><div data-strength-bar class="h-full rounded-full transition-all duration-300" style="width: 0%; background-color: hsl(0 75% 48%)"></div></div>
+                    <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 mt-2 text-xs text-gray-400">
+                        <li data-criterion="upper">○ حرف بزرگ انگلیسی</li><li data-criterion="lower">○ حرف کوچک انگلیسی</li><li data-criterion="number">○ عدد</li><li data-criterion="special">○ کاراکتر ویژه</li><li data-criterion="length">○ بیشتر از ۸ کاراکتر</li>
+                    </ul>
+                </div>
 
                 <label class="flex items-start gap-2 text-sm text-gray-600 cursor-pointer"><input type="checkbox" id="academyTerms" name="terms" value="1" <?= !empty($oldInput['terms']) ? 'checked' : '' ?> class="mt-1 rounded border-gray-300 text-indigo-600"><span><button type="button" onclick="openAcademyTermsModal()" class="text-indigo-600 hover:underline font-medium">قوانین ثبت و فعالیت آموزشگاه</button> را مطالعه کرده‌ام و می‌پذیرم.</span></label>
                 <?php if (!empty($errors['terms'])): ?><p class="text-red-500 text-xs"><?= e($errors['terms']) ?></p><?php endif; ?>
