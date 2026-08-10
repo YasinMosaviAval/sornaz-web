@@ -2,14 +2,13 @@
     <div class="max-w-7xl mx-auto px-4">
         <div class="flex items-center justify-between h-16 md:h-18">
             <!-- لوگو -->
-            <a href="/page/home" class="flex items-center gap-2 shrink-0">
+            <a href="/" class="flex items-center gap-2 shrink-0">
                 <img src="/assets/images/logo/cropped-favicon_512x512.jpg" alt="لوگوی سرناز" class="w-11 h-11 rounded-xl object-cover">
                 <span class="font-bold text-lg hidden sm:block">برنامه موسیقی سُرناز</span>
             </a>
 
             <!-- منوی دسکتاپ -->
             <nav class="hidden lg:flex items-center gap-1 text-sm">
-                <!-- <a href="/page/home" data-page="home" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">خانه</a> -->
                 <a href="/analytics/articles" data-page="articles" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">مقاله‌های آموزشی</a>
                 <a href="/analytics/admin-panel" data-page="contact" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">پنل ادمین</a>
 
@@ -38,7 +37,6 @@
 
         <!-- منوی کشویی موبایل -->
         <div id="mobileMenu" class="hidden lg:hidden pb-4 border-t border-gray-100 pt-3 space-y-1">
-            <!-- <a href="/page/home" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">خانه</a> -->
             <a href="/analytics/articles" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">مقاله‌های آموزشی</a>
             <a href="/analytics/admin-panel" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">پنل ادمین</a>
             <a href="/page/about-us" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">درباره ما</a>

@@ -4,7 +4,7 @@
         <div class="flex items-center gap-3">
             <img src="/assets/images/logo/white_logo_transparent.png" alt="لوگوی سرناز" class="w-11 h-11 object-contain shrink-0">
             <div class="sidebar-text">
-                <a href="/page/home"><h1 class="text-xl font-bold">برنامه سرناز</h1></a>
+                <a href="/"><h1 class="text-xl font-bold">برنامه سرناز</h1></a>
                 <p class="text-xs text-indigo-300">پنل مدیریت آموزشگاه</p>
             </div>
         </div>

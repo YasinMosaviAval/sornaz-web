@@ -2,7 +2,7 @@
     <div class="max-w-7xl mx-auto px-4">
         <div class="flex items-center justify-between h-16 md:h-18">
             <!-- لوگو -->
-            <a href="/page/home" class="flex items-center gap-2 shrink-0">
+            <a href="/" class="flex items-center gap-2 shrink-0">
                 <img src="/assets/images/logo/cropped-favicon_512x512.jpg" alt="لوگوی سرناز" class="w-11 h-11 rounded-xl object-cover">
                 <span class="font-bold text-lg hidden sm:block">برنامه موسیقی سُرناز</span>
             </a>
