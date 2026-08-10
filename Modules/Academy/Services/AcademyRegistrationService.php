@@ -73,7 +73,7 @@ class AcademyRegistrationService {
 
             DB::table('user_contacts')->whereIn('user_id', $userIds)->delete();
             DB::table('user_addresses')->whereIn('user_id', $userIds)->delete();
-            DB::table('user_profiles')->whereIn('user_id', $userIds)->delete();
+            DB::table('z_user_profiles')->whereIn('user_id', $userIds)->delete();
             DB::table('financial_system_accounts')->whereIn('user_id', $userIds)->delete();
             DB::table('user_roles')->whereIn('user_id', $userIds)->delete();
             DB::table('user_sessions')->whereIn('user_id', $userIds)->delete();
@@ -102,8 +102,8 @@ class AcademyRegistrationService {
         $academyId = DB::table('academies')->insertGetId(['user_id' => $userId]);
         if (!$academyId) throw new RuntimeException('ایجاد آموزشگاه ناموفق بود.');
 
-        $profile = DB::table('user_profiles')->where('user_id', $userId)->whereNull('deleted_at')->first();
-        $profileId = $profile['user_profile_id'] ?? DB::table('user_profiles')->insertGetId(['user_id' => $userId]);
+        $profile = DB::table('z_user_profiles')->where('user_id', $userId)->whereNull('deleted_at')->first();
+        $profileId = $profile['user_profile_id'] ?? DB::table('z_user_profiles')->insertGetId(['user_id' => $userId]);
         $account = DB::table('financial_system_accounts')->where('user_id', $userId)->where('type', 'academy_main')->whereNull('deleted_at')->first();
         $accountId = $account['account_id'] ?? DB::table('financial_system_accounts')->insertGetId([
             'user_id' => $userId, 'type' => 'academy_main', 'balance' => 0, 'status' => 'active',
@@ -274,8 +274,8 @@ class AcademyRegistrationService {
     }
 
     private function ensureProfile(int $userId, int $creatorId): void {
-        if (!DB::table('user_profiles')->where('user_id', $userId)->whereNull('deleted_at')->first()) {
-            DB::table('user_profiles')->insertGetId(['user_id' => $userId, 'created_by' => $creatorId, 'updated_by' => $creatorId]);
+        if (!DB::table('z_user_profiles')->where('user_id', $userId)->whereNull('deleted_at')->first()) {
+            DB::table('z_user_profiles')->insertGetId(['user_id' => $userId, 'created_by' => $creatorId, 'updated_by' => $creatorId]);
         }
     }
 

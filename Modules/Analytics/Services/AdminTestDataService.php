@@ -60,6 +60,24 @@ class AdminTestDataService {
         return $stats;
     }
 
+    public function deleteAcademyManagers(): array {
+        return transaction(function () {
+            $users = DB::table('users')->whereRaw("username LIKE '" . self::USERNAME_PREFIX . "%'")->get();
+            $userIds = array_map(fn(array $user) => (int)$user['user_id'], $users);
+            if (!$userIds) {
+                return ['deleted' => 0, 'message' => 'هیچ مدیر آموزشگاه آزمایشی برای حذف وجود ندارد.'];
+            }
+
+            DB::table('translations')->where('table_name', 'users')->whereIn('table_id', $userIds)->delete();
+            DB::table('users')->whereIn('user_id', $userIds)->delete();
+
+            return [
+                'deleted' => count($userIds),
+                'message' => count($userIds) . ' مدیر آموزشگاه آزمایشی و ترجمه‌های مرتبط با موفقیت حذف شدند.',
+            ];
+        });
+    }
+
     private function userValues(array $person, int $index, string $createdAt, string $passwordHash): array {
         $createdTimestamp = strtotime($createdAt);
         $status = $this->statusFor($index);

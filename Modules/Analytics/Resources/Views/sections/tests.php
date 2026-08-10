@@ -27,6 +27,10 @@ $stats = $testStats ?? [];
                 <input type="hidden" name="_token" value="<?= e(csrf_token()) ?>">
                 <button type="submit" class="w-full rounded-2xl bg-indigo-600 px-5 py-3.5 font-medium text-white transition hover:bg-indigo-700"><i class="fas fa-users-cog ml-2"></i>اجرای تست مدیران آموزشگاه</button>
             </form>
+            <form method="POST" action="/analytics/_test/delete-academy-managers" class="mt-3" onsubmit="return confirm('تمام مدیران آموزشگاه آزمایشی و ترجمه نام آن‌ها حذف شوند؟');">
+                <input type="hidden" name="_token" value="<?= e(csrf_token()) ?>">
+                <button type="submit" class="w-full rounded-2xl border border-red-200 bg-red-50 px-5 py-3.5 font-medium text-red-700 transition hover:bg-red-100"><i class="fas fa-user-minus ml-2"></i>حذف مدیران آموزشگاه آزمایشی</button>
+            </form>
             <p class="mt-3 text-xs text-gray-400">اجرای مجدد idempotent است و کاربران دارای پیشوند تست را همگام می‌کند.</p>
         </article>
 

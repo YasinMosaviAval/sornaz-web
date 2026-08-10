@@ -13,12 +13,14 @@
 - ابزار فقط در `APP_ENV=local` اجرا می‌شود و در محیط‌های دیگر پاسخ 404 می‌دهد.
 - ایجاد ۵۰ رکورد در یک transaction انجام می‌شود؛ شکست هر بخش کل عملیات را rollback می‌کند.
 - اجرای مجدد idempotent است. کاربران از روی الگوی `test_academy_manager_XX` پیدا و به‌روزرسانی می‌شوند، بنابراین اجرای مجدد رکورد تکراری نمی‌سازد.
+- عملیات حذف فقط کاربران دارای پیشوند `test_academy_manager_` و ترجمه‌های متصل به شناسه همان کاربران را در یک transaction حذف می‌کند.
 - رمز خام در دیتابیس ذخیره نمی‌شود. مقدار `123456789` با `password_hash` هش می‌شود.
 
 ## مسیرها و اجزای اصلی
 
 - صفحه پنل: `/analytics/admin-panel#tests`
 - اجرای تست: `POST /analytics/_test/seed-academy-managers`
+- حذف مدیران آزمایشی: `POST /analytics/_test/delete-academy-managers`
 - سرویس تولید داده: `Modules/Analytics/Services/AdminTestDataService.php`
 - کنترلر تست: `Modules/Analytics/Controllers/Web/AdminTestController.php`
 - نمای صفحه: `Modules/Analytics/Resources/Views/sections/tests.php`
@@ -128,4 +130,3 @@ WHERE u.username LIKE 'test_academy_manager_%';
 ```text
 feat(admin): add test center and academy manager data generator
 ```
-
