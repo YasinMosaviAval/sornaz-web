@@ -94,6 +94,22 @@ $firstError = !empty($errors) ? reset($errors) : '';
                     <?php if (!empty($errors['password'])): ?>
                         <p class="text-red-500 text-xs mt-1"><?= e($errors['password']) ?></p>
                     <?php endif; ?>
+                    <div class="mt-3" data-password-strength="regPassword">
+                        <div class="flex items-center justify-between text-xs mb-1.5">
+                            <span class="text-gray-500">قدرت رمز عبور</span>
+                            <span data-strength-label class="font-medium text-red-600">بسیار ضعیف</span>
+                        </div>
+                        <div class="h-2.5 overflow-hidden rounded-full bg-gray-200" dir="ltr">
+                            <div data-strength-bar class="h-full rounded-full transition-all duration-300" style="width: 0%; background-color: hsl(0 75% 48%)"></div>
+                        </div>
+                        <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 mt-2 text-xs text-gray-400">
+                            <li data-criterion="upper">○ حرف بزرگ انگلیسی</li>
+                            <li data-criterion="lower">○ حرف کوچک انگلیسی</li>
+                            <li data-criterion="number">○ عدد</li>
+                            <li data-criterion="special">○ کاراکتر ویژه</li>
+                            <li data-criterion="length">○ بیشتر از ۸ کاراکتر</li>
+                        </ul>
+                    </div>
                 </div>
 
                 <div>

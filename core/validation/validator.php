@@ -15,6 +15,7 @@ use Core\validation\Rules\IntegerRule;
 use Core\validation\Rules\BooleanRule;
 use Core\validation\Rules\SameRule;
 use Core\validation\Rules\ConfirmedRule;
+use Core\validation\Rules\PasswordStrengthRule;
 use Exception;
 
 class Validator {
@@ -135,6 +136,9 @@ class Validator {
         }
         if ($rule === 'confirmed') {
             return new ConfirmedRule();
+        }
+        if ($rule === 'password_strength') {
+            return new PasswordStrengthRule();
         }
         throw new Exception("Rule {$rule} not found");
     }

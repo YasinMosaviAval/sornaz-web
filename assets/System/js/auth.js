@@ -48,6 +48,41 @@ window.validateLoginForm = function(form) {
     return true;
 };
 
+function passwordStrength(password) {
+    const criteria = {
+        upper: /[A-Z]/.test(password), lower: /[a-z]/.test(password),
+        number: /[0-9]/.test(password), special: /[!@#$%^&*()\-_+=\[\]{}|;:,.<>?\/~]/.test(password),
+        length: password.length > 8
+    };
+    return {criteria, score: Object.values(criteria).filter(Boolean).length};
+}
+
+function setupPasswordStrength(inputId) {
+    const input = document.getElementById(inputId);
+    const container = document.querySelector(`[data-password-strength="${inputId}"]`);
+    if (!input || !container) return;
+    const update = () => {
+        const result = passwordStrength(input.value);
+        const hue = result.score <= 1 ? 0 : (result.score - 1) * 30;
+        const labels = ['بسیار ضعیف', 'بسیار ضعیف', 'بسیار ضعیف', 'متوسط', 'قوی', 'بسیار قوی'];
+        const bar = container.querySelector('[data-strength-bar]');
+        const label = container.querySelector('[data-strength-label]');
+        bar.style.width = `${result.score * 20}%`;
+        bar.style.backgroundColor = `hsl(${hue} 75% 42%)`;
+        label.textContent = labels[result.score];
+        label.style.color = `hsl(${hue} 75% 35%)`;
+        Object.entries(result.criteria).forEach(([key, met]) => {
+            const item = container.querySelector(`[data-criterion="${key}"]`);
+            if (!item) return;
+            item.classList.toggle('text-green-600', met);
+            item.classList.toggle('text-gray-400', !met);
+            item.textContent = `${met ? '✓' : '○'} ${item.textContent.slice(2)}`;
+        });
+    };
+    input.addEventListener('input', update);
+    update();
+}
+
 window.validateRegisterForm = function(form) {
     const method = form.querySelector('[name="register_method"]')?.value || 'email';
     const identifierInput = form.querySelector(`[name="${method}"]`);
@@ -86,6 +121,11 @@ window.validateRegisterForm = function(form) {
     }
     if (pass.length < 8) {
         showAuthToast('error', 'رمز عبور حداقل ۸ کاراکتر باشد.');
+        passwordInput?.focus();
+        return false;
+    }
+    if (passwordStrength(pass).score < 3) {
+        showAuthToast('error', 'رمز عبور بسیار ضعیف است؛ حداقل ۳ مورد از معیارهای قدرت رمز را رعایت کنید.');
         passwordInput?.focus();
         return false;
     }
@@ -235,7 +275,10 @@ function startRegisterTimer(seconds) {
 
 document.addEventListener('DOMContentLoaded', () => {
     const method = document.getElementById('regMethod')?.value || 'email';
-    if (document.getElementById('registerForm')) setRegisterMethod(method);
+    if (document.getElementById('registerForm')) {
+        setRegisterMethod(method);
+        setupPasswordStrength('regPassword');
+    }
     const flash = document.getElementById('authFlashMessage');
     if (flash?.dataset.success) showAuthToast('success', flash.dataset.success);
     if (flash?.dataset.error) showAuthToast('error', flash.dataset.error);
