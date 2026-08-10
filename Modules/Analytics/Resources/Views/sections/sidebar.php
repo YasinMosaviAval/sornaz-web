@@ -16,17 +16,7 @@
     <nav class="flex-1 overflow-y-auto overflow-x-hidden p-4">
         <ul class="space-y-2">
             <?php if ($isSiteAdmin && env('APP_ENV', 'production') === 'local'): ?>
-                <li class="mb-4 rounded-xl border border-indigo-700 bg-indigo-950/40 p-3">
-                    <p class="mb-2 text-xs font-bold text-indigo-200">ابزارهای داده آزمایشی</p>
-                    <form method="POST" action="/academy/_test/seed-sample-academies" class="mb-2">
-                        <input type="hidden" name="_token" value="<?= e(csrf_token()) ?>">
-                        <button type="submit" class="w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm hover:bg-emerald-700"><i class="fas fa-database ml-2"></i>ایجاد آموزشگاه‌های نمونه</button>
-                    </form>
-                    <form method="POST" action="/academy/_test/delete-sample-academies" onsubmit="return confirm('تمام اطلاعات آموزشگاه‌های نمونه حذف شوند؟');">
-                        <input type="hidden" name="_token" value="<?= e(csrf_token()) ?>">
-                        <button type="submit" class="w-full rounded-lg bg-red-600 px-3 py-2 text-sm hover:bg-red-700"><i class="fas fa-trash-alt ml-2"></i>حذف اطلاعات نمونه</button>
-                    </form>
-                </li>
+                <li><a href="#tests" onclick="showSection('tests')" class="nav-link flex items-center gap-3 rounded-xl bg-indigo-950/40 px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-vials w-5 text-center"></i> مرکز تست‌ها</a></li>
             <?php endif; ?>
             <li><a href="#" onclick="showSection('dashboard')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-home w-5 text-center"></i> داشبورد</a></li>
             <li><a href="#" onclick="showSection('account')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-user-cog w-5 text-center"></i> حساب کاربری</a></li>

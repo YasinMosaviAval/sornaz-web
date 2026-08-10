@@ -69,6 +69,7 @@
             component('academies');
             component('academy-enroll');
             component('academy-requests');
+            component('tests', ['testStats' => $testStats ?? []]);
             // component('home');
             // component('login');
             // component('register');

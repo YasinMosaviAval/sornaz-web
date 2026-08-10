@@ -2,10 +2,12 @@
 
 use Core\router\Router;
 use Modules\Analytics\Controllers\Web\AnalyticsController;
+use Modules\Analytics\Controllers\Web\AdminTestController;
 
 
 
 Router::get('/analytics/admin-panel', [AnalyticsController::class, 'adminPanel'])->middleware('academy-panel');
+Router::post('/analytics/_test/seed-academy-managers', [AdminTestController::class, 'seedAcademyManagers'])->middleware(['site-admin', 'csrf']);
 
 
 

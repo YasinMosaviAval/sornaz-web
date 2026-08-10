@@ -3,8 +3,12 @@
 namespace Modules\Analytics\Controllers\Web;
 
 use Core\http\ResponseFactory;
+use Modules\Analytics\Services\AdminTestDataService;
+use Modules\System\Services\SiteAdminAccess;
 
 class AnalyticsController {
+
+    public function __construct(protected AdminTestDataService $adminTests) {}
 
 
 
@@ -22,7 +26,12 @@ class AnalyticsController {
 
 
 
-    public function adminPanel() { return ResponseFactory::view('Analytics::admin-panel')->layout('admin')->title('سُرناز | صفحه اصلی'); }
+    public function adminPanel() {
+        $testStats = SiteAdminAccess::allows(auth()->user()) && env('APP_ENV', 'production') === 'local'
+            ? $this->adminTests->statistics()
+            : [];
+        return ResponseFactory::view('Analytics::admin-panel', ['testStats' => $testStats])->layout('admin')->title('سُرناز | پنل مدیریت');
+    }
 
 
 
