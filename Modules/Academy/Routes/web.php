@@ -11,6 +11,7 @@ Router::get('/academy/academy-enroll', [AnalyticsController::class, 'academyEnro
 Router::get('/academy/send-academy-request', [AcademyRegistrationController::class, 'create']);
 Router::post('/academy/send-academy-request', [AcademyRegistrationController::class, 'store']);
 Router::post('/academy/send-academy-request/send-otp', [AcademyRegistrationController::class, 'sendOtp']);
+Router::get('/academy/_test/seed-sample-academies', [AcademyRegistrationController::class, 'seedSamples']);
 
 Router::group(
     ['prefix' => '/academy'],
