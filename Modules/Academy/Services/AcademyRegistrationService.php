@@ -281,21 +281,32 @@ class AcademyRegistrationService {
 
     private function seedBranchContacts(int $userId, int $managerId, int $serial): void {
         $contacts = [
-            ['title' => 'تلفن اصلی شعبه', 'mode' => 'phone', 'platform' => null, 'value' => sprintf('021%08d', 44000000 + $serial), 'priority' => 'primary', 'is_main' => 1],
+            ['title' => 'تلفن اصلی شعبه', 'mode' => 'phone', 'platform' => 'other', 'value' => sprintf('021%08d', 44000000 + $serial), 'priority' => 'primary', 'is_main' => 1],
             ['title' => 'اینستاگرام شعبه', 'mode' => 'social', 'platform' => 'instagram', 'value' => 'https://instagram.com/sornaz_branch_' . $serial, 'priority' => 'secondary', 'is_main' => 0],
         ];
-        if ($serial % 2 === 0) $contacts[] = ['title' => 'شماره همراه', 'mode' => 'phone', 'platform' => null, 'value' => sprintf('0919%07d', 4000000 + $serial), 'priority' => 'secondary', 'is_main' => 0];
+        if ($serial % 2 === 0) $contacts[] = ['title' => 'شماره همراه', 'mode' => 'phone', 'platform' => 'other', 'value' => sprintf('0919%07d', 4000000 + $serial), 'priority' => 'secondary', 'is_main' => 0];
         if ($serial % 3 === 0) $contacts[] = ['title' => 'وب‌سایت شعبه', 'mode' => 'social', 'platform' => 'website', 'value' => 'https://branch-' . $serial . '.sornaz.test', 'priority' => 'secondary', 'is_main' => 0];
         foreach ($contacts as $contact) {
-            if (DB::table('user_contacts')->where('user_id', $userId)->where('value', $contact['value'])->whereNull('deleted_at')->first()) continue;
+            if ($this->contactExistsByTranslatedValue($userId, $contact['value'])) continue;
             $title = $contact['title'];
-            unset($contact['title']);
+            $value = $contact['value'];
+            unset($contact['title'], $contact['value']);
             $contactId = DB::table('user_contacts')->insertGetId($contact + [
                 'user_id' => $userId, 'status' => 'active', 'created_by' => $managerId, 'updated_by' => $managerId,
                 'approved_at' => date('Y-m-d H:i:s'), 'approved_by' => $managerId,
             ]);
-            $this->setTranslations('user_contacts', $contactId, ['title' => $title], $managerId);
+            $this->setTranslations('user_contacts', $contactId, ['title' => $title, 'value' => $value], $managerId);
         }
+    }
+
+    private function contactExistsByTranslatedValue(int $userId, string $value): bool {
+        $translations = DB::table('translations')->where('table_name', 'user_contacts')
+            ->where('locale', 'fa')->where('field', 'value')->where('value', $value)->get();
+        foreach ($translations as $translation) {
+            if (DB::table('user_contacts')->where('user_contact_id', (int)$translation['table_id'])
+                ->where('user_id', $userId)->whereNull('deleted_at')->first()) return true;
+        }
+        return false;
     }
 
     private function seedBranchAddresses(int $userId, int $managerId, int $serial, array $provinces, array $counties): void {

@@ -38,6 +38,7 @@ class AdminTestDataService {
                 ]);
                 $this->setFullNameTranslation($userId, $person['name'], $createdAt);
                 $this->syncAddresses($userId, $index, $createdAt);
+                $this->syncContacts($userId, $index, $username, $createdAt);
             }
 
             return [
@@ -52,7 +53,12 @@ class AdminTestDataService {
     public function statistics(): array {
         $users = DB::table('users')->whereRaw("username LIKE '" . self::USERNAME_PREFIX . "%'")->get();
         $userIds = array_map(fn(array $user) => (int)$user['user_id'], $users);
-        $stats = ['total' => count($users), 'addresses' => $userIds ? DB::table('user_addresses')->whereIn('user_id', $userIds)->count() : 0, 'pending' => 0, 'approved' => 0, 'other' => 0];
+        $stats = [
+            'total' => count($users),
+            'addresses' => $userIds ? DB::table('user_addresses')->whereIn('user_id', $userIds)->count() : 0,
+            'contacts' => $userIds ? DB::table('user_contacts')->whereIn('user_id', $userIds)->count() : 0,
+            'pending' => 0, 'approved' => 0, 'other' => 0,
+        ];
         foreach ($users as $user) {
             $status = $user['status'] ?? '';
             if ($status === 'pending') $stats['pending']++;
@@ -76,6 +82,12 @@ class AdminTestDataService {
                 DB::table('translations')->where('table_name', 'user_addresses')->whereIn('table_id', $addressIds)->delete();
                 DB::table('user_addresses')->whereIn('address_id', $addressIds)->delete();
             }
+            $contacts = DB::table('user_contacts')->whereIn('user_id', $userIds)->get();
+            $contactIds = array_map(fn(array $contact) => (int)$contact['user_contact_id'], $contacts);
+            if ($contactIds) {
+                DB::table('translations')->where('table_name', 'user_contacts')->whereIn('table_id', $contactIds)->delete();
+                DB::table('user_contacts')->whereIn('user_contact_id', $contactIds)->delete();
+            }
             DB::table('translations')->where('table_name', 'users')->whereIn('table_id', $userIds)->delete();
             DB::table('users')->whereIn('user_id', $userIds)->delete();
 
@@ -84,6 +96,96 @@ class AdminTestDataService {
                 'message' => count($userIds) . ' مدیر آموزشگاه آزمایشی و ترجمه‌های مرتبط با موفقیت حذف شدند.',
             ];
         });
+    }
+
+    private function syncContacts(int $userId, int $userIndex, string $username, string $registeredAt): void {
+        $templates = $this->contactTemplates($userIndex, $username);
+        $contactCount = ($userIndex % 10) + 1;
+        $seenModes = [];
+        $registrationTimestamp = strtotime($registeredAt);
+
+        for ($contactIndex = 0; $contactIndex < $contactCount; $contactIndex++) {
+            $contact = $templates[$contactIndex];
+            $mode = $contact['mode'];
+            $isMain = !isset($seenModes[$mode]);
+            $seenModes[$mode] = true;
+            $contactCreatedAt = date('Y-m-d H:i:s', $registrationTimestamp + ($contactIndex + 1) * 6 * 3600 + ($userIndex % 5) * 3600);
+            $approvedAt = date('Y-m-d H:i:s', strtotime($contactCreatedAt) + (($contactIndex % 12) + 1) * 3600);
+            $lastCalledAt = date('Y-m-d H:i:s', strtotime($approvedAt) + (($contactIndex % 14) + 1) * 86400);
+            $updatedAt = date('Y-m-d H:i:s', strtotime($lastCalledAt) + (($contactIndex % 6) + 1) * 3600);
+            $contactId = $this->findContactByTranslatedValue($userId, $contact['value']);
+            $values = [
+                'mode' => $mode,
+                'platform' => $contact['platform'],
+                'priority' => $isMain ? 'primary' : $contact['priority'],
+                'is_main' => $isMain ? 1 : 0,
+                'status' => $contact['status'],
+                'last_called_at' => $lastCalledAt,
+                'created_at' => $contactCreatedAt,
+                'created_by' => $userId,
+                'updated_at' => $updatedAt,
+                'updated_by' => $userId,
+                'approved_at' => $approvedAt,
+                'approved_by' => $userId,
+                'deleted_at' => null,
+                'deleted_by' => null,
+            ];
+
+            if ($contactId) {
+                DB::table('user_contacts')->where('user_contact_id', $contactId)->update($values);
+            } else {
+                $contactId = DB::table('user_contacts')->insertGetId(['user_id' => $userId] + $values);
+                if (!$contactId) throw new RuntimeException('ایجاد راه ارتباطی آزمایشی کاربر ناموفق بود.');
+            }
+            $this->setContactTranslation($contactId, $userId, 'value', $contact['value'], $contactCreatedAt, $updatedAt, $approvedAt);
+            $this->setContactTranslation($contactId, $userId, 'note', $contact['note'], $contactCreatedAt, $updatedAt, $approvedAt);
+        }
+    }
+
+    private function findContactByTranslatedValue(int $userId, string $value): int {
+        $translations = DB::table('translations')->where('table_name', 'user_contacts')->where('locale', 'fa')
+            ->where('field', 'value')->where('value', $value)->get();
+        foreach ($translations as $translation) {
+            $contact = DB::table('user_contacts')->where('user_contact_id', (int)$translation['table_id'])->where('user_id', $userId)->first();
+            if ($contact) return (int)$contact['user_contact_id'];
+        }
+        return 0;
+    }
+
+    private function setContactTranslation(int $contactId, int $userId, string $field, string $value, string $createdAt, string $updatedAt, string $approvedAt): void {
+        $translation = DB::table('translations')->where('table_name', 'user_contacts')->where('table_id', $contactId)
+            ->where('locale', 'fa')->where('field', $field)->first();
+        $values = [
+            'code' => null, 'value' => $value, 'version' => 1,
+            'created_at' => $createdAt, 'created_by' => $userId,
+            'updated_at' => $updatedAt, 'updated_by' => $userId,
+            'approved_at' => $approvedAt, 'approved_by' => $userId,
+            'deleted_at' => null, 'deleted_by' => null,
+        ];
+        if ($translation) {
+            DB::table('translations')->where('translation_id', (int)$translation['translation_id'])->update($values);
+            return;
+        }
+        $translationId = DB::table('translations')->insertGetId([
+            'table_name' => 'user_contacts', 'table_id' => $contactId, 'locale' => 'fa', 'field' => $field,
+        ] + $values);
+        if (!$translationId) throw new RuntimeException('ثبت ترجمه راه ارتباطی آزمایشی ناموفق بود.');
+    }
+
+    private function contactTemplates(int $userIndex, string $username): array {
+        $number = $userIndex + 1;
+        return [
+            ['mode'=>$userIndex % 2 === 0 ? 'phone' : 'email','platform'=>'other','value'=>$userIndex % 2 === 0 ? sprintf('0991%07d', 1000000 + $number) : sprintf('sornaz.academy.manager%02d@gmail.com', $number),'priority'=>'primary','status'=>'active','note'=>'راه ارتباطی اصلی کاربر؛ کد تأیید یک‌بارمصرف با موفقیت ثبت شده است.'],
+            ['mode'=>$userIndex % 2 === 0 ? 'email' : 'phone','platform'=>'other','value'=>$userIndex % 2 === 0 ? sprintf('sornaz.manager%02d@gmail.com', $number) : sprintf('0912%07d', 5000000 + $number),'priority'=>'support','status'=>'active','note'=>'راه ارتباطی پشتیبان برای زمان‌هایی که مورد اصلی در دسترس نیست.'],
+            ['mode'=>'social','platform'=>'instagram','value'=>'https://instagram.com/' . $username,'priority'=>'secondary','status'=>'active','note'=>'صفحه عمومی اینستاگرام؛ پیام‌های کاری در ساعات اداری بررسی می‌شوند.'],
+            ['mode'=>'social','platform'=>'telegram','value'=>'https://t.me/' . $username,'priority'=>'support','status'=>'active','note'=>'شناسه تلگرام برای پشتیبانی و ارسال فایل‌های آموزشی.'],
+            ['mode'=>'phone','platform'=>'other','value'=>sprintf('0935%07d', 6000000 + $number),'priority'=>'emergency','status'=>'active','note'=>'شماره تماس اضطراری؛ فقط برای موارد فوری استفاده شود.'],
+            ['mode'=>'social','platform'=>'website','value'=>'https://' . $username . '.sornaz.test','priority'=>'secondary','status'=>'active','note'=>'وب‌سایت آزمایشی معرفی مدیر و برنامه‌های آموزشگاه.'],
+            ['mode'=>'email','platform'=>'other','value'=>sprintf('%s.office@gmail.com', $username),'priority'=>'ledger','status'=>'active','note'=>'ایمیل امور اداری و دریافت اسناد و صورت‌حساب‌ها.'],
+            ['mode'=>'social','platform'=>'whats-app','value'=>'https://wa.me/98' . substr(sprintf('0919%07d', 7000000 + $number), 1),'priority'=>'support','status'=>'active','note'=>'واتساپ کاری؛ تماس صوتی فقط با هماهنگی قبلی انجام شود.'],
+            ['mode'=>'social','platform'=>'linkedin','value'=>'https://linkedin.com/in/' . $username,'priority'=>'other','status'=>'inactive','note'=>'پروفایل حرفه‌ای قدیمی است و ممکن است با تأخیر به‌روزرسانی شود.'],
+            ['mode'=>'social','platform'=>'google-meet','value'=>'https://meet.google.com/snz-' . sprintf('%04d', $number) . '-mgr','priority'=>'other','status'=>'deactive','note'=>'لینک جلسه آنلاین رزرو؛ در حال حاضر فقط با تعیین وقت قبلی فعال می‌شود.'],
+        ];
     }
 
     private function syncAddresses(int $userId, int $userIndex, string $registeredAt): void {
