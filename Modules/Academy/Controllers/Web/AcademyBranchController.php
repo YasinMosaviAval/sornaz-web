@@ -4,10 +4,14 @@ namespace Modules\Academy\Controllers\Web;
 
 use Core\http\ResponseFactory;
 use Modules\Academy\Services\AcademyBranchService;
+use Modules\System\Services\SiteAdminAccess;
 
 class AcademyBranchController {
     public function __construct(protected AcademyBranchService $service) {}
-    public function index() { return ResponseFactory::json(['success'=>true] + $this->service->bootstrap((int)auth()->id())); }
+    public function index() {
+        $user = auth()->user();
+        return ResponseFactory::json(['success'=>true] + $this->service->bootstrap((int)auth()->id(), SiteAdminAccess::allows($user)));
+    }
     public function store() { return $this->run(fn() => $this->service->store((int)auth()->id(), $this->payload()), 201); }
     public function update(int $id) { return $this->run(fn() => $this->service->update((int)auth()->id(), $id, $this->payload())); }
     public function destroy(int $id) { return $this->run(function() use($id){$this->service->delete((int)auth()->id(),$id);return null;}); }

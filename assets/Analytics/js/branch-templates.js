@@ -17,6 +17,7 @@
                             ${isMain ? '<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-200 text-amber-900"><i class="fas fa-star ml-1"></i>شعبه اصلی</span>' : ''}
                         </div>
                         <div class="flex flex-wrap gap-2 mt-2">
+                            ${branch.academy_name ? `<span class="px-3 py-1 rounded-full text-xs bg-violet-100 text-violet-700"><i class="fas fa-school ml-1"></i>${branch.academy_name}</span>` : ''}
                             <span class="px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700">${branch.type}</span>
                             <span class="px-3 py-1 rounded-full text-xs bg-sky-100 text-sky-700">${physicalLabel}</span>
                         </div>
@@ -32,8 +33,7 @@
                 </div>
                 <div class="flex gap-2">
                     <button onclick="viewBranch(${branch.id})" class="flex-1 border border-indigo-200 text-indigo-600 py-2 rounded-xl text-sm hover:bg-indigo-50">جزئیات</button>
-                    <button onclick="editBranch(${branch.id})" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-sm hover:bg-indigo-700">ویرایش</button>
-                    <button onclick="deleteBranch(${branch.id})" class="flex-1 bg-red-600 text-white py-2 rounded-xl text-sm hover:bg-red-700">حذف</button>
+                    ${window.branchReadOnly ? '' : `<button onclick="editBranch(${branch.id})" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-sm hover:bg-indigo-700">ویرایش</button><button onclick="deleteBranch(${branch.id})" class="flex-1 bg-red-600 text-white py-2 rounded-xl text-sm hover:bg-red-700">حذف</button>`}
                 </div>
             </div>`;
     };
@@ -89,7 +89,7 @@
     window.getBranchViewModalHTML = function (branch) {
         const phones = (branch.phones || []).map(item => `<div class="flex justify-between text-sm border-b pb-2"><span>${item.number}</span><span class="text-xs text-gray-500">${item.priority}${item.is_main ? ' (اصلی)' : ''}</span></div>`).join('') || '—';
         const addresses = (branch.addresses || []).map(item => `<div class="text-sm border-b pb-2">${item.province}، ${item.city}، ${item.address}${item.is_main ? ' <span class="text-indigo-600">(اصلی)</span>' : ''}</div>`).join('') || '—';
-        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onclick="if(event.target === this) closeModal()"><div class="bg-white rounded-3xl w-full max-w-2xl shadow-2xl" onclick="event.stopPropagation()"><div class="px-8 py-5 border-b flex justify-between items-center"><div><h2 class="text-2xl font-bold">${branch.name}</h2><p class="text-sm text-gray-500 mt-1">${branch.type} · ${getBranchPhysicalTypeLabel(branch.physical_type)}${branch.is_main ? ' · شعبه اصلی' : ''}</p></div><button onclick="closeModal()" class="text-3xl text-gray-300">×</button></div><div class="p-8 space-y-6"><div class="grid grid-cols-2 gap-5 text-sm"><div><h3 class="font-semibold text-indigo-700 mb-2">اطلاعات پایه</h3><p>مدیر: ${branch.manager || '—'}</p><p class="mt-2">کلاس‌ها: ${branch.classrooms || 0}</p></div><div><h3 class="font-semibold text-indigo-700 mb-2">تلفن‌ها</h3>${phones}</div></div><div><h3 class="font-semibold text-indigo-700 mb-2">آدرس‌ها</h3>${addresses}</div><button onclick="editBranch(${branch.id})" class="w-full bg-indigo-600 text-white py-3 rounded-2xl">ویرایش</button></div></div></div>`;
+        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onclick="if(event.target === this) closeModal()"><div class="bg-white rounded-3xl w-full max-w-2xl shadow-2xl" onclick="event.stopPropagation()"><div class="px-8 py-5 border-b flex justify-between items-center"><div><h2 class="text-2xl font-bold">${branch.name}</h2><p class="text-sm text-gray-500 mt-1">${branch.academy_name ? branch.academy_name + ' · ' : ''}${branch.type} · ${getBranchPhysicalTypeLabel(branch.physical_type)}${branch.is_main ? ' · شعبه اصلی' : ''}</p></div><button onclick="closeModal()" class="text-3xl text-gray-300">×</button></div><div class="p-8 space-y-6"><div class="grid grid-cols-2 gap-5 text-sm"><div><h3 class="font-semibold text-indigo-700 mb-2">اطلاعات پایه</h3><p>مدیر: ${branch.manager || '—'}</p><p class="mt-2">کلاس‌ها: ${branch.classrooms || 0}</p></div><div><h3 class="font-semibold text-indigo-700 mb-2">تلفن‌ها</h3>${phones}</div></div><div><h3 class="font-semibold text-indigo-700 mb-2">آدرس‌ها</h3>${addresses}</div>${window.branchReadOnly ? '' : `<button onclick="editBranch(${branch.id})" class="w-full bg-indigo-600 text-white py-3 rounded-2xl">ویرایش</button>`}</div></div></div>`;
     };
 
     window.getBranchPDFModalHTML = function (columns) {

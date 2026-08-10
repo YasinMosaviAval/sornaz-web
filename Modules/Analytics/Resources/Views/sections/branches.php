@@ -2,10 +2,10 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
             <h1 class="text-3xl font-bold">مدیریت شعبه‌ها</h1>
-            <p class="text-gray-500 mt-1">شعبه‌های مختلف آموزشگاه و اطلاعات آن‌ها</p>
+            <p id="branchesScopeDescription" class="text-gray-500 mt-1">شعبه‌های مختلف آموزشگاه و اطلاعات آن‌ها</p>
         </div>
         <div class="flex flex-wrap gap-3">
-            <button onclick="openAddBranchModal()"
+            <button id="addBranchButton" onclick="openAddBranchModal()"
                     class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
                 <i class="fas fa-plus"></i> افزودن شعبه جدید
             </button>
@@ -22,7 +22,7 @@
 
     <!-- فیلتر -->
     <div class="bg-white rounded-3xl p-5 mb-6 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             <div>
                 <input type="text" id="branchSearch" placeholder="جستجو نام شعبه / مدیر..."
                        onkeyup="filterBranches()"
@@ -32,6 +32,12 @@
                 <select id="filterBranchType" onchange="filterBranches()"
                         class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                     <option value="">همه انواع آموزشی</option>
+                </select>
+            </div>
+            <div>
+                <select id="filterBranchAcademy" onchange="filterBranches()"
+                        class="hidden w-full border border-gray-300 rounded-2xl py-3 px-4">
+                    <option value="">همه آموزشگاه‌ها</option>
                 </select>
             </div>
             <div>
