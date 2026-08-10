@@ -17,6 +17,12 @@ class UserController {
     ) {
     }
 
+    public function directory() {
+        return ResponseFactory::view('Analytics::users', ['users' => $this->service->publicDirectory()])
+            ->layout('main')
+            ->title('سُرناز | کاربران');
+    }
+
 
     public function login() {
         $identifier = trim($_POST['identifier'] ?? '');

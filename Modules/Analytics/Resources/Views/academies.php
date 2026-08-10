@@ -5,7 +5,7 @@
                 <h1 class="text-3xl md:text-4xl font-bold mb-2">آموزشگاه‌ها</h1>
                 <p class="text-gray-500">لیست آموزشگاه‌های فعال روی پلتفرم</p>
             </div>
-            <a href="/academy/send-academy-request" class="border border-indigo-300 text-indigo-600 hover:bg-indigo-50 px-5 py-3 rounded-2xl text-sm">درخواست ثبت آموزشگاه</a>
+            <a href="/academy/send-academy-request" class="border border-indigo-300 text-indigo-600 hover:bg-indigo-50 px-5 py-3 rounded-2xl text-sm">ثبت آموزشگاه</a>
         </div>
 
         <div class="mb-6">

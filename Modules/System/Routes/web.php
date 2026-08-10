@@ -11,6 +11,7 @@ Router::get('/system/forgot-password', [SystemController::class, 'forgotPassword
 Router::get('/login', [SystemController::class, 'login']);
 Router::get('/register', [SystemController::class, 'register']);
 Router::get('/forgot-password', [SystemController::class, 'forgotPassword']);
+Router::get('/users', [UserController::class, 'directory']);
 
 Router::post('/register', [UserController::class, 'store']);
 Router::post('/register/send-otp', [UserController::class, 'sendRegistrationOtp']);

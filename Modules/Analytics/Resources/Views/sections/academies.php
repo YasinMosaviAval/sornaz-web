@@ -7,7 +7,7 @@
         <div class="flex flex-wrap gap-3">
             <button onclick="showSection('academy-requests')"
                     class="border border-indigo-300 text-indigo-600 hover:bg-indigo-50 px-5 py-3 rounded-2xl text-sm">
-                درخواست ثبت آموزشگاه
+                ثبت آموزشگاه
             </button>
             <button onclick="openAddAcademyModal()"
                     class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">

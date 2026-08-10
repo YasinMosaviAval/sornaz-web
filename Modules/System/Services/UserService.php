@@ -51,4 +51,31 @@ class UserService {
 
         return $user;
     }
+
+    public function publicDirectory(): array {
+        $rows = $this->repository->builder()
+            ->select('user_id', 'username', 'type')
+            ->where('status', 'approved')
+            ->where('visibility', 'public')
+            ->whereNull('deleted_at')
+            ->latest('user_id')
+            ->get();
+        $translations = TranslationService::manager();
+        $locale = app()->getLocale();
+        $labels = [
+            'teacher' => 'مدرس', 'student' => 'هنرجو', 'manager' => 'مدیر',
+            'parent' => 'والد', 'employee' => 'همکار', 'company' => 'مجموعه',
+        ];
+
+        return array_map(function (array $user) use ($translations, $locale, $labels) {
+            $id = (int)$user['user_id'];
+            return [
+                'id' => $id,
+                'name' => $translations->get('users', $id, 'full_name', $locale) ?: $user['username'],
+                'role' => $user['type'],
+                'roleLabel' => $labels[$user['type']] ?? 'کاربر',
+                'bio' => $translations->get('users', $id, 'bio', $locale) ?: '',
+            ];
+        }, $rows);
+    }
 }

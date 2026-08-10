@@ -1,6 +1,6 @@
 <footer class="bg-gray-900 text-gray-300 mt-auto">
     <div class="max-w-7xl mx-auto px-4 py-12">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
             <!-- درباره -->
             <div>
                 <div class="flex items-center gap-2 mb-4">
@@ -19,6 +19,15 @@
                     <li><a href="/analytics/articles" class="hover:text-white transition">مقاله‌های آموزشی</a></li>
                     <li><a href="/page/about-us" class="hover:text-white transition">درباره ما</a></li>
                     <li><a href="/page/contact-us" class="hover:text-white transition">تماس با ما</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="font-bold text-white mb-4">جامعه سُرناز</h4>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="/academy/academies" class="hover:text-white transition">آموزشگاه‌ها</a></li>
+                    <li><a href="/users" class="hover:text-white transition">کاربران</a></li>
+                    <li><a href="/academy/send-academy-request" class="hover:text-white transition">ثبت آموزشگاه</a></li>
                 </ul>
             </div>
 

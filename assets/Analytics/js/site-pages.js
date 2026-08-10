@@ -331,6 +331,7 @@ const siteUsersSample = [
 
 
 function getSiteUsers() {
+    if (Array.isArray(window.siteUsersData)) return window.siteUsersData;
     if (typeof allUsers !== 'undefined' && allUsers.length) return allUsers;
     return siteUsersSample;
 }
@@ -1111,7 +1112,7 @@ window.submitSiteEnroll = function() {
     alert('✅ درخواست ثبت‌نام ارسال شد.\nبه‌زودی برای هماهنگی زمان کلاس با شما تماس گرفته می‌شود.');
 };
 
-// ========== درخواست ثبت آموزشگاه (سایت) ==========
+// ========== ثبت آموزشگاه (سایت) ==========
 window.submitSiteAcademyRequest = function() {
     const email = document.getElementById('siteReqEmail')?.value.trim();
     const username = document.getElementById('siteReqUsername')?.value.trim();
@@ -1161,7 +1162,7 @@ window.submitSiteAcademyRequest = function() {
         if (el) el.value = '';
     });
 
-    alert('✅ درخواست ثبت آموزشگاه ارسال شد.\nپس از بررسی، نتیجه از طریق ایمیل اعلام می‌شود.');
+    alert('✅ ثبت آموزشگاه انجام شد.\nپس از بررسی، نتیجه از طریق ایمیل اعلام می‌شود.');
 };
 
 
