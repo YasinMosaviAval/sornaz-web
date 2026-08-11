@@ -24,14 +24,14 @@ class AcademyRegistrationRequest extends FormRequest {
 
     public function messages(): array {
         return [
-            'username.required' => 'نام کاربری الزامی است.',
-            'username.unique' => 'این نام کاربری قبلاً ثبت شده است.',
-            'email.unique' => 'این ایمیل قبلاً ثبت شده است.',
-            'phone.unique' => 'این شماره موبایل قبلاً ثبت شده است.',
-            'password.required' => 'رمز عبور الزامی است.',
-            'password.password_strength' => 'رمز عبور بسیار ضعیف است؛ حداقل ۳ مورد از معیارهای قدرت رمز را رعایت کنید.',
-            'password2.same' => 'رمز عبور و تکرار آن یکسان نیست.',
-            'academy_name.required' => 'نام آموزشگاه الزامی است.',
+            'username.required' => trans('academy.error.username_required', 'نام کاربری الزامی است.'),
+            'username.unique' => trans('academy.error.username_unique', 'این نام کاربری قبلاً ثبت شده است.'),
+            'email.unique' => trans('academy.error.email_unique', 'این ایمیل قبلاً ثبت شده است.'),
+            'phone.unique' => trans('academy.error.phone_unique', 'این شماره موبایل قبلاً ثبت شده است.'),
+            'password.required' => trans('academy.error.password_required', 'رمز عبور الزامی است.'),
+            'password.password_strength' => trans('academy.error.password_weak', 'رمز عبور بسیار ضعیف است؛ حداقل ۳ مورد از معیارهای قدرت رمز را رعایت کنید.'),
+            'password2.same' => trans('academy.error.password_mismatch', 'رمز عبور و تکرار آن یکسان نیست.'),
+            'academy_name.required' => trans('academy.error.name_required', 'نام آموزشگاه الزامی است.'),
         ];
     }
 }

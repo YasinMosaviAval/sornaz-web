@@ -1,5 +1,18 @@
 let academyRegistrationStep = 1;
 let academyRegistrationTimer = null;
+const academyText = (key, fallback = '') => window.academyTranslations?.[`academy.${key}`] || fallback;
+
+window.togglePassword = function(inputId, button) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.type = input.type === 'password' ? 'text' : 'password';
+    const icon = button?.querySelector('i');
+    icon?.classList.toggle('fa-eye', input.type === 'password');
+    icon?.classList.toggle('fa-eye-slash', input.type !== 'password');
+};
+window.closeModal = function() { const container = document.getElementById('modalContainer'); if (container) container.innerHTML = ''; };
+window.toggleMobileMenu = function() { document.getElementById('mobileMenu')?.classList.toggle('hidden'); };
+window.closeMobileMenu = function() { document.getElementById('mobileMenu')?.classList.add('hidden'); };
 
 function academyPasswordStrength(password) {
     const criteria = {
@@ -17,7 +30,7 @@ function setupAcademyPasswordStrength() {
     const update = () => {
         const result = academyPasswordStrength(input.value);
         const hue = result.score <= 1 ? 0 : (result.score - 1) * 30;
-        const labels = ['بسیار ضعیف', 'بسیار ضعیف', 'بسیار ضعیف', 'متوسط', 'قوی', 'بسیار قوی'];
+        const labels = [academyText('js.strength_very_weak'), academyText('js.strength_very_weak'), academyText('js.strength_very_weak'), academyText('js.strength_medium'), academyText('js.strength_strong'), academyText('js.strength_very_strong')];
         const bar = container.querySelector('[data-strength-bar]');
         const label = container.querySelector('[data-strength-label]');
         bar.style.width = `${result.score * 20}%`;
@@ -59,16 +72,16 @@ function validateAcademyRegistration(form) {
     const method = form.elements.register_method.value;
     const identifier = form.elements[method];
     const value = identifier?.value.trim() || '';
-    if (!value) { identifier?.focus(); academyToast(method === 'email' ? 'ایمیل را وارد کنید.' : 'شماره موبایل را وارد کنید.'); return false; }
-    if (method === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { identifier.focus(); academyToast('ایمیل واردشده معتبر نیست.'); return false; }
-    if (method === 'phone' && !/^09\d{9}$/.test(value.replace(/\D/g, ''))) { identifier.focus(); academyToast('شماره موبایل معتبر نیست.'); return false; }
-    for (const [name, message] of [['username', 'نام کاربری را وارد کنید.'], ['academy_name', 'نام آموزشگاه را وارد کنید.'], ['password', 'رمز عبور را وارد کنید.']]) {
+    if (!value) { identifier?.focus(); academyToast(method === 'email' ? academyText('error.email_required') : academyText('error.phone_required')); return false; }
+    if (method === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { identifier.focus(); academyToast(academyText('error.email_invalid')); return false; }
+    if (method === 'phone' && !/^09\d{9}$/.test(value.replace(/\D/g, ''))) { identifier.focus(); academyToast(academyText('error.phone_invalid')); return false; }
+    for (const [name, message] of [['username', academyText('error.username_required')], ['academy_name', academyText('error.name_required')], ['password', academyText('error.password_required')]]) {
         if (!form.elements[name]?.value.trim()) { form.elements[name]?.focus(); academyToast(message); return false; }
     }
-    if (form.elements.password.value.length < 8) { academyToast('رمز عبور باید حداقل ۸ کاراکتر باشد.'); return false; }
-    if (academyPasswordStrength(form.elements.password.value).score < 3) { form.elements.password.focus(); academyToast('رمز عبور بسیار ضعیف است؛ حداقل ۳ مورد از معیارهای قدرت رمز را رعایت کنید.'); return false; }
-    if (form.elements.password.value !== form.elements.password2.value) { academyToast('رمز عبور و تکرار آن یکسان نیست.'); return false; }
-    if (!form.elements.terms.checked) { academyToast('پذیرش قوانین ثبت آموزشگاه الزامی است.'); return false; }
+    if (form.elements.password.value.length < 8) { academyToast(academyText('error.password_short')); return false; }
+    if (academyPasswordStrength(form.elements.password.value).score < 3) { form.elements.password.focus(); academyToast(academyText('error.password_weak')); return false; }
+    if (form.elements.password.value !== form.elements.password2.value) { academyToast(academyText('error.password_mismatch')); return false; }
+    if (!form.elements.terms.checked) { academyToast(academyText('error.terms_required')); return false; }
     academyToast('');
     return true;
 }
@@ -76,7 +89,7 @@ function validateAcademyRegistration(form) {
 window.handleAcademyRegistrationSubmit = function(form) {
     if (academyRegistrationStep === 1) { if (validateAcademyRegistration(form)) sendAcademyRegistrationOtp(); return false; }
     const code = Array.from(document.querySelectorAll('.academy-otp')).map(input => input.value).join('');
-    if (!/^\d{6}$/.test(code)) { academyToast('کد ۶ رقمی را کامل وارد کنید.'); return false; }
+    if (!/^\d{6}$/.test(code)) { academyToast(academyText('error.otp_incomplete')); return false; }
     document.getElementById('academyRegOtp').value = code;
     return true;
 };
@@ -90,7 +103,7 @@ window.sendAcademyRegistrationOtp = async function() {
         const response = await fetch('/academy/send-academy-request/send-otp', {method: 'POST', headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}, body: new FormData(form)});
         const payload = await response.json();
         const data = payload.data || {};
-        if (!response.ok || !data.success) throw new Error(data.errors ? Object.values(data.errors).flat()[0] : (data.message || 'ارسال کد انجام نشد.'));
+        if (!response.ok || !data.success) throw new Error(data.errors ? Object.values(data.errors).flat()[0] : (data.message || academyText('error.otp_send_failed')));
         const method = form.elements.register_method.value;
         document.getElementById('academySentTo').textContent = form.elements[method].value.trim();
         document.getElementById('academyDetailsStep').classList.add('hidden');
@@ -98,7 +111,7 @@ window.sendAcademyRegistrationOtp = async function() {
         academyRegistrationStep = 2;
         setupAcademyOtpInputs();
         startAcademyTimer(data.expires_in || 120);
-    } catch (error) { academyToast(error.message || 'پاسخ نامعتبر از سرور دریافت شد.'); }
+    } catch (error) { academyToast(error.message || academyText('error.invalid_response')); }
     finally { if (button) button.disabled = false; }
 };
 
@@ -134,7 +147,7 @@ function startAcademyTimer(seconds) {
     tick(); academyRegistrationTimer = setInterval(tick, 1000);
 }
 
-const academyTerms = `
+const defaultAcademyTerms = `
 <h3 class="font-bold text-lg mb-2">۱. صحت اطلاعات و مجوزها</h3><p class="mb-4 text-gray-600 leading-relaxed">مدیر آموزشگاه مسئول صحت مشخصات، مجوزهای فعالیت، اطلاعات شعب و هویت عوامل معرفی‌شده است.</p>
 <h3 class="font-bold text-lg mb-2">۲. مدیریت محتوا و دوره‌ها</h3><p class="mb-4 text-gray-600 leading-relaxed">اطلاعات دوره‌ها، شهریه، ظرفیت و زمان‌بندی باید شفاف و به‌روز باشد و حقوق مالکیت فکری دیگران رعایت شود.</p>
 <h3 class="font-bold text-lg mb-2">۳. تعهد در برابر هنرجویان</h3><p class="mb-4 text-gray-600 leading-relaxed">آموزشگاه متعهد است درخواست‌ها و پرداخت‌های هنرجویان را مطابق شرایط اعلام‌شده و قوانین جاری پاسخ‌گو باشد.</p>
@@ -144,7 +157,8 @@ const academyTerms = `
 window.openAcademyTermsModal = function() {
     const container = document.getElementById('modalContainer');
     if (!container) return;
-    container.innerHTML = `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()"><div class="bg-white rounded-3xl w-full max-w-lg my-8 shadow-2xl" onclick="event.stopPropagation()"><div class="px-8 py-5 border-b flex justify-between items-center"><h2 class="text-xl font-bold">قوانین ثبت و فعالیت آموزشگاه</h2><button type="button" onclick="closeModal()" class="text-3xl text-gray-300">×</button></div><div class="p-8 max-h-[60vh] overflow-y-auto text-sm">${academyTerms}</div><div class="px-8 py-5 border-t flex gap-3"><button type="button" onclick="acceptAcademyTerms()" class="flex-1 bg-indigo-600 text-white py-3.5 rounded-2xl">می‌پذیرم</button><button type="button" onclick="closeModal()" class="flex-1 border border-gray-300 py-3.5 rounded-2xl">بستن</button></div></div></div>`;
+    const terms = academyText('terms.content', defaultAcademyTerms);
+    container.innerHTML = `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()"><div class="bg-white rounded-3xl w-full max-w-lg my-8 shadow-2xl" onclick="event.stopPropagation()"><div class="px-8 py-5 border-b flex justify-between items-center"><h2 class="text-xl font-bold">${academyText('terms.title')}</h2><button type="button" aria-label="${academyText('terms.close')}" onclick="closeModal()" class="text-3xl text-gray-300">×</button></div><div class="p-8 max-h-[60vh] overflow-y-auto text-sm">${terms}</div><div class="px-8 py-5 border-t flex gap-3"><button type="button" onclick="acceptAcademyTerms()" class="flex-1 bg-indigo-600 text-white py-3.5 rounded-2xl">${academyText('terms.accept')}</button><button type="button" onclick="closeModal()" class="flex-1 border border-gray-300 py-3.5 rounded-2xl">${academyText('terms.close')}</button></div></div></div>`;
 };
 
 window.acceptAcademyTerms = function() { const terms = document.getElementById('academyTerms'); if (terms) terms.checked = true; closeModal(); };
