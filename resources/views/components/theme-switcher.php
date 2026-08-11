@@ -1,6 +1,6 @@
-<div class="theme-switcher hidden lg:flex items-center gap-2 rounded-xl border px-2 py-1.5" data-theme-controls>
-    <label class="sr-only" for="siteThemeSelect"><?= e(trans('theme.palette', 'پالت رنگ')) ?></label>
-    <select id="siteThemeSelect" data-theme-select onchange="setSiteTheme(this.value)" class="rounded-lg border px-2 py-1 text-xs outline-none">
+<div class="theme-switcher flex items-center gap-2 rounded-xl border px-2 py-1.5" data-theme-controls>
+    <label class="sr-only"><?= e(trans('theme.palette', 'پالت رنگ')) ?></label>
+    <select data-theme-select aria-label="<?= e(trans('theme.palette', 'پالت رنگ')) ?>" onchange="setSiteTheme(this.value)" class="min-w-0 rounded-lg border px-2 py-1 text-xs outline-none">
         <option value="indigo"><?= e(trans('theme.indigo', 'نیلی')) ?></option>
         <option value="emerald"><?= e(trans('theme.emerald', 'زمردی')) ?></option>
         <option value="rose"><?= e(trans('theme.rose', 'رز')) ?></option>
