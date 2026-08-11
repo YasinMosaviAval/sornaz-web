@@ -17,5 +17,9 @@
     };
     window.setSiteTheme = theme => apply(theme, root.dataset.mode || 'light');
     window.toggleSiteThemeMode = () => apply(root.dataset.theme || 'indigo', root.dataset.mode === 'dark' ? 'light' : 'dark');
+    window.changeSiteLanguage = locale => {
+        document.body.classList.add('language-changing');
+        window.setTimeout(() => { window.location.href = `/language/${locale}`; }, 90);
+    };
     document.addEventListener('DOMContentLoaded', () => apply(root.dataset.theme || 'indigo', root.dataset.mode || 'light'));
 })();

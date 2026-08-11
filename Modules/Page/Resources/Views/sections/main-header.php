@@ -25,6 +25,7 @@
             <!-- ورود / ثبت‌نام / خروج -->
             <div class="hidden lg:flex items-center gap-2">
                 <? component('theme-switcher'); ?>
+                <? component('language-switcher'); ?>
                 <?php if (auth()->check()): ?>
                     <form method="POST" action="/logout" class="inline">
                         <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\Csrf\Csrf::class)->token() ?>">
@@ -44,6 +45,10 @@
 
         <!-- منوی کشویی موبایل -->
         <div id="mobileMenu" class="hidden lg:hidden pb-4 border-t border-gray-100 pt-3 space-y-1">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 px-3 pb-3 mb-2 border-b border-gray-100">
+                <? component('theme-switcher'); ?>
+                <? component('language-switcher'); ?>
+            </div>
             <!-- <a href="/page/home" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">خانه</a> -->
             <a href="/analytics/articles" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.articles', 'مقاله‌های آموزشی')) ?></a>
             <a href="/academy/academies" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.academies', 'آموزشگاه‌ها')) ?></a>

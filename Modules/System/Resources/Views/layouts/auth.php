@@ -26,9 +26,6 @@
         .swal2-popup { font-family:Vazirmatn,Tahoma,Arial,sans-serif; direction:<?= e(direction()) ?>; }
         [dir="ltr"] .auth-directional-left { left:auto; right:1rem; }
         [dir="ltr"] .relative > button.absolute.left-4 { left:auto; right:1rem; }
-        .language-toggle input:checked + span { background:#4f46e5; }
-        .language-toggle input:checked + span::after { transform:translateX(1.25rem); }
-        .auth-language-widget { position:fixed; top:1rem; right:1.25rem; z-index:50; direction:ltr; }
         main { animation:auth-page-in .14s ease-out; transition:opacity .09s ease,transform .09s ease; }
         body.language-changing main { opacity:0; transform:translateY(4px); }
         @keyframes auth-page-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
@@ -36,16 +33,9 @@
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
-    <div class="fixed top-4 left-5 z-50"><? component('theme-switcher'); ?></div>
-    <header class="h-16" aria-label="<?= e(trans('auth.language_switch_aria', 'تغییر زبان')) ?>">
-        <label class="auth-language-widget language-toggle inline-flex items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium shadow-sm cursor-pointer hover:border-indigo-300 transition">
-            <i class="fas fa-globe"></i>
-            <span><?= e(locale() === 'fa' ? trans('auth.language_persian', 'فارسی') : trans('auth.language_english', 'English')) ?></span>
-            <input type="checkbox" class="sr-only" <?= locale() === 'en' ? 'checked' : '' ?>
-                   aria-label="<?= e(trans('auth.language_switch_aria', 'تغییر زبان')) ?>"
-                   onchange="changeAuthLanguage(this.checked ? 'en' : 'fa')">
-            <span class="relative block h-6 w-11 rounded-full bg-gray-300 transition-colors after:absolute after:top-1 after:left-1 after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow after:transition-transform"></span>
-        </label>
+    <header class="min-h-16 px-4 py-3 flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-white">
+        <? component('theme-switcher'); ?>
+        <? component('language-switcher'); ?>
     </header>
     <?// component('main-header'); ?>
     <main class="flex-1">
