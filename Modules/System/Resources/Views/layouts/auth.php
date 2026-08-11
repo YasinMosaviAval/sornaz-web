@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){const r=document.documentElement;r.dataset.theme=localStorage.getItem('sornaz.theme')||'indigo';r.dataset.mode=localStorage.getItem('sornaz.mode')||'light';})();</script>
     <title><?= e(trans('auth.site_name', 'آموزشگاه موسیقی')) ?></title>
     <link rel="icon" type="image/jpeg" href="/assets/images/logo/cropped-favicon_512x512.jpg">
     <link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
     <script src="/assets/vendor/tailwind/tailwindcss.js"></script>
     <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="/assets/vendor/sweetalert2/sweetalert2.min.css">
+    <link rel="stylesheet" href="/assets/theme/theme.css?v=<?= filemtime(base_path('assets/theme/theme.css')) ?: 1 ?>">
     <script src="/assets/vendor/sweetalert2/sweetalert2.all.min.js"></script>
     <style>
         body { font-family: Vazirmatn, Tahoma, Arial, sans-serif; }
@@ -34,6 +36,7 @@
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+    <div class="fixed top-4 left-5 z-50"><? component('theme-switcher'); ?></div>
     <header class="h-16" aria-label="<?= e(trans('auth.language_switch_aria', 'تغییر زبان')) ?>">
         <label class="auth-language-widget language-toggle inline-flex items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium shadow-sm cursor-pointer hover:border-indigo-300 transition">
             <i class="fas fa-globe"></i>
@@ -58,5 +61,6 @@
     <div id="modalContainer"></div>
     <script>window.authTranslations = <?= json_encode(translations('auth.js.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;</script>
     <?= scripts() ?>
+    <script src="/assets/theme/theme.js?v=<?= filemtime(base_path('assets/theme/theme.js')) ?: 1 ?>"></script>
 </body>
 </html>
