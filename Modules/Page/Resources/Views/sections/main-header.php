@@ -24,6 +24,7 @@
 
             <!-- ورود / ثبت‌نام / خروج -->
             <div class="hidden lg:flex items-center gap-2">
+                <? component('theme-switcher'); ?>
                 <?php if (auth()->check()): ?>
                     <form method="POST" action="/logout" class="inline">
                         <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\Csrf\Csrf::class)->token() ?>">
