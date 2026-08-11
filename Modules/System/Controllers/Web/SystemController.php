@@ -14,15 +14,25 @@ class SystemController {
     }
 
     public function login() {
-        return ResponseFactory::view('System::login', ['authentication' => $this->service->getByPage('authentication')])->layout('auth')->title('سُرناز | ورود');
+        return ResponseFactory::view('System::login')->layout('auth')->title(trans('auth.meta.login', 'سُرناز | ورود'));
     }
 
     public function register() {
-        return ResponseFactory::view('System::register', ['authentication' => $this->service->getByPage('authentication')])->layout('auth')->title('سُرناز | ثبت نام');
+        return ResponseFactory::view('System::register')->layout('auth')->title(trans('auth.meta.register', 'سُرناز | ثبت نام'));
     }
 
     public function forgotPassword() {
-        return ResponseFactory::view('System::forgot-password', ['authentication' => $this->service->getByPage('authentication')])->layout('auth')->title('سُرناز | فراموشی رمز عبور');
+        return ResponseFactory::view('System::forgot-password')->layout('auth')->title(trans('auth.meta.forgot', 'سُرناز | فراموشی رمز عبور'));
+    }
+
+    public function changeLanguage(string $locale) {
+        if (!in_array($locale, ['fa', 'en'], true)) {
+            abort(404);
+        }
+        session()->put('locale', $locale);
+        $returnTo = $_SERVER['HTTP_REFERER'] ?? '/system/login';
+        $path = parse_url($returnTo, PHP_URL_PATH) ?: '/system/login';
+        return redirect($path);
     }
 
 }

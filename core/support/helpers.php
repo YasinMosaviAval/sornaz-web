@@ -14,6 +14,7 @@ use Core\http\Request;
 use Core\http\Response;
 use Core\support\AssetManager;
 use Core\view\View;
+use Core\localization\FrameworkTranslator;
 
 function query(): DB {return new DB();}
 function user_id(): ?int {return auth()->id();}
@@ -30,6 +31,10 @@ function asset(string $path): string {return '/' . ltrim($path, '/');}
 function session(): Session {return container()->make(Session::class);}
 function request(): Request {return container()->make(Request::class);}
 function db(): PDO {return container()->make(Connection::class)->pdo();}
+function trans(string $key, ?string $fallback = null, array $replace = []): string {return container()->make(FrameworkTranslator::class)->get($key, $fallback, $replace);}
+function translations(string $prefix = ''): array {return container()->make(FrameworkTranslator::class)->all($prefix);}
+function locale(): string {return app()->getLocale();}
+function direction(): string {return locale() === 'fa' ? 'rtl' : 'ltr';}
 function url(string $path = ''): string {return '/' . ltrim($path, '/');}
 function response(): Response {return container()->make(Response::class);}
 function csrf_token(): string {return container()->make(Csrf::class)->token();}

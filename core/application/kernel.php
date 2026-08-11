@@ -18,6 +18,8 @@ class Kernel {
     public function handle() {
         $request = new Request();
         session()->start();
+        $locale = session()->get('locale', 'fa');
+        app()->setLocale(in_array($locale, ['fa', 'en'], true) ? $locale : 'fa');
         $route = Router::dispatch($request->method(), $request->uri());
         $response = new Response();
         if (!$route) {

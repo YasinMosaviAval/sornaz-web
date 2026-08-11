@@ -1,3 +1,10 @@
+const authText = (key, fallback) => window.authTranslations?.[`auth.js.${key}`] || fallback;
+
+window.changeAuthLanguage = function(locale) {
+    document.body.classList.add('language-changing');
+    window.setTimeout(() => { window.location.href = `/language/${locale}`; }, 180);
+};
+
 window.showAuthToast = function(type, message) {
     if (!message) return;
     if (typeof Swal === 'undefined') {
@@ -13,7 +20,7 @@ window.showAuthToast = function(type, message) {
 };
 
 window.alert = function(message) {
-    if (String(message).includes('موفق')) return;
+    if (String(message) === authText('reset_success', 'رمز عبور با موفقیت تغییر کرد. اکنون وارد شوید.')) return;
     showAuthToast('error', String(message));
 };
 
@@ -36,12 +43,12 @@ window.validateLoginForm = function(form) {
     const identifierInput = form.querySelector('[name="identifier"]');
     const passwordInput = form.querySelector('[name="password"]');
     if (!identifierInput?.value.trim()) {
-        showAuthToast('error', 'نام کاربری، ایمیل یا شماره موبایل را وارد کنید.');
+        showAuthToast('error', authText('identifier_required', 'نام کاربری، ایمیل یا شماره موبایل را وارد کنید.'));
         identifierInput?.focus();
         return false;
     }
     if (!passwordInput?.value) {
-        showAuthToast('error', 'رمز عبور را وارد کنید.');
+        showAuthToast('error', authText('password_required', 'رمز عبور را وارد کنید.'));
         passwordInput?.focus();
         return false;
     }
@@ -64,7 +71,14 @@ function setupPasswordStrength(inputId) {
     const update = () => {
         const result = passwordStrength(input.value);
         const hue = result.score <= 1 ? 0 : (result.score - 1) * 30;
-        const labels = ['بسیار ضعیف', 'بسیار ضعیف', 'بسیار ضعیف', 'متوسط', 'قوی', 'بسیار قوی'];
+        const labels = [
+            authText('strength_very_weak', 'بسیار ضعیف'),
+            authText('strength_very_weak', 'بسیار ضعیف'),
+            authText('strength_very_weak', 'بسیار ضعیف'),
+            authText('strength_medium', 'متوسط'),
+            authText('strength_strong', 'قوی'),
+            authText('strength_very_strong', 'بسیار قوی')
+        ];
         const bar = container.querySelector('[data-strength-bar]');
         const label = container.querySelector('[data-strength-label]');
         bar.style.width = `${result.score * 20}%`;
@@ -314,7 +328,7 @@ window.submitForgotPassword = function() {
     alert('اگر این ایمیل ثبت شده باشد، لینک بازیابی ارسال می‌شود.');
 };
 
-const termsContent = `
+const defaultTermsContent = `
 <h3 class="font-bold text-lg mb-3">۱. پذیرش شرایط</h3>
 <p class="mb-4 text-gray-600 leading-relaxed">با ثبت‌نام در این سامانه، تمامی قوانین و مقررات استفاده از خدمات آموزشگاه و پلتفرم آموزشی را می‌پذیرید.</p>
 
@@ -338,14 +352,15 @@ const termsContent = `
 `;
 
 window.openTermsModal = function() {
-    if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد');
+    if (!document.getElementById('modalContainer')) return;
+    const termsContent = authText('terms_content', defaultTermsContent);
     document.getElementById('modalContainer').innerHTML = `
     <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto"
          onclick="if(event.target===this) closeModal()">
         <div class="bg-white rounded-3xl w-full max-w-lg my-8 shadow-2xl" onclick="event.stopPropagation()">
             <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl z-10">
-                <h2 class="text-xl font-bold">قوانین و شرایط استفاده</h2>
-                <button onclick="closeModal()" class="text-3xl text-gray-300 leading-none">×</button>
+                <h2 class="text-xl font-bold">${authText('terms_title', 'قوانین و شرایط استفاده')}</h2>
+                <button onclick="closeModal()" aria-label="${authText('close', 'بستن')}" class="text-3xl text-gray-300 leading-none">×</button>
             </div>
             <div class="p-8 max-h-[60vh] overflow-y-auto text-sm">
                 ${termsContent}
@@ -353,11 +368,11 @@ window.openTermsModal = function() {
             <div class="px-8 py-5 border-t flex gap-3">
                 <button onclick="acceptTerms()"
                         class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-2xl font-medium">
-                    می‌پذیرم
+                    ${authText('terms_accept', 'می‌پذیرم')}
                 </button>
                 <button onclick="closeModal()"
                         class="flex-1 border border-gray-300 py-3.5 rounded-2xl hover:bg-gray-50">
-                    بستن
+                    ${authText('close', 'بستن')}
                 </button>
             </div>
         </div>
@@ -403,14 +418,14 @@ window.sendFpOtp = async function() {
     let destination;
     if (fpMethod === 'email') {
         const email = document.getElementById('fpEmail')?.value.trim();
-        if (!email) return alert('ایمیل را وارد کنید');
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert('ایمیل معتبر نیست');
+        if (!email) return alert(authText('email_required', 'ایمیل را وارد کنید'));
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert(authText('email_invalid', 'ایمیل معتبر نیست'));
         document.getElementById('fpSentTo').textContent = email;
         destination = email;
     } else {
         const phone = document.getElementById('fpPhone')?.value.trim();
-        if (!phone) return alert('شماره موبایل را وارد کنید');
-        if (!/^09\d{9}$/.test(phone.replace(/\s/g, ''))) return alert('شماره موبایل معتبر نیست (مثال: 09123456789)');
+        if (!phone) return alert(authText('phone_required', 'شماره موبایل را وارد کنید'));
+        if (!/^09\d{9}$/.test(phone.replace(/\s/g, ''))) return alert(authText('phone_invalid', 'شماره موبایل معتبر نیست (مثال: 09123456789)'));
         document.getElementById('fpSentTo').textContent = phone;
         destination = phone.replace(/\s/g, '');
     }
@@ -469,7 +484,7 @@ function setupOtpInputs() {
 
 window.verifyFpOtp = async function() {
     const code = Array.from(document.querySelectorAll('.fp-otp')).map(i => i.value).join('');
-    if (code.length !== 6) return alert('کد ۶ رقمی را کامل وارد کنید');
+    if (code.length !== 6) return alert(authText('otp_incomplete', 'کد ۶ رقمی را کامل وارد کنید'));
     try {
         await fpRequest('/forgot-password/verify-otp', {code});
         if (fpTimerInterval) clearInterval(fpTimerInterval);
@@ -480,12 +495,12 @@ window.verifyFpOtp = async function() {
 window.resetPassword = async function() {
     const p1 = document.getElementById('fpNewPass')?.value;
     const p2 = document.getElementById('fpNewPass2')?.value;
-    if (!p1 || p1.length < 8) return alert('رمز عبور حداقل ۸ کاراکتر باشد');
-    if (p1 !== p2) return alert('رمز عبور و تکرار آن یکسان نیست');
+    if (!p1 || p1.length < 8) return alert(authText('password_short', 'رمز عبور حداقل ۸ کاراکتر باشد'));
+    if (p1 !== p2) return alert(authText('password_mismatch', 'رمز عبور و تکرار آن یکسان نیست'));
 
     try {
         await fpRequest('/forgot-password/reset', {password: p1, password_confirmation: p2});
-        alert('رمز عبور با موفقیت تغییر کرد. اکنون وارد شوید.');
+        alert(authText('reset_success', 'رمز عبور با موفقیت تغییر کرد. اکنون وارد شوید.'));
         window.location.href = '/system/login';
     } catch (error) { showFpError(error.message); }
 };
@@ -501,9 +516,9 @@ async function fpRequest(url, fields) {
     const raw = await response.text();
     let payload;
     try { payload = JSON.parse(raw); }
-    catch (error) { console.error('Invalid password reset response:', raw); throw new Error('پاسخ نامعتبر از سرور دریافت شد.'); }
+    catch (error) { console.error('Invalid password reset response:', raw); throw new Error(authText('invalid_response', 'پاسخ نامعتبر از سرور دریافت شد.')); }
     const data = payload.data || {};
-    if (!response.ok || !data.success) throw new Error(data.message || 'انجام درخواست ناموفق بود.');
+    if (!response.ok || !data.success) throw new Error(data.message || authText('request_failed', 'انجام درخواست ناموفق بود.'));
     return data;
 }
 
