@@ -1,31 +1,27 @@
 <header class="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
+    <?php $headerUser = auth()->user(); $isSiteAdmin = \Modules\System\Services\SiteAdminAccess::allows($headerUser); ?>
     <div class="max-w-7xl mx-auto px-4">
-        <div class="relative flex items-center justify-between h-16 md:h-18" dir="ltr">
-            <!-- لوگو -->
-            <a href="/" class="flex items-center gap-2 shrink-0">
-                <img src="/assets/images/logo/cropped-favicon_512x512.jpg" alt="<?= e(trans('public.logo_alt', 'لوگوی سرناز')) ?>" class="w-11 h-11 rounded-xl object-cover">
-                <span class="font-bold text-lg hidden sm:block"><?= e(trans('public.brand', 'برنامه موسیقی سُرناز')) ?></span>
-            </a>
+        <div class="hidden lg:flex items-center gap-4 min-h-20" dir="ltr">
+            <div class="flex flex-1 min-w-0 items-center justify-between gap-3" dir="<?= e(direction()) ?>">
+                <a href="/" class="flex items-center gap-2 shrink-0">
+                    <img src="/assets/images/logo/cropped-favicon_512x512.jpg" alt="<?= e(trans('public.logo_alt', 'لوگوی سرناز')) ?>" class="w-11 h-11 rounded-xl object-cover">
+                    <span class="font-bold text-lg hidden xl:block"><?= e(trans('public.brand', 'برنامه موسیقی سُرناز')) ?></span>
+                </a>
 
-            <!-- منوی دسکتاپ -->
-            <nav class="hidden lg:flex items-center gap-1 text-sm" dir="<?= e(direction()) ?>">
+                <nav class="flex items-center gap-1 text-sm">
                 <!-- <a href="/page/home" data-page="home" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">خانه</a> -->
                 <a href="/analytics/articles" data-page="articles" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.articles', 'مقاله‌های آموزشی')) ?></a>
                 <a href="/academy/academies" data-page="academies" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.academies', 'آموزشگاه‌ها')) ?></a>
                 <a href="/users" data-page="users" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.users', 'کاربران')) ?></a>
-                <?php $headerUser = auth()->user(); $isSiteAdmin = \Modules\System\Services\SiteAdminAccess::allows($headerUser); ?>
                 <?php if (($headerUser['type'] ?? null) === 'academy' || $isSiteAdmin): ?>
                     <a href="/analytics/admin-panel" data-page="contact" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e($isSiteAdmin ? trans('public.nav.admin_panel', 'پنل ادمین') : trans('public.nav.academy_panel', 'پنل آموزشگاه')) ?></a>
                 <?php endif; ?>
 
                 <a href="/page/about-us" data-page="about" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.about', 'درباره ما')) ?></a>
                 <a href="/page/contact-us" data-page="contact" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.contact', 'تماس با ما')) ?></a>
-            </nav>
+                </nav>
 
-            <!-- ورود / ثبت‌نام / خروج -->
-            <div class="hidden lg:flex items-center gap-2" dir="ltr">
-                <? component('theme-switcher'); ?>
-                <? component('language-switcher'); ?>
+                <div class="flex items-center gap-2 shrink-0">
                 <?php if (auth()->check()): ?>
                     <form method="POST" action="/logout" class="inline">
                         <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\Csrf\Csrf::class)->token() ?>">
@@ -35,9 +31,20 @@
                     <a href="/system/login" class="text-sm px-4 py-2 rounded-xl text-indigo-600 hover:bg-indigo-50"><?= e(trans('public.action.login', 'ورود')) ?></a>
                     <a href="/system/register" class="text-sm px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"><?= e(trans('public.action.register', 'ثبت نام')) ?></a>
                 <?php endif; ?>
+                </div>
             </div>
 
-            <!-- منوی موبایل -->
+            <div class="flex shrink-0 items-center gap-2 border-l border-gray-200 pl-4" dir="ltr">
+                <? component('theme-switcher'); ?>
+                <? component('language-switcher'); ?>
+            </div>
+        </div>
+
+        <div class="flex lg:hidden items-center justify-between h-16">
+            <a href="/" class="flex items-center gap-2 shrink-0">
+                <img src="/assets/images/logo/cropped-favicon_512x512.jpg" alt="<?= e(trans('public.logo_alt', 'لوگوی سرناز')) ?>" class="w-11 h-11 rounded-xl object-cover">
+                <span class="font-bold text-base"><?= e(trans('public.brand', 'برنامه موسیقی سُرناز')) ?></span>
+            </a>
             <button type="button" onclick="toggleMobileMenu()" class="lg:hidden p-2 text-gray-600">
                 <i class="fas fa-bars text-xl" id="mobileMenuIcon"></i>
             </button>
