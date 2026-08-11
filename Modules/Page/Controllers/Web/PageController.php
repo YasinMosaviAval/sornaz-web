@@ -22,39 +22,25 @@ class PageController {
             ]
         )
         ->layout('main')
-        ->title('سُرناز | خانه');
+        ->title(trans('public.meta.home', 'سُرناز | خانه'));
     }
 
 
 
 
     public function aboutUs() {
-        return ResponseFactory::view(
-            'Page::about-us',
-            [
-                'about_us' => $this->service->getByPage('about_us'),
-                'header' => $this->service->getByPage('header'),
-                'footer' => $this->service->getByPage('footer'),
-            ]
-        )
+        return ResponseFactory::view('Page::about-us')
         ->layout('main')
-        ->title('سُرناز | درباره ما');
+        ->title(trans('public.meta.about', 'سُرناز | درباره ما'));
     }
 
 
 
 
     public function contactUs() {
-        return ResponseFactory::view(
-            'Page::contact-us',
-            [
-                'contact_us' => $this->service->getByPage('contact_us'),
-                'header' => $this->service->getByPage('header'),
-                'footer' => $this->service->getByPage('footer'),
-            ]
-        )
+        return ResponseFactory::view('Page::contact-us')
         ->layout('main')
-        ->title('سُرناز | تماس با ما');
+        ->title(trans('public.meta.contact', 'سُرناز | تماس با ما'));
     }
 
 

@@ -58,10 +58,17 @@ window.submitPublicContact = function(e) {
     const name = document.getElementById('cName')?.value.trim();
     const email = document.getElementById('cEmail')?.value.trim();
     const message = document.getElementById('cMessage')?.value.trim();
-    if (!name || !email || !message) return alert('لطفاً فیلدهای الزامی را پر کنید');
+    const publicText = (key, fallback) => window.publicTranslations?.[`public.js.${key}`] || fallback;
+    if (!name || !email || !message) {
+        return typeof showAuthToast === 'function'
+            ? showAuthToast('error', publicText('required_fields', 'لطفاً فیلدهای الزامی را پر کنید'))
+            : alert(publicText('required_fields', 'لطفاً فیلدهای الزامی را پر کنید'));
+    }
 
     // در نسخه واقعی: ارسال به API
-    alert('✅ پیام شما ارسال شد. در اولین فرصت پاسخ می‌دهیم.');
+    const successMessage = publicText('contact_success', '✅ پیام شما ارسال شد. در اولین فرصت پاسخ می‌دهیم.');
+    if (typeof showAuthToast === 'function') showAuthToast('success', successMessage);
+    else alert(successMessage);
     document.getElementById('contactPublicForm')?.reset();
 };
 
