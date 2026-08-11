@@ -1,11 +1,12 @@
 <?
-$authentication_array = getFilteredList(setIndexforDataArray($authentication, 'variable_name'), 'authentication');
+$authentication_array = [];
+foreach (translations('authentication_') as $key => $value) $authentication_array[$key] = ['translated_value' => $value];
 ?>
 
 <div id="forgot-password" class="min-h-[80vh] flex items-center justify-center py-10">
     <div class="w-full max-w-md">
         <div class="text-center mb-8">
-            <img src="/assets/images/logo/cropped-favicon_512x512.jpg" alt="لوگوی سرناز" class="inline-block w-20 h-20 rounded-2xl object-cover mb-4 shadow-lg">
+            <img src="/assets/images/logo/cropped-favicon_512x512.jpg" alt="<?= e(trans('auth.logo_alt', 'لوگوی سرناز')) ?>" class="inline-block w-20 h-20 rounded-2xl object-cover mb-4 shadow-lg">
             <h1 class="text-3xl font-bold"><?= $authentication_array["authentication_forgot_password_page_title"]["translated_value"] ?></h1>
             <p class="text-gray-500 mt-2"><?= $authentication_array["authentication_forgot_password_welcome"]["translated_value"] ?></p>
         </div>

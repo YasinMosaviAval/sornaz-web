@@ -12,6 +12,7 @@ use Modules\Blog\Contracts\BlogRepositoryInterface;
 use Modules\Blog\Repositories\BlogRepository;
 use Core\localization\Contracts\TranslationRepositoryInterface;
 use Core\localization\Repositories\TranslationRepository;
+use Core\localization\FrameworkTranslator;
 
 Environment::load(base_path('.env'));
 
@@ -26,6 +27,8 @@ $app->container()->instance(Csrf::class, new Csrf());
 $app->container()->instance(Connection::class, new Connection(require base_path('config/database.php')));
 
 $app->container()->instance(PDO::class, app()->container()->make(Connection::class)->pdo());
+
+$app->container()->bind(FrameworkTranslator::class, FrameworkTranslator::class);
 
 $app->container()->bind(TranslationRepositoryInterface::class, TranslationRepository::class);
 
