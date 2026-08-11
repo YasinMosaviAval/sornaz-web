@@ -1,6 +1,6 @@
 <header class="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
     <div class="max-w-7xl mx-auto px-4">
-        <div class="flex items-center justify-between h-16 md:h-18">
+        <div class="relative flex items-center justify-between h-16 md:h-18" dir="ltr">
             <!-- لوگو -->
             <a href="/" class="flex items-center gap-2 shrink-0">
                 <img src="/assets/images/logo/cropped-favicon_512x512.jpg" alt="<?= e(trans('public.logo_alt', 'لوگوی سرناز')) ?>" class="w-11 h-11 rounded-xl object-cover">
@@ -8,7 +8,7 @@
             </a>
 
             <!-- منوی دسکتاپ -->
-            <nav class="hidden lg:flex items-center gap-1 text-sm">
+            <nav class="hidden lg:flex items-center gap-1 text-sm" dir="<?= e(direction()) ?>">
                 <!-- <a href="/page/home" data-page="home" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">خانه</a> -->
                 <a href="/analytics/articles" data-page="articles" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.articles', 'مقاله‌های آموزشی')) ?></a>
                 <a href="/academy/academies" data-page="academies" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.academies', 'آموزشگاه‌ها')) ?></a>
@@ -23,7 +23,7 @@
             </nav>
 
             <!-- ورود / ثبت‌نام / خروج -->
-            <div class="hidden lg:flex items-center gap-2">
+            <div class="hidden lg:flex items-center gap-2" dir="ltr">
                 <? component('theme-switcher'); ?>
                 <? component('language-switcher'); ?>
                 <?php if (auth()->check()): ?>
@@ -45,7 +45,7 @@
 
         <!-- منوی کشویی موبایل -->
         <div id="mobileMenu" class="hidden lg:hidden pb-4 border-t border-gray-100 pt-3 space-y-1">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 px-3 pb-3 mb-2 border-b border-gray-100">
+            <div class="mobile-header-switchers grid grid-cols-2 gap-2 px-3 pb-3 mb-2 border-b border-gray-100" dir="ltr">
                 <? component('theme-switcher'); ?>
                 <? component('language-switcher'); ?>
             </div>

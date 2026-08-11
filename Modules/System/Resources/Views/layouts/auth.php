@@ -33,7 +33,7 @@
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
-    <header class="min-h-16 px-4 py-3 flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-white">
+    <header class="auth-header-switchers min-h-16 px-4 py-3 flex items-center justify-between gap-2 border-b border-gray-100 bg-white" dir="ltr">
         <? component('theme-switcher'); ?>
         <? component('language-switcher'); ?>
     </header>

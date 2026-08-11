@@ -1,6 +1,6 @@
 <label class="language-switcher inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium cursor-pointer transition" dir="ltr">
     <i class="fas fa-globe"></i>
-    <span><?= e(locale() === 'fa' ? trans('auth.language_persian', 'فارسی') : trans('auth.language_english', 'English')) ?></span>
+    <span data-language-label><?= e(locale() === 'fa' ? trans('auth.language_persian', 'فارسی') : trans('auth.language_english', 'English')) ?></span>
     <input type="checkbox" class="sr-only" <?= locale() === 'en' ? 'checked' : '' ?>
            aria-label="<?= e(trans('auth.language_switch_aria', 'تغییر زبان')) ?>"
            onchange="changeSiteLanguage(this.checked ? 'en' : 'fa')">
