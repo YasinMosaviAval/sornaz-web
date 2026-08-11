@@ -42,7 +42,6 @@ body,header,footer,input,textarea,select,.theme-switcher,.language-switcher { tr
     .theme-switcher,.language-switcher { gap:.375rem;padding:.375rem .5rem;justify-content:center; }
     .theme-switcher select { width:5.25rem;padding:.2rem .35rem;font-size:.68rem; }
     .theme-mode-button { width:1.75rem;height:1.75rem; }
-    .language-switcher [data-language-label] { display:none; }
     .language-switcher .language-switch-track { width:2.25rem;height:1.25rem; }
     .language-switcher .language-switch-track::after { width:.75rem;height:.75rem; }
     .language-switcher input:checked + .language-switch-track::after { transform:translateX(1rem); }
