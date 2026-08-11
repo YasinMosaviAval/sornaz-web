@@ -15,9 +15,9 @@ class AcademyRegistrationController {
     ) {}
 
     public function create() {
-        return ResponseFactory::view('Analytics::send-academy-request')
+        return ResponseFactory::view('Academy::send-academy-request')
             ->layout('main')
-            ->title('سُرناز | ثبت آموزشگاه');
+            ->title(trans('academy.meta.title', 'سُرناز | ثبت آموزشگاه'));
     }
 
     public function index() {
@@ -59,12 +59,12 @@ class AcademyRegistrationController {
             if (!$verification['ok']) return $this->back(['otp' => $verification['message']]);
             $this->service->register($data);
             $this->otp->clear();
-            session()->flash('auth_success', 'ثبت آموزشگاه با موفقیت انجام شد. پس از تأیید می‌توانید وارد پنل مدیریت شوید.');
+            session()->flash('auth_success', trans('academy.success.registered', 'ثبت آموزشگاه با موفقیت انجام شد. پس از تأیید می‌توانید وارد پنل مدیریت شوید.'));
             return redirect('/login');
         } catch (ValidationException $e) {
             return $this->back($e->getErrors());
         } catch (\Throwable $e) {
-            return $this->back(['academy_name' => 'ثبت درخواست انجام نشد. لطفاً دوباره تلاش کنید.']);
+            return $this->back(['academy_name' => trans('academy.error.request_failed', 'ثبت درخواست انجام نشد. لطفاً دوباره تلاش کنید.')]);
         }
     }
 
@@ -75,22 +75,22 @@ class AcademyRegistrationController {
             $result = $this->otp->send($method, (string)$data[$method], $this->otpData($data));
             return ResponseFactory::json(['success' => $result['ok']] + $result, $result['ok'] ? 200 : (isset($result['retry_after']) ? 429 : 503));
         } catch (ValidationException $e) {
-            return ResponseFactory::json(['success' => false, 'message' => 'اطلاعات فرم را بررسی کنید.', 'errors' => $e->getErrors()], 422);
+            return ResponseFactory::json(['success' => false, 'message' => trans('academy.error.review_form', 'اطلاعات فرم را بررسی کنید.'), 'errors' => $e->getErrors()], 422);
         }
     }
 
     private function validatedData(): array {
         $data = (new AcademyRegistrationRequest($_POST))->validated();
-        if (empty($_POST['terms'])) throw new ValidationException(['terms' => 'پذیرش قوانین ثبت آموزشگاه الزامی است.']);
+        if (empty($_POST['terms'])) throw new ValidationException(['terms' => trans('academy.error.terms_required', 'پذیرش قوانین ثبت آموزشگاه الزامی است.')]);
         $method = $data['register_method'];
         if ($method === 'email') {
             $data['email'] = strtolower(trim((string)($data['email'] ?? '')));
             $data['phone'] = null;
-            if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) throw new ValidationException(['email' => 'ایمیل معتبر را وارد کنید.']);
+            if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) throw new ValidationException(['email' => trans('academy.error.email_invalid', 'ایمیل معتبر را وارد کنید.')]);
         } else {
             $data['phone'] = preg_replace('/\D+/', '', (string)($data['phone'] ?? ''));
             $data['email'] = null;
-            if (!preg_match('/^09\d{9}$/', $data['phone'])) throw new ValidationException(['phone' => 'شماره موبایل معتبر را وارد کنید.']);
+            if (!preg_match('/^09\d{9}$/', $data['phone'])) throw new ValidationException(['phone' => trans('academy.error.phone_invalid', 'شماره موبایل معتبر را وارد کنید.')]);
         }
         return $data;
     }
