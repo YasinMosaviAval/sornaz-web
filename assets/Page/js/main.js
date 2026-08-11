@@ -39,13 +39,15 @@ window.toggleAccordion = function(btn) {
     // بستن بقیه (اختیاری — مثل آکاردئون تک‌باز)
     document.querySelectorAll('.accordion-body.open').forEach(b => {
         if (b !== body) {
+            b.style.setProperty('--accordion-height', `${b.scrollHeight}px`);
             b.classList.remove('open');
             const i = b.previousElementSibling?.querySelector('.accordion-icon');
             if (i) { i.classList.remove('open', 'fa-minus'); i.classList.add('fa-plus'); }
         }
     });
 
-    body.classList.toggle('open', !isOpen);
+    body.style.setProperty('--accordion-height', `${body.scrollHeight}px`);
+    requestAnimationFrame(() => body.classList.toggle('open', !isOpen));
     if (icon) {
         icon.classList.toggle('open', !isOpen);
         icon.classList.toggle('fa-plus', isOpen);

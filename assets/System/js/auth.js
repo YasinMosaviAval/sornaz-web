@@ -2,7 +2,7 @@ const authText = (key, fallback) => window.authTranslations?.[`auth.js.${key}`] 
 
 window.changeAuthLanguage = function(locale) {
     document.body.classList.add('language-changing');
-    window.setTimeout(() => { window.location.href = `/language/${locale}`; }, 180);
+    window.setTimeout(() => { window.location.href = `/language/${locale}`; }, 90);
 };
 
 window.showAuthToast = function(type, message) {

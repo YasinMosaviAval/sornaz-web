@@ -15,9 +15,16 @@
         .site-page { display: none; }
         .site-page.active { display: block; }
         .nav-link-site.active { color: #4f46e5; font-weight: 600; }
-        .accordion-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
-        .accordion-body.open { max-height: 800px; }
-        .accordion-icon { transition: transform 0.3s; }
+        .accordion-body {
+            max-height:0;
+            overflow:hidden;
+            opacity:0;
+            transform:translateY(-6px);
+            transition:max-height .29s cubic-bezier(.4,0,.2,1),opacity .15s ease,transform .225s cubic-bezier(.4,0,.2,1);
+            will-change:max-height,opacity,transform;
+        }
+        .accordion-body.open { max-height:var(--accordion-height, 1000px); opacity:1; transform:translateY(0); }
+        .accordion-icon { transition:transform .21s cubic-bezier(.4,0,.2,1); }
         .accordion-icon.open { transform: rotate(180deg); }
         .auth-toast-success { background:#ecfdf5 !important; color:#065f46 !important; border:1px solid #a7f3d0 !important; }
         .auth-toast-error { background:#fef2f2 !important; color:#991b1b !important; border:1px solid #fecaca !important; }
@@ -30,10 +37,10 @@
         .language-toggle input:checked + span { background:#4f46e5; }
         .language-toggle input:checked + span::after { transform:translateX(1.25rem); }
         .public-language-widget { position:fixed; top:5rem; right:1.25rem; z-index:45; direction:ltr; }
-        main { animation:public-page-in .28s ease-out; transition:opacity .18s ease,transform .18s ease; }
+        main { animation:public-page-in .14s ease-out; transition:opacity .09s ease,transform .09s ease; }
         body.language-changing main { opacity:0; transform:translateY(4px); }
         @keyframes public-page-in { from { opacity:0;transform:translateY(4px); } to { opacity:1;transform:none; } }
-        @media (prefers-reduced-motion:reduce) { main { animation:none;transition:none; } }
+        @media (prefers-reduced-motion:reduce) { main,.accordion-body,.accordion-icon { animation:none;transition:none; } }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
