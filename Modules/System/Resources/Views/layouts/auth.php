@@ -27,7 +27,7 @@
         .language-toggle input:checked + span { background:#4f46e5; }
         .language-toggle input:checked + span::after { transform:translateX(1.25rem); }
         .auth-language-widget { position:fixed; top:1rem; right:1.25rem; z-index:50; direction:ltr; }
-        main { animation:auth-page-in .28s ease-out; transition:opacity .18s ease, transform .18s ease; }
+        main { animation:auth-page-in .14s ease-out; transition:opacity .09s ease,transform .09s ease; }
         body.language-changing main { opacity:0; transform:translateY(4px); }
         @keyframes auth-page-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
         @media (prefers-reduced-motion:reduce) { main { animation:none; transition:none; } }
