@@ -31,7 +31,7 @@ class AnalyticsController {
             ? $this->adminTests->statistics()
             : [];
         $scheduleFixtures = env('APP_ENV', 'production') === 'local' ? $this->adminTests->scheduleFixtures() : ['schedules'=>[],'exceptions'=>[]];
-        return ResponseFactory::view('Analytics::admin-panel', ['testStats' => $testStats, 'scheduleFixtures'=>$scheduleFixtures, 'adminUiMap'=>$this->adminTests->adminUiMap(locale())])->layout('admin')->title('سُرناز | پنل مدیریت');
+        return ResponseFactory::view('Analytics::admin-panel', ['testStats' => $testStats, 'scheduleFixtures'=>$scheduleFixtures, 'adminUiMap'=>$this->adminTests->adminUiMap(locale()),'inlineTranslationCatalog'=>$this->adminTests->inlineTranslationCatalog()])->layout('admin')->title('سُرناز | پنل مدیریت');
     }
 
 
