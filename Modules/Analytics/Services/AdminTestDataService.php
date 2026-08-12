@@ -88,23 +88,25 @@ class AdminTestDataService {
         return ['schedules'=>$schedules,'exceptions'=>$exceptions];
     }
 
-    public function deleteAvailability(int $id): array {
-        return transaction(function() use($id){
-            $row=DB::table('user_availabilities')->where('user_availability_id',$id)->first();
+    public function deleteAvailability(int $id, int $actorId): array {
+        return transaction(function() use($id,$actorId){
+            $row=DB::table('user_availabilities')->where('user_availability_id',$id)->whereNull('deleted_at')->first();
             if(!$row)throw new RuntimeException('برنامه زمانی موردنظر یافت نشد.');
-            DB::table('translations')->where('table_name','user_availabilities')->where('table_id',$id)->delete();
-            DB::table('user_availabilities')->where('user_availability_id',$id)->delete();
-            return ['success'=>true,'id'=>$id,'message'=>'برنامه زمانی و ترجمه‌های آن حذف شد.'];
+            $now=date('Y-m-d H:i:s');
+            DB::table('translations')->where('table_name','user_availabilities')->where('table_id',$id)->whereNull('deleted_at')->update(['deleted_at'=>$now,'deleted_by'=>$actorId,'updated_at'=>$now,'updated_by'=>$actorId]);
+            DB::table('user_availabilities')->where('user_availability_id',$id)->update(['deleted_at'=>$now,'deleted_by'=>$actorId,'updated_at'=>$now,'updated_by'=>$actorId]);
+            return ['success'=>true,'id'=>$id,'message'=>'برنامه زمانی حذف شد.'];
         });
     }
 
-    public function deleteAvailabilityException(int $id): array {
-        return transaction(function() use($id){
-            $row=DB::table('user_availability_exceptions')->where('user_availability_exception_id',$id)->first();
+    public function deleteAvailabilityException(int $id, int $actorId): array {
+        return transaction(function() use($id,$actorId){
+            $row=DB::table('user_availability_exceptions')->where('user_availability_exception_id',$id)->whereNull('deleted_at')->first();
             if(!$row)throw new RuntimeException('تعطیلی یا مرخصی موردنظر یافت نشد.');
-            DB::table('translations')->where('table_name','user_availability_exceptions')->where('table_id',$id)->delete();
-            DB::table('user_availability_exceptions')->where('user_availability_exception_id',$id)->delete();
-            return ['success'=>true,'id'=>$id,'message'=>'تعطیلی یا مرخصی و ترجمه‌های آن حذف شد.'];
+            $now=date('Y-m-d H:i:s');
+            DB::table('translations')->where('table_name','user_availability_exceptions')->where('table_id',$id)->whereNull('deleted_at')->update(['deleted_at'=>$now,'deleted_by'=>$actorId,'updated_at'=>$now,'updated_by'=>$actorId]);
+            DB::table('user_availability_exceptions')->where('user_availability_exception_id',$id)->update(['deleted_at'=>$now,'deleted_by'=>$actorId,'updated_at'=>$now,'updated_by'=>$actorId]);
+            return ['success'=>true,'id'=>$id,'message'=>'تعطیلی یا مرخصی حذف شد.'];
         });
     }
 
@@ -250,7 +252,7 @@ class AdminTestDataService {
     }
 
     private function translatedValue(string $table,int $id,string $field): string {
-        $row=DB::table('translations')->where('table_name',$table)->where('table_id',$id)->where('locale','fa')->where('field',$field)->first(); return (string)($row['value']??'');
+        $row=DB::table('translations')->where('table_name',$table)->where('table_id',$id)->where('locale','fa')->where('field',$field)->whereNull('deleted_at')->first(); return (string)($row['value']??'');
     }
 
     private function syncMediaFile(int $userId, string $createdAt, string $folder, string $filename, string $collection, int $sortOrder, ?int $width, ?int $height, string $type = 'image'): int {
