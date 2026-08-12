@@ -1,6 +1,10 @@
 <?php
 $isSiteAdmin = \Modules\System\Services\SiteAdminAccess::allows(auth()->user());
 $stats = $testStats ?? [];
+$localizedNumber = static function (int|float|string $number): string {
+    $formatted = number_format((float)$number, 0, '.', ',');
+    return locale() === 'fa' ? strtr($formatted, ['0'=>'۰','1'=>'۱','2'=>'۲','3'=>'۳','4'=>'۴','5'=>'۵','6'=>'۶','7'=>'۷','8'=>'۸','9'=>'۹']) : $formatted;
+};
 ?>
 <?php if ($isSiteAdmin && env('APP_ENV', 'production') === 'local'): ?>
 <section id="tests" class="section hidden">
@@ -14,14 +18,22 @@ $stats = $testStats ?? [];
             <div class="mb-5 flex items-start justify-between gap-4">
                 <div>
                     <h2 class="text-xl font-bold">تست ۱: مدیران آموزشگاه</h2>
-                    <p class="mt-2 text-sm leading-7 text-gray-500">ایجاد و همگام‌سازی ۵۰ کاربر انسانی با اطلاعات هویتی، آدرس، راه ارتباطی و ۰ تا ۵ ساز و درس موسیقی برای هر کاربر.</p>
+                    <p class="mt-2 text-sm leading-7 text-gray-500">ایجاد و همگام‌سازی <?= $localizedNumber(50) ?> کاربر انسانی با اطلاعات هویتی، آدرس، راه ارتباطی و <?= $localizedNumber(0) ?> تا <?= $localizedNumber(5) ?> ساز و درس موسیقی برای هر کاربر.</p>
+                    <ul class="mt-4 space-y-2 text-sm leading-6 text-gray-600">
+                        <li class="flex items-center justify-between gap-4"><span class="flex items-start gap-2"><i class="fas fa-check-circle mt-1 text-emerald-600"></i>آدرس‌ها و راه‌های ارتباطی</span><strong class="shrink-0 text-gray-700"><?= $localizedNumber(($stats['addresses'] ?? 0) + ($stats['contacts'] ?? 0)) ?></strong></li>
+                        <li class="flex items-center justify-between gap-4"><span class="flex items-start gap-2"><i class="fas fa-check-circle mt-1 text-emerald-600"></i>پروفایل، کاور، گالری و ویدیو</span><strong class="shrink-0 text-gray-700"><?= $localizedNumber($stats['media'] ?? 0) ?></strong></li>
+                        <li class="flex items-center justify-between gap-4"><span class="flex items-start gap-2"><i class="fas fa-check-circle mt-1 text-emerald-600"></i>سازها، درس‌ها و سطح‌های آموزشی</span><strong class="shrink-0 text-gray-700"><?= $localizedNumber(($stats['catalog_instruments'] ?? 0) + ($stats['catalog_lessons'] ?? 0) + ($stats['levels'] ?? 0)) ?></strong></li>
+                        <li class="flex items-center justify-between gap-4"><span class="flex items-start gap-2"><i class="fas fa-check-circle mt-1 text-emerald-600"></i>سازها و درس‌های انتخاب‌شده کاربران</span><strong class="shrink-0 text-gray-700"><?= $localizedNumber(($stats['instruments'] ?? 0) + ($stats['lessons'] ?? 0)) ?></strong></li>
+                        <li class="flex items-center justify-between gap-4"><span class="flex items-start gap-2"><i class="fas fa-check-circle mt-1 text-emerald-600"></i>برنامه‌های حضور هفتگی چندبازه‌ای</span><strong class="shrink-0 text-gray-700"><?= $localizedNumber($stats['availabilities'] ?? 0) ?></strong></li>
+                        <li class="flex items-center justify-between gap-4"><span class="flex items-start gap-2"><i class="fas fa-check-circle mt-1 text-emerald-600"></i>تعطیلات، مرخصی‌ها و استثناها</span><strong class="shrink-0 text-gray-700"><?= $localizedNumber($stats['exceptions'] ?? 0) ?></strong></li>
+                    </ul>
                 </div>
-                <div class="text-left"><span class="block rounded-2xl bg-indigo-50 px-3 py-2 text-sm font-bold text-indigo-700"><?= (int)($stats['total'] ?? 0) ?>/۵۰ کاربر</span><span class="mt-2 block text-xs text-gray-400"><?= (int)($stats['addresses'] ?? 0) ?> آدرس · <?= (int)($stats['contacts'] ?? 0) ?> راه ارتباطی · <?= (int)($stats['instruments'] ?? 0) ?> ساز · <?= (int)($stats['lessons'] ?? 0) ?> درس</span></div>
+                <div class="text-left"><span class="block rounded-2xl bg-indigo-50 px-3 py-2 text-sm font-bold text-indigo-700"><?= $localizedNumber($stats['total'] ?? 0) ?>/<?= $localizedNumber(50) ?> کاربر</span></div>
             </div>
             <div class="mb-5 grid grid-cols-3 gap-3 text-center text-sm">
-                <div class="rounded-2xl bg-amber-50 p-3"><strong class="block text-lg text-amber-700"><?= (int)($stats['pending'] ?? 0) ?></strong><span class="text-gray-500">در انتظار</span></div>
-                <div class="rounded-2xl bg-emerald-50 p-3"><strong class="block text-lg text-emerald-700"><?= (int)($stats['approved'] ?? 0) ?></strong><span class="text-gray-500">تأییدشده</span></div>
-                <div class="rounded-2xl bg-gray-100 p-3"><strong class="block text-lg text-gray-700"><?= (int)($stats['other'] ?? 0) ?></strong><span class="text-gray-500">سایر</span></div>
+                <div class="rounded-2xl bg-amber-50 p-3"><strong class="block text-lg text-amber-700"><?= $localizedNumber($stats['pending'] ?? 0) ?></strong><span class="text-gray-500">در انتظار</span></div>
+                <div class="rounded-2xl bg-emerald-50 p-3"><strong class="block text-lg text-emerald-700"><?= $localizedNumber($stats['approved'] ?? 0) ?></strong><span class="text-gray-500">تأییدشده</span></div>
+                <div class="rounded-2xl bg-gray-100 p-3"><strong class="block text-lg text-gray-700"><?= $localizedNumber($stats['other'] ?? 0) ?></strong><span class="text-gray-500">سایر</span></div>
             </div>
             <form method="POST" action="/analytics/_test/seed-academy-managers" onsubmit="return AppDialog.confirmSubmit(event, '۵۰ مدیر آموزشگاه آزمایشی ایجاد یا همگام‌سازی شوند؟');">
                 <input type="hidden" name="_token" value="<?= e(csrf_token()) ?>">
@@ -37,7 +49,12 @@ $stats = $testStats ?? [];
         <article class="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
             <div class="mb-5">
                 <h2 class="text-xl font-bold">داده‌های نمونه آموزشگاه و شعب</h2>
-                <p class="mt-2 text-sm leading-7 text-gray-500">ابزار موجود برای ایجاد ۵۰ آموزشگاه، شعب و اطلاعات وابسته یا پاک‌سازی کامل آن‌ها.</p>
+                <p class="mt-2 text-sm leading-7 text-gray-500">ابزار موجود برای ایجاد <?= $localizedNumber(50) ?> آموزشگاه، شعب و اطلاعات وابسته یا پاک‌سازی کامل آن‌ها.</p>
+                <ul class="mt-4 space-y-2 text-sm leading-6 text-gray-600">
+                    <li class="flex items-center justify-between gap-4"><span class="flex items-start gap-2"><i class="fas fa-check-circle mt-1 text-emerald-600"></i>آموزشگاه‌های دارای حساب اختصاصی</span><strong class="shrink-0 text-gray-700"><?= $localizedNumber($stats['academies'] ?? 0) ?></strong></li>
+                    <li class="flex items-center justify-between gap-4"><span class="flex items-start gap-2"><i class="fas fa-check-circle mt-1 text-emerald-600"></i>حساب‌های مدیر آموزشگاه</span><strong class="shrink-0 text-gray-700"><?= $localizedNumber($stats['academy_managers'] ?? 0) ?></strong></li>
+                    <li class="flex items-center justify-between gap-4"><span class="flex items-start gap-2"><i class="fas fa-check-circle mt-1 text-emerald-600"></i>شعب فیزیکی، آنلاین یا ترکیبی</span><strong class="shrink-0 text-gray-700"><?= $localizedNumber($stats['branches'] ?? 0) ?></strong></li>
+                </ul>
             </div>
             <div class="space-y-3">
                 <form method="POST" action="/academy/_test/seed-sample-academies">

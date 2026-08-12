@@ -99,8 +99,21 @@ class AdminTestDataService {
             'contacts' => $userIds ? DB::table('user_contacts')->whereIn('user_id', $userIds)->count() : 0,
             'instruments' => $userIds ? DB::table('user_instruments')->whereIn('user_id', $userIds)->count() : 0,
             'lessons' => $userIds ? DB::table('user_lessons')->whereIn('user_id', $userIds)->count() : 0,
+            'media' => $userIds ? DB::table('media_files')->whereIn('user_id', $userIds)->count() : 0,
+            'availabilities' => $userIds ? DB::table('user_availabilities')->whereIn('user_id', $userIds)->whereNull('deleted_at')->count() : 0,
+            'exceptions' => $userIds ? DB::table('user_availability_exceptions')->whereIn('user_id', $userIds)->whereNull('deleted_at')->count() : 0,
+            'catalog_instruments' => DB::table('instruments')->whereNull('deleted_at')->count(),
+            'catalog_lessons' => DB::table('lessons')->whereNull('deleted_at')->count(),
+            'levels' => DB::table('levels')->whereNull('deleted_at')->count(),
             'pending' => 0, 'approved' => 0, 'other' => 0,
         ];
+        $academyUsers = DB::table('users')->whereRaw("username LIKE 'sample_academy_%'")->get();
+        $academyUserIds = array_map(fn(array $user) => (int)$user['user_id'], $academyUsers);
+        $sampleAcademies = $academyUserIds ? DB::table('academies')->whereIn('user_id', $academyUserIds)->get() : [];
+        $academyIds = array_map(fn(array $academy) => (int)$academy['academy_id'], $sampleAcademies);
+        $stats['academies'] = count($sampleAcademies);
+        $stats['branches'] = $academyIds ? DB::table('academy_branches')->whereIn('academy_id', $academyIds)->whereNull('deleted_at')->count() : 0;
+        $stats['academy_managers'] = DB::table('users')->whereRaw("username LIKE 'sample_manager_%'")->count();
         foreach ($users as $user) {
             $status = $user['status'] ?? '';
             if ($status === 'pending') $stats['pending']++;
