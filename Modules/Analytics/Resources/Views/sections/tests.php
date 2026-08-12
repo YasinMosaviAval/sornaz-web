@@ -48,18 +48,18 @@ $localizedNumber = static function (int|float|string $number): string {
 
         <article class="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
             <div class="mb-5">
-                <h2 class="text-xl font-bold">داده‌های نمونه آموزشگاه و شعب</h2>
-                <p class="mt-2 text-sm leading-7 text-gray-500">ابزار موجود برای ایجاد <?= $localizedNumber(50) ?> آموزشگاه، شعب و اطلاعات وابسته یا پاک‌سازی کامل آن‌ها.</p>
+                <h2 class="text-xl font-bold">تست ۲: آموزشگاه‌ها و شعب اصلی</h2>
+                <p class="mt-2 text-sm leading-7 text-gray-500">برای هر مدیر تست ۱، یک حساب آموزشگاه و یک حساب شعبه اصلی با اطلاعات پایه، ترجمه فارسی و انگلیسی و رابطه‌های مدیریتی ایجاد می‌شود.</p>
                 <ul class="mt-4 space-y-2 text-sm leading-6 text-gray-600">
                     <li class="flex items-center justify-between gap-4"><span class="flex items-start gap-2"><i class="fas fa-check-circle mt-1 text-emerald-600"></i>آموزشگاه‌های دارای حساب اختصاصی</span><strong class="shrink-0 text-gray-700"><?= $localizedNumber($stats['academies'] ?? 0) ?></strong></li>
-                    <li class="flex items-center justify-between gap-4"><span class="flex items-start gap-2"><i class="fas fa-check-circle mt-1 text-emerald-600"></i>حساب‌های مدیر آموزشگاه</span><strong class="shrink-0 text-gray-700"><?= $localizedNumber($stats['academy_managers'] ?? 0) ?></strong></li>
-                    <li class="flex items-center justify-between gap-4"><span class="flex items-start gap-2"><i class="fas fa-check-circle mt-1 text-emerald-600"></i>شعب فیزیکی، آنلاین یا ترکیبی</span><strong class="shrink-0 text-gray-700"><?= $localizedNumber($stats['branches'] ?? 0) ?></strong></li>
+                    <li class="flex items-center justify-between gap-4"><span class="flex items-start gap-2"><i class="fas fa-check-circle mt-1 text-emerald-600"></i>شعبه‌های اصلی آموزشگاه‌ها</span><strong class="shrink-0 text-gray-700"><?= $localizedNumber($stats['branches'] ?? 0) ?></strong></li>
+                    <li class="flex items-center justify-between gap-4"><span class="flex items-start gap-2"><i class="fas fa-check-circle mt-1 text-emerald-600"></i>عضویت مدیر در آموزشگاه و شعبه اصلی</span><strong class="shrink-0 text-gray-700"><?= $localizedNumber($stats['academy_memberships'] ?? 0) ?></strong></li>
                 </ul>
             </div>
             <div class="space-y-3">
                 <form method="POST" action="/academy/_test/seed-sample-academies">
                     <input type="hidden" name="_token" value="<?= e(csrf_token()) ?>">
-                    <button type="submit" class="w-full rounded-2xl bg-emerald-600 px-5 py-3.5 font-medium text-white hover:bg-emerald-700"><i class="fas fa-database ml-2"></i>ایجاد آموزشگاه‌های نمونه</button>
+                    <button type="submit" class="w-full rounded-2xl bg-emerald-600 px-5 py-3.5 font-medium text-white hover:bg-emerald-700"><i class="fas fa-database ml-2"></i>اجرای تست آموزشگاه‌ها و شعب اصلی</button>
                 </form>
                 <form method="POST" action="/academy/_test/delete-sample-academies" onsubmit="return AppDialog.confirmSubmit(event, 'تمام اطلاعات آموزشگاه‌های نمونه حذف شوند؟');">
                     <input type="hidden" name="_token" value="<?= e(csrf_token()) ?>">

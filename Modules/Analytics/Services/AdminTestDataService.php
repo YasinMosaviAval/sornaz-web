@@ -128,13 +128,16 @@ class AdminTestDataService {
             'levels' => DB::table('levels')->whereNull('deleted_at')->count(),
             'pending' => 0, 'approved' => 0, 'other' => 0,
         ];
-        $academyUsers = DB::table('users')->whereRaw("username LIKE 'sample_academy_%'")->get();
+        $academyUsers = DB::table('users')->whereRaw("username LIKE 'test_academy_%' AND username NOT LIKE 'test_academy_manager_%'")->get();
         $academyUserIds = array_map(fn(array $user) => (int)$user['user_id'], $academyUsers);
         $sampleAcademies = $academyUserIds ? DB::table('academies')->whereIn('user_id', $academyUserIds)->get() : [];
         $academyIds = array_map(fn(array $academy) => (int)$academy['academy_id'], $sampleAcademies);
         $stats['academies'] = count($sampleAcademies);
         $stats['branches'] = $academyIds ? DB::table('academy_branches')->whereIn('academy_id', $academyIds)->whereNull('deleted_at')->count() : 0;
-        $stats['academy_managers'] = DB::table('users')->whereRaw("username LIKE 'sample_manager_%'")->count();
+        $stats['academy_managers'] = count($users);
+        $stats['academy_memberships'] = $academyIds
+            ? DB::table('academy_branch_members')->whereIn('created_by', $userIds)->whereNull('deleted_at')->count()
+            : 0;
         foreach ($users as $user) {
             $status = $user['status'] ?? '';
             if ($status === 'pending') $stats['pending']++;
