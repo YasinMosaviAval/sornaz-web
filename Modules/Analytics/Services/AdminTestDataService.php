@@ -41,6 +41,7 @@ class AdminTestDataService {
                 $this->syncAddresses($userId, $index, $createdAt);
                 $this->syncContacts($userId, $index, $username, $createdAt);
                 $this->syncMusicExperience($userId, $index, $createdAt, $catalog);
+                $this->syncDefaultUserMedia($userId, $index, $createdAt);
             }
 
             return [
@@ -100,6 +101,9 @@ class AdminTestDataService {
                     DB::table($table)->whereIn($key, $ids)->delete();
                 }
             }
+            DB::table('media_files')->whereIn('user_id', $userIds)->whereRaw("path LIKE 'assets/media/users/%'")->update([
+                'user_id' => null, 'fileable_id' => null, 'updated_by' => null,
+            ]);
             DB::table('translations')->where('table_name', 'users')->whereIn('table_id', $userIds)->delete();
             DB::table('users')->whereIn('user_id', $userIds)->delete();
 
@@ -139,6 +143,33 @@ class AdminTestDataService {
             ], $now);
         }
         return ['instruments' => $instrumentIds, 'lessons' => $lessonIds, 'levels' => $levelIds];
+    }
+
+    private function syncDefaultUserMedia(int $userId, int $userIndex, string $registeredAt): void {
+        $number = $userIndex + 1;
+        $avatarId = $this->syncMediaFile($userId, $registeredAt, 'profiles', sprintf('user-%02d.jpg', $number), 'teacher_avatar', 0, 720, 720);
+        DB::table('users')->where('user_id', $userId)->update(['avatar_file_id' => $avatarId]);
+        $this->syncMediaFile($userId, $registeredAt, 'covers', sprintf('user-%02d.jpg', $number), 'cover', 0, 1280, 720);
+        for ($i = 1; $i <= 3; $i++) $this->syncMediaFile($userId, $registeredAt, 'gallery', sprintf('user-%02d-%02d.jpg', $number, $i), 'teacher_gallery', $i, 1200, 900);
+        if ($number <= 20) $this->syncMediaFile($userId, $registeredAt, 'intro-videos', sprintf('user-%02d.mp4', $number), 'intro_video', 0, null, null, 'video');
+    }
+
+    private function syncMediaFile(int $userId, string $createdAt, string $folder, string $filename, string $collection, int $sortOrder, ?int $width, ?int $height, string $type = 'image'): int {
+        $relativePath = 'assets/media/users/' . $folder . '/' . $filename;
+        $absolutePath = dirname(__DIR__, 3) . '/' . $relativePath;
+        if (!is_file($absolutePath)) throw new RuntimeException('فایل رسانه پیش‌فرض یافت نشد: ' . $relativePath);
+        $existing = DB::table('media_files')->where('path', $relativePath)->first();
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $values = ['user_id'=>$userId, 'disk'=>'public', 'directory'=>'assets/media/users/' . $folder, 'filename'=>$filename,
+            'extension'=>$extension, 'mime_type'=>$type === 'video' ? 'video/mp4' : 'image/jpeg', 'type'=>$type,
+            'collection'=>$collection, 'thumbnail_path'=>null, 'original_filename'=>$filename, 'fileable_type'=>'users',
+            'fileable_id'=>$userId, 'sort_order'=>$sortOrder, 'size'=>filesize($absolutePath), 'duration'=>null,
+            'width'=>$width, 'height'=>$height, 'checksum'=>hash_file('sha256', $absolutePath), 'visibility'=>'public',
+            'updated_at'=>date('Y-m-d H:i:s'), 'updated_by'=>$userId, 'deleted_at'=>null, 'deleted_by'=>null];
+        if ($existing) { $id=(int)$existing['media_file_id']; DB::table('media_files')->where('media_file_id',$id)->update($values); return $id; }
+        $id=DB::table('media_files')->insertGetId(['path'=>$relativePath, 'created_at'=>$createdAt, 'created_by'=>$userId] + $values);
+        if (!$id) throw new RuntimeException('ثبت رسانه پیش‌فرض کاربر ناموفق بود.');
+        return $id;
     }
 
     private function syncCatalogRow(string $table, string $key, string $title, array $fields, array $values, string $now): int {
