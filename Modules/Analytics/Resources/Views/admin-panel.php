@@ -24,6 +24,7 @@
             component('students');
             component('teachers');
             component('branches');
+            component('branch-types');
             component('classrooms');
             component('courses');
             component('terms');

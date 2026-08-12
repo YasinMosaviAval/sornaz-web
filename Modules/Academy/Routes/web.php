@@ -19,6 +19,8 @@ Router::post('/academy/_test/delete-branch-network', [AcademyRegistrationControl
 Router::get('/academy/admin/branches', [AcademyBranchController::class, 'index'])->middleware('academy-panel');
 Router::post('/academy/admin/branches', [AcademyBranchController::class, 'store'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/branches/types', [AcademyBranchController::class, 'storeType'])->middleware(['academy-panel', 'csrf']);
+Router::post('/academy/admin/branch-types/{id}/update', [AcademyBranchController::class, 'updateType'])->middleware(['site-admin', 'csrf']);
+Router::post('/academy/admin/branch-types/{id}/delete', [AcademyBranchController::class, 'deleteType'])->middleware(['site-admin', 'csrf']);
 Router::post('/academy/admin/branches/{id}/update', [AcademyBranchController::class, 'update'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/branches/{id}/delete', [AcademyBranchController::class, 'destroy'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/members/{id}/update', [AcademyBranchController::class, 'updateMember'])->middleware(['academy-panel', 'csrf']);
