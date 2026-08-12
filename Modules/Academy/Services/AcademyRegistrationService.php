@@ -11,6 +11,8 @@ class AcademyRegistrationService {
     private const MANAGER_PREFIX = 'test_academy_manager_';
     private const ACADEMY_PREFIX = 'test_academy_';
     private const BRANCH_PREFIX = 'test_main_branch_';
+    private const EXTRA_BRANCH_PREFIX = 'test_extra_branch_';
+    private const MEMBER_PREFIX = 'test_branch_member_';
 
     public function __construct(protected UserService $users) {}
 
@@ -46,6 +48,35 @@ class AcademyRegistrationService {
                 'skipped' => false,
                 'message' => "تست ۲ تکمیل شد: {$created} آموزشگاه ایجاد و {$updated} آموزشگاه همگام‌سازی شد؛ برای هرکدام یک شعبه اصلی و دو عضویت مدیر ثبت شد.",
             ];
+        });
+    }
+
+    public function seedBranchNetwork(): array {
+        return transaction(function () {
+            $branchTypes = DB::table('academy_branch_types')->whereNull('deleted_at')->get();
+            $provinces = DB::table('world_iran_provinces')->get();
+            $counties = DB::table('world_iran_counties')->get();
+            $academies = DB::table('academies')->whereNull('deleted_at')->get();
+            $academies = array_values(array_filter($academies, function (array $academy) {
+                $user = DB::table('users')->where('user_id', (int)$academy['user_id'])->first();
+                return $user && str_starts_with((string)$user['username'], self::ACADEMY_PREFIX);
+            }));
+            if (!$academies) throw new RuntimeException('ابتدا تست ۲ (آموزشگاه‌ها و شعب اصلی) را اجرا کنید.');
+
+            $branchCount = 0; $staffCount = 0; $studentCount = 0; $contractCount = 0;
+            foreach ($academies as $academyIndex => $academy) {
+                $managerId = (int)$academy['created_by'];
+                $sample = $this->sampleAcademies()[$academyIndex % 50];
+                $extraCount = $academyIndex % 6;
+                for ($branchIndex = 1; $branchIndex <= $extraCount; $branchIndex++) {
+                    $branchId = $this->createSampleBranch((int)$academy['academy_id'], $managerId, $sample, $academyIndex, $branchIndex, $branchTypes, $provinces, $counties);
+                    $branchCount++;
+                    $counts = $this->seedBranchPeople($branchId, $managerId, $academyIndex, $branchIndex);
+                    $staffCount += $counts['staff']; $studentCount += $counts['students']; $contractCount += $counts['contracts'];
+                }
+            }
+            return ['branches' => $branchCount, 'staff' => $staffCount, 'students' => $studentCount, 'contracts' => $contractCount,
+                'message' => "تست ۳ تکمیل شد: {$branchCount} شعبه فرعی، {$staffCount} عضو پرسنل، {$studentCount} هنرجو و {$contractCount} قرارداد همگام‌سازی شد."];
         });
     }
 
@@ -203,14 +234,14 @@ class AcademyRegistrationService {
         return !$existingUser;
     }
 
-    private function createSampleBranch(int $academyId, int $managerId, array $sample, int $academyIndex, int $branchIndex, array $branchTypes, array $provinces, array $counties): void {
-        $serial = $academyIndex * 5 + $branchIndex + 1;
-        $branchLabels = ['مرکزی', 'شمال', 'شرق', 'غرب', 'آنلاین'];
+    private function createSampleBranch(int $academyId, int $managerId, array $sample, int $academyIndex, int $branchIndex, array $branchTypes, array $provinces, array $counties): int {
+        $serial = $academyIndex * 10 + $branchIndex + 1;
+        $branchLabels = ['مرکزی', 'شمال', 'شرق', 'غرب', 'آنلاین', 'جنوب'];
         $branchName = $sample['academy_name'] . ' - شعبه ' . $branchLabels[$branchIndex];
         $branchUserId = $this->seedUser([
-            'username' => sprintf(self::BRANCH_PREFIX . '%02d', $academyIndex + 1),
-            'email' => sprintf('branch%03d@sornaz.test', $serial),
-            'phone' => sprintf('0935%07d', 3000000 + $serial),
+            'username' => $branchIndex === 0 ? sprintf(self::BRANCH_PREFIX . '%02d', $academyIndex + 1) : sprintf(self::EXTRA_BRANCH_PREFIX . '%02d_%02d', $academyIndex + 1, $branchIndex),
+            'email' => $branchIndex === 0 ? sprintf('branch%03d@sornaz.test', $academyIndex * 5 + 1) : sprintf('extra.branch.%02d.%02d@sornaz.test', $academyIndex + 1, $branchIndex),
+            'phone' => $branchIndex === 0 ? sprintf('0935%07d', 3000000 + $academyIndex * 5 + 1) : sprintf('0936%07d', 3000000 + $academyIndex * 10 + $branchIndex),
             'type' => 'branch',
             'gender' => 'other',
             'national_code' => null,
@@ -254,6 +285,66 @@ class AcademyRegistrationService {
 
         $this->ensureAcademyMember($managerId, null);
         $this->ensureAcademyMember($managerId, $branchId);
+        return $branchId;
+    }
+
+    private function seedBranchPeople(int $branchId, int $managerId, int $academyIndex, int $branchIndex): array {
+        $serial = ($academyIndex + 1) * 10 + $branchIndex;
+        $definitions = [
+            'teacher' => 1 + ($serial % 5),
+            'receptionist' => 1 + ($serial % 5),
+            'other' => $serial % 4,
+            'manager' => $serial % 4,
+        ];
+        $firstNames = ['آرمان','سارا','پرهام','نگار','کیان','مهسا','امیر','نرگس','رضا','مریم'];
+        $lastNames = ['احمدی','محمدی','کریمی','رضایی','موسوی','نوری','حسینی'];
+        $staff = 0; $students = 0; $contracts = 0; $teacherNumber = 0;
+        foreach ($definitions as $role => $count) {
+            $roleOffset = (int)array_search($role, array_keys($definitions), true);
+            for ($i = 1; $i <= $count; $i++) {
+                $key = sprintf('%02d_%02d_%s_%02d', $academyIndex + 1, $branchIndex, $role, $i);
+                $name = $firstNames[($serial + $i) % count($firstNames)] . ' ' . $lastNames[($serial + $i * 2) % count($lastNames)];
+                $userId = $this->seedUser(['username' => self::MEMBER_PREFIX . $key, 'email' => str_replace('_', '.', $key) . '@sornaz.test',
+                    'phone' => sprintf('099%08d', (($serial * 1000 + $i * 10 + array_search($role, array_keys($definitions), true)) % 100000000)),
+                    'type' => 'human', 'gender' => ($serial + $i) % 2 ? 'female' : 'male', 'national_code' => sprintf('%010d', 8000000000 + $serial * 1000 + $roleOffset * 100 + $i),
+                    'birthday' => sprintf('%04d-%02d-%02d', 1360 + (($serial + $i) % 25), (($i + $branchIndex) % 12) + 1, (($serial + $i) % 27) + 1),
+                    'full_name' => $name, 'visibility' => 'public'], $managerId);
+                $this->ensureMemberContract($branchId, $userId, $managerId, $role, $serial + $i);
+                $staff++; $contracts++;
+                if ($role === 'teacher') {
+                    $teacherNumber++;
+                    $studentTotal = ($serial + $teacherNumber) % 6;
+                    for ($s = 1; $s <= $studentTotal; $s++) {
+                        $studentKey = sprintf('%02d_%02d_t%02d_s%03d', $academyIndex + 1, $branchIndex, $teacherNumber, $s);
+                        $studentId = $this->seedUser(['username' => self::MEMBER_PREFIX . 'student_' . $studentKey,
+                            'email' => 'student.' . str_replace('_', '.', $studentKey) . '@sornaz.test', 'phone' => sprintf('098%08d', (($serial * 10000 + $teacherNumber * 100 + $s) % 100000000)),
+                            'type' => 'human', 'gender' => ($s + $serial) % 2 ? 'female' : 'male', 'national_code' => sprintf('%010d', 7000000000 + $serial * 1000 + $teacherNumber * 100 + $s),
+                            'birthday' => sprintf('%04d-%02d-%02d', 1375 + (($serial + $s) % 22), (($s + 2) % 12) + 1, (($s + 8) % 27) + 1),
+                            'full_name' => $firstNames[($serial + $s + 3) % count($firstNames)] . ' ' . $lastNames[($serial + $s) % count($lastNames)], 'visibility' => 'private'], $managerId);
+                        $this->ensureMemberContract($branchId, $studentId, $managerId, 'student', $serial + $s);
+                        $students++; $contracts++;
+                    }
+                }
+            }
+        }
+        return compact('staff', 'students', 'contracts');
+    }
+
+    private function ensureMemberContract(int $branchId, int $userId, int $managerId, string $role, int $serial): void {
+        $member = DB::table('academy_branch_members')->where('branch_id', $branchId)->where('user_id', $userId)->first();
+        $values = ['branch_id' => $branchId, 'user_id' => $userId, 'status' => 'active', 'joined_at' => date('Y-m-d'),
+            'created_by' => $managerId, 'updated_by' => $managerId, 'approved_at' => date('Y-m-d H:i:s'), 'approved_by' => $managerId,
+            'deleted_at' => null, 'deleted_by' => null];
+        if ($member) { $memberId = (int)$member['member_id']; DB::table('academy_branch_members')->where('member_id', $memberId)->update($values); }
+        else $memberId = DB::table('academy_branch_members')->insertGetId($values);
+        $type = in_array($role, ['teacher','receptionist','manager'], true) ? $role : 'other';
+        $contract = DB::table('academy_branch_member_contracts')->where('member_id', $memberId)->whereNull('deleted_at')->first();
+        $contractValues = ['member_id' => $memberId, 'type' => $type, 'start_date' => date('Y-m-d'), 'end_date' => date('Y-m-d', strtotime('+1 year')),
+            'price' => $role === 'student' ? 0 : 5000000 + ($serial % 20) * 500000, 'currency_id' => 1,
+            'created_by' => $managerId, 'updated_by' => $managerId, 'approved_at' => date('Y-m-d H:i:s'), 'approved_by' => $managerId,
+            'deleted_at' => null, 'deleted_by' => null];
+        if ($contract) DB::table('academy_branch_member_contracts')->where('member_contract_id', (int)$contract['member_contract_id'])->update($contractValues);
+        else DB::table('academy_branch_member_contracts')->insertGetId($contractValues);
     }
 
     private function ensureAcademyMember(int $managerId, ?int $branchId): void {

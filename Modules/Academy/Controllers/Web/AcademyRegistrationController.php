@@ -39,6 +39,17 @@ class AcademyRegistrationController {
         }
     }
 
+    public function seedBranchNetwork() {
+        if (env('APP_ENV', 'production') !== 'local') abort(404);
+        try {
+            $result = $this->service->seedBranchNetwork();
+            session()->flash('admin_test_message', $result['message']);
+        } catch (\Throwable $e) {
+            session()->flash('admin_test_error', 'ایجاد شبکه شعب و اعضا ناموفق بود: ' . $e->getMessage());
+        }
+        return redirect('/analytics/admin-panel');
+    }
+
     public function deleteSamples() {
         if (env('APP_ENV', 'production') !== 'local') abort(404);
 

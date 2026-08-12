@@ -45,6 +45,14 @@ $localizedNumber = static function (int|float|string $number): string {
             </form>
             <p class="mt-3 text-xs text-gray-400">اجرای مجدد idempotent است و کاربران دارای پیشوند تست را همگام می‌کند.</p>
         </article>
+        <article class="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+            <div class="mb-5"><h2 class="text-xl font-bold">تست ۳: شعب فرعی، اعضا و قراردادها</h2><p class="mt-2 text-sm leading-7 text-gray-500">برای آموزشگاه‌های تست ۲ بین صفر تا پنج شعبه غیر اصلی و برای هر شعبه مدرس، منشی، کارمند، مدیر و هنرجو به همراه عضویت و قرارداد واقعی ایجاد می‌شود.</p></div>
+            <form method="POST" action="/academy/_test/seed-branch-network" onsubmit="return AppDialog.confirmSubmit(event, 'شعب فرعی، اعضا و قراردادهای آزمایشی ایجاد یا همگام‌سازی شوند؟');">
+                <input type="hidden" name="_token" value="<?= e(csrf_token()) ?>">
+                <button type="submit" class="w-full rounded-2xl bg-violet-600 px-5 py-3.5 font-medium text-white hover:bg-violet-700"><i class="fas fa-network-wired ml-2"></i>اجرای تست شبکه شعب و اعضا</button>
+            </form>
+            <p class="mt-3 text-xs text-gray-400">اجرای مجدد تکرارپذیر است و هیچ شعبه فرعی به‌عنوان شعبه اصلی ثبت نمی‌شود.</p>
+        </article>
 
         <article class="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
             <div class="mb-5">

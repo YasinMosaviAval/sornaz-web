@@ -14,11 +14,14 @@ Router::post('/academy/send-academy-request', [AcademyRegistrationController::cl
 Router::post('/academy/send-academy-request/send-otp', [AcademyRegistrationController::class, 'sendOtp']);
 Router::post('/academy/_test/seed-sample-academies', [AcademyRegistrationController::class, 'seedSamples'])->middleware(['site-admin', 'csrf']);
 Router::post('/academy/_test/delete-sample-academies', [AcademyRegistrationController::class, 'deleteSamples'])->middleware(['site-admin', 'csrf']);
+Router::post('/academy/_test/seed-branch-network', [AcademyRegistrationController::class, 'seedBranchNetwork'])->middleware(['site-admin', 'csrf']);
 Router::get('/academy/admin/branches', [AcademyBranchController::class, 'index'])->middleware('academy-panel');
 Router::post('/academy/admin/branches', [AcademyBranchController::class, 'store'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/branches/types', [AcademyBranchController::class, 'storeType'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/branches/{id}/update', [AcademyBranchController::class, 'update'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/branches/{id}/delete', [AcademyBranchController::class, 'destroy'])->middleware(['academy-panel', 'csrf']);
+Router::post('/academy/admin/members/{id}/update', [AcademyBranchController::class, 'updateMember'])->middleware(['academy-panel', 'csrf']);
+Router::post('/academy/admin/members/{id}/delete', [AcademyBranchController::class, 'deleteMember'])->middleware(['academy-panel', 'csrf']);
 
 Router::group(
     ['prefix' => '/academy'],

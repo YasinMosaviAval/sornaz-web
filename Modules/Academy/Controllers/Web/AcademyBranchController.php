@@ -16,6 +16,8 @@ class AcademyBranchController {
     public function update(int $id) { return $this->run(fn() => $this->service->update((int)auth()->id(), $id, $this->payload(), SiteAdminAccess::allows(auth()->user()))); }
     public function destroy(int $id) { return $this->run(function() use($id){$this->service->delete((int)auth()->id(),$id,SiteAdminAccess::allows(auth()->user()));return null;}); }
     public function storeType() { return $this->run(fn() => $this->service->addType((int)auth()->id(), trim((string)($_POST['name'] ?? ''))), 201); }
+    public function updateMember(int $id) { return $this->run(fn()=>$this->service->updateMember((int)auth()->id(),$id,$this->payload(),SiteAdminAccess::allows(auth()->user()))); }
+    public function deleteMember(int $id) { return $this->run(function()use($id){$this->service->deleteMember((int)auth()->id(),$id,SiteAdminAccess::allows(auth()->user()));return null;}); }
     private function payload(): array {
         $encoded = (string)($_POST['payload_b64'] ?? '');
         $raw = $encoded !== '' ? base64_decode($encoded, true) : (string)($_POST['payload'] ?? '');
