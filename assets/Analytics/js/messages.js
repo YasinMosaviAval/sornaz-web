@@ -6,7 +6,7 @@ window.messageStatusesList = ['خوانده‌نشده', 'خوانده‌شده'
 window.messagePrioritiesList = ['عادی', 'مهم', 'فوری'];
 window.messageTypesList = ['اطلاعیه', 'یادآوری', 'هشدار', 'شخصی'];
 
-window.getMessageBranches = function () {
+window.getMessageBranches = async function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
     return [
         { id: 1, name: 'شعبه مرکزی' },
@@ -82,7 +82,7 @@ function sortMessageItems() {
     });
 }
 
-window.updateMessageSortIcons = function () {
+window.updateMessageSortIcons = async function () {
     ['title', 'sender', 'branchName', 'receiver', 'type', 'date', 'status'].forEach(function (f) {
         const icon = document.getElementById('msgSortIcon-' + f);
         if (!icon) return;
@@ -90,7 +90,7 @@ window.updateMessageSortIcons = function () {
     });
 };
 
-window.sortMessagesBy = function (field) {
+window.sortMessagesBy = async function (field) {
     if (msgSortField === field) msgSortDirection = msgSortDirection === 'asc' ? 'desc' : 'asc';
     else { msgSortField = field; msgSortDirection = 'asc'; }
     sortMessageItems();
@@ -98,7 +98,7 @@ window.sortMessagesBy = function (field) {
     window.updateMessageSortIcons();
 };
 
-window.renderMessagesBranchTabs = function () {
+window.renderMessagesBranchTabs = async function () {
     const container = document.getElementById('messagesBranchTabs');
     if (!container) return;
     container.querySelectorAll('.message-branch-tab:not([data-value="all"])').forEach(function (t) { t.remove(); });
@@ -126,7 +126,7 @@ window.renderMessagesBranchTabs = function () {
     }
 };
 
-window.filterMessagesByBranch = function (branchId) {
+window.filterMessagesByBranch = async function (branchId) {
     currentMessageBranch = branchId;
     document.querySelectorAll('.message-branch-tab').forEach(function (tab) {
         const active = String(tab.dataset.value) === String(branchId);
@@ -143,7 +143,7 @@ window.filterMessagesByBranch = function (branchId) {
     window.filterMessages();
 };
 
-window.filterMessages = function () {
+window.filterMessages = async function () {
     const search = (document.getElementById('messageSearch') && document.getElementById('messageSearch').value || '').trim().toLowerCase();
     const status = document.getElementById('filterMessageStatus') && document.getElementById('filterMessageStatus').value || '';
     const priority = document.getElementById('filterMessagePriority') && document.getElementById('filterMessagePriority').value || '';
@@ -167,7 +167,7 @@ window.filterMessages = function () {
     window.renderMessagesTable(filteredMessages);
 };
 
-window.renderMessagesTable = function (list) {
+window.renderMessagesTable = async function (list) {
     list = list || filteredMessages;
     const tbody = document.querySelector('#messagesTable tbody');
     if (!tbody) return;
@@ -213,20 +213,20 @@ function updateMessagesPagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changeMessagesPage = function (page) {
+window.changeMessagesPage = async function (page) {
     const totalPages = Math.ceil(filteredMessages.length / messagesPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     messagesCurrentPage = page;
     window.renderMessagesTable(filteredMessages);
 };
 
-window.openAddMessageModal = function () {
+window.openAddMessageModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = window.getMessageAddModalHTML
         ? window.getMessageAddModalHTML() : '';
 };
 
-window.saveMessage = function () {
+window.saveMessage = async function () {
     const title = (document.getElementById('msgTitle') && document.getElementById('msgTitle').value || '').trim();
     const body = (document.getElementById('msgBody') && document.getElementById('msgBody').value || '').trim();
     if (!title) return alert('عنوان پیام الزامی است');
@@ -256,7 +256,7 @@ window.saveMessage = function () {
     alert('✅ پیام ارسال شد');
 };
 
-window.viewMessage = function (id) {
+window.viewMessage = async function (id) {
     const item = allMessages.find(function (x) { return x.id === id; });
     if (!item) return;
     // علامت‌گذاری به‌عنوان خوانده‌شده
@@ -268,7 +268,7 @@ window.viewMessage = function (id) {
         ? window.getMessageDetailsModalHTML(item) : '';
 };
 
-window.markMessageUnread = function (id) {
+window.markMessageUnread = async function (id) {
     const item = allMessages.find(function (x) { return x.id === id; });
     if (!item) return;
     item.status = 'خوانده‌نشده';
@@ -276,8 +276,8 @@ window.markMessageUnread = function (id) {
     closeModal();
 };
 
-window.deleteMessage = function (id) {
-    if (!confirm('حذف این پیام؟')) return;
+window.deleteMessage = async function (id) {
+    if (!(await AppDialog.confirm('حذف این پیام؟'))) return;
     allMessages = allMessages.filter(function (m) { return m.id !== id; });
     window.filterMessages();
 };

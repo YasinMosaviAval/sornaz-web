@@ -7,6 +7,10 @@ window.changeAuthLanguage = function(locale) {
 
 window.showAuthToast = function(type, message) {
     if (!message) return;
+    if (window.AppDialog) {
+        AppDialog.alert(message, { type: type === 'success' ? 'success' : 'error' });
+        return;
+    }
     if (typeof Swal === 'undefined') {
         console[type === 'error' ? 'error' : 'log'](message);
         return;
@@ -21,7 +25,8 @@ window.showAuthToast = function(type, message) {
 
 window.alert = function(message) {
     if (String(message) === authText('reset_success', 'رمز عبور با موفقیت تغییر کرد. اکنون وارد شوید.')) return;
-    showAuthToast('error', String(message));
+    if (window.AppDialog) AppDialog.alert(String(message), { type:'error' });
+    else showAuthToast('error', String(message));
 };
 
 window.togglePassword = function(inputId, btn) {

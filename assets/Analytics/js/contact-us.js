@@ -122,7 +122,7 @@ let allContactMessages = [
     { id: 3, name: "سارا نوری", email: "sara@email.com", subject: "سوال درباره شهریه", message: "شهریه ترم پاییز گیتار چقدر است؟", date: "۱۴۰۳/۰۹/۱۵", status: "replied" }
 ];
 
-window.renderContactUs = function() {
+window.renderContactUs = async function () {
     document.getElementById('contactPageTitle').value = contactSettings.pageTitle;
     document.getElementById('contactPageHint').value = contactSettings.hint;
     document.getElementById('contactReceiveEmail').value = contactSettings.receiveEmail;
@@ -232,7 +232,7 @@ window.renderContactUs = function() {
     renderContactMessages();
 };
 
-window.saveContactSettings = function() {
+window.saveContactSettings = async function () {
     contactSettings.pageTitle = document.getElementById('contactPageTitle').value;
     contactSettings.hint = document.getElementById('contactPageHint').value;
     contactSettings.receiveEmail = document.getElementById('contactReceiveEmail').value;
@@ -248,7 +248,7 @@ window.saveContactSettings = function() {
     alert('✅ تنظیمات ذخیره شد');
 };
 
-window.saveAboutUsSettings = function() {
+window.saveAboutUsSettings = async function () {
     aboutUsSettings.pageTitle = document.getElementById('aboutUsPageTitle').value;
     aboutUsSettings.title1 = document.getElementById('aboutUsTitle1').value;
     aboutUsSettings.content1 = document.getElementById('aboutUsContent1').value;
@@ -271,7 +271,7 @@ window.saveAboutUsSettings = function() {
     alert('✅ تنظیمات ذخیره شد');
 };
 
-window.saveLoginSettings = function() {
+window.saveLoginSettings = async function () {
     loginSettings.pageTitle = document.getElementById('loginPageTitle').value;
     loginSettings.welcome = document.getElementById('loginWelcome').value;
     loginSettings.email = document.getElementById('loginEmail').value;
@@ -287,7 +287,7 @@ window.saveLoginSettings = function() {
     alert('✅ تنظیمات ذخیره شد');
 };
 
-window.saveRegisterSettings = function() {
+window.saveRegisterSettings = async function () {
     registerSettings.pageTitle = document.getElementById('registerPageTitle').value;
     registerSettings.welcome = document.getElementById('registerWelcome').value;
     registerSettings.email = document.getElementById('registerEmail').value;
@@ -309,7 +309,7 @@ window.saveRegisterSettings = function() {
     alert('✅ تنظیمات ذخیره شد');
 };
 
-window.saveRuleSettings = function() {
+window.saveRuleSettings = async function () {
     ruleSettings.pageTitle = document.getElementById('rulePageTitle').value;
     ruleSettings.title1 = document.getElementById('ruleTitle1').value;
     ruleSettings.content1 = document.getElementById('ruleContent1').value;
@@ -331,7 +331,7 @@ window.saveRuleSettings = function() {
 };
 
 
-window.saveForgotPasswordSettings = function() {
+window.saveForgotPasswordSettings = async function () {
     forgotPasswordSettings.pageTitle = document.getElementById('forgotPasswordPageTitle').value;
     forgotPasswordSettings.welcome = document.getElementById('forgotPasswordWelcome').value;
     forgotPasswordSettings.receiveType = document.getElementById('forgotPasswordReceiveType').value;
@@ -361,7 +361,7 @@ window.saveForgotPasswordSettings = function() {
 
 
 
-window.renderContactMessages = function() {
+window.renderContactMessages = async function () {
     const tbody = document.querySelector('#contactMessagesTable tbody');
     const countEl = document.getElementById('contactMsgCount');
     if (countEl) countEl.textContent = allContactMessages.length + ' پیام';
@@ -390,7 +390,7 @@ window.renderContactMessages = function() {
             </tr>`).join('');
 };
 
-window.viewContactMessage = function(id) {
+window.viewContactMessage = async function (id) {
     const m = allContactMessages.find(x => x.id === id);
     if (!m) return;
     if (m.status === 'unread') m.status = 'read';
@@ -418,15 +418,15 @@ window.viewContactMessage = function(id) {
     </div>`;
 };
 
-window.markContactReplied = function(id) {
+window.markContactReplied = async function (id) {
     const m = allContactMessages.find(x => x.id === id);
     if (m) m.status = 'replied';
     renderContactMessages();
     closeModal();
 };
 
-window.deleteContactMessage = function(id) {
-    if (!confirm('حذف این پیام؟')) return;
+window.deleteContactMessage = async function (id) {
+    if (!(await AppDialog.confirm('حذف این پیام؟'))) return;
     allContactMessages = allContactMessages.filter(m => m.id !== id);
     renderContactMessages();
     closeModal();

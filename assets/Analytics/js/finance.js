@@ -105,7 +105,7 @@ function sortFinanceItems() {
     });
 }
 
-window.updateFinanceSortIcons = function () {
+window.updateFinanceSortIcons = async function () {
     ['title', 'branchName', 'type', 'amount', 'date', 'status'].forEach(function (f) {
         const icon = document.getElementById('financeSortIcon-' + f);
         if (!icon) return;
@@ -114,7 +114,7 @@ window.updateFinanceSortIcons = function () {
     });
 };
 
-window.sortFinanceBy = function (field) {
+window.sortFinanceBy = async function (field) {
     if (financeSortField === field) {
         financeSortDirection = financeSortDirection === 'asc' ? 'desc' : 'asc';
     } else {
@@ -127,7 +127,7 @@ window.sortFinanceBy = function (field) {
 };
 
 // ==================== تب شعبه‌ها ====================
-window.renderFinanceBranchTabs = function () {
+window.renderFinanceBranchTabs = async function () {
     const container = document.getElementById('financeBranchTabs');
     if (!container) return;
     container.querySelectorAll('.finance-branch-tab:not(:first-child)').forEach(function (t) { t.remove(); });
@@ -142,7 +142,7 @@ window.renderFinanceBranchTabs = function () {
     });
 };
 
-window.filterFinanceByBranch = function (branchId) {
+window.filterFinanceByBranch = async function (branchId) {
     currentFinanceBranch = branchId;
     document.querySelectorAll('.finance-branch-tab').forEach(function (tab) {
         tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
@@ -165,7 +165,7 @@ window.filterFinanceByBranch = function (branchId) {
 };
 
 // ==================== محدوده زمانی ====================
-window.onFinanceRangeChange = function () {
+window.onFinanceRangeChange = async function () {
     const range = document.getElementById('filterFinanceRange') && document.getElementById('filterFinanceRange').value;
     const customBox = document.getElementById('financeCustomRangeBox');
     if (customBox) {
@@ -215,7 +215,7 @@ function matchesDateRange(item) {
 }
 
 // ==================== فیلتر ====================
-window.filterFinance = function () {
+window.filterFinance = async function () {
     const search = (document.getElementById('financeSearch') && document.getElementById('financeSearch').value || '').trim().toLowerCase();
     const status = document.getElementById('filterFinanceStatus') && document.getElementById('filterFinanceStatus').value || '';
     const type = document.getElementById('filterFinanceType') && document.getElementById('filterFinanceType').value || '';
@@ -239,7 +239,7 @@ window.filterFinance = function () {
 };
 
 // ==================== خلاصه مالی ====================
-window.renderFinanceSummary = function () {
+window.renderFinanceSummary = async function () {
     const container = document.getElementById('financeSummaryCards');
     if (!container) return;
 
@@ -265,7 +265,7 @@ window.renderFinanceSummary = function () {
 };
 
 // ==================== جدول ====================
-window.renderFinanceTable = function (list) {
+window.renderFinanceTable = async function (list) {
     list = list || filteredTransactions;
     const tbody = document.querySelector('#financeTable tbody');
     if (!tbody) return;
@@ -317,7 +317,7 @@ function updateFinancePagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changeFinancePage = function (page) {
+window.changeFinancePage = async function (page) {
     const totalPages = Math.ceil(filteredTransactions.length / financePerPage) || 1;
     if (page < 1 || page > totalPages) return;
     financeCurrentPage = page;
@@ -347,12 +347,12 @@ function readFinanceForm(prefix) {
 }
 
 // ==================== CRUD ====================
-window.openAddTransactionModal = function () {
+window.openAddTransactionModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = window.getFinanceAddModalHTML ? window.getFinanceAddModalHTML() : '';
 };
 
-window.saveTransaction = function () {
+window.saveTransaction = async function () {
     const data = readFinanceForm('');
     if (!data.title || !data.amount) return alert('شرح و مبلغ الزامی است');
     allTransactions.unshift(Object.assign({ id: Date.now() }, data));
@@ -361,21 +361,21 @@ window.saveTransaction = function () {
     alert('✅ تراکنش ثبت شد');
 };
 
-window.viewTransaction = function (id) {
+window.viewTransaction = async function (id) {
     const item = allTransactions.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getFinanceDetailsModalHTML
         ? window.getFinanceDetailsModalHTML(item) : '';
 };
 
-window.editTransaction = function (id) {
+window.editTransaction = async function (id) {
     const item = allTransactions.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getFinanceEditModalHTML
         ? window.getFinanceEditModalHTML(item) : '';
 };
 
-window.saveEditedTransaction = function (id) {
+window.saveEditedTransaction = async function (id) {
     const data = readFinanceForm('editTrans');
     if (!data.title || !data.amount) return alert('شرح و مبلغ الزامی است');
     const index = allTransactions.findIndex(function (x) { return x.id === id; });
@@ -387,12 +387,12 @@ window.saveEditedTransaction = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.toggleFinanceInlineEdit = function (id) {
+window.toggleFinanceInlineEdit = async function (id) {
     editingFinanceRowId = editingFinanceRowId === id ? null : id;
     renderFinanceTable(filteredTransactions);
 };
 
-window.saveInlineTransaction = function (id) {
+window.saveInlineTransaction = async function (id) {
     const data = readFinanceForm('inlineTrans' + id);
     if (!data.title || !data.amount) return alert('شرح و مبلغ الزامی است');
     const index = allTransactions.findIndex(function (x) { return x.id === id; });
@@ -403,15 +403,15 @@ window.saveInlineTransaction = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.deleteTransaction = function (id) {
-    if (!confirm('آیا از حذف این تراکنش مطمئن هستید؟')) return;
+window.deleteTransaction = async function (id) {
+    if (!(await AppDialog.confirm('آیا از حذف این تراکنش مطمئن هستید؟'))) return;
     allTransactions = allTransactions.filter(function (t) { return t.id !== id; });
     if (editingFinanceRowId === id) editingFinanceRowId = null;
     filterFinance();
 };
 
 // ==================== اکسل / PDF ====================
-window.exportFinanceToExcel = function () {
+window.exportFinanceToExcel = async function () {
     const data = filteredTransactions.length ? filteredTransactions : allTransactions;
     let csv = '\uFEFFردیف,شرح,شعبه,نوع,مبلغ,تاریخ,وضعیت,خلاصه\n';
     data.forEach(function (item, i) {
@@ -425,11 +425,11 @@ window.exportFinanceToExcel = function () {
     link.click();
 };
 
-window.exportFinance = function () {
+window.exportFinance = async function () {
     exportFinanceToExcel();
 };
 
-window.exportFinanceToPDF = function () {
+window.exportFinanceToPDF = async function () {
     document.getElementById('modalContainer').innerHTML = window.getFinancePDFModalHTML
         ? window.getFinancePDFModalHTML(financePdfColumns) : '';
 };

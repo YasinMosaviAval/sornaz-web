@@ -32,26 +32,26 @@ function getGalleryOwnersList() {
     }));
 }
 
-window.getGalleryAcceptForCategory = function (category) {
+window.getGalleryAcceptForCategory = async function (category) {
     if (category === 'cover' || category === 'logo') return 'image/*';
     if (category === 'intro_video') return 'video/*';
     return 'image/*,video/*';
 };
 
-window.getGalleryAllowedTypeLabel = function (category) {
+window.getGalleryAllowedTypeLabel = async function (category) {
     if (category === 'cover' || category === 'logo') return 'فقط تصویر';
     if (category === 'intro_video') return 'فقط ویدیو';
     return 'تصویر یا ویدیو';
 };
 
-window.getGalleryCropAspect = function (category) {
+window.getGalleryCropAspect = async function (category) {
     if (category === 'cover') return 16 / 9;
     if (category === 'logo') return 1;
     if (category === 'gallery') return null;
     return null;
 };
 
-window.getGalleryCropOutputSize = function (category) {
+window.getGalleryCropOutputSize = async function (category) {
     if (category === 'cover') return { w: 1920, h: 1080 };
     if (category === 'logo') return { w: 512, h: 512 };
     return { w: 1600, h: 900 };
@@ -138,17 +138,17 @@ let galleryPendingCropUrl = null;
 let galleryCropState = null;
 let galleryFormModalBackup = null;
 
-window.getGalleryCategory = function (value) {
+window.getGalleryCategory = async function (value) {
     return galleryCategories.find(function (item) { return item.value === value; }) || galleryCategories[3];
 };
 
-window.getGalleryCategoryOptions = function (selected) {
+window.getGalleryCategoryOptions = async function (selected) {
     return galleryCategories.map(function (item) {
         return '<option value="' + item.value + '"' + (item.value === selected ? ' selected' : '') + '>' + item.label + '</option>';
     }).join('');
 };
 
-window.getGalleryOwnerOptions = function (selected) {
+window.getGalleryOwnerOptions = async function (selected) {
     return getGalleryOwnersList().map(function (owner) {
         const sel = String(owner.id) === String(selected) ? ' selected' : '';
         return '<option value="' + owner.id + '"' + sel + '>' + owner.name + '</option>';
@@ -170,7 +170,7 @@ function setActiveOwnerTabsInContainer(container, value) {
     });
 }
 
-window.renderGalleryOwnerTabs = function () {
+window.renderGalleryOwnerTabs = async function () {
     const containers = document.querySelectorAll('.gallery-owner-tabs');
     const owners = [{ id: 'all', name: 'همه', icon: 'fa-layer-group' }].concat(
         getGalleryOwnersList().map(function (owner) {
@@ -192,14 +192,14 @@ window.renderGalleryOwnerTabs = function () {
     });
 };
 
-window.setGalleryCategory = function (category, sectionId) {
+window.setGalleryCategory = async function (category, sectionId) {
     currentGalleryCategory = category;
     if (sectionId) currentGallerySectionId = sectionId;
     window.renderGalleryOwnerTabs();
     window.renderGallery();
 };
 
-window.filterGalleryByOwner = function (ownerId) {
+window.filterGalleryByOwner = async function (ownerId) {
     if (ownerId === 'all' || ownerId === 'academy') {
         currentGalleryOwner = ownerId;
     } else {
@@ -211,7 +211,7 @@ window.filterGalleryByOwner = function (ownerId) {
     window.renderGallery();
 };
 
-window.renderGallery = function () {
+window.renderGallery = async function () {
     const grids = document.querySelectorAll('.gallery-grid');
     grids.forEach(function (grid) {
         const cat = grid.getAttribute('data-gallery-category') || currentGalleryCategory;
@@ -271,7 +271,7 @@ function readGalleryForm(existing) {
     };
 }
 
-window.openAddGalleryModal = function () {
+window.openAddGalleryModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     galleryPendingCropUrl = null;
     document.getElementById('modalContainer').innerHTML = window.getGalleryAddModalHTML
@@ -279,7 +279,7 @@ window.openAddGalleryModal = function () {
     bindGalleryFileCropListener();
 };
 
-window.saveGalleryItem = function () {
+window.saveGalleryItem = async function () {
     const item = readGalleryForm();
     if (!item) return alert('آموزشگاه/شعبه و عنوان الزامی هستند');
     allGalleryItems.unshift(Object.assign({}, item, { id: Date.now(), date: 'همین الان' }));
@@ -299,7 +299,7 @@ window.saveGalleryItem = function () {
     alert('آیتم با موفقیت اضافه شد');
 };
 
-window.editGalleryItem = function (id) {
+window.editGalleryItem = async function (id) {
     const item = allGalleryItems.find(function (entry) { return entry.id === id; });
     if (!item) return;
     galleryPendingCropUrl = null;
@@ -309,7 +309,7 @@ window.editGalleryItem = function (id) {
     bindGalleryFileCropListener();
 };
 
-window.saveEditedGalleryItem = function (id) {
+window.saveEditedGalleryItem = async function (id) {
     const existing = allGalleryItems.find(function (entry) { return entry.id === id; });
     if (!existing) return;
     const prevCategory = currentGalleryCategory;
@@ -328,8 +328,8 @@ window.saveEditedGalleryItem = function (id) {
     alert('تغییرات ذخیره شد');
 };
 
-window.deleteGalleryItem = function (id) {
-    if (!confirm('آیا از حذف این آیتم مطمئن هستید؟')) return;
+window.deleteGalleryItem = async function (id) {
+    if (!(await AppDialog.confirm('آیا از حذف این آیتم مطمئن هستید؟'))) return;
     allGalleryItems = allGalleryItems.filter(function (item) { return item.id !== id; });
     window.renderGallery();
 };
@@ -494,7 +494,7 @@ function bindGalleryCropEvents() {
         galleryCropState.lastX = e.clientX;
         galleryCropState.lastY = e.clientY;
     };
-    window.onmousemove = function (e) {
+    window.onmousemove = async function (e) {
         if (!galleryCropState || !galleryCropState.dragging) return;
         const dx = (e.clientX - galleryCropState.lastX) / galleryCropState.viewScale;
         const dy = (e.clientY - galleryCropState.lastY) / galleryCropState.viewScale;
@@ -504,7 +504,7 @@ function bindGalleryCropEvents() {
         galleryCropState.cy = clamp(galleryCropState.cy + dy, 0, galleryCropState.img.height - galleryCropState.ch);
         drawGalleryCropCanvas();
     };
-    window.onmouseup = function () {
+    window.onmouseup = async function () {
         if (galleryCropState) galleryCropState.dragging = false;
     };
     canvas.ontouchstart = function (e) {
@@ -530,7 +530,7 @@ function bindGalleryCropEvents() {
     };
 }
 
-window.zoomGalleryCrop = function (delta) {
+window.zoomGalleryCrop = async function (delta) {
     const s = galleryCropState;
     if (!s) return;
     const factor = delta > 0 ? 0.92 : 1.08;
@@ -563,7 +563,7 @@ window.zoomGalleryCrop = function (delta) {
     drawGalleryCropCanvas();
 };
 
-window.applyGalleryCrop = function () {
+window.applyGalleryCrop = async function () {
     const s = galleryCropState;
     if (!s) return;
     const size = window.getGalleryCropOutputSize(s.category);
@@ -601,7 +601,7 @@ window.applyGalleryCrop = function () {
     }
 };
 
-window.cancelGalleryCrop = function () {
+window.cancelGalleryCrop = async function () {
     galleryCropState = null;
     const container = document.getElementById('modalContainer');
     if (container && galleryFormModalBackup) {

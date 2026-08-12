@@ -149,7 +149,7 @@ function sortStaffItems() {
     });
 }
 
-window.updateSortIcons = function() {
+window.updateSortIcons = async function () {
     const fields = ['name', 'typeLabel', 'contractTitle', 'branch', 'startDate', 'endDate', 'price', 'status'];
     fields.forEach(field => {
         const icon = document.getElementById(`sortIcon-${field}`);
@@ -162,7 +162,7 @@ window.updateSortIcons = function() {
     });
 };
 
-window.sortStaffBy = function(field) {
+window.sortStaffBy = async function (field) {
     if (staffSortField === field) {
         staffSortDirection = staffSortDirection === 'asc' ? 'desc' : 'asc';
     } else {
@@ -200,20 +200,20 @@ function readLessonsFromPrefix(prefix) {
     });
     return list;
 }
-window.toggleStaffLessonFields = function(selectId, containerId) {
+window.toggleStaffLessonFields = async function (selectId, containerId) {
     const sel = document.getElementById(selectId);
     const box = document.getElementById(containerId);
     if (!sel || !box) return;
     const isTeacher = sel.value === 'teacher';
     box.classList.toggle('hidden', !isTeacher);
 };
-window.addStaffLessonRow = function(prefix) {
+window.addStaffLessonRow = async function (prefix) {
     const container = document.getElementById(prefix + 'LessonsContainer');
     if (!container || !window.getStaffLessonRowHTML) return;
     const idx = container.querySelectorAll('[data-lesson-row]').length;
     container.insertAdjacentHTML('beforeend', window.getStaffLessonRowHTML(prefix, idx, null, idx === 0));
 };
-window.removeStaffLessonRow = function(btn) {
+window.removeStaffLessonRow = async function (btn) {
     const row = btn.closest('[data-lesson-row]');
     if (!row) return;
     const container = row.parentElement;
@@ -226,7 +226,7 @@ window.removeStaffLessonRow = function(btn) {
 };
 
 // ==================== رندر جدول ====================
-window.renderStaffTable = function(staff = filteredStaff) {
+window.renderStaffTable = async function (staff = filteredStaff) {
     const tbody = document.querySelector('#staffTable tbody');
     if (!tbody) return;
 
@@ -299,7 +299,7 @@ function updateStaffPagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changeStaffPage = function(page) {
+window.changeStaffPage = async function (page) {
     const totalPages = Math.ceil(filteredStaff.length / staffPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     staffCurrentPage = page;
@@ -307,7 +307,7 @@ window.changeStaffPage = function(page) {
 };
 
 // ==================== فیلترها ====================
-window.renderStaffBranchTabs = function () {
+window.renderStaffBranchTabs = async function () {
     const container = document.getElementById('staffBranchTabs');
     if (!container) return;
     container.querySelectorAll('.staff-branch-tab:not(:first-child)').forEach(function (tab) { tab.remove(); });
@@ -322,7 +322,7 @@ window.renderStaffBranchTabs = function () {
     });
 };
 
-window.filterStaffByBranch = function (branchName) {
+window.filterStaffByBranch = async function (branchName) {
     currentStaffBranch = branchName;
     document.querySelectorAll('.staff-branch-tab').forEach(function (tab) {
         tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
@@ -343,7 +343,7 @@ window.filterStaffByBranch = function (branchName) {
     window.filterStaff();
 };
 
-window.filterStaff = function() {
+window.filterStaff = async function () {
     const search = (document.getElementById('staffSearch')?.value || '').trim().toLowerCase();
     const type = document.getElementById('filterStaffType')?.value || '';
     const status = document.getElementById('filterStaffStatus')?.value || '';
@@ -364,13 +364,13 @@ window.filterStaff = function() {
     renderStaffTable(filteredStaff);
 };
 
-window.toggleStaffInlineEdit = function(id) {
+window.toggleStaffInlineEdit = async function (id) {
     editingRowId = editingRowId === id ? null : id;
     renderStaffTable(filteredStaff);
 };
 
-window.deleteStaff = function(id) {
-    if (!confirm('آیا از حذف این عضو مطمئن هستید؟')) return;
+window.deleteStaff = async function (id) {
+    if (!(await AppDialog.confirm('آیا از حذف این عضو مطمئن هستید؟'))) return;
     allStaff = allStaff.filter(item => item.id !== id);
     filteredStaff = filteredStaff.filter(item => item.id !== id);
     if (editingRowId === id) editingRowId = null;
@@ -378,11 +378,11 @@ window.deleteStaff = function(id) {
     renderStaffTable(filteredStaff);
 };
 
-window.getInlineEditRowHTML = function(item) {
+window.getInlineEditRowHTML = async function (item) {
     return window.getStaffInlineEditRowHTML ? window.getStaffInlineEditRowHTML(item) : '';
 };
 
-window.saveInlineStaff = function(id) {
+window.saveInlineStaff = async function (id) {
     const name = document.getElementById(`inlineStaffName-${id}`)?.value.trim();
     const phone = document.getElementById(`inlineStaffPhone-${id}`)?.value.trim();
     const contractTitle = document.getElementById(`inlineStaffContractTitle-${id}`)?.value.trim();
@@ -442,7 +442,7 @@ window.saveInlineStaff = function(id) {
 };
 
 // ==================== خروجی اکسل ====================
-window.exportStaffToExcel = function() {
+window.exportStaffToExcel = async function () {
     const data = filteredStaff.length ? filteredStaff : allStaff;
     let csv = '\uFEFF';
     csv += 'ردیف,نام,نوع پرسنل,عنوان قرارداد,شعبه,تاریخ شروع,تاریخ خاتمه,مبلغ قرارداد,واحد پول,وضعیت,شماره تماس,شروع فعالیت,نمایش پروفایل,دروس\n';
@@ -460,11 +460,11 @@ window.exportStaffToExcel = function() {
     link.click();
 };
 
-window.exportStaffToPDF = function() {
+window.exportStaffToPDF = async function () {
     openPDFOptionsModal();
 };
 
-window.openPDFOptionsModal = function() {
+window.openPDFOptionsModal = async function () {
     const modalHTML = window.getStaffPDFModalHTML ? window.getStaffPDFModalHTML(pdfExportColumns) : '';
     document.getElementById('modalContainer').innerHTML = modalHTML;
 };
@@ -554,12 +554,12 @@ window.generateStaffPDF = async function() {
 };
 
 // ==================== Modal افزودن پرسنل ====================
-window.openAddStaffModal = function() {
+window.openAddStaffModal = async function () {
     const modalHTML = window.getStaffAddModalHTML ? window.getStaffAddModalHTML() : '';
     document.getElementById('modalContainer').innerHTML = modalHTML;
 };
 
-window.saveStaff = function() {
+window.saveStaff = async function () {
     const name = document.getElementById('staffName')?.value.trim();
     const phone = document.getElementById('staffPhone')?.value.trim();
     const contractTitle = document.getElementById('staffContractTitle')?.value.trim();
@@ -616,7 +616,7 @@ window.saveStaff = function() {
 };
 
 // ==================== نمایش جزئیات پرسنل ====================
-window.viewStaff = function(id) {
+window.viewStaff = async function (id) {
     const item = allStaff.find(x => x.id === id);
     if (!item) return;
 
@@ -625,7 +625,7 @@ window.viewStaff = function(id) {
 };
 
 // ==================== ویرایش پرسنل ====================
-window.editStaff = function(id) {
+window.editStaff = async function (id) {
     const item = allStaff.find(x => x.id === id);
     if (!item) return;
 
@@ -633,7 +633,7 @@ window.editStaff = function(id) {
     document.getElementById('modalContainer').innerHTML = modalHTML;
 };
 
-window.saveEditedStaff = function(id) {
+window.saveEditedStaff = async function (id) {
     const name = document.getElementById('editStaffName')?.value.trim();
     const phone = document.getElementById('editStaffPhone')?.value.trim();
     const contractTitle = document.getElementById('editStaffContractTitle')?.value.trim();

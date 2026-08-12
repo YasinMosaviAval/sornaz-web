@@ -63,7 +63,7 @@ let allArticles = [
 
 let currentArticleCategory = 'all';
 
-window.renderArticleCategoryTabs = function() {
+window.renderArticleCategoryTabs = async function () {
     const container = document.getElementById('articleCategoryTabs');
     if (!container) return;
     container.querySelectorAll('.article-cat-tab:not(:first-child)').forEach(t => t.remove());
@@ -76,7 +76,7 @@ window.renderArticleCategoryTabs = function() {
     });
 };
 
-window.filterArticlesByCategory = function(cat) {
+window.filterArticlesByCategory = async function (cat) {
     currentArticleCategory = cat;
     document.querySelectorAll('.article-cat-tab').forEach(tab => {
         tab.classList.remove('bg-indigo-600', 'text-white');
@@ -91,11 +91,11 @@ window.filterArticlesByCategory = function(cat) {
     filterArticles();
 };
 
-window.filterArticles = function() {
+window.filterArticles = async function () {
     renderArticlesList();
 };
 
-window.renderArticlesList = function() {
+window.renderArticlesList = async function () {
     const container = document.getElementById('articlesList');
     if (!container) return;
 
@@ -141,7 +141,7 @@ window.renderArticlesList = function() {
         `).join('');
 };
 
-window.openAddArticleModal = function() {
+window.openAddArticleModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     const catChecks = articleCategories.map(c =>
         `<label class="flex items-center gap-2 text-sm"><input type="checkbox" class="article-cat-check" value="${c}"> ${c}</label>`
@@ -178,7 +178,7 @@ window.openAddArticleModal = function() {
     </div>`;
 };
 
-window.saveArticle = function() {
+window.saveArticle = async function () {
     const title = document.getElementById('artTitle')?.value.trim();
     if (!title) return alert('عنوان الزامی است');
     const cats = Array.from(document.querySelectorAll('.article-cat-check:checked')).map(c => c.value);
@@ -197,7 +197,7 @@ window.saveArticle = function() {
     alert('✅ مقاله ثبت شد');
 };
 
-window.viewArticle = function(id) {
+window.viewArticle = async function (id) {
     const a = allArticles.find(x => x.id === id);
     if (!a) return;
     document.getElementById('modalContainer').innerHTML = `
@@ -225,7 +225,7 @@ window.viewArticle = function(id) {
     </div>`;
 };
 
-window.editArticle = function(id) {
+window.editArticle = async function (id) {
     const a = allArticles.find(x => x.id === id);
     if (!a) return;
     const catChecks = articleCategories.map(c =>
@@ -260,7 +260,7 @@ window.editArticle = function(id) {
     </div>`;
 };
 
-window.saveEditedArticle = function(id) {
+window.saveEditedArticle = async function (id) {
     const title = document.getElementById('editArtTitle')?.value.trim();
     if (!title) return alert('عنوان الزامی است');
     const index = allArticles.findIndex(x => x.id === id);
@@ -280,8 +280,8 @@ window.saveEditedArticle = function(id) {
     alert('✅ ذخیره شد');
 };
 
-window.deleteArticle = function(id) {
-    if (confirm('حذف این مقاله؟')) {
+window.deleteArticle = async function (id) {
+    if (await AppDialog.confirm('حذف این مقاله؟')) {
         allArticles = allArticles.filter(a => a.id !== id);
         filterArticles();
     }

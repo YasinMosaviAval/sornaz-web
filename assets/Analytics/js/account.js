@@ -55,7 +55,7 @@ let academySecurityAlerts = [
 
 let lastBackupMeta = null;
 
-window.renderAccountInfo = function () {
+window.renderAccountInfo = async function () {
     const container = document.getElementById('accountInfo');
     if (!container) return;
     if (window.getAccountInfoHTML) {
@@ -102,7 +102,7 @@ window.renderAccountInfo = function () {
     window.renderAccountBackupStatus();
 };
 
-window.renderAccountCover = function () {
+window.renderAccountCover = async function () {
     const coverImg = document.getElementById('accountCoverImg');
     const placeholder = document.getElementById('accountCoverPlaceholder');
     const removeBtn = document.getElementById('accountCoverRemoveBtn');
@@ -120,9 +120,9 @@ window.renderAccountCover = function () {
     }
 };
 
-window.removeAccountCover = function () {
+window.removeAccountCover = async function () {
     if (!academyProfile.coverUrl) return;
-    if (!confirm('حذف کاور پروفایل؟')) return;
+    if (!(await AppDialog.confirm('حذف کاور پروفایل؟'))) return;
     academyProfile.coverUrl = '';
     window.renderAccountCover();
     alert('✅ کاور حذف شد');
@@ -131,7 +131,7 @@ window.removeAccountCover = function () {
 // ---------- کراپ تصویر (آواتار ۱:۱ دایره‌ای / کاور ۱۶:۹) ----------
 let cropState = null;
 
-window.onAccountAvatarChange = function (event) {
+window.onAccountAvatarChange = async function (event) {
     const file = event.target && event.target.files && event.target.files[0];
     if (event.target) event.target.value = '';
     if (!file) return;
@@ -139,7 +139,7 @@ window.onAccountAvatarChange = function (event) {
     openImageCropModal(file, 'avatar');
 };
 
-window.onAccountCoverChange = function (event) {
+window.onAccountCoverChange = async function (event) {
     const file = event.target && event.target.files && event.target.files[0];
     if (event.target) event.target.value = '';
     if (!file) return;
@@ -273,7 +273,7 @@ function bindCropEvents(canvas) {
         cropState.lastX = e.clientX;
         cropState.lastY = e.clientY;
     };
-    window.onmousemove = function (e) {
+    window.onmousemove = async function (e) {
         if (!cropState || !cropState.dragging) return;
         const dx = (e.clientX - cropState.lastX) / cropState.viewScale;
         const dy = (e.clientY - cropState.lastY) / cropState.viewScale;
@@ -283,7 +283,7 @@ function bindCropEvents(canvas) {
         cropState.cy = clamp(cropState.cy + dy, 0, cropState.img.height - cropState.ch);
         drawCropCanvas();
     };
-    window.onmouseup = function () {
+    window.onmouseup = async function () {
         if (cropState) cropState.dragging = false;
     };
     canvas.ontouchstart = function (e) {
@@ -313,7 +313,7 @@ function clamp(v, min, max) {
     return Math.max(min, Math.min(max, v));
 }
 
-window.zoomCrop = function (delta) {
+window.zoomCrop = async function (delta) {
     const s = cropState;
     if (!s) return;
     const factor = delta > 0 ? 0.92 : 1.08; // + زوم این (کادر کوچکتر) / - زوم اوت
@@ -343,7 +343,7 @@ window.zoomCrop = function (delta) {
     drawCropCanvas();
 };
 
-window.applyImageCrop = function () {
+window.applyImageCrop = async function () {
     const s = cropState;
     if (!s) return;
     const out = document.createElement('canvas');
@@ -375,18 +375,18 @@ window.applyImageCrop = function () {
     closeModal();
 };
 
-window.cancelImageCrop = function () {
+window.cancelImageCrop = async function () {
     cropState = null;
     closeModal();
 };
 
-window.openEditProfileModal = function () {
+window.openEditProfileModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = window.getAccountEditProfileModalHTML
         ? window.getAccountEditProfileModalHTML(academyProfile) : '';
 };
 
-window.saveProfile = function () {
+window.saveProfile = async function () {
     const name = (document.getElementById('editAcademyName') && document.getElementById('editAcademyName').value || '').trim();
     const manager = (document.getElementById('editManager') && document.getElementById('editManager').value || '').trim();
     const address = (document.getElementById('editAddress') && document.getElementById('editAddress').value || '').trim();
@@ -404,13 +404,13 @@ window.saveProfile = function () {
     alert('✅ پروفایل به‌روزرسانی شد');
 };
 
-window.openEditBioModal = function () {
+window.openEditBioModal = async function () {
     if (!document.getElementById('modalContainer')) return;
     document.getElementById('modalContainer').innerHTML = window.getAccountEditBioModalHTML
         ? window.getAccountEditBioModalHTML(academyProfile) : '';
 };
 
-window.saveBio = function () {
+window.saveBio = async function () {
     academyProfile.shortIntro = (document.getElementById('editShortIntro') && document.getElementById('editShortIntro').value || '').trim();
     academyProfile.biography = (document.getElementById('editBiography') && document.getElementById('editBiography').value || '').trim();
     window.renderAccountInfo();
@@ -418,13 +418,13 @@ window.saveBio = function () {
     alert('✅ معرفی و بیوگرافی ذخیره شد');
 };
 
-window.renderAccountDocuments = function () {
+window.renderAccountDocuments = async function () {
     const el = document.getElementById('accountDocumentsList');
     if (!el) return;
     el.innerHTML = window.getAccountDocumentsHTML ? window.getAccountDocumentsHTML(academyDocuments) : '';
 };
 
-window.onAccountDocumentUpload = function (event) {
+window.onAccountDocumentUpload = async function (event) {
     const files = event.target && event.target.files;
     if (!files || !files.length) return;
     Array.from(files).forEach(function (file) {
@@ -441,51 +441,51 @@ window.onAccountDocumentUpload = function (event) {
     alert('✅ سند(ها) اضافه شد');
 };
 
-window.deleteAccountDocument = function (id) {
-    if (!confirm('حذف این سند؟')) return;
+window.deleteAccountDocument = async function (id) {
+    if (!(await AppDialog.confirm('حذف این سند؟'))) return;
     academyDocuments = academyDocuments.filter(function (d) { return d.id !== id; });
     window.renderAccountDocuments();
 };
 
-window.renderAccountDevices = function () {
+window.renderAccountDevices = async function () {
     const el = document.getElementById('accountDevicesList');
     if (!el) return;
     el.innerHTML = window.getAccountDevicesHTML ? window.getAccountDevicesHTML(academyDevices) : '';
 };
 
-window.revokeAccountDevice = function (id) {
-    if (!confirm('خروج این دستگاه از حساب؟')) return;
+window.revokeAccountDevice = async function (id) {
+    if (!(await AppDialog.confirm('خروج این دستگاه از حساب؟'))) return;
     academyDevices = academyDevices.filter(function (d) { return d.id !== id; });
     window.renderAccountDevices();
     alert('✅ دستگاه خارج شد');
 };
 
-window.revokeAllOtherDevices = function () {
-    if (!confirm('خروج از همه دستگاه‌ها به‌جز دستگاه فعلی؟')) return;
+window.revokeAllOtherDevices = async function () {
+    if (!(await AppDialog.confirm('خروج از همه دستگاه‌ها به‌جز دستگاه فعلی؟'))) return;
     academyDevices = academyDevices.filter(function (d) { return d.current; });
     window.renderAccountDevices();
     alert('✅ سایر دستگاه‌ها خارج شدند');
 };
 
-window.renderAccountLoginHistory = function () {
+window.renderAccountLoginHistory = async function () {
     const el = document.getElementById('accountLoginHistory');
     if (!el) return;
     el.innerHTML = window.getAccountLoginHistoryHTML ? window.getAccountLoginHistoryHTML(academyLoginHistory) : '';
 };
 
-window.renderAccountSecurityAlerts = function () {
+window.renderAccountSecurityAlerts = async function () {
     const el = document.getElementById('accountSecurityAlerts');
     if (!el) return;
     el.innerHTML = window.getAccountSecurityAlertsHTML ? window.getAccountSecurityAlertsHTML(academySecurityAlerts) : '';
 };
 
-window.renderAccountPrivacy = function () {
+window.renderAccountPrivacy = async function () {
     const el = document.getElementById('accountPrivacyOptions');
     if (!el) return;
     el.innerHTML = window.getAccountPrivacyHTML ? window.getAccountPrivacyHTML(academyProfile.privacy) : '';
 };
 
-window.savePrivacySettings = function () {
+window.savePrivacySettings = async function () {
     const p = academyProfile.privacy;
     p.showPublicProfile = !!(document.getElementById('privacyShowPublic') && document.getElementById('privacyShowPublic').checked);
     p.showBranches = !!(document.getElementById('privacyShowBranches') && document.getElementById('privacyShowBranches').checked);
@@ -496,7 +496,7 @@ window.savePrivacySettings = function () {
     alert('✅ تنظیمات حریم خصوصی ذخیره شد');
 };
 
-window.saveAccountSettings = function () {
+window.saveAccountSettings = async function () {
     const email = document.getElementById('accountEmail') && document.getElementById('accountEmail').value;
     const phone = document.getElementById('accountPhone') && document.getElementById('accountPhone').value;
     const pass = document.getElementById('accountPassword') && document.getElementById('accountPassword').value;
@@ -520,7 +520,7 @@ window.saveAccountSettings = function () {
     alert('✅ تنظیمات حساب ذخیره شد');
 };
 
-window.createFullBackup = function () {
+window.createFullBackup = async function () {
     lastBackupMeta = {
         date: new Date().toLocaleString('fa-IR'),
         size: (2.4 + Math.random()).toFixed(1) + ' مگابایت',
@@ -542,12 +542,12 @@ window.createFullBackup = function () {
     alert('✅ پشتیبان کامل ایجاد و دانلود شد');
 };
 
-window.downloadLastBackup = function () {
+window.downloadLastBackup = async function () {
     if (!lastBackupMeta) return alert('هنوز پشتیبانی ایجاد نشده است.');
     window.createFullBackup();
 };
 
-window.renderAccountBackupStatus = function () {
+window.renderAccountBackupStatus = async function () {
     const el = document.getElementById('accountBackupStatus');
     if (!el) return;
     if (!lastBackupMeta) {

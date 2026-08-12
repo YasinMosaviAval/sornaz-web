@@ -17,7 +17,7 @@ const ruleValuePool = [
     '۷۲ ساعت قبل', 'بله', '۷ سال', '۲ غیبت'
 ];
 
-window.getRuleBranches = function () {
+window.getRuleBranches = async function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
     return [
         { id: 1, name: 'شعبه مرکزی' },
@@ -63,8 +63,8 @@ const rulePdfColumns = [
     { field: 'status', label: 'وضعیت' }
 ];
 
-window.promptAddRuleType = function (selectId) {
-    const name = prompt('نام نوع قانون جدید را وارد کنید:');
+window.promptAddRuleType = async function (selectId) {
+    const name = await AppDialog.prompt('نام نوع قانون جدید را وارد کنید:');
     const sel = document.getElementById(selectId);
     if (!name || !name.trim()) {
         if (sel) sel.value = window.ruleTypesList[0] || '';
@@ -83,7 +83,7 @@ window.promptAddRuleType = function (selectId) {
     }
 };
 
-window.renderRuleTypeFilter = function () {
+window.renderRuleTypeFilter = async function () {
     const sel = document.getElementById('filterRuleType');
     if (!sel) return;
     const cur = sel.value;
@@ -104,7 +104,7 @@ function sortRuleItems() {
     });
 }
 
-window.updateRuleSortIcons = function () {
+window.updateRuleSortIcons = async function () {
     ['title', 'branchName', 'type', 'value', 'status'].forEach(function (f) {
         const icon = document.getElementById('ruleSortIcon-' + f);
         if (!icon) return;
@@ -112,7 +112,7 @@ window.updateRuleSortIcons = function () {
     });
 };
 
-window.sortRulesBy = function (field) {
+window.sortRulesBy = async function (field) {
     if (ruleSortField === field) ruleSortDirection = ruleSortDirection === 'asc' ? 'desc' : 'asc';
     else { ruleSortField = field; ruleSortDirection = 'asc'; }
     sortRuleItems();
@@ -120,7 +120,7 @@ window.sortRulesBy = function (field) {
     window.updateRuleSortIcons();
 };
 
-window.renderRulesBranchTabs = function () {
+window.renderRulesBranchTabs = async function () {
     const container = document.getElementById('rulesBranchTabs');
     if (!container) return;
     container.querySelectorAll('.rule-branch-tab:not(:first-child)').forEach(function (t) { t.remove(); });
@@ -135,7 +135,7 @@ window.renderRulesBranchTabs = function () {
     });
 };
 
-window.filterRulesByBranch = function (branchId) {
+window.filterRulesByBranch = async function (branchId) {
     currentRuleBranch = branchId;
     document.querySelectorAll('.rule-branch-tab').forEach(function (tab) {
         tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
@@ -157,7 +157,7 @@ window.filterRulesByBranch = function (branchId) {
     window.filterRules();
 };
 
-window.filterRules = function () {
+window.filterRules = async function () {
     const search = (document.getElementById('ruleSearch') && document.getElementById('ruleSearch').value || '').trim().toLowerCase();
     const status = document.getElementById('filterRuleStatus') && document.getElementById('filterRuleStatus').value || '';
     const type = document.getElementById('filterRuleType') && document.getElementById('filterRuleType').value || '';
@@ -178,7 +178,7 @@ window.filterRules = function () {
     window.renderRulesTable(filteredRules);
 };
 
-window.renderRulesTable = function (list) {
+window.renderRulesTable = async function (list) {
     list = list || filteredRules;
     const tbody = document.querySelector('#rulesTable tbody');
     if (!tbody) return;
@@ -230,7 +230,7 @@ function updateRulesPagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changeRulesPage = function (page) {
+window.changeRulesPage = async function (page) {
     const totalPages = Math.ceil(filteredRules.length / rulesPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     rulesCurrentPage = page;
@@ -253,12 +253,12 @@ function readRuleForm(prefix) {
     };
 }
 
-window.openAddRuleModal = function () {
+window.openAddRuleModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = window.getRuleAddModalHTML ? window.getRuleAddModalHTML() : '';
 };
 
-window.saveRule = function () {
+window.saveRule = async function () {
     const data = readRuleForm('');
     if (!data.title) return alert('عنوان قانون الزامی است');
     if (data.type === '__new__') return alert('لطفاً یک نوع قانون انتخاب کنید');
@@ -268,21 +268,21 @@ window.saveRule = function () {
     alert('✅ قانون ثبت شد');
 };
 
-window.viewRule = function (id) {
+window.viewRule = async function (id) {
     const item = allRules.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getRuleDetailsModalHTML
         ? window.getRuleDetailsModalHTML(item) : '';
 };
 
-window.editRule = function (id) {
+window.editRule = async function (id) {
     const item = allRules.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getRuleEditModalHTML
         ? window.getRuleEditModalHTML(item) : '';
 };
 
-window.saveEditedRule = function (id) {
+window.saveEditedRule = async function (id) {
     const data = readRuleForm('editRule');
     if (!data.title) return alert('عنوان قانون الزامی است');
     if (data.type === '__new__') return alert('لطفاً یک نوع قانون انتخاب کنید');
@@ -295,12 +295,12 @@ window.saveEditedRule = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.toggleRuleInlineEdit = function (id) {
+window.toggleRuleInlineEdit = async function (id) {
     editingRuleRowId = editingRuleRowId === id ? null : id;
     window.renderRulesTable(filteredRules);
 };
 
-window.saveInlineRule = function (id) {
+window.saveInlineRule = async function (id) {
     const data = readRuleForm('inlineRule' + id);
     if (!data.title) return alert('عنوان قانون الزامی است');
     if (data.type === '__new__') return alert('لطفاً یک نوع قانون انتخاب کنید');
@@ -312,14 +312,14 @@ window.saveInlineRule = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.deleteRule = function (id) {
-    if (!confirm('حذف این قانون؟')) return;
+window.deleteRule = async function (id) {
+    if (!(await AppDialog.confirm('حذف این قانون؟'))) return;
     allRules = allRules.filter(function (r) { return r.id !== id; });
     if (editingRuleRowId === id) editingRuleRowId = null;
     window.filterRules();
 };
 
-window.exportRulesToExcel = function () {
+window.exportRulesToExcel = async function () {
     const data = filteredRules.length ? filteredRules : allRules;
     let csv = '\uFEFFردیف,عنوان,شعبه,نوع,مقدار,وضعیت,خلاصه\n';
     data.forEach(function (item, i) {
@@ -333,7 +333,7 @@ window.exportRulesToExcel = function () {
     link.click();
 };
 
-window.exportRulesToPDF = function () {
+window.exportRulesToPDF = async function () {
     document.getElementById('modalContainer').innerHTML = window.getRulePDFModalHTML
         ? window.getRulePDFModalHTML(rulePdfColumns) : '';
 };

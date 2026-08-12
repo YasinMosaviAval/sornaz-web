@@ -103,7 +103,7 @@ function sortCourseItems() {
     });
 }
 
-window.updateCourseSortIcons = function () {
+window.updateCourseSortIcons = async function () {
     const fields = ['name', 'level', 'branchName', 'instrument', 'capacity', 'enrolled', 'status'];
     fields.forEach(field => {
         const icon = document.getElementById(`courseSortIcon-${field}`);
@@ -114,7 +114,7 @@ window.updateCourseSortIcons = function () {
     });
 };
 
-window.sortCoursesBy = function (field) {
+window.sortCoursesBy = async function (field) {
     if (courseSortField === field) {
         courseSortDirection = courseSortDirection === 'asc' ? 'desc' : 'asc';
     } else {
@@ -127,7 +127,7 @@ window.sortCoursesBy = function (field) {
 };
 
 // ==================== تب شعبه‌ها ====================
-window.renderCoursesBranchTabs = function () {
+window.renderCoursesBranchTabs = async function () {
     const container = document.getElementById('coursesBranchTabs');
     if (!container) return;
     container.querySelectorAll('.course-branch-tab:not(:first-child)').forEach(t => t.remove());
@@ -141,7 +141,7 @@ window.renderCoursesBranchTabs = function () {
     });
 };
 
-window.filterCoursesByBranch = function (branchId) {
+window.filterCoursesByBranch = async function (branchId) {
     currentCourseBranch = branchId;
     document.querySelectorAll('.course-branch-tab').forEach(tab => {
         tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
@@ -164,7 +164,7 @@ window.filterCoursesByBranch = function (branchId) {
 };
 
 // ==================== فیلتر ساز ====================
-window.renderCourseInstrumentFilter = function () {
+window.renderCourseInstrumentFilter = async function () {
     const select = document.getElementById('filterCourseInstrument');
     if (!select) return;
     const names = new Set(allCourses.map(c => c.instrument).filter(Boolean));
@@ -173,7 +173,7 @@ window.renderCourseInstrumentFilter = function () {
         [...names].sort().map(n => `<option value="${n}" ${n === current ? 'selected' : ''}>${n}</option>`).join('');
 };
 
-window.filterCourses = function () {
+window.filterCourses = async function () {
     const search = (document.getElementById('courseSearch')?.value || '').trim().toLowerCase();
     const status = document.getElementById('filterCourseStatus')?.value || '';
     const instrument = document.getElementById('filterCourseInstrument')?.value || '';
@@ -193,7 +193,7 @@ window.filterCourses = function () {
 };
 
 // ==================== رندر جدول ====================
-window.renderCoursesTable = function (list = filteredCourses) {
+window.renderCoursesTable = async function (list = filteredCourses) {
     const tbody = document.querySelector('#coursesTable tbody');
     if (!tbody) return;
 
@@ -267,7 +267,7 @@ function updateCoursesPagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changeCoursesPage = function (page) {
+window.changeCoursesPage = async function (page) {
     const totalPages = Math.ceil(filteredCourses.length / coursesPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     coursesCurrentPage = page;
@@ -275,8 +275,8 @@ window.changeCoursesPage = function (page) {
 };
 
 // ==================== سطح دوره ====================
-window.promptAddCourseLevel = function () {
-    const name = prompt('نام سطح دوره جدید را وارد کنید:')?.trim();
+window.promptAddCourseLevel = async function () {
+    const name = await AppDialog.prompt('نام سطح دوره جدید را وارد کنید:')?.trim();
     if (!name) return;
     if (allCourseLevels.some(l => l.name === name)) return alert('این سطح قبلاً وجود دارد');
     allCourseLevels.push({ id: Date.now(), name });
@@ -315,7 +315,7 @@ function readCourseForm(prefix) {
 }
 
 // ==================== CRUD ====================
-window.openAddCourseModal = function () {
+window.openAddCourseModal = async function () {
     if (!document.getElementById('modalContainer')) {
         alert('خطا: المان modalContainer در صفحه اصلی وجود ندارد!');
         return;
@@ -324,7 +324,7 @@ window.openAddCourseModal = function () {
         ? window.getCourseAddModalHTML() : '';
 };
 
-window.saveCourse = function () {
+window.saveCourse = async function () {
     const data = readCourseForm('');
     if (!data.name) return alert('نام دوره الزامی است');
     if (!data.branchId) return alert('شعبه الزامی است');
@@ -336,21 +336,21 @@ window.saveCourse = function () {
     alert('✅ دوره با موفقیت اضافه شد');
 };
 
-window.viewCourse = function (id) {
+window.viewCourse = async function (id) {
     const item = allCourses.find(x => x.id === id);
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getCourseDetailsModalHTML
         ? window.getCourseDetailsModalHTML(item) : '';
 };
 
-window.editCourse = function (id) {
+window.editCourse = async function (id) {
     const item = allCourses.find(x => x.id === id);
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getCourseEditModalHTML
         ? window.getCourseEditModalHTML(item) : '';
 };
 
-window.saveEditedCourse = function (id) {
+window.saveEditedCourse = async function (id) {
     const data = readCourseForm('editCourse');
     if (!data.name) return alert('نام دوره الزامی است');
     const index = allCourses.findIndex(x => x.id === id);
@@ -363,12 +363,12 @@ window.saveEditedCourse = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.toggleCourseInlineEdit = function (id) {
+window.toggleCourseInlineEdit = async function (id) {
     editingCourseRowId = editingCourseRowId === id ? null : id;
     renderCoursesTable(filteredCourses);
 };
 
-window.saveInlineCourse = function (id) {
+window.saveInlineCourse = async function (id) {
     const data = readCourseForm(`inlineCourse${id}`);
     if (!data.name) return alert('نام دوره الزامی است');
     const index = allCourses.findIndex(x => x.id === id);
@@ -380,8 +380,8 @@ window.saveInlineCourse = function (id) {
     alert('✅ تغییرات با موفقیت ذخیره شد');
 };
 
-window.deleteCourse = function (id) {
-    if (!confirm('آیا از حذف این دوره مطمئن هستید؟')) return;
+window.deleteCourse = async function (id) {
+    if (!(await AppDialog.confirm('آیا از حذف این دوره مطمئن هستید؟'))) return;
     allCourses = allCourses.filter(c => c.id !== id);
     if (editingCourseRowId === id) editingCourseRowId = null;
     renderCourseInstrumentFilter();
@@ -389,7 +389,7 @@ window.deleteCourse = function (id) {
 };
 
 // ==================== خروجی اکسل ====================
-window.exportCoursesToExcel = function () {
+window.exportCoursesToExcel = async function () {
     const data = filteredCourses.length ? filteredCourses : allCourses;
     let csv = '\uFEFF';
     csv += 'ردیف,نام دوره,سطح,شعبه,ساز,ظرفیت,ثبت‌نام‌شده,وضعیت,مدرس\n';
@@ -404,11 +404,11 @@ window.exportCoursesToExcel = function () {
 };
 
 // ==================== خروجی PDF ====================
-window.exportCoursesToPDF = function () {
+window.exportCoursesToPDF = async function () {
     openCoursesPDFOptionsModal();
 };
 
-window.openCoursesPDFOptionsModal = function () {
+window.openCoursesPDFOptionsModal = async function () {
     document.getElementById('modalContainer').innerHTML = window.getCoursePDFModalHTML
         ? window.getCoursePDFModalHTML(coursePdfColumns) : '';
 };

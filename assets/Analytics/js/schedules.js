@@ -23,32 +23,32 @@ const scheduleClassroomPool = [
     { id: 7, name: 'کلاس ویولن' }
 ];
 
-window.getScheduleBranches = function () {
+window.getScheduleBranches = async function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
     return [
         { id: 1, name: 'شعبه مرکزی' }, { id: 2, name: 'شعبه ونک' },
         { id: 3, name: 'شعبه سعادت‌آباد' }, { id: 4, name: 'شعبه کرج' }
     ];
 };
-window.getScheduleStudentOptions = function () {
+window.getScheduleStudentOptions = async function () {
     if (typeof allStudents !== 'undefined' && allStudents.length) {
         return allStudents.map(function (s) { return { value: s.id, label: s.name, id: s.id, name: s.name }; });
     }
     return scheduleStudentPool.map(function (s) { return { value: s.id, label: s.name, id: s.id, name: s.name }; });
 };
-window.getScheduleTeacherOptions = function () {
+window.getScheduleTeacherOptions = async function () {
     if (typeof allStaff !== 'undefined' && allStaff.length) {
         return allStaff.map(function (s) { return { value: s.id, label: s.name, id: s.id, name: s.name }; });
     }
     return scheduleTeacherPool.map(function (t) { return { value: t.id, label: t.name, id: t.id, name: t.name }; });
 };
-window.getScheduleInstrumentOptions = function () {
+window.getScheduleInstrumentOptions = async function () {
     if (typeof sampleInstruments !== 'undefined' && sampleInstruments.length) {
         return sampleInstruments.map(function (i) { return { value: i.id, label: i.title, id: i.id, name: i.title }; });
     }
     return scheduleInstrumentPool.map(function (i) { return { value: i.id, label: i.name, id: i.id, name: i.name }; });
 };
-window.getScheduleClassroomOptions = function () {
+window.getScheduleClassroomOptions = async function () {
     if (typeof allClassrooms !== 'undefined' && allClassrooms.length) {
         return allClassrooms.map(function (c) { return { value: c.id, label: c.name, id: c.id, name: c.name }; });
     }
@@ -141,7 +141,7 @@ function sortScheduleItems() {
     });
 }
 
-window.updateScheduleSortIcons = function () {
+window.updateScheduleSortIcons = async function () {
     ['title', 'day', 'time', 'student', 'teacher', 'instrument', 'classroom', 'type', 'status'].forEach(function (f) {
         const icon = document.getElementById('scheduleSortIcon-' + f);
         if (!icon) return;
@@ -149,7 +149,7 @@ window.updateScheduleSortIcons = function () {
     });
 };
 
-window.sortSchedulesBy = function (field) {
+window.sortSchedulesBy = async function (field) {
     if (scheduleSortField === field) scheduleSortDirection = scheduleSortDirection === 'asc' ? 'desc' : 'asc';
     else { scheduleSortField = field; scheduleSortDirection = 'asc'; }
     sortScheduleItems();
@@ -158,7 +158,7 @@ window.sortSchedulesBy = function (field) {
 };
 
 // ==================== تب شعبه‌ها ====================
-window.renderSchedulesBranchTabs = function () {
+window.renderSchedulesBranchTabs = async function () {
     const container = document.getElementById('schedulesBranchTabs');
     if (!container) return;
     container.querySelectorAll('.schedule-branch-tab:not(:first-child)').forEach(function (t) { t.remove(); });
@@ -173,7 +173,7 @@ window.renderSchedulesBranchTabs = function () {
     });
 };
 
-window.filterSchedulesByBranch = function (branchId) {
+window.filterSchedulesByBranch = async function (branchId) {
     currentScheduleBranch = branchId;
     document.querySelectorAll('.schedule-branch-tab').forEach(function (tab) {
         tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
@@ -195,7 +195,7 @@ window.filterSchedulesByBranch = function (branchId) {
     filterSchedules();
 };
 
-window.renderScheduleFilterOptions = function () {
+window.renderScheduleFilterOptions = async function () {
     const instSel = document.getElementById('filterScheduleInstrument');
     const classSel = document.getElementById('filterScheduleClassroom');
     if (instSel) {
@@ -223,7 +223,7 @@ function timeToMinutes(t) {
     return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
 }
 
-window.filterSchedules = function () {
+window.filterSchedules = async function () {
     const search = (document.getElementById('scheduleSearch') && document.getElementById('scheduleSearch').value || '').trim().toLowerCase();
     const day = document.getElementById('filterScheduleDay') && document.getElementById('filterScheduleDay').value || '';
     const type = document.getElementById('filterScheduleType') && document.getElementById('filterScheduleType').value || '';
@@ -261,7 +261,7 @@ window.filterSchedules = function () {
     renderSchedulesTable(filteredSchedules);
 };
 
-window.renderSchedulesTable = function (list) {
+window.renderSchedulesTable = async function (list) {
     list = list || filteredSchedules;
     const tbody = document.querySelector('#schedulesTable tbody');
     if (!tbody) return;
@@ -313,7 +313,7 @@ function updateSchedulesPagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changeSchedulesPage = function (page) {
+window.changeSchedulesPage = async function (page) {
     const totalPages = Math.ceil(filteredSchedules.length / schedulesPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     schedulesCurrentPage = page;
@@ -354,12 +354,12 @@ function readScheduleForm(prefix) {
     };
 }
 
-window.openAddScheduleModal = function () {
+window.openAddScheduleModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = window.getScheduleAddModalHTML ? window.getScheduleAddModalHTML() : '';
 };
 
-window.saveSchedule = function () {
+window.saveSchedule = async function () {
     const data = readScheduleForm('');
     if (!data.day || !data.startTime || !data.endTime || !data.studentId || !data.teacherId) {
         return alert('روز، ساعت شروع/پایان، هنرجو و استاد الزامی است');
@@ -372,21 +372,21 @@ window.saveSchedule = function () {
     alert('✅ برنامه زمانی ثبت شد');
 };
 
-window.viewSchedule = function (id) {
+window.viewSchedule = async function (id) {
     const item = allSchedules.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getScheduleDetailsModalHTML
         ? window.getScheduleDetailsModalHTML(item) : '';
 };
 
-window.editSchedule = function (id) {
+window.editSchedule = async function (id) {
     const item = allSchedules.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getScheduleEditModalHTML
         ? window.getScheduleEditModalHTML(item) : '';
 };
 
-window.saveEditedSchedule = function (id) {
+window.saveEditedSchedule = async function (id) {
     const data = readScheduleForm('editSch');
     if (!data.day || !data.startTime || !data.endTime || !data.studentId || !data.teacherId) {
         return alert('روز، ساعت شروع/پایان، هنرجو و استاد الزامی است');
@@ -401,12 +401,12 @@ window.saveEditedSchedule = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.toggleScheduleInlineEdit = function (id) {
+window.toggleScheduleInlineEdit = async function (id) {
     editingScheduleRowId = editingScheduleRowId === id ? null : id;
     renderSchedulesTable(filteredSchedules);
 };
 
-window.saveInlineSchedule = function (id) {
+window.saveInlineSchedule = async function (id) {
     const data = readScheduleForm('inlineSch' + id);
     if (!data.day || !data.startTime || !data.endTime || !data.studentId || !data.teacherId) {
         return alert('روز، ساعت شروع/پایان، هنرجو و استاد الزامی است');
@@ -420,8 +420,8 @@ window.saveInlineSchedule = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.deleteSchedule = function (id) {
-    if (!confirm('حذف این برنامه؟')) return;
+window.deleteSchedule = async function (id) {
+    if (!(await AppDialog.confirm('حذف این برنامه؟'))) return;
     allSchedules = allSchedules.filter(function (s) { return s.id !== id; });
     if (editingScheduleRowId === id) editingScheduleRowId = null;
     renderScheduleFilterOptions();
@@ -429,7 +429,7 @@ window.deleteSchedule = function (id) {
 };
 
 // ==================== اکسل / PDF ====================
-window.exportSchedulesToExcel = function () {
+window.exportSchedulesToExcel = async function () {
     const data = filteredSchedules.length ? filteredSchedules : allSchedules;
     let csv = '\uFEFFردیف,عنوان,روز,ساعت,هنرجو,استاد,ساز,کلاس,نوع,وضعیت,شعبه\n';
     data.forEach(function (item, i) {
@@ -444,7 +444,7 @@ window.exportSchedulesToExcel = function () {
     link.click();
 };
 
-window.exportSchedulesToPDF = function () {
+window.exportSchedulesToPDF = async function () {
     document.getElementById('modalContainer').innerHTML = window.getSchedulePDFModalHTML
         ? window.getSchedulePDFModalHTML(schedulePdfColumns) : '';
 };

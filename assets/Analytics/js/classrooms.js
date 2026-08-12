@@ -101,7 +101,7 @@ function sortClassroomItems() {
     });
 }
 
-window.updateClassroomSortIcons = function () {
+window.updateClassroomSortIcons = async function () {
     const fields = ['name', 'typeLabel', 'branchName', 'capacity', 'equipment', 'status'];
     fields.forEach(field => {
         const icon = document.getElementById(`classroomSortIcon-${field}`);
@@ -112,7 +112,7 @@ window.updateClassroomSortIcons = function () {
     });
 };
 
-window.sortClassroomsBy = function (field) {
+window.sortClassroomsBy = async function (field) {
     if (classroomSortField === field) {
         classroomSortDirection = classroomSortDirection === 'asc' ? 'desc' : 'asc';
     } else {
@@ -125,7 +125,7 @@ window.sortClassroomsBy = function (field) {
 };
 
 // ==================== تب شعبه‌ها ====================
-window.renderClassroomBranchTabs = function () {
+window.renderClassroomBranchTabs = async function () {
     const container = document.getElementById('classroomBranchTabs') || document.getElementById('branchTabs');
     if (!container) return;
     container.querySelectorAll('.branch-tab:not(:first-child)').forEach(t => t.remove());
@@ -140,7 +140,7 @@ window.renderClassroomBranchTabs = function () {
 };
 window.renderBranchTabs = window.renderClassroomBranchTabs;
 
-window.filterClassroomsByBranch = function (branchId) {
+window.filterClassroomsByBranch = async function (branchId) {
     currentClassroomBranchFilter = branchId;
     document.querySelectorAll('.branch-tab').forEach(tab => {
         tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
@@ -163,7 +163,7 @@ window.filterClassroomsByBranch = function (branchId) {
 };
 
 // ==================== فیلتر تجهیزات ====================
-window.renderClassroomEquipmentFilter = function () {
+window.renderClassroomEquipmentFilter = async function () {
     const select = document.getElementById('filterClassroomEquipment');
     if (!select) return;
     const names = new Set();
@@ -173,7 +173,7 @@ window.renderClassroomEquipmentFilter = function () {
         [...names].sort().map(n => `<option value="${n}" ${n === current ? 'selected' : ''}>${n}</option>`).join('');
 };
 
-window.renderClassroomTypeFilter = function () {
+window.renderClassroomTypeFilter = async function () {
     const select = document.getElementById('filterClassroomType');
     if (!select) return;
     const current = select.value;
@@ -182,7 +182,7 @@ window.renderClassroomTypeFilter = function () {
         types.map(t => `<option value="${t}" ${t === current ? 'selected' : ''}>${t}</option>`).join('');
 };
 
-window.renderClassroomCapacityFilter = function () {
+window.renderClassroomCapacityFilter = async function () {
     const select = document.getElementById('filterClassroomCapacity');
     if (!select) return;
     const current = select.value;
@@ -191,7 +191,7 @@ window.renderClassroomCapacityFilter = function () {
         capacities.map(cap => `<option value="${cap}" ${cap === Number(current) ? 'selected' : ''}>${cap} نفر</option>`).join('');
 };
 
-window.filterClassrooms = function () {
+window.filterClassrooms = async function () {
     const search = (document.getElementById('classroomSearch')?.value || '').trim().toLowerCase();
     const status = document.getElementById('filterClassroomStatus')?.value || '';
     const equipment = document.getElementById('filterClassroomEquipment')?.value || '';
@@ -214,7 +214,7 @@ window.filterClassrooms = function () {
 };
 
 // ==================== رندر جدول ====================
-window.renderClassroomsTable = function (list = filteredClassrooms) {
+window.renderClassroomsTable = async function (list = filteredClassrooms) {
     const tbody = document.querySelector('#classroomsTable tbody');
     if (!tbody) return;
 
@@ -286,7 +286,7 @@ function updateClassroomPagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changeClassroomPage = function (page) {
+window.changeClassroomPage = async function (page) {
     const totalPages = Math.ceil(filteredClassrooms.length / classroomPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     classroomCurrentPage = page;
@@ -294,8 +294,8 @@ window.changeClassroomPage = function (page) {
 };
 
 // ==================== نوع کلاس ====================
-window.promptAddClassroomType = function () {
-    const name = prompt('نام نوع کلاس جدید را وارد کنید:')?.trim();
+window.promptAddClassroomType = async function () {
+    const name = await AppDialog.prompt('نام نوع کلاس جدید را وارد کنید:')?.trim();
     if (!name) return;
     if (allClassroomTypes.some(t => t.name === name)) return alert('این نوع قبلاً وجود دارد');
     allClassroomTypes.push({ id: Date.now(), name });
@@ -329,13 +329,13 @@ window.promptAddClassroomType = function () {
 };
 
 // ==================== تجهیزات ====================
-window.addClassroomEquipmentField = function (containerId) {
+window.addClassroomEquipmentField = async function (containerId) {
     const el = document.getElementById(containerId);
     if (!el || !window.getClassroomEquipmentFieldHTML) return;
     el.insertAdjacentHTML('beforeend', window.getClassroomEquipmentFieldHTML());
 };
 
-window.removeClassroomEquipmentField = function (button) {
+window.removeClassroomEquipmentField = async function (button) {
     const item = button?.closest('.equipment-item');
     if (!item) return;
     const container = item.parentElement;
@@ -382,13 +382,13 @@ function readClassroomForm(prefix) {
 }
 
 // ==================== CRUD ====================
-window.openAddClassroomModal = function () {
+window.openAddClassroomModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد');
     document.getElementById('modalContainer').innerHTML = window.getClassroomAddModalHTML
         ? window.getClassroomAddModalHTML() : '';
 };
 
-window.saveClassroom = function () {
+window.saveClassroom = async function () {
     const data = readClassroomForm('');
     if (!data.name) return alert('نام کلاس الزامی است');
     if (!data.branchId) return alert('شعبه الزامی است');
@@ -403,21 +403,21 @@ window.saveClassroom = function () {
     alert('✅ کلاس اضافه شد');
 };
 
-window.viewClassroom = function (id) {
+window.viewClassroom = async function (id) {
     const item = allClassrooms.find(x => x.id === id);
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getClassroomDetailsModalHTML
         ? window.getClassroomDetailsModalHTML(item) : '';
 };
 
-window.editClassroom = function (id) {
+window.editClassroom = async function (id) {
     const item = allClassrooms.find(x => x.id === id);
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getClassroomEditModalHTML
         ? window.getClassroomEditModalHTML(item) : '';
 };
 
-window.saveEditedClassroom = function (id) {
+window.saveEditedClassroom = async function (id) {
     const data = readClassroomForm('editClassroom');
     if (!data.name) return alert('نام کلاس الزامی است');
     const index = allClassrooms.findIndex(x => x.id === id);
@@ -430,12 +430,12 @@ window.saveEditedClassroom = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.toggleClassroomInlineEdit = function (id) {
+window.toggleClassroomInlineEdit = async function (id) {
     editingClassroomRowId = editingClassroomRowId === id ? null : id;
     renderClassroomsTable(filteredClassrooms);
 };
 
-window.saveInlineClassroom = function (id) {
+window.saveInlineClassroom = async function (id) {
     const data = readClassroomForm(`inlineClassroom${id}`);
     if (!data.name) return alert('نام کلاس الزامی است');
     const index = allClassrooms.findIndex(x => x.id === id);
@@ -447,8 +447,8 @@ window.saveInlineClassroom = function (id) {
     alert('✅ تغییرات با موفقیت ذخیره شد');
 };
 
-window.deleteClassroom = function (id) {
-    if (!confirm('آیا از حذف این کلاس مطمئن هستید؟')) return;
+window.deleteClassroom = async function (id) {
+    if (!(await AppDialog.confirm('آیا از حذف این کلاس مطمئن هستید؟'))) return;
     allClassrooms = allClassrooms.filter(c => c.id !== id);
     if (editingClassroomRowId === id) editingClassroomRowId = null;
     renderClassroomEquipmentFilter();
@@ -456,7 +456,7 @@ window.deleteClassroom = function (id) {
 };
 
 // ==================== خروجی اکسل ====================
-window.exportClassroomsToExcel = function () {
+window.exportClassroomsToExcel = async function () {
     const data = filteredClassrooms.length ? filteredClassrooms : allClassrooms;
     let csv = '\uFEFF';
     csv += 'ردیف,نام کلاس,نوع کلاس,شعبه,ظرفیت,تجهیزات,وضعیت\n';
@@ -472,11 +472,11 @@ window.exportClassroomsToExcel = function () {
 };
 
 // ==================== خروجی PDF ====================
-window.exportClassroomsToPDF = function () {
+window.exportClassroomsToPDF = async function () {
     openClassroomsPDFOptionsModal();
 };
 
-window.openClassroomsPDFOptionsModal = function () {
+window.openClassroomsPDFOptionsModal = async function () {
     document.getElementById('modalContainer').innerHTML = window.getClassroomPDFModalHTML
         ? window.getClassroomPDFModalHTML(classroomPdfColumns) : '';
 };

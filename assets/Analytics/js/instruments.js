@@ -102,7 +102,7 @@ function sortInstrumentItems() {
     });
 }
 
-window.updateInstrumentSortIcons = function () {
+window.updateInstrumentSortIcons = async function () {
     ['title', 'levelTitle', 'years_of_experience', 'is_primary', 'status', 'branchName'].forEach(function (f) {
         const icon = document.getElementById('instSortIcon-' + f);
         if (!icon) return;
@@ -110,7 +110,7 @@ window.updateInstrumentSortIcons = function () {
     });
 };
 
-window.sortInstrumentsBy = function (field) {
+window.sortInstrumentsBy = async function (field) {
     if (instrumentSortField === field) instrumentSortDirection = instrumentSortDirection === 'asc' ? 'desc' : 'asc';
     else { instrumentSortField = field; instrumentSortDirection = 'asc'; }
     sortInstrumentItems();
@@ -118,7 +118,7 @@ window.sortInstrumentsBy = function (field) {
     updateInstrumentSortIcons();
 };
 
-window.renderInstrumentsBranchTabs = function () {
+window.renderInstrumentsBranchTabs = async function () {
     const container = document.getElementById('instrumentsBranchTabs');
     if (!container) return;
     container.querySelectorAll('.inst-branch-tab:not(:first-child)').forEach(function (t) { t.remove(); });
@@ -133,7 +133,7 @@ window.renderInstrumentsBranchTabs = function () {
     });
 };
 
-window.filterInstrumentsByBranch = function (branchId) {
+window.filterInstrumentsByBranch = async function (branchId) {
     currentInstBranch = branchId;
     document.querySelectorAll('#instrumentsBranchTabs .inst-branch-tab').forEach(function (tab) {
         tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
@@ -155,7 +155,7 @@ window.filterInstrumentsByBranch = function (branchId) {
     filterInstruments();
 };
 
-window.filterInstruments = function () {
+window.filterInstruments = async function () {
     const search = (document.getElementById('instrumentSearch') && document.getElementById('instrumentSearch').value || '').trim().toLowerCase();
     const status = document.getElementById('filterInstrumentStatus') && document.getElementById('filterInstrumentStatus').value || '';
     const level = document.getElementById('filterInstrumentLevel') && document.getElementById('filterInstrumentLevel').value || '';
@@ -172,7 +172,7 @@ window.filterInstruments = function () {
     renderInstrumentsTable(filteredInstruments);
 };
 
-window.renderInstrumentsTable = function (list) {
+window.renderInstrumentsTable = async function (list) {
     list = list || filteredInstruments;
     const tbody = document.querySelector('#instrumentsTable tbody');
     if (!tbody) return;
@@ -219,15 +219,15 @@ function updateInstrumentsPagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changeInstrumentsPage = function (page) {
+window.changeInstrumentsPage = async function (page) {
     const totalPages = Math.ceil(filteredInstruments.length / instrumentsPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     instrumentsCurrentPage = page;
     renderInstrumentsTable(filteredInstruments);
 };
 
-window.promptAddInstrumentType = function () {
-    const name = (prompt('نام ساز جدید را وارد کنید:') || '').trim();
+window.promptAddInstrumentType = async function () {
+    const name = (await AppDialog.prompt('نام ساز جدید را وارد کنید:') || '').trim();
     if (!name) return;
     if (sampleInstruments.some(function (i) { return i.title === name; })) return alert('این ساز قبلاً وجود دارد');
     const item = { id: Date.now(), title: name };
@@ -266,12 +266,12 @@ function enforcePrimary(userId, excludeId) {
     });
 }
 
-window.openAddInstrumentModal = function () {
+window.openAddInstrumentModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = window.getInstrumentAddModalHTML ? window.getInstrumentAddModalHTML() : '';
 };
 
-window.saveInstrument = function () {
+window.saveInstrument = async function () {
     const data = readInstrumentForm('');
     if (!data.instrument_id) return alert('ساز را انتخاب کنید');
     const userId = 1;
@@ -282,21 +282,21 @@ window.saveInstrument = function () {
     alert('✅ ثبت شد');
 };
 
-window.viewInstrument = function (id) {
+window.viewInstrument = async function (id) {
     const item = allUserInstruments.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getInstrumentDetailsModalHTML
         ? window.getInstrumentDetailsModalHTML(item, getLevelTitle(item.level_id)) : '';
 };
 
-window.editInstrument = function (id) {
+window.editInstrument = async function (id) {
     const item = allUserInstruments.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getInstrumentEditModalHTML
         ? window.getInstrumentEditModalHTML(item) : '';
 };
 
-window.saveEditedInstrument = function (id) {
+window.saveEditedInstrument = async function (id) {
     const data = readInstrumentForm('editInst');
     if (!data.instrument_id) return alert('ساز را انتخاب کنید');
     const index = allUserInstruments.findIndex(function (x) { return x.id === id; });
@@ -309,12 +309,12 @@ window.saveEditedInstrument = function (id) {
     alert('✅ ذخیره شد');
 };
 
-window.toggleInstrumentInlineEdit = function (id) {
+window.toggleInstrumentInlineEdit = async function (id) {
     editingInstrumentRowId = editingInstrumentRowId === id ? null : id;
     renderInstrumentsTable(filteredInstruments);
 };
 
-window.saveInlineInstrument = function (id) {
+window.saveInlineInstrument = async function (id) {
     const data = readInstrumentForm('inlineInst' + id);
     if (!data.instrument_id) return alert('ساز را انتخاب کنید');
     const index = allUserInstruments.findIndex(function (x) { return x.id === id; });
@@ -326,14 +326,14 @@ window.saveInlineInstrument = function (id) {
     alert('✅ ذخیره شد');
 };
 
-window.deleteInstrument = function (id) {
-    if (!confirm('حذف این ساز؟')) return;
+window.deleteInstrument = async function (id) {
+    if (!(await AppDialog.confirm('حذف این ساز؟'))) return;
     allUserInstruments = allUserInstruments.filter(function (i) { return i.id !== id; });
     if (editingInstrumentRowId === id) editingInstrumentRowId = null;
     filterInstruments();
 };
 
-window.exportInstrumentsToExcel = function () {
+window.exportInstrumentsToExcel = async function () {
     const data = filteredInstruments.length ? filteredInstruments : allUserInstruments;
     let csv = '\uFEFFردیف,ساز,سطح,سابقه,اصلی,وضعیت,شعبه\n';
     data.forEach(function (item, i) {
@@ -347,7 +347,7 @@ window.exportInstrumentsToExcel = function () {
     link.click();
 };
 
-window.exportInstrumentsToPDF = function () {
+window.exportInstrumentsToPDF = async function () {
     document.getElementById('modalContainer').innerHTML = window.getInstrumentPDFModalHTML
         ? window.getInstrumentPDFModalHTML(instrumentPdfColumns) : '';
 };

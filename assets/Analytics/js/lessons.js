@@ -102,7 +102,7 @@ function sortLessonItems() {
     });
 }
 
-window.updateLessonSortIcons = function () {
+window.updateLessonSortIcons = async function () {
     ['title', 'levelTitle', 'years_of_experience', 'is_primary', 'status', 'branchName'].forEach(function (f) {
         const icon = document.getElementById('lesnSortIcon-' + f);
         if (!icon) return;
@@ -110,7 +110,7 @@ window.updateLessonSortIcons = function () {
     });
 };
 
-window.sortLessonsBy = function (field) {
+window.sortLessonsBy = async function (field) {
     if (lessonSortField === field) lessonSortDirection = lessonSortDirection === 'asc' ? 'desc' : 'asc';
     else { lessonSortField = field; lessonSortDirection = 'asc'; }
     sortLessonItems();
@@ -118,7 +118,7 @@ window.sortLessonsBy = function (field) {
     updateLessonSortIcons();
 };
 
-window.renderLessonsBranchTabs = function () {
+window.renderLessonsBranchTabs = async function () {
     const container = document.getElementById('lessonsBranchTabs');
     if (!container) return;
     container.querySelectorAll('.lesn-branch-tab:not(:first-child)').forEach(function (t) { t.remove(); });
@@ -133,7 +133,7 @@ window.renderLessonsBranchTabs = function () {
     });
 };
 
-window.filterLessonsByBranch = function (branchId) {
+window.filterLessonsByBranch = async function (branchId) {
     currentLesnBranch = branchId;
     document.querySelectorAll('#lessonsBranchTabs .lesn-branch-tab').forEach(function (tab) {
         tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
@@ -155,7 +155,7 @@ window.filterLessonsByBranch = function (branchId) {
     filterLessons();
 };
 
-window.filterLessons = function () {
+window.filterLessons = async function () {
     const search = (document.getElementById('lessonSearch') && document.getElementById('lessonSearch').value || '').trim().toLowerCase();
     const status = document.getElementById('filterLessonStatus') && document.getElementById('filterLessonStatus').value || '';
     const level = document.getElementById('filterLessonLevel') && document.getElementById('filterLessonLevel').value || '';
@@ -172,7 +172,7 @@ window.filterLessons = function () {
     renderLessonsTable(filteredLessons);
 };
 
-window.renderLessonsTable = function (list) {
+window.renderLessonsTable = async function (list) {
     list = list || filteredLessons;
     const tbody = document.querySelector('#lessonsTable tbody');
     if (!tbody) return;
@@ -219,15 +219,15 @@ function updateLessonsPagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changeLessonsPage = function (page) {
+window.changeLessonsPage = async function (page) {
     const totalPages = Math.ceil(filteredLessons.length / lessonsPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     lessonsCurrentPage = page;
     renderLessonsTable(filteredLessons);
 };
 
-window.promptAddLessonType = function () {
-    const name = (prompt('نام درس جدید را وارد کنید:') || '').trim();
+window.promptAddLessonType = async function () {
+    const name = (await AppDialog.prompt('نام درس جدید را وارد کنید:') || '').trim();
     if (!name) return;
     if (sampleLessons.some(function (i) { return i.title === name; })) return alert('این درس قبلاً وجود دارد');
     const item = { id: Date.now(), title: name };
@@ -266,12 +266,12 @@ function enforcePrimary(userId, excludeId) {
     });
 }
 
-window.openAddLessonModal = function () {
+window.openAddLessonModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = window.getLessonAddModalHTML ? window.getLessonAddModalHTML() : '';
 };
 
-window.saveLesson = function () {
+window.saveLesson = async function () {
     const data = readLessonForm('');
     if (!data.lesson_id) return alert('درس را انتخاب کنید');
     const userId = 1;
@@ -282,21 +282,21 @@ window.saveLesson = function () {
     alert('✅ ثبت شد');
 };
 
-window.viewLesson = function (id) {
+window.viewLesson = async function (id) {
     const item = allUserLessons.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getLessonDetailsModalHTML
         ? window.getLessonDetailsModalHTML(item, getLevelTitle(item.level_id)) : '';
 };
 
-window.editLesson = function (id) {
+window.editLesson = async function (id) {
     const item = allUserLessons.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getLessonEditModalHTML
         ? window.getLessonEditModalHTML(item) : '';
 };
 
-window.saveEditedLesson = function (id) {
+window.saveEditedLesson = async function (id) {
     const data = readLessonForm('editLesn');
     if (!data.lesson_id) return alert('درس را انتخاب کنید');
     const index = allUserLessons.findIndex(function (x) { return x.id === id; });
@@ -309,12 +309,12 @@ window.saveEditedLesson = function (id) {
     alert('✅ ذخیره شد');
 };
 
-window.toggleLessonInlineEdit = function (id) {
+window.toggleLessonInlineEdit = async function (id) {
     editingLessonRowId = editingLessonRowId === id ? null : id;
     renderLessonsTable(filteredLessons);
 };
 
-window.saveInlineLesson = function (id) {
+window.saveInlineLesson = async function (id) {
     const data = readLessonForm('inlineLesn' + id);
     if (!data.lesson_id) return alert('درس را انتخاب کنید');
     const index = allUserLessons.findIndex(function (x) { return x.id === id; });
@@ -326,14 +326,14 @@ window.saveInlineLesson = function (id) {
     alert('✅ ذخیره شد');
 };
 
-window.deleteLesson = function (id) {
-    if (!confirm('حذف این درس؟')) return;
+window.deleteLesson = async function (id) {
+    if (!(await AppDialog.confirm('حذف این درس؟'))) return;
     allUserLessons = allUserLessons.filter(function (i) { return i.id !== id; });
     if (editingLessonRowId === id) editingLessonRowId = null;
     filterLessons();
 };
 
-window.exportLessonsToExcel = function () {
+window.exportLessonsToExcel = async function () {
     const data = filteredLessons.length ? filteredLessons : allUserLessons;
     let csv = '\uFEFFردیف,درس,سطح,سابقه,اصلی,وضعیت,شعبه\n';
     data.forEach(function (item, i) {
@@ -347,7 +347,7 @@ window.exportLessonsToExcel = function () {
     link.click();
 };
 
-window.exportLessonsToPDF = function () {
+window.exportLessonsToPDF = async function () {
     document.getElementById('modalContainer').innerHTML = window.getLessonPDFModalHTML
         ? window.getLessonPDFModalHTML(lessonPdfColumns) : '';
 };

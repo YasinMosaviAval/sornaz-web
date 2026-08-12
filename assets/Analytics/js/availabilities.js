@@ -20,14 +20,14 @@ window.branchScheduleTimezoneList = [
     { value: 'UTC', label: 'UTC' }
 ];
 
-window.toggleBranchScheduleRepeatDate = function (wrapId, repeatValue) {
+window.toggleBranchScheduleRepeatDate = async function (wrapId, repeatValue) {
     const wrap = document.getElementById(wrapId);
     if (!wrap) return;
     const show = (repeatValue === 'ماهانه' || repeatValue === 'سالانه');
     wrap.classList.toggle('hidden', !show);
 };
 
-window.getBranchScheduleBranches = function () {
+window.getBranchScheduleBranches = async function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
     return [
         { id: 1, name: 'شعبه مرکزی' }, { id: 2, name: 'شعبه ونک' },
@@ -69,7 +69,7 @@ function mergeConsecutiveSlots(slots) {
 }
 function rangeLabel(range) { return range.start + '-' + range.end; }
 
-window.buildBranchScheduleTimeSlotsHTML = function (containerId, branchId, selectedSlots) {
+window.buildBranchScheduleTimeSlotsHTML = async function (containerId, branchId, selectedSlots) {
     const slots = getFullDaySlots();
     const selected = (selectedSlots || []).map(String);
     return '<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">' +
@@ -81,7 +81,7 @@ window.buildBranchScheduleTimeSlotsHTML = function (containerId, branchId, selec
         }).join('') + '</div>';
 };
 
-window.refreshBranchScheduleTimeSlots = function (containerId, branchId, selectedSlots) {
+window.refreshBranchScheduleTimeSlots = async function (containerId, branchId, selectedSlots) {
     const el = document.getElementById(containerId);
     if (!el) return;
     el.innerHTML = window.buildBranchScheduleTimeSlotsHTML(containerId, branchId, selectedSlots || []);
@@ -169,7 +169,7 @@ function sortBranchScheduleItems() {
     });
 }
 
-window.updateBranchScheduleSortIcons = function () {
+window.updateBranchScheduleSortIcons = async function () {
     ['day', 'timeLabel', 'repeatPeriod', 'timezone', 'branchName', 'status'].forEach(function (f) {
         const icon = document.getElementById('bsSortIcon-' + f);
         if (!icon) return;
@@ -177,7 +177,7 @@ window.updateBranchScheduleSortIcons = function () {
     });
 };
 
-window.sortBranchSchedulesBy = function (field) {
+window.sortBranchSchedulesBy = async function (field) {
     if (bsSortField === field) bsSortDirection = bsSortDirection === 'asc' ? 'desc' : 'asc';
     else { bsSortField = field; bsSortDirection = 'asc'; }
     sortBranchScheduleItems();
@@ -185,7 +185,7 @@ window.sortBranchSchedulesBy = function (field) {
     window.updateBranchScheduleSortIcons();
 };
 
-window.renderBranchSchedulesBranchTabs = function () {
+window.renderBranchSchedulesBranchTabs = async function () {
     const container = document.getElementById('branchSchedulesBranchTabs');
     if (!container) return;
     container.querySelectorAll('.branch-schedule-branch-tab:not(:first-child)').forEach(function (t) { t.remove(); });
@@ -200,7 +200,7 @@ window.renderBranchSchedulesBranchTabs = function () {
     });
 };
 
-window.filterBranchSchedulesByBranch = function (branchId) {
+window.filterBranchSchedulesByBranch = async function (branchId) {
     currentBranchScheduleBranch = branchId;
     document.querySelectorAll('.branch-schedule-branch-tab').forEach(function (tab) {
         tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
@@ -222,7 +222,7 @@ window.filterBranchSchedulesByBranch = function (branchId) {
     window.filterBranchSchedules();
 };
 
-window.filterBranchSchedules = function () {
+window.filterBranchSchedules = async function () {
     const day = document.getElementById('filterBranchDay') && document.getElementById('filterBranchDay').value || '';
     const status = document.getElementById('filterBranchStatus') && document.getElementById('filterBranchStatus').value || '';
     const repeat = document.getElementById('filterBranchRepeat') && document.getElementById('filterBranchRepeat').value || '';
@@ -242,7 +242,7 @@ window.filterBranchSchedules = function () {
     window.renderBranchSchedulesTable(filteredBranchSchedules);
 };
 
-window.renderBranchSchedulesTable = function (list) {
+window.renderBranchSchedulesTable = async function (list) {
     list = list || filteredBranchSchedules;
     const tbody = document.querySelector('#branchSchedulesTable tbody');
     if (!tbody) return;
@@ -294,7 +294,7 @@ function updateBranchSchedulesPagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changeBranchSchedulesPage = function (page) {
+window.changeBranchSchedulesPage = async function (page) {
     const totalPages = Math.ceil(filteredBranchSchedules.length / branchSchedulesPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     branchSchedulesCurrentPage = page;
@@ -340,13 +340,13 @@ function expandRangesToRows(base, ranges) {
     });
 }
 
-window.openAddBranchScheduleModal = function () {
+window.openAddBranchScheduleModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = window.getBranchScheduleAddModalHTML
         ? window.getBranchScheduleAddModalHTML() : '';
 };
 
-window.saveBranchSchedule = function () {
+window.saveBranchSchedule = async function () {
     const data = readBranchScheduleForm('');
     if (!data.day) return alert('روز الزامی است');
     if (!data.ranges.length) return alert('حداقل یک بازه ساعتی انتخاب کنید');
@@ -361,21 +361,21 @@ window.saveBranchSchedule = function () {
     alert('✅ بازه(های) زمانی ثبت شد');
 };
 
-window.viewBranchSchedule = function (id) {
+window.viewBranchSchedule = async function (id) {
     const item = allBranchSchedules.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getBranchScheduleDetailsModalHTML
         ? window.getBranchScheduleDetailsModalHTML(item) : '';
 };
 
-window.editBranchSchedule = function (id) {
+window.editBranchSchedule = async function (id) {
     const item = allBranchSchedules.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getBranchScheduleEditModalHTML
         ? window.getBranchScheduleEditModalHTML(item) : '';
 };
 
-window.saveEditedBranchSchedule = function (id) {
+window.saveEditedBranchSchedule = async function (id) {
     const data = readBranchScheduleForm('editBs');
     if (!data.day) return alert('روز الزامی است');
     if (!data.ranges.length) return alert('حداقل یک بازه ساعتی انتخاب کنید');
@@ -392,12 +392,12 @@ window.saveEditedBranchSchedule = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.toggleBranchScheduleInlineEdit = function (id) {
+window.toggleBranchScheduleInlineEdit = async function (id) {
     editingBranchScheduleRowId = editingBranchScheduleRowId === id ? null : id;
     window.renderBranchSchedulesTable(filteredBranchSchedules);
 };
 
-window.saveInlineBranchSchedule = function (id) {
+window.saveInlineBranchSchedule = async function (id) {
     const data = readBranchScheduleForm('inlineBs' + id);
     if (!data.day) return alert('روز الزامی است');
     if (!data.ranges.length) return alert('حداقل یک بازه ساعتی انتخاب کنید');
@@ -413,14 +413,14 @@ window.saveInlineBranchSchedule = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.deleteBranchSchedule = function (id) {
-    if (!confirm('حذف این زمان‌بندی؟')) return;
+window.deleteBranchSchedule = async function (id) {
+    if (!(await AppDialog.confirm('حذف این زمان‌بندی؟'))) return;
     allBranchSchedules = allBranchSchedules.filter(function (s) { return s.id !== id; });
     if (editingBranchScheduleRowId === id) editingBranchScheduleRowId = null;
     window.filterBranchSchedules();
 };
 
-window.exportBranchSchedulesToExcel = function () {
+window.exportBranchSchedulesToExcel = async function () {
     const data = filteredBranchSchedules.length ? filteredBranchSchedules : allBranchSchedules;
     let csv = '\uFEFFردیف,روز,ساعت,دوره تکرار,منطقه زمانی,شعبه,وضعیت,خلاصه\n';
     data.forEach(function (item, i) {
@@ -435,7 +435,7 @@ window.exportBranchSchedulesToExcel = function () {
     link.click();
 };
 
-window.exportBranchSchedulesToPDF = function () {
+window.exportBranchSchedulesToPDF = async function () {
     document.getElementById('modalContainer').innerHTML = window.getBranchSchedulePDFModalHTML
         ? window.getBranchSchedulePDFModalHTML(bsPdfColumns) : '';
 };

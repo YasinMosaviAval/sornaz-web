@@ -15,6 +15,7 @@
     pushStyle('hero.css');
     ?>
     <?=styles()?>
+    <link rel="stylesheet" href="/assets/theme/theme.css?v=<?= filemtime(base_path('assets/theme/theme.css')) ?: 1 ?>">
 </head>
 <body>
     <? component('header'); ?>
@@ -26,6 +27,7 @@
     pushScript('header.js');
     pushScript('home.js');
     ?>
+    <script src="/assets/theme/dialog.js?v=<?= filemtime(base_path('assets/theme/dialog.js')) ?: 1 ?>"></script>
     <?=scripts()?>
 </body>
 </html>

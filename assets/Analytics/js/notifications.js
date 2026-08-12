@@ -6,7 +6,7 @@ window.notificationStatusesList = ['منتشر شده', 'پیش‌نویس', 'م
 window.notificationPrioritiesList = ['بالا', 'متوسط', 'کم'];
 window.notificationAudiencesList = ['همه', 'هنرجویان', 'اساتید', 'والدین', 'پرسنل'];
 
-window.getNotificationBranches = function () {
+window.getNotificationBranches = async function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
     return [
         { id: 1, name: 'شعبه مرکزی' },
@@ -83,7 +83,7 @@ function sortNotificationItems() {
     });
 }
 
-window.updateNotificationSortIcons = function () {
+window.updateNotificationSortIcons = async function () {
     ['title', 'branchName', 'audience', 'priority', 'date', 'status'].forEach(function (f) {
         const icon = document.getElementById('notifSortIcon-' + f);
         if (!icon) return;
@@ -91,7 +91,7 @@ window.updateNotificationSortIcons = function () {
     });
 };
 
-window.sortNotificationsBy = function (field) {
+window.sortNotificationsBy = async function (field) {
     if (notifSortField === field) notifSortDirection = notifSortDirection === 'asc' ? 'desc' : 'asc';
     else { notifSortField = field; notifSortDirection = 'asc'; }
     sortNotificationItems();
@@ -99,7 +99,7 @@ window.sortNotificationsBy = function (field) {
     window.updateNotificationSortIcons();
 };
 
-window.renderNotificationsBranchTabs = function () {
+window.renderNotificationsBranchTabs = async function () {
     const container = document.getElementById('notificationsBranchTabs');
     if (!container) return;
     container.querySelectorAll('.notification-branch-tab:not([data-value="all"])').forEach(function (t) { t.remove(); });
@@ -127,7 +127,7 @@ window.renderNotificationsBranchTabs = function () {
     }
 };
 
-window.filterNotificationsByBranch = function (branchId) {
+window.filterNotificationsByBranch = async function (branchId) {
     currentNotificationBranch = branchId;
     document.querySelectorAll('.notification-branch-tab').forEach(function (tab) {
         const active = String(tab.dataset.value) === String(branchId);
@@ -144,7 +144,7 @@ window.filterNotificationsByBranch = function (branchId) {
     window.filterNotifications();
 };
 
-window.filterNotifications = function () {
+window.filterNotifications = async function () {
     const search = (document.getElementById('notificationSearch') && document.getElementById('notificationSearch').value || '').trim().toLowerCase();
     const status = document.getElementById('filterNotificationStatus') && document.getElementById('filterNotificationStatus').value || '';
     const priority = document.getElementById('filterNotificationPriority') && document.getElementById('filterNotificationPriority').value || '';
@@ -166,7 +166,7 @@ window.filterNotifications = function () {
     window.renderNotificationsTable(filteredNotifications);
 };
 
-window.renderNotificationsTable = function (list) {
+window.renderNotificationsTable = async function (list) {
     list = list || filteredNotifications;
     const tbody = document.querySelector('#notificationsTable tbody');
     if (!tbody) return;
@@ -212,20 +212,20 @@ function updateNotificationsPagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changeNotificationsPage = function (page) {
+window.changeNotificationsPage = async function (page) {
     const totalPages = Math.ceil(filteredNotifications.length / notificationsPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     notificationsCurrentPage = page;
     window.renderNotificationsTable(filteredNotifications);
 };
 
-window.openAddNotificationModal = function () {
+window.openAddNotificationModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = window.getNotificationAddModalHTML
         ? window.getNotificationAddModalHTML() : '';
 };
 
-window.saveNotification = function (asDraft) {
+window.saveNotification = async function (asDraft) {
     const title = (document.getElementById('notifTitle') && document.getElementById('notifTitle').value || '').trim();
     const body = (document.getElementById('notifBody') && document.getElementById('notifBody').value || '').trim();
     if (!title) return alert('عنوان اعلان الزامی است');
@@ -254,14 +254,14 @@ window.saveNotification = function (asDraft) {
     alert(asDraft ? '✅ پیش‌نویس ذخیره شد' : '✅ اعلان منتشر شد');
 };
 
-window.viewNotification = function (id) {
+window.viewNotification = async function (id) {
     const item = allNotifications.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getNotificationDetailsModalHTML
         ? window.getNotificationDetailsModalHTML(item) : '';
 };
 
-window.publishNotification = function (id) {
+window.publishNotification = async function (id) {
     const item = allNotifications.find(function (x) { return x.id === id; });
     if (!item) return;
     item.status = 'منتشر شده';
@@ -270,7 +270,7 @@ window.publishNotification = function (id) {
     alert('✅ اعلان منتشر شد');
 };
 
-window.expireNotification = function (id) {
+window.expireNotification = async function (id) {
     const item = allNotifications.find(function (x) { return x.id === id; });
     if (!item) return;
     item.status = 'منقضی';
@@ -278,8 +278,8 @@ window.expireNotification = function (id) {
     closeModal();
 };
 
-window.deleteNotification = function (id) {
-    if (!confirm('حذف این اعلان؟')) return;
+window.deleteNotification = async function (id) {
+    if (!(await AppDialog.confirm('حذف این اعلان؟'))) return;
     allNotifications = allNotifications.filter(function (n) { return n.id !== id; });
     window.filterNotifications();
 };

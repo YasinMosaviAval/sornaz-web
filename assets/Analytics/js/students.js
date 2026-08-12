@@ -20,7 +20,7 @@ window.studentLevelsList = studentLevels;
 window.studentTeachersList = studentTeachers;
 window.studentFinancialsList = studentFinancials;
 
-window.getStudentBranches = function () {
+window.getStudentBranches = async function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) {
         return allBranches.map(function (b) { return { id: b.id, name: b.name }; });
     }
@@ -42,12 +42,12 @@ function calcAge(birthDate) {
     return age;
 }
 
-window.isStudentUnder18 = function (birthDate) {
+window.isStudentUnder18 = async function (birthDate) {
     const age = calcAge(birthDate);
     return age !== null && age < 18;
 };
 
-window.toggleStudentParentFields = function (birthInputId, wrapId) {
+window.toggleStudentParentFields = async function (birthInputId, wrapId) {
     const input = document.getElementById(birthInputId);
     const wrap = document.getElementById(wrapId);
     if (!wrap) return;
@@ -159,7 +159,7 @@ function sortStudentItems() {
     });
 }
 
-window.updateStudentSortIcons = function () {
+window.updateStudentSortIcons = async function () {
     ['name', 'instrument', 'level', 'teacher', 'branch', 'remaining', 'financial', 'attendance'].forEach(function (f) {
         const icon = document.getElementById('stuSortIcon-' + f);
         if (!icon) return;
@@ -167,7 +167,7 @@ window.updateStudentSortIcons = function () {
     });
 };
 
-window.sortStudentsBy = function (field) {
+window.sortStudentsBy = async function (field) {
     if (stuSortField === field) stuSortDirection = stuSortDirection === 'asc' ? 'desc' : 'asc';
     else { stuSortField = field; stuSortDirection = 'asc'; }
     sortStudentItems();
@@ -175,7 +175,7 @@ window.sortStudentsBy = function (field) {
     window.updateStudentSortIcons();
 };
 
-window.renderStudentBranchTabs = function () {
+window.renderStudentBranchTabs = async function () {
     const container = document.getElementById('studentBranchTabs');
     if (!container) return;
     container.querySelectorAll('.student-branch-tab:not([data-value="all"])').forEach(function (t) { t.remove(); });
@@ -204,7 +204,7 @@ window.renderStudentBranchTabs = function () {
     }
 };
 
-window.filterStudentsByBranch = function (branchId) {
+window.filterStudentsByBranch = async function (branchId) {
     currentStudentBranch = branchId;
     document.querySelectorAll('.student-branch-tab').forEach(function (tab) {
         const active = String(tab.dataset.value) === String(branchId);
@@ -221,7 +221,7 @@ window.filterStudentsByBranch = function (branchId) {
     window.filterStudents();
 };
 
-window.filterStudents = function () {
+window.filterStudents = async function () {
     const search = (document.getElementById('studentSearch') && document.getElementById('studentSearch').value || '').trim().toLowerCase();
     const ageGroup = document.getElementById('filterStudentAgeGroup') && document.getElementById('filterStudentAgeGroup').value || '';
     const level = document.getElementById('filterStudentLevel') && document.getElementById('filterStudentLevel').value || '';
@@ -256,7 +256,7 @@ window.filterStudents = function () {
     window.renderStudentsTable(filteredStudents);
 };
 
-window.renderStudentsTable = function (list) {
+window.renderStudentsTable = async function (list) {
     list = list || filteredStudents;
     const tbody = document.querySelector('#studentsTable tbody');
     if (!tbody) return;
@@ -308,7 +308,7 @@ function updateStudentsPagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changeStudentsPage = function (page) {
+window.changeStudentsPage = async function (page) {
     const totalPages = Math.ceil(filteredStudents.length / studentsPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     studentsCurrentPage = page;
@@ -372,13 +372,13 @@ function validateStudentData(data) {
     return true;
 }
 
-window.openAddStudentModal = function () {
+window.openAddStudentModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = window.getStudentAddModalHTML
         ? window.getStudentAddModalHTML() : '';
 };
 
-window.saveStudent = function () {
+window.saveStudent = async function () {
     const data = readStudentForm('stu');
     if (!validateStudentData(data)) return;
     allStudents.unshift(Object.assign({}, data, {
@@ -392,21 +392,21 @@ window.saveStudent = function () {
     alert('✅ هنرجو با موفقیت ثبت شد');
 };
 
-window.viewStudent = function (id) {
+window.viewStudent = async function (id) {
     const item = allStudents.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getStudentDetailsModalHTML
         ? window.getStudentDetailsModalHTML(item) : '';
 };
 
-window.editStudent = function (id) {
+window.editStudent = async function (id) {
     const item = allStudents.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getStudentEditModalHTML
         ? window.getStudentEditModalHTML(item) : '';
 };
 
-window.saveEditedStudent = function (id) {
+window.saveEditedStudent = async function (id) {
     const data = readStudentForm('editStu');
     if (!validateStudentData(data)) return;
     const index = allStudents.findIndex(function (x) { return x.id === id; });
@@ -417,12 +417,12 @@ window.saveEditedStudent = function (id) {
     alert('✅ تغییرات با موفقیت ذخیره شد');
 };
 
-window.toggleStudentInlineEdit = function (id) {
+window.toggleStudentInlineEdit = async function (id) {
     editingStudentRowId = editingStudentRowId === id ? null : id;
     window.renderStudentsTable(filteredStudents);
 };
 
-window.saveInlineStudent = function (id) {
+window.saveInlineStudent = async function (id) {
     const data = readStudentForm('inlineStu' + id);
     if (!validateStudentData(data)) return;
     const index = allStudents.findIndex(function (x) { return x.id === id; });
@@ -433,14 +433,14 @@ window.saveInlineStudent = function (id) {
     alert('✅ تغییرات با موفقیت ذخیره شد');
 };
 
-window.deleteStudent = function (id) {
-    if (!confirm('آیا از حذف این هنرجو مطمئن هستید؟')) return;
+window.deleteStudent = async function (id) {
+    if (!(await AppDialog.confirm('آیا از حذف این هنرجو مطمئن هستید؟'))) return;
     allStudents = allStudents.filter(function (s) { return s.id !== id; });
     if (editingStudentRowId === id) editingStudentRowId = null;
     window.filterStudents();
 };
 
-window.exportStudentsToExcel = function () {
+window.exportStudentsToExcel = async function () {
     const data = filteredStudents.length ? filteredStudents : allStudents;
     let csv = '\uFEFFردیف,نام,کد ملی,نام پدر,تاریخ تولد,شماره تماس,آدرس,تاریخ ثبت‌نام,ساز,سطح,استاد,شعبه,جلسات باقی‌مانده,وضعیت مالی,حضور,نام والد,کد ملی والد,تلفن والد\n';
     data.forEach(function (item, i) {
@@ -457,7 +457,7 @@ window.exportStudentsToExcel = function () {
     link.click();
 };
 
-window.exportStudentsToPDF = function () {
+window.exportStudentsToPDF = async function () {
     document.getElementById('modalContainer').innerHTML = window.getStudentPDFModalHTML
         ? window.getStudentPDFModalHTML(studentPdfColumns) : '';
 };

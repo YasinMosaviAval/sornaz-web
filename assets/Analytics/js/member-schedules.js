@@ -21,7 +21,7 @@ window.memberScheduleTimezoneList = [
     { value: 'UTC', label: 'UTC' }
 ];
 
-window.toggleMemberScheduleRepeatDate = function (wrapId, repeatValue) {
+window.toggleMemberScheduleRepeatDate = async function (wrapId, repeatValue) {
     const wrap = document.getElementById(wrapId);
     if (!wrap) return;
     const show = (repeatValue === 'ماهانه' || repeatValue === 'سالانه');
@@ -43,7 +43,7 @@ let memberScheduleMembers = [
     { id: 9, name: 'پارسا جعفری' }, { id: 10, name: 'هستی محمدی' }
 ];
 
-window.getMemberScheduleBranches = function () {
+window.getMemberScheduleBranches = async function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
     return [
         { id: 1, name: 'شعبه مرکزی' }, { id: 2, name: 'شعبه ونک' },
@@ -51,7 +51,7 @@ window.getMemberScheduleBranches = function () {
     ];
 };
 
-window.getMemberScheduleMemberOptions = function () {
+window.getMemberScheduleMemberOptions = async function () {
     if (typeof allStaff !== 'undefined' && allStaff.length) {
         return allStaff.map(function (s) { return { value: s.id, label: s.name, id: s.id, name: s.name }; });
     }
@@ -93,7 +93,7 @@ function mergeConsecutiveSlots(slots) {
 }
 function rangeLabel(range) { return range.start + '-' + range.end; }
 
-window.buildMemberScheduleTimeSlotsHTML = function (containerId, branchId, selectedSlots) {
+window.buildMemberScheduleTimeSlotsHTML = async function (containerId, branchId, selectedSlots) {
     const slots = getBranchSlots(parseInt(branchId, 10) || 1);
     const selected = (selectedSlots || []).map(String);
     return '<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">' +
@@ -105,14 +105,14 @@ window.buildMemberScheduleTimeSlotsHTML = function (containerId, branchId, selec
         }).join('') + '</div>';
 };
 
-window.refreshMemberScheduleTimeSlots = function (containerId, branchId, selectedSlots) {
+window.refreshMemberScheduleTimeSlots = async function (containerId, branchId, selectedSlots) {
     const el = document.getElementById(containerId);
     if (!el) return;
     el.innerHTML = window.buildMemberScheduleTimeSlotsHTML(containerId, branchId, selectedSlots || []);
 };
 
-window.promptAddMemberScheduleMember = function (selectId) {
-    const name = prompt('نام عضو جدید را وارد کنید:');
+window.promptAddMemberScheduleMember = async function (selectId) {
+    const name = await AppDialog.prompt('نام عضو جدید را وارد کنید:');
     const sel = document.getElementById(selectId);
     if (!name || !name.trim()) { if (sel) sel.value = ''; return; }
     const m = { id: Date.now(), name: name.trim() };
@@ -160,7 +160,7 @@ function sortMemberScheduleItems() {
     });
 }
 
-window.updateMemberScheduleSortIcons = function () {
+window.updateMemberScheduleSortIcons = async function () {
     ['name', 'role', 'day', 'timeLabel', 'repeatPeriod', 'timezone', 'branchName', 'status'].forEach(function (f) {
         const icon = document.getElementById('msSortIcon-' + f);
         if (!icon) return;
@@ -168,7 +168,7 @@ window.updateMemberScheduleSortIcons = function () {
     });
 };
 
-window.sortMemberSchedulesBy = function (field) {
+window.sortMemberSchedulesBy = async function (field) {
     if (msSortField === field) msSortDirection = msSortDirection === 'asc' ? 'desc' : 'asc';
     else { msSortField = field; msSortDirection = 'asc'; }
     sortMemberScheduleItems();
@@ -176,7 +176,7 @@ window.sortMemberSchedulesBy = function (field) {
     window.updateMemberScheduleSortIcons();
 };
 
-window.renderMemberSchedulesBranchTabs = function () {
+window.renderMemberSchedulesBranchTabs = async function () {
     const container = document.getElementById('memberSchedulesBranchTabs');
     if (!container) return;
     container.querySelectorAll('.member-schedule-branch-tab:not(:first-child)').forEach(function (t) { t.remove(); });
@@ -191,7 +191,7 @@ window.renderMemberSchedulesBranchTabs = function () {
     });
 };
 
-window.filterMemberSchedulesByBranch = function (branchId) {
+window.filterMemberSchedulesByBranch = async function (branchId) {
     currentMemberScheduleBranch = branchId;
     document.querySelectorAll('.member-schedule-branch-tab').forEach(function (tab) {
         tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
@@ -213,7 +213,7 @@ window.filterMemberSchedulesByBranch = function (branchId) {
     window.filterMemberSchedules();
 };
 
-window.filterMemberSchedules = function () {
+window.filterMemberSchedules = async function () {
     const search = (document.getElementById('memberScheduleSearch') && document.getElementById('memberScheduleSearch').value || '').trim().toLowerCase();
     const role = document.getElementById('filterMemberRole') && document.getElementById('filterMemberRole').value || '';
     const day = document.getElementById('filterMemberDay') && document.getElementById('filterMemberDay').value || '';
@@ -237,7 +237,7 @@ window.filterMemberSchedules = function () {
     window.renderMemberSchedulesTable(filteredMemberSchedules);
 };
 
-window.renderMemberSchedulesTable = function (list) {
+window.renderMemberSchedulesTable = async function (list) {
     list = list || filteredMemberSchedules;
     const tbody = document.querySelector('#memberSchedulesTable tbody');
     if (!tbody) return;
@@ -289,7 +289,7 @@ function updateMemberSchedulesPagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changeMemberSchedulesPage = function (page) {
+window.changeMemberSchedulesPage = async function (page) {
     const totalPages = Math.ceil(filteredMemberSchedules.length / memberSchedulesPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     memberSchedulesCurrentPage = page;
@@ -341,13 +341,13 @@ function expandRangesToRows(base, ranges) {
     });
 }
 
-window.openAddMemberScheduleModal = function () {
+window.openAddMemberScheduleModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = window.getMemberScheduleAddModalHTML
         ? window.getMemberScheduleAddModalHTML() : '';
 };
 
-window.saveMemberSchedule = function () {
+window.saveMemberSchedule = async function () {
     const data = readMemberScheduleForm('');
     if (!data.memberId || data.memberId === '__new__') return alert('انتخاب عضو الزامی است');
     if (!data.day) return alert('روز الزامی است');
@@ -363,21 +363,21 @@ window.saveMemberSchedule = function () {
     alert('✅ بازه(های) زمانی ثبت شد');
 };
 
-window.viewMemberSchedule = function (id) {
+window.viewMemberSchedule = async function (id) {
     const item = allMemberSchedules.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getMemberScheduleDetailsModalHTML
         ? window.getMemberScheduleDetailsModalHTML(item) : '';
 };
 
-window.editMemberSchedule = function (id) {
+window.editMemberSchedule = async function (id) {
     const item = allMemberSchedules.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getMemberScheduleEditModalHTML
         ? window.getMemberScheduleEditModalHTML(item) : '';
 };
 
-window.saveEditedMemberSchedule = function (id) {
+window.saveEditedMemberSchedule = async function (id) {
     const data = readMemberScheduleForm('editMs');
     if (!data.memberId || data.memberId === '__new__') return alert('انتخاب عضو الزامی است');
     if (!data.day) return alert('روز الزامی است');
@@ -395,12 +395,12 @@ window.saveEditedMemberSchedule = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.toggleMemberScheduleInlineEdit = function (id) {
+window.toggleMemberScheduleInlineEdit = async function (id) {
     editingMemberScheduleRowId = editingMemberScheduleRowId === id ? null : id;
     window.renderMemberSchedulesTable(filteredMemberSchedules);
 };
 
-window.saveInlineMemberSchedule = function (id) {
+window.saveInlineMemberSchedule = async function (id) {
     const data = readMemberScheduleForm('inlineMs' + id);
     if (!data.memberId || data.memberId === '__new__') return alert('انتخاب عضو الزامی است');
     if (!data.day) return alert('روز الزامی است');
@@ -418,7 +418,7 @@ window.saveInlineMemberSchedule = function (id) {
 };
 
 window.deleteMemberSchedule = async function (id) {
-    if (!confirm('حذف این زمان‌بندی؟')) return;
+    if (!(await AppDialog.confirm('حذف این زمان‌بندی؟'))) return;
     try {
         const body=new FormData(); body.append('_token',window.adminCsrfToken||'');
         const response=await fetch('/analytics/member-schedules/'+id+'/delete',{method:'POST',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'},body});
@@ -427,7 +427,7 @@ window.deleteMemberSchedule = async function (id) {
     } catch(error) { alert(error.message||'حذف برنامه زمانی ناموفق بود.'); }
 };
 
-window.exportMemberSchedulesToExcel = function () {
+window.exportMemberSchedulesToExcel = async function () {
     const data = filteredMemberSchedules.length ? filteredMemberSchedules : allMemberSchedules;
     let csv = '\uFEFFردیف,نام عضو,نقش,روز,ساعت,دوره تکرار,منطقه زمانی,شعبه,وضعیت,خلاصه\n';
     data.forEach(function (item, i) {
@@ -442,7 +442,7 @@ window.exportMemberSchedulesToExcel = function () {
     link.click();
 };
 
-window.exportMemberSchedulesToPDF = function () {
+window.exportMemberSchedulesToPDF = async function () {
     document.getElementById('modalContainer').innerHTML = window.getMemberSchedulePDFModalHTML
         ? window.getMemberSchedulePDFModalHTML(msPdfColumns) : '';
 };
