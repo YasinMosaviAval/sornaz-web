@@ -19,6 +19,7 @@
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+    <header class="min-h-16 px-4 py-3 flex items-center justify-end border-b bg-white"><? component('inline-edit-switch'); ?></header>
     <?// component('main-header'); ?>
     <main class="flex-1">
         <?=$slot?>
@@ -31,7 +32,9 @@
         pushScript('main.js');
     ?>
     <div id="modalContainer"></div>
+    <script>window.adminCsrfToken=<?= json_encode(csrf_token()) ?>;</script>
     <script src="/assets/theme/dialog.js?v=<?= filemtime(base_path('assets/theme/dialog.js')) ?: 1 ?>"></script>
+    <script src="/assets/Analytics/js/admin-inline-editor.js?v=<?= filemtime(base_path('assets/Analytics/js/admin-inline-editor.js')) ?: 1 ?>"></script>
     <?= scripts() ?>
 </body>
 </html>

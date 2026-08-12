@@ -27,9 +27,11 @@
     <? component('Page::sections.main-footer'); ?>
     <div id="modalContainer"></div>
     <script>
+        window.adminCsrfToken = <?= json_encode(csrf_token()) ?>;
         window.academyTranslations = <?= json_encode(translations('academy.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     </script>
     <script src="/assets/theme/dialog.js?v=<?= filemtime(base_path('assets/theme/dialog.js')) ?: 1 ?>"></script>
+    <script src="/assets/Analytics/js/admin-inline-editor.js?v=<?= filemtime(base_path('assets/Analytics/js/admin-inline-editor.js')) ?: 1 ?>"></script>
     <?= scripts() ?>
     <script src="/assets/theme/theme.js?v=<?= filemtime(base_path('assets/theme/theme.js')) ?: 1 ?>"></script>
 </body>
