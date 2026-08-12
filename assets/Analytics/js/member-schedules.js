@@ -173,6 +173,7 @@ let allMemberSchedules = [];
     }
     allMemberSchedules = allMemberSchedules.slice(0, 100);
 })();
+if (Array.isArray(window.adminMemberSchedulesData) && window.adminMemberSchedulesData.length) allMemberSchedules = window.adminMemberSchedulesData;
 
 let currentMemberScheduleBranch = 'all';
 let memberSchedulesCurrentPage = 1;

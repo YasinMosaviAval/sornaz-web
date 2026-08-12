@@ -76,6 +76,8 @@ class UserService {
             $lessons = $this->userMusicRows('user_lessons', 'user_lesson_id', 'lesson_id', 'lessons', $id, $translations, $locale);
             $addresses = $this->translatedRows('user_addresses', 'address_id', $id, ['address', 'note'], $translations, $locale);
             $contacts = $this->translatedRows('user_contacts', 'user_contact_id', $id, ['value', 'note'], $translations, $locale);
+            $availabilities = $this->translatedRows('user_availabilities', 'user_availability_id', $id, ['summary', 'description'], $translations, $locale);
+            $availabilityExceptions = $this->translatedRows('user_availability_exceptions', 'user_availability_exception_id', $id, ['summary', 'description'], $translations, $locale);
             $firstAddress = $addresses[0]['address'] ?? '';
             return [
                 'id' => $id,
@@ -95,6 +97,7 @@ class UserService {
                 'instruments_count' => count($instruments), 'lessons' => $lessons,
                 'experiences' => array_merge($instruments, $lessons),
                 'addresses' => $addresses, 'contacts' => $contacts,
+                'availabilities' => $availabilities, 'availability_exceptions' => $availabilityExceptions,
                 'city' => $firstAddress ? (explode('،', $firstAddress)[0] ?? '') : '',
                 'headline' => count($instruments) ? 'فعال در زمینه ' . implode('، ', array_slice(array_column($instruments, 'title'), 0, 3)) : 'مدیر آموزشگاه موسیقی',
             ];

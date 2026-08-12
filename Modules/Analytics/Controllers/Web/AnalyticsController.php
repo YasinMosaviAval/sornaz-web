@@ -30,7 +30,8 @@ class AnalyticsController {
         $testStats = SiteAdminAccess::allows(auth()->user()) && env('APP_ENV', 'production') === 'local'
             ? $this->adminTests->statistics()
             : [];
-        return ResponseFactory::view('Analytics::admin-panel', ['testStats' => $testStats])->layout('admin')->title('سُرناز | پنل مدیریت');
+        $scheduleFixtures = env('APP_ENV', 'production') === 'local' ? $this->adminTests->scheduleFixtures() : ['schedules'=>[],'exceptions'=>[]];
+        return ResponseFactory::view('Analytics::admin-panel', ['testStats' => $testStats, 'scheduleFixtures'=>$scheduleFixtures])->layout('admin')->title('سُرناز | پنل مدیریت');
     }
 
 
