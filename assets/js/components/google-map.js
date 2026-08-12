@@ -1,56 +1,14 @@
-let map;
-let marker;
-window.addEventListener("load",function(){
-    if(typeof google==="undefined"){
-        return;
-    }
-    const lat = parseFloat(document.getElementById("latitude").value || 35.6892);
-    const lng = parseFloat(document.getElementById("longitude").value || 51.3890);
-    map = new google.maps.Map(
-        document.getElementById("google-map"),
-        {
-            zoom:13,
-            center:{lat,lng}
-        }
-    );
-    marker = new google.maps.Marker({
-        position:{lat,lng},
-        map,
-        draggable:true
-    });
-
-    marker.addListener("dragend",function(e){
-        document.getElementById("latitude").value = e.latLng.lat();
-        document.getElementById("longitude").value = e.latLng.lng();
-    });
-
-    const input = document.getElementById("google-search");
-    const search = new google.maps.places.SearchBox(input);
-    search.addListener("places_changed",function(){
-        const places = search.getPlaces();
-        if(!places.length){
-            return;
-        }
-        const place = places[0];
-
-        fetch("/api/world/google-address",{
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify(place)
-        })
-        .then(r=>r.json())
-        .then(function(res){
-            document.getElementById("country_id").value=res.country_id;
-            document.getElementById("province_id").value=res.province_id;
-            document.getElementById("county_id").value=res.county_id;
-        })
-
-        marker.setPosition(place.geometry.location);
-        map.panTo(place.geometry.location);
-        document.getElementById("latitude").value = place.geometry.location.lat();
-        document.getElementById("longitude").value = place.geometry.location.lng();
+window.addEventListener('load',function(){
+    const latitude=document.getElementById('latitude'),longitude=document.getElementById('longitude');
+    const latitudePicker=document.getElementById('latitude-picker'),longitudePicker=document.getElementById('longitude-picker');
+    const status=document.getElementById('offline-map-status');
+    if(!latitude||!longitude||!latitudePicker||!longitudePicker)return;
+    const sync=()=>{latitude.value=latitudePicker.value;longitude.value=longitudePicker.value;};
+    latitudePicker.addEventListener('input',sync);longitudePicker.addEventListener('input',sync);sync();
+    document.getElementById('use-current-location')?.addEventListener('click',function(){
+        if(!navigator.geolocation){status.textContent='موقعیت‌یابی در این مرورگر پشتیبانی نمی‌شود.';return;}
+        status.textContent='در حال دریافت موقعیت...';
+        navigator.geolocation.getCurrentPosition(function(position){latitudePicker.value=position.coords.latitude.toFixed(7);longitudePicker.value=position.coords.longitude.toFixed(7);sync();status.textContent='موقعیت دستگاه ثبت شد.';},function(){status.textContent='دسترسی به موقعیت دستگاه ممکن نشد؛ مختصات را دستی وارد کنید.';});
     });
 });
 

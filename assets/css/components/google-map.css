@@ -8,13 +8,15 @@
     margin-top:20px;
 }
 
-#google-search{
-    margin-bottom:15px;
-}
-
 #google-map{
     width:100%;
-    height:450px;
     border-radius:12px;
     border:1px solid #ddd;
 }
+.offline-map-note{margin-bottom:12px;color:#64748b;font-size:.875rem}
+.offline-coordinate-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:20px;background:#f8fafc}
+.offline-coordinate-picker label{display:flex;flex-direction:column;gap:8px;font-size:.875rem}
+.offline-coordinate-picker input{border:1px solid #cbd5e1;border-radius:10px;padding:10px;background:#fff}
+.offline-coordinate-picker button{border:0;border-radius:10px;padding:10px 16px;background:#4f46e5;color:#fff;cursor:pointer}
+#offline-map-status{align-self:center;color:#475569;font-size:.8rem}
+@media(max-width:640px){.offline-coordinate-picker{grid-template-columns:1fr}}

@@ -10,12 +10,13 @@ $longitude = $longitude ?? '';
 
 <div class="google-map-component">
 
-    <input
-        id="google-search"
-        class="form-control"
-        placeholder="جستجوی آدرس">
-
-    <div id="google-map"></div>
+    <p class="offline-map-note">انتخاب موقعیت آفلاین است؛ عرض و طول جغرافیایی را وارد کنید.</p>
+    <div id="google-map" class="offline-coordinate-picker" role="group" aria-label="انتخاب مختصات">
+        <label>عرض جغرافیایی<input type="number" step="0.0000001" id="latitude-picker" value="<?= e($latitude ?: '35.6892') ?>"></label>
+        <label>طول جغرافیایی<input type="number" step="0.0000001" id="longitude-picker" value="<?= e($longitude ?: '51.3890') ?>"></label>
+        <button type="button" id="use-current-location">استفاده از موقعیت دستگاه</button>
+        <span id="offline-map-status" aria-live="polite"></span>
+    </div>
 
     <input
         type="hidden"
@@ -30,5 +31,3 @@ $longitude = $longitude ?? '';
         value="<?=e($longitude)?>">
 
 </div>
-
-<script src="https://maps.googleapis.com/maps/api/js?key=<?=config('google.api_key')?>&libraries=places"></script>

@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e(trans('admin.meta.title','Sornaz Admin Panel')) ?></title>
     <script>(function(){const r=document.documentElement;r.dataset.theme=localStorage.getItem('sornaz.theme')||'indigo';r.dataset.mode=localStorage.getItem('sornaz.mode')||'light';})();</script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="/assets/vendor/tailwind/tailwindcss.js"></script>
+    <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
     <link rel="stylesheet" href="/assets/theme/theme.css?v=<?= filemtime(base_path('assets/theme/theme.css')) ?: 1 ?>">
     <style>
@@ -19,9 +19,9 @@
         @media (prefers-reduced-motion:reduce) { main.site-content { animation:none;transition:none; } }
     </style>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="/assets/vendor/jspdf/jspdf.umd.min.js"></script>
+    <script src="/assets/vendor/jspdf/jspdf.plugin.autotable.min.js"></script>
+    <script src="/assets/vendor/html2canvas/html2canvas.min.js"></script>
     <?
     // pushStyle('reset.css');
     ?>
