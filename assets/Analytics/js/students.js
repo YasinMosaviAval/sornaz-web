@@ -71,7 +71,8 @@ function randomBirthDate(minAge, maxAge) {
 }
 
 let allStudents = [];
-(function buildSample() {
+/* Legacy random fixtures removed: students are hydrated from academy-data-loaded. */
+(function buildSample() { return;
     const branches = window.getStudentBranches();
     for (let i = 1; i <= 250; i++) {
         const first = studentFirstNames[Math.floor(Math.random() * studentFirstNames.length)];
@@ -117,6 +118,7 @@ let allStudents = [];
         allStudents.push(item);
     }
 })();
+window.addEventListener('academy-data-loaded',function(event){allStudents=(event.detail.members||[]).filter(function(item){return item.type==='student';});filteredStudents=allStudents.slice();if(document.getElementById('studentsTable')){window.renderStudentBranchTabs();window.filterStudents();}});
 
 let currentStudentBranch = 'all';
 let studentsCurrentPage = 1;
@@ -412,6 +414,7 @@ window.saveEditedStudent = async function (id) {
     const index = allStudents.findIndex(function (x) { return x.id === id; });
     if (index === -1) return;
     allStudents[index] = Object.assign({}, allStudents[index], data);
+    await branchRequest('/academy/admin/members/' + id + '/update', {payload_b64:encodeBranchPayload(allStudents[index])});
     window.filterStudents();
     closeModal();
     alert('✅ تغییرات با موفقیت ذخیره شد');
@@ -428,6 +431,7 @@ window.saveInlineStudent = async function (id) {
     const index = allStudents.findIndex(function (x) { return x.id === id; });
     if (index === -1) return;
     allStudents[index] = Object.assign({}, allStudents[index], data);
+    await branchRequest('/academy/admin/members/' + id + '/update', {payload_b64:encodeBranchPayload(allStudents[index])});
     editingStudentRowId = null;
     window.filterStudents();
     alert('✅ تغییرات با موفقیت ذخیره شد');
@@ -435,6 +439,7 @@ window.saveInlineStudent = async function (id) {
 
 window.deleteStudent = async function (id) {
     if (!(await AppDialog.confirmDelete(allStudents, id, 'هنرجو'))) return;
+    await branchRequest('/academy/admin/members/' + id + '/delete', {});
     allStudents = allStudents.filter(function (s) { return s.id !== id; });
     if (editingStudentRowId === id) editingStudentRowId = null;
     window.filterStudents();

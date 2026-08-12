@@ -23,6 +23,7 @@ class AcademyBranchService {
                 'types' => $this->types(),
                 'provinces' => DB::table('world_iran_provinces')->select('province_id', 'province_name')->get(),
                 'counties' => DB::table('world_iran_counties')->select('county_id', 'county_name', 'province_id')->get(),
+                'members' => $this->members(null),
             ];
         }
         $academy = $this->academyForUser($ownerUserId);
@@ -35,7 +36,61 @@ class AcademyBranchService {
             'types' => $this->types(),
             'provinces' => DB::table('world_iran_provinces')->select('province_id', 'province_name')->get(),
             'counties' => DB::table('world_iran_counties')->select('county_id', 'county_name', 'province_id')->get(),
+            'members' => $this->members((int)$academy['academy_id']),
         ];
+    }
+
+    private function members(?int $academyId): array {
+        $where = $academyId === null ? '' : ' AND b.academy_id = ' . (int)$academyId;
+        $statement = db()->prepare("SELECT m.member_id, m.user_id, m.branch_id, m.status, m.joined_at, u.username, u.phone, u.national_code, u.birthday, u.visibility, c.member_contract_id, c.type contract_type, c.start_date, c.end_date, c.price, c.currency_id FROM academy_branch_members m JOIN users u ON u.user_id=m.user_id JOIN academy_branches b ON b.branch_id=m.branch_id LEFT JOIN academy_branch_member_contracts c ON c.member_id=m.member_id AND c.deleted_at IS NULL WHERE m.deleted_at IS NULL AND u.deleted_at IS NULL AND b.deleted_at IS NULL{$where} ORDER BY m.member_id DESC");
+        $statement->execute(); $rows = $statement->fetchAll();
+        if (!$rows) return [];
+        $userIds = array_values(array_unique(array_map(fn(array $r)=>(int)$r['user_id'], $rows)));
+        $branchIds = array_values(array_unique(array_map(fn(array $r)=>(int)$r['branch_id'], $rows)));
+        $names=[]; foreach (DB::table('translations')->where('table_name','users')->where('field','full_name')->where('locale','fa')->whereIn('table_id',$userIds)->get() as $t) $names[(int)$t['table_id']]=$t['value'];
+        $branches=[]; foreach (DB::table('translations')->where('table_name','academy_branches')->where('field','name')->where('locale','fa')->whereIn('table_id',$branchIds)->get() as $t) $branches[(int)$t['table_id']]=$t['value'];
+        return array_map(function(array $r) use($names,$branches){
+            $student=str_contains((string)$r['username'], self::STUDENT_USERNAME_MARKER);
+            return ['id'=>(int)$r['member_id'],'user_id'=>(int)$r['user_id'],'name'=>$names[(int)$r['user_id']]??$r['username'],'phone'=>$r['phone']?:'',
+                'nationalId'=>$r['national_code']?:'','birthDate'=>$r['birthday']?:'','branchId'=>(int)$r['branch_id'],'branch'=>$branches[(int)$r['branch_id']]??('شعبه '.$r['branch_id']),
+                'type'=>$student?'student':($r['contract_type']?:'other'),'typeLabel'=>$student?'هنرجو':match($r['contract_type']){'teacher'=>'مدرس','receptionist'=>'پذیرش','manager'=>'مدیر',default=>'کارمند'},
+                'contractTitle'=>$student?'قرارداد آموزشی':'قرارداد همکاری','contractDescription'=>'قرارداد ثبت‌شده در سامانه','startDate'=>$r['start_date']?:$r['joined_at'],'endDate'=>$r['end_date']?:'',
+                'price'=>(float)($r['price']?:0),'currencyId'=>(int)($r['currency_id']?:1),'currency'=>'تومان','status'=>$r['status']==='active'?'فعال':'غیرفعال',
+                'profileVisibility'=>$r['visibility']?:'private','instrument'=>'','level'=>'','teacher'=>'','remaining'=>0,'financial'=>'تسویه','attendance'=>'—','registrationDate'=>$r['joined_at']?:''];
+        },$rows);
+    }
+
+    private const STUDENT_USERNAME_MARKER = 'test_branch_member_student_';
+
+    public function updateMember(int $actorId, int $memberId, array $data, bool $siteAdmin = false): array {
+        return transaction(function() use($actorId,$memberId,$data,$siteAdmin){
+            $member=DB::table('academy_branch_members')->where('member_id',$memberId)->whereNull('deleted_at')->first();
+            if(!$member) throw new RuntimeException('عضو مورد نظر یافت نشد.');
+            $branch=DB::table('academy_branches')->where('branch_id',(int)$member['branch_id'])->whereNull('deleted_at')->first();
+            if(!$branch) throw new RuntimeException('شعبه عضو یافت نشد.');
+            if(!$siteAdmin){$academy=$this->academyForUser($actorId);if((int)$academy['academy_id']!==(int)$branch['academy_id'])throw new RuntimeException('دسترسی ویرایش این عضو را ندارید.');}
+            $userId=(int)$member['user_id'];
+            DB::table('users')->where('user_id',$userId)->update(['phone'=>trim((string)($data['phone']??''))?:null,'national_code'=>trim((string)($data['nationalId']??''))?:null,
+                'birthday'=>($data['birthDate']??'')?:null,'visibility'=>in_array(($data['profileVisibility']??''),['public','private','unlisted'],true)?$data['profileVisibility']:'private','updated_by'=>$actorId]);
+            if(trim((string)($data['name']??''))!=='') TranslationService::manager()->set('users',$userId,'full_name',trim((string)$data['name']),'fa');
+            $newBranch=(int)($data['branchId']??$member['branch_id']);
+            if(!DB::table('academy_branches')->where('branch_id',$newBranch)->where('academy_id',(int)$branch['academy_id'])->whereNull('deleted_at')->first())$newBranch=(int)$member['branch_id'];
+            DB::table('academy_branch_members')->where('member_id',$memberId)->update(['branch_id'=>$newBranch,'status'=>($data['status']??'فعال')==='فعال'?'active':'pending','updated_by'=>$actorId]);
+            $contract=DB::table('academy_branch_member_contracts')->where('member_id',$memberId)->whereNull('deleted_at')->first();
+            $type=($data['type']??'other');if(!in_array($type,['teacher','receptionist','manager'],true))$type='other';
+            $values=['type'=>$type,'start_date'=>($data['startDate']??'')?:null,'end_date'=>($data['endDate']??'')?:null,'price'=>max(0,(float)($data['price']??0)),
+                'currency_id'=>(int)($data['currencyId']??1),'updated_by'=>$actorId];
+            if($contract)DB::table('academy_branch_member_contracts')->where('member_contract_id',(int)$contract['member_contract_id'])->update($values);
+            else DB::table('academy_branch_member_contracts')->insertGetId(['member_id'=>$memberId,'created_by'=>$actorId]+$values);
+            return ['member_id'=>$memberId];
+        });
+    }
+
+    public function deleteMember(int $actorId,int $memberId,bool $siteAdmin=false): void {
+        $member=DB::table('academy_branch_members')->where('member_id',$memberId)->whereNull('deleted_at')->first();if(!$member)throw new RuntimeException('عضو مورد نظر یافت نشد.');
+        if(!$siteAdmin){$branch=DB::table('academy_branches')->where('branch_id',(int)$member['branch_id'])->first();$academy=$this->academyForUser($actorId);if(!$branch||(int)$branch['academy_id']!==(int)$academy['academy_id'])throw new RuntimeException('دسترسی حذف این عضو را ندارید.');}
+        $now=date('Y-m-d H:i:s');DB::table('academy_branch_member_contracts')->where('member_id',$memberId)->whereNull('deleted_at')->update(['deleted_at'=>$now,'deleted_by'=>$actorId,'updated_by'=>$actorId]);
+        DB::table('academy_branch_members')->where('member_id',$memberId)->update(['deleted_at'=>$now,'deleted_by'=>$actorId,'updated_by'=>$actorId]);
     }
 
     public function store(int $ownerUserId, array $data, bool $siteAdmin = false): array {

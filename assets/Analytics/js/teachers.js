@@ -76,7 +76,8 @@ function getRandomDate(start, end) {
 }
 
 let allStaff = [];
-for (let i = 1; i <= 28; i++) {
+/* Legacy random fixtures removed: staff is hydrated from academy-data-loaded. */
+if (false) for (let i = 1; i <= 28; i++) {
     const first = staffFirstNames[Math.floor(Math.random() * staffFirstNames.length)];
     const last = staffLastNames[Math.floor(Math.random() * staffLastNames.length)];
     const type = staffTypes[Math.floor(Math.random() * staffTypes.length)];
@@ -115,6 +116,7 @@ for (let i = 1; i <= 28; i++) {
         lessons: lessons
     });
 }
+window.addEventListener('academy-data-loaded',function(event){allStaff=(event.detail.members||[]).filter(item=>item.type!=='student');filteredStaff=allStaff.slice();if(document.getElementById('staffTable')){window.renderStaffBranchTabs?.();window.filterStaff();}});
 
 // ==================== متغیرهای صفحه‌بندی ====================
 let staffCurrentPage = 1;
@@ -371,6 +373,7 @@ window.toggleStaffInlineEdit = async function (id) {
 
 window.deleteStaff = async function (id) {
     if (!(await AppDialog.confirmDelete(allStaff, id, 'عضو'))) return;
+    await branchRequest(`/academy/admin/members/${id}/delete`,{});
     allStaff = allStaff.filter(item => item.id !== id);
     filteredStaff = filteredStaff.filter(item => item.id !== id);
     if (editingRowId === id) editingRowId = null;
@@ -425,6 +428,7 @@ window.saveInlineStaff = async function (id) {
         contractTitle: contractTitle,
         contractDescription: contractDescription,
         branch: branch,
+        branchId: (typeof allBranches !== 'undefined' && allBranches.find(item => item.name === branch)?.id) || allStaff[index].branchId,
         startDate: startDate,
         endDate: endDate,
         price: price,
@@ -435,6 +439,7 @@ window.saveInlineStaff = async function (id) {
         profileVisibility: profileVisibility,
         lessons: lessons
     };
+    await branchRequest(`/academy/admin/members/${id}/update`,{payload_b64:encodeBranchPayload(allStaff[index])});
 
     editingRowId = null;
     filterStaff();
@@ -676,6 +681,7 @@ window.saveEditedStaff = async function (id) {
         contractTitle: contractTitle,
         contractDescription: contractDescription,
         branch: branch,
+        branchId: (typeof allBranches !== 'undefined' && allBranches.find(item => item.name === branch)?.id) || allStaff[index].branchId,
         startDate: startDate,
         endDate: endDate,
         price: price,
@@ -686,6 +692,8 @@ window.saveEditedStaff = async function (id) {
         profileVisibility: profileVisibility,
         lessons: lessons
     };
+
+    await branchRequest(`/academy/admin/members/${id}/update`,{payload_b64:encodeBranchPayload(allStaff[index])});
 
     filterStaff();
     closeModal();
