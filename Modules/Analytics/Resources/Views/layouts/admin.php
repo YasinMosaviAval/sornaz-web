@@ -54,6 +54,7 @@
     pushScript('branch-types.js');
     pushScript('classroom-templates.js');
     pushScript('classrooms.js');
+    pushScript('classroom-types.js');
     pushScript('course-templates.js');
     pushScript('courses.js');
     pushScript('term-templates.js');

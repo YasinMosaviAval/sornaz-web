@@ -26,6 +26,7 @@
             component('branches');
             component('branch-types');
             component('classrooms');
+            component('classroom-types');
             component('courses');
             component('terms');
             component('gallery');

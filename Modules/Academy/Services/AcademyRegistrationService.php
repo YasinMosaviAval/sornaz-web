@@ -75,8 +75,9 @@ class AcademyRegistrationService {
                     $staffCount += $counts['staff']; $studentCount += $counts['students']; $contractCount += $counts['contracts'];
                 }
             }
+            $classroomResult = app()->container()->make(\Modules\Academy\Services\AcademyClassroomService::class)->seedFixtures();
             return ['branches' => $branchCount, 'staff' => $staffCount, 'students' => $studentCount, 'contracts' => $contractCount,
-                'message' => "تست ۳ تکمیل شد: {$branchCount} شعبه فرعی، {$staffCount} عضو پرسنل، {$studentCount} هنرجو و {$contractCount} قرارداد همگام‌سازی شد."];
+                'classrooms'=>$classroomResult['classrooms'],'message' => "تست ۳ تکمیل شد: {$branchCount} شعبه فرعی، {$staffCount} عضو پرسنل، {$studentCount} هنرجو، {$contractCount} قرارداد و {$classroomResult['classrooms']} کلاس همگام‌سازی شد."];
         });
     }
 

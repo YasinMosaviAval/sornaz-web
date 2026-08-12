@@ -1,65 +1,17 @@
 // ==================== انواع کلاس و وضعیت‌ها ====================
-let allClassroomTypes = [
-    { id: 1, name: 'پیانو' },
-    { id: 2, name: 'گیتار' },
-    { id: 3, name: 'ویولن' },
-    { id: 4, name: 'آواز' },
-    { id: 5, name: 'درام' },
-    { id: 6, name: 'عمومی' },
-    { id: 7, name: 'تمرین گروهی' },
-    { id: 8, name: 'سایر' }
-];
+let allClassroomTypes = [];
 const classroomStatuses = ['فعال', 'تعمیر', 'غیرفعال'];
-const sampleEquipmentPool = [
-    { name: 'پیانو', qty: 1 }, { name: 'پیانو دیجیتال', qty: 2 }, { name: 'گیتار', qty: 4 },
-    { name: 'آمپلی‌فایر', qty: 1 }, { name: 'میکروفون', qty: 2 }, { name: 'ویولن', qty: 3 },
-    { name: 'پایه نت', qty: 6 }, { name: 'درام ست', qty: 1 }, { name: 'پد تمرین', qty: 2 },
-    { name: 'صندلی', qty: 10 }, { name: 'تخته', qty: 1 }, { name: 'سیستم صوتی', qty: 1 },
-    { name: 'آینه', qty: 2 }, { name: 'هدفون', qty: 8 }, { name: 'وایت‌برد', qty: 1 }
-];
-
-const classroomNames = [
-    'کلاس پیانو', 'کلاس گیتار', 'کلاس ویولن', 'کلاس آواز', 'کلاس درام',
-    'سالن تمرین', 'کلاس عمومی', 'اتاق تئوری', 'استودیو ضبط', 'کلاس سلفژ'
-];
-
-function pickEquipment() {
-    const count = 1 + Math.floor(Math.random() * 3);
-    const shuffled = [...sampleEquipmentPool].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, count).map(e => ({ name: e.name, qty: e.qty + Math.floor(Math.random() * 2) }));
-}
 
 function getBranchesList() {
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
-    return [
-        { id: 1, name: 'شعبه مرکزی', classrooms: 0 },
-        { id: 2, name: 'شعبه ونک', classrooms: 0 },
-        { id: 3, name: 'شعبه سعادت‌آباد', classrooms: 0 },
-        { id: 4, name: 'شعبه کرج', classrooms: 0 }
-    ];
+    return [];
 }
 
 // ==================== نمونه داده — ۴۰ کلاس ====================
 let allClassrooms = [];
-(function buildSampleClassrooms() {
-    const branches = getBranchesList();
-    for (let i = 1; i <= 40; i++) {
-        const branch = branches[Math.floor(Math.random() * branches.length)];
-        const type = allClassroomTypes[Math.floor(Math.random() * allClassroomTypes.length)];
-        const baseName = classroomNames[Math.floor(Math.random() * classroomNames.length)];
-        allClassrooms.push({
-            id: i,
-            name: `${baseName} ${i}`,
-            type: type.name,
-            typeLabel: type.name,
-            branchId: branch.id,
-            branchName: branch.name,
-            capacity: 4 + Math.floor(Math.random() * 16),
-            equipment: pickEquipment(),
-            status: classroomStatuses[Math.floor(Math.random() * classroomStatuses.length)]
-        });
-    }
-})();
+
+window.classroomApi=async function(url,data=null,method='POST'){const o={method,credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}};if(data!==null){const token=window.adminCsrfToken||'';o.headers['Content-Type']='application/x-www-form-urlencoded;charset=UTF-8';o.headers['X-CSRF-TOKEN']=token;o.body=new URLSearchParams({_token:token,payload_b64:encodeBranchPayload(data)}).toString();}const r=await fetch(url,o),raw=await r.text();let p;try{p=JSON.parse(raw)}catch(e){throw new Error('پاسخ معتبر JSON دریافت نشد.')}const x=p.data??p;if(!r.ok||x.success===false)throw new Error(x.message||'عملیات ناموفق بود');return x.data??x;};
+async function loadClassrooms(){try{const d=await classroomApi('/academy/admin/classrooms',null,'GET');allBranches=d.branches||allBranches;allClassroomTypes=d.types||[];allClassrooms=d.classrooms||[];filteredClassrooms=allClassrooms.slice();renderClassroomBranchTabs();renderClassroomEquipmentFilter();renderClassroomTypeFilter();renderClassroomCapacityFilter();filterClassrooms();}catch(e){alert(e.message);}}
 
 // ==================== صفحه‌بندی / مرتب‌سازی / فیلتر ====================
 let classroomCurrentPage = 1;
@@ -294,39 +246,7 @@ window.changeClassroomPage = async function (page) {
 };
 
 // ==================== نوع کلاس ====================
-window.promptAddClassroomType = async function () {
-    const name = await AppDialog.prompt('نام نوع کلاس جدید را وارد کنید:')?.trim();
-    if (!name) return;
-    if (allClassroomTypes.some(t => t.name === name)) return alert('این نوع قبلاً وجود دارد');
-    allClassroomTypes.push({ id: Date.now(), name });
-    document.querySelectorAll('select[id$="Type"], select[id*="ClassroomType"], #classroomType, #editClassroomType').forEach(sel => {
-        if (!sel) return;
-        const current = sel.value;
-        const options = allClassroomTypes.map(t => `<option value="${t.name}" ${t.name === current || t.name === name ? 'selected' : ''}>${t.name}</option>`).join('');
-        // فقط selectهای نوع کلاس را هدف بگیر
-        if (sel.id.includes('Type') && !sel.id.includes('Status')) {
-            sel.innerHTML = options;
-        }
-    });
-    // آپدیت دقیق‌تر فیلدهای شناخته‌شده
-    ['classroomType', 'editClassroomType'].forEach(id => {
-        const sel = document.getElementById(id);
-        if (sel) {
-            const current = sel.value;
-            sel.innerHTML = allClassroomTypes.map(t =>
-                `<option value="${t.name}" ${t.name === name || t.name === current ? 'selected' : ''}>${t.name}</option>`
-            ).join('');
-            sel.value = name;
-        }
-    });
-    // inline forms
-    document.querySelectorAll('[id^="inlineClassroom"][id$="Type"]').forEach(sel => {
-        const current = sel.value;
-        sel.innerHTML = allClassroomTypes.map(t =>
-            `<option value="${t.name}" ${t.name === name || t.name === current ? 'selected' : ''}>${t.name}</option>`
-        ).join('');
-    });
-};
+window.promptAddClassroomType=()=>window.openClassroomTypeAdmin?.();
 
 // ==================== تجهیزات ====================
 window.addClassroomEquipmentField = async function (containerId) {
@@ -357,7 +277,8 @@ function readClassroomForm(prefix) {
     // prefix: '' | 'editClassroom' | 'inlineClassroom{id}'
     const field = (suffix) => document.getElementById(prefix ? `${prefix}${suffix}` : `classroom${suffix}`);
     const name = field('Name')?.value.trim();
-    const type = field('Type')?.value;
+    const typeId = parseInt(field('Type')?.value,10);
+    const typeObj=allClassroomTypes.find(x=>x.id===typeId);
     const branchId = parseInt(field('Branch')?.value, 10);
     const capacity = parseInt(field('Capacity')?.value || '8', 10) || 8;
     const status = field('Status')?.value || 'فعال';
@@ -371,13 +292,12 @@ function readClassroomForm(prefix) {
     const branch = getBranchesList().find(b => b.id === branchId);
     return {
         name,
-        type,
-        typeLabel: type,
+        typeId,type:typeObj?.name||'',typeLabel:typeObj?.name||'',
         branchId,
         branchName: branch ? branch.name : '',
         capacity,
         status,
-        equipment
+        equipment,summary:field('Summary')?.value.trim()||'',description:field('Description')?.value.trim()||''
     };
 }
 
@@ -393,7 +313,7 @@ window.saveClassroom = async function () {
     if (!data.name) return alert('نام کلاس الزامی است');
     if (!data.branchId) return alert('شعبه الزامی است');
 
-    allClassrooms.unshift({ id: Date.now(), ...data });
+    const created=await classroomApi('/academy/admin/classrooms',data);allClassrooms.unshift(created);
     const branch = getBranchesList().find(b => b.id === data.branchId);
     if (branch) branch.classrooms = (branch.classrooms || 0) + 1;
 
@@ -422,7 +342,7 @@ window.saveEditedClassroom = async function (id) {
     if (!data.name) return alert('نام کلاس الزامی است');
     const index = allClassrooms.findIndex(x => x.id === id);
     if (index === -1) return;
-    allClassrooms[index] = { ...allClassrooms[index], ...data };
+    allClassrooms[index] = await classroomApi(`/academy/admin/classrooms/${id}/update`,data);
     editingClassroomRowId = null;
     renderClassroomEquipmentFilter();
     filterClassrooms();
@@ -440,7 +360,7 @@ window.saveInlineClassroom = async function (id) {
     if (!data.name) return alert('نام کلاس الزامی است');
     const index = allClassrooms.findIndex(x => x.id === id);
     if (index === -1) return;
-    allClassrooms[index] = { ...allClassrooms[index], ...data };
+    allClassrooms[index] = await classroomApi(`/academy/admin/classrooms/${id}/update`,data);
     editingClassroomRowId = null;
     renderClassroomEquipmentFilter();
     filterClassrooms();
@@ -449,6 +369,7 @@ window.saveInlineClassroom = async function (id) {
 
 window.deleteClassroom = async function (id) {
     if (!(await AppDialog.confirmDelete(allClassrooms, id, 'کلاس'))) return;
+    await classroomApi(`/academy/admin/classrooms/${id}/delete`,{});
     allClassrooms = allClassrooms.filter(c => c.id !== id);
     if (editingClassroomRowId === id) editingClassroomRowId = null;
     renderClassroomEquipmentFilter();
@@ -456,6 +377,7 @@ window.deleteClassroom = async function (id) {
 };
 
 // ==================== خروجی اکسل ====================
+document.addEventListener('DOMContentLoaded',()=>{if(document.getElementById('classroomsTable'))loadClassrooms();});
 window.exportClassroomsToExcel = async function () {
     const data = filteredClassrooms.length ? filteredClassrooms : allClassrooms;
     let csv = '\uFEFF';
