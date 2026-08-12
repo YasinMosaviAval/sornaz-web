@@ -18,7 +18,8 @@ class AcademyBranchService {
             return [
                 'branches' => $this->allBranches(),
                 'academies' => $this->academies(),
-                'read_only' => true,
+                'read_only' => false,
+                'site_admin' => true,
                 'types' => $this->types(),
                 'provinces' => DB::table('world_iran_provinces')->select('province_id', 'province_name')->get(),
                 'counties' => DB::table('world_iran_counties')->select('county_id', 'county_name', 'province_id')->get(),
@@ -30,15 +31,19 @@ class AcademyBranchService {
             'branches' => $this->branches((int)$academy['academy_id']),
             'academies' => [],
             'read_only' => false,
+            'site_admin' => false,
             'types' => $this->types(),
             'provinces' => DB::table('world_iran_provinces')->select('province_id', 'province_name')->get(),
             'counties' => DB::table('world_iran_counties')->select('county_id', 'county_name', 'province_id')->get(),
         ];
     }
 
-    public function store(int $ownerUserId, array $data): array {
-        return transaction(function () use ($ownerUserId, $data) {
-            $academy = $this->academyForUser($ownerUserId);
+    public function store(int $ownerUserId, array $data, bool $siteAdmin = false): array {
+        return transaction(function () use ($ownerUserId, $data, $siteAdmin) {
+            $academy = $siteAdmin
+                ? DB::table('academies')->where('academy_id', (int)($data['academy_id'] ?? 0))->whereNull('deleted_at')->first()
+                : $this->academyForUser($ownerUserId);
+            if (!$academy) throw new RuntimeException('آموزشگاه مقصد معتبر نیست.');
             $academyId = (int)$academy['academy_id'];
             $this->lockAcademy($academyId);
             $data = $this->validate($data);
@@ -48,7 +53,7 @@ class AcademyBranchService {
             $branchUserId = DB::table('users')->insertGetId([
                 'username' => 'branch_' . $academyId . '_' . bin2hex(random_bytes(5)),
                 'password' => password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT),
-                'type' => 'branch', 'status' => $data['status'] === 'فعال' ? 'approved' : 'inactive',
+                'type' => 'branch', 'status' => $this->activeStatus($data['status'] ?? null) ? 'approved' : 'inactive',
                 'locale' => 'fa', 'timezone' => 'Asia/Tehran', 'register_method' => 'admin',
                 'visibility' => 'unlisted', 'created_by' => $ownerUserId, 'updated_by' => $ownerUserId,
             ]);
@@ -66,9 +71,13 @@ class AcademyBranchService {
         });
     }
 
-    public function update(int $ownerUserId, int $branchId, array $data): array {
-        return transaction(function () use ($ownerUserId, $branchId, $data) {
-            $academy = $this->academyForUser($ownerUserId);
+    public function update(int $ownerUserId, int $branchId, array $data, bool $siteAdmin = false): array {
+        return transaction(function () use ($ownerUserId, $branchId, $data, $siteAdmin) {
+            $globalBranch = $siteAdmin ? DB::table('academy_branches')->where('branch_id', $branchId)->whereNull('deleted_at')->first() : null;
+            $academy = $siteAdmin && $globalBranch
+                ? DB::table('academies')->where('academy_id', (int)$globalBranch['academy_id'])->whereNull('deleted_at')->first()
+                : $this->academyForUser($ownerUserId);
+            if (!$academy) throw new RuntimeException('آموزشگاه مرتبط یافت نشد.');
             $academyId = (int)$academy['academy_id'];
             $this->lockAcademy($academyId);
             $branch = $this->ownedRow($academyId, $branchId);
@@ -81,7 +90,7 @@ class AcademyBranchService {
                 'mode' => $data['physical_type'], 'updated_by' => $ownerUserId,
             ]);
             DB::table('users')->where('user_id', (int)$branch['user_id'])->update([
-                'status' => $data['status'] === 'فعال' ? 'approved' : 'inactive', 'updated_by' => $ownerUserId,
+                'status' => $this->activeStatus($data['status'] ?? null) ? 'approved' : 'inactive', 'updated_by' => $ownerUserId,
             ]);
             $this->softDeleteDetails((int)$branch['user_id'], $ownerUserId);
             $this->saveDetails($branchId, (int)$branch['user_id'], $ownerUserId, $data);
@@ -89,9 +98,10 @@ class AcademyBranchService {
         });
     }
 
-    public function delete(int $ownerUserId, int $branchId): void {
-        transaction(function () use ($ownerUserId, $branchId) {
-            $academyId = (int)$this->academyForUser($ownerUserId)['academy_id'];
+    public function delete(int $ownerUserId, int $branchId, bool $siteAdmin = false): void {
+        transaction(function () use ($ownerUserId, $branchId, $siteAdmin) {
+            $globalBranch = $siteAdmin ? DB::table('academy_branches')->where('branch_id', $branchId)->whereNull('deleted_at')->first() : null;
+            $academyId = $globalBranch ? (int)$globalBranch['academy_id'] : (int)$this->academyForUser($ownerUserId)['academy_id'];
             $this->lockAcademy($academyId);
             $branch = $this->ownedRow($academyId, $branchId);
             $now = date('Y-m-d H:i:s');
@@ -158,15 +168,15 @@ class AcademyBranchService {
         $phones = []; $links = [];
         foreach ($contacts as $contact) {
             $contactValue = $tr->get('user_contacts', (int)$contact['user_contact_id'], 'value', 'fa') ?: '';
-            if ($contact['mode'] === 'phone') $phones[] = ['number' => $contactValue, 'priority' => $contact['priority'], 'is_main' => (bool)$contact['is_main']];
-            else $links[] = ['title' => $tr->get('user_contacts', (int)$contact['user_contact_id'], 'title', 'fa') ?: 'لینک', 'url' => $contactValue, 'mode' => $contact['mode'], 'platform' => $contact['platform'], 'priority' => $contact['priority'], 'is_main' => (bool)$contact['is_main']];
+            if (($contact['mode'] ?? '') === 'phone') $phones[] = ['number' => $contactValue, 'priority' => $contact['priority'] ?? 'primary', 'is_main' => (bool)($contact['is_main'] ?? false)];
+            else $links[] = ['title' => $tr->get('user_contacts', (int)$contact['user_contact_id'], 'title', 'fa') ?: 'لینک', 'url' => $contactValue, 'mode' => $contact['mode'] ?? 'social', 'platform' => $contact['platform'] ?? 'other', 'priority' => $contact['priority'] ?? 'secondary', 'is_main' => (bool)($contact['is_main'] ?? false)];
         }
         $addresses = array_map(function ($address) use ($tr) {
             $province = $address['province_id'] ? DB::table('world_iran_provinces')->where('province_id', $address['province_id'])->first() : null;
             $county = $address['county_id'] ? DB::table('world_iran_counties')->where('county_id', $address['county_id'])->first() : null;
             return ['province' => $province['province_name'] ?? '', 'city' => $county['county_name'] ?? '', 'address' => $tr->get('user_addresses', (int)$address['address_id'], 'address', 'fa') ?: '', 'postal_code' => $address['postal_code'], 'lat' => $address['latitude'], 'lng' => $address['longitude'], 'is_main' => (bool)$address['is_main']];
         }, DB::table('user_addresses')->where('user_id', $userId)->whereNull('deleted_at')->get());
-        return ['id' => $branchId, 'academy_id' => $academyId, 'academy_name' => $academyName, 'name' => $tr->get('academy_branches', $branchId, 'name', 'fa') ?: $tr->get('users', $userId, 'full_name', 'fa') ?: 'شعبه', 'type' => $typeName, 'type_id' => $row['academy_branch_type_id'], 'physical_type' => $row['mode'], 'is_main' => (bool)$row['is_main'], 'slogan' => $tr->get('academy_branches', $branchId, 'slogan', 'fa') ?: '', 'bio' => $tr->get('academy_branches', $branchId, 'description', 'fa') ?: '', 'manager' => $tr->get('academy_branches', $branchId, 'manager', 'fa') ?: '', 'classrooms' => DB::table('academy_branch_classrooms')->where('branch_id', $branchId)->whereNull('deleted_at')->count(), 'status' => $row['status'] === 'approved' ? 'فعال' : 'غیرفعال', 'phones' => $phones, 'links' => $links, 'addresses' => $addresses];
+        return ['id' => $branchId, 'academy_id' => $academyId, 'academy_name' => $academyName, 'name' => $tr->get('academy_branches', $branchId, 'name', 'fa') ?: $tr->get('users', $userId, 'full_name', 'fa') ?: 'شعبه', 'type' => $typeName, 'type_id' => $row['academy_branch_type_id'] ?? null, 'physical_type' => $row['mode'] ?? 'physical', 'is_main' => (bool)($row['is_main'] ?? false), 'slogan' => $tr->get('academy_branches', $branchId, 'slogan', 'fa') ?: '', 'bio' => $tr->get('academy_branches', $branchId, 'description', 'fa') ?: '', 'manager' => $tr->get('academy_branches', $branchId, 'manager', 'fa') ?: '', 'classrooms' => DB::table('academy_branch_classrooms')->where('branch_id', $branchId)->whereNull('deleted_at')->count(), 'status' => ($row['status'] ?? null) === 'approved' ? 'فعال' : 'غیرفعال', 'phones' => $phones, 'links' => $links, 'addresses' => $addresses];
     }
 
     private function types(): array {
@@ -175,6 +185,7 @@ class AcademyBranchService {
     }
 
     private function typeLabel(?string $type): string { return ['music'=>'موسیقی','poetry'=>'شعر و ادبیات','painting'=>'نقاشی','hybrid'=>'ترکیبی','other'=>'سایر'][$type ?? 'other'] ?? 'سایر'; }
+    private function activeStatus(mixed $status): bool { return in_array(trim((string)$status), ['active', 'approved', 'فعال'], true); }
 
     private function validate(array $data): array {
         if (trim((string)($data['name'] ?? '')) === '') throw new RuntimeException('نام شعبه الزامی است.');
