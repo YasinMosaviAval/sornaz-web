@@ -270,7 +270,7 @@ window.saveInlineRole = async function (id) {
 };
 
 window.deleteRole = async function (id) {
-    if (!(await AppDialog.confirm('حذف این نقش؟'))) return;
+    if (!(await AppDialog.confirmDelete(allRoles, id, 'نقش'))) return;
     allRoles = allRoles.filter(function (r) { return r.id !== id; });
     if (editingRoleRowId === id) editingRoleRowId = null;
     window.filterRoles();

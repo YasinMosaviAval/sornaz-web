@@ -370,7 +370,7 @@ window.togglePointStatus = async function (id) {
 };
 
 window.deletePoint = async function (id) {
-    if (!(await AppDialog.confirm('حذف این قانون امتیاز؟'))) return;
+    if (!(await AppDialog.confirmDelete(allPoints, id, 'قانون امتیاز'))) return;
     allPoints = allPoints.filter(function (p) { return p.id !== id; });
     if (editingPointRowId === id) editingPointRowId = null;
     window.filterPoints();

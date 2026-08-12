@@ -277,7 +277,7 @@ window.markMessageUnread = async function (id) {
 };
 
 window.deleteMessage = async function (id) {
-    if (!(await AppDialog.confirm('حذف این پیام؟'))) return;
+    if (!(await AppDialog.confirmDelete(allMessages, id, 'پیام'))) return;
     allMessages = allMessages.filter(function (m) { return m.id !== id; });
     window.filterMessages();
 };

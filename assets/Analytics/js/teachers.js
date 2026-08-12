@@ -370,7 +370,7 @@ window.toggleStaffInlineEdit = async function (id) {
 };
 
 window.deleteStaff = async function (id) {
-    if (!(await AppDialog.confirm('آیا از حذف این عضو مطمئن هستید؟'))) return;
+    if (!(await AppDialog.confirmDelete(allStaff, id, 'عضو'))) return;
     allStaff = allStaff.filter(item => item.id !== id);
     filteredStaff = filteredStaff.filter(item => item.id !== id);
     if (editingRowId === id) editingRowId = null;

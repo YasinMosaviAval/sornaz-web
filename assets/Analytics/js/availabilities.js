@@ -414,7 +414,7 @@ window.saveInlineBranchSchedule = async function (id) {
 };
 
 window.deleteBranchSchedule = async function (id) {
-    if (!(await AppDialog.confirm('حذف این زمان‌بندی؟'))) return;
+    if (!(await AppDialog.confirmDelete(allBranchSchedules, id, 'زمان‌بندی'))) return;
     allBranchSchedules = allBranchSchedules.filter(function (s) { return s.id !== id; });
     if (editingBranchScheduleRowId === id) editingBranchScheduleRowId = null;
     window.filterBranchSchedules();

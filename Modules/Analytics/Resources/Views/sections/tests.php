@@ -23,11 +23,11 @@ $stats = $testStats ?? [];
                 <div class="rounded-2xl bg-emerald-50 p-3"><strong class="block text-lg text-emerald-700"><?= (int)($stats['approved'] ?? 0) ?></strong><span class="text-gray-500">تأییدشده</span></div>
                 <div class="rounded-2xl bg-gray-100 p-3"><strong class="block text-lg text-gray-700"><?= (int)($stats['other'] ?? 0) ?></strong><span class="text-gray-500">سایر</span></div>
             </div>
-            <form method="POST" action="/analytics/_test/seed-academy-managers" onsubmit="return confirm('۵۰ مدیر آموزشگاه آزمایشی ایجاد یا همگام‌سازی شوند؟');">
+            <form method="POST" action="/analytics/_test/seed-academy-managers" onsubmit="return AppDialog.confirmSubmit(event, '۵۰ مدیر آموزشگاه آزمایشی ایجاد یا همگام‌سازی شوند؟');">
                 <input type="hidden" name="_token" value="<?= e(csrf_token()) ?>">
                 <button type="submit" class="w-full rounded-2xl bg-indigo-600 px-5 py-3.5 font-medium text-white transition hover:bg-indigo-700"><i class="fas fa-users-cog ml-2"></i>اجرای تست مدیران آموزشگاه</button>
             </form>
-            <form method="POST" action="/analytics/_test/delete-academy-managers" class="mt-3" onsubmit="return confirm('تمام مدیران آموزشگاه آزمایشی و ترجمه نام آن‌ها حذف شوند؟');">
+            <form method="POST" action="/analytics/_test/delete-academy-managers" class="mt-3" onsubmit="return AppDialog.confirmSubmit(event, 'تمام مدیران آموزشگاه آزمایشی و ترجمه نام آن‌ها حذف شوند؟');">
                 <input type="hidden" name="_token" value="<?= e(csrf_token()) ?>">
                 <button type="submit" class="w-full rounded-2xl border border-red-200 bg-red-50 px-5 py-3.5 font-medium text-red-700 transition hover:bg-red-100"><i class="fas fa-user-minus ml-2"></i>حذف مدیران آموزشگاه آزمایشی</button>
             </form>
@@ -44,7 +44,7 @@ $stats = $testStats ?? [];
                     <input type="hidden" name="_token" value="<?= e(csrf_token()) ?>">
                     <button type="submit" class="w-full rounded-2xl bg-emerald-600 px-5 py-3.5 font-medium text-white hover:bg-emerald-700"><i class="fas fa-database ml-2"></i>ایجاد آموزشگاه‌های نمونه</button>
                 </form>
-                <form method="POST" action="/academy/_test/delete-sample-academies" onsubmit="return confirm('تمام اطلاعات آموزشگاه‌های نمونه حذف شوند؟');">
+                <form method="POST" action="/academy/_test/delete-sample-academies" onsubmit="return AppDialog.confirmSubmit(event, 'تمام اطلاعات آموزشگاه‌های نمونه حذف شوند؟');">
                     <input type="hidden" name="_token" value="<?= e(csrf_token()) ?>">
                     <button type="submit" class="w-full rounded-2xl border border-red-200 bg-red-50 px-5 py-3.5 font-medium text-red-700 hover:bg-red-100"><i class="fas fa-trash-alt ml-2"></i>حذف اطلاعات نمونه آموزشگاه‌ها</button>
                 </form>

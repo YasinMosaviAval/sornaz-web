@@ -279,7 +279,7 @@ window.expireNotification = async function (id) {
 };
 
 window.deleteNotification = async function (id) {
-    if (!(await AppDialog.confirm('حذف این اعلان؟'))) return;
+    if (!(await AppDialog.confirmDelete(allNotifications, id, 'اعلان'))) return;
     allNotifications = allNotifications.filter(function (n) { return n.id !== id; });
     window.filterNotifications();
 };

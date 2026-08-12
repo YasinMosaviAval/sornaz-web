@@ -418,7 +418,7 @@ window.saveInlineMemberSchedule = async function (id) {
 };
 
 window.deleteMemberSchedule = async function (id) {
-    if (!(await AppDialog.confirm('حذف این زمان‌بندی؟'))) return;
+    if (!(await AppDialog.confirmDelete(allMemberSchedules, id, 'زمان‌بندی'))) return;
     try {
         const body=new FormData(); body.append('_token',window.adminCsrfToken||'');
         const response=await fetch('/analytics/member-schedules/'+id+'/delete',{method:'POST',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'},body});

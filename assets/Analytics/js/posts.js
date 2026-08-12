@@ -345,12 +345,12 @@ window.deletePost = async function (id) {
     const p = allPosts.find(x => x.id === id);
     if (!p) return;
     if (p.status === 'trash') {
-        if (await AppDialog.confirm('حذف دائمی این نوشته؟')) {
+        if (await AppDialog.confirmDelete(p, id, 'نوشته', { message:`حذف دائمی "${p.title || 'نوشته #' + id}"؟` })) {
             allPosts = allPosts.filter(x => x.id !== id);
             filterPosts();
         }
     } else {
-        if (await AppDialog.confirm('انتقال به زباله‌دان؟')) {
+        if (await AppDialog.confirm(`انتقال "${p.title || 'نوشته #' + id}" به زباله‌دان؟`)) {
             p.status = 'trash';
             filterPosts();
         }

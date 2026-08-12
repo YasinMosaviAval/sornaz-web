@@ -448,7 +448,7 @@ window.saveInlineClassroom = async function (id) {
 };
 
 window.deleteClassroom = async function (id) {
-    if (!(await AppDialog.confirm('آیا از حذف این کلاس مطمئن هستید؟'))) return;
+    if (!(await AppDialog.confirmDelete(allClassrooms, id, 'کلاس'))) return;
     allClassrooms = allClassrooms.filter(c => c.id !== id);
     if (editingClassroomRowId === id) editingClassroomRowId = null;
     renderClassroomEquipmentFilter();

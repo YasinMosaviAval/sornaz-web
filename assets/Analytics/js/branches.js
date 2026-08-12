@@ -32,7 +32,7 @@ window.promptAddBranchType=async function(){const name=await AppDialog.prompt('�
 window.openAddBranchModal = async function (){document.getElementById('modalContainer').innerHTML=window.getBranchAddModalHTML();};
 window.viewBranch = async function (id){const branch=allBranches.find(item=>item.id===id);if(branch)document.getElementById('modalContainer').innerHTML=window.getBranchViewModalHTML(branch);};
 window.editBranch = async function (id){const branch=allBranches.find(item=>item.id===id);if(branch)document.getElementById('modalContainer').innerHTML=window.getBranchEditModalHTML(branch);};
-window.deleteBranch=async function(id){if (!(await AppDialog.confirm('آیا از حذف این شعبه مطمئن هستید؟')))return;try{await branchRequest(`/academy/admin/branches/${id}/delete`);await loadBranches();}catch(error){alert(error.message);}};
+window.deleteBranch=async function(id){if (!(await AppDialog.confirmDelete(allBranches,id,'شعبه')))return;try{await branchRequest(`/academy/admin/branches/${id}/delete`);await loadBranches();}catch(error){alert(error.message);}};
 
 function readCollection(containerId,mapper){return[...document.querySelectorAll(`#${containerId} > div`)].map(mapper).filter(Boolean);}
 function normalizePrimary(items){let found=false;return items.map(item=>{const main=Boolean(item.is_main)&&!found;if(main)found=true;return{...item,is_main:main};});}

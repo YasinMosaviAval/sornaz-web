@@ -329,7 +329,7 @@ window.saveEditedGalleryItem = async function (id) {
 };
 
 window.deleteGalleryItem = async function (id) {
-    if (!(await AppDialog.confirm('آیا از حذف این آیتم مطمئن هستید؟'))) return;
+    if (!(await AppDialog.confirmDelete(allGalleryItems, id, 'آیتم گالری'))) return;
     allGalleryItems = allGalleryItems.filter(function (item) { return item.id !== id; });
     window.renderGallery();
 };
