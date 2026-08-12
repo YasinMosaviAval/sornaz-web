@@ -46,12 +46,19 @@ $localizedNumber = static function (int|float|string $number): string {
             <p class="mt-3 text-xs text-gray-400">اجرای مجدد idempotent است و کاربران دارای پیشوند تست را همگام می‌کند.</p>
         </article>
         <article class="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div class="mb-5"><h2 class="text-xl font-bold">تست ۳: شعب فرعی، اعضا و قراردادها</h2><p class="mt-2 text-sm leading-7 text-gray-500">برای آموزشگاه‌های تست ۲ بین صفر تا پنج شعبه غیر اصلی و برای هر شعبه مدرس، منشی، کارمند، مدیر و هنرجو به همراه عضویت و قرارداد واقعی ایجاد می‌شود.</p></div>
-            <form method="POST" action="/academy/_test/seed-branch-network" onsubmit="return AppDialog.confirmSubmit(event, 'شعب فرعی، اعضا و قراردادهای آزمایشی ایجاد یا همگام‌سازی شوند؟');">
-                <input type="hidden" name="_token" value="<?= e(csrf_token()) ?>">
-                <button type="submit" class="w-full rounded-2xl bg-violet-600 px-5 py-3.5 font-medium text-white hover:bg-violet-700"><i class="fas fa-network-wired ml-2"></i>اجرای تست شبکه شعب و اعضا</button>
-            </form>
-            <p class="mt-3 text-xs text-gray-400">اجرای مجدد تکرارپذیر است و هیچ شعبه فرعی به‌عنوان شعبه اصلی ثبت نمی‌شود.</p>
+            <div class="mb-5"><h2 class="text-xl font-bold">تست ۳: شعب فرعی، اعضا و قراردادها</h2><p class="mt-2 text-sm leading-7 text-gray-500">برای آموزشگاه‌های تست ۲ بین صفر تا پنج شعبه غیر اصلی و برای هر شعبه مدرس، منشی، کارمند، مدیر و هنرجو به همراه عضویت و قرارداد واقعی ایجاد می‌شود.</p>
+                <ul class="mt-4 space-y-2 text-sm leading-6 text-gray-600">
+                    <li class="flex items-center justify-between gap-4"><span><i class="fas fa-check-circle ml-2 text-emerald-600"></i>شعبه‌های فرعی غیر اصلی</span><strong><?= $localizedNumber($stats['extra_branches'] ?? 0) ?></strong></li>
+                    <li class="flex items-center justify-between gap-4"><span><i class="fas fa-chalkboard-teacher ml-2 text-indigo-600"></i>مدرس‌ها</span><strong><?= $localizedNumber($stats['network_teachers'] ?? 0) ?></strong></li>
+                    <li class="flex items-center justify-between gap-4"><span><i class="fas fa-headset ml-2 text-sky-600"></i>منشی‌ها</span><strong><?= $localizedNumber($stats['network_receptionists'] ?? 0) ?></strong></li>
+                    <li class="flex items-center justify-between gap-4"><span><i class="fas fa-user-tie ml-2 text-amber-600"></i>کارمندان و مدیران جدید</span><strong><?= $localizedNumber(($stats['network_employees'] ?? 0)+($stats['network_managers'] ?? 0)) ?></strong></li>
+                    <li class="flex items-center justify-between gap-4"><span><i class="fas fa-user-graduate ml-2 text-violet-600"></i>هنرجویان مدرس‌ها</span><strong><?= $localizedNumber($stats['network_students'] ?? 0) ?></strong></li>
+                    <li class="flex items-center justify-between gap-4"><span><i class="fas fa-file-signature ml-2 text-emerald-600"></i>عضویت‌ها و قراردادها</span><strong><?= $localizedNumber(($stats['network_memberships'] ?? 0)+($stats['network_contracts'] ?? 0)) ?></strong></li>
+                </ul>
+            </div>
+            <div class="space-y-3"><form method="POST" action="/academy/_test/seed-branch-network" onsubmit="return AppDialog.confirmSubmit(event, 'شعب فرعی، اعضا و قراردادهای آزمایشی ایجاد یا همگام‌سازی شوند؟');"><input type="hidden" name="_token" value="<?= e(csrf_token()) ?>"><button type="submit" class="w-full rounded-2xl bg-violet-600 px-5 py-3.5 font-medium text-white hover:bg-violet-700"><i class="fas fa-network-wired ml-2"></i>اجرای تست شبکه شعب و اعضا</button></form>
+                <form method="POST" action="/academy/_test/delete-branch-network" onsubmit="return AppDialog.confirmSubmit(event, 'تمام شعب فرعی، اعضا، هنرجویان و قراردادهای ایجادشده توسط تست ۳ کاملاً حذف شوند؟');"><input type="hidden" name="_token" value="<?= e(csrf_token()) ?>"><button type="submit" class="w-full rounded-2xl border border-red-200 bg-red-50 px-5 py-3.5 font-medium text-red-700 hover:bg-red-100"><i class="fas fa-undo-alt ml-2"></i>برگشت و حذف اطلاعات تست ۳</button></form></div>
+            <p class="mt-3 text-xs text-gray-400">عملیات برگشت فقط داده‌های تست ۳ را حذف می‌کند و آموزشگاه‌ها، شعب اصلی و مدیران تست‌های قبلی باقی می‌مانند.</p>
         </article>
 
         <article class="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">

@@ -138,6 +138,27 @@ class AdminTestDataService {
         $stats['academy_memberships'] = $academyIds
             ? DB::table('academy_branch_members')->whereIn('created_by', $userIds)->whereNull('deleted_at')->count()
             : 0;
+        $extraBranchUsers = DB::table('users')->whereRaw("username LIKE 'test_extra_branch_%'")->get();
+        $extraBranchUserIds = array_map(fn(array $user)=>(int)$user['user_id'], $extraBranchUsers);
+        $extraBranches = $extraBranchUserIds ? DB::table('academy_branches')->whereIn('user_id',$extraBranchUserIds)->whereNull('deleted_at')->get() : [];
+        $extraBranchIds = array_map(fn(array $branch)=>(int)$branch['branch_id'], $extraBranches);
+        $networkUsers = DB::table('users')->whereRaw("username LIKE 'test_branch_member_%'")->get();
+        $networkUserIds = array_map(fn(array $user)=>(int)$user['user_id'], $networkUsers);
+        $networkMembers = $networkUserIds ? DB::table('academy_branch_members')->whereIn('user_id',$networkUserIds)->whereNull('deleted_at')->get() : [];
+        $networkMemberIds = array_map(fn(array $member)=>(int)$member['member_id'], $networkMembers);
+        $stats['extra_branches'] = count($extraBranches);
+        $stats['network_teachers'] = 0; $stats['network_receptionists'] = 0; $stats['network_employees'] = 0; $stats['network_managers'] = 0; $stats['network_students'] = 0;
+        if ($networkMemberIds) foreach (DB::table('academy_branch_member_contracts')->whereIn('member_id',$networkMemberIds)->whereNull('deleted_at')->get() as $contract) {
+            $member = current(array_filter($networkMembers, fn(array $m)=>(int)$m['member_id']===(int)$contract['member_id']));
+            $user = $member ? current(array_filter($networkUsers, fn(array $u)=>(int)$u['user_id']===(int)$member['user_id'])) : null;
+            if ($user && str_contains((string)$user['username'],'_student_')) $stats['network_students']++;
+            elseif ($contract['type']==='teacher') $stats['network_teachers']++;
+            elseif ($contract['type']==='receptionist') $stats['network_receptionists']++;
+            elseif ($contract['type']==='manager') $stats['network_managers']++;
+            else $stats['network_employees']++;
+        }
+        $stats['network_memberships'] = count($networkMembers);
+        $stats['network_contracts'] = $networkMemberIds ? DB::table('academy_branch_member_contracts')->whereIn('member_id',$networkMemberIds)->whereNull('deleted_at')->count() : 0;
         foreach ($users as $user) {
             $status = $user['status'] ?? '';
             if ($status === 'pending') $stats['pending']++;
