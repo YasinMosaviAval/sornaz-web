@@ -1,5 +1,5 @@
 <div class="relative h-screen overflow-hidden">
-    <script>window.adminMemberSchedulesData=<?= json_encode($scheduleFixtures['schedules']??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;window.adminAvailabilityExceptionsData=<?= json_encode($scheduleFixtures['exceptions']??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;</script>
+    <script>window.adminCsrfToken=<?= json_encode(csrf_token()) ?>;window.adminMemberSchedulesData=<?= json_encode($scheduleFixtures['schedules']??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;window.adminAvailabilityExceptionsData=<?= json_encode($scheduleFixtures['exceptions']??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;</script>
     <div id="sidebarOverlay" class="hidden fixed inset-0 z-30 bg-black/40 lg:hidden"></div>
     <div class="flex h-full">
         <? component('sidebar'); ?>

@@ -88,6 +88,26 @@ class AdminTestDataService {
         return ['schedules'=>$schedules,'exceptions'=>$exceptions];
     }
 
+    public function deleteAvailability(int $id): array {
+        return transaction(function() use($id){
+            $row=DB::table('user_availabilities')->where('user_availability_id',$id)->first();
+            if(!$row)throw new RuntimeException('برنامه زمانی موردنظر یافت نشد.');
+            DB::table('translations')->where('table_name','user_availabilities')->where('table_id',$id)->delete();
+            DB::table('user_availabilities')->where('user_availability_id',$id)->delete();
+            return ['success'=>true,'id'=>$id,'message'=>'برنامه زمانی و ترجمه‌های آن حذف شد.'];
+        });
+    }
+
+    public function deleteAvailabilityException(int $id): array {
+        return transaction(function() use($id){
+            $row=DB::table('user_availability_exceptions')->where('user_availability_exception_id',$id)->first();
+            if(!$row)throw new RuntimeException('تعطیلی یا مرخصی موردنظر یافت نشد.');
+            DB::table('translations')->where('table_name','user_availability_exceptions')->where('table_id',$id)->delete();
+            DB::table('user_availability_exceptions')->where('user_availability_exception_id',$id)->delete();
+            return ['success'=>true,'id'=>$id,'message'=>'تعطیلی یا مرخصی و ترجمه‌های آن حذف شد.'];
+        });
+    }
+
     public function deleteAcademyManagers(): array {
         return transaction(function () {
             $users = DB::table('users')->whereRaw("username LIKE '" . self::USERNAME_PREFIX . "%'")->get();

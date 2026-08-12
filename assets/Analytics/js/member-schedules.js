@@ -125,55 +125,7 @@ window.promptAddMemberScheduleMember = function (selectId) {
     }
 };
 
-let allMemberSchedules = [];
-(function buildSample() {
-    const branches = window.getMemberScheduleBranches();
-    let id = 1;
-    for (let i = 0; i < 100 && allMemberSchedules.length < 100; i++) {
-        const member = memberScheduleMembers[Math.floor(Math.random() * memberScheduleMembers.length)];
-        const role = window.memberScheduleRolesList[Math.floor(Math.random() * window.memberScheduleRolesList.length)];
-        const day = window.memberScheduleDaysList[Math.floor(Math.random() * window.memberScheduleDaysList.length)];
-        const status = window.memberScheduleStatusesList[Math.floor(Math.random() * window.memberScheduleStatusesList.length)];
-        const branch = branches[Math.floor(Math.random() * branches.length)];
-        const allSlots = getBranchSlots(branch.id);
-        const count = 2 + Math.floor(Math.random() * 6);
-        const startIdx = Math.floor(Math.random() * Math.max(1, allSlots.length - count - 4));
-        let picked = [];
-        if (Math.random() > 0.4) {
-            for (let k = 0; k < count; k++) picked.push(allSlots[startIdx + k]);
-        } else {
-            const c1 = 1 + Math.floor(Math.random() * 3);
-            for (let k = 0; k < c1; k++) picked.push(allSlots[startIdx + k]);
-            const gap = 3 + Math.floor(Math.random() * 4);
-            const s2 = startIdx + c1 + gap;
-            const c2 = 1 + Math.floor(Math.random() * 3);
-            for (let k = 0; k < c2 && s2 + k < allSlots.length; k++) picked.push(allSlots[s2 + k]);
-        }
-        picked = picked.filter(Boolean);
-        mergeConsecutiveSlots(picked).forEach(function (range) {
-            const rangeSlots = [];
-            for (let m = timeToMinutes(range.start); m < timeToMinutes(range.end); m += 30) rangeSlots.push(minutesToTime(m));
-            const repeatPeriod = window.memberScheduleRepeatList[Math.floor(Math.random() * window.memberScheduleRepeatList.length)];
-            const tz = window.memberScheduleTimezoneList[Math.floor(Math.random() * window.memberScheduleTimezoneList.length)];
-            let repeatDate = '';
-            if (repeatPeriod === 'ماهانه' || repeatPeriod === 'سالانه') {
-                const d = new Date();
-                d.setDate(1 + Math.floor(Math.random() * 28));
-                repeatDate = d.toISOString().split('T')[0];
-            }
-            allMemberSchedules.push({
-                id: id++, memberId: member.id, name: member.name, role: role, day: day,
-                slots: rangeSlots, timeLabel: rangeLabel(range), time: rangeLabel(range),
-                branchId: branch.id, branchName: branch.name, status: status,
-                repeatPeriod: repeatPeriod, repeatDate: repeatDate, timezone: tz.value,
-                summary: 'حضور ' + member.name + ' در ' + day,
-                description: 'زمان‌بندی ' + role + ' در ' + branch.name + ' — ' + rangeLabel(range)
-            });
-        });
-    }
-    allMemberSchedules = allMemberSchedules.slice(0, 100);
-})();
-if (Array.isArray(window.adminMemberSchedulesData) && window.adminMemberSchedulesData.length) allMemberSchedules = window.adminMemberSchedulesData;
+let allMemberSchedules = Array.isArray(window.adminMemberSchedulesData) ? window.adminMemberSchedulesData.slice() : [];
 
 let currentMemberScheduleBranch = 'all';
 let memberSchedulesCurrentPage = 1;
@@ -465,11 +417,14 @@ window.saveInlineMemberSchedule = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.deleteMemberSchedule = function (id) {
+window.deleteMemberSchedule = async function (id) {
     if (!confirm('حذف این زمان‌بندی؟')) return;
-    allMemberSchedules = allMemberSchedules.filter(function (s) { return s.id !== id; });
-    if (editingMemberScheduleRowId === id) editingMemberScheduleRowId = null;
-    window.filterMemberSchedules();
+    try {
+        const body=new FormData(); body.append('_token',window.adminCsrfToken||'');
+        const response=await fetch('/analytics/member-schedules/'+id+'/delete',{method:'POST',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'},body});
+        const result=await response.json(); if(!response.ok||!result.success)throw new Error(result.message||'حذف ناموفق بود.');
+        allMemberSchedules=allMemberSchedules.filter(s=>s.id!==id); if(editingMemberScheduleRowId===id)editingMemberScheduleRowId=null; window.filterMemberSchedules();
+    } catch(error) { alert(error.message||'حذف برنامه زمانی ناموفق بود.'); }
 };
 
 window.exportMemberSchedulesToExcel = function () {

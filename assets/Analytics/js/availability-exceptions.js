@@ -120,51 +120,7 @@ window.promptAddHolidayLeaveMember = function (selectId) {
     }
 };
 
-let allHolidayLeaves = [];
-(function buildSample() {
-    const branches = window.getHolidayLeaveBranches();
-    let id = 1;
-    for (let i = 0; i < 100 && allHolidayLeaves.length < 100; i++) {
-        const member = holidayLeaveMembers[Math.floor(Math.random() * holidayLeaveMembers.length)];
-        const status = window.holidayLeaveStatusesList[Math.floor(Math.random() * window.holidayLeaveStatusesList.length)];
-        const type = window.holidayLeaveTypeList[Math.floor(Math.random() * window.holidayLeaveTypeList.length)];
-        const branch = branches[Math.floor(Math.random() * branches.length)];
-        const allSlots = getHolidayLeaveBranchSlots(branch.id);
-        const count = 2 + Math.floor(Math.random() * 6);
-        const startIdx = Math.floor(Math.random() * Math.max(1, allSlots.length - count - 4));
-        let picked = [];
-        if (Math.random() > 0.4) {
-            for (let k = 0; k < count; k++) picked.push(allSlots[startIdx + k]);
-        } else {
-            const c1 = 1 + Math.floor(Math.random() * 3);
-            for (let k = 0; k < c1; k++) picked.push(allSlots[startIdx + k]);
-            const gap = 3 + Math.floor(Math.random() * 4);
-            const s2 = startIdx + c1 + gap;
-            const c2 = 1 + Math.floor(Math.random() * 3);
-            for (let k = 0; k < c2 && s2 + k < allSlots.length; k++) picked.push(allSlots[s2 + k]);
-        }
-        picked = picked.filter(Boolean);
-        const d = new Date();
-        d.setDate(d.getDate() + Math.floor(Math.random() * 60) - 15);
-        const dateStr = d.toISOString().split('T')[0];
-        hlMergeConsecutiveSlots(picked).forEach(function (range) {
-            const rangeSlots = [];
-            for (let m = hlTimeToMinutes(range.start); m < hlTimeToMinutes(range.end); m += 30) rangeSlots.push(hlMinutesToTime(m));
-            const tz = window.holidayLeaveTimezoneList[Math.floor(Math.random() * window.holidayLeaveTimezoneList.length)];
-            allHolidayLeaves.push({
-                id: id++, memberId: member.id, name: member.name, date: dateStr,
-                slots: rangeSlots, timeLabel: hlRangeLabel(range), time: hlRangeLabel(range),
-                branchId: branch.id, branchName: branch.name, status: status,
-                type: type.value, typeLabel: type.label,
-                timezone: tz.value,
-                summary: 'مرخصی / تعطیل ' + member.name + ' در ' + dateStr,
-                description: 'ثبت تعطیل یا مرخصی در ' + branch.name + ' — ' + hlRangeLabel(range)
-            });
-        });
-    }
-    allHolidayLeaves = allHolidayLeaves.slice(0, 100);
-})();
-if (Array.isArray(window.adminAvailabilityExceptionsData) && window.adminAvailabilityExceptionsData.length) allHolidayLeaves = window.adminAvailabilityExceptionsData;
+let allHolidayLeaves = Array.isArray(window.adminAvailabilityExceptionsData) ? window.adminAvailabilityExceptionsData.slice() : [];
 
 let currentHolidayLeaveBranch = 'all';
 let holidayLeavesCurrentPage = 1;
@@ -447,11 +403,14 @@ window.saveInlineHolidayLeave = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.deleteHolidayLeave = function (id) {
+window.deleteHolidayLeave = async function (id) {
     if (!confirm('حذف این مورد؟')) return;
-    allHolidayLeaves = allHolidayLeaves.filter(function (s) { return s.id !== id; });
-    if (editingHolidayLeaveRowId === id) editingHolidayLeaveRowId = null;
-    window.filterHolidayLeaves();
+    try {
+        const body=new FormData(); body.append('_token',window.adminCsrfToken||'');
+        const response=await fetch('/analytics/availability-exceptions/'+id+'/delete',{method:'POST',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'},body});
+        const result=await response.json(); if(!response.ok||!result.success)throw new Error(result.message||'حذف ناموفق بود.');
+        allHolidayLeaves=allHolidayLeaves.filter(s=>s.id!==id); if(editingHolidayLeaveRowId===id)editingHolidayLeaveRowId=null; window.filterHolidayLeaves();
+    } catch(error) { alert(error.message||'حذف تعطیلی یا مرخصی ناموفق بود.'); }
 };
 
 window.exportHolidayLeavesToExcel = function () {

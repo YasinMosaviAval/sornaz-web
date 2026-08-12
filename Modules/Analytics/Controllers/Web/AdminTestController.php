@@ -2,6 +2,7 @@
 
 namespace Modules\Analytics\Controllers\Web;
 
+use Core\http\ResponseFactory;
 use Modules\Analytics\Services\AdminTestDataService;
 
 class AdminTestController {
@@ -27,5 +28,15 @@ class AdminTestController {
             session()->flash('admin_test_error', 'حذف مدیران آموزشگاه آزمایشی ناموفق بود: ' . $e->getMessage());
         }
         return redirect('/analytics/admin-panel#tests');
+    }
+
+    public function deleteAvailability(string $id) {
+        try { return ResponseFactory::json($this->tests->deleteAvailability((int)$id)); }
+        catch (\Throwable $e) { return ResponseFactory::json(['success'=>false,'message'=>$e->getMessage()],404); }
+    }
+
+    public function deleteAvailabilityException(string $id) {
+        try { return ResponseFactory::json($this->tests->deleteAvailabilityException((int)$id)); }
+        catch (\Throwable $e) { return ResponseFactory::json(['success'=>false,'message'=>$e->getMessage()],404); }
     }
 }
