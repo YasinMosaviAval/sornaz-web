@@ -12,7 +12,7 @@ class AcademyBranchOfferingController
 
     public function index()
     {
-        return ResponseFactory::json(['success' => true, 'data' => $this->service->all()]);
+        return ResponseFactory::json(['success' => true, 'data' => $this->service->all((int) auth()->id())]);
     }
 
     public function storeSchedule()
