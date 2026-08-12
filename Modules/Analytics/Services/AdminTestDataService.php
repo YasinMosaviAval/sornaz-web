@@ -11,6 +11,7 @@ class AdminTestDataService {
 
     public function seedAcademyManagers(): array {
         return transaction(function () {
+            $catalog = $this->syncMusicCatalog();
             $passwordHash = password_hash('123456789', PASSWORD_DEFAULT);
             $created = 0;
             $updated = 0;
@@ -39,6 +40,7 @@ class AdminTestDataService {
                 $this->setFullNameTranslation($userId, $person['name'], $createdAt);
                 $this->syncAddresses($userId, $index, $createdAt);
                 $this->syncContacts($userId, $index, $username, $createdAt);
+                $this->syncMusicExperience($userId, $index, $createdAt, $catalog);
             }
 
             return [
@@ -57,6 +59,8 @@ class AdminTestDataService {
             'total' => count($users),
             'addresses' => $userIds ? DB::table('user_addresses')->whereIn('user_id', $userIds)->count() : 0,
             'contacts' => $userIds ? DB::table('user_contacts')->whereIn('user_id', $userIds)->count() : 0,
+            'instruments' => $userIds ? DB::table('user_instruments')->whereIn('user_id', $userIds)->count() : 0,
+            'lessons' => $userIds ? DB::table('user_lessons')->whereIn('user_id', $userIds)->count() : 0,
             'pending' => 0, 'approved' => 0, 'other' => 0,
         ];
         foreach ($users as $user) {
@@ -88,6 +92,14 @@ class AdminTestDataService {
                 DB::table('translations')->where('table_name', 'user_contacts')->whereIn('table_id', $contactIds)->delete();
                 DB::table('user_contacts')->whereIn('user_contact_id', $contactIds)->delete();
             }
+            foreach ([['user_instruments', 'user_instrument_id'], ['user_lessons', 'user_lesson_id']] as [$table, $key]) {
+                $rows = DB::table($table)->whereIn('user_id', $userIds)->get();
+                $ids = array_map(fn(array $row) => (int)$row[$key], $rows);
+                if ($ids) {
+                    DB::table('translations')->where('table_name', $table)->whereIn('table_id', $ids)->delete();
+                    DB::table($table)->whereIn($key, $ids)->delete();
+                }
+            }
             DB::table('translations')->where('table_name', 'users')->whereIn('table_id', $userIds)->delete();
             DB::table('users')->whereIn('user_id', $userIds)->delete();
 
@@ -96,6 +108,139 @@ class AdminTestDataService {
                 'message' => count($userIds) . ' مدیر آموزشگاه آزمایشی و ترجمه‌های مرتبط با موفقیت حذف شدند.',
             ];
         });
+    }
+
+    private function syncMusicCatalog(): array {
+        $now = date('Y-m-d H:i:s');
+        $instrumentIds = [];
+        foreach ($this->instrumentCatalog() as $item) {
+            $instrumentIds[] = $this->syncCatalogRow('instruments', 'instrument_id', $item['title'], [
+                'summary' => $item['summary'], 'description' => $item['description'],
+            ], [], $now);
+        }
+
+        $lessonIds = [];
+        $lessons = [];
+        foreach ($this->instrumentCatalog() as $item) {
+            $lessons[] = ['title' => $item['title'], 'summary' => 'آموزش نوازندگی ' . $item['title'] . ' از مبانی تا اجرای حرفه‌ای.',
+                'description' => 'این درس به آموزش اصولی نوازندگی ' . $item['title'] . ' می‌پردازد و مباحث شناخت ساز، وضعیت صحیح بدن، تکنیک، خواندن نت، تربیت گوش، اجرای رپرتوار و آمادگی صحنه را به‌صورت مرحله‌ای پوشش می‌دهد.'];
+        }
+        foreach ($this->theoryLessons() as $item) $lessons[] = $item;
+        foreach ($lessons as $item) {
+            $lessonIds[] = $this->syncCatalogRow('lessons', 'lesson_id', $item['title'], [
+                'summary' => $item['summary'], 'description' => $item['description'],
+            ], [], $now);
+        }
+
+        $levelIds = [];
+        foreach ($this->learningLevels() as $sort => $item) {
+            $levelIds[] = $this->syncCatalogRow('levels', 'level_id', $item['title'], ['summary' => $item['summary']], [
+                'type' => 'learning', 'sort_order' => $sort + 1, 'is_active' => 1,
+            ], $now);
+        }
+        return ['instruments' => $instrumentIds, 'lessons' => $lessonIds, 'levels' => $levelIds];
+    }
+
+    private function syncCatalogRow(string $table, string $key, string $title, array $fields, array $values, string $now): int {
+        $titleTranslation = DB::table('translations')->where('table_name', $table)->where('locale', 'fa')
+            ->where('field', 'title')->where('value', $title)->first();
+        $row = $titleTranslation ? DB::table($table)->where($key, (int)$titleTranslation['table_id'])->first() : null;
+        $base = $values + ['updated_at' => $now, 'updated_by' => 1, 'deleted_at' => null, 'deleted_by' => null];
+        if ($row) {
+            $id = (int)$row[$key];
+            DB::table($table)->where($key, $id)->update($base);
+        } else {
+            $id = DB::table($table)->insertGetId($base + ['created_at' => $now, 'created_by' => 1]);
+            if (!$id) throw new RuntimeException('ایجاد داده مرجع موسیقی ناموفق بود: ' . $title);
+        }
+        $this->setTranslation($table, $id, 1, 'title', $title, $now, $now);
+        foreach ($fields as $field => $value) $this->setTranslation($table, $id, 1, $field, $value, $now, $now);
+        return $id;
+    }
+
+    private function syncMusicExperience(int $userId, int $userIndex, string $registeredAt, array $catalog): void {
+        $instrumentCount = $userIndex % 6;
+        $lessonCount = ($userIndex * 5 + 2) % 6;
+        $this->syncExperienceGroup('user_instruments', 'user_instrument_id', 'instrument_id', $catalog['instruments'], $catalog['levels'], $userId, $userIndex, $registeredAt, $instrumentCount, true);
+        $this->syncExperienceGroup('user_lessons', 'user_lesson_id', 'lesson_id', $catalog['lessons'], $catalog['levels'], $userId, $userIndex, $registeredAt, $lessonCount, $instrumentCount === 0);
+    }
+
+    private function syncExperienceGroup(string $table, string $key, string $foreignKey, array $items, array $levels, int $userId, int $userIndex, string $registeredAt, int $count, bool $canBePrimary): void {
+        $wanted = [];
+        for ($i = 0; $i < $count; $i++) {
+            $itemId = $items[($userIndex * 7 + $i * 11) % count($items)];
+            $wanted[] = $itemId;
+            $createdAt = date('Y-m-d H:i:s', strtotime($registeredAt) + ($i + 1) * 7200);
+            $existing = DB::table($table)->where('user_id', $userId)->where($foreignKey, $itemId)->first();
+            $values = ['level_id' => $levels[($userIndex + $i) % count($levels)], 'start_date' => $this->jalaliStartDate($userIndex, $i),
+                'is_primary' => $canBePrimary && $i === 0 ? 1 : 0, 'created_at' => $createdAt, 'created_by' => $userId,
+                'updated_at' => $createdAt, 'updated_by' => $userId, 'deleted_at' => null, 'deleted_by' => null];
+            if ($existing) {
+                $id = (int)$existing[$key]; DB::table($table)->where($key, $id)->update($values);
+            } else {
+                $id = DB::table($table)->insertGetId(['user_id' => $userId, $foreignKey => $itemId] + $values);
+                if (!$id) throw new RuntimeException('ثبت سابقه آموزشی آزمایشی ناموفق بود.');
+            }
+            $kind = $table === 'user_instruments' ? 'نوازندگی این ساز' : 'این درس موسیقی';
+            $this->setTranslation($table, $id, $userId, 'summary', 'سابقه آزمایشی پیوسته در ' . $kind . ' با تمرین منظم هفتگی.', $createdAt, $createdAt);
+            $this->setTranslation($table, $id, $userId, 'description', 'این سابقه برای آزمون پروفایل مدیر آموزشگاه ساخته شده است. کاربر از تاریخ درج‌شده آموزش را آغاز کرده، تمرین‌های تکنیکی و عملی را دنبال می‌کند و تجربه شرکت در کلاس، تمرین گروهی و اجرای هنرجویی دارد.', $createdAt, $createdAt);
+        }
+        $rows = DB::table($table)->where('user_id', $userId)->get();
+        foreach ($rows as $row) if (!in_array((int)$row[$foreignKey], $wanted, true)) {
+            DB::table('translations')->where('table_name', $table)->where('table_id', (int)$row[$key])->delete();
+            DB::table($table)->where($key, (int)$row[$key])->delete();
+        }
+    }
+
+    private function setTranslation(string $table, int $tableId, int $actorId, string $field, string $value, string $createdAt, string $updatedAt): void {
+        $translation = DB::table('translations')->where('table_name', $table)->where('table_id', $tableId)->where('locale', 'fa')->where('field', $field)->first();
+        $values = ['code' => null, 'value' => $value, 'version' => 1, 'updated_at' => $updatedAt, 'updated_by' => $actorId, 'deleted_at' => null, 'deleted_by' => null];
+        if ($translation) DB::table('translations')->where('translation_id', (int)$translation['translation_id'])->update($values);
+        else {
+            $id = DB::table('translations')->insertGetId(['table_name' => $table, 'table_id' => $tableId, 'locale' => 'fa', 'field' => $field, 'created_at' => $createdAt, 'created_by' => $actorId] + $values);
+            if (!$id) throw new RuntimeException('ثبت ترجمه داده موسیقی ناموفق بود.');
+        }
+    }
+
+    private function jalaliStartDate(int $userIndex, int $itemIndex): string {
+        $year = 1384 + (($userIndex * 3 + $itemIndex * 2) % 20);
+        $month = 1 + (($userIndex + $itemIndex * 3) % 12);
+        $day = 1 + (($userIndex * 5 + $itemIndex * 7) % ($month <= 6 ? 31 : 30));
+        return sprintf('%04d-%02d-%02d', $year, $month, $day);
+    }
+
+    private function instrumentCatalog(): array {
+        $groups = [
+            'ایرانی زهی مضرابی' => ['تار','سه‌تار','سنتور','عود (بربت)','قانون','تنبور','دوتار','دیوان','شورانگیز','رباب ایرانی'],
+            'ایرانی زهی آرشه‌ای' => ['کمانچه','قیچک','قیچک باس'],
+            'ایرانی بادی' => ['نی','نی‌انبان','سرنا','کرنا','دوزله','بالابان'],
+            'ایرانی کوبه‌ای' => ['تنبک','دف','دایره','دهل','نقاره','دمام'],
+            'کلاسیک و جهانی' => ['پیانو','کیبورد','ویولن','ویولا','ویولنسل','کنترباس','گیتار کلاسیک','گیتار آکوستیک','گیتار الکتریک','گیتار باس','هارپ','ماندولین','یوکللی','آکاردئون','فلوت','پیکولو','کلارینت','ابوا','فاگوت','ساکسوفون','ترومپت','ترومبون','هورن','توبا','ریکوردر','سازدهنی','درامز','کاخن','زیلوفون','ماریمبا'],
+        ];
+        $items = [];
+        foreach ($groups as $family => $titles) foreach ($titles as $title) $items[] = [
+            'title'=>$title, 'summary'=>$title . ' سازی از خانواده «' . $family . '» است که در آموزش و اجرا کاربرد دارد.',
+            'description'=>$title . ' در خانواده «' . $family . '» قرار می‌گیرد. شکل امروزی آن حاصل تحول شیوه‌های سازسازی و اجرا در دوره‌های مختلف است و در تک‌نوازی، همنوازی یا ارکستر به کار می‌رود. آموزش آن از شناخت ساختمان ساز، تولید صدای صحیح و ریتم‌خوانی آغاز می‌شود و سپس تکنیک، بیان موسیقایی، رپرتوار و اجرای صحنه‌ای را پوشش می‌دهد.'
+        ];
+        return $items;
+    }
+
+    private function theoryLessons(): array {
+        $titles = ['سلفژ','تئوری موسیقی','هارمونی','کنترپوان','آهنگسازی','تنظیم موسیقی','ارکستراسیون','فرم و آنالیز موسیقی','تربیت شنوایی','ریتم‌خوانی','نت‌خوانی','بداهه‌نوازی','رهبری ارکستر','رهبری گروه کر','آواز کلاسیک','آواز ایرانی','صداسازی','موسیقی کودک','مبانی موسیقی ایرانی','ردیف موسیقی ایرانی','دستگاه‌شناسی موسیقی ایرانی','تصنیف‌سازی','موسیقی‌شناسی','تاریخ موسیقی ایران','تاریخ موسیقی جهان','نرم‌افزارهای موسیقی','ضبط و میکس صدا','مسترینگ','طراحی صدا','موسیقی فیلم','اجرای گروهی','گروه‌نوازی ایرانی','کر و همخوانی'];
+        return array_map(fn(string $title) => ['title'=>$title,
+            'summary'=>'درس ' . $title . ' برای پرورش دانش، گوش و مهارت عملی هنرجوی موسیقی.',
+            'description'=>'درس ' . $title . ' بخشی از آموزش نظام‌مند موسیقی است. محتوای آن از مفاهیم پایه و تمرین‌های شنیداری یا نوشتاری آغاز می‌شود و به تحلیل، خلاقیت، اجرا و کاربرد حرفه‌ای می‌رسد. روند تاریخی این حوزه با تحول نظام‌های آموزشی، شیوه‌های نت‌نویسی، موسیقی ایرانی و دستاوردهای موسیقی جهان پیوند دارد.'
+        ], $titles);
+    }
+
+    private function learningLevels(): array {
+        return [
+            ['title'=>'خیلی تازه‌کار','summary'=>'بدون تجربه قبلی؛ آشنایی اولیه با موسیقی و ساز.'], ['title'=>'تازه‌کار','summary'=>'در حال یادگیری مبانی، نت‌خوانی و تمرین‌های ابتدایی.'],
+            ['title'=>'مقدماتی','summary'=>'توانایی اجرای تمرین‌ها و قطعات ساده با راهنمایی مدرس.'], ['title'=>'پایه','summary'=>'تسلط نسبی بر اصول و آمادگی ورود به رپرتوار متنوع‌تر.'],
+            ['title'=>'متوسط','summary'=>'اجرای مستقل قطعات متوسط و شناخت مناسب تکنیک و تئوری.'], ['title'=>'متوسط رو به بالا','summary'=>'کنترل فنی بهتر و آمادگی برای تحلیل و اجرای جدی‌تر.'],
+            ['title'=>'نیمه‌پیشرفته','summary'=>'تجربه اجرایی قابل اتکا و کار روی ظرافت‌های بیانی.'], ['title'=>'پیشرفته','summary'=>'تسلط بالا بر تکنیک، تفسیر و اجرای رپرتوار دشوار.'],
+            ['title'=>'حرفه‌ای','summary'=>'توانایی اجرای حرفه‌ای، تدریس یا فعالیت تخصصی مستمر.'],
+        ];
     }
 
     private function syncContacts(int $userId, int $userIndex, string $username, string $registeredAt): void {

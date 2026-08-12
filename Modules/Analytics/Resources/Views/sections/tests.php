@@ -14,9 +14,9 @@ $stats = $testStats ?? [];
             <div class="mb-5 flex items-start justify-between gap-4">
                 <div>
                     <h2 class="text-xl font-bold">تست ۱: مدیران آموزشگاه</h2>
-                    <p class="mt-2 text-sm leading-7 text-gray-500">ایجاد و همگام‌سازی ۵۰ کاربر انسانی با اطلاعات هویتی، ۱ تا ۳ آدرس واقعی نقشه و ۱ تا ۱۰ راه ارتباطی برای هر کاربر.</p>
+                    <p class="mt-2 text-sm leading-7 text-gray-500">ایجاد و همگام‌سازی ۵۰ کاربر انسانی با اطلاعات هویتی، آدرس، راه ارتباطی و ۰ تا ۵ ساز و درس موسیقی برای هر کاربر.</p>
                 </div>
-                <div class="text-left"><span class="block rounded-2xl bg-indigo-50 px-3 py-2 text-sm font-bold text-indigo-700"><?= (int)($stats['total'] ?? 0) ?>/۵۰ کاربر</span><span class="mt-2 block text-xs text-gray-400"><?= (int)($stats['addresses'] ?? 0) ?> آدرس · <?= (int)($stats['contacts'] ?? 0) ?> راه ارتباطی</span></div>
+                <div class="text-left"><span class="block rounded-2xl bg-indigo-50 px-3 py-2 text-sm font-bold text-indigo-700"><?= (int)($stats['total'] ?? 0) ?>/۵۰ کاربر</span><span class="mt-2 block text-xs text-gray-400"><?= (int)($stats['addresses'] ?? 0) ?> آدرس · <?= (int)($stats['contacts'] ?? 0) ?> راه ارتباطی · <?= (int)($stats['instruments'] ?? 0) ?> ساز · <?= (int)($stats['lessons'] ?? 0) ?> درس</span></div>
             </div>
             <div class="mb-5 grid grid-cols-3 gap-3 text-center text-sm">
                 <div class="rounded-2xl bg-amber-50 p-3"><strong class="block text-lg text-amber-700"><?= (int)($stats['pending'] ?? 0) ?></strong><span class="text-gray-500">در انتظار</span></div>
