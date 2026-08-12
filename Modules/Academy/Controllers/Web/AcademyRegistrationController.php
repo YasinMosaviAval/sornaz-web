@@ -50,6 +50,17 @@ class AcademyRegistrationController {
         return redirect('/analytics/admin-panel');
     }
 
+    public function deleteBranchNetwork() {
+        if (env('APP_ENV', 'production') !== 'local') abort(404);
+        try {
+            $result = $this->service->deleteBranchNetwork();
+            session()->flash('admin_test_message', $result['message']);
+        } catch (\Throwable $e) {
+            session()->flash('admin_test_error', 'حذف معکوس تست ۳ ناموفق بود: ' . $e->getMessage());
+        }
+        return redirect('/analytics/admin-panel');
+    }
+
     public function deleteSamples() {
         if (env('APP_ENV', 'production') !== 'local') abort(404);
 

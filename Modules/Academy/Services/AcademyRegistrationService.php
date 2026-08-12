@@ -80,6 +80,47 @@ class AcademyRegistrationService {
         });
     }
 
+    public function deleteBranchNetwork(): array {
+        return transaction(function () {
+            $branchUsers = DB::table('users')->whereRaw("username LIKE '" . self::EXTRA_BRANCH_PREFIX . "%' ")->get();
+            $memberUsers = DB::table('users')->whereRaw("username LIKE '" . self::MEMBER_PREFIX . "%' ")->get();
+            $branchUserIds = array_map(fn(array $row) => (int)$row['user_id'], $branchUsers);
+            $memberUserIds = array_map(fn(array $row) => (int)$row['user_id'], $memberUsers);
+            $branches = $branchUserIds ? DB::table('academy_branches')->whereIn('user_id', $branchUserIds)->get() : [];
+            $branchIds = array_map(fn(array $row) => (int)$row['branch_id'], $branches);
+            if (!$branchIds && !$memberUserIds) return ['deleted' => 0, 'message' => 'هیچ داده‌ای از تست ۳ برای حذف وجود ندارد.'];
+
+            $members = $branchIds ? DB::table('academy_branch_members')->whereIn('branch_id', $branchIds)->get() : [];
+            $memberIds = array_map(fn(array $row) => (int)$row['member_id'], $members);
+            if ($memberIds) {
+                DB::table('academy_branch_member_permissions')->whereIn('member_id', $memberIds)->delete();
+                DB::table('academy_branch_member_roles')->whereIn('member_id', $memberIds)->delete();
+                DB::table('academy_branch_member_contracts')->whereIn('member_id', $memberIds)->delete();
+                DB::table('academy_branch_members')->whereIn('member_id', $memberIds)->delete();
+            }
+
+            $allUserIds = array_values(array_unique(array_merge($branchUserIds, $memberUserIds)));
+            $contacts = $allUserIds ? DB::table('user_contacts')->whereIn('user_id', $allUserIds)->get() : [];
+            $addresses = $allUserIds ? DB::table('user_addresses')->whereIn('user_id', $allUserIds)->get() : [];
+            $this->deleteTranslations('user_contacts', array_map(fn(array $r)=>(int)$r['user_contact_id'], $contacts));
+            $this->deleteTranslations('user_addresses', array_map(fn(array $r)=>(int)$r['address_id'], $addresses));
+            $this->deleteTranslations('academy_branches', $branchIds);
+            $this->deleteTranslations('users', $allUserIds);
+            if ($allUserIds) {
+                DB::table('user_contacts')->whereIn('user_id', $allUserIds)->delete();
+                DB::table('user_addresses')->whereIn('user_id', $allUserIds)->delete();
+                DB::table('z_user_profiles')->whereIn('user_id', $allUserIds)->delete();
+                DB::table('financial_system_accounts')->whereIn('user_id', $allUserIds)->delete();
+                DB::table('user_roles')->whereIn('user_id', $allUserIds)->delete();
+                DB::table('user_sessions')->whereIn('user_id', $allUserIds)->delete();
+            }
+            if ($branchIds) DB::table('academy_branches')->whereIn('branch_id', $branchIds)->delete();
+            if ($allUserIds) DB::table('users')->whereIn('user_id', $allUserIds)->delete();
+            return ['deleted' => count($branchIds) + count($memberUserIds),
+                'message' => count($branchIds) . ' شعبه فرعی و ' . count($memberUserIds) . ' کاربر تست ۳ به‌همراه عضویت‌ها و قراردادها کاملاً حذف شدند.'];
+        });
+    }
+
     public function deleteSamples(): array {
         return transaction(function () {
             $users = DB::table('users')->whereRaw(
