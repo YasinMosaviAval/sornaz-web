@@ -164,6 +164,7 @@ let allHolidayLeaves = [];
     }
     allHolidayLeaves = allHolidayLeaves.slice(0, 100);
 })();
+if (Array.isArray(window.adminAvailabilityExceptionsData) && window.adminAvailabilityExceptionsData.length) allHolidayLeaves = window.adminAvailabilityExceptionsData;
 
 let currentHolidayLeaveBranch = 'all';
 let holidayLeavesCurrentPage = 1;

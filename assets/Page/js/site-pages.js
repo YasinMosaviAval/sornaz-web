@@ -862,6 +862,7 @@ window.openSiteUserProfile = function(id) {
     renderUserMedia(u);
     renderUserAddresses(u);
     renderUserContacts(u);
+    renderUserAvailability(u);
 
     showSitePage('user-profile');
 };
@@ -1035,6 +1036,22 @@ function renderUserContacts(u) {
     box.innerHTML = rows.length ? rows.map(row => `<div class="rounded-2xl bg-gray-50 p-3">
         <div class="flex justify-between gap-2"><span class="font-medium break-all">${row.value || '—'}</span><span class="text-xs text-gray-400">${row.platform || row.mode || ''}</span></div>
         ${row.note ? `<p class="text-xs text-gray-400 mt-2">${row.note}</p>` : ''}${row.is_main ? '<span class="inline-block mt-2 text-xs text-indigo-600">راه اصلی</span>' : ''}</div>`).join('') : '<p class="text-gray-400">راه ارتباطی ثبت نشده</p>';
+}
+
+function renderUserAvailability(u) {
+    const dayLabels={saturday:'شنبه',sunday:'یکشنبه',monday:'دوشنبه',tuesday:'سه‌شنبه',wednesday:'چهارشنبه',thursday:'پنجشنبه',friday:'جمعه'};
+    const typeLabels={holiday:'تعطیل',closed:'بسته',unavailable:'عدم حضور',busy:'مشغول',vacation:'مرخصی',blocked:'مسدود'};
+    const rows=Array.isArray(u.availabilities)?u.availabilities:[];
+    const box=document.getElementById('upAvailability');
+    if(box){
+        const recurring=rows.filter(row=>row.is_repeating || !row.date); const specific=rows.filter(row=>row.date);
+        const grouped={}; recurring.forEach(row=>(grouped[row.day_of_week]??=[]).push(row));
+        box.innerHTML=Object.keys(dayLabels).map(day=>`<div class="grid grid-cols-1 sm:grid-cols-[100px_1fr] gap-2 border-b border-gray-100 pb-3">
+            <div class="font-medium">${dayLabels[day]}</div><div class="flex flex-wrap gap-2">${(grouped[day]||[]).map(row=>`<span class="rounded-xl bg-emerald-50 text-emerald-700 px-3 py-1.5 text-sm" title="${row.description||''}">${String(row.start_time).slice(0,5)} تا ${String(row.end_time).slice(0,5)}</span>`).join('')||'<span class="text-gray-400 text-sm">بدون برنامه</span>'}</div></div>`).join('')+
+            (specific.length?`<div class="pt-2"><h3 class="font-medium mb-2">حضورهای تاریخ‌دار</h3>${specific.map(row=>`<div class="text-sm rounded-xl bg-indigo-50 text-indigo-700 px-3 py-2 mb-2">${row.date} · ${String(row.start_time).slice(0,5)} تا ${String(row.end_time).slice(0,5)} — ${row.summary||''}</div>`).join('')}</div>`:'');
+    }
+    const exceptionBox=document.getElementById('upAvailabilityExceptions'); const exceptions=Array.isArray(u.availability_exceptions)?u.availability_exceptions:[];
+    if(exceptionBox) exceptionBox.innerHTML=exceptions.length?exceptions.map(row=>`<div class="rounded-2xl bg-rose-50 p-4"><div class="flex flex-wrap justify-between gap-2"><span class="font-medium text-rose-700">${typeLabels[row.type]||row.type}</span><span class="text-sm text-gray-500">${row.date}${row.start_time?' · '+String(row.start_time).slice(0,5)+' تا '+String(row.end_time).slice(0,5):' · تمام‌روز'}</span></div><p class="text-sm text-gray-600 mt-2">${row.summary||''}</p>${row.description?`<p class="text-xs text-gray-400 mt-1">${row.description}</p>`:''}</div>`).join(''):'<p class="text-gray-400">موردی ثبت نشده</p>';
 }
 
 window.openUserGalleryDialog = function(index) {

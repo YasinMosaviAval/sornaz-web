@@ -102,6 +102,16 @@
                     <div id="upInfo" class="space-y-3 text-sm"></div>
                 </section>
 
+                <section class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8">
+                    <h2 class="text-lg font-bold mb-4">برنامه هفتگی حضور</h2>
+                    <div id="upAvailability" class="space-y-4"></div>
+                </section>
+
+                <section class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8">
+                    <h2 class="text-lg font-bold mb-4">تعطیلات، مرخصی‌ها و تغییرات برنامه</h2>
+                    <div id="upAvailabilityExceptions" class="space-y-3"></div>
+                </section>
+
                 <section class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
                     <h2 class="text-lg font-bold mb-4">نشانی‌ها</h2>
                     <div id="upAddresses" class="space-y-3 text-sm"></div>

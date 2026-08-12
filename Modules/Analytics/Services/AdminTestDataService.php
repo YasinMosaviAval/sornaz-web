@@ -42,6 +42,7 @@ class AdminTestDataService {
                 $this->syncContacts($userId, $index, $username, $createdAt);
                 $this->syncMusicExperience($userId, $index, $createdAt, $catalog);
                 $this->syncDefaultUserMedia($userId, $index, $createdAt);
+                $this->syncUserAvailability($userId, $index, $createdAt);
             }
 
             return [
@@ -73,6 +74,20 @@ class AdminTestDataService {
         return $stats;
     }
 
+    public function scheduleFixtures(): array {
+        $users=DB::table('users')->whereRaw("username LIKE '" . self::USERNAME_PREFIX . "%'")->get(); $names=[];
+        foreach($users as $user)$names[(int)$user['user_id']]=$this->translatedValue('users',(int)$user['user_id'],'full_name')?:$user['username'];
+        $days=['saturday'=>'شنبه','sunday'=>'یکشنبه','monday'=>'دوشنبه','tuesday'=>'سه‌شنبه','wednesday'=>'چهارشنبه','thursday'=>'پنجشنبه','friday'=>'جمعه'];
+        $repeat=['week'=>'هفتگی','2-week'=>'دو هفته','3-week'=>'سه هفته','4-week'=>'چهار هفته','month'=>'ماهانه','year'=>'سالانه','none'=>'بی‌تکرار'];
+        $status=['available'=>'فعال','unavailable'=>'غیرفعال','reserved'=>'پر شده','pending'=>'در انتظار تأیید'];
+        $schedules=[];$exceptions=[];
+        foreach($users as $user){$uid=(int)$user['user_id'];
+            foreach(DB::table('user_availabilities')->where('user_id',$uid)->whereNull('deleted_at')->get() as $row){$id=(int)$row['user_availability_id'];$schedules[]=['id'=>$id,'memberId'=>$uid,'name'=>$names[$uid],'role'=>'مدیر','day'=>$row['date']?:($days[$row['day_of_week']]??'—'),'timeLabel'=>substr((string)$row['start_time'],0,5).'-'.substr((string)$row['end_time'],0,5),'time'=>substr((string)$row['start_time'],0,5).'-'.substr((string)$row['end_time'],0,5),'branchId'=>0,'branchName'=>'محل ثبت‌شده کاربر','status'=>$status[$row['type']]??'فعال','repeatPeriod'=>$repeat[$row['repeat_period']]??'هفتگی','repeatDate'=>$row['date']?:'','timezone'=>$row['timezone'],'summary'=>$this->translatedValue('user_availabilities',$id,'summary'),'description'=>$this->translatedValue('user_availabilities',$id,'description')];}
+            foreach(DB::table('user_availability_exceptions')->where('user_id',$uid)->whereNull('deleted_at')->get() as $row){$id=(int)$row['user_availability_exception_id'];$typeLabels=['holiday'=>'تعطیل رسمی','closed'=>'تعطیل','unavailable'=>'مرخصی','busy'=>'ماموریت','vacation'=>'مرخصی','blocked'=>'عدم حضور'];$label=$row['start_time']?substr((string)$row['start_time'],0,5).'-'.substr((string)$row['end_time'],0,5):'تمام‌روز';$exceptions[]=['id'=>$id,'memberId'=>$uid,'name'=>$names[$uid],'date'=>$row['date'],'timeLabel'=>$label,'time'=>$label,'branchId'=>0,'branchName'=>'محل ثبت‌شده کاربر','status'=>'فعال','type'=>$row['type'],'typeLabel'=>$typeLabels[$row['type']]??'عدم حضور','timezone'=>'Asia/Tehran','summary'=>$this->translatedValue('user_availability_exceptions',$id,'summary'),'description'=>$this->translatedValue('user_availability_exceptions',$id,'description')];}
+        }
+        return ['schedules'=>$schedules,'exceptions'=>$exceptions];
+    }
+
     public function deleteAcademyManagers(): array {
         return transaction(function () {
             $users = DB::table('users')->whereRaw("username LIKE '" . self::USERNAME_PREFIX . "%'")->get();
@@ -100,6 +115,10 @@ class AdminTestDataService {
                     DB::table('translations')->where('table_name', $table)->whereIn('table_id', $ids)->delete();
                     DB::table($table)->whereIn($key, $ids)->delete();
                 }
+            }
+            foreach ([['user_availabilities', 'user_availability_id'], ['user_availability_exceptions', 'user_availability_exception_id']] as [$table, $key]) {
+                $rows=DB::table($table)->whereIn('user_id',$userIds)->get(); $ids=array_map(fn(array $row)=>(int)$row[$key],$rows);
+                if($ids){DB::table('translations')->where('table_name',$table)->whereIn('table_id',$ids)->delete();DB::table($table)->whereIn($key,$ids)->delete();}
             }
             DB::table('media_files')->whereIn('user_id', $userIds)->whereRaw("path LIKE 'assets/media/users/%'")->update([
                 'user_id' => null, 'fileable_id' => null, 'updated_by' => null,
@@ -152,6 +171,66 @@ class AdminTestDataService {
         $this->syncMediaFile($userId, $registeredAt, 'covers', sprintf('user-%02d.jpg', $number), 'cover', 0, 1280, 720);
         for ($i = 1; $i <= 3; $i++) $this->syncMediaFile($userId, $registeredAt, 'gallery', sprintf('user-%02d-%02d.jpg', $number, $i), 'teacher_gallery', $i, 1200, 900);
         if ($number <= 20) $this->syncMediaFile($userId, $registeredAt, 'intro-videos', sprintf('user-%02d.mp4', $number), 'intro_video', 0, null, null, 'video');
+    }
+
+    private function syncUserAvailability(int $userId, int $userIndex, string $registeredAt): void {
+        $days=['saturday','sunday','monday','tuesday','wednesday','thursday','friday'];
+        $dayLabels=['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه'];
+        $addresses=DB::table('user_addresses')->where('user_id',$userId)->get();
+        $locationIds=array_map(fn(array $row)=>(int)$row['address_id'],$addresses);
+        foreach($days as $dayIndex=>$day){
+            $parts=1+(($userIndex+$dayIndex)%3); $ranges=$this->availabilityRanges($userIndex,$dayIndex,$parts);
+            foreach($ranges as $partIndex=>$range){
+                $locationId=$locationIds ? $locationIds[($dayIndex+$partIndex)%count($locationIds)] : 0;
+                $location=$locationId ? $this->translatedValue('user_addresses',$locationId,'address') : 'محل فعالیت کاربر';
+                $this->syncAvailabilityRow($userId,$registeredAt,['date'=>null,'day_of_week'=>$day,'start_time'=>$range[0].':00','end_time'=>$range[1].':00',
+                    'timezone'=>'Asia/Tehran','type'=>'available','is_repeating'=>1,'repeat_period'=>'week','is_closed'=>0,'priority'=>$partIndex+1],
+                    'حضور هفتگی در ' . $dayLabels[$dayIndex] . ' از ' . $range[0] . ' تا ' . $range[1],
+                    'بازه حضور دوره‌ای کاربر در ' . $location . '؛ فاصله میان این بازه و بازه بعدی زمان استراحت یا جابه‌جایی است.');
+            }
+        }
+        $specificDate=sprintf('2026-%02d-%02d',9+($userIndex%3),1+(($userIndex*3)%27));
+        $this->syncAvailabilityRow($userId,$registeredAt,['date'=>$specificDate,'day_of_week'=>null,'start_time'=>'16:00:00','end_time'=>'19:00:00',
+            'timezone'=>'Asia/Tehran','type'=>'available','is_repeating'=>0,'repeat_period'=>'none','is_closed'=>0,'priority'=>1],
+            'حضور ویژه در تاریخ ' . $specificDate,'حضور غیرتکراری کاربر برای جلسه، ارزیابی یا برنامه ویژه در تاریخ مشخص‌شده.');
+
+        for($i=0;$i<2+($userIndex%3);$i++){
+            $date=sprintf('2026-%02d-%02d',9+(($userIndex+$i)%3),1+(($userIndex*5+$i*7)%27));
+            $types=['vacation','unavailable','busy','holiday']; $type=$types[($userIndex+$i)%count($types)];
+            $allDay=$i===0; $values=['date'=>$date,'start_time'=>$allDay?null:sprintf('%02d:00:00',10+(($userIndex+$i)%6)),
+                'end_time'=>$allDay?null:sprintf('%02d:00:00',13+(($userIndex+$i)%6)),'type'=>$type];
+            $this->syncAvailabilityExceptionRow($userId,$registeredAt,$values,
+                ($allDay?'عدم حضور تمام‌روز':'عدم حضور ساعتی') . ' در تاریخ ' . $date,
+                'این استثنا بر برنامه هفتگی مقدم است و برای مرخصی، تعطیلی یا مشغله کاربر در تاریخ مشخص ثبت شده است.');
+        }
+    }
+
+    private function availabilityRanges(int $userIndex,int $dayIndex,int $parts): array {
+        $start=8+(($userIndex+$dayIndex)%2); $ranges=[];
+        for($i=0;$i<$parts;$i++){ $from=$start+$i*4; $ranges[]=[sprintf('%02d:00',$from),sprintf('%02d:00',$from+3)]; }
+        return $ranges;
+    }
+
+    private function syncAvailabilityRow(int $userId,string $createdAt,array $values,string $summary,string $description): void {
+        $query=DB::table('user_availabilities')->where('user_id',$userId)->where('start_time',$values['start_time'])->where('end_time',$values['end_time']);
+        $query=$values['date']===null?$query->whereNull('date')->where('day_of_week',$values['day_of_week']):$query->where('date',$values['date']);
+        $row=$query->first(); $base=$values+['created_at'=>$createdAt,'created_by'=>$userId,'updated_at'=>$createdAt,'updated_by'=>$userId,'deleted_at'=>null,'deleted_by'=>null];
+        if($row){$id=(int)$row['user_availability_id'];DB::table('user_availabilities')->where('user_availability_id',$id)->update($base);}else{$id=DB::table('user_availabilities')->insertGetId(['user_id'=>$userId]+$base);}
+        if(!$id)throw new RuntimeException('ثبت برنامه حضور آزمایشی ناموفق بود.');
+        $this->setTranslation('user_availabilities',$id,$userId,'summary',$summary,$createdAt,$createdAt);$this->setTranslation('user_availabilities',$id,$userId,'description',$description,$createdAt,$createdAt);
+    }
+
+    private function syncAvailabilityExceptionRow(int $userId,string $createdAt,array $values,string $summary,string $description): void {
+        $query=DB::table('user_availability_exceptions')->where('user_id',$userId)->where('date',$values['date']);
+        $query=$values['start_time']===null?$query->whereNull('start_time'):$query->where('start_time',$values['start_time']); $row=$query->first();
+        $base=$values+['created_at'=>$createdAt,'created_by'=>$userId,'updated_at'=>$createdAt,'updated_by'=>$userId,'deleted_at'=>null,'deleted_by'=>null];
+        if($row){$id=(int)$row['user_availability_exception_id'];DB::table('user_availability_exceptions')->where('user_availability_exception_id',$id)->update($base);}else{$id=DB::table('user_availability_exceptions')->insertGetId(['user_id'=>$userId]+$base);}
+        if(!$id)throw new RuntimeException('ثبت مرخصی آزمایشی ناموفق بود.');
+        $this->setTranslation('user_availability_exceptions',$id,$userId,'summary',$summary,$createdAt,$createdAt);$this->setTranslation('user_availability_exceptions',$id,$userId,'description',$description,$createdAt,$createdAt);
+    }
+
+    private function translatedValue(string $table,int $id,string $field): string {
+        $row=DB::table('translations')->where('table_name',$table)->where('table_id',$id)->where('locale','fa')->where('field',$field)->first(); return (string)($row['value']??'');
     }
 
     private function syncMediaFile(int $userId, string $createdAt, string $folder, string $filename, string $collection, int $sortOrder, ?int $width, ?int $height, string $type = 'image'): int {
