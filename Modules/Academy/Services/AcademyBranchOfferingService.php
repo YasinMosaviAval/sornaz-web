@@ -3,13 +3,14 @@
 namespace Modules\Academy\Services;
 
 use Core\database\DB;
+use Modules\System\Services\SiteAdminAccess;
 use RuntimeException;
 
 class AcademyBranchOfferingService
 {
-    public function all(): array
+    public function all(int $actor): array
     {
-        $branches = DB::table('academy_branches')->whereNull('deleted_at')->get();
+        $branches = $this->scopedBranches($actor);
         $branchIds = array_map(fn(array $row): int => (int) $row['branch_id'], $branches);
         $branchUserIds = array_map(fn(array $row): int => (int) $row['user_id'], $branches);
         $branchNames = $this->translations('academy_branches', $branchIds, ['name']);
@@ -106,6 +107,7 @@ class AcademyBranchOfferingService
             $end = substr((string) $row['end_time'], 0, 5);
             $result['schedules'][] = [
                 'id' => $id,
+                'user_id' => (int) $row['user_id'],
                 'day' => $days[$row['day_of_week']] ?? $row['date'],
                 'slots' => $this->timeSlots($start, $end),
                 'timeLabel' => $start . '-' . $end,
@@ -127,7 +129,7 @@ class AcademyBranchOfferingService
     public function saveSchedule(int $actor, array $data, int $id = 0): array
     {
         $branchId = (int) ($data['branchId'] ?? 0);
-        $branch = DB::table('academy_branches')->where('branch_id', $branchId)->whereNull('deleted_at')->first();
+        $branch = $this->allowedBranch($actor, $branchId);
         if (!$branch) throw new RuntimeException('شعبه انتخاب‌شده معتبر نیست.');
 
         $days = ['شنبه' => 'saturday', 'یکشنبه' => 'sunday', 'دوشنبه' => 'monday', 'سه‌شنبه' => 'tuesday', 'چهارشنبه' => 'wednesday', 'پنجشنبه' => 'thursday', 'جمعه' => 'friday'];
@@ -274,6 +276,11 @@ class AcademyBranchOfferingService
         }
 
         [$table, $primaryKey] = $config;
+        $record = DB::table($table)->where($primaryKey, $id)->whereNull('deleted_at')->first();
+        if (!$record) throw new RuntimeException('رکورد موردنظر یافت نشد.');
+        $branch = DB::table('academy_branches')->where('user_id', (int) $record['user_id'])->whereNull('deleted_at')->first();
+        if (!$branch) throw new RuntimeException('شعبه مرتبط با این رکورد یافت نشد.');
+        $this->allowedBranch($actor, (int) $branch['branch_id']);
         $now = date('Y-m-d H:i:s');
         DB::table($table)->where($primaryKey, $id)->whereNull('deleted_at')->update([
             'deleted_at' => $now,
@@ -285,5 +292,36 @@ class AcademyBranchOfferingService
             'deleted_by' => $actor,
             'updated_by' => $actor,
         ]);
+    }
+
+    private function scopedBranches(int $actor): array
+    {
+        $user = DB::table('users')->where('user_id', $actor)->whereNull('deleted_at')->first();
+        if (!$user) throw new RuntimeException('حساب کاربری معتبر نیست.');
+        if (SiteAdminAccess::allows($user)) {
+            return DB::table('academy_branches')->whereNull('deleted_at')->get();
+        }
+
+        if (($user['type'] ?? '') === 'branch') {
+            return DB::table('academy_branches')->where('user_id', $actor)->whereNull('deleted_at')->get();
+        }
+
+        $academies = DB::table('academies')->where('user_id', $actor)->whereNull('deleted_at')->get();
+        $created = DB::table('academies')->where('created_by', $actor)->whereNull('deleted_at')->get();
+        $academyIds = array_values(array_unique(array_map(
+            fn(array $row): int => (int) $row['academy_id'],
+            array_merge($academies, $created)
+        )));
+        return $academyIds
+            ? DB::table('academy_branches')->whereIn('academy_id', $academyIds)->whereNull('deleted_at')->get()
+            : [];
+    }
+
+    private function allowedBranch(int $actor, int $branchId): array
+    {
+        foreach ($this->scopedBranches($actor) as $branch) {
+            if ((int) $branch['branch_id'] === $branchId) return $branch;
+        }
+        throw new RuntimeException('شما به این شعبه دسترسی ندارید.');
     }
 }
