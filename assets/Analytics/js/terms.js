@@ -914,7 +914,7 @@ window.saveInlineTerm = async function (id) {
 };
 
 window.deleteTerm = async function (id) {
-    if (!(await AppDialog.confirm('آیا از حذف این ترم مطمئن هستید؟'))) return;
+    if (!(await AppDialog.confirmDelete(allTerms, id, 'ترم'))) return;
     allTerms = allTerms.filter(function (t) { return t.id !== id; });
     if (editingTermRowId === id) editingTermRowId = null;
     if (attendanceTermRowId === id) attendanceTermRowId = null;

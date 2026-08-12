@@ -87,7 +87,24 @@
         open,
         alert: (message, options = {}) => open({ ...options, kind:'alert', message, type:options.type || detectType(message) }),
         confirm: (message, options = {}) => open({ ...options, kind:'confirm', message, type:options.type || 'warning' }),
-        prompt: (message, defaultValue = '', options = {}) => open({ ...options, kind:'prompt', message, defaultValue })
+        prompt: (message, defaultValue = '', options = {}) => open({ ...options, kind:'prompt', message, defaultValue }),
+        confirmDelete: (collection, id, label = text('مورد','item'), options = {}) => {
+            const row = Array.isArray(collection) ? collection.find(item => String(item?.id) === String(id)) : collection;
+            const title = row && (row.title || row.name || row.full_name || row.fullName || row.subject || row.label || row.member_name || row.user_name || row.instrument_title || row.lesson_title || row.course_title || row.classroom_name || row.branch_name || row.role_name || row.permission_name || row.rule_title || row.day || row.date);
+            const display = String(title || `${label} #${id}`).replace(/["“”]/g, '');
+            return open({ ...options, kind:'confirm', type:'warning', message:options.message || text(`آیا از حذف "${display}" مطمئن هستید؟`, `Are you sure you want to delete "${display}"?`) });
+        },
+        confirmSubmit: (event, message, options = {}) => {
+            const form = event.currentTarget;
+            if (form.dataset.dialogConfirmed === '1') { delete form.dataset.dialogConfirmed; return true; }
+            event.preventDefault();
+            open({ ...options, kind:'confirm', type:'warning', message }).then(confirmed => {
+                if (!confirmed) return;
+                form.dataset.dialogConfirmed = '1';
+                form.requestSubmit(event.submitter || undefined);
+            });
+            return false;
+        }
     };
     window.alert = message => window.AppDialog.alert(message);
 })();

@@ -404,7 +404,7 @@ window.saveInlineTransaction = async function (id) {
 };
 
 window.deleteTransaction = async function (id) {
-    if (!(await AppDialog.confirm('آیا از حذف این تراکنش مطمئن هستید؟'))) return;
+    if (!(await AppDialog.confirmDelete(allTransactions, id, 'تراکنش'))) return;
     allTransactions = allTransactions.filter(function (t) { return t.id !== id; });
     if (editingFinanceRowId === id) editingFinanceRowId = null;
     filterFinance();

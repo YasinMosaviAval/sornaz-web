@@ -404,7 +404,7 @@ window.saveInlineHolidayLeave = async function (id) {
 };
 
 window.deleteHolidayLeave = async function (id) {
-    if (!(await AppDialog.confirm('حذف این مورد؟'))) return;
+    if (!(await AppDialog.confirmDelete(allHolidayLeaves, id, 'تعطیلی یا مرخصی'))) return;
     try {
         const body=new FormData(); body.append('_token',window.adminCsrfToken||'');
         const response=await fetch('/analytics/availability-exceptions/'+id+'/delete',{method:'POST',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'},body});

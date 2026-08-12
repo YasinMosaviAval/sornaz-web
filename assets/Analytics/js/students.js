@@ -434,7 +434,7 @@ window.saveInlineStudent = async function (id) {
 };
 
 window.deleteStudent = async function (id) {
-    if (!(await AppDialog.confirm('آیا از حذف این هنرجو مطمئن هستید؟'))) return;
+    if (!(await AppDialog.confirmDelete(allStudents, id, 'هنرجو'))) return;
     allStudents = allStudents.filter(function (s) { return s.id !== id; });
     if (editingStudentRowId === id) editingStudentRowId = null;
     window.filterStudents();

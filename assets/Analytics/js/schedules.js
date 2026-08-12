@@ -421,7 +421,7 @@ window.saveInlineSchedule = async function (id) {
 };
 
 window.deleteSchedule = async function (id) {
-    if (!(await AppDialog.confirm('حذف این برنامه؟'))) return;
+    if (!(await AppDialog.confirmDelete(allSchedules, id, 'برنامه'))) return;
     allSchedules = allSchedules.filter(function (s) { return s.id !== id; });
     if (editingScheduleRowId === id) editingScheduleRowId = null;
     renderScheduleFilterOptions();

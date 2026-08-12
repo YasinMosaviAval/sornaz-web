@@ -426,7 +426,7 @@ window.markContactReplied = async function (id) {
 };
 
 window.deleteContactMessage = async function (id) {
-    if (!(await AppDialog.confirm('حذف این پیام؟'))) return;
+    if (!(await AppDialog.confirmDelete(allContactMessages, id, 'پیام'))) return;
     allContactMessages = allContactMessages.filter(m => m.id !== id);
     renderContactMessages();
     closeModal();

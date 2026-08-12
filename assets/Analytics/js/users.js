@@ -369,7 +369,7 @@ window.saveInlineUser = async function (id) {
 };
 
 window.deleteUser = async function (id) {
-    if (!(await AppDialog.confirm('حذف این کاربر؟'))) return;
+    if (!(await AppDialog.confirmDelete(allUsers, id, 'کاربر'))) return;
     allUsers = allUsers.filter(function (u) { return u.id !== id; });
     if (editingUserRowId === id) editingUserRowId = null;
     window.filterUsers();

@@ -281,7 +281,7 @@ window.saveEditedArticle = async function (id) {
 };
 
 window.deleteArticle = async function (id) {
-    if (await AppDialog.confirm('حذف این مقاله؟')) {
+    if (await AppDialog.confirmDelete(allArticles, id, 'مقاله')) {
         allArticles = allArticles.filter(a => a.id !== id);
         filterArticles();
     }

@@ -327,7 +327,7 @@ window.saveInlineInstrument = async function (id) {
 };
 
 window.deleteInstrument = async function (id) {
-    if (!(await AppDialog.confirm('حذف این ساز؟'))) return;
+    if (!(await AppDialog.confirmDelete(allUserInstruments, id, 'ساز'))) return;
     allUserInstruments = allUserInstruments.filter(function (i) { return i.id !== id; });
     if (editingInstrumentRowId === id) editingInstrumentRowId = null;
     filterInstruments();

@@ -100,7 +100,7 @@ window.approveAcademyRequest = async function (id) {
 window.rejectAcademyRequest = async function (id) {
     const r = allAcademyRequests.find(x => x.id === id);
     if (!r) return;
-    if (!(await AppDialog.confirm('رد این درخواست؟'))) return;
+    if (!(await AppDialog.confirm(`رد درخواست "${r.name || r.title || 'درخواست #' + id}"؟`))) return;
     r.status = 'rejected';
     renderAcademyRequestsTable();
 };

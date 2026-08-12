@@ -313,7 +313,7 @@ window.saveInlineRule = async function (id) {
 };
 
 window.deleteRule = async function (id) {
-    if (!(await AppDialog.confirm('حذف این قانون؟'))) return;
+    if (!(await AppDialog.confirmDelete(allRules, id, 'قانون'))) return;
     allRules = allRules.filter(function (r) { return r.id !== id; });
     if (editingRuleRowId === id) editingRuleRowId = null;
     window.filterRules();

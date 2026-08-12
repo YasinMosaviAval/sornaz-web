@@ -381,7 +381,7 @@ window.saveInlineCourse = async function (id) {
 };
 
 window.deleteCourse = async function (id) {
-    if (!(await AppDialog.confirm('آیا از حذف این دوره مطمئن هستید؟'))) return;
+    if (!(await AppDialog.confirmDelete(allCourses, id, 'دوره'))) return;
     allCourses = allCourses.filter(c => c.id !== id);
     if (editingCourseRowId === id) editingCourseRowId = null;
     renderCourseInstrumentFilter();

@@ -327,7 +327,7 @@ window.saveInlineLesson = async function (id) {
 };
 
 window.deleteLesson = async function (id) {
-    if (!(await AppDialog.confirm('حذف این درس؟'))) return;
+    if (!(await AppDialog.confirmDelete(allUserLessons, id, 'درس'))) return;
     allUserLessons = allUserLessons.filter(function (i) { return i.id !== id; });
     if (editingLessonRowId === id) editingLessonRowId = null;
     filterLessons();

@@ -442,7 +442,7 @@ window.onAccountDocumentUpload = async function (event) {
 };
 
 window.deleteAccountDocument = async function (id) {
-    if (!(await AppDialog.confirm('حذف این سند؟'))) return;
+    if (!(await AppDialog.confirmDelete(academyDocuments, id, 'سند'))) return;
     academyDocuments = academyDocuments.filter(function (d) { return d.id !== id; });
     window.renderAccountDocuments();
 };
@@ -454,7 +454,8 @@ window.renderAccountDevices = async function () {
 };
 
 window.revokeAccountDevice = async function (id) {
-    if (!(await AppDialog.confirm('خروج این دستگاه از حساب؟'))) return;
+    const device = academyDevices.find(function (d) { return d.id === id; });
+    if (!(await AppDialog.confirm(`خروج دستگاه "${device?.name || device?.title || 'دستگاه #' + id}" از حساب؟`))) return;
     academyDevices = academyDevices.filter(function (d) { return d.id !== id; });
     window.renderAccountDevices();
     alert('✅ دستگاه خارج شد');

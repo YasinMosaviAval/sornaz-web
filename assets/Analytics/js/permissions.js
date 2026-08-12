@@ -271,7 +271,7 @@ window.saveInlinePermission = async function (id) {
 };
 
 window.deletePermission = async function (id) {
-    if (!(await AppDialog.confirm('حذف این دسترسی؟'))) return;
+    if (!(await AppDialog.confirmDelete(allPermissions, id, 'دسترسی'))) return;
     allPermissions = allPermissions.filter(function (p) { return p.id !== id; });
     if (editingPermissionRowId === id) editingPermissionRowId = null;
     window.filterPermissions();
