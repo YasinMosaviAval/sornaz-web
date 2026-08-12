@@ -41,7 +41,7 @@ function encodeBranchPayload(data){const bytes=new TextEncoder().encode(JSON.str
 window.promptAddBranchType=async function(){const name=await AppDialog.prompt('نام نوع شعبه جدید را وارد کنید:')?.trim();if(!name)return;if(allBranchTypes.some(item=>item.name===name))return alert('این نوع قبلاً وجود دارد');try{allBranchTypes.push(await branchRequest('/academy/admin/branches/types',{name}));window.renderBranchFilters();['branchType','editBranchType'].forEach(id=>{const select=document.getElementById(id);if(select)select.innerHTML=getBranchTypeOptions(select.value);});}catch(error){alert(error.message);}};
 window.openAddBranchModal = async function (){document.getElementById('modalContainer').innerHTML=window.getBranchAddModalHTML();};
 window.viewBranch = async function (id){editingBranchRowId=null;window.renderBranches();const branch=allBranches.find(item=>item.id===id);if(branch)document.getElementById('modalContainer').innerHTML=window.getBranchViewModalHTML(branch);};
-window.editBranch = async function (id){editingBranchRowId=editingBranchRowId===id?null:id;window.renderBranches();};
+window.editBranch = async function (id){if(branchesView==='cards')return window.editBranchDialog(id);editingBranchRowId=editingBranchRowId===id?null:id;window.renderBranches();};
 window.editBranchDialog = async function (id){const branch=allBranches.find(item=>item.id===id);if(branch)document.getElementById('modalContainer').innerHTML=window.getBranchEditModalHTML(branch);};
 window.deleteBranch=async function(id){if (!(await AppDialog.confirmDelete(allBranches,id,'شعبه')))return;try{await branchRequest(`/academy/admin/branches/${id}/delete`);await loadBranches();}catch(error){alert(error.message);}};
 
