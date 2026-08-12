@@ -5,6 +5,7 @@ use Modules\Academy\Controllers\Web\AcademyController;
 use Modules\Academy\Controllers\Web\AcademyRegistrationController;
 use Modules\Analytics\Controllers\Web\AnalyticsController;
 use Modules\Academy\Controllers\Web\AcademyBranchController;
+use Modules\Academy\Controllers\Web\AcademyClassroomController;
 
 Router::get('/academy/academy', [AnalyticsController::class, 'academy']);
 Router::get('/academy/academies', [AcademyRegistrationController::class, 'index']);
@@ -25,6 +26,13 @@ Router::post('/academy/admin/branches/{id}/update', [AcademyBranchController::cl
 Router::post('/academy/admin/branches/{id}/delete', [AcademyBranchController::class, 'destroy'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/members/{id}/update', [AcademyBranchController::class, 'updateMember'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/members/{id}/delete', [AcademyBranchController::class, 'deleteMember'])->middleware(['academy-panel', 'csrf']);
+Router::get('/academy/admin/classrooms', [AcademyClassroomController::class, 'index'])->middleware('academy-panel');
+Router::post('/academy/admin/classrooms', [AcademyClassroomController::class, 'store'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/classrooms/{id}/update', [AcademyClassroomController::class, 'update'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/classrooms/{id}/delete', [AcademyClassroomController::class, 'delete'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/classroom-types', [AcademyClassroomController::class, 'storeType'])->middleware(['site-admin','csrf']);
+Router::post('/academy/admin/classroom-types/{id}/update', [AcademyClassroomController::class, 'updateType'])->middleware(['site-admin','csrf']);
+Router::post('/academy/admin/classroom-types/{id}/delete', [AcademyClassroomController::class, 'deleteType'])->middleware(['site-admin','csrf']);
 
 Router::group(
     ['prefix' => '/academy'],

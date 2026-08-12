@@ -72,7 +72,7 @@
     function classroomFormFields(item, prefix) {
         const id = (name) => prefix ? `${prefix}${name}` : `classroom${name}`;
         const branches = (typeof allBranches !== 'undefined' ? allBranches : []).map(b => ({ value: b.id, label: b.name }));
-        const types = (typeof allClassroomTypes !== 'undefined' ? allClassroomTypes : []).map(t => ({ value: t.name, label: t.name }));
+        const types = (typeof allClassroomTypes !== 'undefined' ? allClassroomTypes : []).map(t => ({ value: t.id, label: t.name }));
         const statuses = (typeof classroomStatuses !== 'undefined' ? classroomStatuses : ['فعال', 'تعمیر', 'غیرفعال']).map(s => ({ value: s, label: s }));
         const equipment = (item.equipment && item.equipment.length) ? item.equipment : [{}];
         const equipContainer = prefix ? `${prefix}EquipmentContainer` : 'classroomEquipmentContainer';
@@ -87,7 +87,7 @@
                 <div>
                     <label class="block text-sm font-medium mb-2">نوع کلاس *</label>
                     <select id="${id('Type')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(types, item.type || (types[0] && types[0].value))}
+                        ${renderOptions(types, item.typeId || (types[0] && types[0].value))}
                     </select>
                     <button type="button" onclick="promptAddClassroomType()" class="text-sm text-indigo-600 mt-1">+ نوع جدید</button>
                 </div>
@@ -108,6 +108,7 @@
                     </select>
                 </div>
             </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5"><div><label class="block text-sm font-medium mb-2">خلاصه کلاس</label><textarea id="${id('Summary')}" rows="2" class="w-full border border-gray-300 rounded-2xl py-3 px-4">${escapeHtml(item.summary||'')}</textarea></div><div><label class="block text-sm font-medium mb-2">شرح کلاس</label><textarea id="${id('Description')}" rows="2" class="w-full border border-gray-300 rounded-2xl py-3 px-4">${escapeHtml(item.description||'')}</textarea></div></div>
             <div class="mt-5">
                 <label class="block text-sm font-medium mb-2">تجهیزات</label>
                 <div id="${equipContainer}">${equipHtml}</div>

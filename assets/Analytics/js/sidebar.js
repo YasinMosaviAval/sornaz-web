@@ -78,6 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const originalShowSection = window.showSection;
     if (typeof originalShowSection !== 'function') return;
     const submenuMap = {
+        branchesSubmenu: ['branches','branch-types'],
+        classroomsSubmenu: ['classrooms','classroom-types'],
         profilesSubmenu: [
             'users',
             'roles',
