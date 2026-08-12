@@ -8,6 +8,10 @@ use Modules\System\Services\UserService;
 use RuntimeException;
 
 class AcademyRegistrationService {
+    private const MANAGER_PREFIX = 'test_academy_manager_';
+    private const ACADEMY_PREFIX = 'test_academy_';
+    private const BRANCH_PREFIX = 'test_main_branch_';
+
     public function __construct(protected UserService $users) {}
 
     public function register(array $data): int {
@@ -15,29 +19,32 @@ class AcademyRegistrationService {
     }
 
     public function seedSamples(): array {
-        if (DB::table('academies')->count() > 0) {
-            return ['created' => 0, 'skipped' => true, 'message' => 'آموزشگاه‌ها قبلاً ایجاد شده‌اند.'];
-        }
-
         return transaction(function () {
-            if (DB::table('academies')->count() > 0) {
-                return ['created' => 0, 'skipped' => true, 'message' => 'آموزشگاه‌ها قبلاً ایجاد شده‌اند.'];
-            }
-
             $branchTypes = DB::table('academy_branch_types')->whereNull('deleted_at')->get();
             $provinces = DB::table('world_iran_provinces')->get();
             $counties = DB::table('world_iran_counties')->get();
-            $branchesCreated = 0;
+            $managers = DB::table('users')->whereRaw("username LIKE '" . self::MANAGER_PREFIX . "%' ")
+                ->whereNull('deleted_at')->get();
+            usort($managers, fn(array $a, array $b) => strcmp((string)$a['username'], (string)$b['username']));
+            if (!$managers) throw new RuntimeException('ابتدا تست ۱ (مدیران آموزشگاه) را اجرا کنید.');
 
-            foreach ($this->sampleAcademies() as $index => $sample) {
-                $branchesCreated += $this->createSampleAcademy($sample, $index, $branchTypes, $provinces, $counties);
+            $samples = $this->sampleAcademies();
+            $created = 0;
+            $updated = 0;
+            foreach ($managers as $index => $manager) {
+                if (!isset($samples[$index])) break;
+                $wasCreated = $this->createSampleAcademy(
+                    $samples[$index], $index, (int)$manager['user_id'], $branchTypes, $provinces, $counties
+                );
+                $wasCreated ? $created++ : $updated++;
             }
 
             return [
-                'created' => 50,
-                'branches_created' => $branchesCreated,
+                'created' => $created,
+                'updated' => $updated,
+                'branches_created' => $created + $updated,
                 'skipped' => false,
-                'message' => "۵۰ آموزشگاه و {$branchesCreated} شعبه نمونه با موفقیت ایجاد شد.",
+                'message' => "تست ۲ تکمیل شد: {$created} آموزشگاه ایجاد و {$updated} آموزشگاه همگام‌سازی شد؛ برای هرکدام یک شعبه اصلی و دو عضویت مدیر ثبت شد.",
             ];
         });
     }
@@ -45,7 +52,8 @@ class AcademyRegistrationService {
     public function deleteSamples(): array {
         return transaction(function () {
             $users = DB::table('users')->whereRaw(
-                "username LIKE 'sample_academy_%' OR username LIKE 'sample_manager_%' OR username LIKE 'sample_branch_%'"
+                "(username LIKE '" . self::ACADEMY_PREFIX . "%' AND username NOT LIKE '" . self::MANAGER_PREFIX . "%')"
+                . " OR username LIKE '" . self::BRANCH_PREFIX . "%'"
             )->get();
             $userIds = array_map(fn(array $user) => (int)$user['user_id'], $users);
             if (!$userIds) return ['deleted' => 0, 'message' => 'هیچ اطلاعات آزمایشی برای حذف وجود ندارد.'];
@@ -54,14 +62,20 @@ class AcademyRegistrationService {
             $academyIds = array_map(fn(array $academy) => (int)$academy['academy_id'], $academies);
             $branches = $academyIds ? DB::table('academy_branches')->whereIn('academy_id', $academyIds)->get() : [];
             $branchIds = array_map(fn(array $branch) => (int)$branch['branch_id'], $branches);
+            $managerIds = array_values(array_unique(array_map(fn(array $row) => (int)$row['created_by'], $academies)));
             $members = $branchIds ? DB::table('academy_branch_members')->whereIn('branch_id', $branchIds)->get() : [];
+            if ($managerIds) {
+                foreach (DB::table('academy_branch_members')->whereIn('user_id', $managerIds)->whereNull('branch_id')->get() as $member) {
+                    if (in_array((int)$member['created_by'], $managerIds, true)) $members[] = $member;
+                }
+            }
             $memberIds = array_map(fn(array $member) => (int)$member['member_id'], $members);
 
             if ($memberIds) {
                 DB::table('academy_branch_member_roles')->whereIn('member_id', $memberIds)->delete();
                 DB::table('academy_branch_member_contracts')->whereIn('member_id', $memberIds)->delete();
             }
-            if ($branchIds) DB::table('academy_branch_members')->whereIn('branch_id', $branchIds)->delete();
+            if ($memberIds) DB::table('academy_branch_members')->whereIn('member_id', $memberIds)->delete();
 
             $contacts = DB::table('user_contacts')->whereIn('user_id', $userIds)->get();
             $addresses = DB::table('user_addresses')->whereIn('user_id', $userIds)->get();
@@ -140,34 +154,34 @@ class AcademyRegistrationService {
         return $academyId;
     }
 
-    private function createSampleAcademy(array $sample, int $index, array $branchTypes, array $provinces, array $counties): int {
-        $managerId = $this->seedUser([
-            'username' => sprintf('sample_manager_%02d', $index + 1),
-            'email' => sprintf('manager%02d@sornaz.test', $index + 1),
-            'phone' => sprintf('0911%07d', 2000000 + $index + 1),
-            'type' => 'manager',
-            'full_name' => $sample['manager_name'],
-            'visibility' => 'public',
-        ]);
-        DB::table('users')->where('user_id', $managerId)->update(['created_by' => $managerId, 'updated_by' => $managerId]);
-        $this->auditTranslations('users', $managerId, $managerId);
-
+    private function createSampleAcademy(array $sample, int $index, int $managerId, array $branchTypes, array $provinces, array $counties): bool {
+        $existingUser = DB::table('users')->where('username', sprintf(self::ACADEMY_PREFIX . '%02d', $index + 1))->first();
         $academyUserId = $this->seedUser([
-            'username' => $sample['username'],
+            'username' => sprintf(self::ACADEMY_PREFIX . '%02d', $index + 1),
             'email' => $sample['email'],
             'phone' => $sample['phone'],
             'type' => 'academy',
+            'gender' => 'other',
+            'national_code' => null,
+            'birthday' => sprintf('%04d-%02d-%02d', 1370 + ($index % 25), ($index % 12) + 1, ($index % 27) + 1),
             'full_name' => $sample['academy_name'],
+            'slogan' => $sample['slogan'],
             'visibility' => 'unlisted',
         ], $managerId);
 
-        $academyId = DB::table('academies')->insertGetId([
+        $academy = DB::table('academies')->where('user_id', $academyUserId)->first();
+        $academyData = [
             'user_id' => $academyUserId,
             'created_by' => $managerId,
             'updated_by' => $managerId,
             'approved_at' => date('Y-m-d H:i:s'),
             'approved_by' => $managerId,
-        ]);
+            'deleted_at' => null, 'deleted_by' => null,
+        ];
+        if ($academy) {
+            $academyId = (int)$academy['academy_id'];
+            DB::table('academies')->where('academy_id', $academyId)->update($academyData);
+        } else $academyId = DB::table('academies')->insertGetId($academyData);
         if (!$academyId) throw new RuntimeException('ایجاد آموزشگاه نمونه ناموفق بود.');
 
         $this->setTranslations('academies', $academyId, [
@@ -185,12 +199,8 @@ class AcademyRegistrationService {
             ]);
         }
 
-        $branchCount = ($index % 5) + 1;
-        for ($branchIndex = 0; $branchIndex < $branchCount; $branchIndex++) {
-            $this->createSampleBranch($academyId, $managerId, $sample, $index, $branchIndex, $branchTypes, $provinces, $counties);
-        }
-
-        return $branchCount;
+        $this->createSampleBranch($academyId, $managerId, $sample, $index, 0, $branchTypes, $provinces, $counties);
+        return !$existingUser;
     }
 
     private function createSampleBranch(int $academyId, int $managerId, array $sample, int $academyIndex, int $branchIndex, array $branchTypes, array $provinces, array $counties): void {
@@ -198,10 +208,13 @@ class AcademyRegistrationService {
         $branchLabels = ['مرکزی', 'شمال', 'شرق', 'غرب', 'آنلاین'];
         $branchName = $sample['academy_name'] . ' - شعبه ' . $branchLabels[$branchIndex];
         $branchUserId = $this->seedUser([
-            'username' => sprintf('sample_branch_%03d', $serial),
+            'username' => sprintf(self::BRANCH_PREFIX . '%02d', $academyIndex + 1),
             'email' => sprintf('branch%03d@sornaz.test', $serial),
             'phone' => sprintf('0935%07d', 3000000 + $serial),
             'type' => 'branch',
+            'gender' => 'other',
+            'national_code' => null,
+            'birthday' => sprintf('%04d-%02d-%02d', 1370 + ($academyIndex % 25), ($academyIndex % 12) + 1, ($academyIndex % 27) + 1),
             'full_name' => $branchName,
             'visibility' => 'unlisted',
         ], $managerId);
@@ -239,12 +252,26 @@ class AcademyRegistrationService {
         $this->seedBranchContacts($branchUserId, $managerId, $serial);
         $this->seedBranchAddresses($branchUserId, $managerId, $serial, $provinces, $counties);
 
-        if (!DB::table('academy_branch_members')->where('branch_id', $branchId)->where('user_id', $managerId)->whereNull('deleted_at')->first()) {
+        $this->ensureAcademyMember($managerId, null);
+        $this->ensureAcademyMember($managerId, $branchId);
+    }
+
+    private function ensureAcademyMember(int $managerId, ?int $branchId): void {
+        $query = DB::table('academy_branch_members')->where('user_id', $managerId);
+        $query = $branchId === null ? $query->whereNull('branch_id') : $query->where('branch_id', $branchId);
+        $member = $query->first();
+        $values = ['branch_id' => $branchId, 'user_id' => $managerId, 'status' => 'active',
+            'joined_at' => date('Y-m-d'), 'created_by' => $managerId, 'updated_by' => $managerId,
+            'approved_at' => date('Y-m-d H:i:s'), 'approved_by' => $managerId, 'deleted_at' => null, 'deleted_by' => null];
+        if ($member) {
+            $memberId = (int)$member['member_id'];
+            DB::table('academy_branch_members')->where('member_id', $memberId)->update($values);
+        } else {
             $memberId = DB::table('academy_branch_members')->insertGetId([
-                'branch_id' => $branchId, 'user_id' => $managerId, 'status' => 'active',
-                'joined_at' => date('Y-m-d'), 'created_by' => $managerId, 'updated_by' => $managerId,
-                'approved_at' => date('Y-m-d H:i:s'), 'approved_by' => $managerId,
-            ]);
+                'created_at' => date('Y-m-d H:i:s'),
+            ] + $values);
+        }
+        if (!DB::table('academy_branch_member_contracts')->where('member_id', $memberId)->whereNull('deleted_at')->first()) {
             DB::table('academy_branch_member_contracts')->insertGetId([
                 'member_id' => $memberId, 'type' => 'manager', 'start_date' => date('Y-m-d'),
                 'created_by' => $managerId, 'updated_by' => $managerId,
@@ -257,6 +284,8 @@ class AcademyRegistrationService {
         $user = DB::table('users')->where('username', $data['username'])->first();
         $values = [
             'email' => $data['email'], 'phone' => $data['phone'], 'password' => password_hash('123456789', PASSWORD_DEFAULT),
+            'national_code' => $data['national_code'] ?? null, 'gender' => $data['gender'] ?? 'other',
+            'birthday' => $data['birthday'] ?? null,
             'type' => $data['type'], 'status' => 'approved', 'locale' => 'fa', 'timezone' => 'Asia/Tehran',
             'register_method' => 'email', 'visibility' => $data['visibility'] ?? 'unlisted', 'deleted_at' => null,
             'created_by' => $creatorId, 'updated_by' => $creatorId,
@@ -268,7 +297,9 @@ class AcademyRegistrationService {
             $userId = DB::table('users')->insertGetId(['username' => $data['username']] + $values);
         }
         if (!$userId) throw new RuntimeException('ایجاد کاربر نمونه ناموفق بود.');
-        $this->setTranslations('users', $userId, ['full_name' => $data['full_name']], $creatorId ?: $userId);
+        $userTranslations = ['full_name' => $data['full_name']];
+        if (array_key_exists('slogan', $data)) $userTranslations['slogan'] = $data['slogan'];
+        $this->setTranslations('users', $userId, $userTranslations, $creatorId ?: $userId);
         $this->ensureProfile($userId, $creatorId ?: $userId);
         return $userId;
     }
@@ -340,6 +371,18 @@ class AcademyRegistrationService {
         foreach ($values as $field => $value) {
             if (!$translations->set($table, $id, $field, $value, 'fa')) {
                 throw new RuntimeException('ثبت ترجمه اطلاعات نمونه ناموفق بود.');
+            }
+            $english = match ($field) {
+                'full_name', 'title', 'name' => 'Sornaz Music Academy ' . $id,
+                'slogan' => 'Discover your musical voice',
+                'short_description' => 'A sample music academy offering structured courses for learners of different ages and levels.',
+                'description' => 'This sample music academy provides professional instruction, purposeful practice, student performances, and a creative environment from beginner to advanced levels.',
+                'manager' => 'Academy Manager',
+                'address' => 'Sample registered address for the academy main branch in Iran.',
+                default => (string)$value,
+            };
+            if (!$translations->set($table, $id, $field, $english, 'en')) {
+                throw new RuntimeException('ثبت ترجمه انگلیسی اطلاعات نمونه ناموفق بود.');
             }
         }
         $this->auditTranslations($table, $id, $creatorId);
