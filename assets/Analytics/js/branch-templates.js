@@ -75,6 +75,10 @@
         </div>`;
     };
 
+    window.getBranchTypeModalHTML = function () {
+        return `<div id="branchTypeModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[80] p-4"><div class="bg-white rounded-3xl shadow-2xl w-full max-w-xl p-7 space-y-5"><div class="flex items-center justify-between"><h3 class="text-xl font-bold">افزودن نوع آموزشی</h3><button type="button" onclick="closeBranchTypeModal()" class="text-gray-400 text-2xl">×</button></div><div><label class="block text-sm font-medium mb-2">عنوان *</label><input id="newBranchTypeTitle" class="${fieldClass}" maxlength="100" placeholder="مانند هنرهای نمایشی"></div><div><label class="block text-sm font-medium mb-2">خلاصه کوتاه *</label><textarea id="newBranchTypeSummary" class="${fieldClass}" rows="2" maxlength="500" placeholder="معرفی کوتاه این نوع آموزشی"></textarea></div><div><label class="block text-sm font-medium mb-2">شرح کامل *</label><textarea id="newBranchTypeDescription" class="${fieldClass}" rows="5" maxlength="5000" placeholder="توضیح کامل حوزه و دوره‌های این نوع آموزشی"></textarea></div><div class="flex gap-3"><button type="button" onclick="saveBranchType(this)" class="flex-1 rounded-xl bg-indigo-600 py-2.5 text-white">ذخیره نوع آموزشی</button><button type="button" onclick="closeBranchTypeModal()" class="flex-1 rounded-xl border py-2.5">انصراف</button></div></div></div>`;
+    };
+
     function branchForm(branch, isEdit, inline = false) {
         const prefix = inline ? 'inline' : (isEdit ? 'edit' : '');
         const id = key => prefix ? `${prefix}${key.charAt(0).toUpperCase()}${key.slice(1)}` : key;

@@ -15,7 +15,7 @@ class AcademyBranchController {
     public function store() { return $this->run(fn() => $this->service->store((int)auth()->id(), $this->payload(), SiteAdminAccess::allows(auth()->user())), 201); }
     public function update(int $id) { return $this->run(fn() => $this->service->update((int)auth()->id(), $id, $this->payload(), SiteAdminAccess::allows(auth()->user()))); }
     public function destroy(int $id) { return $this->run(function() use($id){$this->service->delete((int)auth()->id(),$id,SiteAdminAccess::allows(auth()->user()));return null;}); }
-    public function storeType() { return $this->run(fn() => $this->service->addType((int)auth()->id(), trim((string)($_POST['name'] ?? ''))), 201); }
+    public function storeType() { return $this->run(fn() => $this->service->addType((int)auth()->id(), $this->payload()), 201); }
     public function updateMember(int $id) { return $this->run(fn()=>$this->service->updateMember((int)auth()->id(),$id,$this->payload(),SiteAdminAccess::allows(auth()->user()))); }
     public function deleteMember(int $id) { return $this->run(function()use($id){$this->service->deleteMember((int)auth()->id(),$id,SiteAdminAccess::allows(auth()->user()));return null;}); }
     private function payload(): array {
