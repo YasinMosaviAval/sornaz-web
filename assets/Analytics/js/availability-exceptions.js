@@ -408,7 +408,7 @@ window.deleteHolidayLeave = async function (id) {
     try {
         const body=new FormData(); body.append('_token',window.adminCsrfToken||'');
         const response=await fetch('/analytics/availability-exceptions/'+id+'/delete',{method:'POST',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'},body});
-        const result=await response.json(); if(!response.ok||!result.success)throw new Error(result.message||'حذف ناموفق بود.');
+        const envelope=await response.json(); const result=envelope.data||{}; if(!response.ok||result.success===false)throw new Error(result.message||'حذف ناموفق بود.');
         allHolidayLeaves=allHolidayLeaves.filter(s=>s.id!==id); if(editingHolidayLeaveRowId===id)editingHolidayLeaveRowId=null; window.filterHolidayLeaves();
     } catch(error) { alert(error.message||'حذف تعطیلی یا مرخصی ناموفق بود.'); }
 };

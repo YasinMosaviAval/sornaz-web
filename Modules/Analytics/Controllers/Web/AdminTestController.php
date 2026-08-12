@@ -31,12 +31,12 @@ class AdminTestController {
     }
 
     public function deleteAvailability(string $id) {
-        try { return ResponseFactory::json($this->tests->deleteAvailability((int)$id)); }
+        try { return ResponseFactory::json($this->tests->deleteAvailability((int)$id, (int)auth()->id())); }
         catch (\Throwable $e) { return ResponseFactory::json(['success'=>false,'message'=>$e->getMessage()],404); }
     }
 
     public function deleteAvailabilityException(string $id) {
-        try { return ResponseFactory::json($this->tests->deleteAvailabilityException((int)$id)); }
+        try { return ResponseFactory::json($this->tests->deleteAvailabilityException((int)$id, (int)auth()->id())); }
         catch (\Throwable $e) { return ResponseFactory::json(['success'=>false,'message'=>$e->getMessage()],404); }
     }
 }

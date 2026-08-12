@@ -422,7 +422,7 @@ window.deleteMemberSchedule = async function (id) {
     try {
         const body=new FormData(); body.append('_token',window.adminCsrfToken||'');
         const response=await fetch('/analytics/member-schedules/'+id+'/delete',{method:'POST',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'},body});
-        const result=await response.json(); if(!response.ok||!result.success)throw new Error(result.message||'حذف ناموفق بود.');
+        const envelope=await response.json(); const result=envelope.data||{}; if(!response.ok||result.success===false)throw new Error(result.message||'حذف ناموفق بود.');
         allMemberSchedules=allMemberSchedules.filter(s=>s.id!==id); if(editingMemberScheduleRowId===id)editingMemberScheduleRowId=null; window.filterMemberSchedules();
     } catch(error) { alert(error.message||'حذف برنامه زمانی ناموفق بود.'); }
 };
