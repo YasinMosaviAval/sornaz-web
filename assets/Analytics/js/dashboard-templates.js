@@ -117,13 +117,13 @@
     window.getDashboardMessagesHTML = function (list) {
         if (!list || !list.length) return emptyState('پیام خوانده‌نشده‌ای نیست');
         return list.map(function (m) {
-            return `<div class="flex justify-between items-start p-3 bg-indigo-50/50 rounded-2xl border border-indigo-100 gap-3">
+            return `<div class="dashboard-unread-message flex justify-between items-start p-3 bg-indigo-50/50 rounded-2xl border border-indigo-100 gap-3">
                 <div class="min-w-0">
-                    <p class="font-medium truncate">${escapeHtml(m.from)}</p>
-                    <p class="text-sm text-gray-600 truncate">${escapeHtml(m.preview)}</p>
+                    <p class="dashboard-unread-sender font-medium truncate">${escapeHtml(m.from)}</p>
+                    <p class="dashboard-unread-preview text-sm text-gray-600 truncate">${escapeHtml(m.preview)}</p>
                     <p class="text-xs text-gray-400 mt-1">${escapeHtml(m.branch)} · ${escapeHtml(m.time)}</p>
                 </div>
-                <button type="button" onclick="goToSectionFromDashboard('messages')" class="text-xs text-indigo-600 shrink-0 hover:underline">مشاهده</button>
+                <button type="button" onclick="goToSectionFromDashboard('messages')" class="dashboard-unread-action text-xs text-indigo-600 shrink-0 hover:underline">مشاهده</button>
             </div>`;
         }).join('');
     };

@@ -87,15 +87,15 @@
         </div>
 
         <!-- پیام‌های خوانده‌نشده -->
-        <div class="bg-white rounded-3xl p-6 shadow">
+        <div class="dashboard-unread-card bg-white rounded-3xl p-6 shadow">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-semibold flex items-center gap-2">
-                    <i class="fas fa-envelope text-indigo-600"></i>
+                    <span class="dashboard-unread-icon inline-flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600"><i class="fas fa-envelope"></i></span>
                     پیام‌های خوانده‌نشده
                 </h2>
                 <button type="button" onclick="goToSectionFromDashboard('messages')" class="text-indigo-600 text-sm hover:underline">مشاهده همه</button>
             </div>
-            <div class="space-y-3" id="unreadMessagesList"></div>
+            <div class="dashboard-unread-list space-y-3" id="unreadMessagesList"></div>
         </div>
     </div>
 
