@@ -259,7 +259,11 @@ class View {
 
 
     public static function pushScript(string $file): void {
-        self::$scripts[] = ['module'=>self::$currentModule, 'file'=>$file];
+        $module = self::$currentModule;
+        if (str_contains($file, '::')) {
+            [$module, $file] = explode('::', $file, 2);
+        }
+        self::$scripts[] = ['module'=>$module, 'file'=>$file];
     }
 
 

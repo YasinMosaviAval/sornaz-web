@@ -1,4 +1,4 @@
-<div id="page-users" class="">
+<div id="page-users" class="site-page active">
     <div class="max-w-7xl mx-auto px-4 py-12">
         <div class="text-center mb-10">
             <h1 class="text-3xl md:text-4xl font-bold mb-3">کاربران</h1>
@@ -20,6 +20,8 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" id="siteUsersGrid"></div>
     </div>
 </div>
+
+<?php require __DIR__ . '/user.php'; ?>
 
 <script>
 window.siteUsersData = <?= json_encode($users ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;

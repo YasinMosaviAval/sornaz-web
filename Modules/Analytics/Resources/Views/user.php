@@ -1,7 +1,7 @@
-<div id="page-user-profile" class="">
+<div id="page-user-profile" class="site-page">
     <div class="max-w-5xl mx-auto px-4 py-8 md:py-12">
 
-        <a href="/analytics/users" class="text-indigo-600 text-sm mb-6 hover:underline flex items-center gap-2">
+        <a href="/users" class="text-indigo-600 text-sm mb-6 hover:underline flex items-center gap-2">
             <div><i class="fas fa-arrow-right"></i> &nbsp; بازگشت به کاربران</div>
         </a>
 
@@ -60,6 +60,16 @@
                     <p id="upBio" class="text-gray-600 leading-relaxed whitespace-pre-wrap"></p>
                 </section>
 
+                <section id="upIntroSection" class="hidden bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8">
+                    <h2 class="text-lg font-bold mb-4">ویدیوی معرفی</h2>
+                    <video id="upIntroVideo" class="w-full aspect-video rounded-2xl bg-black" controls preload="metadata"></video>
+                </section>
+
+                <section id="upGallerySection" class="hidden bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8">
+                    <h2 class="text-lg font-bold mb-4">گالری تصاویر</h2>
+                    <div id="upGallery" class="grid grid-cols-2 md:grid-cols-3 gap-3"></div>
+                </section>
+
                 <!-- سازها / ابزارها -->
                 <section class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8">
                     <h2 class="text-lg font-bold mb-4">سازها و تخصص‌ها</h2>
@@ -93,6 +103,16 @@
                 </section>
 
                 <section class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="text-lg font-bold mb-4">نشانی‌ها</h2>
+                    <div id="upAddresses" class="space-y-3 text-sm"></div>
+                </section>
+
+                <section class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="text-lg font-bold mb-4">راه‌های ارتباطی</h2>
+                    <div id="upContacts" class="space-y-3 text-sm"></div>
+                </section>
+
+                <section class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
                     <h2 class="text-lg font-bold mb-4">نشان‌ها</h2>
                     <div id="upBadges" class="flex flex-wrap gap-2"></div>
                 </section>
@@ -104,4 +124,12 @@
             </div>
         </div>
     </div>
+</div>
+
+<div id="userGalleryDialog" class="hidden fixed inset-0 z-[100] bg-black/90 p-4 items-center justify-center" role="dialog" aria-modal="true">
+    <button type="button" onclick="closeUserGalleryDialog()" class="absolute top-5 left-5 w-11 h-11 rounded-full bg-white/15 text-white text-xl" aria-label="بستن"><i class="fas fa-times"></i></button>
+    <button type="button" onclick="moveUserGallery(-1)" class="absolute right-4 md:right-8 w-12 h-12 rounded-full bg-white/15 text-white" aria-label="قبلی"><i class="fas fa-chevron-right"></i></button>
+    <img id="userGalleryDialogImage" class="max-w-[90vw] max-h-[85vh] object-contain rounded-2xl" alt="تصویر گالری کاربر">
+    <button type="button" onclick="moveUserGallery(1)" class="absolute left-4 md:left-8 w-12 h-12 rounded-full bg-white/15 text-white" aria-label="بعدی"><i class="fas fa-chevron-left"></i></button>
+    <span id="userGalleryDialogCounter" class="absolute bottom-5 text-white/80 text-sm"></span>
 </div>
