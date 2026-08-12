@@ -99,6 +99,13 @@ html[data-mode="dark"] .dashboard-unread-action { padding:.35rem .6rem;border-ra
 html[data-mode="dark"] .dashboard-unread-action:hover { background:color-mix(in srgb,var(--theme-500) 27%,var(--surface-muted));color:var(--theme-100)!important; }
 body,header,footer,input,textarea,select,.theme-switcher,.language-switcher { transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease; }
 #sidebar,#sidebar a,#sidebar button,#sidebar [class*="border-indigo-"] { transition-property:background-color,border-color,color,transform;transition-duration:200ms;transition-timing-function:ease; }
+.admin-edit-switch { background:var(--surface-card);border-color:var(--border);color:var(--text); }
+.admin-edit-switch__track,.admin-edit-switch__track::after { transition:background-color 180ms ease,transform 220ms cubic-bezier(.34,1.56,.64,1); }
+.admin-edit-switch input:checked + .admin-edit-switch__track { background:var(--theme-600)!important; }
+.admin-edit-switch input:checked + .admin-edit-switch__track::after { transform:translateX(1rem); }
+.admin-inline-editing [data-inline-translation-key] { cursor:pointer!important;outline:1px dashed color-mix(in srgb,var(--theme-500) 50%,transparent);outline-offset:3px;border-radius:.2rem; }
+.admin-inline-editing [data-inline-translation-key]:hover { outline:2px solid var(--theme-400);background-color:color-mix(in srgb,var(--theme-500) 10%,transparent)!important; }
+.admin-inline-editing input[data-inline-translation-key],.admin-inline-editing textarea[data-inline-translation-key] { box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--theme-500) 45%,transparent); }
 @media (prefers-reduced-motion:reduce) { body,header,footer,input,textarea,select,.theme-switcher,.language-switcher { transition-duration:0s!important; } }
 @media (max-width:639px) {
     .theme-switcher,.language-switcher { gap:.375rem;padding:.375rem .5rem;justify-content:center; }

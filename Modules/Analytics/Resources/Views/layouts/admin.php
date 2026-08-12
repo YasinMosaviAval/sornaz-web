@@ -114,6 +114,7 @@
     
     pushScript('admin.js');
     pushScript('admin-i18n.js');
+    pushScript('admin-inline-editor.js');
     ?>
     <div id="modalContainer"></div>
     <script>window.adminLocale=<?= json_encode(locale()) ?>;window.adminUiMap=<?= json_encode($adminUiMap??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;</script>
