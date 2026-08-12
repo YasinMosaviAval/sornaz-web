@@ -744,8 +744,8 @@ window.renderSiteUsers = function() {
         : list.map(u => `
             <div class="relative bg-white rounded-3xl p-6 shadow-sm border border-gray-50 text-center hover:shadow-md transition cursor-pointer"
                  onclick="openSiteUser(${u.id})">
-                <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl font-bold">
-                    ${(u.name || '?').charAt(0)}
+                <div class="w-20 h-20 mx-auto mb-3 rounded-full bg-indigo-100 text-indigo-600 overflow-hidden flex items-center justify-center text-2xl font-bold">
+                    ${u.avatar ? `<img src="${u.avatar}" alt="${u.name || 'کاربر'}" class="w-full h-full object-cover" loading="lazy">` : (u.name || '?').charAt(0)}
                 </div>
                 <h3 class="font-bold text-lg mb-1">${u.name}</h3>
                 <span class="inline-block px-2.5 py-0.5 rounded-lg text-xs ${roleColors[u.role] || 'bg-gray-100'} mb-2">
@@ -756,9 +756,9 @@ window.renderSiteUsers = function() {
                 ${u.rating ? `<p class="text-amber-500 text-sm mt-2">⭐ ${u.rating}</p>` : ''}
                 <br>
                 <div class="flex gap-2 absolute bottom-0 left-0 right-0 p-4 bg-white">
-                    <a href="/analytics/user" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm hover:bg-indigo-700 text-center block">
+                    <button type="button" onclick="event.stopPropagation();openSiteUser(${u.id})" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm hover:bg-indigo-700 text-center block">
                         مشاهده
-                    </a>
+                    </button>
                 </div>
             </div>
         `).join('');
@@ -804,7 +804,15 @@ window.openSiteUserProfile = function(id) {
     // نام و آواتار
     document.getElementById('upName').textContent = u.name || 'کاربر';
     const avatar = document.getElementById('upAvatar');
-    if (avatar) avatar.textContent = (u.name || '?').charAt(0);
+    if (avatar) avatar.innerHTML = u.avatar
+        ? `<img src="${u.avatar}" alt="${u.name || 'کاربر'}" class="w-full h-full rounded-full object-cover">`
+        : (u.name || '?').charAt(0);
+    const cover = document.getElementById('upCover');
+    if (cover) {
+        cover.style.backgroundImage = u.cover ? `url("${u.cover}")` : '';
+        cover.classList.toggle('bg-cover', !!u.cover);
+        cover.classList.toggle('bg-center', !!u.cover);
+    }
 
     // نقش
     const roleBadge = document.getElementById('upRoleBadge');
@@ -851,6 +859,9 @@ window.openSiteUserProfile = function(id) {
     renderUserBadges(u);
     // آموزشگاه‌ها
     renderUserAcademies(u);
+    renderUserMedia(u);
+    renderUserAddresses(u);
+    renderUserContacts(u);
 
     showSitePage('user-profile');
 };
@@ -898,9 +909,11 @@ function renderUserLessons(u) {
     box.innerHTML = lessons.map(l => {
         const title = l.title || l.name || l;
         const level = l.level ? ` · ${l.level}` : '';
-        return `<div class="flex items-center justify-between p-3 rounded-2xl border border-gray-100">
-            <span class="font-medium text-sm">${title}</span>
-            <span class="text-xs text-gray-400">${level.replace(' · ', '')}</span>
+        return `<div class="p-3 rounded-2xl border border-gray-100">
+            <div class="flex items-center justify-between gap-3"><span class="font-medium text-sm">${title}</span>
+            <span class="text-xs text-gray-400">${level.replace(' · ', '')}</span></div>
+            ${l.start_date ? `<div class="text-xs text-gray-400 mt-2">شروع: ${l.start_date}</div>` : ''}
+            ${l.summary ? `<p class="text-sm text-gray-500 mt-2">${l.summary}</p>` : ''}
         </div>`;
     }).join('');
 }
@@ -966,6 +979,14 @@ function renderUserInfo(u, role) {
         { label: 'شهر', value: u.city },
         { label: 'سطح', value: u.level || u.student_level },
         { label: 'شروع فعالیت', value: u.start_career_date || u.start_date },
+        { label: 'نام کاربری', value: u.username },
+        { label: 'جنسیت', value: u.gender === 'male' ? 'مرد' : (u.gender === 'female' ? 'زن' : u.gender) },
+        { label: 'وضعیت', value: u.status },
+        { label: 'تلفن', value: u.phone },
+        { label: 'ایمیل', value: u.email },
+        { label: 'تولد', value: u.birthday },
+        { label: 'تاریخ عضویت', value: u.register_time },
+        { label: 'روش عضویت', value: u.register_method },
         { label: 'نمایش عمومی', value: u.show_in_public === 0 ? 'خصوصی' : 'عمومی' }
     ].filter(r => r.value != null && r.value !== '');
 
@@ -977,6 +998,67 @@ function renderUserInfo(u, role) {
             </div>`).join('')
         : '<p class="text-gray-400 text-center">—</p>';
 }
+
+let userGalleryImages = [];
+let userGalleryIndex = 0;
+
+function renderUserMedia(u) {
+    const videoSection = document.getElementById('upIntroSection');
+    const video = document.getElementById('upIntroVideo');
+    if (videoSection && video) {
+        videoSection.classList.toggle('hidden', !u.intro_video);
+        video.src = u.intro_video || '';
+        if (!u.intro_video) video.removeAttribute('src');
+        video.load();
+    }
+    userGalleryImages = Array.isArray(u.gallery) ? u.gallery : [];
+    const gallerySection = document.getElementById('upGallerySection');
+    const gallery = document.getElementById('upGallery');
+    if (gallerySection) gallerySection.classList.toggle('hidden', !userGalleryImages.length);
+    if (gallery) gallery.innerHTML = userGalleryImages.map((src, index) => `
+        <button type="button" onclick="openUserGalleryDialog(${index})" class="aspect-[4/3] overflow-hidden rounded-2xl bg-gray-100 focus:ring-2 focus:ring-indigo-500">
+            <img src="${src}" alt="تصویر ${index + 1} گالری" class="w-full h-full object-cover transition duration-300 hover:scale-105" loading="lazy">
+        </button>`).join('');
+}
+
+function renderUserAddresses(u) {
+    const box = document.getElementById('upAddresses'); if (!box) return;
+    const rows = Array.isArray(u.addresses) ? u.addresses : [];
+    box.innerHTML = rows.length ? rows.map(row => `<div class="rounded-2xl bg-gray-50 p-3">
+        <div class="font-medium leading-6">${row.address || '—'}</div>${row.note ? `<p class="text-xs text-gray-400 mt-2">${row.note}</p>` : ''}
+        ${row.is_main ? '<span class="inline-block mt-2 text-xs text-indigo-600">نشانی اصلی</span>' : ''}</div>`).join('') : '<p class="text-gray-400">نشانی ثبت نشده</p>';
+}
+
+function renderUserContacts(u) {
+    const box = document.getElementById('upContacts'); if (!box) return;
+    const rows = Array.isArray(u.contacts) ? u.contacts : [];
+    box.innerHTML = rows.length ? rows.map(row => `<div class="rounded-2xl bg-gray-50 p-3">
+        <div class="flex justify-between gap-2"><span class="font-medium break-all">${row.value || '—'}</span><span class="text-xs text-gray-400">${row.platform || row.mode || ''}</span></div>
+        ${row.note ? `<p class="text-xs text-gray-400 mt-2">${row.note}</p>` : ''}${row.is_main ? '<span class="inline-block mt-2 text-xs text-indigo-600">راه اصلی</span>' : ''}</div>`).join('') : '<p class="text-gray-400">راه ارتباطی ثبت نشده</p>';
+}
+
+window.openUserGalleryDialog = function(index) {
+    if (!userGalleryImages.length) return;
+    userGalleryIndex = index;
+    const dialog = document.getElementById('userGalleryDialog');
+    dialog.classList.remove('hidden'); dialog.classList.add('flex');
+    document.body.classList.add('overflow-hidden'); updateUserGalleryDialog();
+};
+window.closeUserGalleryDialog = function() {
+    const dialog = document.getElementById('userGalleryDialog');
+    dialog.classList.add('hidden'); dialog.classList.remove('flex'); document.body.classList.remove('overflow-hidden');
+};
+window.moveUserGallery = function(step) { userGalleryIndex = (userGalleryIndex + step + userGalleryImages.length) % userGalleryImages.length; updateUserGalleryDialog(); };
+function updateUserGalleryDialog() {
+    document.getElementById('userGalleryDialogImage').src = userGalleryImages[userGalleryIndex];
+    document.getElementById('userGalleryDialogCounter').textContent = `${userGalleryIndex + 1} از ${userGalleryImages.length}`;
+}
+document.addEventListener('keydown', event => {
+    const dialog = document.getElementById('userGalleryDialog'); if (!dialog || dialog.classList.contains('hidden')) return;
+    if (event.key === 'Escape') closeUserGalleryDialog();
+    if (event.key === 'ArrowRight') moveUserGallery(-1);
+    if (event.key === 'ArrowLeft') moveUserGallery(1);
+});
 
 function renderUserBadges(u) {
     const box = document.getElementById('upBadges');

@@ -52,8 +52,8 @@
     <? component('main-footer'); ?>
     <?
         pushScript('home.js');
-        pushScript('site-pages.js');
-        pushScript('main.js');
+        pushScript('Page::site-pages.js');
+        pushScript('Page::main.js');
     ?>
     <div id="modalContainer"></div>
     <script>

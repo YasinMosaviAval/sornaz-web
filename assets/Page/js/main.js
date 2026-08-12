@@ -1,7 +1,8 @@
 window.showSitePage = function(page) {
-    document.querySelectorAll('.site-page').forEach(el => el.classList.remove('active'));
     const target = document.getElementById('page-' + page);
-    if (target) target.classList.add('active');
+    if (!target) return;
+    document.querySelectorAll('.site-page').forEach(el => el.classList.remove('active'));
+    target.classList.add('active');
 
     document.querySelectorAll('.nav-link-site').forEach(a => {
         a.classList.toggle('active', a.getAttribute('data-page') === page);
@@ -74,8 +75,13 @@ window.submitPublicContact = function(e) {
     document.getElementById('contactPublicForm')?.reset();
 };
 
-// شروع از خانه
-document.addEventListener('DOMContentLoaded', () => showSitePage('home'));
+// صفحه رندرشده سرور را حفظ کن؛ فقط در صفحه‌ای که هیچ بخش فعالی ندارد fallback بزن.
+document.addEventListener('DOMContentLoaded', () => {
+    const active = document.querySelector('.site-page.active');
+    if (active) return;
+    const routePage = window.location.pathname === '/users' ? 'users' : 'home';
+    showSitePage(routePage);
+});
 
 
 // این تابع را در main.js یا یک فایل مشترک بگذار
