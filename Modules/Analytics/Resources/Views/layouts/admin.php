@@ -1,16 +1,22 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="<?= e(locale()) ?>" dir="<?= e(direction()) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sornaz UserInterface</title>
+    <title><?= e(trans('admin.meta.title','Sornaz Admin Panel')) ?></title>
+    <script>(function(){const r=document.documentElement;r.dataset.theme=localStorage.getItem('sornaz.theme')||'indigo';r.dataset.mode=localStorage.getItem('sornaz.mode')||'light';})();</script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
+    <link rel="stylesheet" href="/assets/theme/theme.css?v=<?= filemtime(base_path('assets/theme/theme.css')) ?: 1 ?>">
     <style>
         body { font-family: Vazirmatn, Tahoma, sans-serif; }
         .sidebar { transition: all 0.3s; }
         .card-hover:hover { transform: translateY(-5px); transition: all 0.3s; }
+        main.site-content { animation:admin-page-in .14s ease-out; transition:opacity .09s ease,transform .09s ease; }
+        body.language-changing main.site-content { opacity:0; transform:translateY(4px); }
+        @keyframes admin-page-in { from { opacity:0;transform:translateY(4px); } to { opacity:1;transform:none; } }
+        @media (prefers-reduced-motion:reduce) { main.site-content { animation:none;transition:none; } }
     </style>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -107,8 +113,11 @@
     pushScript('academy-requests.js');
     
     pushScript('admin.js');
+    pushScript('admin-i18n.js');
     ?>
     <div id="modalContainer"></div>
+    <script>window.adminLocale=<?= json_encode(locale()) ?>;window.adminUiMap=<?= json_encode($adminUiMap??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;</script>
     <?=scripts()?>
+    <script src="/assets/theme/theme.js?v=<?= filemtime(base_path('assets/theme/theme.js')) ?: 1 ?>"></script>
 </body>
 </html>

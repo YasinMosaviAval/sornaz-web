@@ -23,7 +23,7 @@
             sessionStorage.setItem('sornaz.reopenMobileMenu', '1');
         }
         document.body.classList.add('language-changing');
-        window.setTimeout(() => { window.location.href = `/language/${locale}`; }, 90);
+        window.setTimeout(() => { window.location.href = `/language/${locale}`; }, 30);
     };
     document.addEventListener('DOMContentLoaded', () => {
         apply(root.dataset.theme || 'indigo', root.dataset.mode || 'light');

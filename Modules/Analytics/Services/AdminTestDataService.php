@@ -44,6 +44,8 @@ class AdminTestDataService {
                 $this->syncDefaultUserMedia($userId, $index, $createdAt);
                 $this->syncUserAvailability($userId, $index, $createdAt);
             }
+            $this->syncEnglishTestTranslations();
+            $this->syncAdminFrameworkTranslations();
 
             return [
                 'created' => $created,
@@ -52,6 +54,40 @@ class AdminTestDataService {
                 'message' => "تست مدیران آموزشگاه تکمیل شد: {$created} کاربر ایجاد و {$updated} کاربر آزمایشی همگام‌سازی شد.",
             ];
         });
+    }
+
+    private function syncEnglishTestTranslations(): void {
+        $users=DB::table('users')->whereRaw("username LIKE '".self::USERNAME_PREFIX."%'")->get();$userIds=array_map(fn(array $u)=>(int)$u['user_id'],$users);
+        if(!$userIds)return;
+        $targets=['users'=>$userIds];
+        foreach(['user_addresses'=>'address_id','user_contacts'=>'user_contact_id','user_instruments'=>'user_instrument_id','user_lessons'=>'user_lesson_id','user_availabilities'=>'user_availability_id','user_availability_exceptions'=>'user_availability_exception_id'] as $table=>$key){$rows=DB::table($table)->whereIn('user_id',$userIds)->get();$targets[$table]=array_map(fn(array $r)=>(int)$r[$key],$rows);}
+        foreach($targets as $table=>$ids){if(!$ids)continue;$rows=DB::table('translations')->where('table_name',$table)->whereIn('table_id',$ids)->where('locale','fa')->whereNull('deleted_at')->get();foreach($rows as $row)$this->setTranslation($table,(int)$row['table_id'],(int)($row['created_by']?:1),(string)$row['field'],$this->englishTestValue($table,(string)$row['field'],(string)$row['value']),(string)$row['created_at'],(string)$row['updated_at'],'en');}
+        foreach(['instruments'=>'instrument_id','lessons'=>'lesson_id','levels'=>'level_id'] as $table=>$key){$rows=DB::table($table)->whereNull('deleted_at')->get();$ids=array_map(fn(array $r)=>(int)$r[$key],$rows);if(!$ids)continue;foreach(DB::table('translations')->where('table_name',$table)->whereIn('table_id',$ids)->where('locale','fa')->whereNull('deleted_at')->get() as $row)$this->setTranslation($table,(int)$row['table_id'],1,(string)$row['field'],$this->englishTestValue($table,(string)$row['field'],(string)$row['value']),(string)$row['created_at'],(string)$row['updated_at'],'en');}
+    }
+
+    private function englishTestValue(string $table,string $field,string $value): string {
+        $names=['علی'=>'Ali','مریم'=>'Maryam','رضا'=>'Reza','سارا'=>'Sara','امیر'=>'Amir','نگار'=>'Negar','حسین'=>'Hossein','الهام'=>'Elham','مهدی'=>'Mehdi','نرگس'=>'Narges','محمد'=>'Mohammad','لیلا'=>'Leila','سعید'=>'Saeed','مهسا'=>'Mahsa','آرش'=>'Arash','نازنین'=>'Nazanin','محمدی'=>'Mohammadi','احمدی'=>'Ahmadi','رضایی'=>'Rezaei','کریمی'=>'Karimi','حسینی'=>'Hosseini','مرادی'=>'Moradi','قاسمی'=>'Ghasemi','اکبری'=>'Akbari','صادقی'=>'Sadeghi','نوری'=>'Nouri'];
+        if($table==='users'&&$field==='full_name'){foreach($names as $fa=>$en)$value=str_replace($fa,$en,$value);return $value;}
+        $titles=['تار'=>'Tar','سه‌تار'=>'Setar','سنتور'=>'Santur','پیانو'=>'Piano','ویولن'=>'Violin','نی'=>'Ney','دف'=>'Daf','تنبک'=>'Tombak','هارمونی'=>'Harmony','سلفژ'=>'Solfège','تئوری موسیقی'=>'Music Theory','خیلی تازه‌کار'=>'Absolute Beginner','تازه‌کار'=>'Beginner','مقدماتی'=>'Elementary','پایه'=>'Foundation','متوسط'=>'Intermediate','متوسط رو به بالا'=>'Upper Intermediate','نیمه‌پیشرفته'=>'Pre-advanced','پیشرفته'=>'Advanced','حرفه‌ای'=>'Professional'];
+        if($field==='title'&&isset($titles[$value]))return $titles[$value];
+        if($field==='title')return 'Music course or instrument: '.substr(hash('sha1',$value),0,8);
+        if($field==='summary')return match($table){'levels'=>'A concise description of this learning level.','user_availabilities'=>'Recurring or date-specific availability for this member.','user_availability_exceptions'=>'A scheduled leave, holiday, or availability exception.','user_instruments'=>'A concise summary of the member’s experience with this instrument.','user_lessons'=>'A concise summary of the member’s experience in this lesson.',default=>'Concise English information for this record.'};
+        if($field==='description')return 'Detailed English description for this music education record, including its background, purpose, and relevant experience.';
+        if($field==='address')return 'Sample registered address for the academy manager in Iran.';
+        if($field==='note')return 'Additional sample notes for this record.';
+        return $value;
+    }
+
+    private function syncAdminFrameworkTranslations(): void {
+        foreach($this->adminUiDictionary() as $index=>$pair){$key='admin.ui.'.substr(hash('sha1',$pair[0]),0,16);$setting=DB::table('f_settings')->where('variable_name',$key)->first();$values=['page'=>'admin','sort_order'=>($index%250),'table_name'=>'admin_ui','value'=>null,'status'=>'active','updated_at'=>date('Y-m-d H:i:s'),'updated_by'=>1,'deleted_at'=>null,'deleted_by'=>null];if($setting){$id=(int)$setting['setting_id'];DB::table('f_settings')->where('setting_id',$id)->update($values);}else{$id=DB::table('f_settings')->insertGetId(['variable_name'=>$key,'created_by'=>1]+$values);}foreach(['fa'=>$pair[0],'en'=>$pair[1]] as $locale=>$text){$tr=DB::table('f_translations')->where('table_name','f_settings')->where('table_id',$id)->where('locale',$locale)->where('field','value')->first();$tv=['value'=>$text,'version'=>1,'updated_at'=>date('Y-m-d H:i:s'),'updated_by'=>1,'deleted_at'=>null,'deleted_by'=>null];if($tr)DB::table('f_translations')->where('translation_id',(int)$tr['translation_id'])->update($tv);else DB::table('f_translations')->insert(['table_name'=>'f_settings','table_id'=>$id,'locale'=>$locale,'field'=>'value','created_by'=>1]+$tv);}}
+    }
+
+    private function adminUiDictionary(): array {return [
+        ['داشبورد','Dashboard'],['حساب کاربری','Account'],['شعبه‌ها','Branches'],['نقش‌ها و دسترسی‌ها','Roles & Access'],['کاربران','Users'],['نقش‌ها','Roles'],['دسترسی‌ها','Permissions'],['گالری','Gallery'],['کاور','Cover'],['لوگو','Logo'],['ویدیو معرفی','Introduction Video'],['مجموعه عکس‌ها و ویدیوها','Photo & Video Collection'],['پرسنل','Staff'],['هنرجویان','Students'],['کلاس‌ها','Classrooms'],['سازها','Instruments'],['درس‌ها','Lessons'],['دوره‌ها','Courses'],['ترم‌ها','Terms'],['برنامه زمانی','Scheduling'],['قوانین زمانبندی','Scheduling Rules'],['برنامه زمانی شعبه‌ها','Branch Schedules'],['برنامه زمانی اعضا','Member Schedules'],['تعطیلات و مرخصی‌ها','Holidays & Leaves'],['برنامه زمانی کلاس‌ها','Class Schedules'],['امور مالی','Finance'],['گزارش‌ها','Reports'],['مرکز تست‌ها','Test Center'],['خروج','Logout'],['افزودن','Add'],['ویرایش','Edit'],['حذف','Delete'],['ذخیره','Save'],['ذخیره تغییرات','Save Changes'],['انصراف','Cancel'],['بستن','Close'],['جستجو','Search'],['همه','All'],['فعال','Active'],['غیرفعال','Inactive'],['در انتظار تأیید','Pending Approval'],['جزئیات','Details'],['نام','Name'],['عنوان','Title'],['توضیحات','Description'],['خلاصه','Summary'],['وضعیت','Status'],['تاریخ','Date'],['ساعت','Time'],['روز','Day'],['شعبه','Branch'],['عضو','Member'],['نقش','Role'],['منطقه زمانی','Timezone'],['دوره تکرار','Repeat Period'],['قبلی','Previous'],['بعدی','Next'],['اول','First'],['آخر','Last'],['بله','Yes'],['خیر','No'],['افزودن زمان‌بندی عضو','Add Member Schedule'],['ویرایش زمان‌بندی عضو','Edit Member Schedule'],['افزودن تعطیل / مرخصی','Add Holiday / Leave'],['ویرایش تعطیل / مرخصی','Edit Holiday / Leave'],['برنامه سرناز','Sornaz Application'],['پنل مدیریت سایت','Site Admin Panel'],['پنل مدیریت آموزشگاه','Academy Admin Panel'],['مدیر ارشد','Senior Administrator'],['تم','Theme'],['زبان','Language'],['روشن','Light'],['تیره','Dark']
+    ];}
+
+    public function adminUiMap(string $locale): array {
+        $map=[];foreach($this->adminUiDictionary() as $pair)$map[$pair[0]]=$locale==='en'?$pair[1]:$pair[0];return $map;
     }
 
     public function statistics(): array {
@@ -324,12 +360,12 @@ class AdminTestDataService {
         }
     }
 
-    private function setTranslation(string $table, int $tableId, int $actorId, string $field, string $value, string $createdAt, string $updatedAt): void {
-        $translation = DB::table('translations')->where('table_name', $table)->where('table_id', $tableId)->where('locale', 'fa')->where('field', $field)->first();
+    private function setTranslation(string $table, int $tableId, int $actorId, string $field, string $value, string $createdAt, string $updatedAt, string $locale = 'fa'): void {
+        $translation = DB::table('translations')->where('table_name', $table)->where('table_id', $tableId)->where('locale', $locale)->where('field', $field)->first();
         $values = ['code' => null, 'value' => $value, 'version' => 1, 'updated_at' => $updatedAt, 'updated_by' => $actorId, 'deleted_at' => null, 'deleted_by' => null];
         if ($translation) DB::table('translations')->where('translation_id', (int)$translation['translation_id'])->update($values);
         else {
-            $id = DB::table('translations')->insertGetId(['table_name' => $table, 'table_id' => $tableId, 'locale' => 'fa', 'field' => $field, 'created_at' => $createdAt, 'created_by' => $actorId] + $values);
+            $id = DB::table('translations')->insertGetId(['table_name' => $table, 'table_id' => $tableId, 'locale' => $locale, 'field' => $field, 'created_at' => $createdAt, 'created_by' => $actorId] + $values);
             if (!$id) throw new RuntimeException('ثبت ترجمه داده موسیقی ناموفق بود.');
         }
     }
