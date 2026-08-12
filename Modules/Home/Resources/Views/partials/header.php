@@ -27,6 +27,7 @@ $menu = [
             <?php endforeach; ?>
         </nav>
         <div class="header-right">
+            <? component('inline-edit-switch'); ?>
             <button class="search-btn">
                 <i class="fa fa-search"></i>
             </button>

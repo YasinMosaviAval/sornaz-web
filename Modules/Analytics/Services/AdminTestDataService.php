@@ -88,14 +88,14 @@ class AdminTestDataService {
 
     public function adminUiMap(string $locale): array {
         $map=[];foreach($this->adminUiDictionary() as $pair)$map[$pair[0]]=$locale==='en'?$pair[1]:$pair[0];
-        $rows=DB::table('f_settings')->where('page','admin')->whereNull('deleted_at')->get();
+        $rows=DB::table('f_settings')->whereNull('deleted_at')->get();
         foreach($rows as $row){$id=(int)$row['setting_id'];$fa=DB::table('f_translations')->where('table_name','f_settings')->where('table_id',$id)->where('field','value')->where('locale','fa')->whereNull('deleted_at')->first();$selected=DB::table('f_translations')->where('table_name','f_settings')->where('table_id',$id)->where('field','value')->where('locale',$locale)->whereNull('deleted_at')->first();if($fa&&$selected)$map[(string)$fa['value']]=(string)$selected['value'];}
         return $map;
     }
 
     public function inlineTranslationCatalog(): array {
         $catalog=[];
-        foreach(DB::table('f_settings')->where('page','admin')->whereNull('deleted_at')->get() as $setting){
+        foreach(DB::table('f_settings')->whereNull('deleted_at')->get() as $setting){
             $id=(int)$setting['setting_id'];$values=[];
             foreach(DB::table('f_translations')->where('table_name','f_settings')->where('table_id',$id)->where('field','value')->whereNull('deleted_at')->get() as $translation)$values[(string)$translation['locale']]=(string)$translation['value'];
             $catalog[]=['key'=>(string)$setting['variable_name'],'fa'=>$values['fa']??'','en'=>$values['en']??''];
@@ -105,10 +105,10 @@ class AdminTestDataService {
 
     public function saveInlineTranslation(string $key,string $fa,string $en,int $actorId): array {
         $key=trim($key);$fa=trim($fa);$en=trim($en);
-        if(!preg_match('/^admin\.(?:ui|inline)\.[a-zA-Z0-9._-]+$/',$key))throw new RuntimeException('کلید ترجمه معتبر نیست.');
+        if(!preg_match('/^(?:admin|site)\.(?:ui|inline)\.[a-zA-Z0-9._-]+$/',$key))throw new RuntimeException('کلید ترجمه معتبر نیست.');
         if($fa===''||$en==='')throw new RuntimeException('متن فارسی و انگلیسی هر دو الزامی هستند.');
         if(mb_strlen($fa)>5000||mb_strlen($en)>5000)throw new RuntimeException('متن ترجمه بیش از حد طولانی است.');
-        return transaction(function()use($key,$fa,$en,$actorId){$now=date('Y-m-d H:i:s');$setting=DB::table('f_settings')->where('variable_name',$key)->whereNull('deleted_at')->first();$base=['page'=>'admin','table_name'=>'admin_ui','status'=>'active','updated_at'=>$now,'updated_by'=>$actorId,'deleted_at'=>null,'deleted_by'=>null];if($setting){$id=(int)$setting['setting_id'];DB::table('f_settings')->where('setting_id',$id)->update($base);}else{$id=DB::table('f_settings')->insertGetId(['variable_name'=>$key,'sort_order'=>999,'created_at'=>$now,'created_by'=>$actorId]+$base);}foreach(['fa'=>$fa,'en'=>$en] as $locale=>$value){$translation=DB::table('f_translations')->where('table_name','f_settings')->where('table_id',$id)->where('field','value')->where('locale',$locale)->first();$values=['value'=>$value,'version'=>1,'updated_at'=>$now,'updated_by'=>$actorId,'deleted_at'=>null,'deleted_by'=>null];if($translation)DB::table('f_translations')->where('translation_id',(int)$translation['translation_id'])->update($values);else DB::table('f_translations')->insert(['table_name'=>'f_settings','table_id'=>$id,'field'=>'value','locale'=>$locale,'created_at'=>$now,'created_by'=>$actorId]+$values);}return ['success'=>true,'key'=>$key,'fa'=>$fa,'en'=>$en,'message'=>'ترجمه با موفقیت ذخیره شد.'];});
+        return transaction(function()use($key,$fa,$en,$actorId){$now=date('Y-m-d H:i:s');$setting=DB::table('f_settings')->where('variable_name',$key)->whereNull('deleted_at')->first();$isAdmin=str_starts_with($key,'admin.');$base=['page'=>$isAdmin?'admin':'site','table_name'=>$isAdmin?'admin_ui':'site_ui','status'=>'active','updated_at'=>$now,'updated_by'=>$actorId,'deleted_at'=>null,'deleted_by'=>null];if($setting){$id=(int)$setting['setting_id'];DB::table('f_settings')->where('setting_id',$id)->update($base);}else{$id=DB::table('f_settings')->insertGetId(['variable_name'=>$key,'sort_order'=>999,'created_at'=>$now,'created_by'=>$actorId]+$base);}foreach(['fa'=>$fa,'en'=>$en] as $locale=>$value){$translation=DB::table('f_translations')->where('table_name','f_settings')->where('table_id',$id)->where('field','value')->where('locale',$locale)->first();$values=['value'=>$value,'version'=>1,'updated_at'=>$now,'updated_by'=>$actorId,'deleted_at'=>null,'deleted_by'=>null];if($translation)DB::table('f_translations')->where('translation_id',(int)$translation['translation_id'])->update($values);else DB::table('f_translations')->insert(['table_name'=>'f_settings','table_id'=>$id,'field'=>'value','locale'=>$locale,'created_at'=>$now,'created_by'=>$actorId]+$values);}return ['success'=>true,'key'=>$key,'fa'=>$fa,'en'=>$en,'message'=>'ترجمه با موفقیت ذخیره شد.'];});
     }
 
     public function statistics(): array {

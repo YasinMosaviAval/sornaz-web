@@ -44,4 +44,8 @@ class AdminTestController {
         try{return ResponseFactory::json($this->tests->saveInlineTranslation((string)($_POST['key']??''),(string)($_POST['fa']??''),(string)($_POST['en']??''),(int)auth()->id()));}
         catch(\Throwable $e){return ResponseFactory::json(['success'=>false,'message'=>$e->getMessage()],422);}
     }
+
+    public function inlineTranslations() {
+        return ResponseFactory::json(['success'=>true,'translations'=>$this->tests->inlineTranslationCatalog()]);
+    }
 }

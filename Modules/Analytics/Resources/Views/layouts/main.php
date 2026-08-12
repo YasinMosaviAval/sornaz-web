@@ -33,7 +33,9 @@
         pushScript('Page::main.js');
     ?>
     <div id="modalContainer"></div>
+    <script>window.adminCsrfToken=<?= json_encode(csrf_token()) ?>;</script>
     <script src="/assets/theme/dialog.js?v=<?= filemtime(base_path('assets/theme/dialog.js')) ?: 1 ?>"></script>
+    <script src="/assets/Analytics/js/admin-inline-editor.js?v=<?= filemtime(base_path('assets/Analytics/js/admin-inline-editor.js')) ?: 1 ?>"></script>
     <?= scripts() ?>
     <script src="/assets/theme/theme.js?v=<?= filemtime(base_path('assets/theme/theme.js')) ?: 1 ?>"></script>
 </body>

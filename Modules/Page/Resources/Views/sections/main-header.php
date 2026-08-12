@@ -35,6 +35,7 @@
             </div>
 
             <div class="flex shrink-0 items-center gap-2 border-l border-gray-200 pl-4" dir="ltr">
+                <? component('inline-edit-switch'); ?>
                 <? component('theme-switcher'); ?>
                 <? component('language-switcher'); ?>
             </div>
@@ -53,6 +54,7 @@
         <!-- منوی کشویی موبایل -->
         <div id="mobileMenu" class="hidden lg:hidden pb-4 border-t border-gray-100 pt-3 space-y-1">
             <div class="mobile-header-switchers grid grid-cols-2 gap-2 px-3 pb-3 mb-2 border-b border-gray-100" dir="ltr">
+                <? component('inline-edit-switch'); ?>
                 <? component('theme-switcher'); ?>
                 <? component('language-switcher'); ?>
             </div>
