@@ -19,16 +19,12 @@ window.instrumentLevels = [
 const instrumentStatuses = ['فعال', 'غیرفعال', 'در انتظار', 'حذف‌شده'];
 
 function getInstBranches() {
-    if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
-    return [
-        { id: 1, name: 'شعبه مرکزی' }, { id: 2, name: 'شعبه ونک' },
-        { id: 3, name: 'شعبه سعادت‌آباد' }, { id: 4, name: 'شعبه کرج' }
-    ];
+    return Array.isArray(window.branchOfferingBranches) ? window.branchOfferingBranches : [];
 }
 
 // ۴۰ نمونه
 window.allUserInstruments = [];
-(function buildSamples() {
+(function buildSamples() { return;
     const branches = getInstBranches();
     const summaries = ['ساز اصلی', 'ساز دوم', 'تخصص', 'ریتم', 'همراهی'];
     for (let i = 1; i <= 40; i++) {
@@ -328,10 +324,15 @@ window.saveInlineInstrument = async function (id) {
 
 window.deleteInstrument = async function (id) {
     if (!(await AppDialog.confirmDelete(allUserInstruments, id, 'ساز'))) return;
+    await branchOfferingDelete('instrument',id);
     allUserInstruments = allUserInstruments.filter(function (i) { return i.id !== id; });
     if (editingInstrumentRowId === id) editingInstrumentRowId = null;
     filterInstruments();
 };
+
+window.applyInstrumentDatabaseData=function(data){window.branchOfferingBranches=data.branches||[];sampleInstruments=data.instruments_catalog||[];instrumentLevels=data.levels||[];allUserInstruments=data.instruments||[];filteredInstruments=allUserInstruments.slice();window.renderInstrumentsBranchTabs();window.filterInstruments();};
+window.addEventListener('branch-offerings-loaded',function(e){window.applyInstrumentDatabaseData(e.detail);});
+if(window.branchOfferingData)window.applyInstrumentDatabaseData(window.branchOfferingData);
 
 window.exportInstrumentsToExcel = async function () {
     const data = filteredInstruments.length ? filteredInstruments : allUserInstruments;

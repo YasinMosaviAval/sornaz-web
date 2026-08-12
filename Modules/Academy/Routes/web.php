@@ -6,6 +6,7 @@ use Modules\Academy\Controllers\Web\AcademyRegistrationController;
 use Modules\Analytics\Controllers\Web\AnalyticsController;
 use Modules\Academy\Controllers\Web\AcademyBranchController;
 use Modules\Academy\Controllers\Web\AcademyClassroomController;
+use Modules\Academy\Controllers\Web\AcademyBranchOfferingController;
 
 Router::get('/academy/academy', [AnalyticsController::class, 'academy']);
 Router::get('/academy/academies', [AcademyRegistrationController::class, 'index']);
@@ -33,6 +34,10 @@ Router::post('/academy/admin/classrooms/{id}/delete', [AcademyClassroomControlle
 Router::post('/academy/admin/classroom-types', [AcademyClassroomController::class, 'storeType'])->middleware(['site-admin','csrf']);
 Router::post('/academy/admin/classroom-types/{id}/update', [AcademyClassroomController::class, 'updateType'])->middleware(['site-admin','csrf']);
 Router::post('/academy/admin/classroom-types/{id}/delete', [AcademyClassroomController::class, 'deleteType'])->middleware(['site-admin','csrf']);
+Router::get('/academy/admin/branch-offerings', [AcademyBranchOfferingController::class, 'index'])->middleware('academy-panel');
+Router::post('/academy/admin/branch-offerings/schedules', [AcademyBranchOfferingController::class, 'storeSchedule'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/branch-offerings/schedules/{id}/update', [AcademyBranchOfferingController::class, 'updateSchedule'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/branch-offerings/{type}/{id}/delete', [AcademyBranchOfferingController::class, 'delete'])->middleware(['academy-panel','csrf']);
 
 Router::group(
     ['prefix' => '/academy'],
