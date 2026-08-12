@@ -10,7 +10,7 @@ window.userTypesList = [
     { value: 'admin', label: 'مدیر' }
 ];
 
-window.getUserBranches = function () {
+window.getUserBranches = async function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
     return [
         { id: 1, name: 'شعبه مرکزی' },
@@ -117,7 +117,7 @@ const userPdfColumns = [
     { field: 'lastLogin', label: 'آخرین ورود' }
 ];
 
-window.populateUserRoleFilter = function () {
+window.populateUserRoleFilter = async function () {
     const sel = document.getElementById('filterUserRole');
     if (!sel) return;
     const current = sel.value;
@@ -139,14 +139,14 @@ function sortUserItems() {
     });
 }
 
-window.updateUserSortIcons = function () {
+window.updateUserSortIcons = async function () {
     ['name', 'phone', 'userTypeLabel', 'roleTitle', 'branchName', 'status'].forEach(function (f) {
         const icon = document.getElementById('userSortIcon-' + f);
         if (icon) icon.textContent = userSortField === f ? (userSortDirection === 'asc' ? '↑' : '↓') : '↕';
     });
 };
 
-window.sortUsersBy = function (field) {
+window.sortUsersBy = async function (field) {
     if (userSortField === field) userSortDirection = userSortDirection === 'asc' ? 'desc' : 'asc';
     else { userSortField = field; userSortDirection = 'asc'; }
     sortUserItems();
@@ -154,7 +154,7 @@ window.sortUsersBy = function (field) {
     window.updateUserSortIcons();
 };
 
-window.renderUsersBranchTabs = function () {
+window.renderUsersBranchTabs = async function () {
     const container = document.getElementById('usersBranchTabs');
     if (!container) return;
     container.querySelectorAll('.user-branch-tab:not([data-value="all"])').forEach(function (t) { t.remove(); });
@@ -182,7 +182,7 @@ window.renderUsersBranchTabs = function () {
     }
 };
 
-window.filterUsersByBranch = function (branchId) {
+window.filterUsersByBranch = async function (branchId) {
     currentUserBranch = branchId;
     document.querySelectorAll('.user-branch-tab').forEach(function (tab) {
         const active = String(tab.dataset.value) === String(branchId);
@@ -197,7 +197,7 @@ window.filterUsersByBranch = function (branchId) {
     window.filterUsers();
 };
 
-window.filterUsers = function () {
+window.filterUsers = async function () {
     const search = (document.getElementById('userSearch') && document.getElementById('userSearch').value || '').trim().toLowerCase();
     const role = document.getElementById('filterUserRole') && document.getElementById('filterUserRole').value || '';
     const status = document.getElementById('filterUserStatus') && document.getElementById('filterUserStatus').value || '';
@@ -220,7 +220,7 @@ window.filterUsers = function () {
     window.renderUsersTable(filteredUsers);
 };
 
-window.renderUsersTable = function (list) {
+window.renderUsersTable = async function (list) {
     list = list || filteredUsers;
     const tbody = document.querySelector('#usersTable tbody');
     if (!tbody) return;
@@ -272,7 +272,7 @@ function updateUsersPagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changeUsersPage = function (page) {
+window.changeUsersPage = async function (page) {
     const totalPages = Math.ceil(filteredUsers.length / usersPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     usersCurrentPage = page;
@@ -312,12 +312,12 @@ function readUserForm(prefix) {
     };
 }
 
-window.openAddUserModal = function () {
+window.openAddUserModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = window.getUserAddModalHTML ? window.getUserAddModalHTML() : '';
 };
 
-window.saveUser = function () {
+window.saveUser = async function () {
     const data = readUserForm('user');
     if (!data.name || !data.phone) return alert('نام و شماره تماس الزامی است');
     allUsers.unshift(Object.assign({}, data, {
@@ -329,19 +329,19 @@ window.saveUser = function () {
     alert('✅ کاربر ثبت شد');
 };
 
-window.viewUser = function (id) {
+window.viewUser = async function (id) {
     const item = allUsers.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getUserDetailsModalHTML ? window.getUserDetailsModalHTML(item) : '';
 };
 
-window.editUser = function (id) {
+window.editUser = async function (id) {
     const item = allUsers.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getUserEditModalHTML ? window.getUserEditModalHTML(item) : '';
 };
 
-window.saveEditedUser = function (id) {
+window.saveEditedUser = async function (id) {
     const data = readUserForm('editUser');
     if (!data.name || !data.phone) return alert('نام و شماره تماس الزامی است');
     const index = allUsers.findIndex(function (x) { return x.id === id; });
@@ -352,12 +352,12 @@ window.saveEditedUser = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.toggleUserInlineEdit = function (id) {
+window.toggleUserInlineEdit = async function (id) {
     editingUserRowId = editingUserRowId === id ? null : id;
     window.renderUsersTable(filteredUsers);
 };
 
-window.saveInlineUser = function (id) {
+window.saveInlineUser = async function (id) {
     const data = readUserForm('inlineUser' + id);
     if (!data.name || !data.phone) return alert('نام و شماره تماس الزامی است');
     const index = allUsers.findIndex(function (x) { return x.id === id; });
@@ -368,14 +368,14 @@ window.saveInlineUser = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.deleteUser = function (id) {
-    if (!confirm('حذف این کاربر؟')) return;
+window.deleteUser = async function (id) {
+    if (!(await AppDialog.confirm('حذف این کاربر؟'))) return;
     allUsers = allUsers.filter(function (u) { return u.id !== id; });
     if (editingUserRowId === id) editingUserRowId = null;
     window.filterUsers();
 };
 
-window.exportUsersToExcel = function () {
+window.exportUsersToExcel = async function () {
     const data = filteredUsers.length ? filteredUsers : allUsers;
     let csv = '\uFEFFردیف,نام,موبایل,ایمیل,نوع,نقش,شعبه,دسترسی‌ها,وضعیت,آخرین ورود\n';
     data.forEach(function (u, i) {
@@ -390,7 +390,7 @@ window.exportUsersToExcel = function () {
     link.click();
 };
 
-window.exportUsersToPDF = function () {
+window.exportUsersToPDF = async function () {
     document.getElementById('modalContainer').innerHTML = window.getUserPDFModalHTML
         ? window.getUserPDFModalHTML(userPdfColumns) : '';
 };

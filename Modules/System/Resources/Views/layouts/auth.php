@@ -50,6 +50,7 @@
     ?>
     <div id="modalContainer"></div>
     <script>window.authTranslations = <?= json_encode(translations('auth.js.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;</script>
+    <script src="/assets/theme/dialog.js?v=<?= filemtime(base_path('assets/theme/dialog.js')) ?: 1 ?>"></script>
     <?= scripts() ?>
     <script src="/assets/theme/theme.js?v=<?= filemtime(base_path('assets/theme/theme.js')) ?: 1 ?>"></script>
 </body>

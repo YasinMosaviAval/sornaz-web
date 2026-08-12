@@ -17,7 +17,7 @@ const reqStatusMap = {
     rejected: { text: 'رد شده', cls: 'bg-red-100 text-red-700' }
 };
 
-window.submitAcademyRequest = function() {
+window.submitAcademyRequest = async function () {
     const email = document.getElementById('reqEmail')?.value.trim();
     const username = document.getElementById('reqUsername')?.value.trim();
     const pass = document.getElementById('reqPassword')?.value;
@@ -43,7 +43,7 @@ window.submitAcademyRequest = function() {
     alert('✅ ثبت آموزشگاه انجام شد و پس از بررسی نتیجه اعلام می‌شود.');
 };
 
-window.renderAcademyRequestsTable = function() {
+window.renderAcademyRequestsTable = async function () {
     const tbody = document.querySelector('#academyRequestsTable tbody');
     if (!tbody) return;
     tbody.innerHTML = allAcademyRequests.length === 0
@@ -73,7 +73,7 @@ window.renderAcademyRequestsTable = function() {
         }).join('');
 };
 
-window.approveAcademyRequest = function(id) {
+window.approveAcademyRequest = async function (id) {
     const r = allAcademyRequests.find(x => x.id === id);
     if (!r) return;
     r.status = 'approved';
@@ -97,15 +97,15 @@ window.approveAcademyRequest = function(id) {
     alert('✅ آموزشگاه تأیید و به لیست اضافه شد');
 };
 
-window.rejectAcademyRequest = function(id) {
+window.rejectAcademyRequest = async function (id) {
     const r = allAcademyRequests.find(x => x.id === id);
     if (!r) return;
-    if (!confirm('رد این درخواست؟')) return;
+    if (!(await AppDialog.confirm('رد این درخواست؟'))) return;
     r.status = 'rejected';
     renderAcademyRequestsTable();
 };
 
-window.viewAcademyRequest = function(id) {
+window.viewAcademyRequest = async function (id) {
     const r = allAcademyRequests.find(x => x.id === id);
     if (!r) return;
     document.getElementById('modalContainer').innerHTML = `

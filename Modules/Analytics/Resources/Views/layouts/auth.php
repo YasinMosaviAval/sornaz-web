@@ -31,6 +31,7 @@
         pushScript('main.js');
     ?>
     <div id="modalContainer"></div>
+    <script src="/assets/theme/dialog.js?v=<?= filemtime(base_path('assets/theme/dialog.js')) ?: 1 ?>"></script>
     <?= scripts() ?>
 </body>
 </html>

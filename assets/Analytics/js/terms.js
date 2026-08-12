@@ -92,21 +92,21 @@ function getTermCourseCapacityFromContext(prefix) {
     return window.getTermCourseCapacity(courseId);
 }
 
-window.getTermCourseOptions = function () {
+window.getTermCourseOptions = async function () {
     if (typeof allCourses !== 'undefined' && allCourses.length) {
         return allCourses.map(function (c) { return { value: c.id, label: c.name, id: c.id, name: c.name }; });
     }
     return allTermCourseOptions.map(function (c) { return { value: c.id, label: c.name, id: c.id, name: c.name }; });
 };
 
-window.getTermClassroomOptions = function () {
+window.getTermClassroomOptions = async function () {
     if (typeof allClassrooms !== 'undefined' && allClassrooms.length) {
         return allClassrooms.map(function (c) { return { value: c.id, label: c.name, id: c.id, name: c.name }; });
     }
     return allTermClassroomOptions.map(function (c) { return { value: c.id, label: c.name, id: c.id, name: c.name }; });
 };
 
-window.getTermTeacherOptions = function () {
+window.getTermTeacherOptions = async function () {
     if (typeof allStaff !== 'undefined' && allStaff.length) {
         return allStaff.filter(function (s) { return s.type === 'teacher' || !s.type; })
             .map(function (s) { return { value: s.id, label: s.name, id: s.id, name: s.name }; });
@@ -114,7 +114,7 @@ window.getTermTeacherOptions = function () {
     return allTermTeacherOptions.map(function (t) { return { value: t.id, label: t.name, id: t.id, name: t.name }; });
 };
 
-window.getTermStudentOptions = function () {
+window.getTermStudentOptions = async function () {
     if (typeof allStudents !== 'undefined' && allStudents.length) {
         return allStudents.map(function (s) { return { value: s.id, label: s.name, id: s.id, name: s.name }; });
     }
@@ -145,13 +145,13 @@ function pickN(arr, n) {
 
 // ==================== ۴۰ ترم نمونه ====================
 const termCourseCapacities = { 1: 8, 2: 10, 3: 12, 4: 6, 5: 7, 6: 9, 7: 8, 8: 10 };
-window.getTermCourseCapacity = function (courseId) {
+window.getTermCourseCapacity = async function (courseId) {
     if (!courseId && courseId !== 0) return 8;
     const normalized = Number(courseId);
     return termCourseCapacities[normalized] || 8;
 };
 
-window.updateTermCourseCapacityHint = function (prefix) {
+window.updateTermCourseCapacityHint = async function (prefix) {
     const courseField = document.getElementById(prefix ? (prefix + 'Course') : 'termCourse');
     const hint = document.getElementById(prefix ? (prefix + 'CourseCapacityHint') : 'termCourseCapacityHint');
     if (!hint) return;
@@ -162,7 +162,7 @@ window.updateTermCourseCapacityHint = function (prefix) {
     window.refreshTermStudentSelectionOptions(prefix ? (prefix + 'StudentsContainer') : 'termStudentsContainer');
 };
 
-window.syncTermInstallments = function (prefix) {
+window.syncTermInstallments = async function (prefix) {
     const costField = document.getElementById(prefix ? (prefix + 'Cost') : 'termCost');
     const container = document.getElementById(prefix ? (prefix + 'InstallmentsContainer') : 'termInstallmentsContainer');
     if (!costField || !container) return;
@@ -171,7 +171,7 @@ window.syncTermInstallments = function (prefix) {
     if (!items.length) return;
 };
 
-window.refreshTermSelectionOptionsForInput = function (selectEl) {
+window.refreshTermSelectionOptionsForInput = async function (selectEl) {
     if (!selectEl) return;
     const containerEl = selectEl.closest('[id$="TeachersContainer"], [id$="StudentsContainer"]');
     if (!containerEl) return;
@@ -182,7 +182,7 @@ window.refreshTermSelectionOptionsForInput = function (selectEl) {
     }
 };
 
-window.refreshTermTeacherSelectionOptions = function (containerId) {
+window.refreshTermTeacherSelectionOptions = async function (containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
     const selects = Array.from(container.querySelectorAll('.term-teacher-select'));
@@ -201,7 +201,7 @@ window.refreshTermTeacherSelectionOptions = function (containerId) {
     });
 };
 
-window.refreshTermStudentSelectionOptions = function (containerId) {
+window.refreshTermStudentSelectionOptions = async function (containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
     const selects = Array.from(container.querySelectorAll('.term-student-select'));
@@ -220,7 +220,7 @@ window.refreshTermStudentSelectionOptions = function (containerId) {
     });
 };
 
-window.refreshTermStudentFieldLimit = function (prefix) {
+window.refreshTermStudentFieldLimit = async function (prefix) {
     const containerId = prefix ? (prefix + 'StudentsContainer') : 'termStudentsContainer';
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -375,7 +375,7 @@ function deriveStartEnd(sessions) {
     };
 }
 
-window.getTermAttendanceStats = function (item) {
+window.getTermAttendanceStats = async function (item) {
     const att = item.attendance || {};
     let present = 0, total = 0;
     Object.keys(att).forEach(function (k) {
@@ -415,7 +415,7 @@ function sortTermItems() {
     });
 }
 
-window.updateTermSortIcons = function () {
+window.updateTermSortIcons = async function () {
     ['name', 'branchName', 'course', 'start', 'end', 'status'].forEach(function (field) {
         const icon = document.getElementById('termSortIcon-' + field);
         if (!icon) return;
@@ -425,7 +425,7 @@ window.updateTermSortIcons = function () {
     });
 };
 
-window.sortTermsBy = function (field) {
+window.sortTermsBy = async function (field) {
     if (termSortField === field) {
         termSortDirection = termSortDirection === 'asc' ? 'desc' : 'asc';
     } else {
@@ -438,7 +438,7 @@ window.sortTermsBy = function (field) {
 };
 
 // ==================== branch tabs ====================
-window.renderTermsBranchTabs = function () {
+window.renderTermsBranchTabs = async function () {
     const container = document.getElementById('termsBranchTabs');
     if (!container) return;
     container.querySelectorAll('.term-branch-tab:not(:first-child)').forEach(function (t) { t.remove(); });
@@ -453,7 +453,7 @@ window.renderTermsBranchTabs = function () {
     });
 };
 
-window.filterTermsByBranch = function (branchId) {
+window.filterTermsByBranch = async function (branchId) {
     currentTermBranch = branchId;
     document.querySelectorAll('.term-branch-tab').forEach(function (tab) {
         tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
@@ -475,7 +475,7 @@ window.filterTermsByBranch = function (branchId) {
     filterTerms();
 };
 
-window.renderTermCourseFilter = function () {
+window.renderTermCourseFilter = async function () {
     const select = document.getElementById('filterTermCourse');
     if (!select) return;
     const names = new Set(allTerms.map(function (t) { return t.course; }).filter(Boolean));
@@ -486,7 +486,7 @@ window.renderTermCourseFilter = function () {
         }).join('');
 };
 
-window.renderTermCurrencyFilter = function () {
+window.renderTermCurrencyFilter = async function () {
     const select = document.getElementById('filterTermCurrency');
     if (!select) return;
     const values = new Set(allTerms.map(function (t) { return t.currency; }).filter(Boolean));
@@ -497,7 +497,7 @@ window.renderTermCurrencyFilter = function () {
         }).join('');
 };
 
-window.renderTermDiscountFilter = function () {
+window.renderTermDiscountFilter = async function () {
     const select = document.getElementById('filterTermDiscount');
     if (!select) return;
     const values = new Set(allTerms.map(function (t) { return t.discount; }).filter(Boolean));
@@ -508,7 +508,7 @@ window.renderTermDiscountFilter = function () {
         }).join('');
 };
 
-window.renderTermClassroomFilter = function () {
+window.renderTermClassroomFilter = async function () {
     const select = document.getElementById('filterTermClassroom');
     if (!select) return;
     const values = new Set(allTerms.map(function (t) { return t.classroom; }).filter(Boolean));
@@ -519,7 +519,7 @@ window.renderTermClassroomFilter = function () {
         }).join('');
 };
 
-window.renderTermInstallmentCountFilter = function () {
+window.renderTermInstallmentCountFilter = async function () {
     const select = document.getElementById('filterTermInstallmentCount');
     if (!select) return;
     const values = new Set(allTerms.map(function (t) { return (t.installments && t.installments.length) ? String(t.installments.length) : '1'; }).filter(Boolean));
@@ -530,7 +530,7 @@ window.renderTermInstallmentCountFilter = function () {
         }).join('');
 };
 
-window.renderTermFilters = function () {
+window.renderTermFilters = async function () {
     window.renderTermCourseFilter();
     window.renderTermCurrencyFilter();
     window.renderTermDiscountFilter();
@@ -538,7 +538,7 @@ window.renderTermFilters = function () {
     window.renderTermInstallmentCountFilter();
 };
 
-window.filterTerms = function () {
+window.filterTerms = async function () {
     const search = (document.getElementById('termSearch') && document.getElementById('termSearch').value || '').trim().toLowerCase();
     const status = document.getElementById('filterTermStatus') && document.getElementById('filterTermStatus').value || '';
     const course = document.getElementById('filterTermCourse') && document.getElementById('filterTermCourse').value || '';
@@ -565,7 +565,7 @@ window.filterTerms = function () {
 };
 
 // ==================== table ====================
-window.renderTermsTable = function (list) {
+window.renderTermsTable = async function (list) {
     list = list || filteredTerms;
     const tbody = document.querySelector('#termsTable tbody');
     if (!tbody) return;
@@ -644,7 +644,7 @@ function updateTermsPagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changeTermsPage = function (page) {
+window.changeTermsPage = async function (page) {
     const totalPages = Math.ceil(filteredTerms.length / termsPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     termsCurrentPage = page;
@@ -652,8 +652,8 @@ window.changeTermsPage = function (page) {
 };
 
 // ==================== prompts for new types ====================
-function promptAddNamed(list, label, selectIds, inlineSuffix) {
-    const name = (prompt('نام ' + label + ' جدید را وارد کنید:') || '').trim();
+async function promptAddNamed(list, label, selectIds, inlineSuffix) {
+    const name = (await AppDialog.prompt('نام ' + label + ' جدید را وارد کنید:') || '').trim();
     if (!name) return;
     if (list.some(function (x) { return x.name === name; })) return alert('این مورد قبلاً وجود دارد');
     list.push({ id: Date.now(), name: name });
@@ -668,8 +668,8 @@ function promptAddNamed(list, label, selectIds, inlineSuffix) {
     });
 }
 
-window.promptAddTermCourse = function () {
-    const name = (prompt('نام دوره جدید را وارد کنید:') || '').trim();
+window.promptAddTermCourse = async function () {
+    const name = (await AppDialog.prompt('نام دوره جدید را وارد کنید:') || '').trim();
     if (!name) return;
     if (allTermCourseOptions.some(function (c) { return c.name === name; })) return alert('این دوره قبلاً وجود دارد');
     const item = { id: Date.now(), name: name };
@@ -685,8 +685,8 @@ window.promptAddTermCourse = function () {
     renderTermCourseFilter();
 };
 
-window.promptAddTermCurrency = function () {
-    const name = (prompt('نام واحد پول جدید را وارد کنید:') || '').trim();
+window.promptAddTermCurrency = async function () {
+    const name = (await AppDialog.prompt('نام واحد پول جدید را وارد کنید:') || '').trim();
     if (!name) return;
     if (allTermCurrencies.some(function (c) { return c.name === name; })) return alert('این واحد قبلاً وجود دارد');
     allTermCurrencies.push({ id: Date.now(), name: name });
@@ -701,8 +701,8 @@ window.promptAddTermCurrency = function () {
     });
 };
 
-window.promptAddTermDiscount = function () {
-    const name = (prompt('عنوان تخفیف جدید را وارد کنید:') || '').trim();
+window.promptAddTermDiscount = async function () {
+    const name = (await AppDialog.prompt('عنوان تخفیف جدید را وارد کنید:') || '').trim();
     if (!name) return;
     if (allTermDiscounts.some(function (d) { return d.name === name; })) return alert('این تخفیف قبلاً وجود دارد');
     allTermDiscounts.push({ id: Date.now(), name: name });
@@ -717,8 +717,8 @@ window.promptAddTermDiscount = function () {
     });
 };
 
-window.promptAddTermClassroom = function () {
-    const name = (prompt('نام کلاس جدید را وارد کنید:') || '').trim();
+window.promptAddTermClassroom = async function () {
+    const name = (await AppDialog.prompt('نام کلاس جدید را وارد کنید:') || '').trim();
     if (!name) return;
     if (allTermClassroomOptions.some(function (c) { return c.name === name; })) return alert('این کلاس قبلاً وجود دارد');
     const item = { id: Date.now(), name: name };
@@ -733,14 +733,14 @@ window.promptAddTermClassroom = function () {
 };
 
 // ==================== multi fields helpers ====================
-window.addTermTeacherField = function (containerId) {
+window.addTermTeacherField = async function (containerId) {
     const el = document.getElementById(containerId);
     if (el && window.getTermTeacherFieldHTML) {
         el.insertAdjacentHTML('beforeend', window.getTermTeacherFieldHTML({}));
         window.refreshTermTeacherSelectionOptions(containerId);
     }
 };
-window.addTermStudentField = function (containerId) {
+window.addTermStudentField = async function (containerId) {
     const el = document.getElementById(containerId);
     if (!el) return;
     const prefix = getTermPrefixFromContainer(containerId);
@@ -754,12 +754,12 @@ window.addTermStudentField = function (containerId) {
     window.refreshTermStudentSelectionOptions(containerId);
     window.refreshTermStudentFieldLimit(prefix);
 };
-window.addTermInstallmentField = function (containerId) {
+window.addTermInstallmentField = async function (containerId) {
     const el = document.getElementById(containerId);
     if (el && window.getTermInstallmentFieldHTML) el.insertAdjacentHTML('beforeend', window.getTermInstallmentFieldHTML({}));
 };
 
-window.rebuildTermSessions = function (prefix) {
+window.rebuildTermSessions = async function (prefix) {
     const countId = prefix ? (prefix + 'SessionCount') : 'termSessionCount';
     const containerId = prefix ? (prefix + 'SessionsContainer') : 'termSessionsContainer';
     const countEl = document.getElementById(countId);
@@ -852,7 +852,7 @@ function readTermForm(prefix) {
 }
 
 // ==================== CRUD ====================
-window.openAddTermModal = function () {
+window.openAddTermModal = async function () {
     if (!document.getElementById('modalContainer')) {
         alert('خطا: المان modalContainer در صفحه اصلی وجود ندارد!');
         return;
@@ -860,7 +860,7 @@ window.openAddTermModal = function () {
     document.getElementById('modalContainer').innerHTML = window.getTermAddModalHTML ? window.getTermAddModalHTML() : '';
 };
 
-window.saveTerm = function () {
+window.saveTerm = async function () {
     const data = readTermForm('');
     if (!validateTermData(data)) return;
     allTerms.unshift(Object.assign({ id: Date.now(), attendance: {} }, data));
@@ -870,19 +870,19 @@ window.saveTerm = function () {
     alert('✅ ترم با موفقیت اضافه شد');
 };
 
-window.viewTerm = function (id) {
+window.viewTerm = async function (id) {
     const item = allTerms.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getTermDetailsModalHTML ? window.getTermDetailsModalHTML(item) : '';
 };
 
-window.editTerm = function (id) {
+window.editTerm = async function (id) {
     const item = allTerms.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getTermEditModalHTML ? window.getTermEditModalHTML(item) : '';
 };
 
-window.saveEditedTerm = function (id) {
+window.saveEditedTerm = async function (id) {
     const data = readTermForm('editTerm');
     if (!validateTermData(data)) return;
     const index = allTerms.findIndex(function (x) { return x.id === id; });
@@ -895,13 +895,13 @@ window.saveEditedTerm = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.toggleTermInlineEdit = function (id) {
+window.toggleTermInlineEdit = async function (id) {
     attendanceTermRowId = null;
     editingTermRowId = editingTermRowId === id ? null : id;
     renderTermsTable(filteredTerms);
 };
 
-window.saveInlineTerm = function (id) {
+window.saveInlineTerm = async function (id) {
     const data = readTermForm('inlineTerm' + id);
     if (!validateTermData(data)) return;
     const index = allTerms.findIndex(function (x) { return x.id === id; });
@@ -913,8 +913,8 @@ window.saveInlineTerm = function (id) {
     alert('✅ تغییرات با موفقیت ذخیره شد');
 };
 
-window.deleteTerm = function (id) {
-    if (!confirm('آیا از حذف این ترم مطمئن هستید؟')) return;
+window.deleteTerm = async function (id) {
+    if (!(await AppDialog.confirm('آیا از حذف این ترم مطمئن هستید؟'))) return;
     allTerms = allTerms.filter(function (t) { return t.id !== id; });
     if (editingTermRowId === id) editingTermRowId = null;
     if (attendanceTermRowId === id) attendanceTermRowId = null;
@@ -923,19 +923,19 @@ window.deleteTerm = function (id) {
 };
 
 // ==================== attendance ====================
-window.toggleTermInlineAttendance = function (id) {
+window.toggleTermInlineAttendance = async function (id) {
     editingTermRowId = null;
     attendanceTermRowId = attendanceTermRowId === id ? null : id;
     renderTermsTable(filteredTerms);
 };
 
-window.openTermAttendanceModal = function (id) {
+window.openTermAttendanceModal = async function (id) {
     const item = allTerms.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getTermAttendanceModalHTML ? window.getTermAttendanceModalHTML(item) : '';
 };
 
-window.saveTermAttendance = function (id, isInline) {
+window.saveTermAttendance = async function (id, isInline) {
     const item = allTerms.find(function (x) { return x.id === id; });
     if (!item) return;
 
@@ -973,7 +973,7 @@ window.saveTermAttendance = function (id, isInline) {
 };
 
 // ==================== excel / pdf ====================
-window.exportTermsToExcel = function () {
+window.exportTermsToExcel = async function () {
     const data = filteredTerms.length ? filteredTerms : allTerms;
     let csv = '\uFEFF';
     csv += 'ردیف,نام ترم,شعبه,دوره مرتبط,تاریخ شروع,تاریخ پایان,وضعیت,هزینه,واحد پول\n';
@@ -988,11 +988,11 @@ window.exportTermsToExcel = function () {
     link.click();
 };
 
-window.exportTermsToPDF = function () {
+window.exportTermsToPDF = async function () {
     openTermsPDFOptionsModal();
 };
 
-window.openTermsPDFOptionsModal = function () {
+window.openTermsPDFOptionsModal = async function () {
     document.getElementById('modalContainer').innerHTML = window.getTermPDFModalHTML
         ? window.getTermPDFModalHTML(termPdfColumns) : '';
 };

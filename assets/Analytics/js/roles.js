@@ -2,7 +2,7 @@
 'use strict';
 
 window.roleTypesList = ['سیستم', 'سفارشی'];
-window.getRoleBranches = function () {
+window.getRoleBranches = async function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
     return [{ id: 1, name: 'شعبه مرکزی' }, { id: 2, name: 'شعبه ونک' }, { id: 3, name: 'شعبه سعادت‌آباد' }, { id: 4, name: 'شعبه کرج' }];
 };
@@ -75,14 +75,14 @@ function sortRoleItems() {
     });
 }
 
-window.updateRoleSortIcons = function () {
+window.updateRoleSortIcons = async function () {
     ['name', 'title', 'title_en', 'type', 'color', 'order', 'branchName'].forEach(function (f) {
         const icon = document.getElementById('roleSortIcon-' + f);
         if (icon) icon.textContent = roleSortField === f ? (roleSortDirection === 'asc' ? '↑' : '↓') : '↕';
     });
 };
 
-window.sortRolesBy = function (field) {
+window.sortRolesBy = async function (field) {
     if (roleSortField === field) roleSortDirection = roleSortDirection === 'asc' ? 'desc' : 'asc';
     else { roleSortField = field; roleSortDirection = 'asc'; }
     sortRoleItems();
@@ -90,7 +90,7 @@ window.sortRolesBy = function (field) {
     window.updateRoleSortIcons();
 };
 
-window.renderRolesBranchTabs = function () {
+window.renderRolesBranchTabs = async function () {
     const container = document.getElementById('rolesBranchTabs');
     if (!container) return;
     container.querySelectorAll('.role-branch-tab:not([data-value="all"])').forEach(function (t) { t.remove(); });
@@ -115,7 +115,7 @@ window.renderRolesBranchTabs = function () {
     }
 };
 
-window.filterRolesByBranch = function (branchId) {
+window.filterRolesByBranch = async function (branchId) {
     currentRoleBranch = branchId;
     document.querySelectorAll('.role-branch-tab').forEach(function (tab) {
         const active = String(tab.dataset.value) === String(branchId);
@@ -128,7 +128,7 @@ window.filterRolesByBranch = function (branchId) {
     window.filterRoles();
 };
 
-window.filterRoles = function () {
+window.filterRoles = async function () {
     const search = (document.getElementById('roleSearch') && document.getElementById('roleSearch').value || '').trim().toLowerCase();
     const type = document.getElementById('filterRoleType') && document.getElementById('filterRoleType').value || '';
     filteredRoles = allRoles.filter(function (r) {
@@ -142,7 +142,7 @@ window.filterRoles = function () {
     window.renderRolesTable(filteredRoles);
 };
 
-window.renderRolesTable = function (list) {
+window.renderRolesTable = async function (list) {
     list = list || filteredRoles;
     const tbody = document.querySelector('#rolesTable tbody');
     if (!tbody) return;
@@ -187,7 +187,7 @@ function updateRolesPagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changeRolesPage = function (page) {
+window.changeRolesPage = async function (page) {
     const totalPages = Math.ceil(filteredRoles.length / rolesPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     rolesCurrentPage = page;
@@ -215,12 +215,12 @@ function readRoleForm(prefix) {
     };
 }
 
-window.openAddRoleModal = function () {
+window.openAddRoleModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = window.getRoleAddModalHTML ? window.getRoleAddModalHTML() : '';
 };
 
-window.saveRole = function () {
+window.saveRole = async function () {
     const data = readRoleForm('role');
     if (!data.name || !data.title) return alert('نام و عنوان الزامی است');
     if (!data.title_en) data.title_en = data.name;
@@ -230,19 +230,19 @@ window.saveRole = function () {
     alert('✅ نقش ثبت شد');
 };
 
-window.viewRole = function (id) {
+window.viewRole = async function (id) {
     const item = allRoles.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getRoleDetailsModalHTML ? window.getRoleDetailsModalHTML(item) : '';
 };
 
-window.editRole = function (id) {
+window.editRole = async function (id) {
     const item = allRoles.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getRoleEditModalHTML ? window.getRoleEditModalHTML(item) : '';
 };
 
-window.saveEditedRole = function (id) {
+window.saveEditedRole = async function (id) {
     const data = readRoleForm('editRole');
     if (!data.name || !data.title) return alert('نام و عنوان الزامی است');
     const index = allRoles.findIndex(function (x) { return x.id === id; });
@@ -253,12 +253,12 @@ window.saveEditedRole = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.toggleRoleInlineEdit = function (id) {
+window.toggleRoleInlineEdit = async function (id) {
     editingRoleRowId = editingRoleRowId === id ? null : id;
     window.renderRolesTable(filteredRoles);
 };
 
-window.saveInlineRole = function (id) {
+window.saveInlineRole = async function (id) {
     const data = readRoleForm('inlineRole' + id);
     if (!data.name || !data.title) return alert('نام و عنوان الزامی است');
     const index = allRoles.findIndex(function (x) { return x.id === id; });
@@ -269,14 +269,14 @@ window.saveInlineRole = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.deleteRole = function (id) {
-    if (!confirm('حذف این نقش؟')) return;
+window.deleteRole = async function (id) {
+    if (!(await AppDialog.confirm('حذف این نقش؟'))) return;
     allRoles = allRoles.filter(function (r) { return r.id !== id; });
     if (editingRoleRowId === id) editingRoleRowId = null;
     window.filterRoles();
 };
 
-window.exportRolesToExcel = function () {
+window.exportRolesToExcel = async function () {
     const data = filteredRoles.length ? filteredRoles : allRoles;
     let csv = '\uFEFFردیف,نام,عنوان,عنوان انگلیسی,نوع,رنگ,ترتیب,شعبه\n';
     data.forEach(function (r, i) {
@@ -289,7 +289,7 @@ window.exportRolesToExcel = function () {
     link.click();
 };
 
-window.exportRolesToPDF = function () {
+window.exportRolesToPDF = async function () {
     document.getElementById('modalContainer').innerHTML = window.getRolePDFModalHTML ? window.getRolePDFModalHTML(rolePdfColumns) : '';
 };
 

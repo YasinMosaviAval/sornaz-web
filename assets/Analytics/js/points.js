@@ -14,7 +14,7 @@ window.pointCategoryLabels = {
 };
 window.pointStatusesList = ['فعال', 'غیرفعال'];
 
-window.getPointBranches = function () {
+window.getPointBranches = async function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
     return [
         { id: 1, name: 'شعبه مرکزی' },
@@ -138,7 +138,7 @@ function sortPointItems() {
     });
 }
 
-window.updatePointSortIcons = function () {
+window.updatePointSortIcons = async function () {
     ['title', 'type', 'category', 'points', 'action', 'branchName', 'status'].forEach(function (f) {
         const icon = document.getElementById('pointSortIcon-' + f);
         if (!icon) return;
@@ -146,7 +146,7 @@ window.updatePointSortIcons = function () {
     });
 };
 
-window.sortPointsBy = function (field) {
+window.sortPointsBy = async function (field) {
     if (pointSortField === field) pointSortDirection = pointSortDirection === 'asc' ? 'desc' : 'asc';
     else { pointSortField = field; pointSortDirection = 'asc'; }
     sortPointItems();
@@ -154,7 +154,7 @@ window.sortPointsBy = function (field) {
     window.updatePointSortIcons();
 };
 
-window.renderPointsBranchTabs = function () {
+window.renderPointsBranchTabs = async function () {
     const container = document.getElementById('pointsBranchTabs');
     if (!container) return;
     container.querySelectorAll('.point-branch-tab:not([data-value="all"])').forEach(function (t) { t.remove(); });
@@ -182,7 +182,7 @@ window.renderPointsBranchTabs = function () {
     }
 };
 
-window.filterPointsByBranch = function (branchId) {
+window.filterPointsByBranch = async function (branchId) {
     currentPointBranch = branchId;
     document.querySelectorAll('.point-branch-tab').forEach(function (tab) {
         const active = String(tab.dataset.value) === String(branchId);
@@ -199,7 +199,7 @@ window.filterPointsByBranch = function (branchId) {
     window.filterPoints();
 };
 
-window.filterPoints = function () {
+window.filterPoints = async function () {
     const search = (document.getElementById('pointSearch') && document.getElementById('pointSearch').value || '').trim().toLowerCase();
     const type = document.getElementById('filterPointType') && document.getElementById('filterPointType').value || '';
     const category = document.getElementById('filterPointCategory') && document.getElementById('filterPointCategory').value || '';
@@ -223,7 +223,7 @@ window.filterPoints = function () {
     window.renderPointsTable(filteredPoints);
 };
 
-window.renderPointsTable = function (list) {
+window.renderPointsTable = async function (list) {
     list = list || filteredPoints;
     const tbody = document.querySelector('#pointsTable tbody');
     if (!tbody) return;
@@ -256,12 +256,12 @@ window.renderPointsTable = function (list) {
     window.updatePointSortIcons();
 };
 
-window.togglePointInlineEdit = function (id) {
+window.togglePointInlineEdit = async function (id) {
     editingPointRowId = editingPointRowId === id ? null : id;
     window.renderPointsTable(filteredPoints);
 };
 
-window.saveInlinePoint = function (id) {
+window.saveInlinePoint = async function (id) {
     const data = readPointForm('inlinePoint' + id);
     if (!data.title) return alert('عنوان الزامی است');
     if (!data.action) return alert('کد عملیات (action) الزامی است');
@@ -292,7 +292,7 @@ function updatePointsPagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changePointsPage = function (page) {
+window.changePointsPage = async function (page) {
     const totalPages = Math.ceil(filteredPoints.length / pointsPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     pointsCurrentPage = page;
@@ -319,13 +319,13 @@ function readPointForm(prefix) {
     };
 }
 
-window.openAddPointModal = function () {
+window.openAddPointModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = window.getPointAddModalHTML
         ? window.getPointAddModalHTML() : '';
 };
 
-window.savePoint = function () {
+window.savePoint = async function () {
     const data = readPointForm('point');
     if (!data.title) return alert('عنوان الزامی است');
     if (!data.action) return alert('کد عملیات (action) الزامی است');
@@ -335,21 +335,21 @@ window.savePoint = function () {
     alert('✅ قانون امتیاز ثبت شد');
 };
 
-window.viewPoint = function (id) {
+window.viewPoint = async function (id) {
     const item = allPoints.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getPointDetailsModalHTML
         ? window.getPointDetailsModalHTML(item) : '';
 };
 
-window.editPoint = function (id) {
+window.editPoint = async function (id) {
     const item = allPoints.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getPointEditModalHTML
         ? window.getPointEditModalHTML(item) : '';
 };
 
-window.saveEditedPoint = function (id) {
+window.saveEditedPoint = async function (id) {
     const data = readPointForm('editPoint');
     if (!data.title) return alert('عنوان الزامی است');
     if (!data.action) return alert('کد عملیات (action) الزامی است');
@@ -361,7 +361,7 @@ window.saveEditedPoint = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.togglePointStatus = function (id) {
+window.togglePointStatus = async function (id) {
     const item = allPoints.find(function (x) { return x.id === id; });
     if (!item) return;
     item.status = item.status === 'فعال' ? 'غیرفعال' : 'فعال';
@@ -369,8 +369,8 @@ window.togglePointStatus = function (id) {
     closeModal();
 };
 
-window.deletePoint = function (id) {
-    if (!confirm('حذف این قانون امتیاز؟')) return;
+window.deletePoint = async function (id) {
+    if (!(await AppDialog.confirm('حذف این قانون امتیاز؟'))) return;
     allPoints = allPoints.filter(function (p) { return p.id !== id; });
     if (editingPointRowId === id) editingPointRowId = null;
     window.filterPoints();

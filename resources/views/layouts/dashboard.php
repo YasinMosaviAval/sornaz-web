@@ -30,5 +30,6 @@
     <?php foreach(\Core\View\View::scripts() as $script): ?>
         <script src="<?= asset($script) ?>"></script>
     <?php endforeach; ?>
+    <script src="/assets/theme/dialog.js?v=<?= filemtime(base_path('assets/theme/dialog.js')) ?: 1 ?>"></script>
 </body>
 </html>

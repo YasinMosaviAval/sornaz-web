@@ -60,6 +60,7 @@
         window.authTranslations = <?= json_encode(translations('auth.js.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
         window.publicTranslations = <?= json_encode(translations('public.js.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     </script>
+    <script src="/assets/theme/dialog.js?v=<?= filemtime(base_path('assets/theme/dialog.js')) ?: 1 ?>"></script>
     <?= scripts() ?>
     <script src="/assets/System/js/auth.js?v=<?= filemtime(base_path('assets/System/js/auth.js')) ?: 1 ?>"></script>
     <script src="/assets/theme/theme.js?v=<?= filemtime(base_path('assets/theme/theme.js')) ?: 1 ?>"></script>

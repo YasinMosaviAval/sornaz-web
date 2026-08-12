@@ -61,7 +61,7 @@ let allPosts = [
 let currentPostBranch = 'all';
 let currentPostStatus = 'all';
 
-window.renderPostsBranchTabs = function() {
+window.renderPostsBranchTabs = async function () {
     const container = document.getElementById('postsBranchTabs');
     if (!container) return;
     container.querySelectorAll('.post-branch-tab:not(:first-child)').forEach(t => t.remove());
@@ -76,7 +76,7 @@ window.renderPostsBranchTabs = function() {
     }
 };
 
-window.filterPostsByBranch = function(branchId) {
+window.filterPostsByBranch = async function (branchId) {
     currentPostBranch = branchId;
     document.querySelectorAll('.post-branch-tab').forEach(tab => {
         tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
@@ -98,7 +98,7 @@ window.filterPostsByBranch = function(branchId) {
     filterPosts();
 };
 
-window.filterPostsByStatus = function(status) {
+window.filterPostsByStatus = async function (status) {
     currentPostStatus = status;
     document.querySelectorAll('.post-status-tab').forEach(tab => {
         tab.classList.remove('bg-gray-900', 'text-white');
@@ -115,11 +115,11 @@ window.filterPostsByStatus = function(status) {
     filterPosts();
 };
 
-window.filterPosts = function() {
+window.filterPosts = async function () {
     renderPostsTable();
 };
 
-window.renderPostsTable = function() {
+window.renderPostsTable = async function () {
     const tbody = document.querySelector('#postsTable tbody');
     if (!tbody) return;
 
@@ -234,7 +234,7 @@ function collectPostForm(prefix) {
     };
 }
 
-window.openAddPostModal = function() {
+window.openAddPostModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = `
     <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
@@ -254,7 +254,7 @@ window.openAddPostModal = function() {
     </div>`;
 };
 
-window.savePost = function() {
+window.savePost = async function () {
     const data = collectPostForm('post');
     if (!data) return;
     allPosts.unshift({
@@ -269,7 +269,7 @@ window.savePost = function() {
     alert('✅ نوشته ثبت شد');
 };
 
-window.viewPost = function(id) {
+window.viewPost = async function (id) {
     const p = allPosts.find(x => x.id === id);
     if (!p) return;
     const stClass = postStatusColors[p.status] || 'bg-gray-100 text-gray-600';
@@ -309,7 +309,7 @@ window.viewPost = function(id) {
     </div>`;
 };
 
-window.editPost = function(id) {
+window.editPost = async function (id) {
     const p = allPosts.find(x => x.id === id);
     if (!p) return;
     document.getElementById('modalContainer').innerHTML = `
@@ -330,7 +330,7 @@ window.editPost = function(id) {
     </div>`;
 };
 
-window.saveEditedPost = function(id) {
+window.saveEditedPost = async function (id) {
     const data = collectPostForm('editPost');
     if (!data) return;
     const index = allPosts.findIndex(x => x.id === id);
@@ -341,16 +341,16 @@ window.saveEditedPost = function(id) {
     alert('✅ ذخیره شد');
 };
 
-window.deletePost = function(id) {
+window.deletePost = async function (id) {
     const p = allPosts.find(x => x.id === id);
     if (!p) return;
     if (p.status === 'trash') {
-        if (confirm('حذف دائمی این نوشته؟')) {
+        if (await AppDialog.confirm('حذف دائمی این نوشته؟')) {
             allPosts = allPosts.filter(x => x.id !== id);
             filterPosts();
         }
     } else {
-        if (confirm('انتقال به زباله‌دان؟')) {
+        if (await AppDialog.confirm('انتقال به زباله‌دان؟')) {
             p.status = 'trash';
             filterPosts();
         }

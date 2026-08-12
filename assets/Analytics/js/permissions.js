@@ -2,7 +2,7 @@
 'use strict';
 
 window.permissionGroupsList = ['زبان', 'درس', 'ابزار', 'هنرجو', 'استاد', 'مالی', 'گزارش', 'عمومی'];
-window.getPermissionBranches = function () {
+window.getPermissionBranches = async function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
     return [{ id: 1, name: 'شعبه مرکزی' }, { id: 2, name: 'شعبه ونک' }, { id: 3, name: 'شعبه سعادت‌آباد' }, { id: 4, name: 'شعبه کرج' }];
 };
@@ -78,14 +78,14 @@ function sortPermissionItems() {
     });
 }
 
-window.updatePermissionSortIcons = function () {
+window.updatePermissionSortIcons = async function () {
     ['name', 'title', 'title_en', 'group', 'branchName'].forEach(function (f) {
         const icon = document.getElementById('permSortIcon-' + f);
         if (icon) icon.textContent = permSortField === f ? (permSortDirection === 'asc' ? '↑' : '↓') : '↕';
     });
 };
 
-window.sortPermissionsBy = function (field) {
+window.sortPermissionsBy = async function (field) {
     if (permSortField === field) permSortDirection = permSortDirection === 'asc' ? 'desc' : 'asc';
     else { permSortField = field; permSortDirection = 'asc'; }
     sortPermissionItems();
@@ -93,7 +93,7 @@ window.sortPermissionsBy = function (field) {
     window.updatePermissionSortIcons();
 };
 
-window.renderPermissionsBranchTabs = function () {
+window.renderPermissionsBranchTabs = async function () {
     const container = document.getElementById('permissionsBranchTabs');
     if (!container) return;
     container.querySelectorAll('.permission-branch-tab:not([data-value="all"])').forEach(function (t) { t.remove(); });
@@ -118,7 +118,7 @@ window.renderPermissionsBranchTabs = function () {
     }
 };
 
-window.filterPermissionsByBranch = function (branchId) {
+window.filterPermissionsByBranch = async function (branchId) {
     currentPermissionBranch = branchId;
     document.querySelectorAll('.permission-branch-tab').forEach(function (tab) {
         const active = String(tab.dataset.value) === String(branchId);
@@ -131,7 +131,7 @@ window.filterPermissionsByBranch = function (branchId) {
     window.filterPermissions();
 };
 
-window.filterPermissions = function () {
+window.filterPermissions = async function () {
     const search = (document.getElementById('permissionSearch') && document.getElementById('permissionSearch').value || '').trim().toLowerCase();
     const group = document.getElementById('filterPermissionGroup') && document.getElementById('filterPermissionGroup').value || '';
     filteredPermissions = allPermissions.filter(function (p) {
@@ -145,7 +145,7 @@ window.filterPermissions = function () {
     window.renderPermissionsTable(filteredPermissions);
 };
 
-window.renderPermissionsTable = function (list) {
+window.renderPermissionsTable = async function (list) {
     list = list || filteredPermissions;
     const tbody = document.querySelector('#permissionsTable tbody');
     if (!tbody) return;
@@ -190,7 +190,7 @@ function updatePermissionsPagination(total, start, end, totalPages) {
     pagination.innerHTML = html;
 }
 
-window.changePermissionsPage = function (page) {
+window.changePermissionsPage = async function (page) {
     const totalPages = Math.ceil(filteredPermissions.length / permissionsPerPage) || 1;
     if (page < 1 || page > totalPages) return;
     permissionsCurrentPage = page;
@@ -216,12 +216,12 @@ function readPermissionForm(prefix) {
     };
 }
 
-window.openAddPermissionModal = function () {
+window.openAddPermissionModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = window.getPermissionAddModalHTML ? window.getPermissionAddModalHTML() : '';
 };
 
-window.savePermission = function () {
+window.savePermission = async function () {
     const data = readPermissionForm('perm');
     if (!data.name || !data.title) return alert('نام و عنوان الزامی است');
     if (!data.title_en) data.title_en = data.name;
@@ -231,19 +231,19 @@ window.savePermission = function () {
     alert('✅ دسترسی ثبت شد');
 };
 
-window.viewPermission = function (id) {
+window.viewPermission = async function (id) {
     const item = allPermissions.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getPermissionDetailsModalHTML ? window.getPermissionDetailsModalHTML(item) : '';
 };
 
-window.editPermission = function (id) {
+window.editPermission = async function (id) {
     const item = allPermissions.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getPermissionEditModalHTML ? window.getPermissionEditModalHTML(item) : '';
 };
 
-window.saveEditedPermission = function (id) {
+window.saveEditedPermission = async function (id) {
     const data = readPermissionForm('editPerm');
     if (!data.name || !data.title) return alert('نام و عنوان الزامی است');
     const index = allPermissions.findIndex(function (x) { return x.id === id; });
@@ -254,12 +254,12 @@ window.saveEditedPermission = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.togglePermissionInlineEdit = function (id) {
+window.togglePermissionInlineEdit = async function (id) {
     editingPermissionRowId = editingPermissionRowId === id ? null : id;
     window.renderPermissionsTable(filteredPermissions);
 };
 
-window.saveInlinePermission = function (id) {
+window.saveInlinePermission = async function (id) {
     const data = readPermissionForm('inlinePerm' + id);
     if (!data.name || !data.title) return alert('نام و عنوان الزامی است');
     const index = allPermissions.findIndex(function (x) { return x.id === id; });
@@ -270,14 +270,14 @@ window.saveInlinePermission = function (id) {
     alert('✅ تغییرات ذخیره شد');
 };
 
-window.deletePermission = function (id) {
-    if (!confirm('حذف این دسترسی؟')) return;
+window.deletePermission = async function (id) {
+    if (!(await AppDialog.confirm('حذف این دسترسی؟'))) return;
     allPermissions = allPermissions.filter(function (p) { return p.id !== id; });
     if (editingPermissionRowId === id) editingPermissionRowId = null;
     window.filterPermissions();
 };
 
-window.exportPermissionsToExcel = function () {
+window.exportPermissionsToExcel = async function () {
     const data = filteredPermissions.length ? filteredPermissions : allPermissions;
     let csv = '\uFEFFردیف,نام,عنوان,عنوان انگلیسی,گروه,شعبه\n';
     data.forEach(function (p, i) {
@@ -290,7 +290,7 @@ window.exportPermissionsToExcel = function () {
     link.click();
 };
 
-window.exportPermissionsToPDF = function () {
+window.exportPermissionsToPDF = async function () {
     document.getElementById('modalContainer').innerHTML = window.getPermissionPDFModalHTML ? window.getPermissionPDFModalHTML(permissionPdfColumns) : '';
 };
 

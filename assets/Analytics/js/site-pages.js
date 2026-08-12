@@ -340,7 +340,7 @@ let siteArtCat = 'all';
 let siteUserRole = 'all';
 
 // ========== مقالات ==========
-window.renderSiteArticleCats = function() {
+window.renderSiteArticleCats = async function () {
     const box = document.getElementById('siteArticleCats');
     if (!box) return;
     box.querySelectorAll('.site-art-cat:not(:first-child)').forEach(t => t.remove());
@@ -353,7 +353,7 @@ window.renderSiteArticleCats = function() {
     });
 };
 
-window.filterSiteArticles = function(cat) {
+window.filterSiteArticles = async function (cat) {
     if (typeof cat === 'string') siteArtCat = cat;
     document.querySelectorAll('.site-art-cat').forEach(tab => {
         const active = (siteArtCat === 'all' && tab.textContent === 'همه') || tab.textContent === siteArtCat;
@@ -365,7 +365,7 @@ window.filterSiteArticles = function(cat) {
     renderSiteArticlesList();
 };
 
-window.renderSiteArticlesList = function() {
+window.renderSiteArticlesList = async function () {
     const box = document.getElementById('siteArticlesList');
     if (!box) return;
     const q = (document.getElementById('siteArticleSearch')?.value || '').trim().toLowerCase();
@@ -400,7 +400,7 @@ window.renderSiteArticlesList = function() {
 
 
 // ========== آموزشگاه‌ها ==========
-window.renderSiteAcademies = function() {
+window.renderSiteAcademies = async function () {
     const box = document.getElementById('siteAcademiesGrid');
     if (!box) return;
     const q = (document.getElementById('siteAcademySearch')?.value || '').trim().toLowerCase();
@@ -444,7 +444,7 @@ window.renderSiteAcademies = function() {
         `).join('');
 };
 
-// window.openSiteAcademy = function(id) {
+// window.openSiteAcademy = async function (id) {
 //     const a = getSiteAcademies().find(x => x.id === id);
 //     if (!a) return;
 //     const el = document.getElementById('siteAcademyDetail');
@@ -481,11 +481,11 @@ window.renderSiteAcademies = function() {
 
 window._currentProfileAcademyId = null;
 
-window.openSiteAcademy = function(id) {
+window.openSiteAcademy = async function (id) {
     openSiteAcademyProfile(id);
 };
 
-window.openSiteAcademyProfile = function(id) {
+window.openSiteAcademyProfile = async function (id) {
     const list = (typeof getSiteAcademies === 'function') ? getSiteAcademies() : [];
     // اگر از allBranches پنل هم داده دارید، ادغام کنید
     let a = list.find(x => x.id == id);
@@ -697,7 +697,7 @@ function renderProfileTeachers(a) {
     `).join('');
 }
 
-window.goEnrollFromProfile = function() {
+window.goEnrollFromProfile = async function () {
     const id = window._currentProfileAcademyId;
     showSitePage('academy-enroll');
     setTimeout(() => {
@@ -717,7 +717,7 @@ window.goEnrollFromProfile = function() {
 
 
 // ========== کاربران ==========
-window.filterSiteUsers = function(role) {
+window.filterSiteUsers = async function (role) {
     if (typeof role === 'string') siteUserRole = role;
     document.querySelectorAll('.site-user-role').forEach(tab => {
         const map = { all: 'همه', teacher: 'اساتید', student: 'هنرجویان', manager: 'مدیران' };
@@ -730,7 +730,7 @@ window.filterSiteUsers = function(role) {
     renderSiteUsers();
 };
 
-window.renderSiteUsers = function() {
+window.renderSiteUsers = async function () {
     const box = document.getElementById('siteUsersGrid');
     if (!box) return;
     const q = (document.getElementById('siteUserSearch')?.value || '').trim().toLowerCase();
@@ -769,7 +769,7 @@ window.renderSiteUsers = function() {
         `).join('');
 };
 
-// window.openSiteUser = function(id) {
+// window.openSiteUser = async function (id) {
 //     const u = getSiteUsers().find(x => x.id === id);
 //     if (!u) return;
 //     const el = document.getElementById('siteUserDetail');
@@ -792,11 +792,11 @@ window.renderSiteUsers = function() {
 
 
 
-window.openSiteUser = function(id) {
+window.openSiteUser = async function (id) {
     openSiteUserProfile(id);
 };
 
-window.openSiteUserProfile = function(id) {
+window.openSiteUserProfile = async function (id) {
     const list = (typeof getSiteUsers === 'function') ? getSiteUsers() : [];
     const u = list.find(x => x.id == id);
     if (!u) {
@@ -1030,7 +1030,7 @@ function renderUserAcademies(u) {
 
 // ========== اتصال به showSitePage ==========
 const _origShowSitePage = window.showSitePage;
-window.showSitePage = function(page) {
+window.showSitePage = async function (page) {
     if (typeof _origShowSitePage === 'function') _origShowSitePage(page);
     else {
         document.querySelectorAll('.site-page').forEach(el => el.classList.remove('active'));
@@ -1050,7 +1050,7 @@ window.showSitePage = function(page) {
 
 
 // ========== ثبت‌نام در کلاس (سایت) ==========
-window.renderSiteEnrollPage = function() {
+window.renderSiteEnrollPage = async function () {
     const sel = document.getElementById('siteEnrollAcademy');
     if (!sel) return;
     const list = (typeof getSiteAcademies === 'function') ? getSiteAcademies() : [];
@@ -1058,7 +1058,7 @@ window.renderSiteEnrollPage = function() {
         list.map(a => `<option value="${a.id}">${a.name}${a.city ? ' — ' + a.city : ''}</option>`).join('');
 };
 
-window.submitSiteEnroll = function() {
+window.submitSiteEnroll = async function () {
     const name = document.getElementById('siteEnrollName')?.value.trim();
     const phone = document.getElementById('siteEnrollPhone')?.value.trim();
     const academyId = document.getElementById('siteEnrollAcademy')?.value;
@@ -1113,7 +1113,7 @@ window.submitSiteEnroll = function() {
 };
 
 // ========== ثبت آموزشگاه (سایت) ==========
-window.submitSiteAcademyRequest = function() {
+window.submitSiteAcademyRequest = async function () {
     const email = document.getElementById('siteReqEmail')?.value.trim();
     const username = document.getElementById('siteReqUsername')?.value.trim();
     const pass = document.getElementById('siteReqPassword')?.value;
@@ -1167,7 +1167,7 @@ window.submitSiteAcademyRequest = function() {
 
 
 
-window.openSiteArticle = function(id) {
+window.openSiteArticle = async function (id) {
     const list = (typeof getSiteArticles === 'function') ? getSiteArticles() : [];
     const a = list.find(x => x.id == id);
     if (!a) {
@@ -1304,7 +1304,7 @@ function renderArticleComments(articleId) {
     `).join('');
 }
 
-window.submitArticleComment = function(e) {
+window.submitArticleComment = async function (e) {
     e.preventDefault();
     const name = document.getElementById('adCommentName')?.value.trim();
     const body = document.getElementById('adCommentBody')?.value.trim();
@@ -1324,13 +1324,13 @@ window.submitArticleComment = function(e) {
     alert('نظر شما ثبت شد و پس از تأیید مدیر نمایش داده می‌شود.');
 };
 
-window.shareArticle = function(type) {
+window.shareArticle = async function (type) {
     const title = window._currentArticleTitle || document.getElementById('adTitle')?.textContent || '';
     const url = location.href;
     if (type === 'telegram') {
         window.open('https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(title), '_blank');
     } else if (type === 'copy') {
-        navigator.clipboard?.writeText(url).then(() => alert('لینک کپی شد')).catch(() => prompt('لینک:', url));
+        navigator.clipboard?.writeText(url).then(() => alert('لینک کپی شد')).catch(async () => await AppDialog.prompt('لینک:', url));
     }
 };
 
@@ -1343,7 +1343,7 @@ window.shareArticle = function(type) {
 
 
 // ========== نمایش صفحه + رندر اولیه ==========
-window.renderSitePageContent = function(page) {
+window.renderSitePageContent = async function (page) {
     if (page === 'articles' || page === 'article-detail') {
         if (typeof renderSiteArticleCats === 'function') renderSiteArticleCats();
         // مهم: حتماً با 'all' تا لیست از اول پر شود
@@ -1370,7 +1370,7 @@ window.renderSitePageContent = function(page) {
 // اگر showSitePage از قبل در site.js هست، آن را گسترش بده
 (function () {
     const prev = window.showSitePage;
-    window.showSitePage = function(page) {
+    window.showSitePage = async function (page) {
         if (typeof prev === 'function') {
             prev(page);
         } else {

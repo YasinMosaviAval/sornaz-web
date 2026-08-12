@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
+    <link rel="stylesheet" href="/assets/theme/theme.css?v=<?= filemtime(base_path('assets/theme/theme.css')) ?: 1 ?>">
     <style>
         body { font-family: Vazirmatn, Tahoma, sans-serif; }
         .site-page { display: none; }
@@ -32,6 +33,8 @@
         pushScript('Page::main.js');
     ?>
     <div id="modalContainer"></div>
+    <script src="/assets/theme/dialog.js?v=<?= filemtime(base_path('assets/theme/dialog.js')) ?: 1 ?>"></script>
     <?= scripts() ?>
+    <script src="/assets/theme/theme.js?v=<?= filemtime(base_path('assets/theme/theme.js')) ?: 1 ?>"></script>
 </body>
 </html>

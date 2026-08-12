@@ -52,7 +52,8 @@ function setupAcademyPasswordStrength() {
 function academyToast(message) {
     const el = document.getElementById(academyRegistrationStep === 1 ? 'academyFormError' : 'academyOtpError');
     if (el) { el.textContent = message; el.classList.toggle('hidden', !message); }
-    if (message && typeof Swal !== 'undefined') Swal.fire({toast: true, position: 'top', icon: 'error', title: message, showConfirmButton: false, timer: 6000});
+    if (message && window.AppDialog) AppDialog.alert(message, { type:'error' });
+    else if (message && typeof Swal !== 'undefined') Swal.fire({toast: true, position: 'top', icon: 'error', title: message, showConfirmButton: false, timer: 6000});
 }
 
 window.setAcademyRegistrationMethod = function(method) {
