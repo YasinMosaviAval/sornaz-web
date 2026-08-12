@@ -16,6 +16,8 @@ class AcademyBranchController {
     public function update(int $id) { return $this->run(fn() => $this->service->update((int)auth()->id(), $id, $this->payload(), SiteAdminAccess::allows(auth()->user()))); }
     public function destroy(int $id) { return $this->run(function() use($id){$this->service->delete((int)auth()->id(),$id,SiteAdminAccess::allows(auth()->user()));return null;}); }
     public function storeType() { return $this->run(fn() => $this->service->addType((int)auth()->id(), $this->payload()), 201); }
+    public function updateType(int $id) { $this->requireSiteAdmin(); return $this->run(fn()=>$this->service->updateType((int)auth()->id(),$id,$this->payload())); }
+    public function deleteType(int $id) { $this->requireSiteAdmin(); return $this->run(function()use($id){$this->service->deleteType((int)auth()->id(),$id);return null;}); }
     public function updateMember(int $id) { return $this->run(fn()=>$this->service->updateMember((int)auth()->id(),$id,$this->payload(),SiteAdminAccess::allows(auth()->user()))); }
     public function deleteMember(int $id) { return $this->run(function()use($id){$this->service->deleteMember((int)auth()->id(),$id,SiteAdminAccess::allows(auth()->user()));return null;}); }
     private function payload(): array {
@@ -26,5 +28,6 @@ class AcademyBranchController {
         if (!is_array($data)) throw new \RuntimeException('داده فرم نامعتبر است: ' . json_last_error_msg());
         return $data;
     }
+    private function requireSiteAdmin(): void { if(!SiteAdminAccess::allows(auth()->user())) abort(403); }
     private function run(callable $callback,int $status=200) { try{return ResponseFactory::json(['success'=>true,'data'=>$callback()],$status);}catch(\Throwable $e){return ResponseFactory::json(['success'=>false,'message'=>$e->getMessage()],422);} }
 }

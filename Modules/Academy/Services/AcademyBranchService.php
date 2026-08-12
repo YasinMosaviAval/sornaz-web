@@ -186,6 +186,30 @@ class AcademyBranchService {
         });
     }
 
+    public function updateType(int $ownerUserId,int $id,array $data): array {
+        $type=DB::table('academy_branch_types')->where('academy_branch_type_id',$id)->whereNull('deleted_at')->first();
+        if(!$type) throw new RuntimeException('نوع آموزشی یافت نشد.');
+        $title=trim((string)($data['title']??''));$summary=trim((string)($data['summary']??''));$description=trim((string)($data['description']??''));
+        if($title===''||mb_strlen($title)>100)throw new RuntimeException('عنوان نوع آموزشی معتبر نیست.');
+        if($summary===''||mb_strlen($summary)>500)throw new RuntimeException('خلاصه نوع آموزشی الزامی است و حداکثر ۵۰۰ نویسه دارد.');
+        if($description===''||mb_strlen($description)>5000)throw new RuntimeException('شرح نوع آموزشی الزامی است و حداکثر ۵۰۰۰ نویسه دارد.');
+        return transaction(function()use($ownerUserId,$id,$title,$summary,$description){
+            foreach($this->types() as $row)if((int)$row['id']!==$id&&$row['name']===$title)throw new RuntimeException('نوع آموزشی دیگری با این عنوان وجود دارد.');
+            DB::table('academy_branch_types')->where('academy_branch_type_id',$id)->update(['updated_by'=>$ownerUserId]);
+            $this->setTypeTranslations($id,['title'=>$title,'summary'=>$summary,'description'=>$description],$ownerUserId);
+            return ['id'=>$id,'name'=>$title,'title'=>$title,'summary'=>$summary,'description'=>$description];
+        });
+    }
+
+    public function deleteType(int $ownerUserId,int $id): void {
+        $type=DB::table('academy_branch_types')->where('academy_branch_type_id',$id)->whereNull('deleted_at')->first();
+        if(!$type)throw new RuntimeException('نوع آموزشی یافت نشد.');
+        if(DB::table('academy_branches')->where('academy_branch_type_id',$id)->whereNull('deleted_at')->count()>0)throw new RuntimeException('این نوع آموزشی توسط یک یا چند شعبه استفاده می‌شود و تا زمان تغییر نوع آن شعبه‌ها قابل حذف نیست.');
+        $now=date('Y-m-d H:i:s');
+        DB::table('academy_branch_types')->where('academy_branch_type_id',$id)->update(['deleted_at'=>$now,'deleted_by'=>$ownerUserId,'updated_by'=>$ownerUserId]);
+        DB::table('translations')->where('table_name','academy_branch_types')->where('table_id',$id)->whereNull('deleted_at')->update(['deleted_at'=>$now,'deleted_by'=>$ownerUserId,'updated_by'=>$ownerUserId]);
+    }
+
     private function ensureDefaultTypes(int $ownerUserId): void {
         $defaults = [
             'music' => ['fa'=>['title'=>'موسیقی','summary'=>'آموزش تخصصی موسیقی و مهارت‌های وابسته.','description'=>'این نوع آموزشی شامل آموزش ساز، آواز، مبانی نظری موسیقی و دوره‌های عملی مرتبط است.'],'en'=>['title'=>'Music','summary'=>'Professional music education and related skills.','description'=>'This educational type includes instruments, singing, music theory, and related practical courses.']],
