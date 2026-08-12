@@ -98,9 +98,17 @@ function showSection(id) {
         }, 100);
     }
     if (section === 'lessons') {
-        setTimeout(() => {
-            if (typeof renderLessonsBranchTabs === 'function') renderLessonsBranchTabs();
-            if (typeof filterLessonsByBranch === 'function') filterLessonsByBranch('all');
+        setTimeout(async () => {
+            try {
+                if (typeof loadLessonDatabaseData === 'function') await loadLessonDatabaseData();
+                else {
+                    if (typeof renderLessonsBranchTabs === 'function') renderLessonsBranchTabs();
+                    if (typeof filterLessonsByBranch === 'function') filterLessonsByBranch('all');
+                }
+            } catch (error) {
+                console.error('Lesson database loading failed:', error);
+                alert(error.message || 'بارگذاری درس‌های شعب ناموفق بود.');
+            }
         }, 100);
     }
     if (section === 'publications') {

@@ -69,3 +69,14 @@ window.generateBranchesPDF=async function(){if(!window.jspdf)return alert('اب�
 
 document.addEventListener('click',event=>{const button=event.target.closest('[data-branch-save]');if(!button)return;event.preventDefault();event.stopPropagation();const id=Number(button.dataset.branchId||0);if(button.dataset.branchSave==='save-add')window.saveBranch(button);else if(button.dataset.branchSave==='save-edit')window.saveEditedBranch(id,button);else if(button.dataset.branchSave==='save-inline')window.saveInlineBranch(id,button);},true);
 document.addEventListener('DOMContentLoaded',()=>{if(document.getElementById('branchesCards'))loadBranches();});
+window.branchOfferingDelete=async function(type,id){const token=window.adminCsrfToken||branchCsrfToken||'';const r=await fetch(`/academy/admin/branch-offerings/${type}/${id}/delete`,{method:'POST',credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest','Content-Type':'application/x-www-form-urlencoded;charset=UTF-8','X-CSRF-TOKEN':token},body:new URLSearchParams({_token:token}).toString()});const p=await r.json(),envelope=p.data??p;if(!r.ok||envelope.success===false)throw new Error(envelope.message||'حذف ناموفق بود.');};
+window.loadBranchOfferings=function(){
+    if(window.branchOfferingData)return Promise.resolve(window.branchOfferingData);
+    if(window.branchOfferingLoadPromise)return window.branchOfferingLoadPromise;
+    window.branchOfferingLoadPromise=fetch('/academy/admin/branch-offerings',{credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}})
+        .then(async r=>{const text=await r.text();let p;try{p=JSON.parse(text);}catch(e){throw new Error('پاسخ اطلاعات شعب از سرور معتبر نیست.');}const envelope=p.data??p;if(!r.ok||envelope.success===false)throw new Error(envelope.message||'بارگذاری اطلاعات شعب ناموفق بود.');return envelope.data??envelope;})
+        .then(d=>{window.branchOfferingData=d;window.branchOfferingBranches=d.branches||[];window.dispatchEvent(new CustomEvent('branch-offerings-loaded',{detail:d}));return d;})
+        .finally(()=>{window.branchOfferingLoadPromise=null;});
+    return window.branchOfferingLoadPromise;
+};
+document.addEventListener('DOMContentLoaded',async()=>{if(!document.getElementById('instrumentsTable')&&!document.getElementById('lessonsTable')&&!document.getElementById('branchSchedulesTable'))return;try{await window.loadBranchOfferings();}catch(e){alert(e.message);}});

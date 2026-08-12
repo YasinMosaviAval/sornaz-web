@@ -49,7 +49,7 @@
         const id = function (n) { return prefix ? prefix + n : 'lesn' + n; };
         const branches = (typeof allBranches !== 'undefined' ? allBranches : []).map(function (b) { return { value: b.id, label: b.name }; });
         const lessons = (typeof window.sampleLessons !== 'undefined' ? window.sampleLessons : []).map(function (i) { return { value: i.id, label: i.title }; });
-        const levels = (typeof window.lessonLevels !== 'undefined' ? window.lessonLevels : []).map(function (l) { return { value: l.level_id, label: l.title + ' (' + l.type + ')' }; });
+        const levels = (typeof window.branchLessonLevels !== 'undefined' ? window.branchLessonLevels : []).map(function (l) { return { value: l.level_id, label: l.title + (l.type ? ' (' + l.type + ')' : '') }; });
         const statuses = ['فعال', 'غیرفعال', 'در انتظار', 'حذف‌شده'].map(function (s) { return { value: s, label: s }; });
         return `
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">

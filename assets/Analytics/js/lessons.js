@@ -8,7 +8,7 @@ window.sampleLessons = [
     { id: 16, title: "کمانچه" }, { id: 17, title: "نی" }, { id: 18, title: "عود" },
     { id: 19, title: "آکاردئون" }, { id: 20, title: "کیبورد" }
 ];
-window.lessonLevels = [
+window.branchLessonLevels = [
     { level_id: 1, title: "مبتدی", type: "learning", sort_order: 1 },
     { level_id: 2, title: "متوسط", type: "learning", sort_order: 2 },
     { level_id: 3, title: "پیشرفته", type: "learning", sort_order: 3 },
@@ -19,21 +19,17 @@ window.lessonLevels = [
 const lessonStatuses = ['فعال', 'غیرفعال', 'در انتظار', 'حذف‌شده'];
 
 function getLesnBranches() {
-    if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
-    return [
-        { id: 1, name: 'شعبه مرکزی' }, { id: 2, name: 'شعبه ونک' },
-        { id: 3, name: 'شعبه سعادت‌آباد' }, { id: 4, name: 'شعبه کرج' }
-    ];
+    return Array.isArray(window.branchOfferingBranches) ? window.branchOfferingBranches : [];
 }
 
 // ۴۰ نمونه
 window.allUserLessons = [];
-(function buildSamples() {
+(function buildSamples() { return;
     const branches = getLesnBranches();
     const summaries = ['درس اصلی', 'درس دوم', 'تخصص', 'ریتم', 'همراهی'];
     for (let i = 1; i <= 40; i++) {
         const lesn = sampleLessons[Math.floor(Math.random() * sampleLessons.length)];
-        const level = lessonLevels[Math.floor(Math.random() * lessonLevels.length)];
+        const level = window.branchLessonLevels[Math.floor(Math.random() * window.branchLessonLevels.length)];
         const branch = branches[Math.floor(Math.random() * branches.length)];
         const userId = 1 + (i % 5);
         allUserLessons.push({
@@ -79,8 +75,8 @@ const lessonPdfColumns = [
     { field: 'branchName', label: 'شعبه' }
 ];
 
-function getLevelTitle(levelId) {
-    const l = lessonLevels.find(function (x) { return x.level_id === levelId; });
+function getLessonLevelTitle(levelId) {
+    const l = window.branchLessonLevels.find(function (x) { return x.level_id === levelId; });
     return l ? l.title : '—';
 }
 
@@ -89,7 +85,7 @@ function sortLessonItems() {
     filteredLessons.sort(function (a, b) {
         let av = a[lessonSortField], bv = b[lessonSortField];
         if (lessonSortField === 'levelTitle') {
-            av = getLevelTitle(a.level_id); bv = getLevelTitle(b.level_id);
+            av = getLessonLevelTitle(a.level_id); bv = getLessonLevelTitle(b.level_id);
         }
         if (lessonSortField === 'years_of_experience') {
             av = Number(av) || 0; bv = Number(bv) || 0;
@@ -188,7 +184,7 @@ window.renderLessonsTable = async function (list) {
         pageItems.forEach(function (item) {
             const tr = document.createElement('tr');
             tr.className = 'hover:bg-gray-50 transition';
-            tr.innerHTML = window.getLessonRowHTML ? window.getLessonRowHTML(item, getLevelTitle(item.level_id)) : '';
+            tr.innerHTML = window.getLessonRowHTML ? window.getLessonRowHTML(item, getLessonLevelTitle(item.level_id)) : '';
             tbody.appendChild(tr);
             if (editingLessonRowId === item.id) {
                 const expand = document.createElement('tr');
@@ -286,7 +282,7 @@ window.viewLesson = async function (id) {
     const item = allUserLessons.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getLessonDetailsModalHTML
-        ? window.getLessonDetailsModalHTML(item, getLevelTitle(item.level_id)) : '';
+        ? window.getLessonDetailsModalHTML(item, getLessonLevelTitle(item.level_id)) : '';
 };
 
 window.editLesson = async function (id) {
@@ -328,16 +324,36 @@ window.saveInlineLesson = async function (id) {
 
 window.deleteLesson = async function (id) {
     if (!(await AppDialog.confirmDelete(allUserLessons, id, 'درس'))) return;
+    await branchOfferingDelete('lesson',id);
     allUserLessons = allUserLessons.filter(function (i) { return i.id !== id; });
     if (editingLessonRowId === id) editingLessonRowId = null;
     filterLessons();
 };
+window.applyLessonDatabaseData=function(data){
+    if(!data||!Array.isArray(data.branches)||!Array.isArray(data.lessons))throw new Error('ساختار اطلاعات درس‌های شعب معتبر نیست.');
+    window.branchOfferingBranches=data.branches;
+    sampleLessons=Array.isArray(data.lessons_catalog)?data.lessons_catalog:[];
+    window.branchLessonLevels=Array.isArray(data.levels)?data.levels:[];
+    window.allUserLessons=data.lessons;
+    filteredLessons=window.allUserLessons.slice();
+    currentLesnBranch='all';
+    window.renderLessonsBranchTabs();
+    window.filterLessons();
+    return window.allUserLessons.length;
+};
+window.loadLessonDatabaseData=async function(force=false){
+    if(force){window.branchOfferingData=null;window.branchOfferingLoadPromise=null;}
+    const data=window.branchOfferingData||(typeof window.loadBranchOfferings==='function'?await window.loadBranchOfferings():null);
+    return window.applyLessonDatabaseData(data);
+};
+window.addEventListener('branch-offerings-loaded',function(e){window.applyLessonDatabaseData(e.detail);});
+if(window.branchOfferingData)window.applyLessonDatabaseData(window.branchOfferingData);
 
 window.exportLessonsToExcel = async function () {
     const data = filteredLessons.length ? filteredLessons : allUserLessons;
     let csv = '\uFEFFردیف,درس,سطح,سابقه,اصلی,وضعیت,شعبه\n';
     data.forEach(function (item, i) {
-        csv += (i + 1) + ',"' + item.title + '","' + getLevelTitle(item.level_id) + '",' + (item.years_of_experience || 0) + ',' +
+        csv += (i + 1) + ',"' + item.title + '","' + getLessonLevelTitle(item.level_id) + '",' + (item.years_of_experience || 0) + ',' +
             (item.is_primary ? 'بله' : 'خیر') + ',"' + (item.status || '') + '","' + item.branchName + '"\n';
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -370,7 +386,7 @@ window.generateLessonsPDF = async function () {
     const date = new Date().toLocaleDateString('fa-IR');
     const data = (filteredLessons.length ? filteredLessons : allUserLessons).map(function (item) {
         return Object.assign({}, item, {
-            levelTitle: getLevelTitle(item.level_id),
+            levelTitle: getLessonLevelTitle(item.level_id),
             is_primary_label: item.is_primary ? 'بله' : 'خیر'
         });
     });

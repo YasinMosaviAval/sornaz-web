@@ -66,13 +66,15 @@ function dump(...$vars): void {foreach ($vars as $var) {echo '<pre>'; var_dump($
 function dd(...$vars): never {foreach ($vars as $var) {echo '<pre>'; var_dump($var); echo '</pre>';} exit;}
 
 function transaction(callable $callback) {
-    db()->beginTransaction();
+    $connection = db();
+    $ownsTransaction = !$connection->inTransaction();
+    if ($ownsTransaction) $connection->beginTransaction();
     try {
         $result = $callback();
-        db()->commit();
+        if ($ownsTransaction && $connection->inTransaction()) $connection->commit();
         return $result;
     } catch (\Throwable $e) {
-        db()->rollback();
+        if ($ownsTransaction && $connection->inTransaction()) $connection->rollBack();
         throw $e;
     }
 }
