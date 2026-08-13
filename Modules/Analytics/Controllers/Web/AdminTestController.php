@@ -12,6 +12,20 @@ use Modules\Academy\Services\AcademyRegistrationService;
 class AdminTestController {
     public function __construct(protected AdminTestDataService $tests, protected AcademyCourseService $courses, protected AcademyTermTestService $terms, protected AcademyTermBatchService $termBatch, protected AcademyRegistrationService $academies) {}
 
+    private function fixtureOptions(string $prefix=''): array {
+        $options=[];
+        foreach(['addresses'=>[1,3],'contact_phone'=>[1,2],'contact_email'=>[1,2],'contact_social'=>[0,6],'instruments'=>[0,5],'lessons'=>[0,5],'gallery'=>[3,3],'daily_slots'=>[1,3],'exceptions'=>[2,4]] as $key=>$defaults){
+            $options[$key.'_min']=(int)($_POST[$prefix.$key.'_min']??$defaults[0]);
+            $options[$key.'_max']=(int)($_POST[$prefix.$key.'_max']??$defaults[1]);
+        }
+        return $options;
+    }
+
+    private function syncFixtureAccounts(string $usernamePrefix,array $options,int $offset=0): int {
+        $rows=\Core\database\DB::table('users')->whereRaw("username LIKE '".$usernamePrefix."%'")->whereNull('deleted_at')->get();
+        return (int)$this->tests->syncFixtureUsers(array_map(fn(array $row)=>(int)$row['user_id'],$rows),$options,$offset)['synced'];
+    }
+
     public function deleteAllTestData() {
         if (env('APP_ENV','production') !== 'local') abort(404);
         try {
@@ -34,8 +48,8 @@ class AdminTestController {
         if(env('APP_ENV','production')!=='local')abort(404);
         try{$actor=(int)auth()->id();$report=[];
             $managerOptions=['addresses_min'=>(int)($_POST['addresses_min']??1),'addresses_max'=>(int)($_POST['addresses_max']??3),'contact_phone_min'=>(int)($_POST['contact_phone_min']??1),'contact_phone_max'=>(int)($_POST['contact_phone_max']??2),'contact_email_min'=>(int)($_POST['contact_email_min']??1),'contact_email_max'=>(int)($_POST['contact_email_max']??2),'contact_social_min'=>(int)($_POST['contact_social_min']??0),'contact_social_max'=>(int)($_POST['contact_social_max']??6),'instruments_min'=>(int)($_POST['instruments_min']??0),'instruments_max'=>(int)($_POST['instruments_max']??5),'lessons_min'=>(int)($_POST['lessons_min']??0),'lessons_max'=>(int)($_POST['lessons_max']??5),'gallery_min'=>(int)($_POST['gallery_min']??3),'gallery_max'=>(int)($_POST['gallery_max']??3),'daily_slots_min'=>(int)($_POST['daily_slots_min']??1),'daily_slots_max'=>(int)($_POST['daily_slots_max']??3),'exceptions_min'=>(int)($_POST['exceptions_min']??2),'exceptions_max'=>(int)($_POST['exceptions_max']??4)];
-            $rootCount=max(1,min(50,(int)($_POST['manager_count']??10)));$a=$this->tests->seedAcademyManagers($rootCount,$managerOptions);$b=$this->academies->seedSamples($rootCount);$report[]=['title'=>'مدیران، آموزشگاه‌ها و شعب اصلی','items'=>["مدیر ایجادشده: {$a['created']}","مدیر همگام‌شده: {$a['updated']}","آموزشگاه ایجادشده: {$b['created']}","آموزشگاه همگام‌شده: {$b['updated']}","شعب اصلی پردازش‌شده: {$b['branches_created']}","تعداد هدف مشترک: {$rootCount}"]];
-            $networkOptions=[];foreach(['branches','teachers','receptionists','employees','managers','students']as$key){$networkOptions[$key.'_min']=(int)($_POST[$key.'_min']??0);$networkOptions[$key.'_max']=(int)($_POST[$key.'_max']??5);}$c=$this->academies->seedBranchNetwork($networkOptions);$report[]=['title'=>'شبکه شعب و اعضا','items'=>["شعب فرعی: {$c['branches']}","پرسنل: {$c['staff']}","هنرجویان: {$c['students']}","قراردادها: {$c['contracts']}","کلاس‌ها: {$c['classrooms']}"]];
+            $rootCount=max(1,min(50,(int)($_POST['manager_count']??10)));$a=$this->tests->seedAcademyManagers($rootCount,$managerOptions);$b=$this->academies->seedSamples($rootCount);$academySynced=$this->syncFixtureAccounts('test_academy_',$this->fixtureOptions('academy_'));$mainBranchSynced=$this->syncFixtureAccounts('test_main_branch_',$this->fixtureOptions('main_branch_'),100);$report[]=['title'=>'مدیران، آموزشگاه‌ها و شعب اصلی','items'=>["مدیر ایجادشده: {$a['created']}","مدیر همگام‌شده: {$a['updated']}","آموزشگاه ایجادشده: {$b['created']}","آموزشگاه همگام‌شده: {$b['updated']}","شعب اصلی پردازش‌شده: {$b['branches_created']}","اطلاعات تکمیلی آموزشگاه: {$academySynced}","اطلاعات تکمیلی شعبه اصلی: {$mainBranchSynced}","تعداد هدف مشترک: {$rootCount}"]];
+            $networkOptions=[];foreach(['branches','teachers','receptionists','employees','managers','students']as$key){$networkOptions[$key.'_min']=(int)($_POST[$key.'_min']??0);$networkOptions[$key.'_max']=(int)($_POST[$key.'_max']??5);}$c=$this->academies->seedBranchNetwork($networkOptions);$extraBranchSynced=$this->syncFixtureAccounts('test_extra_branch_',$this->fixtureOptions('extra_branch_'),200);$report[]=['title'=>'شبکه شعب و اعضا','items'=>["شعب فرعی: {$c['branches']}","اطلاعات تکمیلی شعب فرعی: {$extraBranchSynced}","پرسنل: {$c['staff']}","هنرجویان: {$c['students']}","قراردادها: {$c['contracts']}","کلاس‌ها: {$c['classrooms']}"]];
             $d=$this->courses->seedCourses($actor,(int)($_POST['courses_min']??10),(int)($_POST['courses_max']??50));$report[]=['title'=>'دوره‌ها','items'=>["ایجاد: {$d['created']}","همگام‌سازی: {$d['updated']}","مجموع: {$d['total']}"]];
             $e=$this->terms->seed($actor,[(int)($_POST['terms_min']??1),(int)($_POST['terms_max']??50)],[(int)($_POST['sessions_min']??4),(int)($_POST['sessions_max']??8)]);$report[]=['title'=>'ترم‌ها و جلسات','items'=>["ترم‌ها: {$e['created']}","جلسات: {$e['sessions']}","رکوردهای حضور و غیاب: {$e['attendance']}"]];
             session()->flash('admin_test_report',$report);
@@ -72,9 +86,10 @@ class AdminTestController {
                 $options[$key.'_max']=(int)($_POST[$key.'_max']??5);
             }
             $network=$this->academies->seedBranchNetwork($options);
+            $extraBranchSynced=$this->syncFixtureAccounts('test_extra_branch_',$this->fixtureOptions('extra_branch_'),200);
             $courses=$this->courses->seedCourses($actor,(int)($_POST['courses_min']??10),(int)($_POST['courses_max']??50));
             $terms=$this->terms->seed($actor,[(int)($_POST['terms_min']??1),(int)($_POST['terms_max']??50)],[(int)($_POST['sessions_min']??4),(int)($_POST['sessions_max']??8)]);
-            session()->flash('admin_test_report',[['title'=>'شبکه شعب، اعضا، دوره‌ها و ترم‌ها','items'=>["شعب فرعی: {$network['branches']}","پرسنل: {$network['staff']}","هنرجویان: {$network['students']}","قراردادها: {$network['contracts']}","کلاس‌ها: {$network['classrooms']}","دوره ایجادشده: {$courses['created']}","دوره همگام‌شده: {$courses['updated']}","مجموع دوره‌ها: {$courses['total']}","ترم ایجادشده: {$terms['created']}","جلسه ایجادشده: {$terms['sessions']}","حضور و غیاب ثبت‌شده: {$terms['attendance']}"]]]);
+            session()->flash('admin_test_report',[['title'=>'شبکه شعب، اعضا، دوره‌ها و ترم‌ها','items'=>["شعب فرعی: {$network['branches']}","اطلاعات تکمیلی شعب فرعی: {$extraBranchSynced}","پرسنل: {$network['staff']}","هنرجویان: {$network['students']}","قراردادها: {$network['contracts']}","کلاس‌ها: {$network['classrooms']}","دوره ایجادشده: {$courses['created']}","دوره همگام‌شده: {$courses['updated']}","مجموع دوره‌ها: {$courses['total']}","ترم ایجادشده: {$terms['created']}","جلسه ایجادشده: {$terms['sessions']}","حضور و غیاب ثبت‌شده: {$terms['attendance']}"]]]);
         }catch(\Throwable$e){session()->flash('admin_test_error','ایجاد شبکه شعب، دوره‌ها و ترم‌های آزمایشی ناموفق بود: '.$e->getMessage());}
         return redirect('/analytics/admin-panel#tests');
     }
@@ -100,7 +115,9 @@ class AdminTestController {
                 'exceptions_min'=>(int)($_POST['exceptions_min']??2),'exceptions_max'=>(int)($_POST['exceptions_max']??4),
             ]);
             $academyResult=$this->academies->seedSamples((int)$result['total']);
-            session()->flash('admin_test_report', [['title'=>'مدیران، آموزشگاه‌ها و شعب اصلی','items'=>["مدیر ایجادشده: {$result['created']}","مدیر همگام‌شده: {$result['updated']}","آموزشگاه ایجادشده: {$academyResult['created']}","آموزشگاه همگام‌شده: {$academyResult['updated']}","شعب اصلی: {$academyResult['branches_created']}","تعداد هدف مشترک: {$result['total']}"]]]);
+            $academySynced=$this->syncFixtureAccounts('test_academy_',$this->fixtureOptions('academy_'));
+            $mainBranchSynced=$this->syncFixtureAccounts('test_main_branch_',$this->fixtureOptions('main_branch_'),100);
+            session()->flash('admin_test_report', [['title'=>'مدیران، آموزشگاه‌ها و شعب اصلی','items'=>["مدیر ایجادشده: {$result['created']}","مدیر همگام‌شده: {$result['updated']}","آموزشگاه ایجادشده: {$academyResult['created']}","آموزشگاه همگام‌شده: {$academyResult['updated']}","شعب اصلی: {$academyResult['branches_created']}","اطلاعات تکمیلی آموزشگاه: {$academySynced}","اطلاعات تکمیلی شعبه اصلی: {$mainBranchSynced}","تعداد هدف مشترک: {$result['total']}"]]]);
         } catch (\Throwable $e) {
             session()->flash('admin_test_error', 'ایجاد مدیران آموزشگاه آزمایشی ناموفق بود: ' . $e->getMessage());
         }
