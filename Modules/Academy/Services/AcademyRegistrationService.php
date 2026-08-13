@@ -21,7 +21,7 @@ class AcademyRegistrationService {
     }
 
     public function seedSamples(int $limit=10): array {
-        return transaction(function () {
+        return transaction(function () use ($limit) {
             $branchTypes = DB::table('academy_branch_types')->whereNull('deleted_at')->get();
             $provinces = DB::table('world_iran_provinces')->get();
             $counties = DB::table('world_iran_counties')->get();
@@ -53,7 +53,7 @@ class AcademyRegistrationService {
     }
 
     public function seedBranchNetwork(array $options=[]): array {
-        return transaction(function () {
+        return transaction(function () use ($options) {
             $branchTypes = DB::table('academy_branch_types')->whereNull('deleted_at')->get();
             $provinces = DB::table('world_iran_provinces')->get();
             $counties = DB::table('world_iran_counties')->get();
