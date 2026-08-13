@@ -20,7 +20,7 @@ class AcademyRegistrationService {
         return transaction(fn() => $this->createAcademy($data));
     }
 
-    public function seedSamples(): array {
+    public function seedSamples(int $limit=10): array {
         return transaction(function () {
             $branchTypes = DB::table('academy_branch_types')->whereNull('deleted_at')->get();
             $provinces = DB::table('world_iran_provinces')->get();
@@ -33,7 +33,8 @@ class AcademyRegistrationService {
             $samples = $this->sampleAcademies();
             $created = 0;
             $updated = 0;
-            foreach ($managers as $index => $manager) {
+            $limit=max(1,min(50,$limit));
+            foreach (array_slice($managers,0,$limit) as $index => $manager) {
                 if (!isset($samples[$index])) break;
                 $wasCreated = $this->createSampleAcademy(
                     $samples[$index], $index, (int)$manager['user_id'], $branchTypes, $provinces, $counties
@@ -51,7 +52,7 @@ class AcademyRegistrationService {
         });
     }
 
-    public function seedBranchNetwork(): array {
+    public function seedBranchNetwork(array $options=[]): array {
         return transaction(function () {
             $branchTypes = DB::table('academy_branch_types')->whereNull('deleted_at')->get();
             $provinces = DB::table('world_iran_provinces')->get();
@@ -67,11 +68,11 @@ class AcademyRegistrationService {
             foreach ($academies as $academyIndex => $academy) {
                 $managerId = (int)$academy['created_by'];
                 $sample = $this->sampleAcademies()[$academyIndex % 50];
-                $extraCount = $academyIndex % 6;
+                $extraCount = $this->fixtureCount($academyIndex,$options['branches_min']??0,$options['branches_max']??5);
                 for ($branchIndex = 1; $branchIndex <= $extraCount; $branchIndex++) {
                     $branchId = $this->createSampleBranch((int)$academy['academy_id'], $managerId, $sample, $academyIndex, $branchIndex, $branchTypes, $provinces, $counties);
                     $branchCount++;
-                    $counts = $this->seedBranchPeople($branchId, $managerId, $academyIndex, $branchIndex);
+                    $counts = $this->seedBranchPeople($branchId, $managerId, $academyIndex, $branchIndex,$options);
                     $staffCount += $counts['staff']; $studentCount += $counts['students']; $contractCount += $counts['contracts'];
                 }
             }
@@ -198,6 +199,8 @@ class AcademyRegistrationService {
         if (!$ids) return;
         DB::table('translations')->where('table_name', $table)->whereIn('table_id', $ids)->delete();
     }
+
+    private function fixtureCount(int $seed,int $minimum,int $maximum): int {$minimum=max(0,min(100,$minimum));$maximum=max(0,min(100,$maximum));if($minimum>$maximum)[$minimum,$maximum]=[$maximum,$minimum];return $minimum+($seed%($maximum-$minimum+1));}
 
     private function createAcademy(array $data): int {
         $data['type'] = 'academy';
@@ -349,13 +352,13 @@ class AcademyRegistrationService {
         return $branchId;
     }
 
-    private function seedBranchPeople(int $branchId, int $managerId, int $academyIndex, int $branchIndex): array {
+    private function seedBranchPeople(int $branchId, int $managerId, int $academyIndex, int $branchIndex,array $options=[]): array {
         $serial = ($academyIndex + 1) * 10 + $branchIndex;
         $definitions = [
-            'teacher' => 1 + ($serial % 5),
-            'receptionist' => 1 + ($serial % 5),
-            'other' => $serial % 4,
-            'manager' => $serial % 4,
+            'teacher' => $this->fixtureCount($serial,$options['teachers_min']??1,$options['teachers_max']??5),
+            'receptionist' => $this->fixtureCount($serial,$options['receptionists_min']??1,$options['receptionists_max']??5),
+            'other' => $this->fixtureCount($serial,$options['employees_min']??0,$options['employees_max']??3),
+            'manager' => $this->fixtureCount($serial,$options['managers_min']??0,$options['managers_max']??3),
         ];
         $firstNames = ['آرمان','سارا','پرهام','نگار','کیان','مهسا','امیر','نرگس','رضا','مریم'];
         $lastNames = ['احمدی','محمدی','کریمی','رضایی','موسوی','نوری','حسینی'];
@@ -374,7 +377,7 @@ class AcademyRegistrationService {
                 $staff++; $contracts++;
                 if ($role === 'teacher') {
                     $teacherNumber++;
-                    $studentTotal = ($serial + $teacherNumber) % 6;
+                    $studentTotal = $this->fixtureCount($serial+$teacherNumber,$options['students_min']??0,$options['students_max']??5);
                     for ($s = 1; $s <= $studentTotal; $s++) {
                         $studentKey = sprintf('%02d_%02d_t%02d_s%03d', $academyIndex + 1, $branchIndex, $teacherNumber, $s);
                         $studentId = $this->seedUser(['username' => self::MEMBER_PREFIX . 'student_' . $studentKey,

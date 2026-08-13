@@ -30,7 +30,7 @@ class AcademyRegistrationController {
         if (env('APP_ENV', 'production') !== 'local') abort(404);
 
         try {
-            $result = $this->service->seedSamples();
+            $result = $this->service->seedSamples((int)($_POST['academy_count'] ?? 10));
             session()->flash('admin_test_message', $result['message']);
             return redirect('/analytics/admin-panel');
         } catch (\Throwable $e) {
@@ -42,7 +42,14 @@ class AcademyRegistrationController {
     public function seedBranchNetwork() {
         if (env('APP_ENV', 'production') !== 'local') abort(404);
         try {
-            $result = $this->service->seedBranchNetwork();
+            $result = $this->service->seedBranchNetwork([
+                'branches_min'=>(int)($_POST['branches_min']??0),'branches_max'=>(int)($_POST['branches_max']??5),
+                'teachers_min'=>(int)($_POST['teachers_min']??1),'teachers_max'=>(int)($_POST['teachers_max']??5),
+                'receptionists_min'=>(int)($_POST['receptionists_min']??1),'receptionists_max'=>(int)($_POST['receptionists_max']??5),
+                'employees_min'=>(int)($_POST['employees_min']??0),'employees_max'=>(int)($_POST['employees_max']??3),
+                'managers_min'=>(int)($_POST['managers_min']??0),'managers_max'=>(int)($_POST['managers_max']??3),
+                'students_min'=>(int)($_POST['students_min']??0),'students_max'=>(int)($_POST['students_max']??5),
+            ]);
             session()->flash('admin_test_message', $result['message']);
         } catch (\Throwable $e) {
             session()->flash('admin_test_error', 'ایجاد شبکه شعب و اعضا ناموفق بود: ' . $e->getMessage());

@@ -9,14 +9,15 @@ class AdminTestDataService {
     private const USERNAME_PREFIX = 'test_academy_manager_';
     private const TOTAL = 10;
 
-    public function seedAcademyManagers(): array {
+    public function seedAcademyManagers(int $total = self::TOTAL): array {
+        $total = max(1, min(self::TOTAL, $total));
         return transaction(function () {
             $catalog = $this->syncMusicCatalog();
             $passwordHash = password_hash('123456789', PASSWORD_DEFAULT);
             $created = 0;
             $updated = 0;
 
-            foreach (array_slice($this->people(), 0, self::TOTAL) as $index => $person) {
+            foreach (array_slice($this->people(), 0, $total) as $index => $person) {
                 $number = $index + 1;
                 $username = self::USERNAME_PREFIX . sprintf('%02d', $number);
                 $existing = DB::table('users')->where('username', $username)->first();
@@ -50,7 +51,7 @@ class AdminTestDataService {
             return [
                 'created' => $created,
                 'updated' => $updated,
-                'total' => self::TOTAL,
+                'total' => $total,
                 'message' => "تست مدیران آموزشگاه تکمیل شد: {$created} کاربر ایجاد و {$updated} کاربر آزمایشی همگام‌سازی شد.",
             ];
         });
