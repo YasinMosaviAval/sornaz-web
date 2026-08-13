@@ -9,6 +9,22 @@ class AdminTestDataService {
     private const USERNAME_PREFIX = 'test_academy_manager_';
     private const TOTAL = 10;
 
+    public function syncFixtureUsers(array $userIds,array $options=[],int $indexOffset=0): array {
+        $catalog=$this->syncMusicCatalog();$synced=0;
+        foreach(array_values(array_unique(array_map('intval',$userIds))) as $index=>$userId){
+            if($userId<1)continue;
+            $user=DB::table('users')->where('user_id',$userId)->whereNull('deleted_at')->first();
+            if(!$user)continue;
+            $fixtureIndex=$indexOffset+$index;$createdAt=(string)($user['created_at']??date('Y-m-d H:i:s'));
+            $this->syncAddresses($userId,$fixtureIndex,$createdAt,$this->fixtureCount($fixtureIndex,$options['addresses_min']??1,$options['addresses_max']??3));
+            $this->syncContacts($userId,$fixtureIndex,(string)$user['username'],$createdAt,$options);
+            $this->syncMusicExperience($userId,$fixtureIndex,$createdAt,$catalog,$options);
+            $this->syncDefaultUserMedia($userId,$fixtureIndex,$createdAt,$this->fixtureCount($fixtureIndex,$options['gallery_min']??3,$options['gallery_max']??3));
+            $this->syncUserAvailability($userId,$fixtureIndex,$createdAt,$options);$synced++;
+        }
+        return ['synced'=>$synced];
+    }
+
     public function seedAcademyManagers(int $total = self::TOTAL,array $options=[]): array {
         $total = max(1, min(50, $total));
         return transaction(function () use($total,$options) {
@@ -284,7 +300,7 @@ class AdminTestDataService {
     }
 
     private function syncDefaultUserMedia(int $userId, int $userIndex, string $registeredAt,int $galleryCount=3): void {
-        $number = $userIndex + 1;
+        $number = ($userIndex % 50) + 1;
         $avatarId = $this->syncMediaFile($userId, $registeredAt, 'profiles', sprintf('user-%02d.jpg', $number), 'teacher_avatar', 0, 720, 720);
         DB::table('users')->where('user_id', $userId)->update(['avatar_file_id' => $avatarId]);
         $this->syncMediaFile($userId, $registeredAt, 'covers', sprintf('user-%02d.jpg', $number), 'cover', 0, 1280, 720);

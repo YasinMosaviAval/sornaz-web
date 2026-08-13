@@ -5,7 +5,21 @@ $range=function($name,$label,$min,$max)use($input){ ?>
 <fieldset><legend class="mb-2 text-sm font-medium"><?=e($label)?></legend><div class="grid grid-cols-2 gap-3"><label class="text-xs text-gray-500">حداقل<input class="test-fa-number <?=$input?> mt-1 text-center" type="text" inputmode="numeric" name="<?=$name?>_min" data-min="0" data-max="100" value="<?=$min?>"></label><label class="text-xs text-gray-500">حداکثر<input class="test-fa-number <?=$input?> mt-1 text-center" type="text" inputmode="numeric" name="<?=$name?>_max" data-min="0" data-max="100" value="<?=$max?>"></label></div></fieldset>
 <?php };
 $details=function(array $items){ ?><ul class="mt-4 space-y-2 text-sm leading-6 text-gray-600"><?php foreach($items as$item):?><li class="flex items-start gap-2"><i class="fas fa-check-circle mt-1 text-emerald-600"></i><span><?=e($item)?></span></li><?php endforeach?></ul><?php };
-$tables=function(array $items){ ?><div class="rounded-2xl bg-gray-50 p-4 text-xs leading-7 text-gray-600"><strong>جدول‌های تحت تأثیر</strong><ul class="mt-2 list-disc pr-5"><?php foreach($items as$item):?><li><?=e($item)?></li><?php endforeach?></ul></div><?php };
+$tables=function(array $items)use($range){
+    $joined=implode(' ',$items);
+    if(str_contains($joined,'users: مدیر')){
+        foreach([['academy_','آموزشگاه','border-indigo-100'],['main_branch_','شعبه اصلی','border-sky-100']] as [$prefix,$title,$border]){ ?>
+            <section class="space-y-3 rounded-2xl border <?=$border?> p-4"><h3 class="font-bold">راه‌های ارتباطی هر <?=$title?></h3><?php $range($prefix.'contact_phone','شماره تلفن',1,2);$range($prefix.'contact_email','نشانی ایمیل',1,2);$range($prefix.'contact_social','شبکه اجتماعی و وب‌سایت',0,6);?></section>
+            <section class="space-y-3 rounded-2xl border <?=$border?> p-4"><h3 class="font-bold">سوابق و اطلاعات هر <?=$title?></h3><?php $range($prefix.'addresses','آدرس',1,3);$range($prefix.'instruments','ساز',0,5);$range($prefix.'lessons','درس',0,5);?></section>
+            <section class="space-y-3 rounded-2xl border <?=$border?> p-4"><h3 class="font-bold">رسانه و برنامه زمانی هر <?=$title?></h3><?php $range($prefix.'gallery','تصویر گالری',3,3);$range($prefix.'daily_slots','بازه حضور روزانه',1,3);$range($prefix.'exceptions','تعطیلی، مرخصی و استثنا',2,4);?></section>
+        <?php }
+    }elseif(str_contains($joined,'academy_branch_courses')){ ?>
+        <section class="space-y-3 rounded-2xl border border-violet-100 p-4"><h3 class="font-bold">راه‌های ارتباطی هر شعبه فرعی</h3><?php $range('extra_branch_contact_phone','شماره تلفن',1,2);$range('extra_branch_contact_email','نشانی ایمیل',1,2);$range('extra_branch_contact_social','شبکه اجتماعی و وب‌سایت',0,6);?></section>
+        <section class="space-y-3 rounded-2xl border border-violet-100 p-4"><h3 class="font-bold">سوابق و اطلاعات هر شعبه فرعی</h3><?php $range('extra_branch_addresses','آدرس',1,3);$range('extra_branch_instruments','ساز',0,5);$range('extra_branch_lessons','درس',0,5);?></section>
+        <section class="space-y-3 rounded-2xl border border-violet-100 p-4"><h3 class="font-bold">رسانه و برنامه زمانی هر شعبه فرعی</h3><?php $range('extra_branch_gallery','تصویر گالری',3,3);$range('extra_branch_daily_slots','بازه حضور روزانه',1,3);$range('extra_branch_exceptions','تعطیلی، مرخصی و استثنا',2,4);?></section>
+    <?php } ?>
+    <div class="rounded-2xl bg-gray-50 p-4 text-xs leading-7 text-gray-600"><strong>جدول‌های تحت تأثیر</strong><ul class="mt-2 list-disc pr-5"><?php foreach($items as$item):?><li><?=e($item)?></li><?php endforeach?></ul></div><?php
+};
 ?>
 <?php if($ok):?><section id="tests" class="section hidden">
 <div class="mb-7 rounded-3xl border border-indigo-100 bg-indigo-50 p-6"><h1 class="text-3xl font-bold">تست یکپارچه داده‌های آزمایشی</h1><p class="mt-2 leading-7 text-indigo-700">تنظیمات تمام مراحل را مشخص کنید. اجرای یکپارچه ابتدا مدیران و آموزشگاه‌های متناظر را می‌سازد و سپس شبکه شعب، دوره‌ها و ترم‌ها را تکمیل می‌کند.</p><button type="button" onclick="runUnifiedFixtureTest()" class="mt-5 w-full rounded-2xl bg-indigo-700 p-4 font-bold text-white">اجرای تمام مراحل و دریافت گزارش کامل</button></div>
