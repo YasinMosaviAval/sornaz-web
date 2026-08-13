@@ -7,7 +7,7 @@ use RuntimeException;
 
 class AdminTestDataService {
     private const USERNAME_PREFIX = 'test_academy_manager_';
-    private const TOTAL = 50;
+    private const TOTAL = 10;
 
     public function seedAcademyManagers(): array {
         return transaction(function () {
@@ -16,7 +16,7 @@ class AdminTestDataService {
             $created = 0;
             $updated = 0;
 
-            foreach ($this->people() as $index => $person) {
+            foreach (array_slice($this->people(), 0, self::TOTAL) as $index => $person) {
                 $number = $index + 1;
                 $username = self::USERNAME_PREFIX . sprintf('%02d', $number);
                 $existing = DB::table('users')->where('username', $username)->first();

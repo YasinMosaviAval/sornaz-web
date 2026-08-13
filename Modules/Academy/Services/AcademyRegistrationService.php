@@ -66,8 +66,8 @@ class AcademyRegistrationService {
             $branchCount = 0; $staffCount = 0; $studentCount = 0; $contractCount = 0;
             foreach ($academies as $academyIndex => $academy) {
                 $managerId = (int)$academy['created_by'];
-                $sample = $this->sampleAcademies()[$academyIndex % 50];
-                $extraCount = $academyIndex % 6;
+                $sample = $this->sampleAcademies()[$academyIndex % 10];
+                $extraCount = $academyIndex % 2;
                 for ($branchIndex = 1; $branchIndex <= $extraCount; $branchIndex++) {
                     $branchId = $this->createSampleBranch((int)$academy['academy_id'], $managerId, $sample, $academyIndex, $branchIndex, $branchTypes, $provinces, $counties);
                     $branchCount++;
@@ -102,6 +102,16 @@ class AcademyRegistrationService {
 
             $members = $branchIds ? DB::table('academy_branch_members')->whereIn('branch_id', $branchIds)->get() : [];
             $memberIds = array_map(fn(array $row) => (int)$row['member_id'], $members);
+            $rooms = $branchIds ? DB::table('academy_branch_classrooms')->whereIn('branch_id', $branchIds)->get() : [];
+            $roomIds = array_map(fn(array $row) => (int)$row['classroom_id'], $rooms);
+            if ($roomIds) {
+                $assets = DB::table('academy_branch_classroom_assets')->whereIn('classroom_id', $roomIds)->get();
+                $assetIds = array_map(fn(array $row) => (int)$row['classroom_asset_id'], $assets);
+                $this->deleteTranslations('academy_branch_classroom_assets', $assetIds);
+                $this->deleteTranslations('academy_branch_classrooms', $roomIds);
+                DB::table('academy_branch_classroom_assets')->whereIn('classroom_id', $roomIds)->delete();
+                DB::table('academy_branch_classrooms')->whereIn('classroom_id', $roomIds)->delete();
+            }
             if ($memberIds) {
                 DB::table('academy_branch_member_permissions')->whereIn('member_id', $memberIds)->delete();
                 DB::table('academy_branch_member_roles')->whereIn('member_id', $memberIds)->delete();
@@ -342,10 +352,10 @@ class AcademyRegistrationService {
     private function seedBranchPeople(int $branchId, int $managerId, int $academyIndex, int $branchIndex): array {
         $serial = ($academyIndex + 1) * 10 + $branchIndex;
         $definitions = [
-            'teacher' => 1 + ($serial % 5),
-            'receptionist' => 1 + ($serial % 5),
-            'other' => $serial % 4,
-            'manager' => $serial % 4,
+            'teacher' => 1 + ($serial % 2),
+            'receptionist' => 1,
+            'other' => $serial % 2,
+            'manager' => ($serial + 1) % 2,
         ];
         $firstNames = ['آرمان','سارا','پرهام','نگار','کیان','مهسا','امیر','نرگس','رضا','مریم'];
         $lastNames = ['احمدی','محمدی','کریمی','رضایی','موسوی','نوری','حسینی'];
@@ -364,7 +374,7 @@ class AcademyRegistrationService {
                 $staff++; $contracts++;
                 if ($role === 'teacher') {
                     $teacherNumber++;
-                    $studentTotal = ($serial + $teacherNumber) % 6;
+                    $studentTotal = ($serial + $teacherNumber) % 3;
                     for ($s = 1; $s <= $studentTotal; $s++) {
                         $studentKey = sprintf('%02d_%02d_t%02d_s%03d', $academyIndex + 1, $branchIndex, $teacherNumber, $s);
                         $studentId = $this->seedUser(['username' => self::MEMBER_PREFIX . 'student_' . $studentKey,
