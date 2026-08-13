@@ -7,6 +7,7 @@ use Modules\Analytics\Controllers\Web\AnalyticsController;
 use Modules\Academy\Controllers\Web\AcademyBranchController;
 use Modules\Academy\Controllers\Web\AcademyClassroomController;
 use Modules\Academy\Controllers\Web\AcademyBranchOfferingController;
+use Modules\Academy\Controllers\Web\AcademyCourseController;
 
 Router::get('/academy/academy', [AnalyticsController::class, 'academy']);
 Router::get('/academy/academies', [AcademyRegistrationController::class, 'index']);
@@ -38,6 +39,13 @@ Router::get('/academy/admin/branch-offerings', [AcademyBranchOfferingController:
 Router::post('/academy/admin/branch-offerings/schedules', [AcademyBranchOfferingController::class, 'storeSchedule'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/branch-offerings/schedules/{id}/update', [AcademyBranchOfferingController::class, 'updateSchedule'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/branch-offerings/{type}/{id}/delete', [AcademyBranchOfferingController::class, 'delete'])->middleware(['academy-panel','csrf']);
+Router::get('/academy/admin/courses', [AcademyCourseController::class, 'index'])->middleware('academy-panel');
+Router::post('/academy/admin/courses', [AcademyCourseController::class, 'store'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/courses/{id}/update', [AcademyCourseController::class, 'update'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/courses/{id}/delete', [AcademyCourseController::class, 'destroy'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/course-levels', [AcademyCourseController::class, 'storeLevel'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/course-levels/{id}/update', [AcademyCourseController::class, 'updateLevel'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/course-levels/{id}/delete', [AcademyCourseController::class, 'deleteLevel'])->middleware(['academy-panel','csrf']);
 
 Router::group(
     ['prefix' => '/academy'],

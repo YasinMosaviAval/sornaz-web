@@ -50,10 +50,10 @@
                 <select id="filterCourseStatus" onchange="filterCourses()"
                         class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                     <option value="">همه وضعیت‌ها</option>
-                    <option value="فعال">فعال</option>
                     <option value="در انتظار">در انتظار</option>
-                    <option value="غیرفعال">غیرفعال</option>
-                    <option value="تکمیل‌شده">تکمیل‌شده</option>
+                    <option value="باز">باز</option>
+                    <option value="در حال برگزاری">در حال برگزاری</option>
+                    <option value="پایان‌یافته">پایان‌یافته</option>
                 </select>
             </div>
             <div>

@@ -4,9 +4,13 @@ namespace Modules\Analytics\Controllers\Web;
 
 use Core\http\ResponseFactory;
 use Modules\Analytics\Services\AdminTestDataService;
+use Modules\Academy\Services\AcademyCourseService;
 
 class AdminTestController {
-    public function __construct(protected AdminTestDataService $tests) {}
+    public function __construct(protected AdminTestDataService $tests, protected AcademyCourseService $courses) {}
+
+    public function seedBranchCourses() {if(env('APP_ENV','production')!=='local')abort(404);try{$r=$this->courses->seedCourses((int)auth()->id());session()->flash('admin_test_message',"تست دوره‌ها تکمیل شد: {$r['created']} ایجاد و {$r['updated']} همگام‌سازی شد.");}catch(\Throwable$e){session()->flash('admin_test_error','ایجاد دوره‌های آزمایشی ناموفق بود: '.$e->getMessage());}return redirect('/analytics/admin-panel#tests');}
+    public function deleteBranchCourses() {if(env('APP_ENV','production')!=='local')abort(404);try{$r=$this->courses->deleteSeedCourses((int)auth()->id());session()->flash('admin_test_message',"{$r['deleted']} دوره آزمایشی حذف شد.");}catch(\Throwable$e){session()->flash('admin_test_error','حذف دوره‌های آزمایشی ناموفق بود: '.$e->getMessage());}return redirect('/analytics/admin-panel#tests');}
 
     public function seedAcademyManagers() {
         if (env('APP_ENV', 'production') !== 'local') abort(404);

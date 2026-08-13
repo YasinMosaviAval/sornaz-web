@@ -80,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const submenuMap = {
         branchesSubmenu: ['branches','branch-types'],
         classroomsSubmenu: ['classrooms','classroom-types'],
+        coursesSubmenu: ['courses','course-levels','terms'],
         profilesSubmenu: [
             'users',
             'roles',

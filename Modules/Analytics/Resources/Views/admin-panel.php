@@ -28,6 +28,7 @@
             component('classrooms');
             component('classroom-types');
             component('courses');
+            component('course-levels');
             component('terms');
             component('gallery');
             component('finance');

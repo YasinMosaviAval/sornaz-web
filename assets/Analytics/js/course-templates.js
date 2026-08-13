@@ -48,10 +48,11 @@
 
     function courseFormFields(item, prefix) {
         const id = (name) => prefix ? `${prefix}${name}` : `course${name}`;
-        const branches = (typeof allBranches !== 'undefined' ? allBranches : []).map(b => ({ value: b.id, label: b.name }));
-        const levels = (typeof allCourseLevels !== 'undefined' ? allCourseLevels : []).map(l => ({ value: l.name, label: l.name }));
-        const instruments = (typeof courseInstruments !== 'undefined' ? courseInstruments : []).map(i => ({ value: i, label: i }));
-        const statuses = (typeof courseStatuses !== 'undefined' ? courseStatuses : ['فعال', 'در انتظار', 'غیرفعال', 'تکمیل‌شده']).map(s => ({ value: s, label: s }));
+        const branches = (window.courseBranches || []).map(b => ({ value: b.id, label: b.name }));
+        const levels = (window.allCourseLevels || []).map(l => ({ value: l.id, label: l.name }));
+        const branchId = item.branchId || '';
+        const instruments = (window.courseLessons || []).filter(i => i.branchId == branchId).map(i => ({ value: i.id, label: i.name }));
+        const statuses = [{value:'pending',label:'در انتظار'},{value:'open',label:'باز'},{value:'ongoing',label:'در حال برگزاری'},{value:'finished',label:'پایان‌یافته'}];
 
         return `
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -62,20 +63,20 @@
                 <div>
                     <label class="block text-sm font-medium mb-2">سطح دوره *</label>
                     <select id="${id('Level')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(levels, item.level || (levels[0] && levels[0].value))}
+                        ${renderOptions(levels, item.level_id || (levels[0] && levels[0].value))}
                     </select>
                     <button type="button" onclick="promptAddCourseLevel()" class="text-sm text-indigo-600 mt-1">+ سطح جدید</button>
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">شعبه *</label>
-                    <select id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(branches, item.branchId)}
+                    <select id="${id('Branch')}" onchange="refreshCourseLessons('${prefix}')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                        <option value="">شعبه را انتخاب کنید</option>${renderOptions(branches, item.branchId)}
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">ساز / تخصص</label>
-                    <select id="${id('Instrument')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(instruments, item.instrument || (instruments[0] && instruments[0].value))}
+                    <select id="${id('Instrument')}" ${branchId?'':'disabled'} class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 disabled:bg-gray-100">
+                        <option value="">درس / تخصص را انتخاب کنید</option>${renderOptions(instruments, item.lesson_id)}
                     </select>
                 </div>
                 <div>
@@ -83,18 +84,18 @@
                     <input id="${id('Capacity')}" type="number" min="1" value="${escapeHtml(item.capacity ?? 10)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-2">ثبت‌نام‌شده</label>
-                    <input id="${id('Enrolled')}" type="number" min="0" value="${escapeHtml(item.enrolled ?? 0)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                </div>
-                <div>
                     <label class="block text-sm font-medium mb-2">وضعیت</label>
                     <select id="${id('Status')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(statuses, item.status || 'فعال')}
+                        ${renderOptions(statuses, item.status_code || 'pending')}
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">مدرس</label>
                     <input id="${id('Teacher')}" type="text" value="${escapeHtml(item.teacher || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5" placeholder="نام مدرس">
+                </div>
+                <div class="sm:col-span-2 lg:col-span-3">
+                    <label class="block text-sm font-medium mb-2">خلاصه دوره</label>
+                    <input id="${id('Summary')}" value="${escapeHtml(item.summary || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                 </div>
                 <div class="sm:col-span-2 lg:col-span-3">
                     <label class="block text-sm font-medium mb-2">توضیحات</label>
