@@ -783,6 +783,7 @@ function readCollection(containerId, selector, mapper) {
 }
 
 function readTermForm(prefix) {
+    if(window.termCourses&&window.termCourses.length){const value=name=>termField(prefix,name),course=value('Course'),room=value('Classroom'),currency=value('Currency'),discount=value('Discount'),repeat=value('RepeatType'),status=value('Status'),teachers=value('TeachersContainer'),students=value('StudentsContainer'),sessions=value('SessionsContainer'),installmentCount=Math.max(1,Number(value('InstallmentCount')?.value||1));return{name:value('Name')?.value.trim()||'',branchId:Number(value('Branch')?.value||0),courseId:Number(course?.value||0),classroomId:Number(room?.value||0),currencyId:Number(currency?.value||0),cost:Number(value('Cost')?.value||0),installmentCount,installments:Array.from({length:installmentCount},()=>({amount:1})),discountId:Number(discount?.value||0),repeatType:repeat?.value||'no-period',status:status?.value||'pending',summary:value('Summary')?.value.trim()||'',description:value('Description')?.value.trim()||'',teachers:teachers?[...teachers.querySelectorAll('select')].filter(x=>x.value).map(x=>({id:Number(x.value),name:x.selectedOptions[0]?.textContent||''})):[],students:students?[...students.querySelectorAll('select')].filter(x=>x.value).map(x=>({id:Number(x.value),name:x.selectedOptions[0]?.textContent||''})):[],sessions:sessions?[...sessions.querySelectorAll('input')].map(x=>({date:x.value})):[]};}
     const field = function (suffix) {
         return document.getElementById(prefix ? (prefix + suffix) : ('term' + suffix));
     };
@@ -851,6 +852,18 @@ function readTermForm(prefix) {
     };
 }
 
+function termEncode(data){const bytes=new TextEncoder().encode(JSON.stringify(data));let value='';bytes.forEach(b=>value+=String.fromCharCode(b));return btoa(value).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+async function termApi(url,data=null){const token=window.adminCsrfToken||'',options={method:data?'POST':'GET',credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}};if(data){options.headers['Content-Type']='application/x-www-form-urlencoded;charset=UTF-8';options.headers['X-CSRF-TOKEN']=token;options.body=new URLSearchParams({_token:token,payload_b64:termEncode(data)}).toString();}const response=await fetch(url,options),raw=await response.text();let body;try{body=JSON.parse(raw)}catch(e){throw new Error('پاسخ معتبر JSON از سرور دریافت نشد.')}const envelope=body.data??body;if(!response.ok||envelope.success===false)throw new Error(envelope.message||'عملیات ترم ناموفق بود.');return envelope.data??envelope;}
+window.loadTerms=async function(){const data=await termApi('/academy/admin/terms');window.termBranches=data.branches||[];window.termCourses=data.courses||[];window.termClassrooms=data.classrooms||[];window.termCurrencies=data.currencies||[];window.termDiscounts=data.discounts||[];window.termMembers=data.members||[];window.allBranches=termBranches;allTermCurrencies=termCurrencies;allTermCourseOptions=termCourses;allTermClassroomOptions=termClassrooms;allTerms=data.terms||[];filteredTerms=allTerms.slice();renderTermsBranchTabs();renderTermFilters();filterTerms();return data;};
+function termField(prefix,name){return document.getElementById(prefix?prefix+name:'term'+name)}
+window.refreshTermDependencies=function(prefix){const branch=Number(termField(prefix,'Branch')?.value||0),course=termField(prefix,'Course'),room=termField(prefix,'Classroom');if(course){course.disabled=!branch;course.innerHTML='<option value="">انتخاب دوره</option>'+termCourses.filter(x=>x.branchId===branch).map(x=>`<option value="${x.id}">${x.name}</option>`).join('');}if(room){room.disabled=!branch;room.innerHTML='<option value="">انتخاب کلاس</option>'+termClassrooms.filter(x=>x.branchId===branch).map(x=>`<option value="${x.id}">${x.name}</option>`).join('');}};
+window.refreshTermCourse=function(prefix){const course=termCourses.find(x=>x.id===Number(termField(prefix,'Course')?.value||0));if(!course)return;const render=(type,capacity)=>{const box=termField(prefix,type==='teacher'?'TeachersContainer':'StudentsContainer');if(!box)return;box.innerHTML=Array.from({length:capacity},(_,i)=>`<div class="mb-3"><label class="mb-1 block text-xs">${type==='teacher'?'استاد':'هنرجو'} ${i+1}</label><select class="term-${type}-select w-full rounded-2xl border px-4 py-3" data-person-index="${i}" onchange="refreshTermPeople('${prefix}','${type}')" ${i?'disabled':''}><option value="">انتخاب کنید</option></select></div>`).join('');refreshTermPeople(prefix,type);};render('teacher',course.teacher_capacity);render('student',course.student_capacity);};
+window.refreshTermPeople=function(prefix,type){const branch=Number(termField(prefix,'Branch')?.value||0),course=termCourses.find(x=>x.id===Number(termField(prefix,'Course')?.value||0)),box=termField(prefix,type==='teacher'?'TeachersContainer':'StudentsContainer');if(!box||!course)return;const selects=[...box.querySelectorAll('select')],selected=selects.map(x=>x.value).filter(Boolean),available=termMembers.filter(x=>x.branchId===branch&&x.type===type&&(type!=='teacher'||x.lessonId===course.lessonId));selects.forEach((select,i)=>{const value=select.value;select.disabled=i>0&&!selects[i-1].value;select.innerHTML='<option value="">انتخاب کنید</option>'+available.filter(x=>!selected.includes(String(x.id))||String(x.id)===value).map(x=>`<option value="${x.id}" ${String(x.id)===value?'selected':''}>${x.name}</option>`).join('');});};
+window.rebuildDbTermSessions=function(prefix){const count=Math.max(1,Number(termField(prefix,'SessionCount')?.value||1)),box=termField(prefix,'SessionsContainer'),old=box?[...box.querySelectorAll('input')].map(x=>x.value):[];if(box)box.innerHTML=Array.from({length:count},(_,i)=>`<div><label class="mb-1 block text-xs">جلسه ${i+1}</label><input type="date" value="${old[i]||''}" data-session-index="${i}" onchange="refreshTermSessionDates('${prefix}')" class="term-session-date w-full rounded-2xl border px-4 py-3"></div>`).join('');refreshTermSessionDates(prefix);};
+window.refreshTermSessionDates=function(prefix){const repeat=termField(prefix,'RepeatType')?.value||'no-period',box=termField(prefix,'SessionsContainer');if(!box)return;const inputs=[...box.querySelectorAll('input')],first=inputs[0]?.value;if(repeat==='no-period'){inputs.forEach(x=>x.disabled=false);return;}const days={'week':7,'2-week':14,'3-week':21,'4-week':28},start=first?new Date(first+'T12:00:00'):null;inputs.forEach((input,i)=>{input.disabled=i>0;if(!start||!i)return;const date=new Date(start);if(days[repeat])date.setDate(date.getDate()+days[repeat]*i);else if(repeat==='month')date.setMonth(date.getMonth()+i);else if(repeat==='year')date.setFullYear(date.getFullYear()+i);input.value=date.toISOString().slice(0,10);});};
+window.openAddTermDiscountModal=function(prefix){const host=document.getElementById('modalContainer'),termHtml=host.innerHTML;window.pendingTermModal={html:termHtml,prefix};host.innerHTML=`<div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"><div class="w-full max-w-lg rounded-3xl bg-white p-7"><h2 class="mb-5 text-xl font-bold">افزودن تخفیف جدید</h2><div class="space-y-4"><input id="newTermDiscountTitle" placeholder="عنوان تخفیف" class="w-full rounded-2xl border p-4"><select id="newTermDiscountType" class="w-full rounded-2xl border p-4"><option value="percentage">درصدی</option><option value="fixed">مبلغ ثابت ویژه</option></select><input id="newTermDiscountValue" type="number" min="0" placeholder="مقدار تخفیف" class="w-full rounded-2xl border p-4"><div class="flex gap-3"><button onclick="saveNewTermDiscount()" class="flex-1 rounded-2xl bg-indigo-600 p-3 text-white">ذخیره</button><button onclick="restoreTermModal()" class="flex-1 rounded-2xl border p-3">انصراف</button></div></div></div></div>`;};
+window.restoreTermModal=function(){if(window.pendingTermModal)document.getElementById('modalContainer').innerHTML=window.pendingTermModal.html;};window.saveNewTermDiscount=async function(){const data={title:document.getElementById('newTermDiscountTitle').value.trim(),type:document.getElementById('newTermDiscountType').value,value:Number(document.getElementById('newTermDiscountValue').value||0)};try{const row=await termApi('/academy/admin/term-discounts',data),state=window.pendingTermModal;termDiscounts.push(row);document.getElementById('modalContainer').innerHTML=state.html;const select=termField(state.prefix,'Discount');if(select){select.insertAdjacentHTML('beforeend',`<option value="${row.id}">${row.name}</option>`);select.value=String(row.id);}window.pendingTermModal=null;}catch(e){alert(e.message)}};
+
 // ==================== CRUD ====================
 window.openAddTermModal = async function () {
     if (!document.getElementById('modalContainer')) {
@@ -863,11 +876,7 @@ window.openAddTermModal = async function () {
 window.saveTerm = async function () {
     const data = readTermForm('');
     if (!validateTermData(data)) return;
-    allTerms.unshift(Object.assign({ id: Date.now(), attendance: {} }, data));
-    renderTermFilters();
-    filterTerms();
-    closeModal();
-    alert('✅ ترم با موفقیت اضافه شد');
+    try{await termApi('/academy/admin/terms',data);await loadTerms();closeModal();alert('✅ ترم با موفقیت اضافه شد');}catch(e){alert(e.message)}
 };
 
 window.viewTerm = async function (id) {
@@ -887,12 +896,7 @@ window.saveEditedTerm = async function (id) {
     if (!validateTermData(data)) return;
     const index = allTerms.findIndex(function (x) { return x.id === id; });
     if (index === -1) return;
-    allTerms[index] = Object.assign({}, allTerms[index], data);
-    editingTermRowId = null;
-    renderTermFilters();
-    filterTerms();
-    closeModal();
-    alert('✅ تغییرات ذخیره شد');
+    try{await termApi('/academy/admin/terms/'+id+'/update',data);await loadTerms();editingTermRowId=null;closeModal();alert('✅ تغییرات ذخیره شد');}catch(e){alert(e.message)}
 };
 
 window.toggleTermInlineEdit = async function (id) {
@@ -906,16 +910,12 @@ window.saveInlineTerm = async function (id) {
     if (!validateTermData(data)) return;
     const index = allTerms.findIndex(function (x) { return x.id === id; });
     if (index === -1) return;
-    allTerms[index] = Object.assign({}, allTerms[index], data);
-    editingTermRowId = null;
-    renderTermFilters();
-    filterTerms();
-    alert('✅ تغییرات با موفقیت ذخیره شد');
+    try{await termApi('/academy/admin/terms/'+id+'/update',data);await loadTerms();editingTermRowId=null;alert('✅ تغییرات با موفقیت ذخیره شد');}catch(e){alert(e.message)}
 };
 
 window.deleteTerm = async function (id) {
     if (!(await AppDialog.confirmDelete(allTerms, id, 'ترم'))) return;
-    allTerms = allTerms.filter(function (t) { return t.id !== id; });
+    await termApi('/academy/admin/terms/'+id+'/delete',{});allTerms = allTerms.filter(function (t) { return t.id !== id; });
     if (editingTermRowId === id) editingTermRowId = null;
     if (attendanceTermRowId === id) attendanceTermRowId = null;
     renderTermFilters();
@@ -1073,9 +1073,7 @@ window.generateTermsPDF = async function () {
 (function initTerms() {
     setTimeout(function () {
         if (document.getElementById('termsTable')) {
-            renderTermsBranchTabs();
-            renderTermFilters();
-            filterTerms();
+            loadTerms().catch(function(e){console.error(e);alert(e.message)});
         }
     }, 200);
 })();

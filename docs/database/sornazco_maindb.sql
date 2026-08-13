@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 13, 2026 at 04:28 PM
+-- Generation Time: Aug 13, 2026 at 06:33 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -186,6 +186,7 @@ CREATE TABLE `academy_branch_course_terms` (
   `start_date` date DEFAULT NULL,
   `end_date` date DEFAULT NULL,
   `session_count` int(11) DEFAULT NULL,
+  `session_period` enum('week','2-week','3-week','4-week','month','year','no-period') DEFAULT 'week',
   `price` decimal(12,2) DEFAULT NULL,
   `currency_id` tinyint(4) DEFAULT NULL,
   `status` enum('pending','open','ongoing','finished') DEFAULT 'pending',
