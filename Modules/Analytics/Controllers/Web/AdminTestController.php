@@ -55,7 +55,9 @@ class AdminTestController {
         try {
             $result = $this->tests->seedAcademyManagers(max(1,min(50,(int)($_POST['manager_count']??10))),[
                 'addresses_min'=>(int)($_POST['addresses_min']??1),'addresses_max'=>(int)($_POST['addresses_max']??3),
-                'contacts_min'=>(int)($_POST['contacts_min']??1),'contacts_max'=>(int)($_POST['contacts_max']??10),
+                'contact_phone_min'=>(int)($_POST['contact_phone_min']??1),'contact_phone_max'=>(int)($_POST['contact_phone_max']??2),
+                'contact_email_min'=>(int)($_POST['contact_email_min']??1),'contact_email_max'=>(int)($_POST['contact_email_max']??2),
+                'contact_social_min'=>(int)($_POST['contact_social_min']??0),'contact_social_max'=>(int)($_POST['contact_social_max']??6),
                 'instruments_min'=>(int)($_POST['instruments_min']??0),'instruments_max'=>(int)($_POST['instruments_max']??5),
                 'lessons_min'=>(int)($_POST['lessons_min']??0),'lessons_max'=>(int)($_POST['lessons_max']??5),
                 'gallery_min'=>(int)($_POST['gallery_min']??3),'gallery_max'=>(int)($_POST['gallery_max']??3),

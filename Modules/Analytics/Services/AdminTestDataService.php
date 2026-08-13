@@ -40,7 +40,7 @@ class AdminTestDataService {
                 ]);
                 $this->setFullNameTranslation($userId, $person['name'], $createdAt);
                 $this->syncAddresses($userId,$index,$createdAt,$this->fixtureCount($index,$options['addresses_min']??1,$options['addresses_max']??3));
-                $this->syncContacts($userId,$index,$username,$createdAt,$this->fixtureCount($index,$options['contacts_min']??1,$options['contacts_max']??10));
+                $this->syncContacts($userId,$index,$username,$createdAt,$options);
                 $this->syncMusicExperience($userId,$index,$createdAt,$catalog,$options);
                 $this->syncDefaultUserMedia($userId,$index,$createdAt,$this->fixtureCount($index,$options['gallery_min']??3,$options['gallery_max']??3));
                 $this->syncUserAvailability($userId,$index,$createdAt,$options);
@@ -472,9 +472,10 @@ class AdminTestDataService {
         ];
     }
 
-    private function syncContacts(int $userId, int $userIndex, string $username, string $registeredAt,?int $requestedCount=null): void {
-        $templates = $this->contactTemplates($userIndex, $username);
-        $contactCount = $requestedCount ?? (($userIndex % 10) + 1);
+    private function syncContacts(int $userId, int $userIndex, string $username, string $registeredAt,array $options=[]): void {
+        $allTemplates=$this->contactTemplates($userIndex,$username);$templates=[];
+        foreach(['phone'=>[1,2],'email'=>[1,2],'social'=>[0,6]] as $mode=>[$defaultMin,$defaultMax]){$count=$this->fixtureCount($userIndex+count($templates),$options['contact_'.$mode.'_min']??$defaultMin,$options['contact_'.$mode.'_max']??$defaultMax);$typed=array_values(array_filter($allTemplates,fn($item)=>$item['mode']===$mode));for($i=0;$i<min($count,count($typed));$i++)$templates[]=$typed[$i];}
+        $contactCount=count($templates);
         $seenModes = [];
         $registrationTimestamp = strtotime($registeredAt);
 
