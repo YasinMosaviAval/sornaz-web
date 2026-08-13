@@ -47,7 +47,7 @@ class AcademyRegistrationService {
                 'updated' => $updated,
                 'branches_created' => $created + $updated,
                 'skipped' => false,
-                'message' => "تست ۲ تکمیل شد: {$created} آموزشگاه ایجاد و {$updated} آموزشگاه همگام‌سازی شد؛ برای هرکدام یک شعبه اصلی و دو عضویت مدیر ثبت شد.",
+                'message' => "مرحله آموزشگاه‌های تست ۱ تکمیل شد: {$created} آموزشگاه ایجاد و {$updated} آموزشگاه همگام‌سازی شد؛ برای هر مدیر دقیقاً یک آموزشگاه و شعبه اصلی ثبت شد.",
             ];
         });
     }
