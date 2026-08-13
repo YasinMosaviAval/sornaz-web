@@ -27,8 +27,7 @@ const coursePdfColumns = [
     { field: 'instrument', label: 'ساز / تخصص' },
     { field: 'capacity', label: 'ظرفیت' },
     { field: 'enrolled', label: 'ثبت‌نام‌شده' },
-    { field: 'status', label: 'وضعیت' },
-    { field: 'teacher', label: 'مدرس' }
+    { field: 'status', label: 'وضعیت' }
 ];
 
 function sortCourseItems() {
@@ -126,8 +125,7 @@ window.filterCourses = async function () {
 
     filteredCourses = allCourses.filter(item => {
         const matchBranch = currentCourseBranch === 'all' || item.branchId == currentCourseBranch;
-        const matchSearch = !search || (item.name || '').toLowerCase().includes(search) ||
-            (item.teacher || '').toLowerCase().includes(search);
+        const matchSearch = !search || (item.name || '').toLowerCase().includes(search);
         const matchStatus = !status || item.status === status;
         const matchInstrument = !instrument || item.instrument === instrument;
         return matchBranch && matchSearch && matchStatus && matchInstrument;
@@ -240,14 +238,13 @@ function readCourseForm(prefix) {
     const lessonId = parseInt(field('Instrument')?.value,10);
     const capacity = parseInt(field('Capacity')?.value || '10', 10) || 10;
     const status = field('Status')?.value || 'pending';
-    const teacher = field('Teacher')?.value.trim() || '';
     const summary = field('Summary')?.value.trim() || '';
     const description = field('Description')?.value.trim() || '';
     const branch = getCourseBranches().find(b => b.id === branchId);
     return {
         name, level_id:levelId, branchId,
         branchName: branch ? branch.name : 'نامشخص',
-        lesson_id:lessonId, capacity, status, teacher, summary, description
+        lesson_id:lessonId, capacity, status, summary, description
     };
 }
 
@@ -330,9 +327,9 @@ window.deleteCourse = async function (id) {
 window.exportCoursesToExcel = async function () {
     const data = filteredCourses.length ? filteredCourses : allCourses;
     let csv = '\uFEFF';
-    csv += 'ردیف,نام دوره,سطح,شعبه,ساز,ظرفیت,ثبت‌نام‌شده,وضعیت,مدرس\n';
+    csv += 'ردیف,نام دوره,سطح,شعبه,ساز,ظرفیت,ثبت‌نام‌شده,وضعیت\n';
     data.forEach((item, index) => {
-        csv += `${index + 1},"${item.name}","${item.level || ''}","${item.branchName}","${item.instrument}",${item.capacity},${item.enrolled},"${item.status}","${item.teacher || ''}"\n`;
+        csv += `${index + 1},"${item.name}","${item.level || ''}","${item.branchName}","${item.instrument}",${item.capacity},${item.enrolled},"${item.status}"\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');

@@ -89,10 +89,6 @@
                         ${renderOptions(statuses, item.status_code || 'pending')}
                     </select>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">مدرس</label>
-                    <input id="${id('Teacher')}" type="text" value="${escapeHtml(item.teacher || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5" placeholder="نام مدرس">
-                </div>
                 <div class="sm:col-span-2 lg:col-span-3">
                     <label class="block text-sm font-medium mb-2">خلاصه دوره</label>
                     <input id="${id('Summary')}" value="${escapeHtml(item.summary || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
@@ -180,7 +176,6 @@
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ظرفیت</span><span class="font-medium">${item.capacity}</span></div>
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ثبت‌نام‌شده</span><span class="font-medium">${item.enrolled}</span></div>
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">وضعیت</span><span class="font-medium">${escapeHtml(item.status)}</span></div>
-                                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">مدرس</span><span class="font-medium">${escapeHtml(item.teacher || '—')}</span></div>
                             </div>
                         </div>
                         ${item.description ? `

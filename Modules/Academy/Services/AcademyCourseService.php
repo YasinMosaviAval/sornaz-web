@@ -26,7 +26,7 @@ class AcademyCourseService
         $lessonIds = array_values(array_unique(array_map(fn($r)=>(int)$r['lesson_id'], $lessonRows)));
         $lessonTexts = $this->translations('lessons', $lessonIds, ['title']);
         $courseIds = array_map(fn($r)=>(int)$r['course_id'], $courses);
-        $courseTexts = $this->translations('academy_branch_courses', $courseIds, ['title','summary','description','teacher']);
+        $courseTexts = $this->translations('academy_branch_courses', $courseIds, ['title','summary','description']);
         $branchMap=[]; foreach($branches as $b){$id=(int)$b['branch_id'];$branchMap[$id]=$branchNames[$id]['name']??('شعبه '.$id);}
         $levelMap=[];$levelItems=[];foreach($levels as $l){$id=(int)$l['level_id'];$levelMap[$id]=$levelTexts[$id]['title']??('سطح '.$id);$levelItems[]=['id'=>$id,'name'=>$levelMap[$id],'summary'=>$levelTexts[$id]['summary']??'','description'=>$levelTexts[$id]['description']??''];}
         $lessonItems=[];foreach($lessonRows as $l){$lessonItems[]=['id'=>(int)$l['lesson_id'],'branchId'=>(int)$l['branch_id'],'name'=>$lessonTexts[(int)$l['lesson_id']]['title']??('درس '.$l['lesson_id'])];}
@@ -35,7 +35,7 @@ class AcademyCourseService
             'branches'=>array_map(fn($b)=>['id'=>(int)$b['branch_id'],'name'=>$branchMap[(int)$b['branch_id']]],$branches),
             'levels'=>$levelItems,
             'lessons'=>$lessonItems,
-            'courses'=>array_map(function($c)use($branchMap,$levelMap,$lessonTexts,$courseTexts,$status){$id=(int)$c['course_id'];$lessonId=(int)($c['lesson_id']??0);return ['id'=>$id,'name'=>$courseTexts[$id]['title']??('دوره '.$id),'summary'=>$courseTexts[$id]['summary']??'','description'=>$courseTexts[$id]['description']??'','teacher'=>$courseTexts[$id]['teacher']??'','level_id'=>(int)$c['level_id'],'level'=>$levelMap[(int)$c['level_id']]??'—','branchId'=>(int)$c['branch_id'],'branchName'=>$branchMap[(int)$c['branch_id']]??'—','lesson_id'=>$lessonId,'instrument'=>$lessonTexts[$lessonId]['title']??'—','capacity'=>(int)$c['capacity'],'enrolled'=>0,'status'=>$status[$c['status']]??'در انتظار','status_code'=>$c['status']];},$courses),
+            'courses'=>array_map(function($c)use($branchMap,$levelMap,$lessonTexts,$courseTexts,$status){$id=(int)$c['course_id'];$lessonId=(int)($c['lesson_id']??0);return ['id'=>$id,'name'=>$courseTexts[$id]['title']??('دوره '.$id),'summary'=>$courseTexts[$id]['summary']??'','description'=>$courseTexts[$id]['description']??'','level_id'=>(int)$c['level_id'],'level'=>$levelMap[(int)$c['level_id']]??'—','branchId'=>(int)$c['branch_id'],'branchName'=>$branchMap[(int)$c['branch_id']]??'—','lesson_id'=>$lessonId,'instrument'=>$lessonTexts[$lessonId]['title']??'—','capacity'=>(int)$c['capacity'],'enrolled'=>0,'status'=>$status[$c['status']]??'در انتظار','status_code'=>$c['status']];},$courses),
         ];
     }
 
@@ -48,7 +48,7 @@ class AcademyCourseService
         $title=trim((string)($data['name']??''));if($title==='')throw new RuntimeException('نام دوره الزامی است.');
         $statuses=['در انتظار'=>'pending','باز'=>'open','در حال برگزاری'=>'ongoing','پایان‌یافته'=>'finished','pending'=>'pending','open'=>'open','ongoing'=>'ongoing','finished'=>'finished'];
         $values=['branch_id'=>(int)$branch['branch_id'],'lesson_id'=>$lessonId,'level_id'=>$levelId,'capacity'=>max(1,(int)($data['capacity']??1)),'status'=>$statuses[$data['status']??'pending']??'pending','updated_at'=>date('Y-m-d H:i:s'),'updated_by'=>$actor,'deleted_at'=>null,'deleted_by'=>null];
-        return transaction(function()use($actor,$data,$id,$values,$title){if($id){$row=DB::table('academy_branch_courses')->where('course_id',$id)->whereNull('deleted_at')->first();if(!$row)throw new RuntimeException('دوره یافت نشد.');$this->allowedBranch($actor,(int)$row['branch_id']);DB::table('academy_branch_courses')->where('course_id',$id)->update($values);}else$id=DB::table('academy_branch_courses')->insertGetId(['created_at'=>date('Y-m-d H:i:s'),'created_by'=>$actor]+$values);$this->setTranslations('academy_branch_courses',$id,['title'=>$title,'summary'=>trim((string)($data['summary']??'')),'description'=>trim((string)($data['description']??'')),'teacher'=>trim((string)($data['teacher']??''))],$actor);return ['id'=>$id];});
+        return transaction(function()use($actor,$data,$id,$values,$title){if($id){$row=DB::table('academy_branch_courses')->where('course_id',$id)->whereNull('deleted_at')->first();if(!$row)throw new RuntimeException('دوره یافت نشد.');$this->allowedBranch($actor,(int)$row['branch_id']);DB::table('academy_branch_courses')->where('course_id',$id)->update($values);}else$id=DB::table('academy_branch_courses')->insertGetId(['created_at'=>date('Y-m-d H:i:s'),'created_by'=>$actor]+$values);$this->setTranslations('academy_branch_courses',$id,['title'=>$title,'summary'=>trim((string)($data['summary']??'')),'description'=>trim((string)($data['description']??''))],$actor);return ['id'=>$id];});
     }
 
     public function saveLevel(int $actor,array $data,int $id=0): array
