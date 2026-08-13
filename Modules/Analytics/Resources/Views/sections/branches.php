@@ -76,4 +76,5 @@
             <?php endforeach; ?>
             <th class="p-4 text-right"><button type="button" onclick="sortBranchesBy('id')" class="flex items-center gap-2 font-semibold">عملیات<span id="branchSortIcon-id">↕</span></button></th></tr></thead><tbody id="branchesTableBody"></tbody></table>
     </div>
+    <div id="branchesPagination" class="mt-5 flex flex-col items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-4 sm:flex-row"><div id="branchesPaginationSummary" class="text-sm text-gray-500"></div><div class="flex items-center gap-2"><select id="branchesPageSize" onchange="changeBranchesPageSize(this.value)" class="rounded-xl border px-3 py-2"><option>10</option><option selected>20</option><option>50</option><option>100</option></select><button onclick="changeBranchesPage(-1)" id="branchesPrevPage" class="rounded-xl border px-4 py-2">قبلی</button><span id="branchesPageLabel" class="text-sm"></span><button onclick="changeBranchesPage(1)" id="branchesNextPage" class="rounded-xl border px-4 py-2">بعدی</button></div></div>
 </div>
