@@ -21,12 +21,27 @@ class AdminTestController {
             $network=$this->academies->deleteBranchNetwork();
             $academies=$this->academies->deleteSamples();
             $managers=$this->tests->deleteAcademyManagers();
+            $resetTables=$this->resetAutoIncrements();
             $total=(int)($terms['deleted']??0)+(int)($courses['deleted']??0)+(int)($network['deleted']??0)+(int)($academies['deleted']??0)+(int)($managers['deleted']??0);
-            session()->flash('admin_test_message',"پاک‌سازی کامل تست‌ها انجام شد؛ {$total} رکورد اصلی آزمایشی به‌همراه تمام وابستگی‌هایشان حذف شدند.");
+            session()->flash('admin_test_message',"پاک‌سازی کامل تست‌ها انجام شد؛ {$total} رکورد اصلی آزمایشی حذف و شمارنده شناسه {$resetTables} جدول بازتنظیم شد.");
         } catch (\Throwable $e) {
             session()->flash('admin_test_error','پاک‌سازی کامل اطلاعات تستی ناموفق بود: '.$e->getMessage());
         }
         return redirect('/analytics/admin-panel#tests');
+    }
+
+    private function resetAutoIncrements(): int {
+        $pdo=db();
+        $columns=$pdo->query("SELECT TABLE_NAME,COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND EXTRA LIKE '%auto_increment%' ORDER BY TABLE_NAME")->fetchAll();
+        $reset=0;
+        foreach($columns as $column){
+            $table=(string)$column['TABLE_NAME'];$key=(string)$column['COLUMN_NAME'];
+            if(!preg_match('/^[A-Za-z0-9_]+$/',$table)||!preg_match('/^[A-Za-z0-9_]+$/',$key))continue;
+            $next=(int)$pdo->query("SELECT COALESCE(MAX(`{$key}`),0)+1 FROM `{$table}`")->fetchColumn();
+            $pdo->exec("ALTER TABLE `{$table}` AUTO_INCREMENT = ".max(1,$next));
+            $reset++;
+        }
+        return $reset;
     }
 
     public function seedBranchTerms(){if(env('APP_ENV','production')!=='local')abort(404);try{$r=$this->terms->seed((int)auth()->id(),[(int)($_POST['terms_min']??1),(int)($_POST['terms_max']??50)],[(int)($_POST['sessions_min']??4),(int)($_POST['sessions_max']??8)]);session()->flash('admin_test_message',"تست ترم‌ها تکمیل شد: {$r['created']} ترم، {$r['sessions']} جلسه و {$r['attendance']} حضور و غیاب ایجاد شد.");}catch(\Throwable$e){session()->flash('admin_test_error','ایجاد ترم‌های آزمایشی ناموفق بود: '.$e->getMessage());}return redirect('/analytics/admin-panel#tests');}
