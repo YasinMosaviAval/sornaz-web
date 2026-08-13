@@ -42,7 +42,7 @@
     <div class="bg-white rounded-3xl p-5 mb-6 shadow-sm">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-                <input type="text" id="courseSearch" placeholder="جستجو نام دوره / مدرس..."
+                <input type="text" id="courseSearch" placeholder="جستجوی نام دوره..."
                        class="w-full border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500"
                        onkeyup="filterCourses()">
             </div>
