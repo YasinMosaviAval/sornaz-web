@@ -13,6 +13,7 @@
             <?php if ($error = session()->getFlash('admin_test_error')): ?>
                 <div class="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800"><?= e($error) ?></div>
             <?php endif; ?>
+            <?php if ($report = session()->getFlash('admin_test_report')): ?><div class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900"><h2 class="mb-4 text-lg font-bold">گزارش کامل اجرای تست</h2><div class="grid gap-4 md:grid-cols-2"><?php foreach($report as $section):?><section class="rounded-xl bg-white/70 p-4"><h3 class="font-bold"><?=e($section['title'])?></h3><ul class="mt-2 list-disc space-y-1 pr-5 text-sm"><?php foreach($section['items'] as $item):?><li><?=e($item)?></li><?php endforeach?></ul></section><?php endforeach?></div></div><?php endif; ?>
             <?
             component('add-user-modal');
 
