@@ -13,7 +13,7 @@
             <p class="text-gray-500 mt-1">دوره‌های فعال، غیرفعال و در انتظار تکمیل</p>
         </div>
         <div class="flex flex-wrap gap-3">
-            <button onclick="openAddCourseModal()"
+            <button type="button" data-course-action="add" data-no-inline-edit
                     class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 transition">
                 <i class="fas fa-plus"></i> افزودن دوره جدید
             </button>

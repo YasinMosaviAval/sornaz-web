@@ -5,6 +5,7 @@
             <td class="py-4 px-5">${item.typeLabel}</td>
             <td class="py-4 px-5">${item.contractTitle}</td>
             <td class="py-4 px-5">${item.branch}</td>
+            <td class="py-4 px-5">${item.type === 'teacher' ? escapeHtml(item.lessonName || '—') : '—'}</td>
             <td class="py-4 px-5">${item.startDate}</td>
             <td class="py-4 px-5">${item.endDate}</td>
             <td class="py-4 px-5">${item.price.toLocaleString('fa-IR')} ${item.currency}</td>
@@ -98,11 +99,11 @@
     }
 
     window.getStaffEmptyRowHTML = function () {
-        return `<tr><td colspan="9" class="py-12 text-center text-gray-400">هیچ پرسنلی یافت نشد</td></tr>`;
+        return `<tr><td colspan="10" class="py-12 text-center text-gray-400">هیچ پرسنلی یافت نشد</td></tr>`;
     };
 
     window.getStaffInlineExpandRowHTML = function (item) {
-        return `<td colspan="9" class="p-5 border-t">${window.getStaffInlineEditRowHTML ? window.getStaffInlineEditRowHTML(item) : ''}</td>`;
+        return `<td colspan="10" class="p-5 border-t">${window.getStaffInlineEditRowHTML ? window.getStaffInlineEditRowHTML(item) : ''}</td>`;
     };
 
     window.getStaffInlineEditRowHTML = function (item) {

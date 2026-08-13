@@ -31,7 +31,7 @@
             <td class="py-4 px-5 text-left">
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
                     <button onclick="viewCourse(${item.id})" class="text-indigo-600 hover:underline text-sm leading-6">جزئیات</button>
-                    <button onclick="toggleCourseInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm leading-6">ویرایش</button>
+                    <button type="button" data-course-action="inline-edit" data-course-id="${item.id}" data-no-inline-edit class="text-gray-500 hover:text-indigo-600 text-sm leading-6">ویرایش</button>
                     <button onclick="deleteCourse(${item.id})" class="text-red-500 hover:text-red-700 text-sm leading-6">حذف</button>
                 </div>
             </td>
@@ -165,7 +165,7 @@
                             <p class="text-sm text-gray-500 mt-1">کد دوره: #${item.id}</p>
                         </div>
                         <div class="flex items-center gap-3">
-                            <button onclick="editCourse(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm">ویرایش</button>
+                            <button type="button" data-course-action="edit" data-course-id="${item.id}" data-no-inline-edit class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm">ویرایش</button>
                             <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                         </div>
                     </div>

@@ -62,6 +62,7 @@ const pdfExportColumns = [
     { field: 'typeLabel', label: 'نوع پرسنل' },
     { field: 'contractTitle', label: 'عنوان قرارداد' },
     { field: 'branch', label: 'شعبه' },
+    { field: 'lessonName', label: 'درس مدرس' },
     { field: 'startDate', label: 'تاریخ شروع' },
     { field: 'endDate', label: 'تاریخ خاتمه' },
     { field: 'price', label: 'مبلغ قرارداد' },
@@ -116,7 +117,7 @@ if (false) for (let i = 1; i <= 28; i++) {
         lessons: lessons
     });
 }
-window.addEventListener('academy-data-loaded',function(event){allStaff=(event.detail.members||[]).filter(item=>item.type!=='student');filteredStaff=allStaff.slice();if(document.getElementById('staffTable')){window.renderStaffBranchTabs?.();window.filterStaff();}});
+window.addEventListener('academy-data-loaded',function(event){allStaff=(event.detail.members||[]).filter(item=>item.type!=='student');filteredStaff=allStaff.slice();if(document.getElementById('staffTable')){window.renderStaffBranchTabs?.();window.renderStaffLessonFilter?.();window.filterStaff();}});
 
 // ==================== متغیرهای صفحه‌بندی ====================
 let staffCurrentPage = 1;
@@ -152,7 +153,7 @@ function sortStaffItems() {
 }
 
 window.updateSortIcons = async function () {
-    const fields = ['name', 'typeLabel', 'contractTitle', 'branch', 'startDate', 'endDate', 'price', 'status'];
+    const fields = ['name', 'typeLabel', 'contractTitle', 'branch', 'lessonName', 'startDate', 'endDate', 'price', 'status'];
     fields.forEach(field => {
         const icon = document.getElementById(`sortIcon-${field}`);
         if (!icon) return;
@@ -342,6 +343,7 @@ window.filterStaffByBranch = async function (branchName) {
             }
         });
     }
+    window.renderStaffLessonFilter();
     window.filterStaff();
 };
 
@@ -350,6 +352,7 @@ window.filterStaff = async function () {
     const type = document.getElementById('filterStaffType')?.value || '';
     const status = document.getElementById('filterStaffStatus')?.value || '';
     const currency = document.getElementById('filterStaffCurrency')?.value || '';
+    const lesson = document.getElementById('filterStaffLesson')?.value || '';
     const branch = currentStaffBranch === 'all' ? '' : currentStaffBranch;
 
     filteredStaff = allStaff.filter(item => {
@@ -358,12 +361,21 @@ window.filterStaff = async function () {
         const matchBranch = !branch || item.branch === branch;
         const matchStatus = !status || item.status === status;
         const matchCurrency = !currency || item.currency === currency;
-        return matchSearch && matchType && matchBranch && matchStatus && matchCurrency;
+        const matchLesson = !lesson || String(item.lessonId || '') === lesson;
+        return matchSearch && matchType && matchBranch && matchStatus && matchCurrency && matchLesson;
     });
 
     staffCurrentPage = 1;
     sortStaffItems();
     renderStaffTable(filteredStaff);
+};
+
+window.renderStaffLessonFilter = function () {
+    const select=document.getElementById('filterStaffLesson');if(!select)return;
+    const current=select.value,items=new Map();
+    allStaff.filter(item=>item.type==='teacher'&&item.lessonId&&(currentStaffBranch==='all'||item.branch===currentStaffBranch)).forEach(item=>items.set(String(item.lessonId),item.lessonName||'—'));
+    select.innerHTML='<option value="">همه درس‌های شعبه‌ها</option>'+Array.from(items.entries()).sort((a,b)=>a[1].localeCompare(b[1],'fa')).map(([id,name])=>`<option value="${id}">${name}</option>`).join('');
+    if(items.has(current))select.value=current;
 };
 
 window.toggleStaffInlineEdit = async function (id) {
@@ -453,7 +465,7 @@ window.exportStaffToExcel = async function () {
     csv += 'ردیف,نام,نوع پرسنل,عنوان قرارداد,شعبه,تاریخ شروع,تاریخ خاتمه,مبلغ قرارداد,واحد پول,وضعیت,شماره تماس,شروع فعالیت,نمایش پروفایل,دروس\n';
 
     data.forEach((item, index) => {
-        const lessonsText = formatLessonsSummary(item.lessons).replace(/"/g, '""');
+        const lessonsText = (item.lessonName || formatLessonsSummary(item.lessons)).replace(/"/g, '""');
         const vis = item.profileVisibility === 'private' ? 'خصوصی' : 'عمومی';
         csv += `${index + 1},"${item.name}","${item.typeLabel}","${item.contractTitle}","${item.branch}",${item.startDate},${item.endDate},${item.price},"${item.currency}","${item.status}","${item.phone}","${item.activityStart || ''}","${vis}","${lessonsText}"\n`;
     });
