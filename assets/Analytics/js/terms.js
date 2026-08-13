@@ -92,21 +92,21 @@ function getTermCourseCapacityFromContext(prefix) {
     return window.getTermCourseCapacity(courseId);
 }
 
-window.getTermCourseOptions = async function () {
+window.getTermCourseOptions = function () {
     if (typeof allCourses !== 'undefined' && allCourses.length) {
         return allCourses.map(function (c) { return { value: c.id, label: c.name, id: c.id, name: c.name }; });
     }
     return allTermCourseOptions.map(function (c) { return { value: c.id, label: c.name, id: c.id, name: c.name }; });
 };
 
-window.getTermClassroomOptions = async function () {
+window.getTermClassroomOptions = function () {
     if (typeof allClassrooms !== 'undefined' && allClassrooms.length) {
         return allClassrooms.map(function (c) { return { value: c.id, label: c.name, id: c.id, name: c.name }; });
     }
     return allTermClassroomOptions.map(function (c) { return { value: c.id, label: c.name, id: c.id, name: c.name }; });
 };
 
-window.getTermTeacherOptions = async function () {
+window.getTermTeacherOptions = function () {
     if (typeof allStaff !== 'undefined' && allStaff.length) {
         return allStaff.filter(function (s) { return s.type === 'teacher' || !s.type; })
             .map(function (s) { return { value: s.id, label: s.name, id: s.id, name: s.name }; });
@@ -114,7 +114,7 @@ window.getTermTeacherOptions = async function () {
     return allTermTeacherOptions.map(function (t) { return { value: t.id, label: t.name, id: t.id, name: t.name }; });
 };
 
-window.getTermStudentOptions = async function () {
+window.getTermStudentOptions = function () {
     if (typeof allStudents !== 'undefined' && allStudents.length) {
         return allStudents.map(function (s) { return { value: s.id, label: s.name, id: s.id, name: s.name }; });
     }
@@ -145,7 +145,7 @@ function pickN(arr, n) {
 
 // ==================== ۴۰ ترم نمونه ====================
 const termCourseCapacities = { 1: 8, 2: 10, 3: 12, 4: 6, 5: 7, 6: 9, 7: 8, 8: 10 };
-window.getTermCourseCapacity = async function (courseId) {
+window.getTermCourseCapacity = function (courseId) {
     if (!courseId && courseId !== 0) return 8;
     const normalized = Number(courseId);
     return termCourseCapacities[normalized] || 8;

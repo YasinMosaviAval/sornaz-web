@@ -36,7 +36,7 @@
 
     <!-- فیلترها -->
     <div class="bg-white rounded-3xl p-5 mb-6 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
                 <input type="text" id="staffSearch" placeholder="جستجو نام / موبایل / عنوان قرارداد..." 
                        class="w-full border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500"
@@ -67,13 +67,18 @@
                     <option value="یورو">یورو</option>
                 </select>
             </div>
+            <div>
+                <select id="filterStaffLesson" onchange="filterStaff()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                    <option value="">همه درس‌های شعبه‌ها</option>
+                </select>
+            </div>
         </div>
     </div>
 
     <!-- جدول -->
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1200px]" id="staffTable">
+            <table class="w-full min-w-[1400px]" id="staffTable">
                 <thead class="bg-gray-50 border-b">
                     <tr>
                                 <th class="text-right py-5 px-5 font-medium">
@@ -94,6 +99,11 @@
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortStaffBy('branch')" class="flex items-center gap-1">
                                 شعبه <span id="sortIcon-branch">↕</span>
+                            </button>
+                        </th>
+                        <th class="text-right py-5 px-5 font-medium">
+                            <button onclick="sortStaffBy('lessonName')" class="flex items-center gap-1">
+                                درس مدرس <span id="sortIcon-lessonName">↕</span>
                             </button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">

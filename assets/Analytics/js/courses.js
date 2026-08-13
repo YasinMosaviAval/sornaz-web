@@ -265,6 +265,22 @@ window.openAddCourseModal = async function () {
         ? window.getCourseAddModalHTML() : '';
 };
 
+// اتصال پایدار اکشن‌ها؛ در حالت ویرایش متن نیز کلیک دکمه‌های مدیریتی نباید رهگیری شود.
+if (!window.courseActionDelegationBound) {
+    window.courseActionDelegationBound = true;
+    document.addEventListener('click', function (event) {
+        const button = event.target.closest('[data-course-action]');
+        if (!button) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const id = Number(button.dataset.courseId || 0);
+        const action = button.dataset.courseAction;
+        if (action === 'add') window.openAddCourseModal();
+        if (action === 'edit' && id) window.editCourse(id);
+        if (action === 'inline-edit' && id) window.toggleCourseInlineEdit(id);
+    });
+}
+
 window.saveCourse = async function () {
     const data = readCourseForm('');
     if (!data.name) return alert('نام دوره الزامی است');

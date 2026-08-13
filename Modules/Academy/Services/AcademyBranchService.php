@@ -42,23 +42,43 @@ class AcademyBranchService {
     }
 
     private function members(?int $academyId): array {
+        $this->syncTeacherLessons($academyId);
         $where = $academyId === null ? '' : ' AND b.academy_id = ' . (int)$academyId;
-        $statement = db()->prepare("SELECT m.member_id, m.user_id, m.branch_id, m.status, m.joined_at, u.username, u.phone, u.national_code, u.birthday, u.visibility, c.member_contract_id, c.type contract_type, c.start_date, c.end_date, c.price, c.currency_id FROM academy_branch_members m JOIN users u ON u.user_id=m.user_id JOIN academy_branches b ON b.branch_id=m.branch_id LEFT JOIN academy_branch_member_contracts c ON c.member_id=m.member_id AND c.deleted_at IS NULL WHERE m.deleted_at IS NULL AND u.deleted_at IS NULL AND b.deleted_at IS NULL{$where} ORDER BY m.member_id DESC");
+        $statement = db()->prepare("SELECT m.member_id, m.user_id, m.branch_id, m.status, m.joined_at, u.username, u.phone, u.national_code, u.birthday, u.visibility, c.member_contract_id, c.type contract_type, c.user_lesson_id, c.start_date, c.end_date, c.price, c.currency_id, ul.lesson_id, ul.level_id FROM academy_branch_members m JOIN users u ON u.user_id=m.user_id JOIN academy_branches b ON b.branch_id=m.branch_id LEFT JOIN academy_branch_member_contracts c ON c.member_id=m.member_id AND c.deleted_at IS NULL LEFT JOIN user_lessons ul ON ul.user_lesson_id=c.user_lesson_id AND ul.deleted_at IS NULL WHERE m.deleted_at IS NULL AND u.deleted_at IS NULL AND b.deleted_at IS NULL{$where} ORDER BY m.member_id DESC");
         $statement->execute(); $rows = $statement->fetchAll();
         if (!$rows) return [];
         $userIds = array_values(array_unique(array_map(fn(array $r)=>(int)$r['user_id'], $rows)));
         $branchIds = array_values(array_unique(array_map(fn(array $r)=>(int)$r['branch_id'], $rows)));
         $names=[]; foreach (DB::table('translations')->where('table_name','users')->where('field','full_name')->where('locale','fa')->whereIn('table_id',$userIds)->get() as $t) $names[(int)$t['table_id']]=$t['value'];
         $branches=[]; foreach (DB::table('translations')->where('table_name','academy_branches')->where('field','name')->where('locale','fa')->whereIn('table_id',$branchIds)->get() as $t) $branches[(int)$t['table_id']]=$t['value'];
-        return array_map(function(array $r) use($names,$branches){
+        $lessonIds=array_values(array_unique(array_filter(array_map(fn(array $r)=>(int)($r['lesson_id']??0),$rows))));
+        $lessonNames=[]; if($lessonIds) foreach(DB::table('translations')->where('table_name','lessons')->where('field','title')->where('locale','fa')->whereIn('table_id',$lessonIds)->whereNull('deleted_at')->get() as $t)$lessonNames[(int)$t['table_id']]=$t['value'];
+        return array_map(function(array $r) use($names,$branches,$lessonNames){
             $student=str_contains((string)$r['username'], self::STUDENT_USERNAME_MARKER);
             return ['id'=>(int)$r['member_id'],'user_id'=>(int)$r['user_id'],'name'=>$names[(int)$r['user_id']]??$r['username'],'phone'=>$r['phone']?:'',
                 'nationalId'=>$r['national_code']?:'','birthDate'=>$r['birthday']?:'','branchId'=>(int)$r['branch_id'],'branch'=>$branches[(int)$r['branch_id']]??('شعبه '.$r['branch_id']),
                 'type'=>$student?'student':($r['contract_type']?:'other'),'typeLabel'=>$student?'هنرجو':match($r['contract_type']){'teacher'=>'مدرس','receptionist'=>'پذیرش','manager'=>'مدیر',default=>'کارمند'},
                 'contractTitle'=>$student?'قرارداد آموزشی':'قرارداد همکاری','contractDescription'=>'قرارداد ثبت‌شده در سامانه','startDate'=>$r['start_date']?:$r['joined_at'],'endDate'=>$r['end_date']?:'',
                 'price'=>(float)($r['price']?:0),'currencyId'=>(int)($r['currency_id']?:1),'currency'=>'تومان','status'=>$r['status']==='active'?'فعال':'غیرفعال',
-                'profileVisibility'=>$r['visibility']?:'private','instrument'=>'','level'=>'','teacher'=>'','remaining'=>0,'financial'=>'تسویه','attendance'=>'—','registrationDate'=>$r['joined_at']?:''];
+                'profileVisibility'=>$r['visibility']?:'private','userLessonId'=>(int)($r['user_lesson_id']??0),'lessonId'=>(int)($r['lesson_id']??0),'lessonName'=>$lessonNames[(int)($r['lesson_id']??0)]??'—','instrument'=>'','level'=>'','teacher'=>'','remaining'=>0,'financial'=>'تسویه','attendance'=>'—','registrationDate'=>$r['joined_at']?:''];
         },$rows);
+    }
+
+    private function syncTeacherLessons(?int $academyId): void {
+        $where=$academyId===null?'':' AND b.academy_id='.(int)$academyId;
+        $rows=db()->query("SELECT c.member_contract_id,c.user_lesson_id,m.user_id,m.branch_id,b.user_id branch_user_id,c.created_by FROM academy_branch_member_contracts c JOIN academy_branch_members m ON m.member_id=c.member_id JOIN academy_branches b ON b.branch_id=m.branch_id WHERE c.type='teacher' AND c.deleted_at IS NULL AND m.deleted_at IS NULL AND b.deleted_at IS NULL{$where}")->fetchAll();
+        foreach($rows as $index=>$row){
+            $valid=$row['user_lesson_id']?DB::table('user_lessons')->where('user_lesson_id',(int)$row['user_lesson_id'])->where('user_id',(int)$row['user_id'])->whereNull('deleted_at')->first():null;
+            if($valid)continue;
+            $offered=DB::table('user_lessons')->where('user_id',(int)$row['branch_user_id'])->whereNull('deleted_at')->get();
+            if(!$offered)continue;
+            $source=$offered[$index%count($offered)];
+            $teacherLesson=DB::table('user_lessons')->where('user_id',(int)$row['user_id'])->where('lesson_id',(int)$source['lesson_id'])->whereNull('deleted_at')->first();
+            $actor=(int)($row['created_by']?:1);
+            if($teacherLesson)$userLessonId=(int)$teacherLesson['user_lesson_id'];
+            else $userLessonId=DB::table('user_lessons')->insertGetId(['user_id'=>(int)$row['user_id'],'lesson_id'=>(int)$source['lesson_id'],'level_id'=>$source['level_id']?:null,'start_date'=>$source['start_date']?:date('Y-m-d'),'is_primary'=>1,'created_by'=>$actor,'updated_by'=>$actor]);
+            DB::table('academy_branch_member_contracts')->where('member_contract_id',(int)$row['member_contract_id'])->update(['user_lesson_id'=>$userLessonId,'updated_by'=>$actor]);
+        }
     }
 
     private const STUDENT_USERNAME_MARKER = 'test_branch_member_student_';
@@ -81,6 +101,7 @@ class AcademyBranchService {
             $type=($data['type']??'other');if(!in_array($type,['teacher','receptionist','manager'],true))$type='other';
             $values=['type'=>$type,'start_date'=>($data['startDate']??'')?:null,'end_date'=>($data['endDate']??'')?:null,'price'=>max(0,(float)($data['price']??0)),
                 'currency_id'=>(int)($data['currencyId']??1),'updated_by'=>$actorId];
+            if($type!=='teacher')$values['user_lesson_id']=null;
             if($contract)DB::table('academy_branch_member_contracts')->where('member_contract_id',(int)$contract['member_contract_id'])->update($values);
             else DB::table('academy_branch_member_contracts')->insertGetId(['member_id'=>$memberId,'created_by'=>$actorId]+$values);
             return ['member_id'=>$memberId];
