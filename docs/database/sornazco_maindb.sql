@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 13, 2026 at 04:04 PM
+-- Generation Time: Aug 13, 2026 at 04:28 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -161,7 +161,8 @@ CREATE TABLE `academy_branch_courses` (
   `branch_id` bigint(20) UNSIGNED DEFAULT NULL,
   `lesson_id` bigint(20) UNSIGNED DEFAULT NULL,
   `level_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `capacity` int(11) DEFAULT NULL,
+  `teacher_capacity` int(11) DEFAULT 1,
+  `student_capacity` int(11) DEFAULT 1,
   `status` enum('pending','open','ongoing','finished') DEFAULT 'pending',
   `created_at` datetime DEFAULT current_timestamp(),
   `created_by` bigint(20) UNSIGNED DEFAULT NULL,

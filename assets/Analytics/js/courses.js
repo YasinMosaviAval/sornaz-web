@@ -25,8 +25,8 @@ const coursePdfColumns = [
     { field: 'level', label: 'سطح' },
     { field: 'branchName', label: 'شعبه' },
     { field: 'instrument', label: 'ساز / تخصص' },
-    { field: 'capacity', label: 'ظرفیت' },
-    { field: 'enrolled', label: 'ثبت‌نام‌شده' },
+    { field: 'student_capacity', label: 'ظرفیت هنرجوها' },
+    { field: 'teacher_capacity', label: 'ظرفیت اساتید' },
     { field: 'status', label: 'وضعیت' }
 ];
 
@@ -35,7 +35,7 @@ function sortCourseItems() {
     filteredCourses.sort((a, b) => {
         let aValue = a[courseSortField];
         let bValue = b[courseSortField];
-        if (courseSortField === 'capacity' || courseSortField === 'enrolled') {
+        if (courseSortField === 'student_capacity' || courseSortField === 'teacher_capacity') {
             aValue = Number(aValue);
             bValue = Number(bValue);
         } else {
@@ -49,7 +49,7 @@ function sortCourseItems() {
 }
 
 window.updateCourseSortIcons = async function () {
-    const fields = ['name', 'level', 'branchName', 'instrument', 'capacity', 'enrolled', 'status'];
+    const fields = ['name', 'level', 'branchName', 'instrument', 'student_capacity', 'teacher_capacity', 'status'];
     fields.forEach(field => {
         const icon = document.getElementById(`courseSortIcon-${field}`);
         if (!icon) return;
@@ -236,7 +236,8 @@ function readCourseForm(prefix) {
     const levelId = parseInt(field('Level')?.value,10);
     const branchId = parseInt(field('Branch')?.value, 10);
     const lessonId = parseInt(field('Instrument')?.value,10);
-    const capacity = parseInt(field('Capacity')?.value || '10', 10) || 10;
+    const studentCapacity = Math.max(1, parseInt(field('StudentCapacity')?.value || '1', 10) || 1);
+    const teacherCapacity = Math.max(1, parseInt(field('TeacherCapacity')?.value || '1', 10) || 1);
     const status = field('Status')?.value || 'pending';
     const summary = field('Summary')?.value.trim() || '';
     const description = field('Description')?.value.trim() || '';
@@ -244,7 +245,7 @@ function readCourseForm(prefix) {
     return {
         name, level_id:levelId, branchId,
         branchName: branch ? branch.name : 'نامشخص',
-        lesson_id:lessonId, capacity, status, summary, description
+        lesson_id:lessonId, student_capacity:studentCapacity, teacher_capacity:teacherCapacity, status, summary, description
     };
 }
 
@@ -327,9 +328,9 @@ window.deleteCourse = async function (id) {
 window.exportCoursesToExcel = async function () {
     const data = filteredCourses.length ? filteredCourses : allCourses;
     let csv = '\uFEFF';
-    csv += 'ردیف,نام دوره,سطح,شعبه,ساز,ظرفیت,ثبت‌نام‌شده,وضعیت\n';
+    csv += 'ردیف,نام دوره,سطح,شعبه,ساز,ظرفیت هنرجوها,ظرفیت اساتید,وضعیت\n';
     data.forEach((item, index) => {
-        csv += `${index + 1},"${item.name}","${item.level || ''}","${item.branchName}","${item.instrument}",${item.capacity},${item.enrolled},"${item.status}"\n`;
+        csv += `${index + 1},"${item.name}","${item.level || ''}","${item.branchName}","${item.instrument}",${item.student_capacity},${item.teacher_capacity},"${item.status}"\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');

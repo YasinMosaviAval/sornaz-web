@@ -92,13 +92,13 @@
                             </button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortCoursesBy('capacity')" class="flex items-center gap-1">
-                                ظرفیت <span id="courseSortIcon-capacity">↕</span>
+                            <button onclick="sortCoursesBy('student_capacity')" class="flex items-center gap-1">
+                                ظرفیت هنرجوها <span id="courseSortIcon-student_capacity">↕</span>
                             </button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortCoursesBy('enrolled')" class="flex items-center gap-1">
-                                ثبت‌نام‌شده <span id="courseSortIcon-enrolled">↕</span>
+                            <button onclick="sortCoursesBy('teacher_capacity')" class="flex items-center gap-1">
+                                ظرفیت اساتید <span id="courseSortIcon-teacher_capacity">↕</span>
                             </button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">

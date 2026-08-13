@@ -23,8 +23,8 @@
             <td class="py-4 px-5">${escapeHtml(item.level || '—')}</td>
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
             <td class="py-4 px-5">${escapeHtml(item.instrument)}</td>
-            <td class="py-4 px-5">${item.capacity}</td>
-            <td class="py-4 px-5">${item.enrolled}</td>
+            <td class="py-4 px-5">${item.student_capacity}</td>
+            <td class="py-4 px-5">${item.teacher_capacity}</td>
             <td class="py-4 px-5">
                 <span class="px-3 py-1 rounded-full text-xs ${statusClass}">${escapeHtml(item.status)}</span>
             </td>
@@ -80,8 +80,12 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-2">ظرفیت</label>
-                    <input id="${id('Capacity')}" type="number" min="1" value="${escapeHtml(item.capacity ?? 10)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <label class="block text-sm font-medium mb-2">ظرفیت هنرجوها</label>
+                    <input id="${id('StudentCapacity')}" type="number" min="1" value="${escapeHtml(item.student_capacity ?? 1)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">ظرفیت اساتید</label>
+                    <input id="${id('TeacherCapacity')}" type="number" min="1" value="${escapeHtml(item.teacher_capacity ?? 1)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">وضعیت</label>
@@ -173,8 +177,8 @@
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">سطح</span><span class="font-medium">${escapeHtml(item.level || '—')}</span></div>
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">شعبه</span><span class="font-medium">${escapeHtml(item.branchName)}</span></div>
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ساز / تخصص</span><span class="font-medium">${escapeHtml(item.instrument)}</span></div>
-                                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ظرفیت</span><span class="font-medium">${item.capacity}</span></div>
-                                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ثبت‌نام‌شده</span><span class="font-medium">${item.enrolled}</span></div>
+                                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ظرفیت هنرجوها</span><span class="font-medium">${item.student_capacity}</span></div>
+                                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ظرفیت اساتید</span><span class="font-medium">${item.teacher_capacity}</span></div>
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">وضعیت</span><span class="font-medium">${escapeHtml(item.status)}</span></div>
                             </div>
                         </div>
