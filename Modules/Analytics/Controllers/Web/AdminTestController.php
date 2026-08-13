@@ -5,9 +5,14 @@ namespace Modules\Analytics\Controllers\Web;
 use Core\http\ResponseFactory;
 use Modules\Analytics\Services\AdminTestDataService;
 use Modules\Academy\Services\AcademyCourseService;
+use Modules\Academy\Services\AcademyTermTestService;
+use Modules\Academy\Services\AcademyTermBatchService;
 
 class AdminTestController {
-    public function __construct(protected AdminTestDataService $tests, protected AcademyCourseService $courses) {}
+    public function __construct(protected AdminTestDataService $tests, protected AcademyCourseService $courses, protected AcademyTermTestService $terms, protected AcademyTermBatchService $termBatch) {}
+
+    public function seedBranchTerms(){if(env('APP_ENV','production')!=='local')abort(404);try{$r=$this->termBatch->seed((int)auth()->id());session()->flash('admin_test_message',"تست ترم‌ها تکمیل شد: {$r['created']} ترم، {$r['sessions']} جلسه و {$r['attendance']} حضور و غیاب ایجاد شد.");}catch(\Throwable$e){session()->flash('admin_test_error','ایجاد ترم‌های آزمایشی ناموفق بود: '.$e->getMessage());}return redirect('/analytics/admin-panel#tests');}
+    public function deleteBranchTerms(){if(env('APP_ENV','production')!=='local')abort(404);try{$r=$this->terms->delete();session()->flash('admin_test_message',"{$r['deleted']} ترم آزمایشی و تمام وابستگی‌های آن حذف شد.");}catch(\Throwable$e){session()->flash('admin_test_error','حذف ترم‌های آزمایشی ناموفق بود: '.$e->getMessage());}return redirect('/analytics/admin-panel#tests');}
 
     public function seedBranchCourses() {if(env('APP_ENV','production')!=='local')abort(404);try{$r=$this->courses->seedCourses((int)auth()->id());session()->flash('admin_test_message',"تست دوره‌ها تکمیل شد: {$r['created']} ایجاد و {$r['updated']} همگام‌سازی شد.");}catch(\Throwable$e){session()->flash('admin_test_error','ایجاد دوره‌های آزمایشی ناموفق بود: '.$e->getMessage());}return redirect('/analytics/admin-panel#tests');}
     public function deleteBranchCourses() {if(env('APP_ENV','production')!=='local')abort(404);try{$r=$this->courses->deleteSeedCourses((int)auth()->id());session()->flash('admin_test_message',"{$r['deleted']} دوره آزمایشی حذف شد.");}catch(\Throwable$e){session()->flash('admin_test_error','حذف دوره‌های آزمایشی ناموفق بود: '.$e->getMessage());}return redirect('/analytics/admin-panel#tests');}
