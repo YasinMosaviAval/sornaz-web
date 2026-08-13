@@ -1,68 +1,14 @@
-// ==================== سطوح، سازها، وضعیت‌ها ====================
-let allCourseLevels = [
-    { id: 1, name: 'مبتدی' },
-    { id: 2, name: 'متوسط' },
-    { id: 3, name: 'پیشرفته' },
-    { id: 4, name: 'حرفه‌ای' },
-    { id: 5, name: 'کودکان' },
-    { id: 6, name: 'همه سطوح' }
-];
-
-const courseInstruments = [
-    'پیانو', 'گیتار', 'ویولن', 'آواز', 'درام', 'سنتور', 'کمانچه', 'تار', 'سه‌تار', 'تئوری', 'فلوت', 'سایر'
-];
-
-const courseStatuses = ['فعال', 'در انتظار', 'غیرفعال', 'تکمیل‌شده'];
-
-const courseNameTemplates = [
-    'دوره پیانو', 'دوره گیتار', 'دوره ویولن', 'دوره آواز', 'دوره درام',
-    'دوره سنتور', 'دوره کمانچه', 'دوره تئوری موسیقی', 'دوره تار', 'دوره سلفژ'
-];
-
-const teacherNames = [
-    'علی رضایی', 'سارا موسوی', 'رضا کریمی', 'مینا احمدی', 'حسین مهدوی', 'مریم نوری'
-];
+// ==================== سطوح، درس‌ها، وضعیت‌ها ====================
+window.allCourseLevels = [];
+window.courseLessons = [];
+const courseStatuses = ['در انتظار', 'باز', 'در حال برگزاری', 'پایان‌یافته'];
 
 function getCourseBranches() {
-    if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
-    return [
-        { id: 1, name: 'شعبه مرکزی' },
-        { id: 2, name: 'شعبه ونک' },
-        { id: 3, name: 'شعبه سعادت‌آباد' },
-        { id: 4, name: 'شعبه کرج' }
-    ];
+    return Array.isArray(window.courseBranches) ? window.courseBranches : [];
 }
 
-// ==================== ۴۰ دوره نمونه ====================
-let allCourses = [];
-(function buildSampleCourses() {
-    const branches = getCourseBranches();
-    for (let i = 1; i <= 40; i++) {
-        const branch = branches[Math.floor(Math.random() * branches.length)];
-        const level = allCourseLevels[Math.floor(Math.random() * allCourseLevels.length)];
-        const instrument = courseInstruments[Math.floor(Math.random() * courseInstruments.length)];
-        const capacity = 6 + Math.floor(Math.random() * 16);
-        const enrolled = Math.floor(Math.random() * (capacity + 1));
-        let status = courseStatuses[Math.floor(Math.random() * courseStatuses.length)];
-        if (enrolled >= capacity) status = 'تکمیل‌شده';
-        else if (enrolled === 0 && Math.random() > 0.6) status = 'در انتظار';
-
-        const base = courseNameTemplates[Math.floor(Math.random() * courseNameTemplates.length)];
-        allCourses.push({
-            id: i,
-            name: `${base} ${level.name} ${i}`,
-            level: level.name,
-            branchId: branch.id,
-            branchName: branch.name,
-            instrument,
-            capacity,
-            enrolled,
-            status,
-            teacher: teacherNames[Math.floor(Math.random() * teacherNames.length)],
-            description: `دوره ${level.name} در زمینه ${instrument} — شعبه ${branch.name}`
-        });
-    }
-})();
+// داده‌های این بخش فقط از API و پایگاه داده دریافت می‌شوند.
+window.allCourses = [];
 
 // ==================== صفحه‌بندی / مرتب‌سازی / فیلتر ====================
 let coursesCurrentPage = 1;
@@ -211,10 +157,10 @@ window.renderCoursesTable = async function (list = filteredCourses) {
     } else {
         pageItems.forEach(item => {
             const statusClass = {
-                'فعال': 'bg-green-100 text-green-700',
-                'غیرفعال': 'bg-gray-100 text-gray-600',
                 'در انتظار': 'bg-yellow-100 text-yellow-700',
-                'تکمیل‌شده': 'bg-blue-100 text-blue-700'
+                'باز': 'bg-green-100 text-green-700',
+                'در حال برگزاری': 'bg-indigo-100 text-indigo-700',
+                'پایان‌یافته': 'bg-blue-100 text-blue-700'
             }[item.status] || 'bg-gray-100 text-gray-600';
 
             const tr = document.createElement('tr');
@@ -279,40 +225,35 @@ window.promptAddCourseLevel = async function () {
     const name = await AppDialog.prompt('نام سطح دوره جدید را وارد کنید:')?.trim();
     if (!name) return;
     if (allCourseLevels.some(l => l.name === name)) return alert('این سطح قبلاً وجود دارد');
-    allCourseLevels.push({ id: Date.now(), name });
-
-    const updateSelect = (sel) => {
-        if (!sel) return;
-        const current = sel.value;
-        sel.innerHTML = allCourseLevels.map(l =>
-            `<option value="${l.name}" ${l.name === name || l.name === current ? 'selected' : ''}>${l.name}</option>`
-        ).join('');
-        sel.value = name;
-    };
-
-    ['courseLevel', 'editCourseLevel'].forEach(id => updateSelect(document.getElementById(id)));
-    document.querySelectorAll('[id^="inlineCourse"][id$="Level"]').forEach(updateSelect);
+    await courseApi('/academy/admin/course-levels',{name,summary:'سطح آموزشی دوره',description:'سطح آموزشی قابل انتخاب برای دوره‌های شعبه.'});
+    await loadCourses();
 };
+
+window.refreshCourseLessons=function(prefix){const f=s=>document.getElementById(prefix?prefix+s:'course'+s),branchId=Number(f('Branch')?.value||0),select=f('Instrument');if(!select)return;const items=window.courseLessons.filter(x=>x.branchId===branchId);select.disabled=!branchId;select.innerHTML='<option value="">درس / تخصص را انتخاب کنید</option>'+items.map(x=>`<option value="${x.id}">${x.name}</option>`).join('');};
 
 // ==================== خواندن فرم ====================
 function readCourseForm(prefix) {
     const field = (suffix) => document.getElementById(prefix ? `${prefix}${suffix}` : `course${suffix}`);
     const name = field('Name')?.value.trim();
-    const level = field('Level')?.value;
+    const levelId = parseInt(field('Level')?.value,10);
     const branchId = parseInt(field('Branch')?.value, 10);
-    const instrument = field('Instrument')?.value || '—';
+    const lessonId = parseInt(field('Instrument')?.value,10);
     const capacity = parseInt(field('Capacity')?.value || '10', 10) || 10;
-    const enrolled = parseInt(field('Enrolled')?.value || '0', 10) || 0;
-    const status = field('Status')?.value || 'فعال';
+    const status = field('Status')?.value || 'pending';
     const teacher = field('Teacher')?.value.trim() || '';
+    const summary = field('Summary')?.value.trim() || '';
     const description = field('Description')?.value.trim() || '';
     const branch = getCourseBranches().find(b => b.id === branchId);
     return {
-        name, level, branchId,
+        name, level_id:levelId, branchId,
         branchName: branch ? branch.name : 'نامشخص',
-        instrument, capacity, enrolled, status, teacher, description
+        lesson_id:lessonId, capacity, status, teacher, summary, description
     };
 }
+
+function courseEncode(data){const bytes=new TextEncoder().encode(JSON.stringify(data));let s='';bytes.forEach(b=>s+=String.fromCharCode(b));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+async function courseApi(url,data=null){const token=window.adminCsrfToken||'',o={method:data?'POST':'GET',credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}};if(data){o.headers['Content-Type']='application/x-www-form-urlencoded;charset=UTF-8';o.headers['X-CSRF-TOKEN']=token;o.body=new URLSearchParams({_token:token,payload_b64:courseEncode(data)}).toString();}const r=await fetch(url,o),raw=await r.text();let p;try{p=JSON.parse(raw)}catch(e){throw new Error('پاسخ معتبر JSON از سرور دریافت نشد.')}const env=p.data??p;if(!r.ok||env.success===false)throw new Error(env.message||'عملیات دوره ناموفق بود.');return env.data??env;}
+window.loadCourses=async function(){const d=await courseApi('/academy/admin/courses');window.courseBranches=d.branches||[];window.allCourseLevels=d.levels||[];window.courseLessons=d.lessons||[];window.allCourses=d.courses||[];filteredCourses=allCourses.slice();renderCoursesBranchTabs();renderCourseInstrumentFilter();filterCourses();if(typeof renderCourseLevels==='function')renderCourseLevels();return d;};
 
 // ==================== CRUD ====================
 window.openAddCourseModal = async function () {
@@ -329,11 +270,8 @@ window.saveCourse = async function () {
     if (!data.name) return alert('نام دوره الزامی است');
     if (!data.branchId) return alert('شعبه الزامی است');
 
-    allCourses.unshift({ id: Date.now(), ...data });
-    renderCourseInstrumentFilter();
-    filterCourses();
-    closeModal();
-    alert('✅ دوره با موفقیت اضافه شد');
+    if(!data.level_id)return alert('سطح دوره الزامی است');if(!data.lesson_id)return alert('درس / تخصص الزامی است');
+    try{await courseApi('/academy/admin/courses',data);await loadCourses();closeModal();alert('✅ دوره با موفقیت اضافه شد');}catch(e){alert(e.message);}
 };
 
 window.viewCourse = async function (id) {
@@ -353,14 +291,7 @@ window.editCourse = async function (id) {
 window.saveEditedCourse = async function (id) {
     const data = readCourseForm('editCourse');
     if (!data.name) return alert('نام دوره الزامی است');
-    const index = allCourses.findIndex(x => x.id === id);
-    if (index === -1) return;
-    allCourses[index] = { ...allCourses[index], ...data };
-    editingCourseRowId = null;
-    renderCourseInstrumentFilter();
-    filterCourses();
-    closeModal();
-    alert('✅ تغییرات ذخیره شد');
+    try{await courseApi(`/academy/admin/courses/${id}/update`,data);await loadCourses();editingCourseRowId=null;closeModal();alert('✅ تغییرات ذخیره شد');}catch(e){alert(e.message);}
 };
 
 window.toggleCourseInlineEdit = async function (id) {
@@ -371,21 +302,12 @@ window.toggleCourseInlineEdit = async function (id) {
 window.saveInlineCourse = async function (id) {
     const data = readCourseForm(`inlineCourse${id}`);
     if (!data.name) return alert('نام دوره الزامی است');
-    const index = allCourses.findIndex(x => x.id === id);
-    if (index === -1) return;
-    allCourses[index] = { ...allCourses[index], ...data };
-    editingCourseRowId = null;
-    renderCourseInstrumentFilter();
-    filterCourses();
-    alert('✅ تغییرات با موفقیت ذخیره شد');
+    try{await courseApi(`/academy/admin/courses/${id}/update`,data);await loadCourses();editingCourseRowId=null;alert('✅ تغییرات با موفقیت ذخیره شد');}catch(e){alert(e.message);}
 };
 
 window.deleteCourse = async function (id) {
     if (!(await AppDialog.confirmDelete(allCourses, id, 'دوره'))) return;
-    allCourses = allCourses.filter(c => c.id !== id);
-    if (editingCourseRowId === id) editingCourseRowId = null;
-    renderCourseInstrumentFilter();
-    filterCourses();
+    try{await courseApi(`/academy/admin/courses/${id}/delete`,{});await loadCourses();if(editingCourseRowId===id)editingCourseRowId=null;}catch(e){alert(e.message);}
 };
 
 // ==================== خروجی اکسل ====================
@@ -485,11 +407,9 @@ window.generateCoursesPDF = async function () {
 
 // ==================== Init ====================
 (function initCourses() {
-    setTimeout(() => {
+    setTimeout(async () => {
         if (document.getElementById('coursesTable')) {
-            renderCoursesBranchTabs();
-            renderCourseInstrumentFilter();
-            filterCourses();
+            try { await loadCourses(); } catch (error) { console.error(error); alert(error.message); }
         }
     }, 200);
 })();

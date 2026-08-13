@@ -57,6 +57,7 @@
     pushScript('classroom-types.js');
     pushScript('course-templates.js');
     pushScript('courses.js');
+    pushScript('course-levels.js');
     pushScript('term-templates.js');
     pushScript('terms.js');
     pushScript('gallery-templates.js');

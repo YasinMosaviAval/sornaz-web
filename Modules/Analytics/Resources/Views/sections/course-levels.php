@@ -1,0 +1,4 @@
+<div id="course-levels" class="section hidden">
+    <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"><div><h1 class="text-3xl font-bold">سطح دوره‌ها</h1><p class="mt-1 text-gray-500">مدیریت سطح‌های آموزشی قابل انتخاب برای دوره‌ها</p></div><button onclick="openCourseLevelModal()" class="rounded-2xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700"><i class="fas fa-plus ml-2"></i>افزودن سطح</button></div>
+    <div class="overflow-hidden rounded-3xl bg-white shadow"><div class="overflow-x-auto"><table class="w-full min-w-[760px]"><thead class="border-b bg-gray-50"><tr><th class="px-5 py-4 text-right">عنوان</th><th class="px-5 py-4 text-right">خلاصه</th><th class="px-5 py-4 text-right">توضیحات</th><th class="px-5 py-4"></th></tr></thead><tbody id="courseLevelsBody" class="divide-y"></tbody></table></div></div>
+</div>
