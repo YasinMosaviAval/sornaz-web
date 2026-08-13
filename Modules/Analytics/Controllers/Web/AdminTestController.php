@@ -57,6 +57,11 @@ class AdminTestController {
         return $reset;
     }
 
+    public function seedCoursesAndTerms(){
+        if(env('APP_ENV','production')!=='local')abort(404);
+        try{$actor=(int)auth()->id();$courses=$this->courses->seedCourses($actor,(int)($_POST['courses_min']??10),(int)($_POST['courses_max']??50));$terms=$this->terms->seed($actor,[(int)($_POST['terms_min']??1),(int)($_POST['terms_max']??50)],[(int)($_POST['sessions_min']??4),(int)($_POST['sessions_max']??8)]);session()->flash('admin_test_report',[['title'=>'دوره‌ها، ترم‌ها و جلسات','items'=>["دوره ایجادشده: {$courses['created']}","دوره همگام‌شده: {$courses['updated']}","مجموع دوره‌ها: {$courses['total']}","ترم ایجادشده: {$terms['created']}","جلسه ایجادشده: {$terms['sessions']}","حضور و غیاب ثبت‌شده: {$terms['attendance']}"]]]);}catch(\Throwable$e){session()->flash('admin_test_error','ایجاد دوره‌ها و ترم‌های آزمایشی ناموفق بود: '.$e->getMessage());}return redirect('/analytics/admin-panel#tests');
+    }
+
     public function seedBranchTerms(){if(env('APP_ENV','production')!=='local')abort(404);try{$r=$this->terms->seed((int)auth()->id(),[(int)($_POST['terms_min']??1),(int)($_POST['terms_max']??50)],[(int)($_POST['sessions_min']??4),(int)($_POST['sessions_max']??8)]);session()->flash('admin_test_message',"تست ترم‌ها تکمیل شد: {$r['created']} ترم، {$r['sessions']} جلسه و {$r['attendance']} حضور و غیاب ایجاد شد.");}catch(\Throwable$e){session()->flash('admin_test_error','ایجاد ترم‌های آزمایشی ناموفق بود: '.$e->getMessage());}return redirect('/analytics/admin-panel#tests');}
     public function deleteBranchTerms(){if(env('APP_ENV','production')!=='local')abort(404);try{$r=$this->terms->delete();session()->flash('admin_test_message',"{$r['deleted']} ترم آزمایشی و تمام وابستگی‌های آن حذف شد.");}catch(\Throwable$e){session()->flash('admin_test_error','حذف ترم‌های آزمایشی ناموفق بود: '.$e->getMessage());}return redirect('/analytics/admin-panel#tests');}
 
