@@ -53,7 +53,15 @@ class AdminTestController {
     public function seedAcademyManagers() {
         if (env('APP_ENV', 'production') !== 'local') abort(404);
         try {
-            $result = $this->tests->seedAcademyManagers(max(1, min(50, (int)($_POST['manager_count'] ?? 10))));
+            $result = $this->tests->seedAcademyManagers(max(1,min(50,(int)($_POST['manager_count']??10))),[
+                'addresses_min'=>(int)($_POST['addresses_min']??1),'addresses_max'=>(int)($_POST['addresses_max']??3),
+                'contacts_min'=>(int)($_POST['contacts_min']??1),'contacts_max'=>(int)($_POST['contacts_max']??10),
+                'instruments_min'=>(int)($_POST['instruments_min']??0),'instruments_max'=>(int)($_POST['instruments_max']??5),
+                'lessons_min'=>(int)($_POST['lessons_min']??0),'lessons_max'=>(int)($_POST['lessons_max']??5),
+                'gallery_min'=>(int)($_POST['gallery_min']??3),'gallery_max'=>(int)($_POST['gallery_max']??3),
+                'daily_slots_min'=>(int)($_POST['daily_slots_min']??1),'daily_slots_max'=>(int)($_POST['daily_slots_max']??3),
+                'exceptions_min'=>(int)($_POST['exceptions_min']??2),'exceptions_max'=>(int)($_POST['exceptions_max']??4),
+            ]);
             session()->flash('admin_test_message', $result['message']);
         } catch (\Throwable $e) {
             session()->flash('admin_test_error', 'ایجاد مدیران آموزشگاه آزمایشی ناموفق بود: ' . $e->getMessage());

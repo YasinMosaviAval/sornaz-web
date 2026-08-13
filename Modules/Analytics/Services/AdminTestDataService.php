@@ -9,9 +9,9 @@ class AdminTestDataService {
     private const USERNAME_PREFIX = 'test_academy_manager_';
     private const TOTAL = 10;
 
-    public function seedAcademyManagers(int $total = self::TOTAL): array {
-        $total = max(1, min(self::TOTAL, $total));
-        return transaction(function () {
+    public function seedAcademyManagers(int $total = self::TOTAL,array $options=[]): array {
+        $total = max(1, min(50, $total));
+        return transaction(function () use($total,$options) {
             $catalog = $this->syncMusicCatalog();
             $passwordHash = password_hash('123456789', PASSWORD_DEFAULT);
             $created = 0;
@@ -39,11 +39,11 @@ class AdminTestDataService {
                     'updated_by' => $userId,
                 ]);
                 $this->setFullNameTranslation($userId, $person['name'], $createdAt);
-                $this->syncAddresses($userId, $index, $createdAt);
-                $this->syncContacts($userId, $index, $username, $createdAt);
-                $this->syncMusicExperience($userId, $index, $createdAt, $catalog);
-                $this->syncDefaultUserMedia($userId, $index, $createdAt);
-                $this->syncUserAvailability($userId, $index, $createdAt);
+                $this->syncAddresses($userId,$index,$createdAt,$this->fixtureCount($index,$options['addresses_min']??1,$options['addresses_max']??3));
+                $this->syncContacts($userId,$index,$username,$createdAt,$this->fixtureCount($index,$options['contacts_min']??1,$options['contacts_max']??10));
+                $this->syncMusicExperience($userId,$index,$createdAt,$catalog,$options);
+                $this->syncDefaultUserMedia($userId,$index,$createdAt,$this->fixtureCount($index,$options['gallery_min']??3,$options['gallery_max']??3));
+                $this->syncUserAvailability($userId,$index,$createdAt,$options);
             }
             $this->syncEnglishTestTranslations();
             $this->syncAdminFrameworkTranslations();
@@ -65,6 +65,8 @@ class AdminTestDataService {
         foreach($targets as $table=>$ids){if(!$ids)continue;$rows=DB::table('translations')->where('table_name',$table)->whereIn('table_id',$ids)->where('locale','fa')->whereNull('deleted_at')->get();foreach($rows as $row)$this->setTranslation($table,(int)$row['table_id'],(int)($row['created_by']?:1),(string)$row['field'],$this->englishTestValue($table,(string)$row['field'],(string)$row['value']),(string)$row['created_at'],(string)$row['updated_at'],'en');}
         foreach(['instruments'=>'instrument_id','lessons'=>'lesson_id','levels'=>'level_id'] as $table=>$key){$rows=DB::table($table)->whereNull('deleted_at')->get();$ids=array_map(fn(array $r)=>(int)$r[$key],$rows);if(!$ids)continue;foreach(DB::table('translations')->where('table_name',$table)->whereIn('table_id',$ids)->where('locale','fa')->whereNull('deleted_at')->get() as $row)$this->setTranslation($table,(int)$row['table_id'],1,(string)$row['field'],$this->englishTestValue($table,(string)$row['field'],(string)$row['value']),(string)$row['created_at'],(string)$row['updated_at'],'en');}
     }
+
+    private function fixtureCount(int $seed,int $minimum,int $maximum): int {$minimum=max(0,min(100,$minimum));$maximum=max(0,min(100,$maximum));if($minimum>$maximum)[$minimum,$maximum]=[$maximum,$minimum];return $minimum+($seed%($maximum-$minimum+1));}
 
     private function englishTestValue(string $table,string $field,string $value): string {
         $names=['علی'=>'Ali','مریم'=>'Maryam','رضا'=>'Reza','سارا'=>'Sara','امیر'=>'Amir','نگار'=>'Negar','حسین'=>'Hossein','الهام'=>'Elham','مهدی'=>'Mehdi','نرگس'=>'Narges','محمد'=>'Mohammad','لیلا'=>'Leila','سعید'=>'Saeed','مهسا'=>'Mahsa','آرش'=>'Arash','نازنین'=>'Nazanin','محمدی'=>'Mohammadi','احمدی'=>'Ahmadi','رضایی'=>'Rezaei','کریمی'=>'Karimi','حسینی'=>'Hosseini','مرادی'=>'Moradi','قاسمی'=>'Ghasemi','اکبری'=>'Akbari','صادقی'=>'Sadeghi','نوری'=>'Nouri'];
@@ -281,22 +283,22 @@ class AdminTestDataService {
         return ['instruments' => $instrumentIds, 'lessons' => $lessonIds, 'levels' => $levelIds];
     }
 
-    private function syncDefaultUserMedia(int $userId, int $userIndex, string $registeredAt): void {
+    private function syncDefaultUserMedia(int $userId, int $userIndex, string $registeredAt,int $galleryCount=3): void {
         $number = $userIndex + 1;
         $avatarId = $this->syncMediaFile($userId, $registeredAt, 'profiles', sprintf('user-%02d.jpg', $number), 'teacher_avatar', 0, 720, 720);
         DB::table('users')->where('user_id', $userId)->update(['avatar_file_id' => $avatarId]);
         $this->syncMediaFile($userId, $registeredAt, 'covers', sprintf('user-%02d.jpg', $number), 'cover', 0, 1280, 720);
-        for ($i = 1; $i <= 3; $i++) $this->syncMediaFile($userId, $registeredAt, 'gallery', sprintf('user-%02d-%02d.jpg', $number, $i), 'teacher_gallery', $i, 1200, 900);
+        for ($i = 1; $i <= min(3,$galleryCount); $i++) $this->syncMediaFile($userId, $registeredAt, 'gallery', sprintf('user-%02d-%02d.jpg', $number, $i), 'teacher_gallery', $i, 1200, 900);
         if ($number <= 20) $this->syncMediaFile($userId, $registeredAt, 'intro-videos', sprintf('user-%02d.mp4', $number), 'intro_video', 0, null, null, 'video');
     }
 
-    private function syncUserAvailability(int $userId, int $userIndex, string $registeredAt): void {
+    private function syncUserAvailability(int $userId, int $userIndex, string $registeredAt,array $options=[]): void {
         $days=['saturday','sunday','monday','tuesday','wednesday','thursday','friday'];
         $dayLabels=['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه'];
         $addresses=DB::table('user_addresses')->where('user_id',$userId)->get();
         $locationIds=array_map(fn(array $row)=>(int)$row['address_id'],$addresses);
         foreach($days as $dayIndex=>$day){
-            $parts=1+(($userIndex+$dayIndex)%3); $ranges=$this->availabilityRanges($userIndex,$dayIndex,$parts);
+            $parts=$this->fixtureCount($userIndex+$dayIndex,$options['daily_slots_min']??1,$options['daily_slots_max']??3); $ranges=$this->availabilityRanges($userIndex,$dayIndex,$parts);
             foreach($ranges as $partIndex=>$range){
                 $locationId=$locationIds ? $locationIds[($dayIndex+$partIndex)%count($locationIds)] : 0;
                 $location=$locationId ? $this->translatedValue('user_addresses',$locationId,'address') : 'محل فعالیت کاربر';
@@ -311,7 +313,7 @@ class AdminTestDataService {
             'timezone'=>'Asia/Tehran','type'=>'available','is_repeating'=>0,'repeat_period'=>'none','is_closed'=>0,'priority'=>1],
             'حضور ویژه در تاریخ ' . $specificDate,'حضور غیرتکراری کاربر برای جلسه، ارزیابی یا برنامه ویژه در تاریخ مشخص‌شده.');
 
-        for($i=0;$i<2+($userIndex%3);$i++){
+        $exceptionCount=$this->fixtureCount($userIndex,$options['exceptions_min']??2,$options['exceptions_max']??4);for($i=0;$i<$exceptionCount;$i++){
             $date=sprintf('2026-%02d-%02d',9+(($userIndex+$i)%3),1+(($userIndex*5+$i*7)%27));
             $types=['vacation','unavailable','busy','holiday']; $type=$types[($userIndex+$i)%count($types)];
             $allDay=$i===0; $values=['date'=>$date,'start_time'=>$allDay?null:sprintf('%02d:00:00',10+(($userIndex+$i)%6)),
@@ -385,9 +387,9 @@ class AdminTestDataService {
         return $id;
     }
 
-    private function syncMusicExperience(int $userId, int $userIndex, string $registeredAt, array $catalog): void {
-        $instrumentCount = $userIndex % 6;
-        $lessonCount = ($userIndex * 5 + 2) % 6;
+    private function syncMusicExperience(int $userId, int $userIndex, string $registeredAt, array $catalog,array $options=[]): void {
+        $instrumentCount=$this->fixtureCount($userIndex,$options['instruments_min']??0,$options['instruments_max']??5);
+        $lessonCount=$this->fixtureCount($userIndex*5+2,$options['lessons_min']??0,$options['lessons_max']??5);
         $this->syncExperienceGroup('user_instruments', 'user_instrument_id', 'instrument_id', $catalog['instruments'], $catalog['levels'], $userId, $userIndex, $registeredAt, $instrumentCount, true);
         $this->syncExperienceGroup('user_lessons', 'user_lesson_id', 'lesson_id', $catalog['lessons'], $catalog['levels'], $userId, $userIndex, $registeredAt, $lessonCount, $instrumentCount === 0);
     }
@@ -470,9 +472,9 @@ class AdminTestDataService {
         ];
     }
 
-    private function syncContacts(int $userId, int $userIndex, string $username, string $registeredAt): void {
+    private function syncContacts(int $userId, int $userIndex, string $username, string $registeredAt,?int $requestedCount=null): void {
         $templates = $this->contactTemplates($userIndex, $username);
-        $contactCount = ($userIndex % 10) + 1;
+        $contactCount = $requestedCount ?? (($userIndex % 10) + 1);
         $seenModes = [];
         $registrationTimestamp = strtotime($registeredAt);
 
@@ -560,9 +562,9 @@ class AdminTestDataService {
         ];
     }
 
-    private function syncAddresses(int $userId, int $userIndex, string $registeredAt): void {
+    private function syncAddresses(int $userId, int $userIndex, string $registeredAt,?int $requestedCount=null): void {
         $locations = $this->locations();
-        $addressCount = ($userIndex % 3) + 1;
+        $addressCount = $requestedCount ?? (($userIndex % 3) + 1);
         $registrationTimestamp = strtotime($registeredAt);
 
         for ($addressIndex = 0; $addressIndex < $addressCount; $addressIndex++) {
