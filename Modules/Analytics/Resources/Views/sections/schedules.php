@@ -2,13 +2,9 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-3xl font-bold">برنامه زمانی کلاس‌ها</h1>
-            <p class="text-gray-500 mt-1">زمان‌بندی جلسات خصوصی و گروهی در شعبه‌ها</p>
+            <p class="text-gray-500 mt-1">جلسات حضوری و آنلاین ترم‌های آموزشگاه</p>
         </div>
         <div class="flex flex-wrap gap-3">
-            <button onclick="openAddScheduleModal()"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
-                <i class="fas fa-plus"></i> افزودن برنامه
-            </button>
             <button onclick="exportSchedulesToExcel()"
                     class="border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl flex items-center gap-2">
                 <i class="fas fa-file-excel text-green-600"></i> خروجی اکسل
@@ -38,32 +34,18 @@
                    onkeyup="filterSchedules()">
             <select id="filterScheduleDay" onchange="filterSchedules()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه روزها</option>
-                <option value="شنبه">شنبه</option>
-                <option value="یکشنبه">یکشنبه</option>
-                <option value="دوشنبه">دوشنبه</option>
-                <option value="سه‌شنبه">سه‌شنبه</option>
-                <option value="چهارشنبه">چهارشنبه</option>
-                <option value="پنجشنبه">پنجشنبه</option>
-                <option value="جمعه">جمعه</option>
+                <option value="5">شنبه</option><option value="6">یکشنبه</option><option value="0">دوشنبه</option><option value="1">سه‌شنبه</option><option value="2">چهارشنبه</option><option value="3">پنجشنبه</option><option value="4">جمعه</option>
             </select>
             <select id="filterScheduleType" onchange="filterSchedules()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه انواع</option>
-                <option value="خصوصی">خصوصی</option>
-                <option value="گروهی">گروهی</option>
-                <option value="آنلاین">آنلاین</option>
+                <option value="in_person">حضوری</option><option value="online">آنلاین</option>
             </select>
             <select id="filterScheduleStatus" onchange="filterSchedules()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه وضعیت‌ها</option>
-                <option value="فعال">فعال</option>
-                <option value="غیرفعال">غیرفعال</option>
-                <option value="تأیید شده">تأیید شده</option>
-                <option value="در انتظار تأیید">در انتظار تأیید</option>
-                <option value="رد شده">رد شده</option>
-                <option value="حذف‌شده">حذف‌شده</option>
-                <option value="پایان یافته">پایان یافته</option>
+                <option value="pending">در انتظار تأیید</option><option value="approved">تأیید شده</option><option value="rejected">رد شده</option><option value="completed">پایان یافته</option><option value="canceled">لغو شده</option><option value="rescheduled">زمان‌بندی مجدد</option><option value="held">برگزار شده</option><option value="postponed">به تعویق افتاده</option>
             </select>
             <select id="filterScheduleInstrument" onchange="filterSchedules()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
-                <option value="">همه سازها</option>
+                <option value="">همه درس‌ها</option>
             </select>
             <select id="filterScheduleClassroom" onchange="filterSchedules()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه کلاس‌ها</option>
@@ -103,7 +85,7 @@
                             <button onclick="sortSchedulesBy('teacher')" class="flex items-center gap-1">استاد <span id="scheduleSortIcon-teacher">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortSchedulesBy('instrument')" class="flex items-center gap-1">ساز <span id="scheduleSortIcon-instrument">↕</span></button>
+                            <button onclick="sortSchedulesBy('lesson')" class="flex items-center gap-1">درس <span id="scheduleSortIcon-lesson">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortSchedulesBy('classroom')" class="flex items-center gap-1">کلاس <span id="scheduleSortIcon-classroom">↕</span></button>
@@ -120,8 +102,14 @@
                 <tbody class="divide-y text-sm"></tbody>
             </table>
         </div>
-        <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
+        <div class="px-6 py-4 border-t flex flex-col lg:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="schedulesPaginationInfo">نمایش ۱ تا ۱۰ از ۲۰۰ برنامه</span>
+            <label class="flex items-center gap-2 whitespace-nowrap">
+                تعداد ردیف در صفحه
+                <select id="schedulesPerPage" onchange="changeSchedulesPerPage(this.value)" class="border border-gray-300 rounded-xl py-2 px-3 text-gray-700">
+                    <option value="10">۱۰</option><option value="20">۲۰</option><option value="30">۳۰</option><option value="50">۵۰</option><option value="100">۱۰۰</option>
+                </select>
+            </label>
             <div class="flex items-center gap-2" id="schedulesPaginationButtons"></div>
         </div>
     </div>
