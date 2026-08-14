@@ -29,6 +29,7 @@
         });
         const types = (window.ruleTypesList || []).map(function (t) { return { value: t, label: t }; });
         const statuses = (window.ruleStatusesList || []).map(function (s) { return { value: s, label: s }; });
+        const units = (window.ruleValueUnitsList || []).map(function (u) { return { value: u, label: u }; });
         return `
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
@@ -43,15 +44,16 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">نوع قانون</label>
-                    <select id="${id('Type')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
-                            onchange="if(this.value==='__new__'){window.promptAddRuleType('${id('Type')}');}">
+                    <select id="${id('Type')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                         ${renderOptions(types, item.type || '')}
-                        <option value="__new__">+ افزودن نوع جدید</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">مقدار</label>
-                    <input id="${id('Value')}" type="text" value="${escapeHtml(item.value || '')}" placeholder="مثال: ۲۴ ساعت قبل" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input id="${id('Value')}" type="number" min="0" step="0.01" value="${escapeHtml(item.valueAmount ?? '')}" placeholder="مثال: ۲۴" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                        <select id="${id('ValueUnit')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${renderOptions(units, item.valueUnit || 'ساعت')}</select>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">وضعیت</label>

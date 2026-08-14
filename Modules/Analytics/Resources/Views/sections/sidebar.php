@@ -56,7 +56,7 @@
                     <i class="fas fa-chevron-down text-xs transition-transform duration-200 submenu-chevron"></i>
                 </button>
                 <ul id="scheduleSubmenu" class="mt-1 mr-4 space-y-1 hidden border-r border-indigo-700/60 pr-2">
-                    <li><a href="#" onclick="showSection('scheduling-rules')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 transition text-sm text-yellow-300 hover:text-yellow-200"><i class="fas fa-gavel w-4"></i>قوانین زمانبندی</a></li>
+                    <li><a href="#" onclick="showSection('scheduling-rules')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 transition text-sm"><i class="fas fa-gavel w-4"></i>قوانین زمانبندی</a></li>
                     <li><a href="#" onclick="showSection('availabilities')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 transition text-sm text-indigo-100"><i class="fas fa-clock w-4"></i>برنامه زمانی شعبه‌ها</a></li>
                     <li><a href="#" onclick="showSection('member-schedules')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 transition text-sm text-indigo-100"><i class="fas fa-user-clock w-4"></i>برنامه زمانی اعضا</a></li>
                     <li><a href="#" onclick="showSection('availability-exceptions')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 transition text-sm text-indigo-100"><i class="fas fa-umbrella-beach w-4"></i>تعطیلات و مرخصی‌ها</a></li>
