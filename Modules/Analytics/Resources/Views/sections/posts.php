@@ -4,27 +4,16 @@
             <h1 class="text-3xl font-bold">نوشته‌ها</h1>
             <p class="text-gray-500 mt-1">مدیریت پست‌ها، محصولات و مطالب تئوری موسیقی</p>
         </div>
-        <button onclick="openAddPostModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
+        <button onclick="openPostEditor()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
             <i class="fas fa-plus"></i> افزودن نوشته
         </button>
     </div>
 
-    <!-- تاپ‌بار: شعبه + وضعیت (شبیه وردپرس) -->
-    <div class="bg-white rounded-3xl p-3 mb-4 shadow-sm overflow-x-auto">
-        <div class="flex gap-2 min-w-max" id="postsBranchTabs">
-            <button onclick="filterPostsByBranch('all')" class="post-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium bg-indigo-600 text-white">همه شعبه‌ها</button>
-        </div>
-    </div>
-
     <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
         <div class="flex flex-wrap gap-2" id="postsStatusTabs">
-            <button onclick="filterPostsByStatus('all')" class="post-status-tab px-4 py-2 rounded-xl text-sm font-medium bg-gray-900 text-white">همه</button>
-            <button onclick="filterPostsByStatus('published')" class="post-status-tab px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50">منتشرشده</button>
-            <button onclick="filterPostsByStatus('draft')" class="post-status-tab px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50">پیش‌نویس</button>
-            <button onclick="filterPostsByStatus('pending')" class="post-status-tab px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50">در انتظار</button>
-            <button onclick="filterPostsByStatus('private')" class="post-status-tab px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50">خصوصی</button>
-            <button onclick="filterPostsByStatus('trash')" class="post-status-tab px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50">زباله‌دان</button>
-            <button onclick="filterPostsByStatus('future')" class="post-status-tab px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50">زمان‌بندی‌شده</button>
+            <?php foreach (['all'=>'همه','published'=>'منتشرشده','draft'=>'پیش‌نویس','pending'=>'در انتظار','private'=>'خصوصی','trash'=>'زباله‌دان','future'=>'زمان‌بندی‌شده'] as $key=>$label): ?>
+                <button data-status="<?= $key ?>" onclick="filterPostsByStatus('<?= $key ?>')" class="post-status-tab px-4 py-2 rounded-xl text-sm font-medium <?= $key==='all'?'bg-gray-900 text-white':'border border-gray-200 hover:bg-gray-50' ?>"><?= $label ?> <span class="opacity-60" data-post-status-count="<?= $key ?>">0</span></button>
+            <?php endforeach; ?>
         </div>
     </div>
 
@@ -67,6 +56,10 @@
                 </thead>
                 <tbody class="divide-y text-sm"></tbody>
             </table>
+        </div>
+        <div class="flex flex-col gap-3 border-t p-4 text-sm text-gray-500 md:flex-row md:items-center md:justify-between">
+            <div class="flex items-center gap-3"><span id="postsPaginationInfo">نمایش ۰ نوشته</span><select id="postsPerPage" onchange="changePostsPerPage(this.value)" class="rounded-xl border px-3 py-2"><option>10</option><option selected>20</option><option>30</option><option>50</option><option>100</option></select></div>
+            <div id="postsPaginationButtons" class="flex flex-wrap gap-2"></div>
         </div>
     </div>
 </div>

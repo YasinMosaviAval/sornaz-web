@@ -68,6 +68,7 @@
 
 
             component('posts');
+            component('post-editor');
             component('about-us');
             component('contact-us');
             component('articles');
