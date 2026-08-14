@@ -11,6 +11,7 @@ use Modules\Academy\Controllers\Web\AcademyCourseController;
 use Modules\Academy\Controllers\Web\AcademyTermController;
 use Modules\Academy\Controllers\Web\AcademyTermAvailabilityController;
 use Modules\Academy\Controllers\Web\AcademyClassScheduleController;
+use Modules\Academy\Controllers\Web\AcademyWeeklyScheduleBoundsController;
 
 Router::get('/academy/academy', [AnalyticsController::class, 'academy']);
 Router::get('/academy/academies', [AcademyRegistrationController::class, 'index']);
@@ -59,6 +60,7 @@ Router::post('/academy/admin/terms/{id}/update', [AcademyTermController::class, 
 Router::post('/academy/admin/terms/{id}/delete', [AcademyTermController::class, 'destroy'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/term-discounts', [AcademyTermController::class, 'storeDiscount'])->middleware(['academy-panel','csrf']);
 Router::get('/academy/admin/class-schedules', [AcademyClassScheduleController::class, 'index'])->middleware('academy-panel');
+Router::get('/academy/admin/class-schedule-week-bounds', [AcademyWeeklyScheduleBoundsController::class, 'index'])->middleware('academy-panel');
 Router::post('/academy/admin/class-schedules/{id}/attendance', [AcademyClassScheduleController::class, 'attendance'])->middleware(['academy-panel','csrf']);
 
 Router::group(
