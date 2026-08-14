@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="<?= htmlspecialchars(locale()) ?>" dir="<?= locale() === 'en' ? 'ltr' : 'rtl' ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>آموزشگاه موسیقی</title>
+    <script>(function(){const r=document.documentElement;r.dataset.theme=localStorage.getItem('sornaz.theme')||'indigo';r.dataset.mode=localStorage.getItem('sornaz.mode')||'light';})();</script>
+    <title><?= e($title ?: trans('public.site_name', 'برنامه موسیقی سُرناز')) ?></title>
+    <link rel="icon" type="image/jpeg" href="/assets/images/logo/cropped-favicon_512x512.jpg">
     <script src="/assets/vendor/tailwind/tailwindcss.js"></script>
     <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
@@ -20,15 +22,13 @@
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
-    <? component('main-header'); ?>
+    <? component('Page::sections.main-header'); ?>
     <main class="flex-1">
         <?=$slot?>
     </main>
-    <? component('main-footer'); ?>
+    <? component('Page::sections.main-footer'); ?>
     <?
         pushScript('home.js');
-        pushScript('auth.js');
-
         pushScript('Page::site-pages.js');
         pushScript('Page::main.js');
     ?>

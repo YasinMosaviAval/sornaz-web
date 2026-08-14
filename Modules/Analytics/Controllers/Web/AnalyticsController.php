@@ -4,17 +4,22 @@ namespace Modules\Analytics\Controllers\Web;
 
 use Core\http\ResponseFactory;
 use Modules\Analytics\Services\AdminTestDataService;
+use Modules\Analytics\Services\PublicPostService;
 use Modules\System\Services\SiteAdminAccess;
 
 class AnalyticsController {
 
-    public function __construct(protected AdminTestDataService $adminTests) {}
+    public function __construct(protected AdminTestDataService $adminTests, protected PublicPostService $posts) {}
 
 
 
 
-    public function articles() { return ResponseFactory::view('Analytics::articles')->layout('main')->title('سُرناز | صفحه اصلی'); }
-    public function articleDetails() { return ResponseFactory::view('Analytics::article-details')->layout('main')->title('سُرناز | صفحه اصلی'); }
+    public function articles() { return ResponseFactory::view('Analytics::articles', ['articles'=>$this->posts->all(locale())])->layout('main')->title('سُرناز | مقاله‌های آموزشی'); }
+    public function articleDetails() {
+        try { $article=$this->posts->find((int)($_GET['id']??0), locale()); }
+        catch (\Throwable) { abort(404); }
+        return ResponseFactory::view('Analytics::article-details', ['article'=>$article])->layout('main')->title(($article['title']?:'مقاله').' | سُرناز');
+    }
 
 
 

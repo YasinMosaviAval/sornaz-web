@@ -1,20 +1,13 @@
 // —— داده نمونه (اگر allArticles / allAcademiesList از پنل لود شده باشد از همان استفاده می‌شود) ——
 
-const siteArticleCategories = [
-    "موسیقی ایران", "تاریخ موسیقی", "زندگینامه موسیقی‌دانان",
-    "تئوری موسیقی", "ردیف و دستگاه", "فرم‌های موسیقی"
-];
+const siteArticleCategories = [];
 
 function getSiteArticles() {
+    if (Array.isArray(window.siteArticlesData)) return window.siteArticlesData;
     if (typeof allArticles !== 'undefined' && allArticles.length) {
         return allArticles.filter(a => a.status === 'published' || !a.status);
     }
-    return [
-        { id: 1, title: "ساختار موسیقی برنامه‌ای ایرانی چگونه است؟", summary: "بررسی شکل‌گیری موسیقی برنامه‌ای از قاجار تا رادیو.", content: "این مقاله به بررسی شکل‌گیری و تحول موسیقی برنامه‌ای ایرانی می‌پردازد...", categories: ["موسیقی ایران", "تاریخ موسیقی"], published_at: "۱۴۰۳/۰۱/۲۳", views: 420 },
-        { id: 2, title: "مفهوم قطعه در موسیقی ایرانی", summary: "عنوانی برای آثار متریک خارج از قالب‌های سنتی.", content: "مفهوم قطعه در موسیقی دستگاهی ایران...", categories: ["تئوری موسیقی"], published_at: "۱۴۰۲/۰۶/۰۸", views: 310 },
-        { id: 3, title: "مدرسه عالی موسیقی", summary: "تأسیس ۱۳۰۲ به همت علینقی وزیری.", content: "مدرسه عالی موسیقی یکی از مهم‌ترین نهادهای آموزشی...", categories: ["تاریخ موسیقی"], published_at: "۱۴۰۲/۰۶/۰۸", views: 280 },
-        { id: 4, title: "عبدالله دوامی", summary: "راوی تصنیف و ردیف موسیقی ایرانی.", content: "عبدالله دوامی از مهم‌ترین حافظان تصنیف‌های قدیمی بود...", categories: ["زندگینامه موسیقی‌دانان"], published_at: "۱۴۰۲/۰۶/۰۸", views: 195 }
-    ];
+    return [];
 }
 
 function getSiteAcademies() {
@@ -344,7 +337,7 @@ window.renderSiteArticleCats = async function () {
     const box = document.getElementById('siteArticleCats');
     if (!box) return;
     box.querySelectorAll('.site-art-cat:not(:first-child)').forEach(t => t.remove());
-    siteArticleCategories.forEach(cat => {
+    [...new Set(getSiteArticles().flatMap(article => article.categories || []))].forEach(cat => {
         const btn = document.createElement('button');
         btn.className = 'site-art-cat px-4 py-2 rounded-xl text-sm border border-gray-200 hover:bg-gray-50';
         btn.textContent = cat;
@@ -379,13 +372,13 @@ window.renderSiteArticlesList = async function () {
     box.innerHTML = list.length === 0
         ? `<p class="text-center text-gray-400 py-16">مقاله‌ای یافت نشد</p>`
         : list.map(a => `
-            <article class="bg-white rounded-3xl p-6 shadow-sm hover:shadow-md transition cursor-pointer border border-gray-50" onclick="openSiteArticle(${a.id})">
+            <article class="bg-white rounded-3xl p-6 shadow-sm hover:shadow-md transition border border-gray-50">
                 <div class="flex flex-wrap gap-2 mb-2">
                     ${(a.categories || []).map(c =>
                         `<span class="px-2.5 py-1 rounded-lg text-xs bg-indigo-50 text-indigo-700">${c}</span>`
                     ).join('')}
                 </div>
-                <a href="/analytics/article-details">
+                <a href="/analytics/article-details?id=${a.id}">
                     <h2 class="text-xl font-bold mb-2 hover:text-indigo-600">${a.title}</h2>
                 </a>
                 <p class="text-gray-600 text-sm leading-relaxed line-clamp-3">${a.summary || a.description || ''}</p>
