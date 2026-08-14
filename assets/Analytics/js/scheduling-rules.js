@@ -3,48 +3,18 @@
 // ==================== قوانین زمان‌بندی (ایزوله) ====================
 window.ruleTypesList = ['لغو', 'جبرانی', 'رزرو', 'زمان‌بندی'];
 window.ruleStatusesList = ['فعال', 'غیرفعال', 'در انتظار تأیید', 'حذف‌شده'];
-
-const ruleTitlePool = [
-    'حداقل زمان لغو کلاس', 'حداکثر جلسات جبرانی در ماه', 'ساعت شروع رزرو آنلاین',
-    'ساعت پایان رزرو آنلاین', 'حداقل فاصله بین دو کلاس استاد', 'حداکثر کلاس روزانه استاد',
-    'مهلت رزرو کلاس گروهی', 'قفل خودکار کلاس پس از غیبت', 'حداکثر ظرفیت کلاس گروهی',
-    'مدت جلسه خصوصی پیش‌فرض', 'مدت جلسه گروهی پیش‌فرض', 'محدودیت تغییر زمان کلاس',
-    'الزام تأیید مدیر برای جبرانی', 'حداقل سن ثبت‌نام آنلاین', 'سقف غیبت مجاز ماهانه'
-];
-const ruleValuePool = [
-    '۲۴ ساعت قبل', '۲ جلسه', '۰۸:۰۰', '۲۲:۰۰', '۱۵ دقیقه', '۶ جلسه',
-    '۴۸ ساعت قبل', '۳ غیبت متوالی', '۱۲ نفر', '۶۰ دقیقه', '۹۰ دقیقه',
-    '۷۲ ساعت قبل', 'بله', '۷ سال', '۲ غیبت'
-];
+window.ruleValueUnitsList = ['ساعت', 'دقیقه', 'روز', 'جلسه', 'غیبت', 'نفر', 'سال', 'بله/خیر', 'درصد', 'مبلغ'];
 
 window.getRuleBranches = function () {
-    if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
-    return [
-        { id: 1, name: 'شعبه مرکزی' },
-        { id: 2, name: 'شعبه ونک' },
-        { id: 3, name: 'شعبه سعادت‌آباد' },
-        { id: 4, name: 'شعبه کرج' }
-    ];
+    return ruleBranches;
 };
 
 let allRules = [];
-(function buildSampleRules() {
-    const branches = window.getRuleBranches();
-    for (let i = 1; i <= 30; i++) {
-        const title = ruleTitlePool[Math.floor(Math.random() * ruleTitlePool.length)] + (i > 15 ? ' #' + i : '');
-        const type = window.ruleTypesList[Math.floor(Math.random() * window.ruleTypesList.length)];
-        const value = ruleValuePool[Math.floor(Math.random() * ruleValuePool.length)];
-        const status = window.ruleStatusesList[Math.floor(Math.random() * window.ruleStatusesList.length)];
-        const branch = branches[Math.floor(Math.random() * branches.length)];
-        allRules.push({
-            id: i, title: title,
-            summary: 'خلاصه قانون ' + title,
-            description: 'توضیحات مربوط به «' + title + '» در ' + branch.name + ' با مقدار ' + value,
-            branchId: branch.id, branchName: branch.name,
-            type: type, value: value, status: status
-        });
-    }
-})();
+let ruleBranches = [];
+
+function encodeRulePayload(data){return btoa(unescape(encodeURIComponent(JSON.stringify(data)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+async function ruleApi(url,data=null){const token=window.adminCsrfToken||'',options={method:data===null?'GET':'POST',credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}};if(data!==null){options.headers['Content-Type']='application/x-www-form-urlencoded;charset=UTF-8';options.headers['X-CSRF-TOKEN']=token;options.body=new URLSearchParams({_token:token,payload_b64:encodeRulePayload(data)}).toString();}const response=await fetch(url,options),raw=await response.text();let body;try{body=JSON.parse(raw);}catch(e){throw new Error('پاسخ معتبر JSON از سرور دریافت نشد.');}const envelope=body.data??body;if(!response.ok||envelope.success===false)throw new Error(envelope.message||'عملیات قانون زمان‌بندی ناموفق بود.');return envelope.data??envelope;}
+async function loadSchedulingRules(){const data=await ruleApi('/analytics/admin-scheduling-rules');ruleBranches=data.branches||[];allRules=data.rules||[];filteredRules=allRules.slice();window.renderRulesBranchTabs();window.renderRuleTypeFilter();window.filterRules();}
 
 let currentRuleBranch = 'all';
 let rulesCurrentPage = 1;
@@ -62,26 +32,6 @@ const rulePdfColumns = [
     { field: 'value', label: 'مقدار' },
     { field: 'status', label: 'وضعیت' }
 ];
-
-window.promptAddRuleType = async function (selectId) {
-    const name = await AppDialog.prompt('نام نوع قانون جدید را وارد کنید:');
-    const sel = document.getElementById(selectId);
-    if (!name || !name.trim()) {
-        if (sel) sel.value = window.ruleTypesList[0] || '';
-        return;
-    }
-    const t = name.trim();
-    if (window.ruleTypesList.indexOf(t) === -1) {
-        window.ruleTypesList.push(t);
-        window.renderRuleTypeFilter();
-    }
-    if (sel) {
-        const opt = document.createElement('option');
-        opt.value = t; opt.textContent = t;
-        sel.insertBefore(opt, sel.lastElementChild);
-        sel.value = t;
-    }
-};
 
 window.renderRuleTypeFilter = async function () {
     const sel = document.getElementById('filterRuleType');
@@ -246,7 +196,8 @@ function readRuleForm(prefix) {
         branchName: branch ? branch.name : 'نامشخص',
         title: f('Title') && f('Title').value.trim() || '',
         type: f('Type') && f('Type').value || '',
-        value: f('Value') && f('Value').value.trim() || '—',
+        value: f('Value') && f('Value').value || '',
+        valueUnit: f('ValueUnit') && f('ValueUnit').value || '',
         status: f('Status') && f('Status').value || 'فعال',
         summary: f('Summary') && f('Summary').value.trim() || '',
         description: f('Description') && f('Description').value.trim() || ''
@@ -262,10 +213,7 @@ window.saveRule = async function () {
     const data = readRuleForm('');
     if (!data.title) return alert('عنوان قانون الزامی است');
     if (data.type === '__new__') return alert('لطفاً یک نوع قانون انتخاب کنید');
-    allRules.unshift(Object.assign({ id: Date.now() }, data));
-    window.filterRules();
-    closeModal();
-    alert('✅ قانون ثبت شد');
+    try{await ruleApi('/analytics/admin-scheduling-rules',data);closeModal();await loadSchedulingRules();alert('✅ قانون ثبت شد');}catch(error){alert(error.message);}
 };
 
 window.viewRule = async function (id) {
@@ -286,13 +234,7 @@ window.saveEditedRule = async function (id) {
     const data = readRuleForm('editRule');
     if (!data.title) return alert('عنوان قانون الزامی است');
     if (data.type === '__new__') return alert('لطفاً یک نوع قانون انتخاب کنید');
-    const index = allRules.findIndex(function (x) { return x.id === id; });
-    if (index === -1) return;
-    allRules[index] = Object.assign({}, allRules[index], data);
-    editingRuleRowId = null;
-    window.filterRules();
-    closeModal();
-    alert('✅ تغییرات ذخیره شد');
+    try{await ruleApi('/analytics/admin-scheduling-rules/'+id+'/update',data);editingRuleRowId=null;closeModal();await loadSchedulingRules();alert('✅ تغییرات ذخیره شد');}catch(error){alert(error.message);}
 };
 
 window.toggleRuleInlineEdit = async function (id) {
@@ -304,19 +246,12 @@ window.saveInlineRule = async function (id) {
     const data = readRuleForm('inlineRule' + id);
     if (!data.title) return alert('عنوان قانون الزامی است');
     if (data.type === '__new__') return alert('لطفاً یک نوع قانون انتخاب کنید');
-    const index = allRules.findIndex(function (x) { return x.id === id; });
-    if (index === -1) return;
-    allRules[index] = Object.assign({}, allRules[index], data);
-    editingRuleRowId = null;
-    window.filterRules();
-    alert('✅ تغییرات ذخیره شد');
+    try{await ruleApi('/analytics/admin-scheduling-rules/'+id+'/update',data);editingRuleRowId=null;await loadSchedulingRules();alert('✅ تغییرات ذخیره شد');}catch(error){alert(error.message);}
 };
 
 window.deleteRule = async function (id) {
     if (!(await AppDialog.confirmDelete(allRules, id, 'قانون'))) return;
-    allRules = allRules.filter(function (r) { return r.id !== id; });
-    if (editingRuleRowId === id) editingRuleRowId = null;
-    window.filterRules();
+    try{await ruleApi('/analytics/admin-scheduling-rules/'+id+'/delete',{});if(editingRuleRowId===id)editingRuleRowId=null;await loadSchedulingRules();}catch(error){alert(error.message);}
 };
 
 window.exportRulesToExcel = async function () {
@@ -384,9 +319,7 @@ window.generateRulesPDF = async function () {
 
 setTimeout(function () {
     if (document.getElementById('rulesTable')) {
-        window.renderRulesBranchTabs();
-        window.renderRuleTypeFilter();
-        window.filterRules();
+        loadSchedulingRules().catch(function(error){alert(error.message);});
     }
 }, 200);
 })();
