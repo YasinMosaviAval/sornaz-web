@@ -16,48 +16,7 @@ window.getNotificationBranches = function () {
     ];
 };
 
-const notifSampleTitles = [
-    'تعطیلی شعبه در روز جمعه', 'شروع ثبت‌نام ترم جدید', 'تغییر ساعت کلاس‌های عصر',
-    'برگزاری مستر کلاس رایگان', 'اطلاعیه پرداخت شهریه', 'جشن پایان ترم تابستان',
-    'به‌روزرسانی قوانین حضور و غیاب', 'ظرفیت کلاس‌های سطح پیشرفته تکمیل شد',
-    'برنامه کنسرت هنرجویان', 'هشدار تأخیر پرداخت شهریه', 'زمان‌بندی آزمون تئوری',
-    'افتتاح کلاس جدید گیتار کلاسیک'
-];
-const notifSampleBodies = [
-    'به اطلاع می‌رساند در تاریخ اعلام‌شده شعبه تعطیل خواهد بود. کلاس‌ها به هفته بعد منتقل می‌شوند.',
-    'ثبت‌نام ترم جدید از امروز آغاز شده است. برای رزرو جا با پذیرش تماس بگیرید.',
-    'ساعت کلاس‌های عصر از این هفته تغییر کرده است. جزئیات در پنل هنرجو قابل مشاهده است.',
-    'مستر کلاس رایگان ویژه هنرجویان سطح متوسط برگزار می‌شود. ظرفیت محدود.',
-    'مهلت پرداخت شهریه ترم جاری رو به اتمام است. لطفاً در اسرع وقت اقدام فرمایید.',
-    'جشن پایان ترم با حضور هنرجویان و خانواده‌ها برگزار خواهد شد. دعوت‌نامه ارسال می‌شود.',
-    'قوانین حضور و غیاب به‌روزرسانی شد. مطالعه آیین‌نامه جدید الزامی است.',
-    'ظرفیت کلاس‌های پیشرفته تکمیل شده است. لیست انتظار در پذیرش فعال است.',
-    'برنامه کنسرت هنرجویان نهایی شد. زمان تمرین‌های گروهی اعلام خواهد شد.',
-    'برای جلوگیری از قطع دسترسی، شهریه معوق را تا پایان هفته پرداخت نمایید.'
-];
-
 let allNotifications = [];
-(function buildSample() {
-    const branches = window.getNotificationBranches();
-    for (let i = 1; i <= 42; i++) {
-        const branch = branches[Math.floor(Math.random() * branches.length)];
-        const d = new Date();
-        d.setDate(d.getDate() - Math.floor(Math.random() * 45));
-        allNotifications.push({
-            id: i,
-            title: notifSampleTitles[Math.floor(Math.random() * notifSampleTitles.length)],
-            body: notifSampleBodies[Math.floor(Math.random() * notifSampleBodies.length)],
-            branchId: branch.id,
-            branchName: branch.name,
-            audience: window.notificationAudiencesList[Math.floor(Math.random() * window.notificationAudiencesList.length)],
-            priority: window.notificationPrioritiesList[Math.floor(Math.random() * window.notificationPrioritiesList.length)],
-            status: window.notificationStatusesList[Math.floor(Math.random() * window.notificationStatusesList.length)],
-            date: d.toLocaleDateString('fa-IR'),
-            dateISO: d.toISOString().split('T')[0],
-            source: Math.random() > 0.4 ? 'سیستم' : 'مدیریت'
-        });
-    }
-})();
 
 let currentNotificationBranch = 'all';
 let notificationsCurrentPage = 1;
@@ -65,6 +24,36 @@ const notificationsPerPage = 10;
 let filteredNotifications = allNotifications.slice();
 let notifSortField = '';
 let notifSortDirection = 'asc';
+
+function notificationEncode(data) {
+    const bytes = new TextEncoder().encode(JSON.stringify(data));
+    let value = '';
+    bytes.forEach(function (byte) { value += String.fromCharCode(byte); });
+    return btoa(value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function notificationApi(url, data = null) {
+    const token = window.adminCsrfToken || '';
+    const options = { method: data === null ? 'GET' : 'POST', credentials: 'same-origin', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } };
+    if (data !== null) {
+        options.headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+        options.headers['X-CSRF-TOKEN'] = token;
+        options.body = new URLSearchParams({ _token: token, payload_b64: notificationEncode(data) }).toString();
+    }
+    const response = await fetch(url, options);
+    const payload = await response.json();
+    const envelope = payload.data ?? payload;
+    if (!response.ok || envelope.success === false) throw new Error(envelope.message || 'عملیات اعلان ناموفق بود.');
+    return envelope.data ?? envelope;
+}
+
+window.loadAdminNotifications = async function () {
+    const data = await notificationApi('/analytics/admin-notifications');
+    allNotifications = data.notifications || [];
+    filteredNotifications = allNotifications.slice();
+    window.filterNotifications();
+    return data;
+};
 
 function sortNotificationItems() {
     if (!notifSortField) return;
@@ -231,27 +220,12 @@ window.saveNotification = async function (asDraft) {
     if (!title) return alert('عنوان اعلان الزامی است');
     if (!body) return alert('متن اعلان الزامی است');
 
-    const branchId = parseInt(document.getElementById('notifBranch') && document.getElementById('notifBranch').value, 10);
-    const branch = window.getNotificationBranches().find(function (b) { return b.id === branchId; });
-    const now = new Date();
-
-    allNotifications.unshift({
-        id: Date.now(),
-        title: title,
-        body: body,
-        branchId: branchId,
-        branchName: branch ? branch.name : 'نامشخص',
-        audience: document.getElementById('notifAudience') && document.getElementById('notifAudience').value || 'همه',
-        priority: document.getElementById('notifPriority') && document.getElementById('notifPriority').value || 'متوسط',
-        date: now.toLocaleDateString('fa-IR'),
-        dateISO: now.toISOString().split('T')[0],
-        status: asDraft ? 'پیش‌نویس' : 'منتشر شده',
-        source: 'مدیریت'
-    });
-
-    window.filterNotifications();
-    closeModal();
-    alert(asDraft ? '✅ پیش‌نویس ذخیره شد' : '✅ اعلان منتشر شد');
+    try {
+        await notificationApi('/analytics/admin-notifications', { title: title, body: body, asDraft: Boolean(asDraft) });
+        await window.loadAdminNotifications();
+        closeModal();
+        alert(asDraft ? '✅ پیش‌نویس ذخیره شد' : '✅ اعلان منتشر شد');
+    } catch (error) { alert(error.message); }
 };
 
 window.viewNotification = async function (id) {
@@ -264,30 +238,24 @@ window.viewNotification = async function (id) {
 window.publishNotification = async function (id) {
     const item = allNotifications.find(function (x) { return x.id === id; });
     if (!item) return;
-    item.status = 'منتشر شده';
-    window.filterNotifications();
-    closeModal();
-    alert('✅ اعلان منتشر شد');
+    try { await notificationApi('/analytics/admin-notifications/' + id + '/publish', {}); await window.loadAdminNotifications(); closeModal(); alert('✅ اعلان منتشر شد'); } catch (error) { alert(error.message); }
 };
 
 window.expireNotification = async function (id) {
     const item = allNotifications.find(function (x) { return x.id === id; });
     if (!item) return;
-    item.status = 'منقضی';
-    window.filterNotifications();
-    closeModal();
+    try { await notificationApi('/analytics/admin-notifications/' + id + '/expire', {}); await window.loadAdminNotifications(); closeModal(); } catch (error) { alert(error.message); }
 };
 
 window.deleteNotification = async function (id) {
     if (!(await AppDialog.confirmDelete(allNotifications, id, 'اعلان'))) return;
-    allNotifications = allNotifications.filter(function (n) { return n.id !== id; });
-    window.filterNotifications();
+    try { await notificationApi('/analytics/admin-notifications/' + id + '/delete', {}); await window.loadAdminNotifications(); } catch (error) { alert(error.message); }
 };
 
-setTimeout(function () {
+setTimeout(async function () {
     if (document.getElementById('notificationsTable')) {
         window.renderNotificationsBranchTabs();
-        window.filterNotifications();
+        try { await window.loadAdminNotifications(); } catch (error) { console.error(error); alert(error.message); }
     }
 }, 200);
 })();
