@@ -1,4 +1,21 @@
 <div id="schedules" class="section hidden">
+    <style>
+        #schedulesWeeklyTables table {
+            width: max-content !important;
+            min-width: 0 !important;
+            table-layout: auto !important;
+        }
+        #schedulesWeeklyTables th,
+        #schedulesWeeklyTables td {
+            width: auto !important;
+            min-width: 0 !important;
+            max-width: none !important;
+        }
+        #schedulesWeeklyTables td button {
+            width: auto !important;
+            min-width: 0 !important;
+        }
+    </style>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-3xl font-bold">برنامه زمانی کلاس‌ها</h1>
@@ -60,13 +77,17 @@
             </select>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">از ساعت</label>
-                <input type="time" id="filterScheduleTimeFrom" onchange="filterSchedules()"
-                       class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                <select id="filterScheduleTimeFrom" onchange="filterSchedules()"
+                        class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                    <option value="">همه ساعت‌ها</option>
+                </select>
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">تا ساعت</label>
-                <input type="time" id="filterScheduleTimeTo" onchange="filterSchedules()"
-                       class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                <select id="filterScheduleTimeTo" onchange="filterSchedules()"
+                        class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                    <option value="">همه ساعت‌ها</option>
+                </select>
             </div>
         </div>
     </div>
