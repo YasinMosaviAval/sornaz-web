@@ -9,6 +9,7 @@ use Modules\Academy\Controllers\Web\AcademyClassroomController;
 use Modules\Academy\Controllers\Web\AcademyBranchOfferingController;
 use Modules\Academy\Controllers\Web\AcademyCourseController;
 use Modules\Academy\Controllers\Web\AcademyTermController;
+use Modules\Academy\Controllers\Web\AcademyTermAvailabilityController;
 use Modules\Academy\Controllers\Web\AcademyClassScheduleController;
 
 Router::get('/academy/academy', [AnalyticsController::class, 'academy']);
@@ -49,6 +50,7 @@ Router::post('/academy/admin/course-levels', [AcademyCourseController::class, 's
 Router::post('/academy/admin/course-levels/{id}/update', [AcademyCourseController::class, 'updateLevel'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/course-levels/{id}/delete', [AcademyCourseController::class, 'deleteLevel'])->middleware(['academy-panel','csrf']);
 Router::get('/academy/admin/terms', [AcademyTermController::class, 'index'])->middleware('academy-panel');
+Router::get('/academy/admin/term-available-times', [AcademyTermAvailabilityController::class, 'index'])->middleware('academy-panel');
 Router::get('/academy/admin/term-invoices', [AcademyTermController::class, 'invoices'])->middleware('academy-panel');
 Router::post('/academy/admin/term-invoices/{id}/update', [AcademyTermController::class, 'updateInvoice'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/term-invoices/{id}/installments/{installmentId}/pay', [AcademyTermController::class, 'payInstallment'])->middleware(['academy-panel','csrf']);

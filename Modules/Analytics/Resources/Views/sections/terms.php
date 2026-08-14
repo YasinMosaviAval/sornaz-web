@@ -86,12 +86,22 @@
                     <option value="">همه تعداد اقساط</option>
                 </select>
             </div>
+            <div>
+                <select id="filterTermWeekday" onchange="filterTerms()"
+                        class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                    <option value="">همه روزهای هفته</option>
+                    <option value="6">شنبه</option><option value="0">یکشنبه</option>
+                    <option value="1">دوشنبه</option><option value="2">سه‌شنبه</option>
+                    <option value="3">چهارشنبه</option><option value="4">پنجشنبه</option>
+                    <option value="5">جمعه</option>
+                </select>
+            </div>
         </div>
     </div>
 
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1100px]" id="termsTable">
+            <table class="w-full min-w-[1400px]" id="termsTable">
                 <thead class="bg-gray-50 border-b">
                     <tr>
                         <th class="text-right py-5 px-5 font-medium">
@@ -119,6 +129,8 @@
                                 تاریخ پایان <span id="termSortIcon-end">↕</span>
                             </button>
                         </th>
+                        <th class="text-right py-5 px-5 font-medium">روز برگزاری</th>
+                        <th class="text-right py-5 px-5 font-medium">ساعت برگزاری</th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortTermsBy('status')" class="flex items-center gap-1">
                                 وضعیت <span id="termSortIcon-status">↕</span>
