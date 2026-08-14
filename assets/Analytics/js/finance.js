@@ -68,11 +68,15 @@ let allTransactions = [];
     }
 })();
 
+// داده‌های نمونه بالا برای استفاده‌های بعدی نگه داشته شده‌اند؛ جدول فعلی فقط فاکتورهای واقعی ترم‌ها را نمایش می‌دهد.
+let allTermInvoices = [];
+
 let currentFinanceBranch = 'all';
 let financeCurrentPage = 1;
 const financePerPage = 10;
-let filteredTransactions = allTransactions.slice();
+let filteredTransactions = [];
 let editingFinanceRowId = null;
+let installmentFinanceRowId = null;
 let financeSortField = '';
 let financeSortDirection = 'asc';
 
@@ -106,7 +110,7 @@ function sortFinanceItems() {
 }
 
 window.updateFinanceSortIcons = async function () {
-    ['title', 'branchName', 'type', 'amount', 'date', 'status'].forEach(function (f) {
+    ['title', 'branchName', 'course', 'amount', 'date', 'status'].forEach(function (f) {
         const icon = document.getElementById('financeSortIcon-' + f);
         if (!icon) return;
         icon.textContent = financeSortField === f
@@ -220,12 +224,12 @@ window.filterFinance = async function () {
     const status = document.getElementById('filterFinanceStatus') && document.getElementById('filterFinanceStatus').value || '';
     const type = document.getElementById('filterFinanceType') && document.getElementById('filterFinanceType').value || '';
 
-    filteredTransactions = allTransactions.filter(function (item) {
+    filteredTransactions = allTermInvoices.filter(function (item) {
         if (item.status === 'حذف‌شده' && status !== 'حذف‌شده') {
             // still show if explicitly filtered; otherwise hide deleted by default? user asked for filter by status so show all unless filtered
         }
         const matchBranch = currentFinanceBranch === 'all' || item.branchId == currentFinanceBranch;
-        const matchSearch = !search || (item.title || '').toLowerCase().includes(search) || (item.summary || '').toLowerCase().includes(search);
+        const matchSearch = !search || (item.title || '').toLowerCase().includes(search) || (item.course || '').toLowerCase().includes(search) || (item.summary || '').toLowerCase().includes(search);
         const matchStatus = !status || item.status === status;
         const matchType = !type || item.type === type;
         const matchDate = matchesDateRange(item);
@@ -243,24 +247,25 @@ window.renderFinanceSummary = async function () {
     const container = document.getElementById('financeSummaryCards');
     if (!container) return;
 
-    // فقط تراکنش‌های تأیید شده در خلاصه
-    const list = filteredTransactions.filter(function (t) { return t.status === 'تأیید شده'; });
-    const income = list.filter(function (t) { return t.type === 'درآمد'; }).reduce(function (s, t) { return s + (Number(t.amount) || 0); }, 0);
-    const expense = list.filter(function (t) { return t.type === 'هزینه'; }).reduce(function (s, t) { return s + (Number(t.amount) || 0); }, 0);
-    const balance = income - expense;
+    const total = filteredTransactions.reduce(function (sum, invoice) { return sum + (Number(invoice.amount) || 0); }, 0);
+    const paid = filteredTransactions.reduce(function (sum, invoice) {
+        return sum + (invoice.installments || []).filter(function (installment) { return installment.statusCode === 'paid'; })
+            .reduce(function (subtotal, installment) { return subtotal + (Number(installment.amount) || 0); }, 0);
+    }, 0);
+    const remaining = Math.max(0, total - paid);
 
     container.innerHTML = `
         <div class="bg-white rounded-3xl p-6 shadow">
-            <p class="text-gray-500 text-sm">کل درآمد (تأیید شده)</p>
-            <p class="text-2xl font-bold text-green-600 mt-2">${income.toLocaleString('fa-IR')} تومان</p>
+            <p class="text-gray-500 text-sm">مجموع مبلغ فاکتورها</p>
+            <p class="text-2xl font-bold text-indigo-600 mt-2">${total.toLocaleString('fa-IR')} تومان</p>
         </div>
         <div class="bg-white rounded-3xl p-6 shadow">
-            <p class="text-gray-500 text-sm">کل هزینه (تأیید شده)</p>
-            <p class="text-2xl font-bold text-red-600 mt-2">${expense.toLocaleString('fa-IR')} تومان</p>
+            <p class="text-gray-500 text-sm">اقساط پرداخت‌شده</p>
+            <p class="text-2xl font-bold text-green-600 mt-2">${paid.toLocaleString('fa-IR')} تومان</p>
         </div>
         <div class="bg-white rounded-3xl p-6 shadow">
-            <p class="text-gray-500 text-sm">مانده</p>
-            <p class="text-2xl font-bold ${balance >= 0 ? 'text-indigo-600' : 'text-red-600'} mt-2">${balance.toLocaleString('fa-IR')} تومان</p>
+            <p class="text-gray-500 text-sm">مانده قابل پرداخت</p>
+            <p class="text-2xl font-bold text-amber-600 mt-2">${remaining.toLocaleString('fa-IR')} تومان</p>
         </div>`;
 };
 
@@ -291,6 +296,11 @@ window.renderFinanceTable = async function (list) {
                 expand.className = 'bg-gray-50';
                 expand.innerHTML = window.getFinanceInlineExpandRowHTML ? window.getFinanceInlineExpandRowHTML(item) : '';
                 tbody.appendChild(expand);
+            } else if (installmentFinanceRowId === item.id) {
+                const expand = document.createElement('tr');
+                expand.className = 'bg-gray-50';
+                expand.innerHTML = window.getFinanceInlineInstallmentsRowHTML ? window.getFinanceInlineInstallmentsRowHTML(item) : '';
+                tbody.appendChild(expand);
             }
         });
     }
@@ -301,7 +311,7 @@ window.renderFinanceTable = async function (list) {
 function updateFinancePagination(total, start, end, totalPages) {
     const info = document.getElementById('financePaginationInfo');
     if (info) {
-        info.textContent = 'نمایش ' + (total === 0 ? 0 : start + 1) + ' تا ' + Math.min(end, total) + ' از ' + total + ' تراکنش';
+        info.textContent = 'نمایش ' + (total === 0 ? 0 : start + 1) + ' تا ' + Math.min(end, total) + ' از ' + total + ' فاکتور';
     }
     const pagination = document.getElementById('financePaginationButtons');
     if (!pagination) return;
@@ -338,12 +348,53 @@ function readFinanceForm(prefix) {
         branchId: branchId,
         branchName: branch ? branch.name : 'نامشخص',
         type: f('Type') && f('Type').value || 'درآمد',
-        status: f('Status') && f('Status').value || 'تأیید شده',
+        statusCode: f('Status') && f('Status').value || 'draft',
         summary: f('Summary') && f('Summary').value.trim() || '',
         description: f('Description') && f('Description').value.trim() || '',
         dateIso: dateIso,
         date: dateIso ? formatDisplayDate(dateIso) : '—'
     };
+}
+
+function financeEncode(data) {
+    const bytes = new TextEncoder().encode(JSON.stringify(data));
+    let value = '';
+    bytes.forEach(function (byte) { value += String.fromCharCode(byte); });
+    return btoa(value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function financeApi(url, data) {
+    const token = window.adminCsrfToken || '';
+    const response = await fetch(url, {
+        method: 'POST', credentials: 'same-origin',
+        headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', 'X-CSRF-TOKEN': token },
+        body: new URLSearchParams({ _token: token, payload_b64: financeEncode(data) }).toString()
+    });
+    const body = await response.json();
+    const envelope = body.data ?? body;
+    if (!response.ok || envelope.success === false) throw new Error(envelope.message || 'ویرایش فاکتور ناموفق بود.');
+    return envelope.data ?? envelope;
+}
+
+async function loadFinanceInvoices() {
+    const response = await fetch('/academy/admin/term-invoices', {
+        credentials: 'same-origin', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    const body = await response.json();
+    const envelope = body.data ?? body;
+    const data = envelope.data ?? envelope;
+    if (!response.ok || envelope.success === false) throw new Error(envelope.message || 'دریافت فاکتورها ناموفق بود.');
+    window.allBranches = data.branches || window.allBranches || [];
+    allTermInvoices = (data.invoices || []).map(function (invoice) {
+        return Object.assign({}, invoice, {
+            title: invoice.termName,
+            type: 'فاکتور ترم',
+            dateIso: invoice.dueDate,
+            date: formatDisplayDate(invoice.dueDate)
+        });
+    });
+    renderFinanceBranchTabs();
+    filterFinance();
 }
 
 // ==================== CRUD ====================
@@ -362,14 +413,46 @@ window.saveTransaction = async function () {
 };
 
 window.viewTransaction = async function (id) {
-    const item = allTransactions.find(function (x) { return x.id === id; });
+    const item = allTermInvoices.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getFinanceDetailsModalHTML
         ? window.getFinanceDetailsModalHTML(item) : '';
 };
 
+window.openFinanceInstallments = async function (id) {
+    const item = allTermInvoices.find(function (x) { return x.id === id; });
+    if (!item || !document.getElementById('modalContainer')) return;
+    document.getElementById('modalContainer').innerHTML = window.getFinanceInstallmentsModalHTML
+        ? window.getFinanceInstallmentsModalHTML(item) : '';
+};
+
+window.toggleFinanceInlineInstallments = async function (id) {
+    editingFinanceRowId = null;
+    installmentFinanceRowId = installmentFinanceRowId === id ? null : id;
+    renderFinanceTable(filteredTransactions);
+};
+
+window.payFinanceInstallment = async function (invoiceId, installmentId, isInline) {
+    const invoice = allTermInvoices.find(function (item) { return item.id === invoiceId; });
+    const installment = invoice && (invoice.installments || []).find(function (item) { return item.id === installmentId; });
+    if (!installment || installment.statusCode === 'paid') return;
+    const confirmed = await AppDialog.confirm('آیا از پرداخت قسط ' + Number(installment.number).toLocaleString('fa-IR') + ' به مبلغ ' + Number(installment.amount || 0).toLocaleString('fa-IR') + ' تومان مطمئن هستید؟');
+    if (!confirmed) return;
+    try {
+        await financeApi('/academy/admin/term-invoices/' + invoiceId + '/installments/' + installmentId + '/pay', {});
+        await loadFinanceInvoices();
+        if (isInline) {
+            installmentFinanceRowId = invoiceId;
+            renderFinanceTable(filteredTransactions);
+        } else {
+            openFinanceInstallments(invoiceId);
+        }
+        alert('✅ پرداخت قسط با موفقیت ثبت شد');
+    } catch (error) { alert(error.message); }
+};
+
 window.editTransaction = async function (id) {
-    const item = allTransactions.find(function (x) { return x.id === id; });
+    const item = allTermInvoices.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getFinanceEditModalHTML
         ? window.getFinanceEditModalHTML(item) : '';
@@ -378,16 +461,22 @@ window.editTransaction = async function (id) {
 window.saveEditedTransaction = async function (id) {
     const data = readFinanceForm('editTrans');
     if (!data.title || !data.amount) return alert('شرح و مبلغ الزامی است');
-    const index = allTransactions.findIndex(function (x) { return x.id === id; });
-    if (index === -1) return;
-    allTransactions[index] = Object.assign({}, allTransactions[index], data);
-    editingFinanceRowId = null;
-    filterFinance();
-    closeModal();
-    alert('✅ تغییرات ذخیره شد');
+    try {
+        await financeApi('/academy/admin/term-invoices/' + id + '/update', {
+            title: data.title, amount: data.amount, dueDate: data.dateIso,
+            statusCode: data.statusCode, summary: data.summary, description: data.description
+        });
+        await loadFinanceInvoices();
+        editingFinanceRowId = null;
+        closeModal();
+        alert('✅ تغییرات ذخیره شد');
+    } catch (error) { alert(error.message); }
 };
 
 window.toggleFinanceInlineEdit = async function (id) {
+    const item = allTermInvoices.find(function (x) { return x.id === id; });
+    if (!item) return;
+    installmentFinanceRowId = null;
     editingFinanceRowId = editingFinanceRowId === id ? null : id;
     renderFinanceTable(filteredTransactions);
 };
@@ -395,12 +484,15 @@ window.toggleFinanceInlineEdit = async function (id) {
 window.saveInlineTransaction = async function (id) {
     const data = readFinanceForm('inlineTrans' + id);
     if (!data.title || !data.amount) return alert('شرح و مبلغ الزامی است');
-    const index = allTransactions.findIndex(function (x) { return x.id === id; });
-    if (index === -1) return;
-    allTransactions[index] = Object.assign({}, allTransactions[index], data);
-    editingFinanceRowId = null;
-    filterFinance();
-    alert('✅ تغییرات ذخیره شد');
+    try {
+        await financeApi('/academy/admin/term-invoices/' + id + '/update', {
+            title: data.title, amount: data.amount, dueDate: data.dateIso,
+            statusCode: data.statusCode, summary: data.summary, description: data.description
+        });
+        editingFinanceRowId = null;
+        await loadFinanceInvoices();
+        alert('✅ تغییرات ذخیره شد');
+    } catch (error) { alert(error.message); }
 };
 
 window.deleteTransaction = async function (id) {
@@ -484,10 +576,15 @@ window.generateFinancePDF = async function () {
 
 // ==================== Init ====================
 (function initFinance() {
-    setTimeout(function () {
+    setTimeout(async function () {
         if (document.getElementById('financeTable')) {
-            renderFinanceBranchTabs();
-            filterFinance();
+            try {
+                await loadFinanceInvoices();
+            } catch (error) {
+                console.error(error);
+                allTermInvoices = [];
+                filterFinance();
+            }
         }
     }, 200);
 })();

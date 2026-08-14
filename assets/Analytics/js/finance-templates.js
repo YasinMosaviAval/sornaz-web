@@ -14,6 +14,11 @@
     }
     function statusClass(status) {
         return {
+            'پیش‌نویس': 'bg-gray-100 text-gray-600',
+            'صادرشده': 'bg-blue-100 text-blue-700',
+            'پرداخت جزئی': 'bg-yellow-100 text-yellow-700',
+            'پرداخت‌شده': 'bg-green-100 text-green-700',
+            'لغوشده': 'bg-red-100 text-red-700',
             'تأیید شده': 'bg-green-100 text-green-700',
             'در انتظار تأیید': 'bg-yellow-100 text-yellow-700',
             'رد شده': 'bg-red-100 text-red-700',
@@ -22,11 +27,10 @@
     }
 
     window.getFinanceRowHTML = function (item) {
-        const typeClass = item.type === 'درآمد' ? 'text-green-600' : 'text-red-600';
         return `
-            <td class="py-4 px-5 font-medium">${escapeHtml(item.title)}</td>
+            <td class="py-4 px-5 font-medium">#${escapeHtml(item.id)} — ${escapeHtml(item.termName)}</td>
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5"><span class="${typeClass} font-medium">${escapeHtml(item.type)}</span></td>
+            <td class="py-4 px-5">${escapeHtml(item.course || '—')}</td>
             <td class="py-4 px-5 font-medium">${Number(item.amount || 0).toLocaleString('fa-IR')}</td>
             <td class="py-4 px-5">${escapeHtml(item.date || '—')}</td>
             <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td>
@@ -34,42 +38,81 @@
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewTransaction(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
                     <button onclick="toggleFinanceInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
-                    <button onclick="deleteTransaction(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>
+                    <button onclick="toggleFinanceInlineInstallments(${item.id})" class="text-emerald-600 hover:underline text-sm">مشاهده اقساط</button>
                 </div>
             </td>`;
     };
 
     window.getFinanceEmptyRowHTML = function () {
-        return `<tr><td colspan="7" class="py-12 text-center text-gray-400">تراکنشی یافت نشد</td></tr>`;
+        return `<tr><td colspan="7" class="py-12 text-center text-gray-400">فاکتور ترمی یافت نشد</td></tr>`;
+    };
+
+    function financeInstallmentsPanel(item, isInline) {
+        const installments = item.installments || [];
+        const firstUnpaid = installments.find(function (installment) { return installment.statusCode !== 'paid'; });
+        const rows = installments.map(function (installment) {
+            const badge = installment.statusCode === 'paid'
+                ? 'bg-green-100 text-green-700'
+                : (installment.statusCode === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700');
+            const isNextPayable = firstUnpaid && firstUnpaid.id === installment.id;
+            const payButton = installment.statusCode === 'paid' ? '' : (isNextPayable
+                ? `<button onclick="payFinanceInstallment(${item.id}, ${installment.id}, ${isInline ? 'true' : 'false'})" class="rounded-xl bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700">پرداخت</button>`
+                : '<button type="button" disabled title="ابتدا قسط قبلی را پرداخت کنید" class="cursor-not-allowed rounded-xl bg-gray-200 px-4 py-2 text-sm text-gray-400">پرداخت</button>');
+            return `<div class="grid grid-cols-2 md:grid-cols-5 gap-3 items-center border border-gray-200 rounded-2xl p-4">
+                <div><span class="block text-xs text-gray-400 mb-1">شماره قسط</span><strong>${Number(installment.number).toLocaleString('fa-IR')}</strong></div>
+                <div><span class="block text-xs text-gray-400 mb-1">مبلغ</span><strong>${Number(installment.amount || 0).toLocaleString('fa-IR')}</strong></div>
+                <div><span class="block text-xs text-gray-400 mb-1">سررسید</span><strong>${escapeHtml(installment.dueDate || '—')}</strong></div>
+                <div><span class="inline-flex px-3 py-1 rounded-full text-xs ${badge}">${escapeHtml(installment.status)}</span></div>
+                <div class="text-left">${payButton}</div>
+            </div>`;
+        }).join('') || '<p class="text-center text-gray-400 py-8">قسطی برای این فاکتور ثبت نشده است.</p>';
+        return `<div id="financeInstallmentsPanel-${item.id}"><div class="flex items-center justify-between mb-4"><div><h3 class="font-bold text-lg">اقساط فاکتور #${escapeHtml(item.id)}</h3><p class="text-sm text-gray-500 mt-1">${escapeHtml(item.termName)} — ${escapeHtml(item.course)}</p></div>${isInline ? `<button onclick="toggleFinanceInlineInstallments(${item.id})" class="text-gray-500 hover:text-gray-700">بستن</button>` : ''}</div><div class="max-h-[55vh] overflow-y-auto space-y-3 pr-1">${rows}</div></div>`;
+    }
+
+    window.getFinanceInlineInstallmentsRowHTML = function (item) {
+        return `<td colspan="7" class="p-5 border-t"><div class="rounded-2xl border border-gray-200 bg-white p-5">${financeInstallmentsPanel(item, true)}</div></td>`;
+    };
+
+    window.getFinanceInstallmentsModalHTML = function (item) {
+        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
+            <div class="bg-white rounded-3xl w-full max-w-3xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+                <div class="px-8 py-5 border-b flex justify-between items-center">
+                    <div><h2 class="text-2xl font-bold">اقساط فاکتور #${escapeHtml(item.id)}</h2><p class="text-sm text-gray-500 mt-1">${escapeHtml(item.termName)} — ${escapeHtml(item.course)}</p></div>
+                    <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
+                </div>
+                <div class="p-8">${financeInstallmentsPanel(item, false)}<button onclick="closeModal()" class="w-full mt-6 border border-gray-300 py-4 rounded-2xl hover:bg-gray-50">بستن</button></div>
+            </div>
+        </div>`;
     };
 
     window.getFinanceInlineExpandRowHTML = function (item) {
         return `<td colspan="7" class="p-5 border-t">${window.getFinanceInlineEditRowHTML ? window.getFinanceInlineEditRowHTML(item) : ''}</td>`;
     };
 
-    function formFields(item, prefix) {
+    function formFields(item, prefix, isInvoiceEdit) {
         const id = function (n) { return prefix ? prefix + n : 'trans' + n; };
         const branches = (typeof allBranches !== 'undefined' ? allBranches : []).map(function (b) {
             return { value: b.id, label: b.name };
         });
-        const types = [{ value: 'درآمد', label: 'درآمد' }, { value: 'هزینه', label: 'هزینه' }];
+        const types = isInvoiceEdit ? [{ value: 'فاکتور ترم', label: 'فاکتور ترم' }] : [{ value: 'درآمد', label: 'درآمد' }, { value: 'هزینه', label: 'هزینه' }];
         const statuses = [
-            { value: 'تأیید شده', label: 'تأیید شده' },
-            { value: 'در انتظار تأیید', label: 'در انتظار تأیید' },
-            { value: 'رد شده', label: 'رد شده' },
-            { value: 'حذف‌شده', label: 'حذف‌شده' }
+            { value: 'draft', label: 'پیش‌نویس' },
+            { value: 'issued', label: 'صادرشده' },
+            { value: 'partial', label: 'پرداخت جزئی' },
+            { value: 'paid', label: 'پرداخت‌شده' },
+            { value: 'canceled', label: 'لغوشده' }
         ];
         return `
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                     <label class="block text-sm font-medium mb-2">شعبه *</label>
-                    <select id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <select id="${id('Branch')}" ${isInvoiceEdit ? 'disabled' : ''} class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
                         ${renderOptions(branches, item.branchId)}
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">نوع تراکنش *</label>
-                    <select id="${id('Type')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <select id="${id('Type')}" ${isInvoiceEdit ? 'disabled' : ''} class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
                         ${renderOptions(types, item.type || 'درآمد')}
                     </select>
                 </div>
@@ -88,7 +131,7 @@
                 <div>
                     <label class="block text-sm font-medium mb-2">وضعیت</label>
                     <select id="${id('Status')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(statuses, item.status || 'تأیید شده')}
+                        ${renderOptions(statuses, item.statusCode || 'draft')}
                     </select>
                 </div>
                 <div class="sm:col-span-2">
@@ -104,7 +147,7 @@
 
     window.getFinanceInlineEditRowHTML = function (item) {
         return `<div class="space-y-6">
-            ${formFields(item, 'inlineTrans' + item.id)}
+            ${formFields(item, 'inlineTrans' + item.id, true)}
             <div class="flex flex-col sm:flex-row gap-4 pt-2">
                 <button onclick="saveInlineTransaction(${item.id})" class="w-full sm:w-auto min-w-[140px] bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-4 rounded-2xl font-medium">ذخیره</button>
                 <button onclick="toggleFinanceInlineEdit(${item.id})" class="w-full sm:w-auto min-w-[140px] border border-gray-300 px-5 py-4 rounded-2xl hover:bg-gray-50">انصراف</button>
@@ -120,7 +163,7 @@
                     <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                 </div>
                 <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto">
-                    ${formFields({}, '')}
+                    ${formFields({}, '', false)}
                     <div class="flex gap-4 pt-4">
                         <button onclick="saveTransaction()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-medium">ذخیره</button>
                         <button onclick="closeModal()" class="flex-1 border border-gray-300 py-4 rounded-2xl hover:bg-gray-50">انصراف</button>
@@ -138,7 +181,7 @@
                     <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                 </div>
                 <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto">
-                    ${formFields(item, 'editTrans')}
+                    ${formFields(item, 'editTrans', true)}
                     <div class="flex gap-4 pt-4">
                         <button onclick="saveEditedTransaction(${item.id})" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-medium">ذخیره تغییرات</button>
                         <button onclick="closeModal()" class="flex-1 border border-gray-300 py-4 rounded-2xl hover:bg-gray-50">انصراف</button>
@@ -159,6 +202,7 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <button onclick="editTransaction(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm">ویرایش</button>
+                        <button onclick="openFinanceInstallments(${item.id})" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-sm">مشاهده اقساط</button>
                         <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                     </div>
                 </div>

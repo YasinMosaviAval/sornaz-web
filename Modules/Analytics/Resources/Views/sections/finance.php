@@ -2,7 +2,7 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-3xl font-bold">امور مالی</h1>
-            <p class="text-gray-500 mt-1">درآمد، هزینه و تراکنش‌های شعبه‌ها</p>
+            <p class="text-gray-500 mt-1">فاکتورهای ترم‌ها و وضعیت اقساط آن‌ها</p>
         </div>
         <div class="flex flex-wrap gap-3">
             <button onclick="openAddTransactionModal()"
@@ -36,22 +36,22 @@
     <!-- فیلترها -->
     <div class="bg-white rounded-3xl p-5 mb-6 shadow-sm">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <input type="text" id="financeSearch" placeholder="جستجو شرح تراکنش..."
+            <input type="text" id="financeSearch" placeholder="جستجو نام ترم یا دوره..."
                    class="w-full border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500"
                    onkeyup="filterFinance()">
             <select id="filterFinanceStatus" onchange="filterFinance()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه وضعیت‌ها</option>
-                <option value="تأیید شده">تأیید شده</option>
-                <option value="در انتظار تأیید">در انتظار تأیید</option>
-                <option value="رد شده">رد شده</option>
-                <option value="حذف‌شده">حذف‌شده</option>
+                <option value="پیش‌نویس">پیش‌نویس</option>
+                <option value="صادرشده">صادرشده</option>
+                <option value="پرداخت جزئی">پرداخت جزئی</option>
+                <option value="پرداخت‌شده">پرداخت‌شده</option>
+                <option value="لغوشده">لغوشده</option>
             </select>
             <select id="filterFinanceType" onchange="filterFinance()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه انواع</option>
-                <option value="درآمد">درآمد</option>
-                <option value="هزینه">هزینه</option>
+                <option value="فاکتور ترم">فاکتور ترم</option>
             </select>
             <select id="filterFinanceRange" onchange="onFinanceRangeChange()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
@@ -83,13 +83,13 @@
                 <thead class="bg-gray-50 border-b">
                     <tr>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortFinanceBy('title')" class="flex items-center gap-1">شرح <span id="financeSortIcon-title">↕</span></button>
+                            <button onclick="sortFinanceBy('title')" class="flex items-center gap-1">فاکتور / ترم <span id="financeSortIcon-title">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortFinanceBy('branchName')" class="flex items-center gap-1">شعبه <span id="financeSortIcon-branchName">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortFinanceBy('type')" class="flex items-center gap-1">نوع <span id="financeSortIcon-type">↕</span></button>
+                            <button onclick="sortFinanceBy('course')" class="flex items-center gap-1">دوره <span id="financeSortIcon-course">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortFinanceBy('amount')" class="flex items-center gap-1">مبلغ <span id="financeSortIcon-amount">↕</span></button>
@@ -107,7 +107,7 @@
             </table>
         </div>
         <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
-            <span id="financePaginationInfo">نمایش ۱ تا ۱۰ از ۵۰ تراکنش</span>
+            <span id="financePaginationInfo">در حال دریافت فاکتورها...</span>
             <div class="flex items-center gap-2" id="financePaginationButtons"></div>
         </div>
     </div>
