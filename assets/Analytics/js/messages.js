@@ -6,7 +6,7 @@ window.messageStatusesList = ['خوانده‌نشده', 'خوانده‌شده'
 window.messagePrioritiesList = ['عادی', 'مهم', 'فوری'];
 window.messageTypesList = ['اطلاعیه', 'یادآوری', 'هشدار', 'شخصی'];
 
-window.getMessageBranches = async function () {
+window.getMessageBranches = function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
     return [
         { id: 1, name: 'شعبه مرکزی' },

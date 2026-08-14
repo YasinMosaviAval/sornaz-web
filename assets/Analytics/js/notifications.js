@@ -6,7 +6,7 @@ window.notificationStatusesList = ['منتشر شده', 'پیش‌نویس', 'م
 window.notificationPrioritiesList = ['بالا', 'متوسط', 'کم'];
 window.notificationAudiencesList = ['همه', 'هنرجویان', 'اساتید', 'والدین', 'پرسنل'];
 
-window.getNotificationBranches = async function () {
+window.getNotificationBranches = function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
     return [
         { id: 1, name: 'شعبه مرکزی' },
