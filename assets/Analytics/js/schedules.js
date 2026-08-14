@@ -23,7 +23,7 @@ const scheduleClassroomPool = [
     { id: 7, name: 'کلاس ویولن' }
 ];
 
-window.getScheduleBranches = async function () {
+window.getScheduleBranches = function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
     return [
         { id: 1, name: 'شعبه مرکزی' }, { id: 2, name: 'شعبه ونک' },

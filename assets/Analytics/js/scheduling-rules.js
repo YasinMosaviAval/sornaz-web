@@ -17,7 +17,7 @@ const ruleValuePool = [
     '۷۲ ساعت قبل', 'بله', '۷ سال', '۲ غیبت'
 ];
 
-window.getRuleBranches = async function () {
+window.getRuleBranches = function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
     return [
         { id: 1, name: 'شعبه مرکزی' },
