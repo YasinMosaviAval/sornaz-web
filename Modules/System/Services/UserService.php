@@ -11,32 +11,66 @@ class UserService {
 
     public function register(array $data): int|false {
         $fullName = $data['full_name'] ?? '';
+        $ownsTransaction = !db()->inTransaction();
 
-        $userId = $this->repository->store([
-            'username'        => $data['username'],
-            'email'           => $data['email'] ?? null,
-            'phone'           => $data['phone'] ?? null,
-            'password'        => password_hash($data['password'], PASSWORD_DEFAULT),
-            'type'            => $data['type'] ?? 'student',
-            'status'          => $data['status'] ?? 'pending',
-            'locale'          => $data['locale'] ?? 'fa',
-            'timezone'        => $data['timezone'] ?? 'Asia/Tehran',
-            'register_method' => $data['register_method'],
-        ]);
+        try {
+            return transaction(function () use ($data, $fullName) {
+                $userId = $this->repository->store([
+                    'username'        => $data['username'],
+                    'email'           => $data['email'] ?? null,
+                    'phone'           => $data['phone'] ?? null,
+                    'password'        => password_hash($data['password'], PASSWORD_DEFAULT),
+                    'type'            => $data['type'] ?? 'student',
+                    'status'          => $data['status'] ?? 'pending',
+                    'locale'          => $data['locale'] ?? 'fa',
+                    'timezone'        => $data['timezone'] ?? 'Asia/Tehran',
+                    'register_method' => $data['register_method'],
+                ]);
 
-        if (!$userId) {
+            if (!$userId) {
+                throw new \RuntimeException('User could not be created.');
+            }
+
+            $accountCreated = DB::table('financial_system_accounts')->insert([
+                'account_id' => $userId,
+                'user_id' => $userId,
+                'type' => $this->initialAccountType((string)($data['type'] ?? 'human')),
+                'balance' => 0,
+                'status' => 'active',
+            ]);
+
+            if (!$accountCreated) {
+                throw new \RuntimeException('Initial financial account could not be created.');
+            }
+
+            $translationCreated = TranslationService::manager()->set(
+                'users',
+                $userId,
+                'full_name',
+                $fullName,
+                $data['locale'] ?? 'fa'
+            );
+
+            if (!$translationCreated) {
+                throw new \RuntimeException('User translation could not be created.');
+            }
+
+                return $userId;
+            });
+        } catch (\Throwable $exception) {
+            if (!$ownsTransaction) {
+                throw $exception;
+            }
             return false;
         }
+    }
 
-        TranslationService::manager()->set(
-            'users',
-            $userId,
-            'full_name',
-            $fullName,
-            $data['locale'] ?? 'fa'
-        );
-
-        return $userId;
+    private function initialAccountType(string $userType): string {
+        return match ($userType) {
+            'academy' => 'academy_main',
+            'teacher' => 'teacher_wallet',
+            default => 'student_wallet',
+        };
     }
 
     public function attempt(string $identifier, string $password): array|false {
