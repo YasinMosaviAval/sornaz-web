@@ -5,6 +5,14 @@
             <p class="text-gray-500 mt-1">جلسات حضوری و آنلاین ترم‌های آموزشگاه</p>
         </div>
         <div class="flex flex-wrap gap-3">
+            <button id="schedulesListViewButton" onclick="setSchedulesView('list')"
+                    class="rounded-xl border bg-indigo-600 px-4 py-2 text-sm text-white">
+                <i class="fas fa-table ml-1"></i> نمایش لیستی
+            </button>
+            <button id="schedulesWeeklyViewButton" onclick="setSchedulesView('weekly')"
+                    class="rounded-xl border px-4 py-2 text-sm">
+                <i class="fas fa-calendar-week ml-1"></i> برنامه هفتگی
+            </button>
             <button onclick="exportSchedulesToExcel()"
                     class="border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl flex items-center gap-2">
                 <i class="fas fa-file-excel text-green-600"></i> خروجی اکسل
@@ -64,7 +72,7 @@
     </div>
 
     <!-- جدول -->
-    <div class="bg-white rounded-3xl shadow overflow-hidden">
+    <div id="schedulesListView" class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full min-w-[1300px]" id="schedulesTable">
                 <thead class="bg-gray-50 border-b">
@@ -112,5 +120,20 @@
             </label>
             <div class="flex items-center gap-2" id="schedulesPaginationButtons"></div>
         </div>
+    </div>
+
+    <div id="schedulesWeeklyView" class="hidden space-y-5">
+        <div class="flex flex-col gap-3 rounded-3xl bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h2 class="font-bold">برنامه هفتگی کلاس‌ها</h2>
+                <p id="schedulesWeekRange" class="mt-1 text-sm text-gray-500"></p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="changeSchedulesWeek(-1)" class="rounded-xl border px-4 py-2 text-sm">هفته قبل</button>
+                <button onclick="goToCurrentSchedulesWeek()" class="rounded-xl border px-4 py-2 text-sm">هفته جاری</button>
+                <button onclick="changeSchedulesWeek(1)" class="rounded-xl border px-4 py-2 text-sm">هفته بعد</button>
+            </div>
+        </div>
+        <div id="schedulesWeeklyTables" class="space-y-6"></div>
     </div>
 </div>
