@@ -32,7 +32,8 @@ class SystemController {
         session()->put('locale', $locale);
         $returnTo = $_SERVER['HTTP_REFERER'] ?? '/system/login';
         $path = parse_url($returnTo, PHP_URL_PATH) ?: '/system/login';
-        return redirect($path);
+        $query = parse_url($returnTo, PHP_URL_QUERY);
+        return redirect($path . ($query ? '?' . $query : ''));
     }
 
 }
