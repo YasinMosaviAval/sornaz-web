@@ -27,12 +27,17 @@
     }
 
     window.getTermRowHTML = function (item, statusClass) {
+        const dayNames=['یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه','شنبه'];
+        const days=[...new Set((item.sessions||[]).filter(s=>s.date).map(s=>dayNames[new Date(s.date+'T12:00:00').getDay()]))].join('، ')||'—';
+        const times=[...new Set((item.sessions||[]).filter(s=>s.startTime).map(s=>s.startTime+(s.endTime?' تا '+s.endTime:'')))].join('، ')||'—';
         return `
             <td class="py-4 px-5 font-medium">${escapeHtml(item.name)}</td>
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
             <td class="py-4 px-5">${escapeHtml(item.course || '—')}</td>
             <td class="py-4 px-5">${escapeHtml(item.start || '—')}</td>
             <td class="py-4 px-5">${escapeHtml(item.end || '—')}</td>
+            <td class="py-4 px-5">${escapeHtml(days)}</td>
+            <td class="py-4 px-5">${escapeHtml(times)}</td>
             <td class="py-4 px-5">
                 <span class="px-3 py-1 rounded-full text-xs ${statusClass || statusBadgeClass(item.status)}">${escapeHtml(item.status)}</span>
             </td>
@@ -48,15 +53,15 @@
     };
 
     window.getTermEmptyRowHTML = function () {
-        return `<tr><td colspan="7" class="py-12 text-center text-gray-400">هیچ ترمی یافت نشد</td></tr>`;
+        return `<tr><td colspan="9" class="py-12 text-center text-gray-400">هیچ ترمی یافت نشد</td></tr>`;
     };
 
     window.getTermInlineExpandRowHTML = function (item) {
-        return `<td colspan="7" class="p-5 border-t">${window.getTermInlineEditRowHTML ? window.getTermInlineEditRowHTML(item) : ''}</td>`;
+        return `<td colspan="9" class="p-5 border-t">${window.getTermInlineEditRowHTML ? window.getTermInlineEditRowHTML(item) : ''}</td>`;
     };
 
     window.getTermInlineAttendanceRowHTML = function (item) {
-        return `<td colspan="7" class="p-5 border-t">${window.getTermAttendancePanelHTML ? window.getTermAttendancePanelHTML(item, true) : ''}</td>`;
+        return `<td colspan="9" class="p-5 border-t">${window.getTermAttendancePanelHTML ? window.getTermAttendancePanelHTML(item, true) : ''}</td>`;
     };
 
     window.getTermTeacherFieldHTML = function (item) {
@@ -324,7 +329,7 @@
             return `<div class="flex justify-between border-b pb-2 text-sm"><span>قسط ${i + 1}</span><span class="font-medium">${Number(x.amount || 0).toLocaleString('fa-IR')}</span></div>`;
         }).join('') || '<p class="text-sm text-gray-400">قسطی ثبت نشده</p>';
         const sessions = (item.sessions || []).map(function (s, i) {
-            return `<div class="flex justify-between border-b pb-2 text-sm"><span>جلسه ${i + 1}</span><span class="font-medium">${escapeHtml(s.date || '—')}</span></div>`;
+            return `<div class="flex justify-between border-b pb-2 text-sm"><span>جلسه ${i + 1}</span><span class="font-medium">${escapeHtml(s.date || '—')}، ${escapeHtml(s.startTime || '—')} تا ${escapeHtml(s.endTime || '—')}</span></div>`;
         }).join('') || '<p class="text-sm text-gray-400">جلسه‌ای ثبت نشده</p>';
 
         return `
@@ -593,20 +598,21 @@
 (function(){
 const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const opts=(rows,value)=>rows.map(x=>`<option value="${x.id}" ${String(x.id)===String(value)?'selected':''}>${esc(x.name)}</option>`).join('');
+window.getTermTimeOptions=function(times,value){const rows=Array.isArray(times)?times:[];return '<option value="">انتخاب ساعت</option>'+rows.map(time=>`<option value="${time}" ${time===value?'selected':''}>${time}</option>`).join('');};
 function people(prefix,type,capacity,selected){const rows=[];for(let i=0;i<capacity;i++){const current=selected[i]||{};rows.push(`<div class="mb-3"><label class="mb-1 block text-xs text-gray-500">${type==='teacher'?'استاد':'هنرجو'} ${i+1}</label><select class="term-${type}-select w-full rounded-2xl border px-4 py-3" data-person-index="${i}" onchange="refreshTermPeople('${prefix}','${type}')" ${i&&!current.id?'disabled':''}><option value="">انتخاب کنید</option><option value="${current.id||''}" selected>${esc(current.name||'')}</option></select></div>`);}return rows.join('');}
-function form(item={},prefix=''){const id=n=>prefix?prefix+n:'term'+n,branch=item.branchId||'',course=item.courseId||'',classroom=item.classroomId||'',sessions=item.sessions?.length?item.sessions:[{date:''}],teacherCapacity=(window.termCourses||[]).find(x=>x.id==course)?.teacher_capacity||1,studentCapacity=(window.termCourses||[]).find(x=>x.id==course)?.student_capacity||1;return `<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+function duration(s){if(!s.startTime||!s.endTime)return 90;const[a,b]=s.startTime.split(':').map(Number),[c,d]=s.endTime.split(':').map(Number);return Math.max(1,c*60+d-a*60-b);}function form(item={},prefix=''){const id=n=>prefix?prefix+n:'term'+n,branch=item.branchId||'',course=item.courseId||'',classroom=item.classroomId||'',sessions=item.sessions?.length?item.sessions:[{date:'',startTime:'10:00',endTime:'11:30'}],teacherCapacity=(window.termCourses||[]).find(x=>x.id==course)?.teacher_capacity||1,studentCapacity=(window.termCourses||[]).find(x=>x.id==course)?.student_capacity||1;return `<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
 <div><label class="mb-2 block text-sm font-medium">نام ترم *</label><input id="${id('Name')}" value="${esc(item.name||'')}" class="w-full rounded-2xl border px-5 py-3.5"></div>
 <div><label class="mb-2 block text-sm font-medium">شعبه *</label><select id="${id('Branch')}" onchange="refreshTermDependencies('${prefix}')" class="w-full rounded-2xl border px-5 py-3.5"><option value="">انتخاب شعبه</option>${opts(window.termBranches||[],branch)}</select></div>
 <div><label class="mb-2 block text-sm font-medium">دوره مرتبط *</label><select id="${id('Course')}" onchange="refreshTermCourse('${prefix}')" ${branch?'':'disabled'} class="w-full rounded-2xl border px-5 py-3.5 disabled:bg-gray-100"><option value="">انتخاب دوره</option>${opts((window.termCourses||[]).filter(x=>x.branchId==branch),course)}</select></div>
-<div><label class="mb-2 block text-sm font-medium">کلاس برگزاری *</label><select id="${id('Classroom')}" ${branch?'':'disabled'} class="w-full rounded-2xl border px-5 py-3.5 disabled:bg-gray-100"><option value="">انتخاب کلاس</option>${opts((window.termClassrooms||[]).filter(x=>x.branchId==branch),classroom)}</select></div>
+<div><label class="mb-2 block text-sm font-medium">کلاس برگزاری *</label><select id="${id('Classroom')}" onchange="syncTermDateAvailability('${prefix}');refreshAllTermSessionAvailability('${prefix}')" ${branch?'':'disabled'} class="w-full rounded-2xl border px-5 py-3.5 disabled:bg-gray-100"><option value="">انتخاب کلاس</option>${opts((window.termClassrooms||[]).filter(x=>x.branchId==branch),classroom)}</select></div>
 <div><label class="mb-2 block text-sm font-medium">نوع پول *</label><select id="${id('Currency')}" class="w-full rounded-2xl border px-5 py-3.5">${opts(window.termCurrencies||[],item.currencyId||window.termCurrencies?.[0]?.id)}</select></div>
 <div><label class="mb-2 block text-sm font-medium">هزینه ترم</label><input id="${id('Cost')}" type="number" min="0" value="${item.cost??0}" class="w-full rounded-2xl border px-5 py-3.5"></div>
-<div><label class="mb-2 block text-sm font-medium">تعداد اقساط</label><input id="${id('InstallmentCount')}" type="number" min="1" value="${item.installmentCount||1}" class="w-full rounded-2xl border px-5 py-3.5"></div>
+<div><label class="mb-2 block text-sm font-medium">تعداد اقساط</label><input id="${id('InstallmentCount')}" type="number" min="1" max="${Math.max(2,sessions.length)}" value="${Math.min(item.installmentCount||1,Math.max(2,sessions.length))}" class="w-full rounded-2xl border px-5 py-3.5"><p class="mt-1 text-xs text-gray-400">حداکثر ${Math.max(2,sessions.length)} قسط</p></div>
 <div><label class="mb-2 block text-sm font-medium">تخفیف</label><select id="${id('Discount')}" class="w-full rounded-2xl border px-5 py-3.5"><option value="">بدون تخفیف</option>${opts(window.termDiscounts||[],item.discountId)}</select><button type="button" onclick="openAddTermDiscountModal('${prefix}')" class="mt-2 text-sm text-indigo-600">+ افزودن تخفیف جدید</button></div>
 <div><label class="mb-2 block text-sm font-medium">وضعیت</label><select id="${id('Status')}" class="w-full rounded-2xl border px-5 py-3.5"><option value="pending">در انتظار</option><option value="open">باز</option><option value="ongoing">در حال برگزاری</option><option value="finished">پایان‌یافته</option></select></div>
 <div><label class="mb-2 block text-sm font-medium">تعداد جلسات</label><input id="${id('SessionCount')}" type="number" min="1" max="100" value="${sessions.length}" onchange="rebuildDbTermSessions('${prefix}')" class="w-full rounded-2xl border px-5 py-3.5"></div>
 <div><label class="mb-2 block text-sm font-medium">نحوه تکرار</label><select id="${id('RepeatType')}" onchange="refreshTermSessionDates('${prefix}')" class="w-full rounded-2xl border px-5 py-3.5"><option value="week">هفتگی</option><option value="2-week">دو هفته یک‌بار</option><option value="3-week">سه هفته یک‌بار</option><option value="4-week">چهار هفته یک‌بار</option><option value="month">ماهانه</option><option value="year">سالانه</option><option value="no-period">سایر</option></select></div></div>
-<div class="mt-6"><label class="mb-2 block text-sm font-medium">جلسات و تاریخ هر جلسه</label><div id="${id('SessionsContainer')}" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">${sessions.map((s,i)=>`<div><label class="mb-1 block text-xs">جلسه ${i+1}</label><input type="date" value="${s.date||''}" data-session-index="${i}" onchange="refreshTermSessionDates('${prefix}')" class="term-session-date w-full rounded-2xl border px-4 py-3" ${i&&item.repeatType!=='other'?'disabled':''}></div>`).join('')}</div></div>
+<div class="mt-6"><label class="mb-2 block text-sm font-medium">تاریخ، ساعت شروع و مدت جلسات</label><div id="${id('SessionsContainer')}" data-term-id="${item.id||0}" class="grid grid-cols-1 gap-3 sm:grid-cols-2">${sessions.map((s,i)=>`<div class="rounded-2xl border p-4"><label class="mb-2 block text-sm font-medium">جلسه ${i+1}</label><div class="grid grid-cols-1 gap-2 sm:grid-cols-3"><input type="date" value="${s.date||''}" data-session-index="${i}" onchange="refreshTermSessionDates('${prefix}');refreshAllTermSessionAvailability('${prefix}')" class="term-session-date w-full rounded-xl border px-3 py-2.5 disabled:bg-gray-100" ${(!course||!classroom)||(i&&item.repeatType!=='other')?'disabled':''}><select disabled class="term-session-start w-full rounded-xl border px-3 py-2.5 disabled:bg-gray-100" ${i===0?`onchange="syncTermSessionTimes('${prefix}')"`:''} aria-label="ساعت شروع">${window.getTermTimeOptions(s.startTime?[s.startTime]:[],s.startTime||'')}</select><div class="relative"><input disabled type="number" min="5" max="1440" step="5" value="${duration(s)}" class="term-session-duration w-full rounded-xl border px-3 py-2.5 pl-14 disabled:bg-gray-100" ${i===0?`onchange="syncTermSessionTimes('${prefix}')"`:''} aria-label="مدت جلسه"><span class="pointer-events-none absolute left-3 top-3 text-xs text-gray-400">دقیقه</span></div></div></div>`).join('')}</div></div>
 <div class="mt-6 grid gap-5"><input id="${id('Summary')}" value="${esc(item.summary||'')}" placeholder="خلاصه ترم" class="w-full rounded-2xl border px-5 py-3.5"><textarea id="${id('Description')}" rows="3" placeholder="شرح ترم" class="w-full rounded-2xl border px-5 py-3.5">${esc(item.description||'')}</textarea></div>
 <div class="mt-6"><h3 class="mb-3 font-medium">استادها (ظرفیت ${teacherCapacity})</h3><div id="${id('TeachersContainer')}">${people(prefix,'teacher',teacherCapacity,item.teachers||[])}</div></div>
 <div class="mt-6"><h3 class="mb-3 font-medium">هنرجویان (ظرفیت ${studentCapacity})</h3><div id="${id('StudentsContainer')}">${people(prefix,'student',studentCapacity,item.students||[])}</div></div>`;}
