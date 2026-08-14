@@ -5,6 +5,7 @@ use Modules\Analytics\Controllers\Web\AnalyticsController;
 use Modules\Analytics\Controllers\Web\AdminTestController;
 use Modules\Analytics\Controllers\Web\AdminNotificationController;
 use Modules\Analytics\Controllers\Web\AdminSchedulingRuleController;
+use Modules\Analytics\Controllers\Web\AdminPostController;
 
 
 
@@ -18,6 +19,13 @@ Router::get('/analytics/admin-scheduling-rules', [AdminSchedulingRuleController:
 Router::post('/analytics/admin-scheduling-rules', [AdminSchedulingRuleController::class, 'store'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-scheduling-rules/{id}/update', [AdminSchedulingRuleController::class, 'update'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-scheduling-rules/{id}/delete', [AdminSchedulingRuleController::class, 'delete'])->middleware(['academy-panel','csrf']);
+Router::get('/analytics/admin-posts', [AdminPostController::class, 'index'])->middleware('academy-panel');
+Router::get('/analytics/admin-posts/{id}', [AdminPostController::class, 'show'])->middleware('academy-panel');
+Router::post('/analytics/admin-posts', [AdminPostController::class, 'store'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-posts/{id}/update', [AdminPostController::class, 'update'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-posts/{id}/trash', [AdminPostController::class, 'trash'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-posts/{id}/restore', [AdminPostController::class, 'restore'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-posts/{id}/delete', [AdminPostController::class, 'destroy'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/_test/seed-academy-managers', [AdminTestController::class, 'seedAcademyManagers'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/_test/delete-academy-managers', [AdminTestController::class, 'deleteAcademyManagers'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/_test/seed-branch-courses', [AdminTestController::class, 'seedBranchCourses'])->middleware(['site-admin', 'csrf']);
