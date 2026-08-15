@@ -126,6 +126,7 @@
     <div id="modalContainer"></div>
     <script>window.adminLocale=<?= json_encode(locale()) ?>;window.adminUiMap=<?= json_encode($adminUiMap??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;</script>
     <script src="/assets/theme/dialog.js?v=<?= filemtime(base_path('assets/theme/dialog.js')) ?: 1 ?>"></script>
+    <script src="/assets/Analytics/js/network.js?v=<?= filemtime(base_path('assets/Analytics/js/network.js')) ?: 1 ?>"></script>
     <?=scripts()?>
     <script src="/assets/theme/theme.js?v=<?= filemtime(base_path('assets/theme/theme.js')) ?: 1 ?>"></script>
 </body>
