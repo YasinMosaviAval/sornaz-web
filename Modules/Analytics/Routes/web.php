@@ -11,6 +11,7 @@ use Modules\Analytics\Controllers\Web\SitePageContentController;
 use Modules\Analytics\Controllers\Web\AdminMediaController;
 use Modules\Analytics\Controllers\Web\AdminSettingController;
 use Modules\Analytics\Controllers\Web\AdminUserAccessController;
+use Modules\Analytics\Controllers\Web\AdminAccessCatalogController;
 
 
 
@@ -40,9 +41,16 @@ Router::post('/analytics/admin-media/upload', [AdminMediaController::class, 'upl
 Router::post('/analytics/admin-media/{id}/update', [AdminMediaController::class, 'update'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-media/{id}/delete', [AdminMediaController::class, 'delete'])->middleware(['academy-panel','csrf']);
 Router::get('/analytics/site-settings', [AdminSettingController::class, 'show']);
-Router::post('/analytics/admin-settings', [AdminSettingController::class, 'save'])->middleware(['site-admin','csrf']);
+Router::post('/analytics/admin-settings', [AdminSettingController::class, 'save'])->middleware(['academy-panel','csrf']);
 Router::get('/analytics/admin-user-access', [AdminUserAccessController::class, 'index'])->middleware('site-admin');
 Router::post('/analytics/admin-user-access/{id}', [AdminUserAccessController::class, 'save'])->middleware(['site-admin','csrf']);
+Router::get('/analytics/admin-access-catalog', [AdminAccessCatalogController::class, 'index'])->middleware('site-admin');
+Router::post('/analytics/admin-roles', [AdminAccessCatalogController::class, 'saveRole'])->middleware(['site-admin','csrf']);
+Router::post('/analytics/admin-roles/{id}', [AdminAccessCatalogController::class, 'saveRole'])->middleware(['site-admin','csrf']);
+Router::post('/analytics/admin-roles/{id}/delete', [AdminAccessCatalogController::class, 'deleteRole'])->middleware(['site-admin','csrf']);
+Router::post('/analytics/admin-permissions', [AdminAccessCatalogController::class, 'savePermission'])->middleware(['site-admin','csrf']);
+Router::post('/analytics/admin-permissions/{id}', [AdminAccessCatalogController::class, 'savePermission'])->middleware(['site-admin','csrf']);
+Router::post('/analytics/admin-permissions/{id}/delete', [AdminAccessCatalogController::class, 'deletePermission'])->middleware(['site-admin','csrf']);
 Router::get('/analytics/admin-site-pages', [SitePageContentController::class, 'pages'])->middleware('academy-panel');
 Router::get('/analytics/site-page-content', [SitePageContentController::class, 'content']);
 Router::post('/analytics/admin-site-page-content', [SitePageContentController::class, 'save'])->middleware(['site-admin','csrf']);
