@@ -132,5 +132,6 @@
     <script src="/assets/Analytics/js/charts.js?v=<?= filemtime(base_path('assets/Analytics/js/charts.js')) ?: 1 ?>"></script>
     <?=scripts()?>
     <script src="/assets/theme/theme.js?v=<?= filemtime(base_path('assets/theme/theme.js')) ?: 1 ?>"></script>
+    <script src="/assets/theme/help-center.js?v=<?= filemtime(base_path('assets/theme/help-center.js')) ?: 1 ?>"></script>
 </body>
 </html>
