@@ -4,6 +4,7 @@ use Core\router\Router;
 use Modules\System\Controllers\Web\UserController;
 use Modules\System\Controllers\Web\SystemController;
 use Modules\System\Controllers\Web\UserReferralController;
+use Modules\System\Controllers\Web\UserTrackingController;
 
 Router::get('/system/login', [SystemController::class, 'login']);
 Router::get('/system/register', [SystemController::class, 'register']);
@@ -15,6 +16,7 @@ Router::get('/forgot-password', [SystemController::class, 'forgotPassword']);
 Router::get('/language/{locale}', [SystemController::class, 'changeLanguage']);
 Router::get('/users', [UserController::class, 'directory']);
 Router::get('/system/my-invite', [UserReferralController::class, 'show'])->middleware('auth');
+Router::post('/system/tracking/ingest', [UserTrackingController::class, 'ingest']);
 
 Router::post('/register', [UserController::class, 'store']);
 Router::post('/register/send-otp', [UserController::class, 'sendRegistrationOtp']);

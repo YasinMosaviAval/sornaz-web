@@ -129,7 +129,13 @@ class View {
         $slot = $content;
         // $content = $content; // برای سازگاری با Layoutهای قدیمی
         require $layoutPath;
-        return ob_get_clean();
+        $html = ob_get_clean();
+        $trackingPath = base_path('assets/theme/user-tracking.js');
+        $trackingTag = '<script src="/assets/theme/user-tracking.js?v=' . (file_exists($trackingPath) ? filemtime($trackingPath) : 1) . '"></script>';
+        if (stripos($html, '</body>') !== false) {
+            return preg_replace('/<\/body>/i', $trackingTag . '</body>', $html, 1) ?? $html;
+        }
+        return $html . $trackingTag;
     }
 
 
