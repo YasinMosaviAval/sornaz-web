@@ -29,7 +29,7 @@
                     <i class="fas fa-calendar-day text-indigo-600"></i>
                     کلاس‌های امروز
                 </h2>
-                <button type="button" onclick="goToSectionFromDashboard('member-schedules')" class="text-indigo-600 text-sm hover:underline">مشاهده همه</button>
+                <button type="button" onclick="goToSectionFromDashboard('schedules')" class="text-indigo-600 text-sm hover:underline">مشاهده همه</button>
             </div>
             <div class="space-y-3" id="todayClassesList"></div>
         </div>
@@ -119,7 +119,7 @@
                     <i class="fas fa-calendar-times text-orange-500"></i>
                     تعطیلات و مرخصی‌های نزدیک
                 </h2>
-                <button type="button" onclick="goToSectionFromDashboard('availabilities-exceptions')" class="text-indigo-600 text-sm hover:underline">مشاهده همه</button>
+                <button type="button" onclick="goToSectionFromDashboard('availability-exceptions')" class="text-indigo-600 text-sm hover:underline">مشاهده همه</button>
             </div>
             <div class="space-y-3" id="upcomingHolidaysList"></div>
         </div>
