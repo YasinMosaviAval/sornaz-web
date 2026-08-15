@@ -6,6 +6,7 @@ use Modules\Analytics\Controllers\Web\AdminTestController;
 use Modules\Analytics\Controllers\Web\AdminNotificationController;
 use Modules\Analytics\Controllers\Web\AdminSchedulingRuleController;
 use Modules\Analytics\Controllers\Web\AdminPostController;
+use Modules\Analytics\Controllers\Web\AdminPostCategoryController;
 use Modules\Analytics\Controllers\Web\AdminCommentController;
 use Modules\Analytics\Controllers\Web\SitePageContentController;
 use Modules\Analytics\Controllers\Web\AdminMediaController;
@@ -33,6 +34,10 @@ Router::post('/analytics/admin-posts/{id}/update', [AdminPostController::class, 
 Router::post('/analytics/admin-posts/{id}/trash', [AdminPostController::class, 'trash'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-posts/{id}/restore', [AdminPostController::class, 'restore'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-posts/{id}/delete', [AdminPostController::class, 'destroy'])->middleware(['academy-panel','csrf']);
+Router::get('/analytics/admin-post-categories', [AdminPostCategoryController::class, 'index'])->middleware('academy-panel');
+Router::post('/analytics/admin-post-categories', [AdminPostCategoryController::class, 'store'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-post-categories/{id}/update', [AdminPostCategoryController::class, 'update'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-post-categories/{id}/delete', [AdminPostCategoryController::class, 'delete'])->middleware(['academy-panel','csrf']);
 Router::get('/analytics/admin-comments', [AdminCommentController::class, 'index'])->middleware('academy-panel');
 Router::post('/analytics/admin-comments/{id}/update', [AdminCommentController::class, 'update'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-comments/{id}/reply', [AdminCommentController::class, 'reply'])->middleware(['academy-panel','csrf']);

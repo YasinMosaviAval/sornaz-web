@@ -175,6 +175,9 @@ function showSection(id) {
             if (typeof filterPostsByStatus === 'function') filterPostsByStatus('all');
         }, 100);
     }
+    if (section === 'post-categories' && typeof loadPostCategories === 'function') {
+        setTimeout(() => loadPostCategories(), 100);
+    }
     if (section === 'about-us') {
         setTimeout(() => { if (typeof renderAboutUs === 'function') renderAboutUs(); }, 100);
     }

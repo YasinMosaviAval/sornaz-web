@@ -70,6 +70,7 @@
 
 
             component('posts');
+            component('post-categories');
             component('post-editor');
             component('pages');
             component('comments');

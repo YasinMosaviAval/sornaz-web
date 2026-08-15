@@ -109,6 +109,7 @@
 
 
     pushScript('posts.js');
+    pushScript('post-categories.js');
     pushScript('pages.js');
     pushScript('comments.js');
     pushScript('media.js');
