@@ -21,6 +21,7 @@ $firstError = !empty($errors) ? reset($errors) : '';
             <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\csrf\Csrf::class)->token() ?>">
             <input type="hidden" name="register_method" id="regMethod" value="<?= e($oldInput['register_method'] ?? 'email') ?>">
             <input type="hidden" name="otp" id="regOtp" value="">
+            <input type="hidden" name="invite_code" value="<?= e($oldInput['invite_code'] ?? ($_GET['ref'] ?? '')) ?>">
 
             <?php if (!empty($errors['otp'])): ?>
                 <p class="text-red-500 text-sm text-center mb-5"><?= e($errors['otp']) ?> <?= e(trans('auth.register.otp_retry', 'لطفاً اطلاعات را بررسی کرده و کد جدید بگیرید.')) ?></p>
