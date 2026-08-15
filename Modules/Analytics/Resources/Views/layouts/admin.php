@@ -108,6 +108,10 @@
 
 
     pushScript('posts.js');
+    pushScript('pages.js');
+    pushScript('comments.js');
+    pushScript('media.js');
+    pushScript('settings.js');
     pushScript('articles.js');
     pushScript('about-us.js');
     pushScript('contact-us.js');

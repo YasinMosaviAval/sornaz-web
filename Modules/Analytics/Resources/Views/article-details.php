@@ -18,32 +18,32 @@
             <span class="text-gray-300">⟵</span>
             <a href="/analytics/articles" class="hover:text-indigo-600"><?= $isEnglish ? 'Educational articles' : 'مقاله‌های آموزشی' ?></a>
             <span class="text-gray-300">⟵</span>
-            <span class="text-gray-600 line-clamp-1"><?= htmlspecialchars($article['title']) ?></span>
+            <span class="text-gray-600 line-clamp-1" data-dynamic-content><?= htmlspecialchars($article['title']) ?></span>
         </nav>
 
-        <h1 class="text-3xl md:text-4xl font-bold leading-tight mb-6"><?= htmlspecialchars($article['title']) ?></h1>
+        <h1 class="text-3xl md:text-4xl font-bold leading-tight mb-6" data-dynamic-content><?= htmlspecialchars($article['title']) ?></h1>
 
         <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-500 mb-8 pb-6 border-b border-gray-100">
-            <?php if ($article['author_name']): ?><span><i class="far fa-user text-indigo-400 ml-1"></i><?= htmlspecialchars($article['author_name']) ?></span><?php endif; ?>
-            <span><i class="far fa-calendar text-indigo-400 ml-1"></i><?= $isEnglish ? 'Published:' : 'تاریخ انتشار:' ?> <strong class="font-medium text-gray-700"><?= htmlspecialchars((string)($article['published_at'] ?? '—')) ?></strong></span>
-            <?php if ($article['updated_at']): ?><span><i class="far fa-clock text-indigo-400 ml-1"></i><?= $isEnglish ? 'Updated:' : 'آخرین به‌روزرسانی:' ?> <strong class="font-medium text-gray-700"><?= htmlspecialchars($article['updated_at']) ?></strong></span><?php endif; ?>
-            <span><i class="far fa-eye text-indigo-400 ml-1"></i><strong class="font-medium text-gray-700"><?= (int)$article['views'] ?></strong> <?= $isEnglish ? 'views' : 'بازدید' ?></span>
+            <?php if ($article['author_name']): ?><span><i class="far fa-user text-indigo-400 ml-1"></i><span data-dynamic-content><?= htmlspecialchars($article['author_name']) ?></span></span><?php endif; ?>
+            <span><i class="far fa-calendar text-indigo-400 ml-1"></i><?= $isEnglish ? 'Published:' : 'تاریخ انتشار:' ?> <strong class="font-medium text-gray-700" data-dynamic-content><?= htmlspecialchars((string)($article['published_at'] ?? '—')) ?></strong></span>
+            <?php if ($article['updated_at']): ?><span><i class="far fa-clock text-indigo-400 ml-1"></i><?= $isEnglish ? 'Updated:' : 'آخرین به‌روزرسانی:' ?> <strong class="font-medium text-gray-700" data-dynamic-content><?= htmlspecialchars($article['updated_at']) ?></strong></span><?php endif; ?>
+            <span><i class="far fa-eye text-indigo-400 ml-1"></i><strong class="font-medium text-gray-700" data-dynamic-content><?= (int)$article['views'] ?></strong> <?= $isEnglish ? 'views' : 'بازدید' ?></span>
         </div>
 
         <?php if ($article['cover']): ?>
-            <img src="<?= htmlspecialchars($article['cover']) ?>" alt="<?= htmlspecialchars($article['title']) ?>" class="w-full max-h-[480px] object-cover rounded-3xl mb-8">
+            <img src="<?= htmlspecialchars($article['cover']) ?>" alt="<?= htmlspecialchars($article['title']) ?>" class="w-full max-h-[480px] object-cover rounded-3xl mb-8" data-dynamic-content>
         <?php endif; ?>
 
         <?php if ($article['categories']): ?>
-            <div class="flex flex-wrap gap-2 mb-8">
+            <div class="flex flex-wrap gap-2 mb-8" data-dynamic-content>
                 <?php foreach ($article['categories'] as $category): ?><span class="px-3 py-1.5 rounded-xl text-xs bg-indigo-50 text-indigo-700"><?= htmlspecialchars($category) ?></span><?php endforeach; ?>
             </div>
         <?php endif; ?>
 
-        <?php if ($article['summary']): ?><div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 md:p-6 mb-8 text-indigo-900 leading-relaxed"><?= nl2br(htmlspecialchars($article['summary'])) ?></div><?php endif; ?>
-        <?php if ($article['description']): ?><div class="text-gray-600 leading-8 mb-8"><?= nl2br(htmlspecialchars($article['description'])) ?></div><?php endif; ?>
+        <?php if ($article['summary']): ?><div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 md:p-6 mb-8 text-indigo-900 leading-relaxed" data-dynamic-content><?= nl2br(htmlspecialchars($article['summary'])) ?></div><?php endif; ?>
+        <?php if ($article['description']): ?><div class="text-gray-600 leading-8 mb-8" data-dynamic-content><?= nl2br(htmlspecialchars($article['description'])) ?></div><?php endif; ?>
 
-        <article class="article-body prose prose-lg max-w-none text-gray-700 leading-8 text-justify">
+        <article class="article-body prose prose-lg max-w-none text-gray-700 leading-8 text-justify" data-dynamic-content>
             <?= $article['content'] !== '' ? $article['content'] : '<p class="text-gray-400">'.($isEnglish?'No content has been added.':'محتوایی برای این نوشته ثبت نشده است.').'</p>' ?>
         </article>
 
@@ -52,3 +52,13 @@
         </div>
     </div>
 </div>
+
+<style>[data-dynamic-content][data-page-content-key], [data-dynamic-content] [data-page-content-key] { outline: none !important; cursor: default !important; }</style>
+<script>
+document.addEventListener('click', function (event) {
+    if (new URLSearchParams(location.search).get('cms') === '1' && event.target.closest('[data-dynamic-content]')) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    }
+}, true);
+</script>

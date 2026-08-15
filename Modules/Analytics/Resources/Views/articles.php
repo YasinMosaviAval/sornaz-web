@@ -20,9 +20,19 @@
             <input type="text" id="siteArticleSearch" placeholder="جستجو در مقالات..." onkeyup="filterSiteArticles()" class="w-full md:w-96 border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500">
         </div>
 
-        <div class="space-y-5" id="siteArticlesList"></div>
+        <div class="space-y-5" id="siteArticlesList" data-dynamic-content></div>
     </div>
 </div>
+
+<style>[data-dynamic-content][data-page-content-key], [data-dynamic-content] [data-page-content-key] { outline: none !important; cursor: default !important; }</style>
+<script>
+document.addEventListener('click', function (event) {
+    if (new URLSearchParams(location.search).get('cms') === '1' && event.target.closest('[data-dynamic-content]')) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    }
+}, true);
+</script>
 
 <!-- جزئیات مقاله (صفحه جدا) -->
 <!-- <div id="page-article-detail" class="site-page">

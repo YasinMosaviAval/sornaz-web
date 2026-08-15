@@ -65,6 +65,7 @@
     <script src="/assets/Analytics/js/admin-inline-editor.js?v=<?= filemtime(base_path('assets/Analytics/js/admin-inline-editor.js')) ?: 1 ?>"></script>
     <?= scripts() ?>
     <script src="/assets/System/js/auth.js?v=<?= filemtime(base_path('assets/System/js/auth.js')) ?: 1 ?>"></script>
+    <script src="/assets/Page/js/page-content-editor.js?v=<?= filemtime(base_path('assets/Page/js/page-content-editor.js')) ?: 1 ?>"></script>
     <script src="/assets/theme/theme.js?v=<?= filemtime(base_path('assets/theme/theme.js')) ?: 1 ?>"></script>
 </body>
 </html>

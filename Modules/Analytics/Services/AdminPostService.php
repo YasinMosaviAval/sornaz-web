@@ -7,13 +7,14 @@ use RuntimeException;
 
 class AdminPostService
 {
-    private const TYPES = ['post', 'product', 'music_theory'];
+    private const TYPES = ['post', 'product', 'music_theory', 'page'];
     private const STATUSES = ['draft', 'published', 'private', 'inherit', 'pending', 'trash', 'auto-draft', 'future', 'request-pending', 'request-confirmed'];
     private const VISIBILITIES = ['public', 'private', 'followers', 'premium'];
     private const TEXT_FIELDS = ['title', 'brief', 'description', 'content'];
 
     public function index(array $filters): array
     {
+        $this->ensurePageType();
         $page = max(1, (int)($filters['page'] ?? 1));
         $perPage = in_array((int)($filters['perPage'] ?? 20), [10, 20, 30, 50, 100], true) ? (int)$filters['perPage'] : 20;
         $where = ['p.deleted_at IS NULL'];
@@ -21,6 +22,7 @@ class AdminPostService
         foreach (['status', 'type', 'visibility'] as $field) {
             if (!empty($filters[$field])) { $where[] = "p.$field = ?"; $bindings[] = $filters[$field]; }
         }
+        if (!empty($filters['excludeType'])) { $where[] = 'p.type <> ?'; $bindings[] = $filters['excludeType']; }
         if (!empty($filters['search'])) {
             $term = '%' . trim((string)$filters['search']) . '%';
             $where[] = "(p.slug LIKE ? OR p.categories LIKE ? OR EXISTS (SELECT 1 FROM translations tx WHERE tx.table_name='posts' AND tx.table_id=p.post_id AND tx.locale='fa' AND tx.field IN ('title','brief','description','content') AND tx.deleted_at IS NULL AND tx.value LIKE ?))";
@@ -34,8 +36,11 @@ class AdminPostService
             FROM posts p LEFT JOIN users u ON u.user_id=p.author_id
             WHERE $whereSql ORDER BY p.post_id DESC LIMIT $offset,$perPage", $bindings);
         $posts = array_map(fn(array $row) => $this->map($row), $rows);
+        $countWhere = ['deleted_at IS NULL']; $countBindings = [];
+        if (!empty($filters['type'])) { $countWhere[]='type=?'; $countBindings[]=$filters['type']; }
+        if (!empty($filters['excludeType'])) { $countWhere[]='type<>?'; $countBindings[]=$filters['excludeType']; }
         $counts = [];
-        foreach ($this->query("SELECT status,COUNT(*) total FROM posts WHERE deleted_at IS NULL GROUP BY status") as $row) $counts[$row['status']] = (int)$row['total'];
+        foreach ($this->query('SELECT status,COUNT(*) total FROM posts WHERE '.implode(' AND ',$countWhere).' GROUP BY status',$countBindings) as $row) $counts[$row['status']] = (int)$row['total'];
         return ['posts'=>$posts, 'total'=>(int)$count, 'page'=>$page, 'perPage'=>$perPage, 'statusCounts'=>$counts];
     }
 
@@ -48,6 +53,7 @@ class AdminPostService
 
     public function create(int $actor, array $data): int
     {
+        $this->ensurePageType();
         return transaction(function () use ($actor, $data) {
             [$values, $texts] = $this->validated($data, $actor);
             $id = (int)DB::table('posts')->insertGetId(['author_id'=>$actor, 'created_by'=>$actor] + $values);
@@ -58,6 +64,7 @@ class AdminPostService
 
     public function update(int $actor, int $id, array $data): void
     {
+        $this->ensurePageType();
         $this->find($id);
         transaction(function () use ($actor, $id, $data) {
             [$values, $texts] = $this->validated($data, $actor, $id);
@@ -159,5 +166,11 @@ class AdminPostService
     {
         $statement = db()->prepare($sql); $statement->execute($bindings);
         return $scalar ? $statement->fetchColumn() : $statement->fetchAll();
+    }
+
+    private function ensurePageType(): void
+    {
+        $column = $this->query("SHOW COLUMNS FROM posts LIKE 'type'")[0] ?? null;
+        if ($column && !str_contains((string)$column['Type'], "'page'")) db()->exec("ALTER TABLE posts MODIFY type ENUM('post','product','music_theory','page') DEFAULT 'post'");
     }
 }
