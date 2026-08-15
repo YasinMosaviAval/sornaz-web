@@ -111,6 +111,9 @@ function showSection(id) {
             }
         }, 100);
     }
+    if (section === 'chart-gallery' && typeof window.openChartGallery === 'function') {
+        window.openChartGallery();
+    }
     if (section === 'publications') {
         setTimeout(() => {
             if (typeof renderPublicationsBranchTabs === 'function') renderPublicationsBranchTabs();
