@@ -6,6 +6,11 @@ use Modules\Analytics\Controllers\Web\AdminTestController;
 use Modules\Analytics\Controllers\Web\AdminNotificationController;
 use Modules\Analytics\Controllers\Web\AdminSchedulingRuleController;
 use Modules\Analytics\Controllers\Web\AdminPostController;
+use Modules\Analytics\Controllers\Web\AdminCommentController;
+use Modules\Analytics\Controllers\Web\SitePageContentController;
+use Modules\Analytics\Controllers\Web\AdminMediaController;
+use Modules\Analytics\Controllers\Web\AdminSettingController;
+use Modules\Analytics\Controllers\Web\AdminUserAccessController;
 
 
 
@@ -26,6 +31,21 @@ Router::post('/analytics/admin-posts/{id}/update', [AdminPostController::class, 
 Router::post('/analytics/admin-posts/{id}/trash', [AdminPostController::class, 'trash'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-posts/{id}/restore', [AdminPostController::class, 'restore'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-posts/{id}/delete', [AdminPostController::class, 'destroy'])->middleware(['academy-panel','csrf']);
+Router::get('/analytics/admin-comments', [AdminCommentController::class, 'index'])->middleware('academy-panel');
+Router::post('/analytics/admin-comments/{id}/update', [AdminCommentController::class, 'update'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-comments/{id}/reply', [AdminCommentController::class, 'reply'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-comments/{id}/delete', [AdminCommentController::class, 'delete'])->middleware(['academy-panel','csrf']);
+Router::get('/analytics/admin-media', [AdminMediaController::class, 'index'])->middleware('academy-panel');
+Router::post('/analytics/admin-media/upload', [AdminMediaController::class, 'upload'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-media/{id}/update', [AdminMediaController::class, 'update'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-media/{id}/delete', [AdminMediaController::class, 'delete'])->middleware(['academy-panel','csrf']);
+Router::get('/analytics/site-settings', [AdminSettingController::class, 'show']);
+Router::post('/analytics/admin-settings', [AdminSettingController::class, 'save'])->middleware(['site-admin','csrf']);
+Router::get('/analytics/admin-user-access', [AdminUserAccessController::class, 'index'])->middleware('site-admin');
+Router::post('/analytics/admin-user-access/{id}', [AdminUserAccessController::class, 'save'])->middleware(['site-admin','csrf']);
+Router::get('/analytics/admin-site-pages', [SitePageContentController::class, 'pages'])->middleware('academy-panel');
+Router::get('/analytics/site-page-content', [SitePageContentController::class, 'content']);
+Router::post('/analytics/admin-site-page-content', [SitePageContentController::class, 'save'])->middleware(['site-admin','csrf']);
 Router::post('/analytics/_test/seed-academy-managers', [AdminTestController::class, 'seedAcademyManagers'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/_test/delete-academy-managers', [AdminTestController::class, 'deleteAcademyManagers'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/_test/seed-branch-courses', [AdminTestController::class, 'seedBranchCourses'])->middleware(['site-admin', 'csrf']);

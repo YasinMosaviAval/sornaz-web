@@ -1,0 +1,4 @@
+<?php
+namespace Modules\Analytics\Controllers\Web;
+use Core\http\ResponseFactory;use Modules\Analytics\Services\AdminUserAccessService;use RuntimeException;
+class AdminUserAccessController{public function __construct(private AdminUserAccessService$s){}public function index(){try{return ResponseFactory::json(['success'=>true,'data'=>$this->s->index($_GET)]);}catch(\Throwable$e){return ResponseFactory::json(['success'=>false,'message'=>$e->getMessage()],422);}}public function save(int$id){try{$this->s->save((int)auth()->id(),$id,$this->payload());return ResponseFactory::json(['success'=>true]);}catch(\Throwable$e){return ResponseFactory::json(['success'=>false,'message'=>$e->getMessage()],422);}}private function payload():array{$raw=base64_decode(strtr((string)request()->input('payload_b64',''),'-_','+/'),true);$d=$raw===false?null:json_decode($raw,true);if(!is_array($d))throw new RuntimeException('اطلاعات دسترسی معتبر نیست.');return$d;}}

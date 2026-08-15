@@ -10,7 +10,7 @@ class PublicPostService
     public function all(string $locale): array
     {
         $locale = $this->locale($locale);
-        $rows = DB::table('posts')->whereNull('deleted_at')->where('status', 'published')->orderBy('published_at', 'DESC')->get();
+        $rows = DB::table('posts')->whereNull('deleted_at')->where('status', 'published')->where('type', '<>', 'page')->orderBy('published_at', 'DESC')->get();
         return array_map(fn(array $row) => $this->map($row, $locale, false), $rows);
     }
 

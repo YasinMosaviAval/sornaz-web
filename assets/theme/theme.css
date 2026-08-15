@@ -1,3 +1,5 @@
+@import url('/assets/fonts/fonts.css');
+
 :root {
     --theme-50:#eef2ff; --theme-100:#e0e7ff; --theme-200:#c7d2fe; --theme-300:#a5b4fc;
     --theme-400:#818cf8; --theme-500:#6366f1; --theme-600:#4f46e5; --theme-700:#4338ca;
@@ -12,6 +14,7 @@ html[data-theme="amber"] { --theme-50:#fffbeb;--theme-100:#fef3c7;--theme-200:#f
 html[data-mode="dark"] { --surface:#0f172a;--surface-card:#172033;--surface-muted:#202b40;--surface-strong:#080d18;--text:#e5e7eb;--text-muted:#9ca3af;--border:#334155;color-scheme:dark; }
 
 html,body { background-color:var(--surface);color:var(--text); }
+html { font-size:var(--site-root-font-size,16px); }
 body,.bg-gray-50,.bg-gray-100 { background-color:var(--surface)!important; }
 body.bg-gray-50 { background-color:var(--surface)!important; }
 .bg-white { background-color:var(--surface-card)!important; }
@@ -139,3 +142,4 @@ body.app-dialog-open { overflow:hidden; }
 .app-dialog__button--confirm { background:var(--theme-600);color:#fff; }.app-dialog__button--confirm:hover { background:var(--theme-700); }.app-dialog__button--cancel { border:1px solid var(--border);background:var(--surface-muted);color:var(--text); }
 @media (max-width:480px) { .app-dialog { padding:1.25rem;border-radius:1.25rem; }.app-dialog__button { min-width:5.75rem; } }
 @media (prefers-reduced-motion:reduce) { .app-dialog-backdrop,.app-dialog { transition:none; } }
+body { font-family: var(--site-font-family, Vazirmatn, Tahoma, Arial, sans-serif) !important; }

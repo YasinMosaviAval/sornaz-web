@@ -44,6 +44,7 @@
             component('users');
             component('roles');
             component('permissions');
+            component('settings');
 
             
             
@@ -69,6 +70,9 @@
 
             component('posts');
             component('post-editor');
+            component('pages');
+            component('comments');
+            component('media');
             component('about-us');
             component('contact-us');
             component('articles');
