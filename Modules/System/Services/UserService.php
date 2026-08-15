@@ -6,7 +6,7 @@ use Core\translation\TranslationService;
 use Modules\System\Repositories\UserRepository;
 
 class UserService {
-    public function __construct(protected UserRepository $repository) {
+    public function __construct(protected UserRepository $repository, protected UserReferralService $referrals) {
     }
 
     public function register(array $data): int|false {
@@ -54,6 +54,8 @@ class UserService {
             if (!$translationCreated) {
                 throw new \RuntimeException('User translation could not be created.');
             }
+
+            $this->referrals->ensureForUser($userId, $data['invite_code'] ?? null);
 
                 return $userId;
             });

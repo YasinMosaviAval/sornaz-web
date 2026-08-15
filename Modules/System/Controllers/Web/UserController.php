@@ -55,6 +55,7 @@ class UserController {
         try {
             $request = new UserStoreRequest($_POST);
             $data = $request->validated();
+            $data['invite_code'] = trim((string)($_POST['invite_code'] ?? ''));
             if (!$this->validRegistrationIdentifier($data)) {
                 return redirect('/register')->withInput($_POST)->withErrors(['identifier' => trans('auth.error.identifier_invalid', 'ایمیل یا شماره موبایل معتبر را وارد کنید.')]);
             }
@@ -84,6 +85,7 @@ class UserController {
     public function sendRegistrationOtp() {
         try {
             $data = (new UserStoreRequest($_POST))->validated();
+            $data['invite_code'] = trim((string)($_POST['invite_code'] ?? ''));
             if (!$this->validRegistrationIdentifier($data)) {
                 return ResponseFactory::json(['success' => false, 'message' => trans('auth.error.identifier_invalid', 'ایمیل یا شماره موبایل معتبر را وارد کنید.')], 422);
             }

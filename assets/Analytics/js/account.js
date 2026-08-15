@@ -100,7 +100,13 @@ window.renderAccountInfo = async function () {
     window.renderAccountSecurityAlerts();
     window.renderAccountPrivacy();
     window.renderAccountBackupStatus();
+    window.loadAccountInviteLink();
 };
+
+let accountInviteData=null;
+window.loadAccountInviteLink=async function(){const input=document.getElementById('accountInviteUrl');if(!input)return;try{const response=await fetch('/system/my-invite',{credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}}),payload=await response.json(),body=payload.data??payload,data=body.data??body;if(!response.ok||body.success===false)throw new Error(body.message||'دریافت لینک دعوت ناموفق بود.');accountInviteData=data;input.value=data.url;document.getElementById('accountInviteCode').textContent=data.code;document.getElementById('accountInviteCount').textContent=Number(data.invitedUsers||0)+' کاربر دعوت‌شده';}catch(error){input.value='دریافت لینک دعوت ناموفق بود';console.error(error);}};
+window.copyAccountInviteLink=async function(){if(!accountInviteData)return;try{await navigator.clipboard.writeText(accountInviteData.url);alert('✅ لینک دعوت کپی شد.');}catch(_){const input=document.getElementById('accountInviteUrl');input.select();document.execCommand('copy');alert('✅ لینک دعوت کپی شد.');}};
+window.shareAccountInviteLink=async function(){if(!accountInviteData)return;if(navigator.share)try{return await navigator.share({title:'دعوت به سرناز',text:'از طریق لینک دعوت من در سرناز ثبت‌نام کنید.',url:accountInviteData.url});}catch(error){if(error.name==='AbortError')return;}return window.copyAccountInviteLink();};
 
 window.renderAccountCover = async function () {
     const coverImg = document.getElementById('accountCoverImg');
