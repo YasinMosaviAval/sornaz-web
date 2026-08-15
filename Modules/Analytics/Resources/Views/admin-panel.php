@@ -20,6 +20,7 @@
             component('dashboard');
             component('account');
             component('reports');
+            component('chart-gallery');
             component('messages');
             component('notifications');
             component('students');
