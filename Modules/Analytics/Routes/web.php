@@ -12,6 +12,7 @@ use Modules\Analytics\Controllers\Web\AdminMediaController;
 use Modules\Analytics\Controllers\Web\AdminSettingController;
 use Modules\Analytics\Controllers\Web\AdminUserAccessController;
 use Modules\Analytics\Controllers\Web\AdminAccessCatalogController;
+use Modules\Analytics\Controllers\Web\AdminDashboardController;
 
 
 
@@ -43,6 +44,7 @@ Router::post('/analytics/admin-media/{id}/delete', [AdminMediaController::class,
 Router::get('/analytics/site-settings', [AdminSettingController::class, 'show']);
 Router::post('/analytics/admin-settings', [AdminSettingController::class, 'save'])->middleware(['academy-panel','csrf']);
 Router::get('/analytics/admin-user-access', [AdminUserAccessController::class, 'index'])->middleware('site-admin');
+Router::get('/analytics/admin-dashboard', [AdminDashboardController::class, 'index'])->middleware('academy-panel');
 Router::post('/analytics/admin-user-access/{id}', [AdminUserAccessController::class, 'save'])->middleware(['site-admin','csrf']);
 Router::get('/analytics/admin-access-catalog', [AdminAccessCatalogController::class, 'index'])->middleware('site-admin');
 Router::post('/analytics/admin-roles', [AdminAccessCatalogController::class, 'saveRole'])->middleware(['site-admin','csrf']);
