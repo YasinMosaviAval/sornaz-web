@@ -2,58 +2,19 @@
 'use strict';
 // ==================== حساب کاربری آموزشگاه ====================
 
-let academyProfile = {
-    name: 'موزیک آکادمی',
-    type: 'آموزشگاه موسیقی',
-    manager: 'علی رضایی',
-    email: 'admin@musicacademy.ir',
-    phone: '۰۲۱-۸۸۷۷۶۶۵۵',
-    address: 'تهران، خیابان ولیعصر، پلاک ۱۲۳',
-    founded: '۱۳۹۵',
-    branches: 4,
-    students: 248,
-    teachers: 28,
-    avatarUrl: '',
-    coverUrl: '',
-    shortIntro: 'آموزش تخصصی موسیقی برای همه سنین با اساتید مجرب در چندین شعبه.',
-    biography: 'موزیک آکادمی از سال ۱۳۹۵ با هدف ارتقای آموزش موسیقی استاندارد در تهران تأسیس شد.\n\nما دوره‌های پیانو، گیتار، ویولن، آواز و سایر سازها را به‌صورت خصوصی و گروهی ارائه می‌دهیم و با برگزاری کنسرت‌ها و مسترکلاس‌ها مسیر رشد هنرجویان را هموار می‌کنیم.',
-    privacy: {
-        showPublicProfile: true,
-        showBranches: true,
-        showTeachers: true,
-        showContact: true,
-        showStats: false,
-        indexable: true
-    }
-};
-
-let academyDocuments = [
-    { id: 1, name: 'مجوز فعالیت آموزشگاه.pdf', size: '1.2 مگابایت', date: '۱۴۰۳/۰۲/۱۵', type: 'pdf' },
-    { id: 2, name: 'اساسنامه.pdf', size: '850 کیلوبایت', date: '۱۴۰۲/۱۱/۰۱', type: 'pdf' },
-    { id: 3, name: 'کارت ملی مدیر.jpg', size: '420 کیلوبایت', date: '۱۴۰۳/۰۱/۲۰', type: 'image' }
-];
-
-let academyDevices = [
-    { id: 1, name: 'Chrome · Windows', location: 'تهران', lastActive: 'همین الان', current: true, ip: '185.XX.XX.12' },
-    { id: 2, name: 'Safari · iPhone', location: 'تهران', lastActive: '۲ ساعت پیش', current: false, ip: '185.XX.XX.44' },
-    { id: 3, name: 'Firefox · macOS', location: 'کرج', lastActive: 'دیروز', current: false, ip: '91.XX.XX.8' }
-];
-
-let academyLoginHistory = [
-    { id: 1, action: 'ورود', device: 'Chrome · Windows', ip: '185.XX.XX.12', date: '۱۴۰۴/۰۵/۱۲ — ۱۴:۳۰', ok: true },
-    { id: 2, action: 'خروج', device: 'Chrome · Windows', ip: '185.XX.XX.12', date: '۱۴۰۴/۰۵/۱۱ — ۲۲:۱۰', ok: true },
-    { id: 3, action: 'ورود', device: 'Safari · iPhone', ip: '185.XX.XX.44', date: '۱۴۰۴/۰۵/۱۱ — ۰۹:۱۵', ok: true },
-    { id: 4, action: 'تلاش ناموفق', device: 'Unknown', ip: '45.XX.XX.99', date: '۱۴۰۴/۰۵/۱۰ — ۰۳:۲۲', ok: false },
-    { id: 5, action: 'ورود', device: 'Firefox · macOS', ip: '91.XX.XX.8', date: '۱۴۰۴/۰۵/۰۹ — ۱۸:۴۰', ok: true }
-];
-
-let academySecurityAlerts = [
-    { id: 1, level: 'warning', title: 'ورود از IP جدید', text: 'ورود موفق از آدرس ناشناخته ثبت شد.', date: '۱۴۰۴/۰۵/۱۰' },
-    { id: 2, level: 'info', title: 'تغییر رمز عبور', text: 'رمز عبور حساب مدیریت به‌روزرسانی شد.', date: '۱۴۰۴/۰۴/۲۸' },
-    { id: 3, level: 'danger', title: 'چند تلاش ناموفق ورود', text: 'بیش از ۳ تلاش ناموفق در بازه کوتاه شناسایی شد.', date: '۱۴۰۴/۰۴/۱۵' }
-];
+let academyProfile = {privacy:{}};
+let academyDocuments = [];
+let academyDevices = [];
+let academyLoginHistory = [];
+let academySecurityAlerts = [];
 
 let lastBackupMeta = null;
+let pendingAccountDocuments = [];
+
+function accountPayload(data){const json=JSON.stringify(data||{}),bytes=new TextEncoder().encode(json);let binary='';bytes.forEach(b=>binary+=String.fromCharCode(b));return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+async function accountRequest(url,data,method='POST') {const options={method,credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':window.adminCsrfToken||''}};if(data!==undefined){const body=new URLSearchParams();body.set('_token',window.adminCsrfToken||'');body.set('payload_b64',accountPayload(data));options.body=body;}const response=await fetch(url,options),payload=await response.json(),body=payload.data??payload;if(!response.ok||body.success===false)throw new Error(body.message||'انجام عملیات ناموفق بود.');return body.data??body;}
+async function loadAccountData(){try{const data=await accountRequest('/analytics/admin-account',undefined,'GET');academyProfile=data.profile||{privacy:{}};academyDocuments=data.documents||[];academyDevices=data.devices||[];academyLoginHistory=data.loginHistory||[];academySecurityAlerts=data.securityAlerts||[];lastBackupMeta=data.backup||null;window.renderAccountInfo();}catch(error){console.error(error);alert(error.message);}}
+async function uploadAccountFile(kind,blob,name,meta={}){const form=new FormData();form.set('_token',window.adminCsrfToken||'');form.set('file',blob,name);Object.entries(meta).forEach(([k,v])=>form.set(k,v??''));const response=await fetch('/analytics/admin-account/media/'+kind,{method:'POST',credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':window.adminCsrfToken||''},body:form}),payload=await response.json(),body=payload.data??payload;if(!response.ok||body.success===false)throw new Error(body.message||'آپلود فایل ناموفق بود.');return body.data??body;}
 
 window.renderAccountInfo = async function () {
     const container = document.getElementById('accountInfo');
@@ -129,9 +90,7 @@ window.renderAccountCover = async function () {
 window.removeAccountCover = async function () {
     if (!academyProfile.coverUrl) return;
     if (!(await AppDialog.confirm('حذف کاور پروفایل؟'))) return;
-    academyProfile.coverUrl = '';
-    window.renderAccountCover();
-    alert('✅ کاور حذف شد');
+    try{await accountRequest('/analytics/admin-account/media/'+academyProfile.coverId+'/delete',{});await loadAccountData();alert('✅ کاور حذف شد');}catch(error){alert(error.message);}
 };
 
 // ---------- کراپ تصویر (آواتار ۱:۱ دایره‌ای / کاور ۱۶:۹) ----------
@@ -367,18 +326,7 @@ window.applyImageCrop = async function () {
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(s.img, s.cx, s.cy, s.cw, s.ch, 0, 0, outW, outH);
 
-    const dataUrl = out.toDataURL('image/jpeg', 0.92);
-    if (s.mode === 'avatar') {
-        academyProfile.avatarUrl = dataUrl;
-        window.renderAccountInfo();
-        alert('✅ عکس پروفایل ذخیره شد');
-    } else {
-        academyProfile.coverUrl = dataUrl;
-        window.renderAccountCover();
-        alert('✅ کاور ذخیره شد');
-    }
-    cropState = null;
-    closeModal();
+    out.toBlob(async function(blob){if(!blob)return alert('ساخت تصویر ناموفق بود.');try{await uploadAccountFile(s.mode,blob,s.mode+'.jpg');cropState=null;closeModal();await loadAccountData();alert(s.mode==='avatar'?'✅ عکس پروفایل ذخیره شد':'✅ کاور ذخیره شد');}catch(error){alert(error.message);}},'image/jpeg',0.92);
 };
 
 window.cancelImageCrop = async function () {
@@ -399,15 +347,7 @@ window.saveProfile = async function () {
     const phone = (document.getElementById('editProfilePhone') && document.getElementById('editProfilePhone').value || '').trim();
     const email = (document.getElementById('editProfileEmail') && document.getElementById('editProfileEmail').value || '').trim();
     const founded = (document.getElementById('editFounded') && document.getElementById('editFounded').value || '').trim();
-    if (name) academyProfile.name = name;
-    if (manager) academyProfile.manager = manager;
-    if (address) academyProfile.address = address;
-    if (phone) academyProfile.phone = phone;
-    if (email) academyProfile.email = email;
-    if (founded) academyProfile.founded = founded;
-    window.renderAccountInfo();
-    closeModal();
-    alert('✅ پروفایل به‌روزرسانی شد');
+    try{await accountRequest('/analytics/admin-account/profile',{name,address,phone,email,founded});closeModal();await loadAccountData();alert('✅ پروفایل به‌روزرسانی شد');}catch(error){alert(error.message);}
 };
 
 window.openEditBioModal = async function () {
@@ -417,11 +357,7 @@ window.openEditBioModal = async function () {
 };
 
 window.saveBio = async function () {
-    academyProfile.shortIntro = (document.getElementById('editShortIntro') && document.getElementById('editShortIntro').value || '').trim();
-    academyProfile.biography = (document.getElementById('editBiography') && document.getElementById('editBiography').value || '').trim();
-    window.renderAccountInfo();
-    closeModal();
-    alert('✅ معرفی و بیوگرافی ذخیره شد');
+    const shortIntro=(document.getElementById('editShortIntro')?.value||'').trim(),biography=(document.getElementById('editBiography')?.value||'').trim();try{await accountRequest('/analytics/admin-account/bio',{shortIntro,biography});closeModal();await loadAccountData();alert('✅ معرفی و بیوگرافی ذخیره شد');}catch(error){alert(error.message);}
 };
 
 window.renderAccountDocuments = async function () {
@@ -433,24 +369,15 @@ window.renderAccountDocuments = async function () {
 window.onAccountDocumentUpload = async function (event) {
     const files = event.target && event.target.files;
     if (!files || !files.length) return;
-    Array.from(files).forEach(function (file) {
-        academyDocuments.unshift({
-            id: Date.now() + Math.random(),
-            name: file.name,
-            size: (file.size / 1024 > 1024 ? (file.size / 1024 / 1024).toFixed(1) + ' مگابایت' : Math.round(file.size / 1024) + ' کیلوبایت'),
-            date: new Date().toLocaleDateString('fa-IR'),
-            type: file.type.indexOf('image/') === 0 ? 'image' : 'pdf'
-        });
-    });
-    event.target.value = '';
-    window.renderAccountDocuments();
-    alert('✅ سند(ها) اضافه شد');
+    pendingAccountDocuments=Array.from(files);event.target.value='';
+    if(document.getElementById('modalContainer')&&window.getAccountDocumentModalHTML)document.getElementById('modalContainer').innerHTML=window.getAccountDocumentModalHTML(pendingAccountDocuments);
 };
+
+window.saveAccountDocuments=async function(){if(!pendingAccountDocuments.length)return;const meta={documentType:document.getElementById('accountDocumentType')?.value||'other',documentNumber:document.getElementById('accountDocumentNumber')?.value||'',issuedAt:document.getElementById('accountDocumentIssuedAt')?.value||'',expiresAt:document.getElementById('accountDocumentExpiresAt')?.value||''};try{for(const file of pendingAccountDocuments)await uploadAccountFile('document',file,file.name,meta);pendingAccountDocuments=[];closeModal();await loadAccountData();alert('✅ سند(ها) اضافه شد');}catch(error){alert(error.message);}};
 
 window.deleteAccountDocument = async function (id) {
     if (!(await AppDialog.confirmDelete(academyDocuments, id, 'سند'))) return;
-    academyDocuments = academyDocuments.filter(function (d) { return d.id !== id; });
-    window.renderAccountDocuments();
+    try{await accountRequest('/analytics/admin-account/media/'+id+'/delete',{});await loadAccountData();}catch(error){alert(error.message);}
 };
 
 window.renderAccountDevices = async function () {
@@ -462,16 +389,12 @@ window.renderAccountDevices = async function () {
 window.revokeAccountDevice = async function (id) {
     const device = academyDevices.find(function (d) { return d.id === id; });
     if (!(await AppDialog.confirm(`خروج دستگاه "${device?.name || device?.title || 'دستگاه #' + id}" از حساب؟`))) return;
-    academyDevices = academyDevices.filter(function (d) { return d.id !== id; });
-    window.renderAccountDevices();
-    alert('✅ دستگاه خارج شد');
+    try{await accountRequest('/analytics/admin-account/sessions/'+id+'/end',{});await loadAccountData();alert('✅ نشست دستگاه پایان یافت');}catch(error){alert(error.message);}
 };
 
 window.revokeAllOtherDevices = async function () {
     if (!(await AppDialog.confirm('خروج از همه دستگاه‌ها به‌جز دستگاه فعلی؟'))) return;
-    academyDevices = academyDevices.filter(function (d) { return d.current; });
-    window.renderAccountDevices();
-    alert('✅ سایر دستگاه‌ها خارج شدند');
+    try{for(const d of academyDevices.filter(x=>!x.current&&x.status!=='ended'))await accountRequest('/analytics/admin-account/sessions/'+d.id+'/end',{});await loadAccountData();alert('✅ سایر نشست‌ها پایان یافتند');}catch(error){alert(error.message);}
 };
 
 window.renderAccountLoginHistory = async function () {
@@ -500,7 +423,7 @@ window.savePrivacySettings = async function () {
     p.showContact = !!(document.getElementById('privacyShowContact') && document.getElementById('privacyShowContact').checked);
     p.showStats = !!(document.getElementById('privacyShowStats') && document.getElementById('privacyShowStats').checked);
     p.indexable = !!(document.getElementById('privacyIndexable') && document.getElementById('privacyIndexable').checked);
-    alert('✅ تنظیمات حریم خصوصی ذخیره شد');
+    try{await accountRequest('/analytics/admin-account/privacy',p);await loadAccountData();alert('✅ تنظیمات حریم خصوصی ذخیره شد');}catch(error){alert(error.message);}
 };
 
 window.saveAccountSettings = async function () {
@@ -508,50 +431,20 @@ window.saveAccountSettings = async function () {
     const phone = document.getElementById('accountPhone') && document.getElementById('accountPhone').value;
     const pass = document.getElementById('accountPassword') && document.getElementById('accountPassword').value;
     const pass2 = document.getElementById('accountPasswordConfirm') && document.getElementById('accountPasswordConfirm').value;
-    if (email) academyProfile.email = email;
-    if (phone) academyProfile.phone = phone;
     if (pass || pass2) {
         if (pass !== pass2) return alert('تکرار رمز عبور مطابقت ندارد.');
-        if (pass.length < 6) return alert('رمز عبور باید حداقل ۶ کاراکتر باشد.');
-        academySecurityAlerts.unshift({
-            id: Date.now(),
-            level: 'info',
-            title: 'تغییر رمز عبور',
-            text: 'رمز عبور حساب مدیریت به‌روزرسانی شد.',
-            date: new Date().toLocaleDateString('fa-IR')
-        });
-        if (document.getElementById('accountPassword')) document.getElementById('accountPassword').value = '';
-        if (document.getElementById('accountPasswordConfirm')) document.getElementById('accountPasswordConfirm').value = '';
+        if (pass.length < 8) return alert('رمز عبور باید حداقل ۸ کاراکتر باشد.');
     }
-    window.renderAccountInfo();
-    alert('✅ تنظیمات حساب ذخیره شد');
+    try{await accountRequest('/analytics/admin-account/security',{email,phone,password:pass,passwordConfirmation:pass2});if(document.getElementById('accountPassword'))document.getElementById('accountPassword').value='';if(document.getElementById('accountPasswordConfirm'))document.getElementById('accountPasswordConfirm').value='';await loadAccountData();alert('✅ تنظیمات حساب ذخیره شد');}catch(error){alert(error.message);}
 };
 
 window.createFullBackup = async function () {
-    lastBackupMeta = {
-        date: new Date().toLocaleString('fa-IR'),
-        size: (2.4 + Math.random()).toFixed(1) + ' مگابایت',
-        id: Date.now()
-    };
-    // شبیه‌سازی دانلود JSON
-    const payload = {
-        profile: academyProfile,
-        documents: academyDocuments.map(function (d) { return { name: d.name, date: d.date }; }),
-        generatedAt: new Date().toISOString(),
-        note: 'پشتیبان نمونه — در نسخه واقعی شامل تمام جداول دیتابیس است'
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'backup_academy_' + lastBackupMeta.id + '.json';
-    link.click();
-    window.renderAccountBackupStatus();
-    alert('✅ پشتیبان کامل ایجاد و دانلود شد');
+    try{const data=await accountRequest('/analytics/admin-account/backups',{});lastBackupMeta={id:data.id,date:new Date().toLocaleString('fa-IR'),size:Math.max(1,Math.round((data.size||0)/1024))+' کیلوبایت'};window.renderAccountBackupStatus();location.href='/analytics/admin-account/backups/'+data.id+'/download';alert('✅ پشتیبان محدود به اطلاعات همین آموزشگاه ایجاد شد');}catch(error){alert(error.message);}
 };
 
 window.downloadLastBackup = async function () {
     if (!lastBackupMeta) return alert('هنوز پشتیبانی ایجاد نشده است.');
-    window.createFullBackup();
+    location.href='/analytics/admin-account/backups/'+lastBackupMeta.id+'/download';
 };
 
 window.renderAccountBackupStatus = async function () {
@@ -566,7 +459,7 @@ window.renderAccountBackupStatus = async function () {
 
 setTimeout(function () {
     if (document.getElementById('accountInfo') || document.getElementById('account')) {
-        window.renderAccountInfo();
+        loadAccountData();
     }
 }, 200);
 })();

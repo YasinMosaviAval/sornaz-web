@@ -1,0 +1,44 @@
+{
+    "academy_documents": {
+        "create": "CREATE TABLE `academy_documents` (\n  `academy_document_id` bigint(20) UNSIGNED NOT NULL,\n  `academy_id` bigint(20) UNSIGNED NOT NULL,\n  `media_file_id` bigint(20) UNSIGNED NOT NULL,\n  `document_type` enum('license','identity','statute','tax','contract','certificate','other') NOT NULL DEFAULT 'other',\n  `document_number` varchar(100) DEFAULT NULL,\n  `issued_at` date DEFAULT NULL,\n  `expires_at` date DEFAULT NULL,\n  `status` enum('pending','approved','rejected','expired') NOT NULL DEFAULT 'pending',\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  `created_by` bigint(20) UNSIGNED DEFAULT NULL,\n  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),\n  `updated_by` bigint(20) UNSIGNED DEFAULT NULL,\n  `deleted_at` datetime DEFAULT NULL,\n  `deleted_by` bigint(20) UNSIGNED DEFAULT NULL\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+        "alters": [
+            "ALTER TABLE `academy_documents`\n  ADD PRIMARY KEY (`academy_document_id`),\n  ADD UNIQUE KEY `uq_academy_document_media` (`media_file_id`),\n  ADD KEY `idx_academy_documents_academy` (`academy_id`,`status`),\n  ADD KEY `idx_academy_documents_expiry` (`expires_at`);",
+            "ALTER TABLE `academy_documents`\n  MODIFY `academy_document_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;"
+        ]
+    },
+    "tracking_ingestion_batches": {
+        "create": "CREATE TABLE `tracking_ingestion_batches` (\n  `tracking_ingestion_batch_id` bigint(20) UNSIGNED NOT NULL,\n  `batch_uuid` char(36) NOT NULL,\n  `tracking_user_session_id` bigint(20) UNSIGNED NOT NULL,\n  `page_view_id` bigint(20) UNSIGNED NOT NULL,\n  `events_count` int(10) UNSIGNED NOT NULL DEFAULT 0,\n  `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+        "alters": [
+            "ALTER TABLE `tracking_ingestion_batches`\n  ADD PRIMARY KEY (`tracking_ingestion_batch_id`),\n  ADD UNIQUE KEY `uq_tracking_ingestion_batch_uuid` (`batch_uuid`),\n  ADD KEY `idx_tracking_ingestion_session` (`tracking_user_session_id`,`created_at`),\n  ADD KEY `idx_tracking_ingestion_page` (`page_view_id`,`created_at`);",
+            "ALTER TABLE `tracking_ingestion_batches`\n  MODIFY `tracking_ingestion_batch_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;"
+        ]
+    },
+    "tracking_user_activity_intervals": {
+        "create": "CREATE TABLE `tracking_user_activity_intervals` (\n  `tracking_user_activity_interval_id` bigint(20) UNSIGNED NOT NULL,\n  `interval_uuid` char(36) NOT NULL,\n  `tracking_user_session_id` bigint(20) UNSIGNED NOT NULL,\n  `page_view_id` bigint(20) UNSIGNED DEFAULT NULL,\n  `user_id` bigint(20) UNSIGNED DEFAULT NULL,\n  `activity_type` enum('active','idle','reading','hidden','disconnected') NOT NULL,\n  `started_at` datetime(3) NOT NULL,\n  `ended_at` datetime(3) DEFAULT NULL,\n  `duration_ms` bigint(20) UNSIGNED DEFAULT NULL,\n  `section_key` varchar(100) DEFAULT NULL,\n  `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+        "alters": [
+            "ALTER TABLE `tracking_user_activity_intervals`\n  ADD PRIMARY KEY (`tracking_user_activity_interval_id`),\n  ADD UNIQUE KEY `uq_tracking_activity_interval_uuid` (`interval_uuid`),\n  ADD KEY `idx_tracking_activity_session_time` (`tracking_user_session_id`,`started_at`),\n  ADD KEY `idx_tracking_activity_page_time` (`page_view_id`,`started_at`),\n  ADD KEY `idx_tracking_activity_user_type` (`user_id`,`activity_type`,`started_at`);",
+            "ALTER TABLE `tracking_user_activity_intervals`\n  MODIFY `tracking_user_activity_interval_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;"
+        ]
+    },
+    "tracking_user_consents": {
+        "create": "CREATE TABLE `tracking_user_consents` (\n  `tracking_user_consent_id` bigint(20) UNSIGNED NOT NULL,\n  `user_id` bigint(20) UNSIGNED DEFAULT NULL,\n  `guest_id` varchar(64) DEFAULT NULL,\n  `analytics_allowed` tinyint(1) NOT NULL DEFAULT 1,\n  `personalization_allowed` tinyint(1) NOT NULL DEFAULT 0,\n  `marketing_allowed` tinyint(1) NOT NULL DEFAULT 0,\n  `policy_version` varchar(20) NOT NULL DEFAULT '1',\n  `ip_address` varchar(45) DEFAULT NULL,\n  `user_agent` text DEFAULT NULL,\n  `granted_at` datetime DEFAULT NULL,\n  `revoked_at` datetime DEFAULT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp()\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+        "alters": [
+            "ALTER TABLE `tracking_user_consents`\n  ADD PRIMARY KEY (`tracking_user_consent_id`),\n  ADD KEY `idx_tracking_consent_user` (`user_id`,`created_at`),\n  ADD KEY `idx_tracking_consent_guest` (`guest_id`,`created_at`);",
+            "ALTER TABLE `tracking_user_consents`\n  MODIFY `tracking_user_consent_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;"
+        ]
+    },
+    "tracking_user_content_engagements": {
+        "create": "CREATE TABLE `tracking_user_content_engagements` (\n  `tracking_user_content_engagement_id` bigint(20) UNSIGNED NOT NULL,\n  `tracking_user_session_id` bigint(20) UNSIGNED NOT NULL,\n  `page_view_id` bigint(20) UNSIGNED NOT NULL,\n  `user_id` bigint(20) UNSIGNED DEFAULT NULL,\n  `section_key` varchar(100) NOT NULL,\n  `section_type` varchar(50) DEFAULT NULL,\n  `entity_type` varchar(50) DEFAULT NULL,\n  `entity_id` bigint(20) UNSIGNED DEFAULT NULL,\n  `impression_count` int(10) UNSIGNED NOT NULL DEFAULT 0,\n  `visible_duration_ms` bigint(20) UNSIGNED NOT NULL DEFAULT 0,\n  `active_duration_ms` bigint(20) UNSIGNED NOT NULL DEFAULT 0,\n  `idle_duration_ms` bigint(20) UNSIGNED NOT NULL DEFAULT 0,\n  `reading_duration_ms` bigint(20) UNSIGNED NOT NULL DEFAULT 0,\n  `max_visibility_percent` smallint(5) UNSIGNED NOT NULL DEFAULT 0,\n  `interaction_count` int(10) UNSIGNED NOT NULL DEFAULT 0,\n  `click_count` int(10) UNSIGNED NOT NULL DEFAULT 0,\n  `first_seen_at` datetime(3) DEFAULT NULL,\n  `last_seen_at` datetime(3) DEFAULT NULL,\n  `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3),\n  `updated_at` datetime(3) DEFAULT NULL ON UPDATE current_timestamp(3)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+        "alters": [
+            "ALTER TABLE `tracking_user_content_engagements`\n  ADD PRIMARY KEY (`tracking_user_content_engagement_id`),\n  ADD UNIQUE KEY `uq_tracking_page_section` (`page_view_id`,`section_key`),\n  ADD KEY `idx_tracking_engagement_entity` (`entity_type`,`entity_id`),\n  ADD KEY `idx_tracking_engagement_user` (`user_id`,`created_at`),\n  ADD KEY `idx_tracking_engagement_session` (`tracking_user_session_id`);",
+            "ALTER TABLE `tracking_user_content_engagements`\n  MODIFY `tracking_user_content_engagement_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;"
+        ]
+    },
+    "user_referrals": {
+        "create": "CREATE TABLE `user_referrals` (\n  `user_referral_id` bigint(20) UNSIGNED NOT NULL,\n  `user_id` bigint(20) UNSIGNED NOT NULL,\n  `invite_code` varchar(24) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,\n  `referred_by_user_id` bigint(20) UNSIGNED DEFAULT NULL,\n  `status` enum('active','converted','blocked') NOT NULL DEFAULT 'active',\n  `converted_at` datetime DEFAULT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  `created_by` bigint(20) UNSIGNED DEFAULT NULL,\n  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),\n  `updated_by` bigint(20) UNSIGNED DEFAULT NULL,\n  `deleted_at` datetime DEFAULT NULL,\n  `deleted_by` bigint(20) UNSIGNED DEFAULT NULL\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;",
+        "alters": [
+            "ALTER TABLE `user_referrals`\n  ADD PRIMARY KEY (`user_referral_id`),\n  ADD UNIQUE KEY `uq_user_referrals_user` (`user_id`),\n  ADD UNIQUE KEY `uq_user_referrals_code` (`invite_code`),\n  ADD KEY `idx_user_referrals_referrer` (`referred_by_user_id`),\n  ADD KEY `idx_user_referrals_status` (`status`,`deleted_at`);",
+            "ALTER TABLE `user_referrals`\n  MODIFY `user_referral_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=410;"
+        ]
+    }
+}

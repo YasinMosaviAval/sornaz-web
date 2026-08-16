@@ -8,6 +8,8 @@ ALTER TABLE `tracking_user_sessions`
   ADD COLUMN `last_activity_at` datetime(3) DEFAULT NULL AFTER `started_at`,
   ADD COLUMN `last_heartbeat_at` datetime(3) DEFAULT NULL AFTER `last_activity_at`,
   ADD COLUMN `end_reason` enum('logout','tab_closed','browser_closed','timeout','session_expired','network_lost','unknown') DEFAULT NULL AFTER `ended_at`,
+  ADD COLUMN `auth_revoked_at` datetime(3) DEFAULT NULL AFTER `end_reason`,
+  ADD COLUMN `auth_revoked_by` bigint(20) UNSIGNED DEFAULT NULL AFTER `auth_revoked_at`,
   ADD COLUMN `active_duration_ms` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
   ADD COLUMN `idle_duration_ms` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
   ADD COLUMN `visible_duration_ms` bigint(20) UNSIGNED NOT NULL DEFAULT 0,

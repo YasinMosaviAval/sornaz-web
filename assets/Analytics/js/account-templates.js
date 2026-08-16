@@ -41,8 +41,8 @@
                             <input id="editAcademyName" type="text" value="${escapeHtml(p.name)}" class="${fieldClass}">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium mb-2">مدیر مسئول</label>
-                            <input id="editManager" type="text" value="${escapeHtml(p.manager)}" class="${fieldClass}">
+                            <label class="block text-sm font-medium mb-2">مدیر اصلی</label>
+                            <input id="editManager" type="text" value="${escapeHtml(p.manager)}" disabled class="${fieldClass} bg-gray-100 text-gray-500 cursor-not-allowed">
                         </div>
                         <div>
                             <label class="block text-sm font-medium mb-2">ایمیل</label>
@@ -53,8 +53,8 @@
                             <input id="editProfilePhone" type="text" value="${escapeHtml(p.phone)}" class="${fieldClass}">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium mb-2">سال تأسیس</label>
-                            <input id="editFounded" type="text" value="${escapeHtml(p.founded)}" class="${fieldClass}">
+                            <label class="block text-sm font-medium mb-2">تاریخ تأسیس</label>
+                            <input id="editFounded" type="date" value="${escapeHtml(p.founded)}" class="${fieldClass}">
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium mb-2">آدرس</label>
@@ -106,12 +106,17 @@
                     <i class="fas ${icon} text-xl"></i>
                     <div class="min-w-0">
                         <p class="font-medium text-sm truncate">${escapeHtml(d.name)}</p>
-                        <p class="text-xs text-gray-400">${escapeHtml(d.size)} · ${escapeHtml(d.date)}</p>
+                        <p class="text-xs text-gray-400">${escapeHtml(d.size)} · ${escapeHtml(d.date)}${d.number?' · شماره '+escapeHtml(d.number):''}</p>
                     </div>
                 </div>
-                <button onclick="deleteAccountDocument(${d.id})" class="text-red-500 text-sm hover:underline shrink-0">حذف</button>
+                <div class="flex gap-3 shrink-0">${d.url?'<a href="'+escapeHtml(d.url)+'" target="_blank" class="text-indigo-600 text-sm hover:underline">مشاهده</a>':''}<button onclick="deleteAccountDocument(${d.id})" class="text-red-500 text-sm hover:underline">حذف</button></div>
             </div>`;
         }).join('');
+    };
+
+    window.getAccountDocumentModalHTML = function (files) {
+        const names=(files||[]).map(f=>escapeHtml(f.name)).join('، ');
+        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onclick="if(event.target===this) closeModal()"><div class="bg-white rounded-3xl w-full max-w-xl shadow-2xl" onclick="event.stopPropagation()"><div class="px-7 py-5 border-b flex justify-between"><h2 class="text-xl font-bold">مشخصات سند آموزشگاه</h2><button onclick="closeModal()" class="text-3xl text-gray-300">×</button></div><div class="p-7 space-y-4"><p class="text-xs text-gray-500 break-words">${names}</p><label class="block text-sm">نوع سند<select id="accountDocumentType" class="${fieldClass} mt-2"><option value="license">مجوز فعالیت</option><option value="identity">مدرک هویتی</option><option value="statute">اساسنامه</option><option value="tax">مدرک مالیاتی</option><option value="contract">قرارداد</option><option value="certificate">گواهی</option><option value="other">سایر</option></select></label><label class="block text-sm">شماره سند<input id="accountDocumentNumber" class="${fieldClass} mt-2"></label><div class="grid grid-cols-2 gap-4"><label class="block text-sm">تاریخ صدور<input id="accountDocumentIssuedAt" type="date" class="${fieldClass} mt-2"></label><label class="block text-sm">تاریخ انقضا<input id="accountDocumentExpiresAt" type="date" class="${fieldClass} mt-2"></label></div><div class="flex gap-3 pt-2"><button onclick="saveAccountDocuments()" class="flex-1 bg-indigo-600 text-white py-3 rounded-2xl">آپلود و ثبت</button><button onclick="closeModal()" class="flex-1 border py-3 rounded-2xl">انصراف</button></div></div></div></div>`;
     };
 
     window.getAccountDevicesHTML = function (devices) {
@@ -216,4 +221,3 @@
         </div>`;
     };
 })();
-

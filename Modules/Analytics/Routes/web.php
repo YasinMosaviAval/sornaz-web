@@ -14,10 +14,22 @@ use Modules\Analytics\Controllers\Web\AdminSettingController;
 use Modules\Analytics\Controllers\Web\AdminUserAccessController;
 use Modules\Analytics\Controllers\Web\AdminAccessCatalogController;
 use Modules\Analytics\Controllers\Web\AdminDashboardController;
+use Modules\Analytics\Controllers\Web\AdminAccountController;
 
 
 
 Router::get('/analytics/admin-panel', [AnalyticsController::class, 'adminPanel'])->middleware('academy-panel');
+Router::get('/analytics/admin-account', [AdminAccountController::class, 'show'])->middleware('academy-panel');
+Router::post('/analytics/admin-account/profile', [AdminAccountController::class, 'profile'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-account/bio', [AdminAccountController::class, 'bio'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-account/privacy', [AdminAccountController::class, 'privacy'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-account/security', [AdminAccountController::class, 'security'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-account/media/{kind}', [AdminAccountController::class, 'upload'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-account/media/{id}/delete', [AdminAccountController::class, 'deleteMedia'])->middleware(['academy-panel','csrf']);
+Router::get('/analytics/admin-account/media/{id}/download', [AdminAccountController::class, 'downloadMedia'])->middleware('academy-panel');
+Router::post('/analytics/admin-account/sessions/{id}/end', [AdminAccountController::class, 'endSession'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-account/backups', [AdminAccountController::class, 'backup'])->middleware(['academy-panel','csrf']);
+Router::get('/analytics/admin-account/backups/{id}/download', [AdminAccountController::class, 'download'])->middleware('academy-panel');
 Router::get('/analytics/admin-notifications', [AdminNotificationController::class, 'index'])->middleware('academy-panel');
 Router::post('/analytics/admin-notifications', [AdminNotificationController::class, 'store'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-notifications/{id}/publish', [AdminNotificationController::class, 'publish'])->middleware(['academy-panel','csrf']);

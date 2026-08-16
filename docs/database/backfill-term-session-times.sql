@@ -1,7 +1,3 @@
-UPDATE academy_branch_bookings b
-JOIN academy_branch_course_term_sessions s ON s.booking_id = b.booking_id
-SET b.start_time = COALESCE(b.start_time, '10:00:00'),
-    b.end_time = COALESCE(b.end_time, '11:30:00')
-WHERE b.deleted_at IS NULL
-  AND s.deleted_at IS NULL
-  AND (b.start_time IS NULL OR b.end_time IS NULL);
+version https://git-lfs.github.com/spec/v1
+oid sha256:31a0a95194d9ca46bdfb88127cb15b32085ad1a4f098b93b67d1791b85a52c2d
+size 318

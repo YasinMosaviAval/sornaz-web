@@ -1,0 +1,2 @@
+storage/account-media/**/*.mp4 filter=lfs diff=lfs merge=lfs -text
+docs/database/*.sql filter=lfs diff=lfs merge=lfs -text

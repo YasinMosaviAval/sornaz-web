@@ -1,0 +1,20 @@
+CREATE TABLE `academy_documents` (
+  `academy_document_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `academy_id` bigint(20) UNSIGNED NOT NULL,
+  `media_file_id` bigint(20) UNSIGNED NOT NULL,
+  `document_type` enum('license','identity','statute','tax','contract','certificate','other') NOT NULL DEFAULT 'other',
+  `document_number` varchar(100) DEFAULT NULL,
+  `issued_at` date DEFAULT NULL,
+  `expires_at` date DEFAULT NULL,
+  `status` enum('pending','approved','rejected','expired') NOT NULL DEFAULT 'pending',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` bigint(20) UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`academy_document_id`),
+  UNIQUE KEY `uq_academy_document_media` (`media_file_id`),
+  KEY `idx_academy_documents_academy` (`academy_id`,`status`),
+  KEY `idx_academy_documents_expiry` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
