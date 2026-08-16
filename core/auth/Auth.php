@@ -2,6 +2,7 @@
 
 namespace Core\auth;
 
+use Core\database\DB;
 use Modules\System\Contracts\UserRepositoryInterface;
 
 class Auth {
@@ -30,7 +31,13 @@ class Auth {
 
     public function id(): ?int {
         $sessionId = session()->get($this->sessionKey);
-        if ($sessionId) return (int)$sessionId;
+        if ($sessionId) {
+            $phpSessionId=session_id();
+            if($phpSessionId!==''&&DB::table('tracking_user_sessions')->where('session_id',$phpSessionId)->whereNotNull('auth_revoked_at')->first()){
+                session()->forget($this->sessionKey);$this->clearRememberCookie();return null;
+            }
+            return (int)$sessionId;
+        }
         return $this->restoreRememberedUser();
     }
 

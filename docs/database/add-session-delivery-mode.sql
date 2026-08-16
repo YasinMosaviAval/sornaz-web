@@ -1,6 +1,3 @@
-ALTER TABLE academy_branch_course_term_sessions
-    ADD COLUMN delivery_mode ENUM('in_person','online') NOT NULL DEFAULT 'in_person' AFTER branch_url_id;
-
-UPDATE academy_branch_course_term_sessions
-SET delivery_mode='online'
-WHERE branch_url_id IS NOT NULL;
+version https://git-lfs.github.com/spec/v1
+oid sha256:d9bac836dd1f393793f0e82d5f2197dc5bb04fa908543209cdc1b46bc05a0897
+size 258

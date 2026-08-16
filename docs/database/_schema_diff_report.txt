@@ -1,0 +1,149 @@
+WEBSITE DB: farhan77_maindb tables=115 views=0
+OFFLINE  DB: sornazco_maindb tables=121 views=0
+
+=== TABLES ONLY IN WEBSITE (localhost) ===
+(none)
+
+=== TABLES ONLY IN OFFLINE (sornazco) ===
+academy_documents
+tracking_ingestion_batches
+tracking_user_activity_intervals
+tracking_user_consents
+tracking_user_content_engagements
+user_referrals
+
+=== COLUMN DIFFS (6 tables) ===
+-- access_system_permissions
+  only offline: resource, action, scope, risk_level
+-- access_system_roles
+  only offline: parent_role_id, level, scope
+-- posts
+  CHANGED `type`
+    WEB: enum('post','product','music_theory') DEFAULT 'post'
+    OFF: enum('post','product','music_theory','page') DEFAULT 'post'
+-- tracking_user_events
+  only website: tracking_user_eventsid
+  only offline: tracking_user_event_id, event_uuid, sequence_number, occurred_at, received_at, client_timestamp_ms, event_version, target_type, target_id, target_name, target_text, entity_type, entity_id, section_key, position_x, position_y, viewport_x, viewport_y, scroll_x, scroll_y, scroll_depth, duration_ms, numeric_value, is_trusted, source
+-- tracking_user_page_views
+  only offline: page_view_uuid, tab_id, sequence_number, page_path, canonical_url, entity_type, entity_id, locale, last_activity_at, last_heartbeat_at, total_duration_ms, visible_duration_ms, hidden_duration_ms, active_duration_ms, idle_duration_ms, reading_duration_ms, interaction_count, keypress_count, form_interaction_count, max_scroll_depth, max_scroll_y, content_height, first_interaction_at, last_interaction_at, exit_reason, is_completed
+  CHANGED `page_type`
+    WEB: enum('home','product','category','blog','dashboard','other') DEFAULT NULL
+    OFF: varchar(50) DEFAULT NULL
+-- tracking_user_sessions
+  only offline: visit_uuid, authenticated_session_id, status, last_activity_at, last_heartbeat_at, end_reason, auth_revoked_at, auth_revoked_by, active_duration_ms, idle_duration_ms, visible_duration_ms, hidden_duration_ms, events_count, engagement_score, language, timezone, screen_width, screen_height, viewport_width, viewport_height, device_pixel_ratio, platform, app_version, tracking_version, consent_status, city_name, region_name
+  CHANGED `entry_page`
+    WEB: varchar(255) DEFAULT NULL COMMENT 'اولین صفحه‌ای که کاربر وارد آن شده'
+    OFF: varchar(1000) DEFAULT NULL
+  CHANGED `exit_page`
+    WEB: varchar(255) DEFAULT NULL COMMENT 'آخرین صفحه قبل از خروج'
+    OFF: varchar(1000) DEFAULT NULL
+
+=== INDEX / FK DIFFS (5 tables) ===
+-- access_system_permissions
+{
+    "keys": {
+        "only_web": [],
+        "only_off": {
+            "idx_access_permissions_resource_action": "`resource`,`action`",
+            "idx_access_permissions_scope_risk": "`scope`,`risk_level`"
+        },
+        "changed": []
+    }
+}
+-- access_system_roles
+{
+    "keys": {
+        "only_web": [],
+        "only_off": {
+            "idx_access_roles_parent": "`parent_role_id`",
+            "idx_access_roles_scope_level": "`scope`,`level`"
+        },
+        "changed": []
+    }
+}
+-- tracking_user_events
+{
+    "primary": {
+        "web": "`tracking_user_eventsid`",
+        "off": "`tracking_user_event_id`"
+    },
+    "keys": {
+        "only_web": [],
+        "only_off": {
+            "idx_tracking_event_page_sequence": "`page_view_id`,`sequence_number`",
+            "idx_tracking_event_user_time": "`user_id`,`occurred_at`",
+            "idx_tracking_event_name_time": "`event_name`,`occurred_at`",
+            "idx_tracking_event_entity": "`entity_type`,`entity_id`",
+            "idx_tracking_event_section": "`section_key`,`occurred_at`"
+        },
+        "changed": []
+    },
+    "uniques": {
+        "only_web": [],
+        "only_off": {
+            "uq_tracking_event_uuid": "`event_uuid`"
+        },
+        "changed": []
+    }
+}
+-- tracking_user_page_views
+{
+    "keys": {
+        "only_web": [],
+        "only_off": {
+            "idx_tracking_page_session_sequence": "`tracking_user_session_id`,`sequence_number`",
+            "idx_tracking_page_user_entered": "`user_id`,`entered_at`",
+            "idx_tracking_page_entity": "`entity_type`,`entity_id`",
+            "idx_tracking_page_type_entered": "`page_type`,`entered_at`"
+        },
+        "changed": []
+    },
+    "uniques": {
+        "only_web": [],
+        "only_off": {
+            "uq_tracking_page_view_uuid": "`page_view_uuid`"
+        },
+        "changed": []
+    }
+}
+-- tracking_user_sessions
+{
+    "keys": {
+        "only_web": [],
+        "only_off": {
+            "idx_tracking_user_status_activity": "`status`,`last_activity_at`",
+            "idx_tracking_user_user_started": "`user_id`,`started_at`",
+            "idx_tracking_user_guest_started": "`guest_id`,`started_at`",
+            "idx_tracking_user_auth_session": "`authenticated_session_id`"
+        },
+        "changed": []
+    },
+    "uniques": {
+        "only_web": [],
+        "only_off": {
+            "uq_tracking_visit_uuid": "`visit_uuid`"
+        },
+        "changed": []
+    }
+}
+
+=== ENGINE DIFFS ===
+(none)
+
+=== VIEWS only website === (none)
+=== VIEWS only offline === (none)
+
+=== INSERT BATCH COUNTS (tables with different batch counts) ===
+access_system_permissions	web_batches=1	off_batches=2
+access_system_role_permissions	web_batches=3	off_batches=7
+categories	web_batches=0	off_batches=1
+f_translations	web_batches=3	off_batches=9
+tracking_ingestion_batches	web_batches=0	off_batches=1
+tracking_user_activity_intervals	web_batches=0	off_batches=1
+tracking_user_content_engagements	web_batches=0	off_batches=1
+tracking_user_events	web_batches=0	off_batches=1
+tracking_user_page_views	web_batches=0	off_batches=1
+tracking_user_sessions	web_batches=0	off_batches=1
+user_notifications	web_batches=1	off_batches=17
+user_referrals	web_batches=0	off_batches=1
+z_settings	web_batches=0	off_batches=1
