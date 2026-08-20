@@ -61,6 +61,7 @@
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortNotificationsBy('title')" class="flex items-center gap-1">عنوان اعلان <span id="notifSortIcon-title">↕</span></button>
                         </th>
+                        <th class="text-right py-5 px-5 font-medium">گیرنده</th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortNotificationsBy('branchName')" class="flex items-center gap-1">شعبه <span id="notifSortIcon-branchName">↕</span></button>
                         </th>

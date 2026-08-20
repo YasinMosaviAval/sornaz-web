@@ -6,8 +6,8 @@ use Core\database\DB;
 use RuntimeException;
 
 class AdminNotificationService {
-    public function all(): array {
-        $rows = DB::table('user_notifications')->whereNull('deleted_at')->orderBy('user_notification_id', 'DESC')->limit(1000)->get();
+    public function all(int $recipientId): array {
+        $rows = DB::table('user_notifications')->where('user_id',$recipientId)->whereNull('deleted_at')->orderBy('user_notification_id', 'DESC')->limit(1000)->get();
         return array_map(fn(array $row) => $this->map($row), $rows);
     }
 
@@ -44,10 +44,11 @@ class AdminNotificationService {
     private function map(array $row): array {
         $texts=[];
         foreach (DB::table('translations')->where('table_name','user_notifications')->where('table_id',(int)$row['user_notification_id'])->where('locale',locale())->whereIn('field',['title','message'])->whereNull('deleted_at')->get() as $translation) $texts[(string)$translation['field']]=(string)$translation['value'];
+        $recipient=DB::table('users')->where('user_id',(int)($row['user_id']??0))->whereNull('deleted_at')->first();
         $operation = str_replace('database_', '', (string)$row['type']);
         $priority = $operation === 'delete' ? 'بالا' : ($operation === 'update' ? 'متوسط' : 'کم');
         return [
-            'id'=>(int)$row['user_notification_id'], 'title'=>$texts['title']??'', 'body'=>$texts['message']??'',
+            'id'=>(int)$row['user_notification_id'], 'title'=>$texts['title']??'', 'body'=>$texts['message']??'', 'recipientId'=>(int)($row['user_id']??0), 'recipientUsername'=>$recipient['username']??'—',
             'branchId'=>0, 'branchName'=>'سیستم', 'audience'=>'مدیران', 'priority'=>$priority,
             'status'=>$row['type'] === 'manual_draft' ? 'پیش‌نویس' : 'منتشر شده',
             'date'=>date('Y/m/d', strtotime($row['created_at'])), 'dateISO'=>date('Y-m-d', strtotime($row['created_at'])),
