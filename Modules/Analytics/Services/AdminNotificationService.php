@@ -15,15 +15,16 @@ class AdminNotificationService {
         $title = trim((string)($data['title'] ?? ''));
         $message = trim((string)($data['body'] ?? ''));
         if ($title === '' || $message === '') throw new RuntimeException('عنوان و متن اعلان الزامی است.');
-        return (int)DB::table('user_notifications')->insertGetId([
+        $id = (int)DB::table('user_notifications')->insertGetId([
             'user_id' => $actor,
             'type' => !empty($data['asDraft']) ? 'manual_draft' : 'manual',
-            'title' => $title,
-            'message' => $message,
             'entity_type' => 'admin_notification',
             'is_read' => 0,
             'created_by' => $actor,
+            'updated_by' => $actor,
         ]);
+        foreach (['fa'=>[$title,$message], 'en'=>[$title,$message]] as $locale=>[$t,$m]) foreach(['title'=>$t,'message'=>$m] as $field=>$value) DB::table('translations')->insert(['table_name'=>'user_notifications','table_id'=>$id,'field'=>$field,'locale'=>$locale,'value'=>$value,'version'=>1,'created_by'=>$actor,'updated_by'=>$actor]);
+        return $id;
     }
 
     public function setStatus(int $id, string $status, int $actor): void {
@@ -41,10 +42,12 @@ class AdminNotificationService {
     }
 
     private function map(array $row): array {
+        $texts=[];
+        foreach (DB::table('translations')->where('table_name','user_notifications')->where('table_id',(int)$row['user_notification_id'])->where('locale',locale())->whereIn('field',['title','message'])->whereNull('deleted_at')->get() as $translation) $texts[(string)$translation['field']]=(string)$translation['value'];
         $operation = str_replace('database_', '', (string)$row['type']);
         $priority = $operation === 'delete' ? 'بالا' : ($operation === 'update' ? 'متوسط' : 'کم');
         return [
-            'id'=>(int)$row['user_notification_id'], 'title'=>$row['title'], 'body'=>$row['message'],
+            'id'=>(int)$row['user_notification_id'], 'title'=>$texts['title']??'', 'body'=>$texts['message']??'',
             'branchId'=>0, 'branchName'=>'سیستم', 'audience'=>'مدیران', 'priority'=>$priority,
             'status'=>$row['type'] === 'manual_draft' ? 'پیش‌نویس' : 'منتشر شده',
             'date'=>date('Y/m/d', strtotime($row['created_at'])), 'dateISO'=>date('Y-m-d', strtotime($row['created_at'])),
