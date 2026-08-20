@@ -4,12 +4,13 @@ namespace Modules\Analytics\Services;
 
 use Core\database\DB;
 use RuntimeException;
+use Modules\System\Services\SiteAdminAccess;
 
 final class AcademyScopedBackupService
 {
     public function create(int$actor):array
     {
-        $academy=DB::table('academies')->where('user_id',$actor)->whereNull('deleted_at')->first()?:DB::table('academies')->where('created_by',$actor)->whereNull('deleted_at')->orderBy('academy_id')->first();
+        $user=DB::table('users')->where('user_id',$actor)->whereNull('deleted_at')->first();$academy=DB::table('academies')->where('user_id',$actor)->whereNull('deleted_at')->first()?:DB::table('academies')->where('created_by',$actor)->whereNull('deleted_at')->orderBy('academy_id')->first();if(!$academy&&SiteAdminAccess::allows($user))$academy=DB::table('academies')->whereNull('deleted_at')->orderBy('academy_id')->first();
         if(!$academy)throw new RuntimeException('آموزشگاه مرتبط یافت نشد.');$aid=(int)$academy['academy_id'];
         $branches=DB::table('academy_branches')->where('academy_id',$aid)->get();$branchIds=$this->ids($branches,'branch_id');
         $members=$branchIds?DB::table('academy_branch_members')->whereIn('branch_id',$branchIds)->get():[];$memberIds=$this->ids($members,'member_id');

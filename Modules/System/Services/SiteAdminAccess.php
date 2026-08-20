@@ -13,6 +13,7 @@ class SiteAdminAccess {
         // حساب بنیان‌گذار سایت مستقل از type و داده‌های نقش، همیشه مدیر سایت است.
         if ($userId === 1) return true;
 
+        if (in_array(($user['type'] ?? null), ['admin', 'superadmin', 'site_admin'], true)) return true;
         if (($user['type'] ?? null) !== 'manager') return false;
 
         $role = DB::table('user_roles')

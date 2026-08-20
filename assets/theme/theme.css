@@ -143,3 +143,7 @@ body.app-dialog-open { overflow:hidden; }
 @media (max-width:480px) { .app-dialog { padding:1.25rem;border-radius:1.25rem; }.app-dialog__button { min-width:5.75rem; } }
 @media (prefers-reduced-motion:reduce) { .app-dialog-backdrop,.app-dialog { transition:none; } }
 body { font-family: var(--site-font-family, Vazirmatn, Tahoma, Arial, sans-serif) !important; }
+html[data-mode="dark"] .context-help-warning { border-color:#92400e !important; background:rgba(120,53,15,.42) !important; color:#fde68a !important; }
+html[data-mode="dark"] .context-help-warning p { color:#fde68a !important; }
+html[data-mode="dark"] .context-help-tip { border-color:#a16207 !important; background:rgba(113,63,18,.42) !important; color:#fde68a !important; }
+html[data-mode="dark"] .context-help-tip p { color:#fde68a !important; }
