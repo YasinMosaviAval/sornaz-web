@@ -77,7 +77,8 @@ class UserService {
         return match ($userType) {
             'academy' => 'academy_main',
             'teacher' => 'teacher_wallet',
-            default => 'student_wallet',
+            'human' => 'user_wallet',
+            default => 'user_wallet',
         };
     }
 

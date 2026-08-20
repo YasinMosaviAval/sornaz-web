@@ -69,8 +69,10 @@ class UserController {
             if (!$verification['ok']) {
                 return redirect('/register')->withInput($_POST)->withErrors(['otp' => $verification['message']]);
             }
+            session()->put('suppress_database_notifications', true);
             $userId = $this->service->register($data);
             if (!$userId) {
+                session()->forget('suppress_database_notifications');
                 return redirect('/register')
                     ->withInput($_POST)
                     ->withErrors(['username' => trans('auth.error.register_failed', 'ثبت‌نام ناموفق بود.')]);
@@ -82,17 +84,19 @@ class UserController {
             DB::table('users')->where('user_id', $userId)->update($verified);
             auth()->login((int)$userId, true);
             $this->recordLogin((int)$userId);
-            $this->notifications->send(
-                1,
-                'ثبت‌نام کاربر جدید در جدول users',
-                'کاربر با user_id=' . $userId . ' (انجام‌دهنده عملیات: user_id=' . $userId . ') در جدول users یک سطر جدید اضافه کرد. ستون‌های درج‌شده: username، email، phone، password، type، status، locale، timezone، register_method، created_by، updated_by، approved_at، approved_by' . (($data['register_method'] ?? '') === 'phone' ? '، phone_verified_at' : '') . '. همچنین ستون‌های status، type، approved_at، approved_by، updated_by و' . (($data['register_method'] ?? '') === 'phone' ? ' phone_verified_at' : '') . ' در همین سطر به‌روزرسانی شدند و ورود در ستون‌های last_login_at و last_login_ip ثبت شد.',
-                'users',
-                $userId,
-                $userId
-            );
+            $registeredAt = date('Y-m-d H:i:s');
+            $isPhone = ($data['register_method'] ?? '') === 'phone';
+            $contactLabel = $isPhone ? 'شماره تلفن' : 'ایمیل';
+            $contact = $isPhone ? (string)$data['phone'] : (string)$data['email'];
+            $this->notifications->send($userId, 'ثبت‌نام موفق', 'ثبت نام شما در تاریخ ' . $registeredAt . ' با موفقیت صورت گرفت.', 'users', $userId, $userId, 'Registration successful', 'Your registration was completed successfully on ' . $registeredAt . '.');
+            $this->notifications->send(1, 'ثبت‌نام کاربر جدید', 'کاربری با آی‌دی ' . $userId . ' با نام کاربری ' . $data['username'] . ' و ' . $contactLabel . ' ' . $contact . ' در سایت ثبت‌نام کرد.', 'users', $userId, $userId, 'New user registration', 'User ID ' . $userId . ' registered on the site with username ' . $data['username'] . ' and ' . ($isPhone ? 'phone number ' : 'email ') . $contact . '.');
+            $this->notifications->send(1, 'ایجاد اکانت مالی کاربر جدید', 'برای کاربر جدید با آی‌دی ' . $userId . ' یک عدد اکانت مالی ایجاد شد.', 'financial_system_accounts', $userId, $userId, 'New user financial account created', 'A financial account was created for new user ID ' . $userId . '.');
+            $this->notifications->send(1, 'ایجاد کد دعوت کاربر جدید', 'برای کاربر جدید با آی‌دی ' . $userId . ' یک عدد کد دعوت ایجاد شد.', 'user_referrals', $userId, $userId, 'New user invitation code created', 'An invitation code was created for new user ID ' . $userId . '.');
+            session()->forget('suppress_database_notifications');
             session()->flash('auth_success', 'ثبت نام شما و ورود به حساب کاربری با موفقیت انجام شد.');
             return redirect('/page/home');
         } catch (ValidationException $e) {
+            session()->forget('suppress_database_notifications');
             return redirect('/register')
                 ->withInput($_POST)
                 ->withErrors($e->getErrors());
