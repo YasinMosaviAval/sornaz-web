@@ -100,7 +100,8 @@ window.sendAcademyRegistrationOtp = async function() {
     const button = document.getElementById('academySendOtpBtn');
     if (button) button.disabled = true;
     try {
-        const response = await fetch('/academy/send-academy-request/send-otp', {method: 'POST', headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}, body: new FormData(form)});
+        const otpEndpoint = form.action.includes('register-main-branch') ? '/academy/register-main-branch/send-otp' : '/academy/send-academy-request/send-otp';
+        const response = await fetch(otpEndpoint, {method: 'POST', headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}, body: new FormData(form)});
         const payload = await response.json();
         const data = payload.data || {};
         if (!response.ok || !data.success) throw new Error(data.errors ? Object.values(data.errors).flat()[0] : (data.message || academyText('error.otp_send_failed')));
@@ -154,11 +155,20 @@ const defaultAcademyTerms = `
 <h3 class="font-bold text-lg mb-2">۴. حریم خصوصی</h3><p class="mb-4 text-gray-600 leading-relaxed">اطلاعات هنرجویان و استادان فقط برای ارائه خدمات مجاز استفاده می‌شود و افشای آن بدون مجوز ممنوع است.</p>
 <h3 class="font-bold text-lg mb-2">۵. بررسی و تعلیق</h3><p class="text-gray-600 leading-relaxed">سُرناز می‌تواند مدارک را بررسی کند و در صورت اطلاعات نادرست، تخلف یا شکایت معتبر، انتشار صفحه آموزشگاه را متوقف کند.</p>`;
 
+const defaultBranchTerms = `
+<h3 class="font-bold text-lg mb-2">۱. صحت اطلاعات شعبه</h3><p class="mb-4 text-gray-600 leading-relaxed">مدیر شعبه مسئول صحت اطلاعات تماس، نشانی، ساعات فعالیت و مجوزهای مربوط به شعبه است.</p>
+<h3 class="font-bold text-lg mb-2">۲. رعایت مقررات آموزشگاه</h3><p class="mb-4 text-gray-600 leading-relaxed">تمام فعالیت‌های شعبه باید مطابق قوانین آموزشگاه مادر و دستورالعمل‌های اعلام‌شده انجام شود.</p>
+<h3 class="font-bold text-lg mb-2">۳. مسئولیت خدمات شعبه</h3><p class="mb-4 text-gray-600 leading-relaxed">مدیر شعبه مسئول کیفیت خدمات، پاسخ‌گویی به هنرجویان و رعایت برنامه‌های ثبت‌شده در شعبه است.</p>
+<h3 class="font-bold text-lg mb-2">۴. حفظ حریم خصوصی</h3><p class="mb-4 text-gray-600 leading-relaxed">اطلاعات هنرجویان، استادان و کارکنان شعبه باید محرمانه نگه داشته شود و فقط برای ارائه خدمات مجاز استفاده شود.</p>
+<h3 class="font-bold text-lg mb-2">۵. بررسی و تعلیق شعبه</h3><p class="text-gray-600 leading-relaxed">سُرناز و مدیر آموزشگاه می‌توانند در صورت تخلف، اطلاعات نادرست یا شکایت معتبر، فعالیت شعبه را بررسی یا محدود کنند.</p>`;
+
 window.openAcademyTermsModal = function() {
     const container = document.getElementById('modalContainer');
     if (!container) return;
-    const terms = academyText('terms.content', defaultAcademyTerms);
-    container.innerHTML = `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()"><div class="bg-white rounded-3xl w-full max-w-lg my-8 shadow-2xl" onclick="event.stopPropagation()"><div class="px-8 py-5 border-b flex justify-between items-center"><h2 class="text-xl font-bold">${academyText('terms.title')}</h2><button type="button" aria-label="${academyText('terms.close')}" onclick="closeModal()" class="text-3xl text-gray-300">×</button></div><div class="p-8 max-h-[60vh] overflow-y-auto text-sm">${terms}</div><div class="px-8 py-5 border-t flex gap-3"><button type="button" onclick="acceptAcademyTerms()" class="flex-1 bg-indigo-600 text-white py-3.5 rounded-2xl">${academyText('terms.accept')}</button><button type="button" onclick="closeModal()" class="flex-1 border border-gray-300 py-3.5 rounded-2xl">${academyText('terms.close')}</button></div></div></div>`;
+    const isBranch = document.getElementById('academyRegistrationForm')?.action.includes('register-main-branch');
+    const terms = isBranch ? defaultBranchTerms : academyText('terms.content', defaultAcademyTerms);
+    const termsTitle = isBranch ? 'قوانین ثبت و فعالیت شعبه' : academyText('terms.title', 'قوانین ثبت و فعالیت آموزشگاه');
+    container.innerHTML = `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()"><div class="bg-white rounded-3xl w-full max-w-lg my-8 shadow-2xl" onclick="event.stopPropagation()"><div class="px-8 py-5 border-b flex justify-between items-center"><h2 class="text-xl font-bold">${termsTitle}</h2><button type="button" aria-label="${academyText('terms.close')}" onclick="closeModal()" class="text-3xl text-gray-300">×</button></div><div class="p-8 max-h-[60vh] overflow-y-auto text-sm">${terms}</div><div class="px-8 py-5 border-t flex gap-3"><button type="button" onclick="acceptAcademyTerms()" class="flex-1 bg-indigo-600 text-white py-3.5 rounded-2xl">${academyText('terms.accept')}</button><button type="button" onclick="closeModal()" class="flex-1 border border-gray-300 py-3.5 rounded-2xl">${academyText('terms.close')}</button></div></div></div>`;
 };
 
 window.acceptAcademyTerms = function() { const terms = document.getElementById('academyTerms'); if (terms) terms.checked = true; closeModal(); };

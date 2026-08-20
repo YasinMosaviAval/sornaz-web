@@ -62,7 +62,7 @@ class UserService {
             }
 
             $this->referrals->ensureForUser($userId, $data['invite_code'] ?? null);
-            $this->assignRole($userId, 'user', $userId);
+            if (empty($data['skip_default_role'])) $this->assignRole($userId, 'user', $userId);
 
                 return $userId;
             });
