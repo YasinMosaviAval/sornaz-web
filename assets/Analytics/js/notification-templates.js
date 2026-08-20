@@ -36,6 +36,7 @@
     window.getNotificationRowHTML = function (item) {
         return `
             <td class="py-4 px-5 font-medium">${escapeHtml(item.title)}</td>
+            <td class="py-4 px-5" dir="ltr">@${escapeHtml(item.recipientUsername || '—')} <small class="text-gray-400">(${escapeHtml(item.recipientId || '—')})</small></td>
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
             <td class="py-4 px-5"><span class="px-2.5 py-1 rounded-full text-xs bg-slate-100 text-slate-600">${escapeHtml(item.audience || 'همه')}</span></td>
             <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${priorityClass(item.priority)}">${escapeHtml(item.priority)}</span></td>
@@ -50,7 +51,7 @@
     };
 
     window.getNotificationEmptyRowHTML = function () {
-        return '<tr><td colspan="7" class="py-12 text-center text-gray-400">اعلانی یافت نشد</td></tr>';
+        return '<tr><td colspan="8" class="py-12 text-center text-gray-400">اعلانی یافت نشد</td></tr>';
     };
 
     window.getNotificationAddModalHTML = function () {
