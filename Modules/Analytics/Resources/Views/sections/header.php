@@ -20,8 +20,8 @@
             </button>
             <div class="hidden md:flex items-center gap-2 min-w-0">
                 <div class="text-right hidden sm:block">
-                    <p class="font-medium text-sm truncate">علی رضایی</p>
-                    <p class="text-xs text-gray-500 truncate">مدیر ارشد</p>
+                    <p class="font-medium text-sm truncate" dir="ltr">@<?= e(auth()->user()['username'] ?? '') ?></p>
+                    <p class="text-xs text-gray-500 truncate">نام کاربری</p>
                 </div>
                 <div class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
                     <i class="fas fa-user text-indigo-700"></i>

@@ -23,6 +23,7 @@
 
                 <div class="flex items-center gap-2 shrink-0">
                 <?php if (auth()->check()): ?>
+                    <span class="hidden sm:inline text-sm text-gray-600" dir="ltr">@<?= e($headerUser['username'] ?? '') ?></span>
                     <form method="POST" action="/logout" class="inline">
                         <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\Csrf\Csrf::class)->token() ?>">
                         <button type="submit" class="text-sm px-4 py-2 rounded-xl text-red-600 hover:bg-red-50"><?= e(trans('public.action.logout', 'خروج')) ?></button>
@@ -69,6 +70,7 @@
             <a href="/page/contact-us" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.contact', 'تماس با ما')) ?></a>
             <div class="flex gap-2 pt-3 border-t border-gray-100 mt-2">
                 <?php if (auth()->check()): ?>
+                    <span class="flex-1 text-center text-sm py-2.5 rounded-xl bg-gray-50 text-gray-700" dir="ltr">@<?= e($headerUser['username'] ?? '') ?></span>
                     <form method="POST" action="/logout" class="flex-1">
                         <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\Csrf\Csrf::class)->token() ?>">
                         <button type="submit" class="w-full text-center text-sm py-2.5 rounded-xl border border-red-200 text-red-600"><?= e(trans('public.action.logout', 'خروج')) ?></button>
