@@ -3,13 +3,15 @@ namespace Modules\Academy\Controllers\Web;
 
 use Core\http\ResponseFactory;
 use Modules\Academy\Services\AcademyTermService;
+use Throwable;
 
-class AcademyTermAvailabilityController
-{
+class AcademyTermAvailabilityController {
+
+
     public function __construct(private AcademyTermService $service) {}
 
-    public function index()
-    {
+
+    public function index() {
         try {
             $times = $this->service->availableStartTimes(
                 (int) auth()->id(),
@@ -43,8 +45,10 @@ class AcademyTermAvailabilityController
                 }));
             }
             return ResponseFactory::json(['success' => true, 'data' => ['times' => $times, 'closed' => $closed || !$workingTimes, 'full' => !$closed && (bool) $workingTimes && !$times]]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }
+
+
 }

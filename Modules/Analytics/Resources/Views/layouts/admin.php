@@ -114,10 +114,7 @@
     pushScript('comments.js');
     pushScript('media.js');
     pushScript('settings.js');
-    pushScript('articles.js');
-    pushScript('about-us.js');
     pushScript('contact-us.js');
-    pushScript('academies.js');
     pushScript('academy-enroll.js');
     pushScript('academy-requests.js');
     

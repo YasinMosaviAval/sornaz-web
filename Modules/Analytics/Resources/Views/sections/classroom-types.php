@@ -1,1 +1,26 @@
-<?php if(\Modules\System\Services\SiteAdminAccess::allows(auth()->user())):?><section id="classroom-types" class="section hidden"><div class="mb-7 flex justify-between"><div><h1 class="text-3xl font-bold">انواع کلاس</h1><p class="mt-2 text-gray-500">مدیریت انواع کلاس‌های فیزیکی</p></div><button onclick="openClassroomTypeAdmin()" class="rounded-xl bg-indigo-600 px-5 py-2 text-white">+ نوع جدید</button></div><div class="overflow-x-auto rounded-3xl bg-white shadow"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-4 text-right">عنوان</th><th class="p-4 text-right">خلاصه</th><th class="p-4 text-right">شرح</th><th class="p-4"></th></tr></thead><tbody id="classroomTypesBody"></tbody></table></div></section><?php endif;?>
+<?php if(\Modules\System\Services\SiteAdminAccess::allows(auth()->user())) : ?>
+<section id="classroom-types" class="section hidden">
+    <div class="mb-7 flex justify-between">
+        <div>
+            <h1 class="text-3xl font-bold">انواع کلاس</h1>
+            <p class="mt-2 text-gray-500">مدیریت انواع کلاس‌های فیزیکی</p>
+        </div>
+        <button onclick="openClassroomTypeAdmin()" class="rounded-xl bg-indigo-600 px-5 py-2 text-white">+ نوع جدید</button>
+    </div>
+    <div class="overflow-x-auto rounded-3xl bg-white shadow">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="p-4 text-right">عنوان</th>
+                    <th class="p-4 text-right">خلاصه</th>
+                    <th class="p-4 text-right">شرح</th>
+                    <th class="p-4"></th>
+                </tr>
+            </thead>
+            <tbody id="classroomTypesBody">
+
+            </tbody>
+        </table>
+    </div>
+</section>
+<?php endif; ?>

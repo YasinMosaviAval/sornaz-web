@@ -7,13 +7,16 @@ use Modules\System\Services\UserService;
 use Modules\System\Requests\UserStoreRequest;
 use Modules\System\Services\RegistrationOtpService;
 use Modules\System\Services\PasswordResetOtpService;
+use Core\database\DB;
+use Modules\System\Services\UserNotificationService;
 
 class UserController {
 
     public function __construct(
         protected UserService $service,
         protected RegistrationOtpService $registrationOtp,
-        protected PasswordResetOtpService $passwordResetOtp
+        protected PasswordResetOtpService $passwordResetOtp,
+        protected UserNotificationService $notifications
     ) {
     }
 
@@ -73,8 +76,11 @@ class UserController {
                     ->withErrors(['username' => trans('auth.error.register_failed', 'ثبت‌نام ناموفق بود.')]);
             }
             $this->registrationOtp->clear();
-            session()->flash('auth_success', trans('auth.success.register', 'ثبت‌نام شما با موفقیت انجام شد. اکنون می‌توانید وارد شوید.'));
-            return redirect('/login');
+            DB::table('users')->where('user_id', $userId)->update(['status' => 'approved', 'updated_by' => $userId]);
+            auth()->login((int)$userId, true);
+            $this->notifications->send(1, 'ثبت‌نام کاربر جدید', 'یک کاربر جدید با شناسه ' . $userId . ' ثبت‌نام کرد.', 'user', $userId, $userId);
+            session()->flash('auth_success', trans('auth.success.register', 'ثبت‌نام شما با موفقیت انجام شد.'));
+            return redirect('/page/home');
         } catch (ValidationException $e) {
             return redirect('/register')
                 ->withInput($_POST)

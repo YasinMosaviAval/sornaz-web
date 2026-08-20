@@ -5,6 +5,7 @@ namespace Modules\Academy\Services;
 use Core\database\DB;
 use Core\translation\TranslationService;
 use Modules\System\Services\UserService;
+use Modules\System\Services\UserNotificationService;
 use RuntimeException;
 
 class AcademyRegistrationService {
@@ -14,10 +15,16 @@ class AcademyRegistrationService {
     private const EXTRA_BRANCH_PREFIX = 'test_extra_branch_';
     private const MEMBER_PREFIX = 'test_branch_member_';
 
-    public function __construct(protected UserService $users) {}
+    public function __construct(protected UserService $users, protected UserNotificationService $notifications) {}
 
     public function register(array $data): int {
-        return transaction(fn() => $this->createAcademy($data));
+        return transaction(function () use ($data) {
+            $academyId = $this->createAcademy($data);
+            $managerId = (int)DB::table('academies')->where('academy_id', $academyId)->first()['created_by'];
+            $this->notifications->send(1, 'ثبت آموزشگاه جدید', 'یک آموزشگاه جدید ثبت شد.', 'academy', $academyId, $managerId);
+            $this->notifications->send($managerId, 'آموزشگاه شما ثبت شد', 'درخواست ثبت آموزشگاه شما دریافت شد.', 'academy', $academyId, $managerId);
+            return $academyId;
+        });
     }
 
     public function seedSamples(int $limit=10): array {
@@ -208,7 +215,7 @@ class AcademyRegistrationService {
         $userId = $this->users->register($data);
         if (!$userId) throw new RuntimeException('ایجاد حساب آموزشگاه ناموفق بود.');
 
-        $academyId = DB::table('academies')->insertGetId(['user_id' => $userId]);
+        $academyId = DB::table('academies')->insertGetId(['user_id' => $userId, 'created_by' => $userId, 'updated_by' => $userId]);
         if (!$academyId) throw new RuntimeException('ایجاد آموزشگاه ناموفق بود.');
 
         $profile = DB::table('z_user_profiles')->where('user_id', $userId)->whereNull('deleted_at')->first();
@@ -227,6 +234,7 @@ class AcademyRegistrationService {
                 'user_id' => $userId,
                 'is_main' => 1,
                 'timezone' => $data['timezone'] ?? 'Asia/Tehran',
+                'created_by' => $userId, 'updated_by' => $userId,
             ]);
         }
         if (!$profileId || !$accountId || !$branchId) {
