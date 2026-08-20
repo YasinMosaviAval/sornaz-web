@@ -30,6 +30,24 @@ class AcademyRegistrationService {
         }); } finally { session()->forget('suppress_database_notifications'); }
     }
 
+    public function registerMainBranch(int $academyId, int $managerId, array $data): int {
+        return transaction(function () use ($academyId, $managerId, $data) {
+            $academy = DB::table('academies')->where('academy_id', $academyId)->whereNull('deleted_at')->first();
+            if (!$academy) throw new RuntimeException('آموزشگاه یافت نشد.');
+            $now = date('Y-m-d H:i:s');
+            $userId = DB::table('users')->insertGetId(['username'=>$data['username'],'email'=>$data['email'],'phone'=>$data['phone'],'password'=>password_hash($data['password'], PASSWORD_DEFAULT),'type'=>'branch','status'=>'approved','locale'=>'fa','timezone'=>'Asia/Tehran','register_method'=>$data['register_method'],'visibility'=>'unlisted','created_by'=>$managerId,'updated_by'=>$managerId,'approved_at'=>$now,'approved_by'=>$managerId]);
+            $branchId = DB::table('academy_branches')->insertGetId(['academy_id'=>$academyId,'user_id'=>$userId,'is_main'=>1,'timezone'=>'Asia/Tehran','created_by'=>$managerId,'updated_by'=>$managerId]);
+            if (!$userId || !$branchId) throw new RuntimeException('ایجاد شعبه اصلی ناموفق بود.');
+            $this->users->assignRole($userId, 'academy_branch_owner', $managerId);
+            $this->users->assignRole($managerId, 'academy_branch_manager', $managerId);
+            $this->notifications->send(1, 'ثبت شعبه جدید', "کاربر با آی‌دی {$managerId} شعبه اصلی آموزشگاه با آی‌دی {$academyId} را ثبت کرد.", 'academy_branches', $branchId, $managerId);
+            $this->notifications->send((int)$academy['user_id'], 'ثبت شعبه آموزشگاه', "شعبه اصلی آموزشگاه با آی‌دی {$academyId} با موفقیت ثبت شد.", 'academy_branches', $branchId, $managerId);
+            $this->notifications->send($managerId, 'ثبت درخواست شعبه', 'درخواست ثبت شعبه اصلی با موفقیت ارسال شد.', 'academy_branches', $branchId, $managerId);
+            $this->notifications->send($userId, 'ایجاد حساب شعبه', 'حساب کاربری شعبه اصلی با موفقیت ایجاد و تأیید شد.', 'users', $userId, $managerId);
+            return $branchId;
+        });
+    }
+
     public function seedSamples(int $limit=10): array {
         return transaction(function () use ($limit) {
             $branchTypes = DB::table('academy_branch_types')->whereNull('deleted_at')->get();
@@ -214,14 +232,19 @@ class AcademyRegistrationService {
 
     private function createAcademy(array $data): int {
         $data['type'] = 'academy';
+        $data['skip_default_role'] = true;
         $data['full_name'] = $data['academy_name'];
+        $requesterId = 0;
+        try { $requesterId = (int)(auth()->id() ?? 0); } catch (\Throwable) {}
         $userId = $this->users->register($data);
         if (!$userId) throw new RuntimeException('ایجاد حساب آموزشگاه ناموفق بود.');
+        $requesterId = $requesterId ?: (int)$userId;
         $now = date('Y-m-d H:i:s');
-        DB::table('users')->where('user_id', $userId)->update(['type'=>'academy', 'approved_at'=>$now, 'approved_by'=>$userId, 'updated_by'=>$userId]);
-        $this->users->assignRole($userId, 'academy_owner', $userId);
+        DB::table('users')->where('user_id', $userId)->update(['type'=>'academy', 'status'=>'approved', 'approved_at'=>$now, 'approved_by'=>$requesterId, 'created_by'=>$requesterId, 'updated_by'=>$requesterId]);
+        $this->users->assignRole($userId, 'academy_owner', $requesterId);
+        $this->users->assignRole($requesterId, 'academy_manager', $requesterId);
 
-        $academyId = DB::table('academies')->insertGetId(['user_id' => $userId, 'created_by' => $userId, 'updated_by' => $userId]);
+        $academyId = DB::table('academies')->insertGetId(['user_id' => $userId, 'created_by' => $requesterId, 'updated_by' => $requesterId]);
         if (!$academyId) throw new RuntimeException('ایجاد آموزشگاه ناموفق بود.');
 
         $profile = DB::table('z_user_profiles')->where('user_id', $userId)->whereNull('deleted_at')->first();
@@ -230,20 +253,7 @@ class AcademyRegistrationService {
         $accountId = $account['account_id'] ?? DB::table('financial_system_accounts')->insertGetId([
             'user_id' => $userId, 'type' => 'academy_main', 'balance' => 0, 'status' => 'active',
         ]);
-        $branch = DB::table('academy_branches')->where('user_id', $userId)->where('is_main', 1)->whereNull('deleted_at')->first();
-        if ($branch) {
-            $branchId = (int)$branch['branch_id'];
-            DB::table('academy_branches')->where('branch_id', $branchId)->update(['academy_id' => $academyId]);
-        } else {
-            $branchId = DB::table('academy_branches')->insertGetId([
-                'academy_id' => $academyId,
-                'user_id' => $userId,
-                'is_main' => 1,
-                'timezone' => $data['timezone'] ?? 'Asia/Tehran',
-                'created_by' => $userId, 'updated_by' => $userId,
-            ]);
-        }
-        if (!$profileId || !$accountId || !$branchId) {
+        if (!$profileId || !$accountId) {
             throw new RuntimeException('ایجاد اطلاعات پایه آموزشگاه ناموفق بود.');
         }
 

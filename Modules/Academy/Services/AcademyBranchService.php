@@ -137,6 +137,7 @@ class AcademyBranchService {
                 'type' => 'branch', 'status' => $this->activeStatus($data['status'] ?? null) ? 'approved' : 'inactive',
                 'locale' => 'fa', 'timezone' => 'Asia/Tehran', 'register_method' => 'admin',
                 'visibility' => 'unlisted', 'created_by' => $ownerUserId, 'updated_by' => $ownerUserId,
+                'approved_at' => date('Y-m-d H:i:s'), 'approved_by' => $ownerUserId,
             ]);
             if (!$branchUserId) throw new RuntimeException('ایجاد حساب شعبه ناموفق بود.');
 
@@ -147,6 +148,12 @@ class AcademyBranchService {
                 'timezone' => 'Asia/Tehran', 'created_by' => $ownerUserId, 'updated_by' => $ownerUserId,
             ]);
             if (!$branchId) throw new RuntimeException('ایجاد شعبه ناموفق بود.');
+            $role = DB::table('access_system_roles')->where('name','academy_branch_owner')->whereNull('deleted_at')->first();
+            if (!$role) throw new RuntimeException('نقش academy_branch_owner یافت نشد.');
+            DB::table('user_roles')->insertGetId(['user_id'=>$branchUserId,'role_id'=>(int)$role['role_id'],'is_main'=>1,'granted_by'=>$ownerUserId,'created_by'=>$ownerUserId,'updated_by'=>$ownerUserId,'approved_at'=>date('Y-m-d H:i:s'),'approved_by'=>$ownerUserId]);
+            $managerRole = DB::table('access_system_roles')->where('name','academy_branch_manager')->whereNull('deleted_at')->first();
+            if (!$managerRole) throw new RuntimeException('نقش academy_branch_manager یافت نشد.');
+            DB::table('user_roles')->where('user_id',$ownerUserId)->where('role_id',(int)$managerRole['role_id'])->whereNull('deleted_at')->first() ?: DB::table('user_roles')->insertGetId(['user_id'=>$ownerUserId,'role_id'=>(int)$managerRole['role_id'],'is_main'=>0,'granted_by'=>$ownerUserId,'created_by'=>$ownerUserId,'updated_by'=>$ownerUserId,'approved_at'=>date('Y-m-d H:i:s'),'approved_by'=>$ownerUserId]);
             $this->saveDetails($branchId, $branchUserId, $ownerUserId, $data);
             $notifications = app()->container()->make(UserNotificationService::class);
             $notifications->send(1, 'ثبت شعبه جدید در جدول academy_branches', 'انجام‌دهنده عملیات user_id=' . $ownerUserId . ' در جدول users سطر user_id=' . $branchUserId . ' و در جدول academy_branches سطر branch_id=' . $branchId . ' را اضافه کرد. ستون‌های users: username، email، phone، password، type، status، locale، timezone، register_method، visibility، created_by، updated_by. ستون‌های academy_branches: academy_id، user_id، is_main، academy_branch_type_id، mode، timezone، created_by، updated_by. همچنین ستون updated_by در جدول academies برای academy_id=' . $academyId . ' به‌روزرسانی شد.', 'academy_branches', $branchId, $ownerUserId);

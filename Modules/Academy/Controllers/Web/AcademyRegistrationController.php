@@ -22,6 +22,12 @@ class AcademyRegistrationController {
         return ResponseFactory::view('Academy::send-academy-request')->layout('main')->title(trans('academy.meta.title', 'سُرناز | ثبت آموزشگاه'));
     }
 
+    public function createMainBranch() {
+        $setup = session()->get('academy_branch_setup');
+        if (!$setup || empty($setup['academy_id'])) return redirect('/academy/send-academy-request');
+        return ResponseFactory::view('Academy::register-main-branch', ['academy' => $setup])->layout('main')->title('سُرناز | ثبت شعبه اصلی');
+    }
+
 
     public function index() {
         return ResponseFactory::view('Analytics::academies', ['academies' => $this->service->all()])->layout('main')->title('سُرناز | آموزشگاه‌ها');
@@ -90,10 +96,11 @@ class AcademyRegistrationController {
             $data = $this->validatedData();
             $verification = $this->otp->verify(trim((string)($_POST['otp'] ?? '')), $this->otpData($data));
             if (!$verification['ok']) return $this->back(['otp' => $verification['message']]);
-            $this->service->register($data);
+            $academyId = $this->service->register($data);
             $this->otp->clear();
-            session()->flash('auth_success', trans('academy.success.registered', 'ثبت آموزشگاه با موفقیت انجام شد. پس از تأیید می‌توانید وارد پنل مدیریت شوید.'));
-            return redirect('/login');
+            session()->put('academy_branch_setup', ['academy_id' => $academyId, 'manager_id' => (int)auth()->id()]);
+            session()->flash('auth_success', 'آموزشگاه با موفقیت ثبت شد. اکنون اطلاعات شعبه اصلی را ثبت کنید.');
+            return redirect('/academy/register-main-branch');
         } catch (ValidationException $e) {
             return $this->back($e->getErrors());
         } catch (Throwable $e) {
@@ -111,6 +118,32 @@ class AcademyRegistrationController {
         } catch (ValidationException $e) {
             return ResponseFactory::json(['success' => false, 'message' => trans('academy.error.review_form', 'اطلاعات فرم را بررسی کنید.'), 'errors' => $e->getErrors()], 422);
         }
+    }
+
+    public function sendMainBranchOtp() {
+        try {
+            $data = $this->validatedBranchData();
+            $result = $this->otp->send($data['register_method'], (string)$data[$data['register_method']], $this->otpData($data));
+            return ResponseFactory::json(['success' => $result['ok']] + $result, $result['ok'] ? 200 : (isset($result['retry_after']) ? 429 : 503));
+        } catch (ValidationException $e) {
+            return ResponseFactory::json(['success' => false, 'message' => 'اطلاعات فرم را بررسی کنید.', 'errors' => $e->getErrors()], 422);
+        }
+    }
+
+    public function storeMainBranch() {
+        try {
+            $setup = session()->get('academy_branch_setup');
+            if (!$setup || empty($setup['academy_id'])) return redirect('/academy/send-academy-request');
+            $data = $this->validatedBranchData();
+            $verification = $this->otp->verify(trim((string)($_POST['otp'] ?? '')), $this->otpData($data));
+            if (!$verification['ok']) return redirect('/academy/register-main-branch')->withInput($_POST)->withErrors(['otp' => $verification['message']]);
+            $this->service->registerMainBranch((int)$setup['academy_id'], (int)$setup['manager_id'], $data);
+            $this->otp->clear();
+            session()->forget('academy_branch_setup');
+            session()->flash('auth_success', 'شعبه اصلی با موفقیت ثبت شد.');
+            return redirect('/home');
+        } catch (ValidationException $e) { return redirect('/academy/register-main-branch')->withInput($_POST)->withErrors($e->getErrors());
+        } catch (Throwable $e) { return redirect('/academy/register-main-branch')->withInput($_POST)->withErrors(['username' => 'ثبت شعبه انجام نشد. لطفاً دوباره تلاش کنید.']); }
     }
 
 
@@ -136,6 +169,20 @@ class AcademyRegistrationController {
         unset($data['password2'], $data['terms'], $data['otp']);
         ksort($data);
         return $data;
+    }
+
+    private function validatedBranchData(): array {
+        $method = ($_POST['register_method'] ?? 'email') === 'phone' ? 'phone' : 'email';
+        $username = trim((string)($_POST['username'] ?? ''));
+        $password = (string)($_POST['password'] ?? '');
+        $password2 = (string)($_POST['password2'] ?? '');
+        if (!preg_match('/^[A-Za-z0-9_]{3,50}$/', $username)) throw new ValidationException(['username' => 'نام کاربری شعبه معتبر نیست.']);
+        if (strlen($password) < 8 || $password !== $password2) throw new ValidationException(['password' => 'رمز عبور باید حداقل ۸ کاراکتر باشد و تکرار آن یکسان باشد.']);
+        $value = trim((string)($_POST[$method] ?? ''));
+        if ($method === 'email' && !filter_var($value, FILTER_VALIDATE_EMAIL)) throw new ValidationException(['email' => 'ایمیل معتبر را وارد کنید.']);
+        if ($method === 'phone') { $value = preg_replace('/\D+/', '', $value); if (!preg_match('/^09\d{9}$/', $value)) throw new ValidationException(['phone' => 'شماره موبایل معتبر را وارد کنید.']); }
+        if (empty($_POST['terms'])) throw new ValidationException(['terms' => 'پذیرش قوانین ثبت و فعالیت شعبه الزامی است.']);
+        return ['register_method'=>$method, 'username'=>$username, 'password'=>$password, 'password2'=>$password2, 'email'=>$method==='email'?$value:null, 'phone'=>$method==='phone'?$value:null];
     }
 
 

@@ -5,7 +5,7 @@ namespace Core\database;
 use PDO;
 
 class DatabaseChangeNotifier {
-    private const IGNORED_TABLES = ['user_notifications'];
+    private const IGNORED_TABLES = ['user_notifications', 'translations'];
 
     public static function record(PDO $pdo, string $table, string $operation, array $data = [], ?int $entityId = null): void {
         if (in_array($table, self::IGNORED_TABLES, true)) return;
