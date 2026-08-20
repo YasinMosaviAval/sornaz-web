@@ -54,7 +54,6 @@ class UserController {
         return redirect('/page/home');
     }
 
-
     public function store() {
         try {
             $request = new UserStoreRequest($_POST);

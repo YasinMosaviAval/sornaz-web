@@ -165,6 +165,7 @@ $firstError = !empty($errors) ? reset($errors) : '';
             <a href="/system/login" class="w-full border border-gray-300 hover:bg-gray-50 py-3.5 rounded-2xl font-medium transition text-center block"><?= $authentication_array["authentication_login"]["translated_value"] ?></a>
         </form>
 
+
         <p class="text-center text-sm text-gray-400 mt-6">
             <a href="/page/home" class="hover:text-indigo-600"><?= $authentication_array["authentication_back_to_home"]["translated_value"] ?></a>
         </p>

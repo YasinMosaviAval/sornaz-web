@@ -1,6 +1,15 @@
 <div id="settings" class="section hidden">
     <div class="mb-6"><h1 class="text-3xl font-bold">تنظیمات</h1><p class="mt-1 text-gray-500">تنظیمات عمومی ظاهر و رفتار سایت</p></div>
     <div class="max-w-3xl rounded-3xl bg-white p-6 shadow-sm">
+        <h2 class="text-xl font-bold">ظاهر و حالت پنل</h2>
+        <p class="mt-2 text-sm text-gray-500">تم رنگی، حالت روشن یا تیره، زبان و حالت ویرایش متن‌های ثابت را انتخاب کنید.</p>
+        <div class="mt-6 grid gap-5 md:grid-cols-2">
+            <label class="block"><span class="mb-2 block text-sm font-medium">تم رنگی</span><select id="siteColorTheme" onchange="applyAppearanceSetting('colorTheme',this.value)" class="w-full rounded-xl border px-4 py-3"><option value="indigo">نیلی</option><option value="emerald">سبز</option><option value="rose">رز</option><option value="amber">کهربایی</option></select></label>
+            <label class="block"><span class="mb-2 block text-sm font-medium">حالت نمایش</span><select id="siteThemeMode" onchange="applyAppearanceSetting('themeMode',this.value)" class="w-full rounded-xl border px-4 py-3"><option value="light">روشن</option><option value="dark">تیره</option></select></label>
+            <label class="block"><span class="mb-2 block text-sm font-medium">زبان برنامه</span><select id="siteLanguage" onchange="applyAppearanceSetting('language',this.value)" class="w-full rounded-xl border px-4 py-3"><option value="fa">فارسی</option><option value="en">English</option></select></label>
+            <label class="flex items-center gap-3 rounded-xl border p-4"><input id="siteEditMode" type="checkbox" onchange="applyAppearanceSetting('editMode',this.checked)" class="h-5 w-5 rounded"><span><strong class="block">حالت ویرایش</strong><small class="text-gray-500">امکان ویرایش متن‌های ثابت با کلیک روی آن‌ها</small></span></label>
+        </div>
+        <hr class="my-8">
         <h2 class="text-xl font-bold">فونت اصلی پروژه</h2>
         <p class="mt-2 text-sm text-gray-500">خانواده فونت و اندازه عمومی متن‌ها روی پنل مدیریت و صفحات عمومی اعمال می‌شود. نوع اعداد به‌صورت خودکار از زبان صفحه پیروی می‌کند.</p>
         <div class="mt-6 grid gap-5 md:grid-cols-2">
