@@ -92,6 +92,7 @@ class UserController {
             $this->notifications->send(1, 'ثبت‌نام کاربر جدید', 'کاربری با آی‌دی ' . $userId . ' با نام کاربری ' . $data['username'] . ' و ' . $contactLabel . ' ' . $contact . ' در سایت ثبت‌نام کرد.', 'users', $userId, $userId, 'New user registration', 'User ID ' . $userId . ' registered on the site with username ' . $data['username'] . ' and ' . ($isPhone ? 'phone number ' : 'email ') . $contact . '.');
             $this->notifications->send(1, 'ایجاد اکانت مالی کاربر جدید', 'برای کاربر جدید با آی‌دی ' . $userId . ' یک عدد اکانت مالی ایجاد شد.', 'financial_system_accounts', $userId, $userId, 'New user financial account created', 'A financial account was created for new user ID ' . $userId . '.');
             $this->notifications->send(1, 'ایجاد کد دعوت کاربر جدید', 'برای کاربر جدید با آی‌دی ' . $userId . ' یک عدد کد دعوت ایجاد شد.', 'user_referrals', $userId, $userId, 'New user invitation code created', 'An invitation code was created for new user ID ' . $userId . '.');
+            $this->notifications->send(1, 'ایجاد نقش کاربر جدید', 'برای کاربر جدید با آی‌دی ' . $userId . ' نقش کاربر ایجاد شد.', 'user_roles', $userId, $userId, 'New user role created', 'A user role was created for new user ID ' . $userId . '.');
             session()->forget('suppress_database_notifications');
             session()->flash('auth_success', 'ثبت نام شما و ورود به حساب کاربری با موفقیت انجام شد.');
             return redirect('/page/home');
