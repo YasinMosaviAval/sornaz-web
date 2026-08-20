@@ -2,11 +2,12 @@
 $oldInput = session()->getFlash('_old_input', []);
 $errors   = session()->getFlash('_errors', []);
 $success  = session()->getFlash('auth_success');
+$authError = session()->getFlash('auth_error');
 ?>
 
 <div id="authFlashMessage" class="hidden"
      data-success="<?= e($success ?? '') ?>"
-     data-error="<?= e(!empty($errors['identifier']) ? $errors['identifier'] : '') ?>"></div>
+     data-error="<?= e($authError ?: (!empty($errors['identifier']) ? $errors['identifier'] : '')) ?>"></div>
 
 <div id="login" class="min-h-[80vh] flex items-center justify-center py-10">
     <div class="w-full max-w-md">
