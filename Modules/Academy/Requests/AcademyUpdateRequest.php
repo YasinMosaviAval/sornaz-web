@@ -12,19 +12,16 @@ class AcademyUpdateRequest extends FormRequest {
 
     public function rules(): array {
         return [
-
         ];
     }
 
     public function messages(): array {
         return [
-
         ];
     }
 
     public function attributes(): array {
         return [
-
         ];
     }
 

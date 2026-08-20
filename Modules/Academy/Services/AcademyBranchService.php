@@ -5,6 +5,7 @@ namespace Modules\Academy\Services;
 use Core\database\DB;
 use Core\translation\TranslationService;
 use RuntimeException;
+use Modules\System\Services\UserNotificationService;
 
 class AcademyBranchService {
     public function academyForUser(int $userId): array {
@@ -122,6 +123,7 @@ class AcademyBranchService {
                 : $this->academyForUser($ownerUserId);
             if (!$academy) throw new RuntimeException('آموزشگاه مقصد معتبر نیست.');
             $academyId = (int)$academy['academy_id'];
+            DB::table('academies')->where('academy_id', $academyId)->update(['updated_by' => $ownerUserId]);
             $this->lockAcademy($academyId);
             $data = $this->validate($data);
             $hasBranches = DB::table('academy_branches')->where('academy_id', $academyId)->whereNull('deleted_at')->count() > 0;
@@ -129,6 +131,8 @@ class AcademyBranchService {
 
             $branchUserId = DB::table('users')->insertGetId([
                 'username' => 'branch_' . $academyId . '_' . bin2hex(random_bytes(5)),
+                'email' => !empty($data['email']) ? strtolower(trim((string)$data['email'])) : null,
+                'phone' => !empty($data['phone']) ? preg_replace('/\D+/', '', (string)$data['phone']) : null,
                 'password' => password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT),
                 'type' => 'branch', 'status' => $this->activeStatus($data['status'] ?? null) ? 'approved' : 'inactive',
                 'locale' => 'fa', 'timezone' => 'Asia/Tehran', 'register_method' => 'admin',
@@ -144,6 +148,10 @@ class AcademyBranchService {
             ]);
             if (!$branchId) throw new RuntimeException('ایجاد شعبه ناموفق بود.');
             $this->saveDetails($branchId, $branchUserId, $ownerUserId, $data);
+            $notifications = app()->container()->make(UserNotificationService::class);
+            $notifications->send(1, 'ثبت شعبه جدید', 'یک شعبه جدید برای آموزشگاه ثبت شد.', 'branch', $branchId, $ownerUserId);
+            $notifications->send((int)$academy['user_id'], 'شعبه جدید آموزشگاه', 'یک شعبه جدید برای آموزشگاه شما ثبت شد.', 'branch', $branchId, $ownerUserId);
+            $notifications->send($branchUserId, 'حساب شعبه ایجاد شد', 'حساب کاربری شعبه شما ایجاد شد.', 'branch', $branchId, $ownerUserId);
             return $this->findOwned($academyId, $branchId);
         });
     }

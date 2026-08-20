@@ -13,16 +13,13 @@
             <p class="text-gray-500 mt-1">لیست کلاس‌ها، نوع، تجهیزات و وضعیت هر شعبه</p>
         </div>
         <div class="flex flex-wrap gap-3">
-            <button onclick="openAddClassroomModal()"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 transition">
+            <button onclick="openAddClassroomModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 transition">
                 <i class="fas fa-plus"></i> افزودن کلاس جدید
             </button>
-            <button onclick="exportClassroomsToExcel()"
-                    class="border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl flex items-center gap-2">
+            <button onclick="exportClassroomsToExcel()" class="border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl flex items-center gap-2">
                 <i class="fas fa-file-excel text-green-600"></i> خروجی اکسل
             </button>
-            <button onclick="exportClassroomsToPDF()"
-                    class="border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl flex items-center gap-2">
+            <button onclick="exportClassroomsToPDF()" class="border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl flex items-center gap-2">
                 <i class="fas fa-file-pdf text-red-600"></i> خروجی PDF
             </button>
         </div>
@@ -31,10 +28,7 @@
     <!-- تاپ‌بار شعبه‌ها -->
     <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
         <div class="flex gap-2 min-w-max" id="classroomBranchTabs">
-            <button onclick="filterClassroomsByBranch('all')"
-                    class="branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium bg-indigo-600 text-white">
-                همه شعبه‌ها
-            </button>
+            <button onclick="filterClassroomsByBranch('all')" class="branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium bg-indigo-600 text-white">همه شعبه‌ها</button>
         </div>
     </div>
 
@@ -42,13 +36,10 @@
     <div class="bg-white rounded-3xl p-5 mb-6 shadow-sm">
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
             <div>
-                <input type="text" id="classroomSearch" placeholder="جستجو نام کلاس..."
-                       class="w-full border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500"
-                       onkeyup="filterClassrooms()">
+                <input type="text" id="classroomSearch" placeholder="جستجو نام کلاس..." class="w-full border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500" onkeyup="filterClassrooms()">
             </div>
             <div>
-                <select id="filterClassroomStatus" onchange="filterClassrooms()"
-                        class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                <select id="filterClassroomStatus" onchange="filterClassrooms()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                     <option value="">همه وضعیت‌ها</option>
                     <option value="فعال">فعال</option>
                     <option value="تعمیر">تعمیر</option>
@@ -56,20 +47,17 @@
                 </select>
             </div>
             <div>
-                <select id="filterClassroomType" onchange="filterClassrooms()"
-                        class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                <select id="filterClassroomType" onchange="filterClassrooms()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                     <option value="">همه انواع</option>
                 </select>
             </div>
             <div>
-                <select id="filterClassroomCapacity" onchange="filterClassrooms()"
-                        class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                <select id="filterClassroomCapacity" onchange="filterClassrooms()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                     <option value="">همه ظرفیت‌ها</option>
                 </select>
             </div>
             <div>
-                <select id="filterClassroomEquipment" onchange="filterClassrooms()"
-                        class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                <select id="filterClassroomEquipment" onchange="filterClassrooms()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                     <option value="">همه تجهیزات</option>
                 </select>
             </div>
@@ -83,34 +71,22 @@
                 <thead class="bg-gray-50 border-b">
                     <tr>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortClassroomsBy('name')" class="flex items-center gap-1">
-                                نام کلاس <span id="classroomSortIcon-name">↕</span>
-                            </button>
+                            <button onclick="sortClassroomsBy('name')" class="flex items-center gap-1">نام کلاس <span id="classroomSortIcon-name">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortClassroomsBy('typeLabel')" class="flex items-center gap-1">
-                                نوع کلاس <span id="classroomSortIcon-typeLabel">↕</span>
-                            </button>
+                            <button onclick="sortClassroomsBy('typeLabel')" class="flex items-center gap-1">نوع کلاس <span id="classroomSortIcon-typeLabel">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortClassroomsBy('branchName')" class="flex items-center gap-1">
-                                شعبه <span id="classroomSortIcon-branchName">↕</span>
-                            </button>
+                            <button onclick="sortClassroomsBy('branchName')" class="flex items-center gap-1">شعبه <span id="classroomSortIcon-branchName">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortClassroomsBy('capacity')" class="flex items-center gap-1">
-                                ظرفیت <span id="classroomSortIcon-capacity">↕</span>
-                            </button>
+                            <button onclick="sortClassroomsBy('capacity')" class="flex items-center gap-1">ظرفیت <span id="classroomSortIcon-capacity">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortClassroomsBy('equipment')" class="flex items-center gap-1">
-                                تجهیزات <span id="classroomSortIcon-equipment">↕</span>
-                            </button>
+                            <button onclick="sortClassroomsBy('equipment')" class="flex items-center gap-1">تجهیزات <span id="classroomSortIcon-equipment">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortClassroomsBy('status')" class="flex items-center gap-1">
-                                وضعیت <span id="classroomSortIcon-status">↕</span>
-                            </button>
+                            <button onclick="sortClassroomsBy('status')" class="flex items-center gap-1">وضعیت <span id="classroomSortIcon-status">↕</span></button>
                         </th>
                         <th class="w-40 py-5 px-5"></th>
                     </tr>

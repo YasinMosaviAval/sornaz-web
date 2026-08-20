@@ -1,4 +1,47 @@
 <?php
 namespace Modules\Academy\Controllers\Web;
-use Core\http\ResponseFactory;use Modules\Academy\Services\AcademyClassScheduleService;use RuntimeException;
-class AcademyClassScheduleController{public function __construct(private AcademyClassScheduleService$s){}public function index(){return$this->run(fn()=>['success'=>true,'data'=>$this->s->index((int)auth()->id(),$_GET)]);}public function attendance(int$id){return$this->run(function()use($id){$this->s->attendance((int)auth()->id(),$id,$this->payload());return['success'=>true];});}private function payload():array{$raw=base64_decode(strtr((string)request()->input('payload_b64',''),'-_','+/'),true);$d=$raw===false?null:json_decode($raw,true);if(!is_array($d))throw new RuntimeException('اطلاعات معتبر نیست.');return$d;}private function run(callable$c){try{return ResponseFactory::json($c());}catch(\Throwable$e){return ResponseFactory::json(['success'=>false,'message'=>$e->getMessage()],422);}}}
+use Core\http\ResponseFactory;
+use Modules\Academy\Services\AcademyClassScheduleService;
+use RuntimeException;
+use Throwable;
+
+class AcademyClassScheduleController{
+
+
+    public function __construct(private AcademyClassScheduleService $s) {}
+
+
+    public function index() {
+        return $this->run(fn()=>['success'=>true,'data'=>$this->s->index((int)auth()->id(),$_GET)]);
+    }
+
+
+    public function attendance(int$id) {
+        return $this->run(
+            function() use($id) {
+                $this->s->attendance((int)auth()->id(),$id,$this->payload());
+                return['success'=>true];
+            }
+        );
+    }
+
+
+    private function payload() : array {
+        $raw = base64_decode(strtr((string)request()->input('payload_b64',''),'-_','+/'),true);
+        $d = $raw === false ? null : json_decode($raw,true);
+        if(!is_array($d)) throw new RuntimeException('اطلاعات معتبر نیست.');
+        return$d;
+    }
+
+
+    private function run(callable$c) {
+        try{
+            return ResponseFactory::json($c());
+        }
+        catch (Throwable $e) {
+            return ResponseFactory::json(['success' => false,'message' => $e->getMessage()], 422);
+        }
+    }
+
+
+}

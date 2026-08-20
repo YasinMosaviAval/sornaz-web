@@ -25,7 +25,13 @@ class UserService {
                     'locale'          => $data['locale'] ?? 'fa',
                     'timezone'        => $data['timezone'] ?? 'Asia/Tehran',
                     'register_method' => $data['register_method'],
+                    'created_by'      => $data['created_by'] ?? null,
+                    'updated_by'      => $data['updated_by'] ?? null,
                 ]);
+
+                if (empty($data['created_by']) && empty($data['updated_by'])) {
+                    $this->repository->updateById($userId, ['created_by' => $userId, 'updated_by' => $userId]);
+                }
 
             if (!$userId) {
                 throw new \RuntimeException('User could not be created.');

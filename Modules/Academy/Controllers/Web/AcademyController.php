@@ -20,39 +20,19 @@ class AcademyController {
 
 
 
-    /**
-     * لیست
-     */
     public function index() {
         $items = $this->service->all();
-        return ResponseFactory::view(
-                'Academy::index',
-                [
-                    'items' => $items
-                ]
-            )
-            ->layout('main')
-            ->title('Academy');
+        return ResponseFactory::view('Academy::index', ['items' => $items])->layout('main')->title('Academy');
     }
 
 
 
-    /**
-     * فرم ایجاد
-     */
     public function create() {
-        return ResponseFactory::view(
-                'Academy::create'
-            )
-            ->layout('main')
-            ->title('ایجاد Academy');
+        return ResponseFactory::view('Academy::create')->layout('main')->title('ایجاد Academy');
     }
 
 
 
-    /**
-     * ذخیره
-     */
     public function store() {
         $request = new AcademyStoreRequest($_POST);
         $data = $request->validated();
@@ -62,49 +42,26 @@ class AcademyController {
 
 
 
-    /**
-     * نمایش
-     */
     public function show(int $id) {
         $item = $this->service->findById($id);
         if (!$item) {
             abort(404);
         }
-        return ResponseFactory::view(
-                'Academy::show',
-                [
-                    'item' => $item
-                ]
-            )
-            ->layout('main')
-            ->title('نمایش Academy');
+        return ResponseFactory::view('Academy::show', ['item' => $item])->layout('main')->title('نمایش Academy');
     }
 
 
 
-    /**
-     * فرم ویرایش
-     */
     public function edit(int $id) {
         $item = $this->service->findById($id);
         if (!$item) {
             abort(404);
         }
-        return ResponseFactory::view(
-                'Academy::edit',
-                [
-                    'item' => $item
-                ]
-            )
-            ->layout('main')
-            ->title('ویرایش Academy');
+        return ResponseFactory::view('Academy::edit', ['item' => $item])->layout('main')->title('ویرایش Academy');
     }
 
 
 
-    /**
-     * بروزرسانی
-     */
     public function update(int $id) {
         $request = new AcademyUpdateRequest($_POST);
         $data = $request->validated();
@@ -114,12 +71,11 @@ class AcademyController {
 
 
 
-    /**
-     * حذف
-     */
     public function destroy(int $id) {
         $this->service->delete($id);
         return redirect('/academy');
     }
+
+
 
 }

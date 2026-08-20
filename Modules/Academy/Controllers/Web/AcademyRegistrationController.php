@@ -7,37 +7,39 @@ use Core\validation\ValidationException;
 use Modules\Academy\Requests\AcademyRegistrationRequest;
 use Modules\Academy\Services\AcademyRegistrationService;
 use Modules\System\Services\RegistrationOtpService;
+use Throwable;
 
 class AcademyRegistrationController {
+
+
     public function __construct(
         protected AcademyRegistrationService $service,
         protected RegistrationOtpService $otp
     ) {}
 
+
     public function create() {
-        return ResponseFactory::view('Academy::send-academy-request')
-            ->layout('main')
-            ->title(trans('academy.meta.title', 'سُرناز | ثبت آموزشگاه'));
+        return ResponseFactory::view('Academy::send-academy-request')->layout('main')->title(trans('academy.meta.title', 'سُرناز | ثبت آموزشگاه'));
     }
 
+
     public function index() {
-        return ResponseFactory::view('Analytics::academies', ['academies' => $this->service->all()])
-            ->layout('main')
-            ->title('سُرناز | آموزشگاه‌ها');
+        return ResponseFactory::view('Analytics::academies', ['academies' => $this->service->all()])->layout('main')->title('سُرناز | آموزشگاه‌ها');
     }
+
 
     public function seedSamples() {
         if (env('APP_ENV', 'production') !== 'local') abort(404);
-
         try {
             $result = $this->service->seedSamples((int)($_POST['academy_count'] ?? 10));
             session()->flash('admin_test_message', $result['message']);
             return redirect('/analytics/admin-panel');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             session()->flash('admin_test_error', 'ایجاد آموزشگاه‌های نمونه ناموفق بود: ' . $e->getMessage());
             return redirect('/analytics/admin-panel');
         }
     }
+
 
     public function seedBranchNetwork() {
         if (env('APP_ENV', 'production') !== 'local') abort(404);
@@ -51,35 +53,37 @@ class AcademyRegistrationController {
                 'students_min'=>(int)($_POST['students_min']??0),'students_max'=>(int)($_POST['students_max']??5),
             ]);
             session()->flash('admin_test_message', $result['message']);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             session()->flash('admin_test_error', 'ایجاد شبکه شعب و اعضا ناموفق بود: ' . $e->getMessage());
         }
         return redirect('/analytics/admin-panel');
     }
+
 
     public function deleteBranchNetwork() {
         if (env('APP_ENV', 'production') !== 'local') abort(404);
         try {
             $result = $this->service->deleteBranchNetwork();
             session()->flash('admin_test_message', $result['message']);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             session()->flash('admin_test_error', 'حذف معکوس تست ۳ ناموفق بود: ' . $e->getMessage());
         }
         return redirect('/analytics/admin-panel');
     }
 
+
     public function deleteSamples() {
         if (env('APP_ENV', 'production') !== 'local') abort(404);
-
         try {
             $result = $this->service->deleteSamples();
             session()->flash('admin_test_message', $result['message']);
             return redirect('/analytics/admin-panel');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             session()->flash('admin_test_error', 'حذف اطلاعات نمونه ناموفق بود: ' . $e->getMessage());
             return redirect('/analytics/admin-panel');
         }
     }
+
 
     public function store() {
         try {
@@ -92,10 +96,11 @@ class AcademyRegistrationController {
             return redirect('/login');
         } catch (ValidationException $e) {
             return $this->back($e->getErrors());
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return $this->back(['academy_name' => trans('academy.error.request_failed', 'ثبت درخواست انجام نشد. لطفاً دوباره تلاش کنید.')]);
         }
     }
+
 
     public function sendOtp() {
         try {
@@ -107,6 +112,8 @@ class AcademyRegistrationController {
             return ResponseFactory::json(['success' => false, 'message' => trans('academy.error.review_form', 'اطلاعات فرم را بررسی کنید.'), 'errors' => $e->getErrors()], 422);
         }
     }
+
+
 
     private function validatedData(): array {
         $data = (new AcademyRegistrationRequest($_POST))->validated();
@@ -124,13 +131,17 @@ class AcademyRegistrationController {
         return $data;
     }
 
+
     private function otpData(array $data): array {
         unset($data['password2'], $data['terms'], $data['otp']);
         ksort($data);
         return $data;
     }
 
+
     private function back(array $errors) {
         return redirect('/academy/send-academy-request')->withInput($_POST)->withErrors($errors);
     }
+
+
 }
