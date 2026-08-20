@@ -21,8 +21,8 @@ class AcademyRegistrationService {
         return transaction(function () use ($data) {
             $academyId = $this->createAcademy($data);
             $managerId = (int)DB::table('academies')->where('academy_id', $academyId)->first()['created_by'];
-            $this->notifications->send(1, 'ثبت آموزشگاه جدید', 'یک آموزشگاه جدید ثبت شد.', 'academy', $academyId, $managerId);
-            $this->notifications->send($managerId, 'آموزشگاه شما ثبت شد', 'درخواست ثبت آموزشگاه شما دریافت شد.', 'academy', $academyId, $managerId);
+            $this->notifications->send(1, 'ثبت آموزشگاه جدید در جدول academies', 'انجام‌دهنده عملیات user_id=' . $managerId . ' در جدول academies سطر academy_id=' . $academyId . ' را اضافه کرد. ستون‌های درج‌شده: user_id، created_by، updated_by؛ اطلاعات ترجمه آموزشگاه نیز در جدول translations برای academy_id=' . $academyId . ' درج شد.', 'academies', $academyId, $managerId);
+            $this->notifications->send($managerId, 'ثبت آموزشگاه شما در جدول academies', 'انجام‌دهنده عملیات user_id=' . $managerId . ' سطر academy_id=' . $academyId . ' را در جدول academies اضافه کرد. ستون‌های درج‌شده: user_id، created_by، updated_by.', 'academies', $academyId, $managerId);
             return $academyId;
         });
     }
@@ -214,6 +214,8 @@ class AcademyRegistrationService {
         $data['full_name'] = $data['academy_name'];
         $userId = $this->users->register($data);
         if (!$userId) throw new RuntimeException('ایجاد حساب آموزشگاه ناموفق بود.');
+        $now = date('Y-m-d H:i:s');
+        DB::table('users')->where('user_id', $userId)->update(['type'=>'academy', 'approved_at'=>$now, 'approved_by'=>$userId, 'updated_by'=>$userId]);
 
         $academyId = DB::table('academies')->insertGetId(['user_id' => $userId, 'created_by' => $userId, 'updated_by' => $userId]);
         if (!$academyId) throw new RuntimeException('ایجاد آموزشگاه ناموفق بود.');

@@ -42,6 +42,7 @@ class UserController {
                 ->withErrors(['identifier' => trans('auth.error.credentials_invalid', 'نام‌کاربری، ایمیل، شماره موبایل یا رمز عبور اشتباه است.')]);
         }
         auth()->login((int)$user['user_id'], !empty($_POST['remember']));
+        $this->recordLogin((int)$user['user_id']);
         session()->flash('auth_success', trans('auth.success.login', 'ورود به حساب کاربری با موفقیت انجام شد.'));
         return redirect('/page/home');
     }
@@ -76,10 +77,21 @@ class UserController {
                     ->withErrors(['username' => trans('auth.error.register_failed', 'ثبت‌نام ناموفق بود.')]);
             }
             $this->registrationOtp->clear();
-            DB::table('users')->where('user_id', $userId)->update(['status' => 'approved', 'updated_by' => $userId]);
+            $now = date('Y-m-d H:i:s');
+            $verified = ['status' => 'approved', 'type' => 'human', 'approved_at' => $now, 'approved_by' => $userId, 'updated_by' => $userId];
+            if (($data['register_method'] ?? '') === 'phone') $verified['phone_verified_at'] = $now;
+            DB::table('users')->where('user_id', $userId)->update($verified);
             auth()->login((int)$userId, true);
-            $this->notifications->send(1, 'ثبت‌نام کاربر جدید', 'یک کاربر جدید با شناسه ' . $userId . ' ثبت‌نام کرد.', 'user', $userId, $userId);
-            session()->flash('auth_success', trans('auth.success.register', 'ثبت‌نام شما با موفقیت انجام شد.'));
+            $this->recordLogin((int)$userId);
+            $this->notifications->send(
+                1,
+                'ثبت‌نام کاربر جدید در جدول users',
+                'کاربر با user_id=' . $userId . ' (انجام‌دهنده عملیات: user_id=' . $userId . ') در جدول users یک سطر جدید اضافه کرد. ستون‌های درج‌شده: username، email، phone، password، type، status، locale، timezone، register_method، created_by، updated_by، approved_at، approved_by' . (($data['register_method'] ?? '') === 'phone' ? '، phone_verified_at' : '') . '. همچنین ستون‌های status، type، approved_at، approved_by، updated_by و' . (($data['register_method'] ?? '') === 'phone' ? ' phone_verified_at' : '') . ' در همین سطر به‌روزرسانی شدند و ورود در ستون‌های last_login_at و last_login_ip ثبت شد.',
+                'users',
+                $userId,
+                $userId
+            );
+            session()->flash('auth_success', 'ثبت نام شما و ورود به حساب کاربری با موفقیت انجام شد.');
             return redirect('/page/home');
         } catch (ValidationException $e) {
             return redirect('/register')
@@ -168,6 +180,13 @@ class UserController {
         unset($data['otp'], $data['password2'], $data['terms']);
         ksort($data);
         return $data;
+    }
+
+    private function recordLogin(int $userId): void {
+        DB::table('users')->where('user_id', $userId)->update([
+            'last_login_at' => date('Y-m-d H:i:s'),
+            'last_login_ip' => substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45),
+        ]);
     }
 
 

@@ -20,7 +20,7 @@ class UserService {
                     'email'           => $data['email'] ?? null,
                     'phone'           => $data['phone'] ?? null,
                     'password'        => password_hash($data['password'], PASSWORD_DEFAULT),
-                    'type'            => $data['type'] ?? 'student',
+                    'type'            => $data['type'] ?? 'human',
                     'status'          => $data['status'] ?? 'pending',
                     'locale'          => $data['locale'] ?? 'fa',
                     'timezone'        => $data['timezone'] ?? 'Asia/Tehran',

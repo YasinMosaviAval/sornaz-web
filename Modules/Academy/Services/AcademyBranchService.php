@@ -149,9 +149,9 @@ class AcademyBranchService {
             if (!$branchId) throw new RuntimeException('ایجاد شعبه ناموفق بود.');
             $this->saveDetails($branchId, $branchUserId, $ownerUserId, $data);
             $notifications = app()->container()->make(UserNotificationService::class);
-            $notifications->send(1, 'ثبت شعبه جدید', 'یک شعبه جدید برای آموزشگاه ثبت شد.', 'branch', $branchId, $ownerUserId);
-            $notifications->send((int)$academy['user_id'], 'شعبه جدید آموزشگاه', 'یک شعبه جدید برای آموزشگاه شما ثبت شد.', 'branch', $branchId, $ownerUserId);
-            $notifications->send($branchUserId, 'حساب شعبه ایجاد شد', 'حساب کاربری شعبه شما ایجاد شد.', 'branch', $branchId, $ownerUserId);
+            $notifications->send(1, 'ثبت شعبه جدید در جدول academy_branches', 'انجام‌دهنده عملیات user_id=' . $ownerUserId . ' در جدول users سطر user_id=' . $branchUserId . ' و در جدول academy_branches سطر branch_id=' . $branchId . ' را اضافه کرد. ستون‌های users: username، email، phone، password، type، status، locale، timezone، register_method، visibility، created_by، updated_by. ستون‌های academy_branches: academy_id، user_id، is_main، academy_branch_type_id، mode، timezone، created_by، updated_by. همچنین ستون updated_by در جدول academies برای academy_id=' . $academyId . ' به‌روزرسانی شد.', 'academy_branches', $branchId, $ownerUserId);
+            $notifications->send((int)$academy['user_id'], 'ثبت شعبه جدید آموزشگاه', 'انجام‌دهنده عملیات user_id=' . $ownerUserId . ' سطر branch_id=' . $branchId . ' را در جدول academy_branches و سطر user_id=' . $branchUserId . ' را در جدول users اضافه کرد. ستون updated_by در جدول academies برای academy_id=' . $academyId . ' نیز به‌روزرسانی شد.', 'academy_branches', $branchId, $ownerUserId);
+            $notifications->send($branchUserId, 'ایجاد حساب کاربری شعبه', 'انجام‌دهنده عملیات user_id=' . $ownerUserId . ' سطر user_id=' . $branchUserId . ' را در جدول users و سطر branch_id=' . $branchId . ' را در جدول academy_branches اضافه کرد. نوع حساب در users.type برابر branch ثبت شد.', 'academy_branches', $branchId, $ownerUserId);
             return $this->findOwned($academyId, $branchId);
         });
     }
