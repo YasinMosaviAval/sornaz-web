@@ -9,6 +9,7 @@ class DatabaseChangeNotifier {
 
     public static function record(PDO $pdo, string $table, string $operation, array $data = [], ?int $entityId = null): void {
         if (in_array($table, self::IGNORED_TABLES, true)) return;
+        if ($operation === 'update') return;
         if (function_exists('session') && session()->get('suppress_database_notifications', false)) return;
 
         $labels = ['insert' => 'ایجاد', 'update' => 'ویرایش', 'delete' => 'حذف'];

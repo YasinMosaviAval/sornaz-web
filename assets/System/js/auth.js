@@ -288,6 +288,19 @@ function startRegisterTimer(seconds) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    const username = document.querySelector('#registrationForm input[name="username"], form[action="/system/register"] input[name="username"], input[name="username"]');
+    const hint = username?.parentElement.querySelector('[data-username-hint]');
+    if (username && hint) {
+        const updateUsernameHint = () => {
+            const value = username.value;
+            hint.classList.remove('text-gray-400', 'text-green-600', 'text-red-600');
+            if (!value) { hint.classList.add('text-gray-400'); hint.textContent = 'نام کاربری: حداقل ۳ و حداکثر ۱۰۰ کاراکتر، فقط حروف انگلیسی، عدد و _'; return; }
+            const valid = /^[A-Za-z0-9_]{3,100}$/.test(value);
+            hint.classList.add(valid ? 'text-green-600' : 'text-red-600');
+            hint.textContent = valid ? 'نام کاربری صحیح است.' : 'نام کاربری باید ۳ تا ۱۰۰ کاراکتر و فقط شامل حروف انگلیسی، عدد و _ باشد.';
+        };
+        username.addEventListener('input', updateUsernameHint); username.addEventListener('focus', updateUsernameHint); updateUsernameHint();
+    }
     const method = document.getElementById('regMethod')?.value || 'email';
     if (document.getElementById('registerForm')) {
         setRegisterMethod(method);

@@ -175,8 +175,24 @@ window.acceptAcademyTerms = function() { const terms = document.getElementById('
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!document.getElementById('academyRegistrationForm')) return;
+    setupUsernameHint(document.querySelector('#academyRegistrationForm input[name="username"]'));
     setAcademyRegistrationMethod(document.getElementById('academyRegMethod').value || 'email');
     setupAcademyPasswordStrength();
     const message = document.getElementById('academyFlashMessage')?.dataset.error;
     if (message) academyToast(message);
 });
+
+function setupUsernameHint(input) {
+    if (!input) return;
+    const hint = input.parentElement.querySelector('[data-username-hint]');
+    if (!hint) return;
+    const update = () => {
+        const value = input.value;
+        hint.classList.remove('text-gray-400', 'text-green-600', 'text-red-600');
+        if (!value) { hint.classList.add('text-gray-400'); hint.textContent = 'نام کاربری: حداقل ۳ و حداکثر ۱۰۰ کاراکتر، فقط حروف انگلیسی، عدد و _'; return; }
+        const valid = /^[A-Za-z0-9_]{3,100}$/.test(value);
+        hint.classList.add(valid ? 'text-green-600' : 'text-red-600');
+        hint.textContent = valid ? 'نام کاربری صحیح است.' : 'نام کاربری باید ۳ تا ۱۰۰ کاراکتر و فقط شامل حروف انگلیسی، عدد و _ باشد.';
+    };
+    input.addEventListener('input', update); input.addEventListener('focus', update); update();
+}

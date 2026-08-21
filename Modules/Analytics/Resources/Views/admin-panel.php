@@ -46,6 +46,7 @@
             component('roles');
             component('permissions');
             component('settings');
+            component('guides', ['guides'=>$guides??[]]);
 
             //component('awards');
             //component('certificates');
