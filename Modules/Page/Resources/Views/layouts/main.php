@@ -57,6 +57,16 @@
     ?>
     <div id="modalContainer"></div>
     <script>
+        (function(){
+            const bar=document.getElementById('siteScrollProgressBar');
+            if(!bar)return;
+            const update=function(){const max=document.documentElement.scrollHeight-window.innerHeight;bar.parentElement.style.display=max>0?'block':'none';bar.style.width=(max>0?Math.min(100,Math.max(0,(window.scrollY/max)*100)):0)+'%';};
+            window.addEventListener('scroll',update,{passive:true});
+            window.addEventListener('resize',update,{passive:true});
+            update();
+        })();
+    </script>
+    <script>
         window.adminCsrfToken = <?= json_encode(csrf_token()) ?>;
         window.authTranslations = <?= json_encode(translations('auth.js.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
         window.publicTranslations = <?= json_encode(translations('public.js.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;

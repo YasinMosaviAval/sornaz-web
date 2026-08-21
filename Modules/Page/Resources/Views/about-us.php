@@ -1,5 +1,5 @@
 <div id="page-about" class="">
-    <div class="max-w-3xl mx-auto px-4 py-12 md:py-16">
+    <div class="max-w-6xl mx-auto px-4 py-12 md:py-16">
         <h1 class="text-3xl md:text-4xl font-bold text-center mb-4"><?= e(trans('public.about.title', 'درباره برنامه موسیقی سُرناز')) ?></h1>
         <div class="bg-white rounded-3xl p-8 shadow-sm mb-6 leading-relaxed text-gray-600 text-justify">
             <p class="pb-5 text-gray-600 leading-8 text-justify whitespace-pre-line"><?= e(trans('public.about.description')) ?></p>

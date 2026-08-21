@@ -1,4 +1,5 @@
-<header class="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
+<header class="relative bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
+    <div id="siteScrollProgress" class="pointer-events-none absolute inset-x-0 bottom-[-5px] z-50 hidden h-[5px] bg-transparent" aria-hidden="true"><div id="siteScrollProgressBar" class="h-full w-0 bg-indigo-600 transition-[width] duration-75"></div></div>
     <?php
     $headerUser = auth()->user();
     $isSiteAdmin = \Modules\System\Services\SiteAdminAccess::allows($headerUser);

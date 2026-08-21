@@ -19,6 +19,7 @@
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+    <div id="siteScrollProgress" class="pointer-events-none fixed inset-x-0 top-0 z-[100] hidden h-[5px] bg-transparent" aria-hidden="true"><div id="siteScrollProgressBar" class="h-full w-0 bg-indigo-600"></div></div>
     <header class="min-h-16 px-4 py-3 flex items-center justify-end border-b bg-white"><? component('inline-edit-switch'); ?></header>
     <?// component('main-header'); ?>
     <main class="flex-1">
@@ -33,6 +34,7 @@
     ?>
     <div id="modalContainer"></div>
     <script>window.adminCsrfToken=<?= json_encode(csrf_token()) ?>;</script>
+    <script>(function(){const bar=document.getElementById('siteScrollProgressBar');if(!bar)return;const update=function(){const max=document.documentElement.scrollHeight-window.innerHeight;bar.parentElement.style.display=max>0?'block':'none';bar.style.width=(max>0?Math.min(100,Math.max(0,(window.scrollY/max)*100)):0)+'%';};window.addEventListener('scroll',update,{passive:true});window.addEventListener('resize',update,{passive:true});update();})();</script>
     <script src="/assets/theme/dialog.js?v=<?= filemtime(base_path('assets/theme/dialog.js')) ?: 1 ?>"></script>
     <script src="/assets/Analytics/js/admin-inline-editor.js?v=<?= filemtime(base_path('assets/Analytics/js/admin-inline-editor.js')) ?: 1 ?>"></script>
     <?= scripts() ?>
