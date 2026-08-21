@@ -12,7 +12,7 @@
         <div class="bg-white rounded-3xl p-4 mb-6 shadow-sm">
             <p class="text-sm font-medium text-gray-500 mb-3">فیلتر بر اساس دسته‌بندی</p>
             <div class="flex flex-wrap gap-2" id="siteArticleCats">
-                <button onclick="filterSiteArticles('all')" class="site-art-cat px-4 py-2 rounded-xl text-sm bg-indigo-600 text-white">همه</button>
+                <button onclick="filterSiteArticles('all')" class="site-art-cat px-4 py-2 rounded-xl text-sm bg-indigo-600 hover:bg-indigo-700 text-white">همه</button>
             </div>
         </div>
 
@@ -20,7 +20,7 @@
             <input type="text" id="siteArticleSearch" placeholder="جستجو در مقالات..." onkeyup="filterSiteArticles()" class="w-full md:w-96 border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500">
         </div>
 
-        <div class="space-y-5" id="siteArticlesList" data-dynamic-content></div>
+        <div class="space-y-[30px] px-4 md:px-0" id="siteArticlesList" data-dynamic-content></div>
     </div>
 </div>
 

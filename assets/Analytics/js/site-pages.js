@@ -3,9 +3,9 @@
 const siteArticleCategories = [];
 
 function getSiteArticles() {
-    if (Array.isArray(window.siteArticlesData)) return window.siteArticlesData;
+    if (Array.isArray(window.siteArticlesData)) return [...window.siteArticlesData].sort((a,b) => String(b.published_at || '').localeCompare(String(a.published_at || '')));
     if (typeof allArticles !== 'undefined' && allArticles.length) {
-        return allArticles.filter(a => a.status === 'published' || !a.status);
+        return allArticles.filter(a => a.status === 'published' || !a.status).sort((a,b) => String(b.published_at || '').localeCompare(String(a.published_at || '')));
     }
     return [];
 }
@@ -351,6 +351,7 @@ window.filterSiteArticles = async function (cat) {
     document.querySelectorAll('.site-art-cat').forEach(tab => {
         const active = (siteArtCat === 'all' && tab.textContent === 'همه') || tab.textContent === siteArtCat;
         tab.classList.toggle('bg-indigo-600', active);
+        tab.classList.toggle('hover:bg-indigo-700', active);
         tab.classList.toggle('text-white', active);
         tab.classList.toggle('border', !active);
         tab.classList.toggle('border-gray-200', !active);
@@ -372,19 +373,20 @@ window.renderSiteArticlesList = async function () {
     box.innerHTML = list.length === 0
         ? `<p class="text-center text-gray-400 py-16">مقاله‌ای یافت نشد</p>`
         : list.map(a => `
-            <article class="bg-white rounded-3xl p-6 shadow-sm hover:shadow-md transition border border-gray-50">
-                <div class="flex flex-wrap gap-2 mb-2">
+            <article class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition border border-gray-50 flex flex-col md:flex-row items-center gap-[30px] p-[30px]">
+                ${a.thumbnail || a.cover ? `<a href="/analytics/article-details?id=${a.id}" class="block w-full md:w-80 md:shrink-0"><img src="${a.thumbnail || a.cover}" alt="${a.title}" class="block w-full aspect-[16/9] object-cover rounded-xl" loading="lazy"></a>` : ''}
+                <div class="flex-1"><div class="flex flex-wrap gap-2 mb-3">
                     ${(a.categories || []).map(c =>
                         `<span class="px-2.5 py-1 rounded-lg text-xs bg-indigo-50 text-indigo-700">${c}</span>`
                     ).join('')}
                 </div>
                 <a href="/analytics/article-details?id=${a.id}">
-                    <h2 class="text-xl font-bold mb-2 hover:text-indigo-600">${a.title}</h2>
+                    <h2 class="text-xl font-bold mb-3 hover:text-indigo-600">${a.title}</h2>
                 </a>
                 <p class="text-gray-600 text-sm leading-relaxed line-clamp-3">${a.summary || a.description || ''}</p>
-                <div class="flex gap-4 mt-3 text-xs text-gray-400">
+                <div class="flex items-center justify-between mt-3 text-xs text-gray-400" dir="ltr">
                     <span><i class="far fa-calendar ml-1"></i>${a.published_at || '—'}</span>
-                    ${a.views != null ? `<span><i class="far fa-eye ml-1"></i>${a.views} بازدید</span>` : ''}
+                </div>
                 </div>
             </article>
         `).join('');

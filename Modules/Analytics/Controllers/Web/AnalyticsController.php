@@ -7,10 +7,11 @@ use Modules\Analytics\Services\AdminTestDataService;
 use Modules\Analytics\Services\PublicPostService;
 use Modules\System\Services\SiteAdminAccess;
 use Modules\Analytics\Services\AdminGuideService;
+use Modules\Analytics\Services\PublicCommentService;
 
 class AnalyticsController {
 
-    public function __construct(protected AdminTestDataService $adminTests, protected PublicPostService $posts, protected AdminGuideService $guides) {}
+    public function __construct(protected AdminTestDataService $adminTests, protected PublicPostService $posts, protected AdminGuideService $guides, protected PublicCommentService $comments) {}
 
 
 
@@ -19,7 +20,7 @@ class AnalyticsController {
     public function articleDetails() {
         try { $article=$this->posts->find((int)($_GET['id']??0), locale()); }
         catch (\Throwable) { abort(404); }
-        return ResponseFactory::view('Analytics::article-details', ['article'=>$article])->layout('main')->title(($article['title']?:'مقاله').' | سُرناز');
+        return ResponseFactory::view('Analytics::article-details', ['article'=>$article,'comments'=>$this->comments->forPost((int)($_GET['id']??0))])->layout('main')->title(($article['title']?:'مقاله').' | سُرناز');
     }
 
 
