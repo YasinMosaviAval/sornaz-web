@@ -62,7 +62,7 @@ window.submitPublicContact = function(e) {
     const email = document.getElementById('cEmail')?.value.trim();
     const message = document.getElementById('cMessage')?.value.trim();
     const publicText = (key, fallback) => window.publicTranslations?.[`public.js.${key}`] || fallback;
-    if (!name || !email || !message) {
+    if (!message) {
         return typeof showAuthToast === 'function'
             ? showAuthToast('error', publicText('required_fields', 'لطفاً فیلدهای الزامی را پر کنید'))
             : alert(publicText('required_fields', 'لطفاً فیلدهای الزامی را پر کنید'));
