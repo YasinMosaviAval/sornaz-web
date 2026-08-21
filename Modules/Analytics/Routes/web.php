@@ -16,6 +16,7 @@ use Modules\Analytics\Controllers\Web\AdminUserAccessController;
 use Modules\Analytics\Controllers\Web\AdminAccessCatalogController;
 use Modules\Analytics\Controllers\Web\AdminDashboardController;
 use Modules\Analytics\Controllers\Web\AdminAccountController;
+use Modules\Analytics\Controllers\Web\PublicCommentController;
 
 
 
@@ -94,6 +95,7 @@ Router::get('/analytics/admin-inline-translations', [AdminTestController::class,
 
 Router::get('/analytics/articles', [AnalyticsController::class, 'articles']);
 Router::get('/analytics/article-details', [AnalyticsController::class, 'articleDetails']);
+Router::post('/analytics/article-comments/{id}', [PublicCommentController::class, 'store'])->middleware(['csrf']);
 
 
 
