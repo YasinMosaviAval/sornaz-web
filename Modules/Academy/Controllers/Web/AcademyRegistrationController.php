@@ -2,6 +2,7 @@
 
 namespace Modules\Academy\Controllers\Web;
 
+use Core\database\DB;
 use Core\http\ResponseFactory;
 use Core\validation\ValidationException;
 use Modules\Academy\Requests\AcademyRegistrationRequest;
@@ -141,7 +142,7 @@ class AcademyRegistrationController {
             $this->otp->clear();
             session()->forget('academy_branch_setup');
             session()->flash('auth_success', 'شعبه اصلی با موفقیت ثبت شد.');
-            return redirect('/home');
+            return redirect('/');
         } catch (ValidationException $e) { return redirect('/academy/register-main-branch')->withInput($_POST)->withErrors($e->getErrors());
         } catch (Throwable $e) { return redirect('/academy/register-main-branch')->withInput($_POST)->withErrors(['username' => 'ثبت شعبه انجام نشد. لطفاً دوباره تلاش کنید.']); }
     }
@@ -176,7 +177,8 @@ class AcademyRegistrationController {
         $username = trim((string)($_POST['username'] ?? ''));
         $password = (string)($_POST['password'] ?? '');
         $password2 = (string)($_POST['password2'] ?? '');
-        if (!preg_match('/^[A-Za-z0-9_]{3,50}$/', $username)) throw new ValidationException(['username' => 'نام کاربری شعبه معتبر نیست.']);
+        if (!preg_match('/^[A-Za-z0-9_]{3,100}$/', $username)) throw new ValidationException(['username' => 'نام کاربری باید بین ۳ تا ۱۰۰ کاراکتر و فقط شامل حروف انگلیسی، عدد و _ باشد.']);
+        if (DB::table('users')->where('username', $username)->whereNull('deleted_at')->first()) throw new ValidationException(['username' => 'این نام کاربری قبلاً ثبت شده است.']);
         if (strlen($password) < 8 || $password !== $password2) throw new ValidationException(['password' => 'رمز عبور باید حداقل ۸ کاراکتر باشد و تکرار آن یکسان باشد.']);
         $value = trim((string)($_POST[$method] ?? ''));
         if ($method === 'email' && !filter_var($value, FILTER_VALIDATE_EMAIL)) throw new ValidationException(['email' => 'ایمیل معتبر را وارد کنید.']);

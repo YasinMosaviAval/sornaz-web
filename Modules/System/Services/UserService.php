@@ -76,9 +76,10 @@ class UserService {
 
     private function initialAccountType(string $userType): string {
         return match ($userType) {
-            'academy' => 'academy_main',
+            'academy' => 'academy_wallet',
             'teacher' => 'teacher_wallet',
             'human' => 'user_wallet',
+            'branch' => 'branch_wallet',
             default => 'user_wallet',
         };
     }

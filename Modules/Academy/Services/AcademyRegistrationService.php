@@ -6,6 +6,7 @@ use Core\database\DB;
 use Core\translation\TranslationService;
 use Modules\System\Services\UserService;
 use Modules\System\Services\UserNotificationService;
+use Modules\System\Services\UserReferralService;
 use RuntimeException;
 
 class AcademyRegistrationService {
@@ -15,7 +16,7 @@ class AcademyRegistrationService {
     private const EXTRA_BRANCH_PREFIX = 'test_extra_branch_';
     private const MEMBER_PREFIX = 'test_branch_member_';
 
-    public function __construct(protected UserService $users, protected UserNotificationService $notifications) {}
+    public function __construct(protected UserService $users, protected UserNotificationService $notifications, protected UserReferralService $referrals) {}
 
     public function register(array $data): int {
         session()->put('suppress_database_notifications', true);
@@ -36,8 +37,10 @@ class AcademyRegistrationService {
             if (!$academy) throw new RuntimeException('آموزشگاه یافت نشد.');
             $now = date('Y-m-d H:i:s');
             $userId = DB::table('users')->insertGetId(['username'=>$data['username'],'email'=>$data['email'],'phone'=>$data['phone'],'password'=>password_hash($data['password'], PASSWORD_DEFAULT),'type'=>'branch','status'=>'approved','locale'=>'fa','timezone'=>'Asia/Tehran','register_method'=>$data['register_method'],'visibility'=>'unlisted','created_by'=>$managerId,'updated_by'=>$managerId,'approved_at'=>$now,'approved_by'=>$managerId]);
+            DB::table('financial_system_accounts')->insert(['account_id'=>$userId,'user_id'=>$userId,'type'=>'branch_wallet','balance'=>0,'status'=>'active']);
             $branchId = DB::table('academy_branches')->insertGetId(['academy_id'=>$academyId,'user_id'=>$userId,'is_main'=>1,'timezone'=>'Asia/Tehran','created_by'=>$managerId,'updated_by'=>$managerId]);
             if (!$userId || !$branchId) throw new RuntimeException('ایجاد شعبه اصلی ناموفق بود.');
+            $this->referrals->ensureForUser($userId);
             $this->users->assignRole($userId, 'academy_branch_owner', $managerId);
             $this->users->assignRole($managerId, 'academy_branch_manager', $managerId);
             $this->notifications->send(1, 'ثبت شعبه جدید', "کاربر با آی‌دی {$managerId} شعبه اصلی آموزشگاه با آی‌دی {$academyId} را ثبت کرد.", 'academy_branches', $branchId, $managerId);
@@ -249,9 +252,9 @@ class AcademyRegistrationService {
 
         $profile = DB::table('z_user_profiles')->where('user_id', $userId)->whereNull('deleted_at')->first();
         $profileId = $profile['user_profile_id'] ?? DB::table('z_user_profiles')->insertGetId(['user_id' => $userId]);
-        $account = DB::table('financial_system_accounts')->where('user_id', $userId)->where('type', 'academy_main')->whereNull('deleted_at')->first();
+        $account = DB::table('financial_system_accounts')->where('user_id', $userId)->where('type', 'academy_wallet')->whereNull('deleted_at')->first();
         $accountId = $account['account_id'] ?? DB::table('financial_system_accounts')->insertGetId([
-            'user_id' => $userId, 'type' => 'academy_main', 'balance' => 0, 'status' => 'active',
+            'user_id' => $userId, 'type' => 'academy_wallet', 'balance' => 0, 'status' => 'active',
         ]);
         if (!$profileId || !$accountId) {
             throw new RuntimeException('ایجاد اطلاعات پایه آموزشگاه ناموفق بود.');
@@ -311,9 +314,9 @@ class AcademyRegistrationService {
         ], $managerId);
 
         $this->ensureProfile($academyUserId, $managerId);
-        if (!DB::table('financial_system_accounts')->where('user_id', $academyUserId)->where('type', 'academy_main')->whereNull('deleted_at')->first()) {
+        if (!DB::table('financial_system_accounts')->where('user_id', $academyUserId)->where('type', 'academy_wallet')->whereNull('deleted_at')->first()) {
             DB::table('financial_system_accounts')->insertGetId([
-                'user_id' => $academyUserId, 'type' => 'academy_main', 'balance' => 0, 'status' => 'active',
+                'user_id' => $academyUserId, 'type' => 'academy_wallet', 'balance' => 0, 'status' => 'active',
                 'created_by' => $managerId, 'updated_by' => $managerId,
             ]);
         }

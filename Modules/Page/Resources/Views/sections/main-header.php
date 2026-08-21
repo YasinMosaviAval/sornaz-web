@@ -1,5 +1,21 @@
 <header class="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
-    <?php $headerUser = auth()->user(); $isSiteAdmin = \Modules\System\Services\SiteAdminAccess::allows($headerUser); ?>
+    <?php
+    $headerUser = auth()->user();
+    $isSiteAdmin = \Modules\System\Services\SiteAdminAccess::allows($headerUser);
+    $isBranchUser = ($headerUser['type'] ?? null) === 'branch';
+    $hasManagerPanelRole = false;
+    if ($headerUser) {
+        $hasManagerPanelRole = (bool)\Core\database\DB::table('user_roles')
+            ->join('access_system_roles', 'access_system_roles.role_id', '=', 'user_roles.role_id')
+            ->where('user_roles.user_id', (int)$headerUser['user_id'])
+            ->whereIn('access_system_roles.name', ['academy_manager', 'academy_branch_manager'])
+            ->whereNull('user_roles.deleted_at')
+            ->whereNull('access_system_roles.deleted_at')
+            ->first();
+    }
+    $isAdminPanelUser = $isSiteAdmin || $isBranchUser || $hasManagerPanelRole;
+    $hasAdminPanel = $isAdminPanelUser || in_array(($headerUser['type'] ?? null), ['academy', 'branch'], true);
+    ?>
     <div class="max-w-7xl mx-auto px-4">
         <div class="hidden lg:flex items-center gap-4 min-h-20" dir="ltr">
             <div class="flex flex-1 min-w-0 items-center justify-between gap-3" dir="<?= e(direction()) ?>">
@@ -13,8 +29,8 @@
                 <a href="/analytics/articles" data-page="articles" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.articles', 'مقاله‌های آموزشی')) ?></a>
                 <a href="/academy/academies" data-page="academies" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.academies', 'آموزشگاه‌ها')) ?></a>
                 <a href="/users" data-page="users" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.users', 'کاربران')) ?></a>
-                <?php if (($headerUser['type'] ?? null) === 'academy' || $isSiteAdmin): ?>
-                    <a href="/analytics/admin-panel" data-page="contact" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e($isSiteAdmin ? trans('public.nav.admin_panel', 'پنل ادمین') : trans('public.nav.academy_panel', 'پنل آموزشگاه')) ?></a>
+                <?php if ($hasAdminPanel): ?>
+                    <a href="/analytics/admin-panel" data-page="contact" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e($isAdminPanelUser ? trans('public.nav.admin_panel', 'پنل ادمین') : trans('public.nav.academy_panel', 'پنل آموزشگاه')) ?></a>
                 <?php endif; ?>
 
                 <a href="/page/about-us" data-page="about" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.about', 'درباره ما')) ?></a>
@@ -63,8 +79,8 @@
             <a href="/analytics/articles" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.articles', 'مقاله‌های آموزشی')) ?></a>
             <a href="/academy/academies" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.academies', 'آموزشگاه‌ها')) ?></a>
             <a href="/users" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.users', 'کاربران')) ?></a>
-            <?php if (($headerUser['type'] ?? null) === 'academy' || $isSiteAdmin): ?>
-                <a href="/analytics/admin-panel" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e($isSiteAdmin ? trans('public.nav.admin_panel', 'پنل ادمین') : trans('public.nav.academy_panel', 'پنل آموزشگاه')) ?></a>
+            <?php if ($hasAdminPanel): ?>
+                <a href="/analytics/admin-panel" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e($isAdminPanelUser ? trans('public.nav.admin_panel', 'پنل ادمین') : trans('public.nav.academy_panel', 'پنل آموزشگاه')) ?></a>
             <?php endif; ?>
             <a href="/page/about-us" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.about', 'درباره ما')) ?></a>
             <a href="/page/contact-us" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.contact', 'تماس با ما')) ?></a>

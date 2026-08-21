@@ -6,10 +6,11 @@ use Core\http\ResponseFactory;
 use Modules\Analytics\Services\AdminTestDataService;
 use Modules\Analytics\Services\PublicPostService;
 use Modules\System\Services\SiteAdminAccess;
+use Modules\Analytics\Services\AdminGuideService;
 
 class AnalyticsController {
 
-    public function __construct(protected AdminTestDataService $adminTests, protected PublicPostService $posts) {}
+    public function __construct(protected AdminTestDataService $adminTests, protected PublicPostService $posts, protected AdminGuideService $guides) {}
 
 
 
@@ -36,7 +37,8 @@ class AnalyticsController {
             ? $this->adminTests->statistics()
             : [];
         $scheduleFixtures = env('APP_ENV', 'production') === 'local' ? $this->adminTests->scheduleFixtures() : ['schedules'=>[],'exceptions'=>[]];
-        return ResponseFactory::view('Analytics::admin-panel', ['testStats' => $testStats, 'scheduleFixtures'=>$scheduleFixtures, 'adminUiMap'=>$this->adminTests->adminUiMap(locale()),'inlineTranslationCatalog'=>$this->adminTests->inlineTranslationCatalog()])->layout('admin')->title('سُرناز | پنل مدیریت');
+        $guides = SiteAdminAccess::allows(auth()->user()) ? $this->guides->all(locale()) : [];
+        return ResponseFactory::view('Analytics::admin-panel', ['testStats' => $testStats, 'scheduleFixtures'=>$scheduleFixtures, 'guides'=>$guides, 'adminUiMap'=>$this->adminTests->adminUiMap(locale()),'inlineTranslationCatalog'=>$this->adminTests->inlineTranslationCatalog()])->layout('admin')->title('سُرناز | پنل مدیریت');
     }
 
 

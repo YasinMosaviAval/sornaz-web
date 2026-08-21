@@ -70,6 +70,7 @@ $firstError = !empty($errors) ? reset($errors) : '';
                            value="<?= e($oldInput['username'] ?? '') ?>"
                            class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 focus:outline-none focus:border-indigo-500"
                            placeholder="<?= $authentication_array["authentication_username_placeholder"]["translated_value"] ?>">
+                    <p data-username-hint class="mt-1 text-xs text-gray-400">نام کاربری: حداقل ۳ و حداکثر ۱۰۰ کاراکتر، فقط حروف انگلیسی، عدد و _</p>
                     <?php if (!empty($errors['username'])): ?>
                         <p class="text-red-500 text-xs mt-1"><?= e($errors['username']) ?></p>
                     <?php endif; ?>
