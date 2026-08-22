@@ -186,10 +186,11 @@
         }).join('');
     };
 
-    window.getAccountCropModalHTML = function (mode, title) {
+    window.getAccountCropModalHTML = function (mode, title, meta) {
+        meta=meta||{};
         const hint = mode === 'avatar'
             ? 'کادر دایره‌ای ۱×۱ را جابه‌جا کنید و با دکمه‌های زوم اندازه را تغییر دهید. نسبت همیشه مربعی می‌ماند.'
-            : 'کادر ۱۶×۹ را جابه‌جا کنید و با زوم کوچک/بزرگ کنید. نسبت افقی ثابت می‌ماند و به هم نمی‌ریزد.';
+            : mode === 'gallery' ? 'کادر تصویر را جابه‌جا کنید و اندازه دلخواه را با زوم تنظیم کنید.' : 'کادر ۱۶×۹ را جابه‌جا کنید و با زوم کوچک/بزرگ کنید. نسبت افقی ثابت می‌ماند و به هم نمی‌ریزد.';
         return `<div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) cancelImageCrop()">
             <div class="bg-white rounded-3xl w-full max-w-3xl my-6 shadow-2xl" onclick="event.stopPropagation()">
                 <div class="px-6 py-4 border-b flex justify-between items-center gap-3">
@@ -215,11 +216,16 @@
                         </div>
                     </div>
                     <div class="flex gap-3 mt-5">
-                        <button type="button" onclick="applyImageCrop()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-2xl font-medium">تأیید و ذخیره</button>
+                        <button type="button" onclick="applyImageCrop()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-2xl font-medium">تأیید برش</button>
                         <button type="button" onclick="cancelImageCrop()" class="flex-1 border border-gray-300 py-3.5 rounded-2xl hover:bg-gray-50">انصراف</button>
                     </div>
                 </div>
             </div>
         </div>`;
+    };
+
+    window.getAccountMediaMetaModalHTML = function (mode, meta) {
+        meta=meta||{};
+        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onclick="if(event.target===this) cancelAccountCroppedMedia()"><div class="w-full max-w-xl rounded-3xl bg-white shadow-2xl" onclick="event.stopPropagation()"><div class="flex items-center justify-between border-b px-7 py-5"><div><h2 class="text-xl font-bold">اطلاعات ${mode==='avatar'?'تصویر پروفایل':'کاور'}</h2><p class="mt-1 text-xs text-gray-500">پس از تأیید برش، مشخصات رسانه را ثبت کنید.</p></div><button onclick="cancelAccountCroppedMedia()" class="text-3xl text-gray-300">×</button></div><div class="space-y-4 p-7"><label class="block text-sm font-medium">عنوان *<input id="accountMediaTitle" value="${escapeHtml(meta.title||'')}" class="${fieldClass} mt-2"></label><label class="block text-sm font-medium">خلاصه<input id="accountMediaSummary" value="${escapeHtml(meta.summary||'')}" class="${fieldClass} mt-2"></label><label class="block text-sm font-medium">توضیحات<textarea id="accountMediaDescription" rows="4" class="${fieldClass} mt-2">${escapeHtml(meta.description||'')}</textarea></label><div class="flex gap-3 pt-2"><button onclick="saveAccountCroppedMedia()" class="flex-1 rounded-2xl bg-indigo-600 py-3.5 text-white">ذخیره</button><button onclick="cancelAccountCroppedMedia()" class="flex-1 rounded-2xl border py-3.5">انصراف</button></div></div></div></div>`;
     };
 })();

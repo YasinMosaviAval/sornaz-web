@@ -15,6 +15,8 @@ function accountPayload(data){const json=JSON.stringify(data||{}),bytes=new Text
 async function accountRequest(url,data,method='POST') {const options={method,credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':window.adminCsrfToken||''}};if(data!==undefined){const body=new URLSearchParams();body.set('_token',window.adminCsrfToken||'');body.set('payload_b64',accountPayload(data));options.body=body;}const response=await fetch(url,options),payload=await response.json(),body=payload.data??payload;if(!response.ok||body.success===false)throw new Error(body.message||'انجام عملیات ناموفق بود.');return body.data??body;}
 async function loadAccountData(){try{const data=await accountRequest('/analytics/admin-account',undefined,'GET');academyProfile=data.profile||{privacy:{}};academyDocuments=data.documents||[];academyDevices=data.devices||[];academyLoginHistory=data.loginHistory||[];academySecurityAlerts=data.securityAlerts||[];lastBackupMeta=data.backup||null;window.renderAccountInfo();}catch(error){console.error(error);alert(error.message);}}
 async function uploadAccountFile(kind,blob,name,meta={}){const form=new FormData();form.set('_token',window.adminCsrfToken||'');form.set('file',blob,name);Object.entries(meta).forEach(([k,v])=>form.set(k,v??''));const response=await fetch('/analytics/admin-account/media/'+kind,{method:'POST',credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':window.adminCsrfToken||''},body:form}),payload=await response.json(),body=payload.data??payload;if(!response.ok||body.success===false)throw new Error(body.message||'آپلود فایل ناموفق بود.');return body.data??body;}
+window.reloadAdminAccount=loadAccountData;
+window.addEventListener('admin-media-changed',event=>{if(event.detail?.source!=='account')loadAccountData();});
 
 window.renderAccountInfo = async function () {
     const container = document.getElementById('accountInfo');
@@ -94,11 +96,12 @@ window.renderAccountCover = async function () {
 window.removeAccountCover = async function () {
     if (!academyProfile.coverUrl) return;
     if (!(await AppDialog.confirm('حذف کاور پروفایل؟'))) return;
-    try{await accountRequest('/analytics/admin-account/media/'+academyProfile.coverId+'/delete',{});await loadAccountData();alert('✅ کاور حذف شد');}catch(error){alert(error.message);}
+    try{await accountRequest('/analytics/admin-account/media/'+academyProfile.coverId+'/delete',{});await loadAccountData();window.dispatchEvent(new CustomEvent('admin-media-changed',{detail:{source:'account'}}));alert('✅ کاور حذف شد');}catch(error){alert(error.message);}
 };
 
 // ---------- کراپ تصویر (آواتار ۱:۱ دایره‌ای / کاور ۱۶:۹) ----------
 let cropState = null;
+let pendingAccountCroppedMedia = null;
 
 window.onAccountAvatarChange = async function (event) {
     const file = event.target && event.target.files && event.target.files[0];
@@ -116,16 +119,16 @@ window.onAccountCoverChange = async function (event) {
     openImageCropModal(file, 'cover');
 };
 
-function openImageCropModal(file, mode) {
+function openImageCropModal(file, mode, options={}) {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     const reader = new FileReader();
     reader.onload = function (e) {
         const img = new Image();
         img.onload = function () {
-            const aspect = mode === 'avatar' ? 1 : 16 / 9;
-            const title = mode === 'avatar' ? 'کراپ عکس پروفایل (۱×۱ دایره‌ای)' : 'کراپ کاور (۱۶×۹ افقی)';
+            const aspect = mode === 'avatar' ? 1 : (mode === 'gallery' ? img.width / img.height : 16 / 9);
+            const title = mode === 'avatar' ? 'ویرایش عکس (۱×۱)' : (mode === 'gallery' ? 'ویرایش تصویر گالری' : 'ویرایش کاور (۱۶×۹)');
             document.getElementById('modalContainer').innerHTML = window.getAccountCropModalHTML
-                ? window.getAccountCropModalHTML(mode, title) : '';
+                ? window.getAccountCropModalHTML(mode, title, options.meta||{title:(mode==='avatar'?'آواتار ':'کاور ')+(academyProfile.name||'حساب'),summary:'',description:''}) : '';
             const canvas = document.getElementById('accountCropCanvas');
             if (!canvas) return;
             cropState = {
@@ -142,7 +145,10 @@ function openImageCropModal(file, mode) {
                 offsetY: 0,
                 dragging: false,
                 lastX: 0,
-                lastY: 0
+                lastY: 0,
+                onApply: options.onApply,
+                onCancel: options.onCancel,
+                meta: options.meta || {}
             };
             initCropFrame();
             drawCropCanvas();
@@ -152,6 +158,8 @@ function openImageCropModal(file, mode) {
     };
     reader.readAsDataURL(file);
 }
+
+window.openAdminImageEditor=function(file,mode,options={}){openImageCropModal(file,mode,options);};
 
 function initCropFrame() {
     const s = cropState;
@@ -319,6 +327,8 @@ window.applyImageCrop = async function () {
     let outW, outH;
     if (s.mode === 'avatar') {
         outW = outH = 512;
+    } else if(s.mode === 'gallery') {
+        outW=Math.min(1920,Math.round(s.cw));outH=Math.max(1,Math.round(outW/s.aspect));
     } else {
         outW = 1920;
         outH = 1080;
@@ -330,12 +340,14 @@ window.applyImageCrop = async function () {
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(s.img, s.cx, s.cy, s.cw, s.ch, 0, 0, outW, outH);
 
-    out.toBlob(async function(blob){if(!blob)return alert('ساخت تصویر ناموفق بود.');try{await uploadAccountFile(s.mode,blob,s.mode+'.jpg');cropState=null;closeModal();await loadAccountData();alert(s.mode==='avatar'?'✅ عکس پروفایل ذخیره شد':'✅ کاور ذخیره شد');}catch(error){alert(error.message);}},'image/jpeg',0.92);
+    out.toBlob(async function(blob){if(!blob)return alert('ساخت تصویر ناموفق بود.');try{if(s.onApply){const callback=s.onApply;cropState=null;await callback(blob);return;}const mode=s.mode;cropState=null;pendingAccountCroppedMedia={blob,mode};const meta={title:(mode==='avatar'?'آواتار ':'کاور ')+(academyProfile.name||'حساب'),summary:'',description:''};document.getElementById('modalContainer').innerHTML=window.getAccountMediaMetaModalHTML(mode,meta);}catch(error){alert(error.message);}},'image/jpeg',0.92);
 };
 
+window.saveAccountCroppedMedia=async function(){const pending=pendingAccountCroppedMedia;if(!pending)return;const meta={title:document.getElementById('accountMediaTitle')?.value.trim()||'',summary:document.getElementById('accountMediaSummary')?.value.trim()||'',description:document.getElementById('accountMediaDescription')?.value.trim()||''};if(!meta.title)return alert('عنوان الزامی است.');try{const mode=pending.mode;await uploadAccountFile(mode,pending.blob,mode+'.jpg',meta);pendingAccountCroppedMedia=null;closeModal();await loadAccountData();window.dispatchEvent(new CustomEvent('admin-media-changed',{detail:{source:'account'}}));alert(mode==='avatar'?'✅ عکس پروفایل ذخیره شد':'✅ کاور ذخیره شد');}catch(error){alert(error.message);}};
+window.cancelAccountCroppedMedia=function(){pendingAccountCroppedMedia=null;closeModal();};
+
 window.cancelImageCrop = async function () {
-    cropState = null;
-    closeModal();
+    const callback=cropState?.onCancel;cropState = null;if(callback)return callback();closeModal();
 };
 
 window.openEditProfileModal = async function () {

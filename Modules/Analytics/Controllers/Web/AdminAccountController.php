@@ -15,7 +15,7 @@ final class AdminAccountController
     public function bio(){return$this->mutate(fn($d)=>$this->service->saveBio((int)auth()->id(),$d));}
     public function privacy(){return$this->mutate(fn($d)=>$this->service->savePrivacy((int)auth()->id(),$d));}
     public function security(){return$this->mutate(fn($d)=>$this->service->saveSecurity((int)auth()->id(),$d));}
-    public function upload(string$kind){return$this->run(fn()=>['success'=>true,'data'=>$this->service->uploadMedia((int)auth()->id(),$_FILES['file']??[],$kind,$_POST)]);}
+    public function upload(string$kind){return$this->run(function()use($kind){if(!in_array($kind,['avatar','cover','document'],true))throw new \RuntimeException('نوع رسانه معتبر نیست.');$actor=(int)auth()->id();$media=$this->service->uploadMedia($actor,$_FILES['file']??[],$kind,$_POST);if($kind!=='document')$this->service->saveMediaMetadata($actor,(int)$media['id'],$_POST);return['success'=>true,'data'=>$media];});}
     public function deleteMedia(int$id){return$this->mutate(fn()=> $this->service->deleteMedia((int)auth()->id(),$id),false);}
     public function downloadMedia(int$id){try{$f=$this->service->downloadableMedia((int)auth()->id(),$id);return new DownloadResponse($f['path'],$f['filename'],$f['mime']);}catch(\Throwable$e){return ResponseFactory::json(['success'=>false,'message'=>$e->getMessage()],404);}}
     public function endSession(int$id){return$this->mutate(fn()=> $this->service->endTrackingSession((int)auth()->id(),$id),false);}

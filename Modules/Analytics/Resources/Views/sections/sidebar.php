@@ -63,15 +63,15 @@
                 </ul>
             </li>
             <li>
-                <button type="button" onclick="toggleSidebarSubmenu('gallerySubmenu', this)" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-right text-yellow-300 hover:text-yellow-200">
+                <button type="button" onclick="toggleSidebarSubmenu('gallerySubmenu', this)" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-right text-white hover:text-white">
                     <span class="flex items-center gap-3"><i class="fas fa-images w-5 text-center"></i> گالری</span>
                     <i class="fas fa-chevron-down text-xs transition-transform duration-200 submenu-chevron"></i>
                 </button>
                 <ul id="gallerySubmenu" class="mt-1 mr-4 space-y-1 hidden border-r border-indigo-700/60 pr-2">
-                    <li><a href="#" onclick="showSection('gallery-cover')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 transition text-sm text-yellow-300 hover:text-yellow-200"><i class="fas fa-image w-4"></i>کاور</a></li>
-                    <li><a href="#" onclick="showSection('gallery-logo')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 transition text-sm text-yellow-300 hover:text-yellow-200"><i class="fas fa-certificate w-4"></i>لوگو</a></li>
-                    <li><a href="#" onclick="showSection('gallery-intro-video')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 transition text-sm text-yellow-300 hover:text-yellow-200"><i class="fas fa-video w-4"></i>ویدیو معرفی</a></li>
-                    <li><a href="#" onclick="showSection('gallery-collection')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 transition text-sm text-yellow-300 hover:text-yellow-200"><i class="fas fa-photo-video w-4"></i>مجموعه عکس‌ها و ویدیوها</a></li>
+                    <li><a href="#" onclick="showSection('gallery-cover')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 transition text-sm text-white hover:text-white"><i class="fas fa-image w-4"></i>کاور</a></li>
+                    <li><a href="#" onclick="showSection('gallery-logo')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 transition text-sm text-white hover:text-white"><i class="fas fa-certificate w-4"></i>لوگو</a></li>
+                    <li><a href="#" onclick="showSection('gallery-intro-video')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 transition text-sm text-white hover:text-white"><i class="fas fa-video w-4"></i>ویدیو معرفی</a></li>
+                    <li><a href="#" onclick="showSection('gallery-collection')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 transition text-sm text-white hover:text-white"><i class="fas fa-photo-video w-4"></i>مجموعه عکس‌ها و ویدیوها</a></li>
                 </ul>
             </li>
             <li><a href="#" onclick="showSection('teachers')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-chalkboard-teacher w-5 text-center"></i> پرسنل</a></li>
@@ -108,5 +108,4 @@
         </ul>
     </nav>
 </div>
-
 
