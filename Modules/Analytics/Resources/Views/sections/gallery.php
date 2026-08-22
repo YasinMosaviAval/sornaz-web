@@ -1,3 +1,44 @@
+<style>
+    .gallery-grid > .gallery-card {
+        height: auto;
+        min-width: 0;
+        border-radius: .75rem;
+    }
+    .gallery-card-body > div:last-child > div > button:first-child { display: none; }
+    #galleryViewerModal > div { border-radius: .75rem; }
+    .gallery-card-media {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        flex: 0 0 auto;
+        overflow: hidden;
+        background: #e5e7eb;
+    }
+    .gallery-card-media > img,
+    .gallery-card-media > video {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+    }
+    .gallery-card-body { height: 13rem; min-height: 13rem; }
+    .gallery-card.gallery-card-compact .gallery-card-body { height: 8.5rem; min-height: 8.5rem; }
+    .gallery-card-title {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+    .gallery-card-description {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+    }
+</style>
 <div id="gallery-cover" class="section hidden" data-gallery-category="cover">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
