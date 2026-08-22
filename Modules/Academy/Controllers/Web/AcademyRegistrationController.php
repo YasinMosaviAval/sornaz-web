@@ -7,7 +7,9 @@ use Core\http\ResponseFactory;
 use Core\validation\ValidationException;
 use Modules\Academy\Requests\AcademyRegistrationRequest;
 use Modules\Academy\Services\AcademyRegistrationService;
+use Modules\Academy\Services\AcademyBranchService;
 use Modules\System\Services\RegistrationOtpService;
+use Modules\System\Services\SiteAdminAccess;
 use Throwable;
 
 class AcademyRegistrationController {
@@ -15,7 +17,8 @@ class AcademyRegistrationController {
 
     public function __construct(
         protected AcademyRegistrationService $service,
-        protected RegistrationOtpService $otp
+        protected RegistrationOtpService $otp,
+        protected AcademyBranchService $branchService
     ) {}
 
 
@@ -27,6 +30,49 @@ class AcademyRegistrationController {
         $setup = session()->get('academy_branch_setup');
         if (!$setup || empty($setup['academy_id'])) return redirect('/academy/send-academy-request');
         return ResponseFactory::view('Academy::register-main-branch', ['academy' => $setup])->layout('main')->title('سُرناز | ثبت شعبه اصلی');
+    }
+
+    public function createAdminBranchDialog() {
+        $academyId = (int)($_GET['academy_id'] ?? 0);
+        if (!SiteAdminAccess::allows(auth()->user())) $academyId = (int)$this->branchService->academyForUser((int)auth()->id())['academy_id'];
+        if ($academyId < 1 || !DB::table('academies')->where('academy_id', $academyId)->whereNull('deleted_at')->first()) abort(404);
+        return ResponseFactory::view('Academy::admin-branch-registration-dialog', ['academyId' => $academyId]);
+    }
+
+    public function sendAdminBranchOtp() {
+        try {
+            $data = $this->validatedAdminBranchData();
+            $result = $this->otp->send($data['register_method'], (string)$data[$data['register_method']], $this->otpData($data));
+            return ResponseFactory::json(['success' => $result['ok']] + $result, $result['ok'] ? 200 : (isset($result['retry_after']) ? 429 : 503));
+        } catch (ValidationException $e) {
+            return ResponseFactory::json(['success' => false, 'message' => 'اطلاعات فرم را بررسی کنید.', 'errors' => $e->getErrors()], 422);
+        }
+    }
+
+    public function storeAdminBranch() {
+        try {
+            $data = $this->validatedAdminBranchData();
+            $verification = $this->otp->verify(trim((string)($_POST['otp'] ?? '')), $this->otpData($data));
+            if (!$verification['ok']) throw new ValidationException(['otp' => $verification['message']]);
+            $type = DB::table('academy_branch_types')->whereNull('deleted_at')->orderBy('academy_branch_type_id')->first();
+            if (!$type) throw new \RuntimeException('نوع آموزشی معتبری برای ثبت شعبه یافت نشد.');
+            $this->branchService->store((int)auth()->id(), [
+                'academy_id'=>$data['academy_id'], 'name'=>$data['name'], 'username'=>$data['username'],
+                'email'=>$data['email'], 'phone'=>$data['phone'], 'password'=>$data['password'], 'password2'=>$data['password2'],
+                'type_id'=>(int)$type['academy_branch_type_id'], 'physical_type'=>'physical', 'status'=>'active',
+                'slogan'=>$data['slogan'], 'short_description'=>$data['short_description'], 'bio'=>$data['biography'],
+                'phones'=>[], 'links'=>[], 'addresses'=>[],
+            ], SiteAdminAccess::allows(auth()->user()));
+            $this->otp->clear();
+            session()->flash('admin_test_message', 'شعبه جدید با موفقیت ثبت شد.');
+        } catch (ValidationException $e) {
+            $errors = $e->getErrors();
+            session()->flash('admin_test_error', reset($errors) ?: 'ثبت شعبه انجام نشد.');
+        } catch (Throwable $e) {
+            error_log('[Admin Branch Registration Error] ' . $e->getMessage());
+            session()->flash('admin_test_error', $e->getMessage());
+        }
+        return redirect('/analytics/admin-panel#branches');
     }
 
 
@@ -197,6 +243,15 @@ class AcademyRegistrationController {
             'name'=>$name, 'slogan'=>trim((string)($_POST['slogan']??'')),
             'short_description'=>trim((string)($_POST['short_description']??'')),
             'biography'=>trim((string)($_POST['biography']??''))];
+    }
+
+    private function validatedAdminBranchData(): array {
+        $data = $this->validatedBranchData();
+        $academyId = (int)($_POST['academy_id'] ?? 0);
+        if (!SiteAdminAccess::allows(auth()->user())) $academyId = (int)$this->branchService->academyForUser((int)auth()->id())['academy_id'];
+        if ($academyId < 1 || !DB::table('academies')->where('academy_id', $academyId)->whereNull('deleted_at')->first()) throw new ValidationException(['academy_id' => 'آموزشگاه مقصد معتبر نیست.']);
+        $data['academy_id'] = $academyId;
+        return $data;
     }
 
 

@@ -71,7 +71,7 @@
 
     function classroomFormFields(item, prefix) {
         const id = (name) => prefix ? `${prefix}${name}` : `classroom${name}`;
-        const branches = (typeof allBranches !== 'undefined' ? allBranches : []).map(b => ({ value: b.id, label: b.name }));
+        const branches = getBranchesList().map(b => ({ value: b.id, label: b.name }));
         const types = (typeof allClassroomTypes !== 'undefined' ? allClassroomTypes : []).map(t => ({ value: t.id, label: t.name }));
         const statuses = (typeof classroomStatuses !== 'undefined' ? classroomStatuses : ['فعال', 'تعمیر', 'غیرفعال']).map(s => ({ value: s, label: s }));
         const equipment = (item.equipment && item.equipment.length) ? item.equipment : [{}];

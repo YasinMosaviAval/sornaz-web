@@ -35,6 +35,8 @@ class AcademyRegistrationService {
         return transaction(function () use ($academyId, $managerId, $data) {
             $academy = DB::table('academies')->where('academy_id', $academyId)->whereNull('deleted_at')->first();
             if (!$academy) throw new RuntimeException('آموزشگاه یافت نشد.');
+            // Repairs registrations created before academy-level membership was moved into createAcademy().
+            $this->ensureAcademyMember($academyId, $managerId, null);
             $now = date('Y-m-d H:i:s');
             $userId = DB::table('users')->insertGetId(['username'=>$data['username'],'email'=>$data['email'],'phone'=>$data['phone'],'password'=>password_hash($data['password'], PASSWORD_DEFAULT),'type'=>'branch','status'=>'approved','locale'=>'fa','timezone'=>'Asia/Tehran','register_method'=>$data['register_method'],'visibility'=>'unlisted','created_by'=>$managerId,'updated_by'=>$managerId,'approved_at'=>$now,'approved_by'=>$managerId]);
             DB::table('financial_system_accounts')->insert([
@@ -45,10 +47,11 @@ class AcademyRegistrationService {
                 'created_by' => $managerId,
                 'updated_by' => $managerId,
             ]);
+            $isFirstBranch = DB::table('academy_branches')->where('academy_id', $academyId)->whereNull('deleted_at')->count() === 0;
             $branchId = DB::table('academy_branches')->insertGetId([
                 'academy_id' => $academyId,
                 'user_id' => $userId,
-                'is_main' => 1,
+                'is_main' => $isFirstBranch ? 1 : 0,
                 'academy_branch_type_id' => 1,
                 'mode' => 'physical',
                 'timezone' => 'Asia/Tehran',
@@ -56,6 +59,7 @@ class AcademyRegistrationService {
                 'updated_by' => $managerId,
             ]);
             if (!$userId || !$branchId) throw new RuntimeException('ایجاد شعبه اصلی ناموفق بود.');
+            $this->ensureAcademyMember($academyId, $managerId, $branchId);
             $translations = TranslationService::manager();
             $academyName = $translations->get('academies', $academyId, 'title', 'fa')
                 ?: $translations->get('users', (int)$academy['user_id'], 'full_name', 'fa')
@@ -80,7 +84,6 @@ class AcademyRegistrationService {
             }
             $this->referrals->ensureForUser($userId);
             $this->users->assignRole($userId, 'academy_branch_owner', $managerId);
-            $this->users->assignRole($managerId, 'academy_branch_manager', $managerId);
             $this->notifications->send(1, 'ثبت شعبه جدید', "کاربر با آی‌دی {$managerId} شعبه اصلی آموزشگاه با آی‌دی {$academyId} را ثبت کرد.", 'academy_branches', $branchId, $managerId);
             $this->notifications->send((int)$academy['user_id'], 'ثبت شعبه آموزشگاه', "شعبه اصلی آموزشگاه با آی‌دی {$academyId} با موفقیت ثبت شد.", 'academy_branches', $branchId, $managerId);
             $this->notifications->send($managerId, 'ثبت درخواست شعبه', 'درخواست ثبت شعبه اصلی با موفقیت ارسال شد.', 'academy_branches', $branchId, $managerId);
@@ -283,10 +286,16 @@ class AcademyRegistrationService {
         $now = date('Y-m-d H:i:s');
         DB::table('users')->where('user_id', $userId)->update(['type'=>'academy', 'status'=>'approved', 'approved_at'=>$now, 'approved_by'=>$requesterId, 'created_by'=>$requesterId, 'updated_by'=>$requesterId]);
         $this->users->assignRole($userId, 'academy_owner', $requesterId);
-        $this->users->assignRole($requesterId, 'academy_manager', $requesterId);
+        $this->users->assignRole($requesterId, 'vip_member', $requesterId);
+        DB::table('user_roles')->where('user_id', $requesterId)->where('role_id', 14)->whereNull('deleted_at')->update([
+            'deleted_at' => $now,
+            'deleted_by' => $requesterId,
+            'updated_by' => $requesterId,
+        ]);
 
         $academyId = DB::table('academies')->insertGetId(['user_id' => $userId, 'created_by' => $requesterId, 'updated_by' => $requesterId]);
         if (!$academyId) throw new RuntimeException('ایجاد آموزشگاه ناموفق بود.');
+        $this->ensureAcademyMember($academyId, $requesterId, null);
 
         $profile = DB::table('z_user_profiles')->where('user_id', $userId)->whereNull('deleted_at')->first();
         $profileId = $profile['user_profile_id'] ?? DB::table('z_user_profiles')->insertGetId(['user_id' => $userId]);
@@ -359,6 +368,7 @@ class AcademyRegistrationService {
             ]);
         }
 
+        $this->ensureAcademyMember($academyId, $managerId, null);
         $this->createSampleBranch($academyId, $managerId, $sample, $index, 0, $branchTypes, $provinces, $counties);
         return !$existingUser;
     }
@@ -412,8 +422,7 @@ class AcademyRegistrationService {
         $this->seedBranchContacts($branchUserId, $managerId, $serial);
         $this->seedBranchAddresses($branchUserId, $managerId, $serial, $provinces, $counties);
 
-        $this->ensureAcademyMember($managerId, null);
-        $this->ensureAcademyMember($managerId, $branchId);
+        $this->ensureAcademyMember($academyId, $managerId, $branchId);
         return $branchId;
     }
 
@@ -460,15 +469,17 @@ class AcademyRegistrationService {
     }
 
     private function ensureMemberContract(int $branchId, int $userId, int $managerId, string $role, int $serial): void {
+        $branch = DB::table('academy_branches')->where('branch_id', $branchId)->whereNull('deleted_at')->first();
+        if (!$branch) throw new RuntimeException('شعبه مورد نظر یافت نشد.');
         $member = DB::table('academy_branch_members')->where('branch_id', $branchId)->where('user_id', $userId)->first();
-        $values = ['branch_id' => $branchId, 'user_id' => $userId, 'status' => 'active', 'joined_at' => date('Y-m-d'),
+        $values = ['academy_id' => (int)$branch['academy_id'], 'branch_id' => $branchId, 'user_id' => $userId, 'status' => 'active', 'joined_at' => date('Y-m-d'),
             'created_by' => $managerId, 'updated_by' => $managerId, 'approved_at' => date('Y-m-d H:i:s'), 'approved_by' => $managerId,
             'deleted_at' => null, 'deleted_by' => null];
         if ($member) { $memberId = (int)$member['member_id']; DB::table('academy_branch_members')->where('member_id', $memberId)->update($values); }
         else $memberId = DB::table('academy_branch_members')->insertGetId($values);
         $type = in_array($role, ['teacher','receptionist','manager'], true) ? $role : 'other';
         $contract = DB::table('academy_branch_member_contracts')->where('member_id', $memberId)->whereNull('deleted_at')->first();
-        $contractValues = ['member_id' => $memberId, 'type' => $type, 'start_date' => date('Y-m-d'), 'end_date' => date('Y-m-d', strtotime('+1 year')),
+        $contractValues = ['member_id' => $memberId, 'type' => $type, 'end_date' => date('Y-m-d', strtotime('+1 year')),
             'price' => $role === 'student' ? 0 : 5000000 + ($serial % 20) * 500000, 'currency_id' => 1,
             'created_by' => $managerId, 'updated_by' => $managerId, 'approved_at' => date('Y-m-d H:i:s'), 'approved_by' => $managerId,
             'deleted_at' => null, 'deleted_by' => null];
@@ -476,13 +487,14 @@ class AcademyRegistrationService {
         else DB::table('academy_branch_member_contracts')->insertGetId($contractValues);
     }
 
-    private function ensureAcademyMember(int $managerId, ?int $branchId): void {
-        $query = DB::table('academy_branch_members')->where('user_id', $managerId);
+    private function ensureAcademyMember(int $academyId, int $managerId, ?int $branchId): void {
+        $query = DB::table('academy_branch_members')->where('academy_id', $academyId)->where('user_id', $managerId);
         $query = $branchId === null ? $query->whereNull('branch_id') : $query->where('branch_id', $branchId);
         $member = $query->first();
-        $values = ['branch_id' => $branchId, 'user_id' => $managerId, 'status' => 'active',
+        $now = date('Y-m-d H:i:s');
+        $values = ['academy_id' => $academyId, 'branch_id' => $branchId, 'user_id' => $managerId, 'status' => 'active',
             'joined_at' => date('Y-m-d'), 'created_by' => $managerId, 'updated_by' => $managerId,
-            'approved_at' => date('Y-m-d H:i:s'), 'approved_by' => $managerId, 'deleted_at' => null, 'deleted_by' => null];
+            'approved_at' => $now, 'approved_by' => $managerId, 'deleted_at' => null, 'deleted_by' => null];
         if ($member) {
             $memberId = (int)$member['member_id'];
             DB::table('academy_branch_members')->where('member_id', $memberId)->update($values);
@@ -491,12 +503,31 @@ class AcademyRegistrationService {
                 'created_at' => date('Y-m-d H:i:s'),
             ] + $values);
         }
-        if (!DB::table('academy_branch_member_contracts')->where('member_id', $memberId)->whereNull('deleted_at')->first()) {
+        $contract = DB::table('academy_branch_member_contracts')->where('member_id', $memberId)->whereNull('deleted_at')->first();
+        $contractValues = [
+            'member_id' => $memberId, 'type' => 'manager',
+            'created_by' => $managerId, 'updated_by' => $managerId,
+            'approved_at' => $now, 'approved_by' => $managerId,
+            'deleted_at' => null, 'deleted_by' => null,
+        ];
+        if ($contract) {
+            DB::table('academy_branch_member_contracts')->where('member_contract_id', (int)$contract['member_contract_id'])->update($contractValues + ['start_date' => null]);
+        } else {
             DB::table('academy_branch_member_contracts')->insertGetId([
-                'member_id' => $memberId, 'type' => 'manager', 'start_date' => date('Y-m-d'),
-                'created_by' => $managerId, 'updated_by' => $managerId,
-                'approved_at' => date('Y-m-d H:i:s'), 'approved_by' => $managerId,
-            ]);
+                'created_at' => $now,
+            ] + $contractValues);
+        }
+        $roleId = $branchId === null ? 7 : 16;
+        $memberRole = DB::table('academy_branch_member_roles')->where('member_id', $memberId)->where('role_id', $roleId)->whereNull('deleted_at')->first();
+        $roleValues = [
+            'member_id' => $memberId, 'role_id' => $roleId, 'is_main' => 1,
+            'created_by' => $managerId, 'updated_by' => $managerId, 'approved_at' => $now,
+            'approved_by' => $managerId, 'deleted_at' => null, 'deleted_by' => null,
+        ];
+        if ($memberRole) {
+            DB::table('academy_branch_member_roles')->where('member_role_id', (int)$memberRole['member_role_id'])->update($roleValues);
+        } else {
+            DB::table('academy_branch_member_roles')->insertGetId($roleValues);
         }
     }
 

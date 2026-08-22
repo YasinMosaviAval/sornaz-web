@@ -1,4 +1,15 @@
-<?php $isSiteAdmin = \Modules\System\Services\SiteAdminAccess::allows(auth()->user()); $isBranchAccount = (auth()->user()['type'] ?? '') === 'branch'; ?>
+<?php
+$panelUser = auth()->user();
+$isSiteAdmin = \Modules\System\Services\SiteAdminAccess::allows($panelUser);
+$isBranchAccount = ($panelUser['type'] ?? '') === 'branch';
+$hasAcademyManagementRole = $panelUser && (bool)\Core\database\DB::table('academy_branch_members')
+    ->join('academy_branch_member_roles', 'academy_branch_member_roles.member_id', '=', 'academy_branch_members.member_id')
+    ->where('academy_branch_members.user_id', (int)$panelUser['user_id'])
+    ->whereIn('academy_branch_member_roles.role_id', [7, 16])
+    ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->first();
+$hasAcademyPanelAccess = $isSiteAdmin || $isBranchAccount || $hasAcademyManagementRole
+    || in_array(($panelUser['type'] ?? ''), ['academy', 'branch'], true);
+?>
 <div id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-indigo-900 text-white flex flex-col shadow-2xl transform -translate-x-full transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:shadow-none">
     <!-- Header -->
     <div class="flex items-center justify-between p-6 border-b border-indigo-800">
@@ -6,7 +17,7 @@
             <img src="/assets/images/logo/white_logo_transparent.png" alt="لوگوی سرناز" class="w-11 h-11 object-contain shrink-0">
             <div class="sidebar-text">
                 <a href="/"><h1 class="text-xl font-bold">برنامه سرناز</h1></a>
-                <p class="text-xs text-indigo-300"><?= $isSiteAdmin ? 'پنل مدیریت سایت' : 'پنل مدیریت آموزشگاه' ?></p>
+                <p class="text-xs text-indigo-300">پنل کاربری</p>
             </div>
         </div>
         <!-- فقط موبایل -->
@@ -38,6 +49,7 @@
             <? } ?>
             <li><a href="#" onclick="showSection('dashboard')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-home w-5 text-center"></i> داشبورد</a></li>
             <li><a href="#" onclick="showSection('account')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-user-cog w-5 text-center"></i> حساب کاربری</a></li>
+            <?php if($hasAcademyPanelAccess): ?>
             <?php if(!$isBranchAccount): ?>
             <li>
                 <button type="button" onclick="toggleSidebarSubmenu('branchesSubmenu',this)" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800">
@@ -105,7 +117,7 @@
                 </ul>
             </li>
             <li><a href="#" onclick="showSection('finance')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-money-bill-wave w-5 text-center"></i> امور مالی</a></li>
+            <?php endif; ?>
         </ul>
     </nav>
 </div>
-

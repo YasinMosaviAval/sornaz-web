@@ -1,17 +1,17 @@
 // ==================== انواع کلاس و وضعیت‌ها ====================
 let allClassroomTypes = [];
+let allClassroomBranches = [];
 const classroomStatuses = ['فعال', 'تعمیر', 'غیرفعال'];
 
 function getBranchesList() {
-    if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
-    return [];
+    return allClassroomBranches;
 }
 
 // ==================== نمونه داده — ۴۰ کلاس ====================
 let allClassrooms = [];
 
 window.classroomApi=async function(url,data=null,method='POST'){const o={method,credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}};if(data!==null){const token=window.adminCsrfToken||'';o.headers['Content-Type']='application/x-www-form-urlencoded;charset=UTF-8';o.headers['X-CSRF-TOKEN']=token;o.body=new URLSearchParams({_token:token,payload_b64:encodeBranchPayload(data)}).toString();}const r=await fetch(url,o),raw=await r.text();let p;try{p=JSON.parse(raw)}catch(e){throw new Error('پاسخ معتبر JSON دریافت نشد.')}const x=p.data??p;if(!r.ok||x.success===false)throw new Error(x.message||'عملیات ناموفق بود');return x.data??x;};
-async function loadClassrooms(){try{const d=await classroomApi('/academy/admin/classrooms',null,'GET');allBranches=d.branches||allBranches;allClassroomTypes=d.types||[];allClassrooms=d.classrooms||[];filteredClassrooms=allClassrooms.slice();renderClassroomBranchTabs();renderClassroomEquipmentFilter();renderClassroomTypeFilter();renderClassroomCapacityFilter();filterClassrooms();}catch(e){alert(e.message);}}
+async function loadClassrooms(){try{const d=await classroomApi('/academy/admin/classrooms',null,'GET');allClassroomBranches=d.branches||[];allClassroomTypes=d.types||[];allClassrooms=d.classrooms||[];filteredClassrooms=allClassrooms.slice();renderClassroomBranchTabs();renderClassroomEquipmentFilter();renderClassroomTypeFilter();renderClassroomCapacityFilter();filterClassrooms();}catch(e){alert(e.message);}}
 window.syncClassroomTypeState=function(item,selectNew=false){if(!item?.id)return;const index=allClassroomTypes.findIndex(type=>Number(type.id)===Number(item.id));const normalized={...item,name:item.title||item.name};if(index>=0)allClassroomTypes[index]={...allClassroomTypes[index],...normalized};else allClassroomTypes.push(normalized);document.querySelectorAll('#classroomType,#editClassroomType,[id^="inlineClassroom"][id$="Type"]').forEach(select=>{const selected=selectNew?item.id:select.value;select.innerHTML=allClassroomTypes.map(type=>`<option value="${type.id}" ${String(type.id)===String(selected)?'selected':''}>${type.name}</option>`).join('');if(selectNew)select.value=String(item.id);select.dispatchEvent(new Event('change',{bubbles:true}));});renderClassroomTypeFilter();};
 window.addEventListener('classroom-type-saved',event=>window.syncClassroomTypeState(event.detail,true));
 window.addEventListener('classroom-type-deleted',event=>{allClassroomTypes=allClassroomTypes.filter(type=>Number(type.id)!==Number(event.detail.id));document.querySelectorAll('#classroomType,#editClassroomType,[id^="inlineClassroom"][id$="Type"]').forEach(select=>{const selected=select.value;select.innerHTML=allClassroomTypes.map(type=>`<option value="${type.id}" ${String(type.id)===String(selected)?'selected':''}>${type.name}</option>`).join('');});renderClassroomTypeFilter();});
