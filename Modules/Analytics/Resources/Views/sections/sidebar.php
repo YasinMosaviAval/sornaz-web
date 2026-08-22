@@ -1,4 +1,4 @@
-<?php $isSiteAdmin = \Modules\System\Services\SiteAdminAccess::allows(auth()->user()); ?>
+<?php $isSiteAdmin = \Modules\System\Services\SiteAdminAccess::allows(auth()->user()); $isBranchAccount = (auth()->user()['type'] ?? '') === 'branch'; ?>
 <div id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-indigo-900 text-white flex flex-col shadow-2xl transform -translate-x-full transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:shadow-none">
     <!-- Header -->
     <div class="flex items-center justify-between p-6 border-b border-indigo-800">
@@ -38,6 +38,7 @@
             <? } ?>
             <li><a href="#" onclick="showSection('dashboard')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-home w-5 text-center"></i> داشبورد</a></li>
             <li><a href="#" onclick="showSection('account')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-user-cog w-5 text-center"></i> حساب کاربری</a></li>
+            <?php if(!$isBranchAccount): ?>
             <li>
                 <button type="button" onclick="toggleSidebarSubmenu('branchesSubmenu',this)" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800">
                     <span class="flex gap-3"><i class="fas fa-building w-5"></i>شعبه‌ها</span>
@@ -49,6 +50,7 @@
                     <?php endif;?>
                     </ul>
                 </li>
+            <?php endif; ?>
             <li>
                 <button type="button" onclick="toggleSidebarSubmenu('profilesSubmenu', this)" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-right text-white">
                     <span class="flex items-center gap-3"><i class="fas fa-id-card w-5 text-center"></i> نقش‌ها و دسترسی‌ها</span>
@@ -106,6 +108,5 @@
         </ul>
     </nav>
 </div>
-
 
 

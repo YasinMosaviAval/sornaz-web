@@ -10,16 +10,14 @@
 
     window.getAccountInfoHTML = function (p) {
         const rows = [
-            ['نام آموزشگاه', p.name],
-            ['مدیر مسئول', p.manager],
+            ['نام', p.name],
             ['ایمیل', p.email],
             ['تلفن', p.phone],
             ['آدرس', p.address],
-            ['سال تأسیس', p.founded],
-            ['تعداد شعبه‌ها', (p.branches || 0) + ' شعبه'],
-            ['تعداد هنرجویان', (p.students || 0) + ' نفر'],
-            ['تعداد اساتید', (p.teachers || 0) + ' نفر']
+            [p.accountType === 'human' ? 'تاریخ تولد' : 'سال تأسیس', p.founded]
         ];
+        if (p.accountType !== 'human') rows.splice(1, 0, ['مدیر مسئول', p.manager]);
+        if (p.accountType !== 'human') rows.push([p.accountType === 'branch' ? 'نوع حساب' : 'تعداد شعبه‌ها', p.accountType === 'branch' ? 'شعبه' : (p.branches || 0) + ' شعبه'], ['تعداد هنرجویان', (p.students || 0) + ' نفر'], ['تعداد اساتید', (p.teachers || 0) + ' نفر']);
         return rows.map(function (r) {
             return '<div class="flex justify-between border-b pb-3 gap-4">' +
                 '<span class="text-gray-500 shrink-0">' + escapeHtml(r[0]) + '</span>' +
@@ -37,13 +35,13 @@
                 <div class="p-8 space-y-5">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
-                            <label class="block text-sm font-medium mb-2">نام آموزشگاه</label>
+                            <label class="block text-sm font-medium mb-2">نام</label>
                             <input id="editAcademyName" type="text" value="${escapeHtml(p.name)}" class="${fieldClass}">
                         </div>
-                        <div>
+                        ${p.accountType === 'human' ? '' : `<div>
                             <label class="block text-sm font-medium mb-2">مدیر اصلی</label>
                             <input id="editManager" type="text" value="${escapeHtml(p.manager)}" disabled class="${fieldClass} bg-gray-100 text-gray-500 cursor-not-allowed">
-                        </div>
+                        </div>`}
                         <div>
                             <label class="block text-sm font-medium mb-2">ایمیل</label>
                             <input id="editProfileEmail" type="email" value="${escapeHtml(p.email)}" class="${fieldClass}">
@@ -53,7 +51,7 @@
                             <input id="editProfilePhone" type="text" value="${escapeHtml(p.phone)}" class="${fieldClass}">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium mb-2">تاریخ تأسیس</label>
+                            <label class="block text-sm font-medium mb-2">${p.accountType === 'human' ? 'تاریخ تولد' : 'تاریخ تأسیس'}</label>
                             <input id="editFounded" type="date" value="${escapeHtml(p.founded)}" class="${fieldClass}">
                         </div>
                         <div class="sm:col-span-2">
@@ -80,7 +78,7 @@
                 <div class="p-8 space-y-5">
                     <div>
                         <label class="block text-sm font-medium mb-2">معرفی کوتاه</label>
-                        <textarea id="editShortIntro" rows="2" class="${fieldClass}" placeholder="یک یا دو خط درباره آموزشگاه">${escapeHtml(p.shortIntro || '')}</textarea>
+                        <textarea id="editShortIntro" rows="2" class="${fieldClass}" placeholder="یک یا دو خط درباره حساب">${escapeHtml(p.shortIntro || '')}</textarea>
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-2">بیوگرافی کامل</label>
@@ -168,13 +166,17 @@
     window.getAccountPrivacyHTML = function (privacy) {
         privacy = privacy || {};
         const options = [
-            { id: 'privacyShowPublic', key: 'showPublicProfile', label: 'نمایش پروفایل عمومی آموزشگاه در وبسایت' },
-            { id: 'privacyShowBranches', key: 'showBranches', label: 'نمایش لیست شعبه‌ها در صفحه عمومی' },
-            { id: 'privacyShowTeachers', key: 'showTeachers', label: 'نمایش اساتید در صفحه عمومی' },
+            { id: 'privacyShowPublic', key: 'showPublicProfile', label: 'نمایش پروفایل عمومی در وبسایت' },
             { id: 'privacyShowContact', key: 'showContact', label: 'نمایش اطلاعات تماس عمومی' },
-            { id: 'privacyShowStats', key: 'showStats', label: 'نمایش آمار (تعداد هنرجو / کلاس)' },
             { id: 'privacyIndexable', key: 'indexable', label: 'اجازه ایندکس شدن در موتورهای جستجو' }
         ];
+        if (privacy.accountType === 'academy') options.splice(1, 0,
+            { id: 'privacyShowBranches', key: 'showBranches', label: 'نمایش لیست شعبه‌ها در صفحه عمومی' },
+            { id: 'privacyShowTeachers', key: 'showTeachers', label: 'نمایش اساتید در صفحه عمومی' },
+            { id: 'privacyShowStats', key: 'showStats', label: 'نمایش آمار (تعداد هنرجو / کلاس)' });
+        if (privacy.accountType === 'branch') options.splice(1, 0,
+            { id: 'privacyShowTeachers', key: 'showTeachers', label: 'نمایش اساتید در صفحه عمومی' },
+            { id: 'privacyShowStats', key: 'showStats', label: 'نمایش آمار (تعداد هنرجو / کلاس)' });
         return options.map(function (o) {
             const checked = privacy[o.key] ? 'checked' : '';
             return `<label class="flex items-center gap-3 p-3 border border-gray-100 rounded-2xl hover:bg-gray-50 cursor-pointer">

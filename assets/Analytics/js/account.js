@@ -24,6 +24,10 @@ window.renderAccountInfo = async function () {
     }
     const nameEl = document.getElementById('academyName');
     if (nameEl) nameEl.textContent = academyProfile.name;
+    const pageTitle = document.getElementById('accountPageTitle');
+    if (pageTitle) pageTitle.textContent = 'حساب کاربری ' + (academyProfile.entityLabel || '');
+    const coverLabel = document.getElementById('accountCoverLabel');
+    if (coverLabel) coverLabel.textContent = 'کاور پروفایل ' + (academyProfile.entityLabel || 'حساب');
     const typeEl = document.getElementById('academyTypeLabel');
     if (typeEl) typeEl.textContent = academyProfile.type;
     const shortEl = document.getElementById('academyShortIntro');

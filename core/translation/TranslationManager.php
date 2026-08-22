@@ -83,8 +83,8 @@ class TranslationManager {
             $value,
             $version
         );
-        if ($result && $model instanceof Model) {
-            $key = $this->cacheKey($model, $field, $locale, $version);
+        if ($result) {
+            $key = implode(':', [$this->table($model), $id, $field, $locale, $version]);
             $this->cache[$key] = $value;
         }
         return $result;

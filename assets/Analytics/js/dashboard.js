@@ -16,8 +16,21 @@
             credentials: 'same-origin',
             headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         });
-        const payload = await response.json();
+        const raw = await response.text();
+        let payload;
+        try {
+            payload = JSON.parse(raw);
+        } catch (_) {
+            throw new Error(response.redirected
+                ? 'نشست شما منقضی شده است. لطفاً دوباره وارد شوید.'
+                : 'پاسخ نامعتبر از سرور دریافت شد. لطفاً صفحه را دوباره بارگذاری کنید.');
+        }
         const envelope = payload.data ?? payload;
+        if (response.status === 401) {
+            const loginUrl = envelope.loginUrl || '/system/login';
+            window.location.assign(loginUrl);
+            throw new Error(envelope.message || 'نشست شما منقضی شده است.');
+        }
         if (!response.ok || envelope.success === false) throw new Error(envelope.message || 'بارگذاری داشبورد ناموفق بود.');
         return envelope.data ?? envelope;
     }
