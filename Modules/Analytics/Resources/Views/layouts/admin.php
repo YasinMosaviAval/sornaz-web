@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= e(trans('admin.meta.title','Sornaz Admin Panel')) ?></title>
+    <title><?= e(trans('admin.meta.title','پنل کاربری سرناز')) ?></title>
     <script>(function(){const r=document.documentElement;r.dataset.theme=localStorage.getItem('sornaz.theme')||'indigo';r.dataset.mode=localStorage.getItem('sornaz.mode')||'light';})();</script>
     <script src="/assets/vendor/tailwind/tailwindcss.js"></script>
     <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/assets/theme/theme.css?v=<?= filemtime(base_path('assets/theme/theme.css')) ?: 1 ?>">
     <style>
         body { font-family: Vazirmatn, Tahoma, sans-serif; }
+        .branch-detail-select,.branch-detail-select option { background:#fff!important;color:#111827!important; }
         .sidebar { transition: all 0.3s; }
         .card-hover:hover { transform: translateY(-5px); transition: all 0.3s; }
         main.site-content { animation:admin-page-in .14s ease-out; transition:opacity .09s ease,transform .09s ease; }
@@ -128,6 +129,7 @@
     <script src="/assets/Analytics/js/network.js?v=<?= filemtime(base_path('assets/Analytics/js/network.js')) ?: 1 ?>"></script>
     <script src="/assets/vendor/echarts/echarts.min.js?v=6.1.0"></script>
     <script src="/assets/Analytics/js/charts.js?v=<?= filemtime(base_path('assets/Analytics/js/charts.js')) ?: 1 ?>"></script>
+    <script src="/assets/Academy/js/academy-registration.js?v=<?= filemtime(base_path('assets/Academy/js/academy-registration.js')) ?: 1 ?>"></script>
     <?=scripts()?>
     <script src="/assets/theme/theme.js?v=<?= filemtime(base_path('assets/theme/theme.js')) ?: 1 ?>"></script>
     <script src="/assets/theme/help-center.js?v=<?= filemtime(base_path('assets/theme/help-center.js')) ?: 1 ?>"></script>

@@ -6,16 +6,16 @@
     $isBranchUser = ($headerUser['type'] ?? null) === 'branch';
     $hasManagerPanelRole = false;
     if ($headerUser) {
-        $hasManagerPanelRole = (bool)\Core\database\DB::table('user_roles')
-            ->join('access_system_roles', 'access_system_roles.role_id', '=', 'user_roles.role_id')
-            ->where('user_roles.user_id', (int)$headerUser['user_id'])
-            ->whereIn('access_system_roles.name', ['academy_manager', 'academy_branch_manager'])
-            ->whereNull('user_roles.deleted_at')
-            ->whereNull('access_system_roles.deleted_at')
+        $hasManagerPanelRole = (bool)\Core\database\DB::table('academy_branch_members')
+            ->join('academy_branch_member_roles', 'academy_branch_member_roles.member_id', '=', 'academy_branch_members.member_id')
+            ->where('academy_branch_members.user_id', (int)$headerUser['user_id'])
+            ->whereIn('academy_branch_member_roles.role_id', [7, 16])
+            ->whereNull('academy_branch_members.deleted_at')
+            ->whereNull('academy_branch_member_roles.deleted_at')
             ->first();
     }
     $isAdminPanelUser = $isSiteAdmin || $isBranchUser || $hasManagerPanelRole;
-    $hasAdminPanel = $isAdminPanelUser || in_array(($headerUser['type'] ?? null), ['academy', 'branch'], true);
+    $hasAdminPanel = (bool)$headerUser;
     ?>
     <div class="max-w-7xl mx-auto px-4">
         <div class="hidden lg:flex items-center gap-4 min-h-20" dir="ltr">
@@ -31,7 +31,7 @@
                 <a href="/academy/academies" data-page="academies" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.academies', 'آموزشگاه‌ها')) ?></a>
                 <a href="/users" data-page="users" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.users', 'کاربران')) ?></a>
                 <?php if ($hasAdminPanel): ?>
-                    <a href="/analytics/admin-panel" data-page="contact" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e($isAdminPanelUser ? trans('public.nav.admin_panel', 'پنل ادمین') : trans('public.nav.academy_panel', 'پنل آموزشگاه')) ?></a>
+                    <a href="/analytics/admin-panel" data-page="contact" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.user_panel', 'پنل کاربری')) ?></a>
                 <?php endif; ?>
 
                 <a href="/page/about-us" data-page="about" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.about', 'درباره ما')) ?></a>
@@ -81,7 +81,7 @@
             <a href="/academy/academies" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.academies', 'آموزشگاه‌ها')) ?></a>
             <a href="/users" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.users', 'کاربران')) ?></a>
             <?php if ($hasAdminPanel): ?>
-                <a href="/analytics/admin-panel" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e($isAdminPanelUser ? trans('public.nav.admin_panel', 'پنل ادمین') : trans('public.nav.academy_panel', 'پنل آموزشگاه')) ?></a>
+                <a href="/analytics/admin-panel" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.user_panel', 'پنل کاربری')) ?></a>
             <?php endif; ?>
             <a href="/page/about-us" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.about', 'درباره ما')) ?></a>
             <a href="/page/contact-us" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.contact', 'تماس با ما')) ?></a>

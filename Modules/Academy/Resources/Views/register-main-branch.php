@@ -1,4 +1,6 @@
 <?php
+$academyNameLabel = 'نام';
+$shortDescriptionLabel = 'معرفی';
 ob_start();
 include __DIR__ . '/send-academy-request.php';
 $branchPage = ob_get_clean();

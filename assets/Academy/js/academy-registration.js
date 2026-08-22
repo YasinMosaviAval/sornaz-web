@@ -100,7 +100,7 @@ window.sendAcademyRegistrationOtp = async function() {
     const button = document.getElementById('academySendOtpBtn');
     if (button) button.disabled = true;
     try {
-        const otpEndpoint = form.action.includes('register-main-branch') ? '/academy/register-main-branch/send-otp' : '/academy/send-academy-request/send-otp';
+        const otpEndpoint = form.dataset.otpEndpoint || (form.action.includes('register-main-branch') ? '/academy/register-main-branch/send-otp' : '/academy/send-academy-request/send-otp');
         const response = await fetch(otpEndpoint, {method: 'POST', headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}, body: new FormData(form)});
         const payload = await response.json();
         const data = payload.data || {};
@@ -163,24 +163,31 @@ const defaultBranchTerms = `
 <h3 class="font-bold text-lg mb-2">۵. بررسی و تعلیق شعبه</h3><p class="text-gray-600 leading-relaxed">سُرناز و مدیر آموزشگاه می‌توانند در صورت تخلف، اطلاعات نادرست یا شکایت معتبر، فعالیت شعبه را بررسی یا محدود کنند.</p>`;
 
 window.openAcademyTermsModal = function() {
-    const container = document.getElementById('modalContainer');
-    if (!container) return;
-    const isBranch = document.getElementById('academyRegistrationForm')?.action.includes('register-main-branch');
+    const form = document.getElementById('academyRegistrationForm');
+    if (!form) return;
+    const isBranch = form.action.includes('register-main-branch') || form.action.includes('/branches/registration');
     const terms = isBranch ? defaultBranchTerms : academyText('terms.content', defaultAcademyTerms);
     const termsTitle = isBranch ? 'قوانین ثبت و فعالیت شعبه' : academyText('terms.title', 'قوانین ثبت و فعالیت آموزشگاه');
-    container.innerHTML = `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()"><div class="bg-white rounded-3xl w-full max-w-lg my-8 shadow-2xl" onclick="event.stopPropagation()"><div class="px-8 py-5 border-b flex justify-between items-center"><h2 class="text-xl font-bold">${termsTitle}</h2><button type="button" aria-label="${academyText('terms.close')}" onclick="closeModal()" class="text-3xl text-gray-300">×</button></div><div class="p-8 max-h-[60vh] overflow-y-auto text-sm">${terms}</div><div class="px-8 py-5 border-t flex gap-3"><button type="button" onclick="acceptAcademyTerms()" class="flex-1 bg-indigo-600 text-white py-3.5 rounded-2xl">${academyText('terms.accept')}</button><button type="button" onclick="closeModal()" class="flex-1 border border-gray-300 py-3.5 rounded-2xl">${academyText('terms.close')}</button></div></div></div>`;
+    const acceptLabel = academyText('terms.accept') || 'می پذیرم';
+    const closeLabel = academyText('terms.close') || 'بستن';
+    document.getElementById('academyTermsDialog')?.remove();
+    document.body.insertAdjacentHTML('beforeend', `<div id="academyTermsDialog" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[90] p-4 overflow-y-auto" onclick="if(event.target===this) closeAcademyTermsModal()"><div class="bg-white rounded-3xl w-full max-w-lg my-8 shadow-2xl" onclick="event.stopPropagation()"><div class="px-8 py-5 border-b flex justify-between items-center"><h2 class="text-xl font-bold">${termsTitle}</h2><button type="button" aria-label="${closeLabel}" onclick="closeAcademyTermsModal()" class="text-3xl text-gray-300">×</button></div><div class="p-8 max-h-[60vh] overflow-y-auto text-sm">${terms}</div><div class="px-8 py-5 border-t flex gap-3"><button type="button" onclick="acceptAcademyTerms()" class="flex-1 bg-indigo-600 text-white py-3.5 rounded-2xl">${acceptLabel}</button><button type="button" onclick="closeAcademyTermsModal()" class="flex-1 border border-gray-300 py-3.5 rounded-2xl">${closeLabel}</button></div></div></div>`);
 };
 
-window.acceptAcademyTerms = function() { const terms = document.getElementById('academyTerms'); if (terms) terms.checked = true; closeModal(); };
+window.closeAcademyTermsModal = function() { document.getElementById('academyTermsDialog')?.remove(); };
+window.acceptAcademyTerms = function() { const terms = document.getElementById('academyTerms'); if (terms) terms.checked = true; closeAcademyTermsModal(); };
 
-document.addEventListener('DOMContentLoaded', () => {
+window.initAcademyRegistrationForm = function() {
     if (!document.getElementById('academyRegistrationForm')) return;
+    academyRegistrationStep = 1;
     setupUsernameHint(document.querySelector('#academyRegistrationForm input[name="username"]'));
     setAcademyRegistrationMethod(document.getElementById('academyRegMethod').value || 'email');
     setupAcademyPasswordStrength();
     const message = document.getElementById('academyFlashMessage')?.dataset.error;
     if (message) academyToast(message);
-});
+};
+
+document.addEventListener('DOMContentLoaded', window.initAcademyRegistrationForm);
 
 function setupUsernameHint(input) {
     if (!input) return;
