@@ -1,6 +1,6 @@
 <div id="account" class="section hidden">
     <div class="mb-8">
-        <h1 class="text-3xl font-bold">حساب کاربری آموزشگاه</h1>
+        <h1 id="accountPageTitle" class="text-3xl font-bold">حساب کاربری</h1>
         <p class="text-gray-500 mt-1">مدیریت پروفایل، امنیت، حریم خصوصی و پشتیبان‌گیری</p>
     </div>
 
@@ -10,7 +10,7 @@
             <div id="accountCoverPreview" class="w-full aspect-video max-h-[640px] bg-gradient-to-br from-indigo-600 via-indigo-500 to-violet-600 flex items-center justify-center overflow-hidden">
                 <div id="accountCoverPlaceholder" class="text-center text-white/90 px-4 pointer-events-none">
                     <i class="fas fa-image text-4xl mb-2 opacity-80"></i>
-                    <p class="text-sm">کاور پروفایل آموزشگاه</p>
+                    <p id="accountCoverLabel" class="text-sm">کاور پروفایل حساب</p>
                     <p class="text-xs opacity-75 mt-1">قالب پیشنهادی ۱۹۲۰×۱۰۸۰ (۱۶:۹ افقی)</p>
                 </div>
                 <img id="accountCoverImg" src="" alt="کاور" class="absolute inset-0 w-full h-full object-cover hidden pointer-events-none">
@@ -89,10 +89,10 @@
         </div>
     </div>
 
-    <!-- اسناد آموزشگاه -->
+    <!-- اسناد -->
     <div class="bg-white rounded-3xl p-6 shadow mt-8">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
-            <h3 class="font-bold text-lg">اسناد آموزشگاه</h3>
+            <h3 class="font-bold text-lg">اسناد</h3>
             <label class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2.5 rounded-xl text-sm cursor-pointer hover:bg-indigo-100">
                 <i class="fas fa-upload"></i> آپلود سند
                 <input type="file" id="accountDocInput" class="hidden" multiple onchange="onAccountDocumentUpload(event)">

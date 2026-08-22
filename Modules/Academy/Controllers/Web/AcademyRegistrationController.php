@@ -144,7 +144,10 @@ class AcademyRegistrationController {
             session()->flash('auth_success', 'شعبه اصلی با موفقیت ثبت شد.');
             return redirect('/');
         } catch (ValidationException $e) { return redirect('/academy/register-main-branch')->withInput($_POST)->withErrors($e->getErrors());
-        } catch (Throwable $e) { return redirect('/academy/register-main-branch')->withInput($_POST)->withErrors(['username' => 'ثبت شعبه انجام نشد. لطفاً دوباره تلاش کنید.']); }
+        } catch (Throwable $e) {
+            error_log('[Main Branch Registration Error] ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return redirect('/academy/register-main-branch')->withInput($_POST)->withErrors(['username' => 'ثبت شعبه انجام نشد. لطفاً دوباره تلاش کنید.']);
+        }
     }
 
 
@@ -183,8 +186,17 @@ class AcademyRegistrationController {
         $value = trim((string)($_POST[$method] ?? ''));
         if ($method === 'email' && !filter_var($value, FILTER_VALIDATE_EMAIL)) throw new ValidationException(['email' => 'ایمیل معتبر را وارد کنید.']);
         if ($method === 'phone') { $value = preg_replace('/\D+/', '', $value); if (!preg_match('/^09\d{9}$/', $value)) throw new ValidationException(['phone' => 'شماره موبایل معتبر را وارد کنید.']); }
+        if (DB::table('users')->where($method, $value)->whereNull('deleted_at')->first()) {
+            throw new ValidationException([$method => $method === 'email' ? 'این ایمیل قبلاً ثبت شده است.' : 'این شماره موبایل قبلاً ثبت شده است.']);
+        }
         if (empty($_POST['terms'])) throw new ValidationException(['terms' => 'پذیرش قوانین ثبت و فعالیت شعبه الزامی است.']);
-        return ['register_method'=>$method, 'username'=>$username, 'password'=>$password, 'password2'=>$password2, 'email'=>$method==='email'?$value:null, 'phone'=>$method==='phone'?$value:null];
+        $name = trim((string)($_POST['academy_name'] ?? ''));
+        if ($name === '' || mb_strlen($name) > 255) throw new ValidationException(['academy_name' => 'نام شعبه الزامی است و حداکثر ۲۵۵ نویسه دارد.']);
+        return ['register_method'=>$method, 'username'=>$username, 'password'=>$password, 'password2'=>$password2,
+            'email'=>$method==='email'?$value:null, 'phone'=>$method==='phone'?$value:null,
+            'name'=>$name, 'slogan'=>trim((string)($_POST['slogan']??'')),
+            'short_description'=>trim((string)($_POST['short_description']??'')),
+            'biography'=>trim((string)($_POST['biography']??''))];
     }
 
 

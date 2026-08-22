@@ -38,7 +38,6 @@ class UserService {
             }
 
             $accountCreated = DB::table('financial_system_accounts')->insert([
-                'account_id' => $userId,
                 'user_id' => $userId,
                 'type' => $this->initialAccountType((string)($data['type'] ?? 'human')),
                 'balance' => 0,

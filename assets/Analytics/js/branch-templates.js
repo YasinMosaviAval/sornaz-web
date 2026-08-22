@@ -33,7 +33,7 @@
                 </div>
                 <div class="flex gap-2">
                     <button onclick="viewBranch(${branch.id})" class="flex-1 border border-indigo-200 text-indigo-600 py-2 rounded-xl text-sm hover:bg-indigo-50">جزئیات</button>
-                    ${window.branchReadOnly ? '' : `<button onclick="editBranch(${branch.id})" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-sm hover:bg-indigo-700">ویرایش</button><button onclick="deleteBranch(${branch.id})" class="flex-1 bg-red-600 text-white py-2 rounded-xl text-sm hover:bg-red-700">حذف</button>`}
+                    ${window.branchReadOnly ? '' : `<button onclick="editBranch(${branch.id})" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-sm hover:bg-indigo-700">ویرایش</button>${window.branchCanDelete === false ? '' : `<button onclick="deleteBranch(${branch.id})" class="flex-1 bg-red-600 text-white py-2 rounded-xl text-sm hover:bg-red-700">حذف</button>`}`}
                 </div>
             </div>`;
     };

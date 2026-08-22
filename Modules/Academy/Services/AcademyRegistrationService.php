@@ -37,9 +37,47 @@ class AcademyRegistrationService {
             if (!$academy) throw new RuntimeException('آموزشگاه یافت نشد.');
             $now = date('Y-m-d H:i:s');
             $userId = DB::table('users')->insertGetId(['username'=>$data['username'],'email'=>$data['email'],'phone'=>$data['phone'],'password'=>password_hash($data['password'], PASSWORD_DEFAULT),'type'=>'branch','status'=>'approved','locale'=>'fa','timezone'=>'Asia/Tehran','register_method'=>$data['register_method'],'visibility'=>'unlisted','created_by'=>$managerId,'updated_by'=>$managerId,'approved_at'=>$now,'approved_by'=>$managerId]);
-            DB::table('financial_system_accounts')->insert(['account_id'=>$userId,'user_id'=>$userId,'type'=>'branch_wallet','balance'=>0,'status'=>'active']);
-            $branchId = DB::table('academy_branches')->insertGetId(['academy_id'=>$academyId,'user_id'=>$userId,'is_main'=>1,'timezone'=>'Asia/Tehran','created_by'=>$managerId,'updated_by'=>$managerId]);
+            DB::table('financial_system_accounts')->insert([
+                'user_id' => $userId,
+                'type' => 'branch_wallet',
+                'balance' => 0,
+                'status' => 'active',
+                'created_by' => $managerId,
+                'updated_by' => $managerId,
+            ]);
+            $branchId = DB::table('academy_branches')->insertGetId([
+                'academy_id' => $academyId,
+                'user_id' => $userId,
+                'is_main' => 1,
+                'academy_branch_type_id' => 1,
+                'mode' => 'physical',
+                'timezone' => 'Asia/Tehran',
+                'created_by' => $managerId,
+                'updated_by' => $managerId,
+            ]);
             if (!$userId || !$branchId) throw new RuntimeException('ایجاد شعبه اصلی ناموفق بود.');
+            $translations = TranslationService::manager();
+            $academyName = $translations->get('academies', $academyId, 'title', 'fa')
+                ?: $translations->get('users', (int)$academy['user_id'], 'full_name', 'fa')
+                ?: 'آموزشگاه';
+            $manager = DB::table('users')->where('user_id', $managerId)->first();
+            $managerName = $translations->get('users', $managerId, 'full_name', 'fa')
+                ?: ($manager['username'] ?? ('کاربر ' . $managerId));
+            $branchName = trim((string)($data['name'] ?? '')) ?: ($academyName . ' - شعبه اصلی');
+            foreach ([
+                'name' => $branchName,
+                'manager' => $managerName,
+                'slogan' => trim((string)($data['slogan'] ?? '')),
+                'short_description' => trim((string)($data['short_description'] ?? '')),
+                'description' => trim((string)($data['biography'] ?? '')),
+            ] as $field => $value) {
+                if (!$translations->set('academy_branches', $branchId, $field, $value, 'fa')) {
+                    throw new RuntimeException('ثبت اطلاعات شعبه اصلی ناموفق بود.');
+                }
+            }
+            foreach (['full_name'=>$branchName, 'short_description'=>trim((string)($data['short_description']??'')), 'biography'=>trim((string)($data['biography']??''))] as $field=>$value) {
+                $translations->set('users', $userId, $field, $value, 'fa');
+            }
             $this->referrals->ensureForUser($userId);
             $this->users->assignRole($userId, 'academy_branch_owner', $managerId);
             $this->users->assignRole($managerId, 'academy_branch_manager', $managerId);

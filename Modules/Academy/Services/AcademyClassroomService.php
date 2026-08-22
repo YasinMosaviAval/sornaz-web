@@ -8,7 +8,19 @@ use RuntimeException;
 class AcademyClassroomService {
     private function tr(string $table,int $id,string $field): string { return TranslationService::manager()->get($table,$id,$field,'fa')?:''; }
     private function set(string $table,int $id,array $values,int $actor): void { foreach($values as $field=>$value)if(!TranslationService::manager()->set($table,$id,$field,(string)$value,'fa'))throw new RuntimeException('ذخیره ترجمه ناموفق بود.');DB::table('translations')->where('table_name',$table)->where('table_id',$id)->where('locale','fa')->update(['created_by'=>$actor,'updated_by'=>$actor,'deleted_at'=>null,'deleted_by'=>null]); }
-    private function branches(int $actor,bool $admin): array { if($admin)return DB::table('academy_branches')->whereNull('deleted_at')->get();$academy=DB::table('academies')->where('user_id',$actor)->whereNull('deleted_at')->first();if(!$academy)throw new RuntimeException('آموزشگاه مرتبط یافت نشد.');return DB::table('academy_branches')->where('academy_id',(int)$academy['academy_id'])->whereNull('deleted_at')->get(); }
+    private function branches(int $actor,bool $admin): array {
+        if($admin)return DB::table('academy_branches')->whereNull('deleted_at')->get();
+        $user=DB::table('users')->where('user_id',$actor)->whereNull('deleted_at')->first();
+        if(!$user)throw new RuntimeException('کاربر معتبر نیست.');
+        if(($user['type']??'')==='branch')return DB::table('academy_branches')->where('user_id',$actor)->whereNull('deleted_at')->get();
+        $academies=array_merge(
+            DB::table('academies')->where('user_id',$actor)->whereNull('deleted_at')->get(),
+            DB::table('academies')->where('created_by',$actor)->whereNull('deleted_at')->get()
+        );
+        $academyIds=array_values(array_unique(array_map(fn($academy)=>(int)$academy['academy_id'],$academies)));
+        if(!$academyIds)throw new RuntimeException('آموزشگاه مرتبط یافت نشد.');
+        return DB::table('academy_branches')->whereIn('academy_id',$academyIds)->whereNull('deleted_at')->get();
+    }
     private function allowedBranch(int $actor,int $branchId,bool $admin): array { foreach($this->branches($actor,$admin) as $b)if((int)$b['branch_id']===$branchId)return $b;throw new RuntimeException('شعبه معتبر نیست.'); }
     public function bootstrap(int $actor,bool $admin): array { $branches=$this->branches($actor,$admin);$ids=array_map(fn($b)=>(int)$b['branch_id'],$branches);$types=DB::table('academy_branch_classroom_types')->whereNull('deleted_at')->get();$rooms=$ids?DB::table('academy_branch_classrooms')->whereIn('branch_id',$ids)->whereNull('deleted_at')->get():[];return ['branches'=>array_map(fn($b)=>['id'=>(int)$b['branch_id'],'name'=>$this->tr('academy_branches',(int)$b['branch_id'],'name')?:'شعبه '.$b['branch_id']],$branches),'types'=>array_map(fn($t)=>$this->type($t),$types),'classrooms'=>array_map(fn($r)=>$this->room($r),$rooms)]; }
     private function type(array $r): array {$id=(int)$r['classroom_type_id'];return ['id'=>$id,'name'=>$this->tr('academy_branch_classroom_types',$id,'title')?:$r['code'],'title'=>$this->tr('academy_branch_classroom_types',$id,'title')?:$r['code'],'summary'=>$this->tr('academy_branch_classroom_types',$id,'summary'),'description'=>$this->tr('academy_branch_classroom_types',$id,'description')];}
