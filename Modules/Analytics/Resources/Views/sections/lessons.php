@@ -31,20 +31,14 @@
             <select id="filterLessonStatus" onchange="filterLessons()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه وضعیت‌ها</option>
-                <option value="فعال">فعال</option>
-                <option value="غیرفعال">غیرفعال</option>
-                <option value="در انتظار">در انتظار</option>
-                <option value="حذف‌شده">حذف‌شده</option>
+                <option value="active">فعال</option>
+                <option value="inactive">غیرفعال</option>
+                <option value="pending">در انتظار</option>
+                <option value="removed">حذف‌شده</option>
             </select>
             <select id="filterLessonLevel" onchange="filterLessons()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه سطوح</option>
-                <option value="1">مبتدی</option>
-                <option value="2">متوسط</option>
-                <option value="3">پیشرفته</option>
-                <option value="4">حرفه‌ای</option>
-                <option value="5">کارشناسی</option>
-                <option value="6">کارشناسی ارشد</option>
             </select>
         </div>
     </div>
@@ -60,8 +54,8 @@
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortLessonsBy('levelTitle')" class="flex items-center gap-1">سطح <span id="lesnSortIcon-levelTitle">↕</span></button>
                         </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortLessonsBy('years_of_experience')" class="flex items-center gap-1">سابقه <span id="lesnSortIcon-years_of_experience">↕</span></button>
+                        <th class="text-center py-5 px-5 font-medium">
+                            <button onclick="sortLessonsBy('start_date')" class="flex w-full items-center justify-center gap-1">زمان شروع <span id="lesnSortIcon-start_date">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortLessonsBy('is_primary')" class="flex items-center gap-1">اصلی <span id="lesnSortIcon-is_primary">↕</span></button>
@@ -70,7 +64,7 @@
                             <button onclick="sortLessonsBy('status')" class="flex items-center gap-1">وضعیت <span id="lesnSortIcon-status">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortLessonsBy('branchName')" class="flex items-center gap-1">شعبه <span id="lesnSortIcon-branchName">↕</span></button>
+                            <button onclick="sortLessonsBy('branchName')" class="flex items-center gap-1">سازمان <span id="lesnSortIcon-branchName">↕</span></button>
                         </th>
                         <th class="w-40 py-5 px-5"></th>
                     </tr>

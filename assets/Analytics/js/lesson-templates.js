@@ -14,11 +14,30 @@
     }
     function statusBadge(status) {
         return {
-            'فعال': 'bg-green-100 text-green-700',
-            'غیرفعال': 'bg-gray-100 text-gray-600',
-            'در انتظار': 'bg-yellow-100 text-yellow-700',
-            'حذف‌شده': 'bg-red-100 text-red-700'
+            active: 'bg-green-100 text-green-700', inactive: 'bg-gray-100 text-gray-600',
+            pending: 'bg-yellow-100 text-yellow-700', removed: 'bg-red-100 text-red-700'
         }[status] || 'bg-gray-100 text-gray-600';
+    }
+    const statusLabels = { pending: 'در انتظار', active: 'فعال', inactive: 'غیرفعال', removed: 'حذف‌شده' };
+    function formatLessonStartDate(value) {
+        const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!match) return value || '—';
+        const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
+        const today = new Date();
+        let totalMonths = (today.getFullYear() - year) * 12 + (today.getMonth() + 1 - month);
+        if (today.getDate() < day) totalMonths--;
+        totalMonths = Math.max(0, totalMonths);
+        const fullYears = Math.floor(totalMonths / 12);
+        const date = `${match[1]}/${match[2]}/${match[3]}`;
+        const isEnglish = String(window.adminLocale || document.documentElement.lang || 'fa').toLowerCase().startsWith('en');
+        if (isEnglish) {
+            const duration = fullYears >= 1
+                ? `${fullYears} ${fullYears === 1 ? 'year' : 'years'}`
+                : `${totalMonths} ${totalMonths === 1 ? 'month' : 'months'}`;
+            return `${date}  (${duration})`;
+        }
+        const duration = fullYears >= 1 ? `${fullYears} سال` : `${totalMonths} ماه`;
+        return `(${duration})  ${date}`;
     }
 
     window.getLessonRowHTML = function (item, levelTitle) {
@@ -26,9 +45,9 @@
         return `
             <td class="py-4 px-5 font-medium">${escapeHtml(item.title)}</td>
             <td class="py-4 px-5">${escapeHtml(levelTitle || '—')}</td>
-            <td class="py-4 px-5">${item.years_of_experience ?? '—'}</td>
+            <td class="py-4 px-5 text-center" dir="ltr">${escapeHtml(formatLessonStartDate(item.start_date))}</td>
             <td class="py-4 px-5">${item.is_primary ? '<span class="px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700">اصلی</span>' : '—'}</td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${sc}">${escapeHtml(item.status || 'فعال')}</span></td>
+            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${sc}">${escapeHtml(statusLabels[item.status] || item.status || 'در انتظار')}</span></td>
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
             <td class="py-4 px-5 text-left">
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
@@ -47,18 +66,24 @@
 
     function formFields(item, prefix) {
         const id = function (n) { return prefix ? prefix + n : 'lesn' + n; };
-        const branches = (typeof allBranches !== 'undefined' ? allBranches : []).map(function (b) { return { value: b.id, label: b.name }; });
+        const organizations = (window.branchOfferingData?.organizations || []).map(function (b) { return { value: b.user_id, label: b.name }; });
+        const fixedOrganization = window.branchOfferingData?.organization_selection === 'fixed';
+        const statusMode = window.branchOfferingData?.lesson_status_mode || 'pending';
         const lessons = (typeof window.sampleLessons !== 'undefined' ? window.sampleLessons : []).map(function (i) { return { value: i.id, label: i.title }; });
-        const levels = (typeof window.branchLessonLevels !== 'undefined' ? window.branchLessonLevels : []).map(function (l) { return { value: l.level_id, label: l.title + (l.type ? ' (' + l.type + ')' : '') }; });
-        const statuses = ['فعال', 'غیرفعال', 'در انتظار', 'حذف‌شده'].map(function (s) { return { value: s, label: s }; });
+        const levels = (typeof window.branchLessonLevels !== 'undefined' ? window.branchLessonLevels : []).filter(function (l) { return !l.type || l.type === 'learning'; }).map(function (l) { return { value: l.level_id, label: l.title }; });
+        const statuses = Object.entries(statusLabels).map(function (s) { return { value: s[0], label: s[1] }; });
+        const selectedOrganizationUserId = item.organization_user_id || item.user_id || organizations[0]?.value;
+        const hasPrimary = (window.allUserLessons || []).some(function (lesson) { return lesson.user_id === selectedOrganizationUserId && lesson.is_primary && lesson.id !== item.id; });
+        const primaryDisabled = hasPrimary && !item.is_primary;
+        const prohibitedCursor = `url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2724%27%20height=%2724%27%3E%3Ccircle%20cx=%2712%27%20cy=%2712%27%20r=%279%27%20fill=%27white%27%20stroke=%27%23dc2626%27%20stroke-width=%273%27/%3E%3Cpath%20d=%27M6%2018L18%206%27%20stroke=%27%23dc2626%27%20stroke-width=%273%27/%3E%3C/svg%3E) 12 12, not-allowed`;
         return `
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                <div>
-                    <label class="block text-sm font-medium mb-2">شعبه *</label>
-                    <select id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(branches, item.branchId)}
+                ${fixedOrganization ? '' : `<div>
+                    <label class="block text-sm font-medium mb-2">سازمان *</label>
+                    <select id="${id('Organization')}" onchange="updateLessonPrimaryAvailability('${id('Organization')}','${id('Primary')}',${item.id || 0})" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                        ${renderOptions(organizations, selectedOrganizationUserId)}
                     </select>
-                </div>
+                </div>`}
                 <div>
                     <label class="block text-sm font-medium mb-2">درس *</label>
                     <select id="${id('Select')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
@@ -73,18 +98,18 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-2">سابقه (سال)</label>
-                    <input id="${id('Years')}" type="number" min="0" value="${escapeHtml(item.years_of_experience ?? 1)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <label class="block text-sm font-medium mb-2">زمان شروع *</label>
+                    <input id="${id('StartDate')}" type="date" value="${escapeHtml(item.start_date || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                 </div>
-                <div>
+                ${statusMode === 'active' ? '' : `<div>
                     <label class="block text-sm font-medium mb-2">وضعیت</label>
-                    <select id="${id('Status')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(statuses, item.status || 'فعال')}
-                    </select>
-                </div>
+                    ${statusMode === 'pending'
+                        ? `<input type="text" value="در انتظار" disabled class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-100 py-3.5 px-5 text-gray-500">`
+                        : `<select id="${id('Status')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${renderOptions(statuses, item.status || 'pending')}</select>`}
+                </div>`}
                 <div class="flex items-end">
-                    <label class="flex items-center gap-2 text-sm pb-3">
-                        <input type="checkbox" id="${id('Primary')}" ${item.is_primary ? 'checked' : ''}>
+                    <label class="flex items-center gap-2 pb-3 text-sm ${primaryDisabled ? 'text-gray-400' : ''}" ${primaryDisabled ? `style="cursor:${prohibitedCursor}"` : ''}>
+                        <input type="checkbox" id="${id('Primary')}" class="h-4 w-4 ${primaryDisabled ? 'border-gray-300 bg-gray-200 accent-gray-400' : ''}" ${item.is_primary ? 'checked' : ''} ${primaryDisabled ? 'disabled' : ''}>
                         درس اصلی (فقط یکی برای هر کاربر)
                     </label>
                 </div>
@@ -160,10 +185,10 @@
                     ${item.description ? `<p class="text-gray-600 leading-relaxed">${escapeHtml(item.description)}</p>` : ''}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">سطح</span><span class="font-medium">${escapeHtml(levelTitle || '—')}</span></div>
-                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">سابقه</span><span class="font-medium">${item.years_of_experience ?? 0} سال</span></div>
+                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">زمان شروع</span><span class="font-medium">${escapeHtml(item.start_date || '—')}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">اصلی</span><span class="font-medium">${item.is_primary ? 'بله' : 'خیر'}</span></div>
-                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">وضعیت</span><span class="font-medium">${escapeHtml(item.status || 'فعال')}</span></div>
-                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">شعبه</span><span class="font-medium">${escapeHtml(item.branchName)}</span></div>
+                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">وضعیت</span><span class="font-medium">${escapeHtml(statusLabels[item.status] || item.status || 'در انتظار')}</span></div>
+                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">سازمان</span><span class="font-medium">${escapeHtml(item.branchName)}</span></div>
                     </div>
                 </div>
             </div>

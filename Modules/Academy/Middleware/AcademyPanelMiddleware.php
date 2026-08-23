@@ -31,8 +31,10 @@ class AcademyPanelMiddleware {
         $branch = DB::table('academy_branches')->where('user_id', $userId)->whereNull('deleted_at')->first();
         $manager = DB::table('academy_branch_members')
             ->join('academy_branch_member_roles', 'academy_branch_member_roles.member_id', '=', 'academy_branch_members.member_id')
-            ->where('academy_branch_members.user_id', $userId)->whereIn('academy_branch_member_roles.role_id', [7, 16])
-            ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->first();
+            ->join('access_system_roles', 'access_system_roles.role_id', '=', 'academy_branch_member_roles.role_id')
+            ->where('academy_branch_members.user_id', $userId)
+            ->whereIn('access_system_roles.name', ['academy_owner', 'academy_manager', 'branch_manager', 'academy_receptionist', 'branch_receptionist'])
+            ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->first();
         if (!$academy && !$branch && !$manager) {
             if ($this->expectsJson()) return ResponseFactory::json(['success'=>false,'message'=>'دسترسی لازم برای این بخش را ندارید.'], 403);
             abort(403, 'دسترسی لازم برای این بخش را ندارید.');
