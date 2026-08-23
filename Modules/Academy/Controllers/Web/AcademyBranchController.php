@@ -68,6 +68,10 @@ class AcademyBranchController {
         return $this->run(fn()=>$this->service->updateMember((int)auth()->id(),$id,$this->payload(),SiteAdminAccess::allows(auth()->user()))); 
     }
 
+    public function storeMember() {
+        return $this->run(fn()=>$this->service->storeMember((int)auth()->id(),$this->payload(),SiteAdminAccess::allows(auth()->user())), 201);
+    }
+
 
     public function deleteMember(int $id) { 
         return $this->run(
