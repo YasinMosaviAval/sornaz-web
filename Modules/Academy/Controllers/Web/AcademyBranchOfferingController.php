@@ -27,13 +27,40 @@ class AcademyBranchOfferingController {
         return $this->saveSchedule($id);
     }
 
+    public function storeLesson() { return $this->saveLesson(); }
+
+    public function updateLesson(int $id) { return $this->saveLesson($id); }
+
+    public function storeLessonCatalog() {
+        try {
+            $data = $this->payload('اطلاعات درس جدید معتبر نیست.');
+            return ResponseFactory::json(['success' => true, 'data' => $this->service->createLesson((int) auth()->id(), $data)]);
+        } catch (Throwable $e) {
+            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    private function saveLesson(int $id = 0) {
+        try {
+            $data = $this->payload('اطلاعات درس معتبر نیست.');
+            return ResponseFactory::json(['success' => true, 'data' => $this->service->saveLesson((int) auth()->id(), $data, $id)]);
+        } catch (Throwable $e) {
+            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    private function payload(string $message): array {
+        $encoded = (string) request()->input('payload_b64', '');
+        $decoded = base64_decode(strtr($encoded, '-_', '+/'), true);
+        $data = $decoded === false ? null : json_decode($decoded, true);
+        if (!is_array($data)) throw new RuntimeException($message);
+        return $data;
+    }
+
 
     private function saveSchedule(int $id = 0) {
         try {
-            $encoded = (string) request()->input('payload_b64', '');
-            $decoded = base64_decode(strtr($encoded, '-_', '+/'), true);
-            $data = $decoded === false ? null : json_decode($decoded, true);
-            if (!is_array($data)) throw new RuntimeException('اطلاعات برنامه زمانی معتبر نیست.');
+            $data = $this->payload('اطلاعات برنامه زمانی معتبر نیست.');
             $saved = $this->service->saveSchedule((int) auth()->id(), $data, $id);
             return ResponseFactory::json(['success' => true, 'data' => $saved]);
         } catch (Throwable $e) {
