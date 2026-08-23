@@ -36,6 +36,7 @@ Router::post('/academy/admin/branch-types/{id}/update', [AcademyBranchController
 Router::post('/academy/admin/branch-types/{id}/delete', [AcademyBranchController::class, 'deleteType'])->middleware(['site-admin', 'csrf']);
 Router::post('/academy/admin/branches/{id}/update', [AcademyBranchController::class, 'update'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/branches/{id}/delete', [AcademyBranchController::class, 'destroy'])->middleware(['academy-panel', 'csrf']);
+Router::post('/academy/admin/members', [AcademyBranchController::class, 'storeMember'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/members/{id}/update', [AcademyBranchController::class, 'updateMember'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/members/{id}/delete', [AcademyBranchController::class, 'deleteMember'])->middleware(['academy-panel', 'csrf']);
 Router::get('/academy/admin/classrooms', [AcademyClassroomController::class, 'index'])->middleware('academy-panel');

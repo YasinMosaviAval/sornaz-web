@@ -33,7 +33,7 @@ class AcademyPanelMiddleware {
             ->join('academy_branch_member_roles', 'academy_branch_member_roles.member_id', '=', 'academy_branch_members.member_id')
             ->join('access_system_roles', 'access_system_roles.role_id', '=', 'academy_branch_member_roles.role_id')
             ->where('academy_branch_members.user_id', $userId)
-            ->whereIn('access_system_roles.name', ['academy_owner', 'academy_manager', 'branch_manager', 'academy_receptionist', 'branch_receptionist'])
+            ->whereRaw("(access_system_roles.name LIKE 'academy_%owner%' OR access_system_roles.name LIKE 'academy_%manager%' OR access_system_roles.name LIKE 'academy_%receptionist%' OR access_system_roles.name LIKE '%branch%manager%' OR access_system_roles.name LIKE '%branch%receptionist%')")
             ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->first();
         if (!$academy && !$branch && !$manager) {
             if ($this->expectsJson()) return ResponseFactory::json(['success'=>false,'message'=>'دسترسی لازم برای این بخش را ندارید.'], 403);

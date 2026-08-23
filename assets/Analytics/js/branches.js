@@ -7,6 +7,33 @@ let allBranchAcademies = [];
 let allBranchManagerCandidates = [];
 window.branchReadOnly = false;
 window.branchSiteAdmin = false;
+window.branchAccount = false;
+window.applyFixedBranchScope = function () {
+    if (!window.branchAccount) return;
+    document.documentElement.classList.add('branch-scope-fixed');
+    document.querySelectorAll('[id]').forEach(function (element) {
+        const id = element.id.toLowerCase();
+        const isTabs = id.includes('branch') && id.endsWith('tabs');
+        const isBranchFilter = id.endsWith('branchfilter') || id === 'filterbranchacademy';
+        const isAcademyFilter = id.includes('academy') && id.includes('filter');
+        const isAccessBranchFilter = id === 'accessuserbranch';
+        if (!isTabs && !isBranchFilter && !isAcademyFilter && !isAccessBranchFilter) return;
+        if (isTabs) {
+            const shell = element.parentElement && element.parentElement.children.length === 1 ? element.parentElement : element;
+            shell.classList.add('hidden');
+            shell.setAttribute('aria-hidden', 'true');
+            return;
+        }
+        const field = element.closest('select, [data-branch-filter]') || element;
+        const wrapper = field.parentElement && field.parentElement.children.length <= 2 ? field.parentElement : field;
+        wrapper.classList.add('hidden');
+        wrapper.setAttribute('aria-hidden', 'true');
+    });
+    if (!window.branchScopeObserver && document.body) {
+        window.branchScopeObserver = new MutationObserver(function () { window.applyFixedBranchScope(); });
+        window.branchScopeObserver.observe(document.body, {childList:true, subtree:true});
+    }
+};
 let branchesView = 'cards';
 let branchSortField = '';
 let branchSortDirection = 'asc';
@@ -49,7 +76,7 @@ window.filterBranches = async function (){const q=(document.getElementById('bran
 async function branchRequest(url,fields=null,method='POST'){const options={method,credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}};if(fields!==null){const token=branchCsrfToken||document.querySelector('[data-branches-root]')?.dataset.csrf||'';const body=new URLSearchParams({_token:token});Object.entries(fields).forEach(([key,value])=>body.set(key,String(value)));options.headers['Content-Type']='application/x-www-form-urlencoded;charset=UTF-8';options.headers['X-CSRF-TOKEN']=token;options.body=body.toString();}const response=await fetch(url,options),raw=await response.text();let payload;try{payload=JSON.parse(raw);}catch(error){console.error('Invalid branches API response:',response.status,raw);throw new Error('سرور پاسخ نامعتبر برگرداند؛ صفحه را تازه‌سازی و دوباره تلاش کنید.');}const envelope=payload.data??payload;if(envelope.csrf_token)branchCsrfToken=envelope.csrf_token;if(!response.ok||envelope.success===false)throw new Error(envelope.message||'عملیات شعبه انجام نشد.');return envelope.data??envelope;}
 function localizeBranchNumber(value){return document.documentElement.lang==='fa'?String(value).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]):String(value);}
 window.setBranchesView=function(view){branchesView=view;document.getElementById('branchesCards')?.classList.toggle('hidden',view!=='cards');document.getElementById('branchesTableWrap')?.classList.toggle('hidden',view!=='table');document.getElementById('branchesTableViewButton')?.classList.toggle('bg-indigo-600',view==='table');document.getElementById('branchesTableViewButton')?.classList.toggle('text-white',view==='table');document.getElementById('branchesCardViewButton')?.classList.toggle('bg-indigo-600',view==='cards');document.getElementById('branchesCardViewButton')?.classList.toggle('text-white',view==='cards');};
-async function loadBranches(){try{const data=await branchRequest('/academy/admin/branches',null,'GET');branchCsrfToken=data.csrf_token||branchCsrfToken;allBranches=data.branches||[];filteredBranches=[...allBranches];allBranchTypes=data.types||[];allBranchAcademies=data.academies||[];window.branchReadOnly=Boolean(data.read_only);window.branchSiteAdmin=Boolean(data.site_admin);window.branchAccount=Boolean(data.branch_account);window.branchCanCreate=data.can_create_branch!==false;window.branchCanDelete=data.can_delete_branch!==false;const addButton=document.getElementById('addBranchButton');if(addButton)addButton.classList.toggle('hidden',!window.branchCanCreate);iranProvinces=(data.provinces||[]).map(item=>({id:item.province_id,name:item.province_name}));iranCounties=(data.counties||[]).map(item=>({id:item.county_id,province_id:item.province_id,name:item.county_name}));const description=document.getElementById('branchesScopeDescription');if(description)description.textContent=window.branchSiteAdmin?'مدیریت سراسری تمام آموزشگاه‌ها و شعب ثبت‌شده':(window.branchAccount?'اطلاعات و مدیریت همین شعبه':'مدیریت شعب آموزشگاه');document.getElementById('branchesAcademiesCount').textContent=localizeBranchNumber(allBranchAcademies.length||new Set(allBranches.map(item=>item.academy_id)).size);window.renderBranchFilters();window.filterBranches();window.setBranchesView(window.branchSiteAdmin?'table':'cards');window.dispatchEvent(new CustomEvent('academy-data-loaded',{detail:data}));}catch(error){alert(error.message);}}
+async function loadBranches(){try{const data=await branchRequest('/academy/admin/branches',null,'GET');branchCsrfToken=data.csrf_token||branchCsrfToken;allBranches=data.branches||[];filteredBranches=[...allBranches];allBranchTypes=data.types||[];allBranchAcademies=data.academies||[];window.branchReadOnly=Boolean(data.read_only);window.branchSiteAdmin=Boolean(data.site_admin);window.branchAccount=Boolean(data.branch_account);window.branchCanCreate=data.can_create_branch!==false;window.branchCanDelete=data.can_delete_branch!==false;window.applyFixedBranchScope();const addButton=document.getElementById('addBranchButton');if(addButton)addButton.classList.toggle('hidden',!window.branchCanCreate);iranProvinces=(data.provinces||[]).map(item=>({id:item.province_id,name:item.province_name}));iranCounties=(data.counties||[]).map(item=>({id:item.county_id,province_id:item.province_id,name:item.county_name}));const description=document.getElementById('branchesScopeDescription');if(description)description.textContent=window.branchSiteAdmin?'مدیریت سراسری تمام آموزشگاه‌ها و شعب ثبت‌شده':(window.branchAccount?'اطلاعات و مدیریت همین شعبه':'مدیریت شعب آموزشگاه');document.getElementById('branchesAcademiesCount').textContent=localizeBranchNumber(allBranchAcademies.length||new Set(allBranches.map(item=>item.academy_id)).size);window.renderBranchFilters();window.filterBranches();window.setBranchesView(window.branchSiteAdmin?'table':'cards');window.dispatchEvent(new CustomEvent('academy-data-loaded',{detail:data}));window.applyFixedBranchScope();}catch(error){alert(error.message);}}
 
 window.updateBranchCountySelect=function(provinceSelect){const block=provinceSelect.closest('.address-block');const city=block?.querySelector('.addr-city');if(!city)return;const province=iranProvinces.find(item=>item.name===provinceSelect.value);const counties=province?iranCounties.filter(item=>String(item.province_id)===String(province.id)):[];city.innerHTML='<option value="">'+(province?'انتخاب شهر':'ابتدا استان را انتخاب کنید')+'</option>'+counties.map(item=>`<option value="${item.name}">${item.name}</option>`).join('');city.disabled=!province;};
 

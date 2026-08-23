@@ -30,7 +30,7 @@
 
     <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
         <div class="flex gap-2 min-w-max" id="staffBranchTabs">
-            <button onclick="filterStaffByBranch('all')" class="staff-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium bg-indigo-600 text-white">همه شعبه‌ها</button>
+            <button data-staff-organization="all" onclick="filterStaffByBranch('all')" class="staff-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium bg-indigo-600 text-white">همه</button>
         </div>
     </div>
 
@@ -88,7 +88,7 @@
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortStaffBy('typeLabel')" class="flex items-center gap-1">
-                                نوع پرسنل <span id="sortIcon-typeLabel">↕</span>
+                                نوع قرارداد <span id="sortIcon-typeLabel">↕</span>
                             </button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
@@ -98,12 +98,12 @@
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortStaffBy('branch')" class="flex items-center gap-1">
-                                شعبه <span id="sortIcon-branch">↕</span>
+                                سازمان <span id="sortIcon-branch">↕</span>
                             </button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortStaffBy('lessonName')" class="flex items-center gap-1">
-                                درس مدرس <span id="sortIcon-lessonName">↕</span>
+                                درس <span id="sortIcon-lessonName">↕</span>
                             </button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">

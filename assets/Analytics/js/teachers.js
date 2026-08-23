@@ -59,10 +59,10 @@ window.profileVisibilities = profileVisibilities;
 const pdfExportColumns = [
     { field: 'index', label: 'ردیف' },
     { field: 'name', label: 'نام' },
-    { field: 'typeLabel', label: 'نوع پرسنل' },
+    { field: 'typeLabel', label: 'نوع قرارداد' },
     { field: 'contractTitle', label: 'عنوان قرارداد' },
-    { field: 'branch', label: 'شعبه' },
-    { field: 'lessonName', label: 'درس مدرس' },
+    { field: 'branch', label: 'سازمان' },
+    { field: 'lessonName', label: 'درس' },
     { field: 'startDate', label: 'تاریخ شروع' },
     { field: 'endDate', label: 'تاریخ خاتمه' },
     { field: 'price', label: 'مبلغ قرارداد' },
@@ -117,7 +117,7 @@ if (false) for (let i = 1; i <= 28; i++) {
         lessons: lessons
     });
 }
-window.addEventListener('academy-data-loaded',function(event){allStaff=(event.detail.members||[]).filter(item=>item.type!=='student');filteredStaff=allStaff.slice();if(document.getElementById('staffTable')){window.renderStaffBranchTabs?.();window.renderStaffLessonFilter?.();window.filterStaff();}});
+window.addEventListener('academy-data-loaded',function(event){window.staffCatalog=event.detail.staff_catalog||{};window.contractCurrencies=(window.staffCatalog.currencies||[]).map(x=>({id:x.id,label:x.name}));window.lessonTypes=(window.staffCatalog.lessons||[]).map(x=>({value:x.lesson_id,label:x.name,organization_user_id:x.organization_user_id}));window.lessonLevels=(window.staffCatalog.levels||[]).map(x=>({value:x.id,label:x.name}));allStaff=(event.detail.members||[]).filter(item=>item.type!=='student');filteredStaff=allStaff.slice();if(document.getElementById('staffTable')){window.renderStaffBranchTabs?.();window.renderStaffLessonFilter?.();window.filterStaff();}});
 
 // ==================== متغیرهای صفحه‌بندی ====================
 let staffCurrentPage = 1;
@@ -209,6 +209,7 @@ window.toggleStaffLessonFields = async function (selectId, containerId) {
     if (!sel || !box) return;
     const isTeacher = sel.value === 'teacher';
     box.classList.toggle('hidden', !isTeacher);
+    window.updateStaffRole?.(selectId.replace(/Type$/,'Role'),sel.value,selectId.replace(/Type$/,'Organization'));
 };
 window.addStaffLessonRow = async function (prefix) {
     const container = document.getElementById(prefix + 'LessonsContainer');
@@ -262,6 +263,7 @@ window.renderStaffTable = async function (staff = filteredStaff) {
                 expandRow.className = 'bg-gray-50 staff-inline-expand';
                 expandRow.innerHTML = window.getStaffInlineExpandRowHTML ? window.getStaffInlineExpandRowHTML(item) : '';
                 tbody.appendChild(expandRow);
+                window.updateStaffOrganization?.('inlineStaff'+item.id);
             }
         });
     }
@@ -314,11 +316,14 @@ window.renderStaffBranchTabs = async function () {
     const container = document.getElementById('staffBranchTabs');
     if (!container) return;
     container.querySelectorAll('.staff-branch-tab:not(:first-child)').forEach(function (tab) { tab.remove(); });
+    const allButton=container.querySelector('.staff-branch-tab');if(allButton){allButton.classList.toggle('bg-indigo-600',currentStaffBranch==='all');allButton.classList.toggle('text-white',currentStaffBranch==='all');allButton.classList.toggle('border-indigo-600',currentStaffBranch==='all');allButton.classList.toggle('border-gray-200',currentStaffBranch!=='all');}
+    const academyButton=document.createElement('button');academyButton.dataset.staffOrganization='academy';academyButton.className='staff-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border '+(currentStaffBranch==='academy'?'bg-indigo-600 text-white border-indigo-600':'border-gray-200 hover:bg-gray-50')+' transition';academyButton.textContent='آموزشگاه';academyButton.onclick=function(){window.filterStaffByBranch('academy');};container.appendChild(academyButton);
     const branchesList = (typeof allBranches !== 'undefined' && allBranches.length) ? allBranches : [{ id: 1, name: 'شعبه مرکزی' }, { id: 2, name: 'شعبه ونک' }, { id: 3, name: 'شعبه سعادت‌آباد' }, { id: 4, name: 'شعبه کرج' }];
     branchesList.forEach(function (branch) {
         const active = currentStaffBranch === branch.name;
         const btn = document.createElement('button');
         btn.className = 'staff-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ' + (active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50') + ' transition';
+        btn.dataset.staffOrganization=branch.name;
         btn.textContent = branch.name;
         btn.onclick = function () { window.filterStaffByBranch(branch.name); };
         container.appendChild(btn);
@@ -337,7 +342,7 @@ window.filterStaffByBranch = async function (branchName) {
         tabs[0].classList.remove('border-gray-200');
     } else {
         tabs.forEach(function (tab) {
-            if (tab.textContent === branchName) {
+            if (tab.dataset.staffOrganization === branchName) {
                 tab.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
                 tab.classList.remove('border-gray-200');
             }
@@ -358,7 +363,7 @@ window.filterStaff = async function () {
     filteredStaff = allStaff.filter(item => {
         const matchSearch = !search || item.name.toLowerCase().includes(search) || item.contractTitle.toLowerCase().includes(search) || (item.phone && item.phone.includes(search));
         const matchType = !type || item.type === type;
-        const matchBranch = !branch || item.branch === branch;
+        const matchBranch = !branch || (branch==='academy' ? Number(item.branchId||0)===0 : item.branch === branch);
         const matchStatus = !status || item.status === status;
         const matchCurrency = !currency || item.currency === currency;
         const matchLesson = !lesson || String(item.lessonId || '') === lesson;
@@ -373,7 +378,7 @@ window.filterStaff = async function () {
 window.renderStaffLessonFilter = function () {
     const select=document.getElementById('filterStaffLesson');if(!select)return;
     const current=select.value,items=new Map();
-    allStaff.filter(item=>item.type==='teacher'&&item.lessonId&&(currentStaffBranch==='all'||item.branch===currentStaffBranch)).forEach(item=>items.set(String(item.lessonId),item.lessonName||'—'));
+    allStaff.filter(item=>item.type==='teacher'&&item.lessonId&&(currentStaffBranch==='all'||(currentStaffBranch==='academy'?Number(item.branchId||0)===0:item.branch===currentStaffBranch))).forEach(item=>items.set(String(item.lessonId),item.lessonName||'—'));
     select.innerHTML='<option value="">همه درس‌های شعبه‌ها</option>'+Array.from(items.entries()).sort((a,b)=>a[1].localeCompare(b[1],'fa')).map(([id,name])=>`<option value="${id}">${name}</option>`).join('');
     if(items.has(current))select.value=current;
 };
@@ -384,6 +389,7 @@ window.toggleStaffInlineEdit = async function (id) {
 };
 
 window.deleteStaff = async function (id) {
+    if(editingRowId!==null){editingRowId=null;renderStaffTable(filteredStaff);}
     if (!(await AppDialog.confirmDelete(allStaff, id, 'عضو'))) return;
     await branchRequest(`/academy/admin/members/${id}/delete`,{});
     allStaff = allStaff.filter(item => item.id !== id);
@@ -398,76 +404,22 @@ window.getInlineEditRowHTML = async function (item) {
 };
 
 window.saveInlineStaff = async function (id) {
-    const name = document.getElementById(`inlineStaffName-${id}`)?.value.trim();
-    const phone = document.getElementById(`inlineStaffPhone-${id}`)?.value.trim();
-    const contractTitle = document.getElementById(`inlineStaffContractTitle-${id}`)?.value.trim();
-    const contractDescription = document.getElementById(`inlineStaffContractDescription-${id}`)?.value.trim();
-    const startDate = document.getElementById(`inlineStaffStartDate-${id}`)?.value;
-    const endDate = document.getElementById(`inlineStaffEndDate-${id}`)?.value;
-    const price = parseFloat(document.getElementById(`inlineStaffPrice-${id}`)?.value || 0);
-
-    if (!name || !phone || !contractTitle || !startDate || !endDate || price <= 0) {
-        alert('لطفاً تمام فیلدهای الزامی قرارداد را پر کنید.');
-        return;
-    }
-
-    const typeValue = document.getElementById(`inlineStaffType-${id}`).value;
-    const type = staffTypes.find(t => t.value === typeValue) || staffTypes[0];
-    const branch = document.getElementById(`inlineStaffBranch-${id}`).value;
-    const currencyId = parseInt(document.getElementById(`inlineStaffCurrency-${id}`).value, 10);
-    const currency = contractCurrencies.find(c => c.id === currencyId)?.label || 'تومان';
-    const status = document.getElementById(`inlineStaffStatus-${id}`).value;
-    const activityStart = document.getElementById(`inlineStaffActivityStart-${id}`)?.value || '';
-    const profileVisibility = document.getElementById(`inlineStaffProfileVisibility-${id}`)?.value || 'public';
-    let lessons = [];
-    if (type.value === 'teacher') {
-        lessons = readLessonsFromPrefix('inlineStaff' + id);
-        if (!lessons.length) {
-            alert('برای استاد حداقل یک نوع درس و سطح باید انتخاب شود.');
-            return;
-        }
-    }
-
-    const index = allStaff.findIndex(x => x.id === id);
-    if (index === -1) return;
-
-    allStaff[index] = {
-        ...allStaff[index],
-        name: name,
-        phone: phone,
-        type: type.value,
-        typeLabel: type.label,
-        contractTitle: contractTitle,
-        contractDescription: contractDescription,
-        branch: branch,
-        branchId: (typeof allBranches !== 'undefined' && allBranches.find(item => item.name === branch)?.id) || allStaff[index].branchId,
-        startDate: startDate,
-        endDate: endDate,
-        price: price,
-        currencyId: currencyId,
-        currency: currency,
-        status: status,
-        activityStart: activityStart,
-        profileVisibility: profileVisibility,
-        lessons: lessons
-    };
-    await branchRequest(`/academy/admin/members/${id}/update`,{payload_b64:encodeBranchPayload(allStaff[index])});
-
-    editingRowId = null;
-    filterStaff();
-    alert('✅ تغییرات با موفقیت ذخیره شد');
+    const p='inlineStaff'+id,get=s=>document.getElementById(p+s),type=get('Type')?.value,lessons=type==='teacher'?readLessonsFromPrefix(p):[],index=allStaff.findIndex(x=>x.id===id);
+    const data={...allStaff[index],name:get('Name')?.value.trim(),phone:get('Phone')?.value.trim(),nationalId:get('NationalId')?.value.trim(),gender:get('Gender')?.value,birthDate:get('BirthDate')?.value,profileVisibility:get('ProfileVisibility')?.value,type,roleId:Number(get('Role')?.value),organizationUserId:Number(get('Organization')?.value||window.staffCatalog?.organizations?.[0]?.user_id),contractTitle:get('ContractTitle')?.value.trim(),contractDescription:get('ContractDescription')?.value.trim(),currencyId:Number(get('Currency')?.value),price:Number(get('Price')?.value),startDate:get('StartDate')?.value,endDate:get('EndDate')?.value,lessons,lessonId:Number(lessons[0]?.type||0),levelId:Number(lessons[0]?.level||0)};
+    if(index<0||!data.name||!data.phone||!data.nationalId||!data.birthDate||!data.roleId||!data.contractTitle||!data.startDate||!data.endDate||data.price<=0||(type==='teacher'&&!lessons.length))return alert('لطفاً تمام فیلدهای الزامی را تکمیل کنید.');
+    try{await branchRequest(`/academy/admin/members/${id}/update`,{payload_b64:encodeBranchPayload(data)});editingRowId=null;await loadBranches();alert('✅ تغییرات با موفقیت ذخیره شد');}catch(error){alert(error.message);}
 };
 
 // ==================== خروجی اکسل ====================
 window.exportStaffToExcel = async function () {
     const data = filteredStaff.length ? filteredStaff : allStaff;
     let csv = '\uFEFF';
-    csv += 'ردیف,نام,نوع پرسنل,عنوان قرارداد,شعبه,تاریخ شروع,تاریخ خاتمه,مبلغ قرارداد,واحد پول,وضعیت,شماره تماس,شروع فعالیت,نمایش پروفایل,دروس\n';
+    csv += 'ردیف,نام,نوع قرارداد,عنوان قرارداد,سازمان,تاریخ شروع,تاریخ خاتمه,مبلغ قرارداد,واحد پول,وضعیت,شماره تماس,نمایش پروفایل,درس\n';
 
     data.forEach((item, index) => {
         const lessonsText = (item.lessonName || formatLessonsSummary(item.lessons)).replace(/"/g, '""');
         const vis = item.profileVisibility === 'private' ? 'خصوصی' : 'عمومی';
-        csv += `${index + 1},"${item.name}","${item.typeLabel}","${item.contractTitle}","${item.branch}",${item.startDate},${item.endDate},${item.price},"${item.currency}","${item.status}","${item.phone}","${item.activityStart || ''}","${vis}","${lessonsText}"\n`;
+        csv += `${index + 1},"${item.name}","${item.typeLabel}","${item.contractTitle}","${item.branch}",${item.startDate},${item.endDate},${item.price},"${item.currency}","${item.status}","${item.phone}","${vis}","${lessonsText}"\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -574,6 +526,7 @@ window.generateStaffPDF = async function() {
 window.openAddStaffModal = async function () {
     const modalHTML = window.getStaffAddModalHTML ? window.getStaffAddModalHTML() : '';
     document.getElementById('modalContainer').innerHTML = modalHTML;
+    window.updateStaffOrganization?.('staff');
 };
 
 window.saveStaff = async function () {
@@ -592,11 +545,9 @@ window.saveStaff = async function () {
 
     const typeValue = document.getElementById('staffType').value;
     const type = staffTypes.find(t => t.value === typeValue) || staffTypes[0];
-    const branch = document.getElementById('staffBranch').value;
     const currencyId = parseInt(document.getElementById('staffCurrency').value, 10);
-    const currency = contractCurrencies.find(c => c.id === currencyId)?.label || 'تومان';
+    const currency = (window.contractCurrencies || contractCurrencies).find(c => Number(c.id) === currencyId)?.label || 'تومان';
 
-    const activityStart = document.getElementById('staffActivityStart')?.value || '';
     const profileVisibility = document.getElementById('staffProfileVisibility')?.value || 'public';
     let lessons = [];
     if (type.value === 'teacher') {
@@ -607,35 +558,17 @@ window.saveStaff = async function () {
         }
     }
 
-    allStaff.unshift({
-        id: Date.now(),
-        name: name,
-        phone: phone,
-        type: type.value,
-        typeLabel: type.label,
-        contractTitle: contractTitle,
-        contractDescription: contractDescription,
-        branch: branch,
-        startDate: startDate,
-        endDate: endDate,
-        price: price,
-        currencyId: currencyId,
-        currency: currency,
-        status: 'فعال',
-        activityStart: activityStart,
-        profileVisibility: profileVisibility,
-        lessons: lessons
-    });
-
-    filterStaff();
-    closeModal();
-    alert('✅ پرسنل با موفقیت ثبت شد');
+    const lesson=lessons[0]||{};
+    const data={name,phone,nationalId:document.getElementById('staffNationalId')?.value.trim(),gender:document.getElementById('staffGender')?.value,birthDate:document.getElementById('staffBirthDate')?.value,profileVisibility,type:type.value,roleId:Number(document.getElementById('staffRole')?.value),organizationUserId:Number(document.getElementById('staffOrganization')?.value||window.staffCatalog?.organizations?.[0]?.user_id),contractTitle,contractDescription,startDate,endDate,price,currencyId,lessonId:Number(lesson.type||0),levelId:Number(lesson.level||0)};
+    if(!data.nationalId||!data.birthDate||!data.roleId)return alert('کد ملی، تاریخ تولد و نقش الزامی است.');
+    try{await branchRequest('/academy/admin/members',{payload_b64:encodeBranchPayload(data)});closeModal();await loadBranches();alert('✅ پرسنل با موفقیت ثبت شد');}catch(error){alert(error.message);}
 };
 
 // ==================== نمایش جزئیات پرسنل ====================
 window.viewStaff = async function (id) {
     const item = allStaff.find(x => x.id === id);
     if (!item) return;
+    if(editingRowId!==null){editingRowId=null;renderStaffTable(filteredStaff);}
 
     const modalHTML = window.getStaffDetailsModalHTML ? window.getStaffDetailsModalHTML(item) : '';
     document.getElementById('modalContainer').innerHTML = modalHTML;
@@ -648,6 +581,7 @@ window.editStaff = async function (id) {
 
     const modalHTML = window.getStaffEditModalHTML ? window.getStaffEditModalHTML(item) : '';
     document.getElementById('modalContainer').innerHTML = modalHTML;
+    window.updateStaffOrganization?.('editStaff');
 };
 
 window.saveEditedStaff = async function (id) {
@@ -658,8 +592,10 @@ window.saveEditedStaff = async function (id) {
     const startDate = document.getElementById('editStaffStartDate')?.value;
     const endDate = document.getElementById('editStaffEndDate')?.value;
     const price = parseFloat(document.getElementById('editStaffPrice')?.value || 0);
+    const nationalId = document.getElementById('editStaffNationalId')?.value.trim();
+    const birthDate = document.getElementById('editStaffBirthDate')?.value;
 
-    if (!name || !phone || !contractTitle || !startDate || !endDate || price <= 0) {
+    if (!name || !phone || !nationalId || !birthDate || !contractTitle || !startDate || !endDate || price <= 0) {
         alert('لطفاً تمام فیلدهای الزامی قرارداد را پر کنید.');
         return;
     }
@@ -669,11 +605,8 @@ window.saveEditedStaff = async function (id) {
 
     const typeValue = document.getElementById('editStaffType').value;
     const type = staffTypes.find(t => t.value === typeValue) || staffTypes[0];
-    const branch = document.getElementById('editStaffBranch').value;
     const currencyId = parseInt(document.getElementById('editStaffCurrency').value, 10);
-    const currency = contractCurrencies.find(c => c.id === currencyId)?.label || 'تومان';
-    const status = document.getElementById('editStaffStatus').value;
-    const activityStart = document.getElementById('editStaffActivityStart')?.value || '';
+    const currency = (window.contractCurrencies || contractCurrencies).find(c => Number(c.id) === currencyId)?.label || 'تومان';
     const profileVisibility = document.getElementById('editStaffProfileVisibility')?.value || 'public';
     let lessons = [];
     if (type.value === 'teacher') {
@@ -692,24 +625,22 @@ window.saveEditedStaff = async function (id) {
         typeLabel: type.label,
         contractTitle: contractTitle,
         contractDescription: contractDescription,
-        branch: branch,
-        branchId: (typeof allBranches !== 'undefined' && allBranches.find(item => item.name === branch)?.id) || allStaff[index].branchId,
+        organizationUserId:Number(document.getElementById('editStaffOrganization')?.value||window.staffCatalog?.organizations?.[0]?.user_id),
+        roleId:Number(document.getElementById('editStaffRole')?.value),
+        gender:document.getElementById('editStaffGender')?.value,
+        nationalId:nationalId,
+        birthDate:birthDate,
         startDate: startDate,
         endDate: endDate,
         price: price,
         currencyId: currencyId,
         currency: currency,
-        status: status,
-        activityStart: activityStart,
         profileVisibility: profileVisibility,
-        lessons: lessons
+        lessons: lessons,
+        lessonId:Number(lessons[0]?.type||0),levelId:Number(lessons[0]?.level||0)
     };
 
-    await branchRequest(`/academy/admin/members/${id}/update`,{payload_b64:encodeBranchPayload(allStaff[index])});
-
-    filterStaff();
-    closeModal();
-    alert('✅ تغییرات با موفقیت ذخیره شد');
+    try{await branchRequest(`/academy/admin/members/${id}/update`,{payload_b64:encodeBranchPayload(allStaff[index])});closeModal();await loadBranches();alert('✅ تغییرات با موفقیت ذخیره شد');}catch(error){alert(error.message);}
 };
 
 // ==================== اجرای اولیه ====================
