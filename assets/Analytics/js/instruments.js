@@ -157,7 +157,7 @@ window.filterInstruments = async function () {
     const level = document.getElementById('filterInstrumentLevel') && document.getElementById('filterInstrumentLevel').value || '';
 
     filteredInstruments = allUserInstruments.filter(function (item) {
-        const matchBranch = currentInstBranch === 'all' || item.branchId == currentInstBranch;
+        const matchBranch = window.matchesOrganizationFilter(item,currentInstBranch);
         const matchSearch = !search || (item.title || '').toLowerCase().includes(search) || (item.summary || '').toLowerCase().includes(search);
         const matchStatus = !status || item.status === status;
         const matchLevel = !level || String(item.level_id) === String(level);

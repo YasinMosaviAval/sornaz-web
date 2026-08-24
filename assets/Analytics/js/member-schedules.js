@@ -222,7 +222,7 @@ window.filterMemberSchedules = async function () {
     const timezone = document.getElementById('filterMemberTimezone') && document.getElementById('filterMemberTimezone').value || '';
 
     filteredMemberSchedules = allMemberSchedules.filter(function (s) {
-        const matchBranch = currentMemberScheduleBranch === 'all' || s.branchId == currentMemberScheduleBranch;
+        const matchBranch = window.matchesOrganizationFilter(s,currentMemberScheduleBranch);
         const matchSearch = !search || (s.name || '').toLowerCase().includes(search) || (s.summary || '').toLowerCase().includes(search);
         const matchRole = !role || s.role === role;
         const matchDay = !day || s.day === day;

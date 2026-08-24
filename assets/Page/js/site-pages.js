@@ -352,6 +352,7 @@ window.filterSiteArticles = async function (cat) {
         const active = (siteArtCat === 'all' && tab.textContent === 'همه') || tab.textContent === siteArtCat;
         tab.classList.toggle('bg-indigo-600', active);
         tab.classList.toggle('hover:bg-indigo-700', active);
+        tab.classList.toggle('hover:bg-gray-50', !active);
         tab.classList.toggle('text-white', active);
         tab.classList.toggle('border', !active);
         tab.classList.toggle('border-gray-200', !active);

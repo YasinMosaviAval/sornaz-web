@@ -4,10 +4,11 @@
     let dashboardData = null;
     let currentDashboardBranch = 'all';
     let loading = false;
+    let pendingDashboardBranch = null;
 
     function endpoint() {
         const params = new URLSearchParams();
-        if (currentDashboardBranch !== 'all') params.set('branchId', currentDashboardBranch);
+        if (currentDashboardBranch !== 'all') params.set('branchId', currentDashboardBranch === 'academy' ? '0' : currentDashboardBranch);
         return '/analytics/admin-dashboard' + (params.size ? '?' + params : '');
     }
 
@@ -44,8 +45,9 @@
     window.renderDashboardBranchTabs = function () {
         const container = document.getElementById('dashboardBranchTabs');
         if (!container || !dashboardData) return;
+        container.dataset.selectedValue = String(currentDashboardBranch);
         container.innerHTML = '';
-        [{ id: 'all', name: 'همه شعبه‌ها' }, ...(dashboardData.branches || [])].forEach(branch => {
+        [{ id: 'all', name: 'همه' }, ...(dashboardData.branches || [])].forEach(branch => {
             const active = String(currentDashboardBranch) === String(branch.id);
             const button = document.createElement('button');
             button.type = 'button';
@@ -59,8 +61,14 @@
     };
 
     window.filterDashboardByBranch = async function (branchId) {
-        if (loading || String(branchId) === String(currentDashboardBranch)) return;
+        if (String(branchId) === String(currentDashboardBranch)) return;
         currentDashboardBranch = branchId;
+        if (loading) {
+            pendingDashboardBranch = branchId;
+            window.renderDashboardBranchTabs();
+            window.applyAcademyOrganizationTabs?.();
+            return;
+        }
         await window.refreshDashboard();
     };
 
@@ -89,6 +97,10 @@
         refreshIcon?.classList.add('fa-spin');
         try {
             dashboardData = await requestDashboard();
+            if(currentDashboardBranch==='academy'){
+                ['todayClasses','urgentItems','recentPayments','recentDeposits','todayAbsences','unreadMessages','recentRegistrations','upcomingHolidays'].forEach(key=>{dashboardData[key]=(dashboardData[key]||[]).filter(item=>window.matchesOrganizationFilter(item,'academy'));});
+                dashboardData.stats={...(dashboardData.stats||{}),activeStudents:0,todayClasses:0,monthlyIncome:'0',attendanceRate:'۰٪',pendingPayments:0,absencesToday:0,newMessages:dashboardData.unreadMessages.length,urgentAlerts:dashboardData.urgentItems.length,newStudentsWeek:0,pointsAwarded:0};
+            }
             window.renderDashboardBranchTabs();
             window.renderDashboard();
         } catch (error) {
@@ -96,6 +108,10 @@
         } finally {
             loading = false;
             refreshIcon?.classList.remove('fa-spin');
+            if (pendingDashboardBranch !== null) {
+                pendingDashboardBranch = null;
+                window.refreshDashboard();
+            }
         }
     };
 

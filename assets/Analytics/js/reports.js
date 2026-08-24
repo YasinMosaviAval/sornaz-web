@@ -191,7 +191,7 @@ window.filterReports = function () {
     const todayISO = now.toISOString().split('T')[0];
 
     filteredReports = allReports.filter(function (r) {
-        const matchBranch = currentReportBranch === 'all' || String(r.branchId) === String(currentReportBranch);
+        const matchBranch = window.matchesOrganizationFilter(r,currentReportBranch);
         const matchSearch = !search || (r.title || '').toLowerCase().includes(search) || (r.type || '').toLowerCase().includes(search);
         const matchType = !type || r.type === type;
         const matchStatus = !status || r.status === status;
