@@ -89,7 +89,7 @@
                     <select id="${id('Type')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                         ${renderOptions(types, item.typeId || (types[0] && types[0].value))}
                     </select>
-                    <button type="button" onclick="promptAddClassroomType()" class="text-sm text-indigo-600 mt-1">+ نوع جدید</button>
+                    ${window.classroomPermissions?.canCreate ? '<button type="button" onclick="promptAddClassroomType()" class="text-sm text-indigo-600 mt-1">+ نوع جدید</button>' : ''}
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">شعبه *</label>

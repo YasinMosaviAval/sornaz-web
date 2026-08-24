@@ -307,7 +307,7 @@ class AcademyBranchService {
         if ($description === '' || mb_strlen($description) > 5000) throw new RuntimeException('شرح نوع آموزشی الزامی است و حداکثر ۵۰۰۰ نویسه دارد.');
         return transaction(function () use ($ownerUserId, $title, $summary, $description) {
             foreach ($this->types() as $type) if ($type['name'] === $title) return $type;
-            $id = DB::table('academy_branch_types')->insertGetId(['type' => 'other', 'created_by' => $ownerUserId, 'updated_by' => $ownerUserId]);
+            $id = DB::table('academy_branch_types')->insertGetId(['created_by' => $ownerUserId, 'updated_by' => $ownerUserId]);
             $this->setTypeTranslations($id, ['title'=>$title,'summary'=>$summary,'description'=>$description], $ownerUserId);
             return ['id' => $id, 'name' => $title, 'title'=>$title, 'summary'=>$summary, 'description'=>$description];
         });
@@ -342,11 +342,12 @@ class AcademyBranchService {
             'music' => ['fa'=>['title'=>'موسیقی','summary'=>'آموزش تخصصی موسیقی و مهارت‌های وابسته.','description'=>'این نوع آموزشی شامل آموزش ساز، آواز، مبانی نظری موسیقی و دوره‌های عملی مرتبط است.'],'en'=>['title'=>'Music','summary'=>'Professional music education and related skills.','description'=>'This educational type includes instruments, singing, music theory, and related practical courses.']],
             'poetry' => ['fa'=>['title'=>'شعر و ادبیات','summary'=>'آموزش شعر، ادبیات و مهارت‌های نوشتاری.','description'=>'این نوع آموزشی دوره‌های شعر، ادبیات فارسی، نگارش خلاق، نقد و خوانش متون ادبی را پوشش می‌دهد.'],'en'=>['title'=>'Poetry and Literature','summary'=>'Education in poetry, literature, and writing skills.','description'=>'This educational type covers poetry, Persian literature, creative writing, criticism, and literary reading.']],
         ];
-        foreach ($defaults as $type=>$locales) {
-            $row=DB::table('academy_branch_types')->where('type',$type)->first();
+        foreach ($defaults as $locales) {
+            $existingTranslation=DB::table('translations')->where('table_name','academy_branch_types')->where('field','title')->where('locale','fa')->where('value',$locales['fa']['title'])->first();
+            $row=$existingTranslation?DB::table('academy_branch_types')->where('academy_branch_type_id',(int)$existingTranslation['table_id'])->first():null;
             $values=['updated_by'=>$ownerUserId,'deleted_at'=>null,'deleted_by'=>null];
             if($row){$id=(int)$row['academy_branch_type_id'];DB::table('academy_branch_types')->where('academy_branch_type_id',$id)->update($values);}
-            else $id=DB::table('academy_branch_types')->insertGetId(['type'=>$type,'created_by'=>$ownerUserId]+$values);
+            else $id=DB::table('academy_branch_types')->insertGetId(['created_by'=>$ownerUserId]+$values);
             foreach($locales as $locale=>$fields)$this->setTypeTranslations($id,$fields,$ownerUserId,$locale);
         }
     }
@@ -430,7 +431,7 @@ class AcademyBranchService {
             ? ($tr->get('academies', $academyId, 'title', 'fa') ?: $tr->get('users', (int)$academy['user_id'], 'full_name', 'fa') ?: ($academyUser['username'] ?? 'آموزشگاه'))
             : 'بدون آموزشگاه';
         $type = $row['academy_branch_type_id'] ? DB::table('academy_branch_types')->where('academy_branch_type_id', (int)$row['academy_branch_type_id'])->first() : null;
-        $typeName = $type ? ($tr->get('academy_branch_types', (int)$type['academy_branch_type_id'], 'title', 'fa') ?: $tr->get('academy_branch_types', (int)$type['academy_branch_type_id'], 'name', 'fa') ?: $this->typeLabel($type['type'])) : 'سایر';
+        $typeName = $type ? ($tr->get('academy_branch_types', (int)$type['academy_branch_type_id'], 'title', 'fa') ?: $tr->get('academy_branch_types', (int)$type['academy_branch_type_id'], 'name', 'fa') ?: 'نوع آموزشی') : 'سایر';
         $contacts = DB::table('user_contacts')->where('user_id', $userId)->whereNull('deleted_at')->get();
         $phones = []; $links = [];
         foreach ($contacts as $contact) {
@@ -470,10 +471,9 @@ class AcademyBranchService {
 
     private function types(): array {
         $tr = TranslationService::manager();
-        return array_map(function($row)use($tr){$id=(int)$row['academy_branch_type_id'];$title=$tr->get('academy_branch_types',$id,'title','fa')?:$tr->get('academy_branch_types',$id,'name','fa')?:$this->typeLabel($row['type']);return ['id'=>$id,'name'=>$title,'title'=>$title,'summary'=>$tr->get('academy_branch_types',$id,'summary','fa')?:'','description'=>$tr->get('academy_branch_types',$id,'description','fa')?:''];}, DB::table('academy_branch_types')->whereNull('deleted_at')->get());
+        return array_map(function($row)use($tr){$id=(int)$row['academy_branch_type_id'];$title=$tr->get('academy_branch_types',$id,'title','fa')?:$tr->get('academy_branch_types',$id,'name','fa')?:('نوع آموزشی '.$id);return ['id'=>$id,'name'=>$title,'title'=>$title,'summary'=>$tr->get('academy_branch_types',$id,'summary','fa')?:'','description'=>$tr->get('academy_branch_types',$id,'description','fa')?:''];}, DB::table('academy_branch_types')->whereNull('deleted_at')->get());
     }
 
-    private function typeLabel(?string $type): string { return ['music'=>'موسیقی','poetry'=>'شعر و ادبیات','painting'=>'نقاشی','hybrid'=>'ترکیبی','other'=>'سایر'][$type ?? 'other'] ?? 'سایر'; }
     private function activeStatus(mixed $status): bool { return in_array(trim((string)$status), ['active', 'approved', 'فعال'], true); }
 
     private function validate(array $data): array {
