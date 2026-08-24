@@ -63,25 +63,42 @@ class AcademyClassroomController {
 
 
     public function storeType() {
-        if(!$this->admin())abort(403);
-        return $this->run(fn()=>$this->s->saveType((int)auth()->id(),$this->data()),201);
+        return $this->run(fn()=>$this->s->saveType((int)auth()->id(),$this->data(),$this->admin()),201);
     }
 
 
     public function updateType(int $id) {
-        if(!$this->admin())abort(403);
-        return $this->run(fn()=>$this->s->saveType((int)auth()->id(),$this->data(),$id));
+        return $this->run(fn()=>$this->s->saveType((int)auth()->id(),$this->data(),$this->admin(),$id));
     }
 
 
     public function deleteType(int $id) {
-        if(!$this->admin())abort(403);
         return $this->run(
             function() use($id) {
-                $this->s->deleteType((int)auth()->id(),$id);
+                $this->s->deleteType((int)auth()->id(),$id,$this->admin());
                 return null;
             }
         );
+    }
+
+    public function cycleTypeStatus(int $id) {
+        return $this->run(fn()=>$this->s->cycleStatus((int)auth()->id(),$id,$this->admin()));
+    }
+
+    public function storeTypeCategory() {
+        return $this->run(fn()=>$this->s->createCategory((int)auth()->id(),$this->data(),$this->admin()),201);
+    }
+
+    public function updateTypeCategory(string $value) {
+        return $this->run(fn()=>$this->s->updateCategory((int)auth()->id(),$value,$this->data(),$this->admin()));
+    }
+
+    public function deleteTypeCategory(string $value) {
+        return $this->run(function()use($value){$this->s->deleteCategory((int)auth()->id(),$value,$this->admin());return null;});
+    }
+
+    public function realtimeVersion() {
+        return $this->run(fn()=>$this->s->realtimeVersion((int)auth()->id(),$this->admin()));
     }
 
 

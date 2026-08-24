@@ -9,6 +9,20 @@ $hasAcademyManagementRole = $panelUser && (bool)\Core\database\DB::table('academ
     ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->first();
 $hasAcademyPanelAccess = $isSiteAdmin || $isBranchAccount || $hasAcademyManagementRole
     || in_array(($panelUser['type'] ?? ''), ['academy', 'branch'], true);
+$panelUserId = (int)($panelUser['user_id'] ?? 0);
+$ownsAcademy = $panelUserId && (\Core\database\DB::table('academies')->where('user_id',$panelUserId)->whereNull('deleted_at')->first()
+    || \Core\database\DB::table('academies')->where('created_by',$panelUserId)->whereNull('deleted_at')->first());
+$isAcademyManager = $panelUserId && (bool)\Core\database\DB::table('academy_branch_members')
+    ->join('academy_branch_member_roles','academy_branch_member_roles.member_id','=','academy_branch_members.member_id')
+    ->join('access_system_roles','access_system_roles.role_id','=','academy_branch_member_roles.role_id')
+    ->where('academy_branch_members.user_id',$panelUserId)
+    ->whereRaw("(access_system_roles.name LIKE 'academy_%manager%' AND access_system_roles.name NOT LIKE '%branch%')")
+    ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->first();
+$ownsMainBranch = $panelUserId && (bool)\Core\database\DB::table('academy_branches')->where('user_id',$panelUserId)->where('is_main',1)->whereNull('deleted_at')->first();
+if (!$ownsMainBranch && $panelUserId) foreach (\Core\database\DB::table('academy_branch_members')->where('user_id',$panelUserId)->where('status','active')->whereNull('deleted_at')->get() as $classroomMember) {
+    if (\Core\database\DB::table('academy_branches')->where('branch_id',(int)$classroomMember['branch_id'])->where('is_main',1)->whereNull('deleted_at')->first()) { $ownsMainBranch=true; break; }
+}
+$canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager || $ownsMainBranch;
 ?>
 <div id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-indigo-900 text-white flex flex-col shadow-2xl transform -translate-x-full transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:shadow-none">
     <!-- Header -->
@@ -88,6 +102,7 @@ $hasAcademyPanelAccess = $isSiteAdmin || $isBranchAccount || $hasAcademyManageme
             </li>
             <li><a href="#" onclick="showSection('teachers')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-chalkboard-teacher w-5 text-center"></i> پرسنل</a></li>
             <li><a href="#" onclick="showSection('students')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-users w-5 text-center"></i> هنرجویان</a></li>
+            <?php if($canCreateClassroomType): ?>
             <li>
                 <button type="button" onclick="toggleSidebarSubmenu('classroomsSubmenu',this)" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800">
                     <span class="flex gap-3"><i class="fas fa-door-open w-5"></i>کلاس‌ها</span>
@@ -95,11 +110,12 @@ $hasAcademyPanelAccess = $isSiteAdmin || $isBranchAccount || $hasAcademyManageme
                 </button>
                 <ul id="classroomsSubmenu" class="mt-1 mr-4 space-y-1 hidden border-r border-indigo-700/60 pr-2">
                     <li><a href="#" onclick="showSection('classrooms')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm"><i class="fas fa-door-open w-4"></i>کلاس‌ها</a></li>
-                    <?//php if($isSiteAdmin):?>
-                    <?//php endif;?>
                     <li><a href="#" onclick="showSection('classroom-types')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm"><i class="fas fa-shapes w-4"></i>انواع کلاس</a></li>
                 </ul>
             </li>
+            <?php else: ?>
+            <li><a href="#" onclick="showSection('classrooms')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-door-open w-5 text-center"></i> کلاس‌ها</a></li>
+            <?php endif; ?>
             <!-- <li><a href="#" onclick="showSection('instruments')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-guitar w-5 text-center"></i> سازها</a></li> -->
             <li><a href="#" onclick="showSection('lessons')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-book w-5 text-center"></i> درس‌ها</a></li>
             <li><button type="button" onclick="toggleSidebarSubmenu('coursesSubmenu',this)" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><span class="flex gap-3"><i class="fas fa-book-open w-5"></i>دوره‌ها</span><i class="fas fa-chevron-down text-xs submenu-chevron"></i></button><ul id="coursesSubmenu" class="mt-1 mr-4 space-y-1 hidden border-r border-indigo-700/60 pr-2"><li><a href="#" onclick="showSection('courses')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm"><i class="fas fa-book-open w-4"></i>دوره‌ها</a></li><li><a href="#" onclick="showSection('course-levels')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm"><i class="fas fa-signal w-4"></i>سطح دوره‌ها</a></li><li><a href="#" onclick="showSection('terms')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm"><i class="fas fa-calendar-check w-4"></i>ترم‌ها</a></li></ul></li>
