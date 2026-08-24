@@ -225,7 +225,7 @@ window.filterBranchSchedules = async function () {
     const timezone = document.getElementById('filterBranchTimezone') && document.getElementById('filterBranchTimezone').value || '';
 
     filteredBranchSchedules = allBranchSchedules.filter(function (s) {
-        const matchBranch = currentBranchScheduleBranch === 'all' || s.branchId == currentBranchScheduleBranch;
+        const matchBranch = window.matchesOrganizationFilter(s,currentBranchScheduleBranch);
         const matchDay = !day || s.day === day;
         const matchStatus = !status || s.status === status;
         const matchRepeat = !repeat || s.repeatPeriod === repeat;

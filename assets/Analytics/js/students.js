@@ -232,7 +232,7 @@ window.filterStudents = async function () {
     const remaining = document.getElementById('filterStudentRemaining') && document.getElementById('filterStudentRemaining').value || '';
 
     filteredStudents = allStudents.filter(function (stu) {
-        const matchBranch = currentStudentBranch === 'all' || String(stu.branchId) === String(currentStudentBranch);
+        const matchBranch = window.matchesOrganizationFilter(stu,currentStudentBranch);
         const matchSearch = !search ||
             (stu.name || '').toLowerCase().includes(search) ||
             (stu.teacher || '').toLowerCase().includes(search) ||

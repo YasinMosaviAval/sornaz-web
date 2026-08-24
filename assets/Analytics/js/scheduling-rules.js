@@ -113,7 +113,7 @@ window.filterRules = async function () {
     const type = document.getElementById('filterRuleType') && document.getElementById('filterRuleType').value || '';
 
     filteredRules = allRules.filter(function (item) {
-        const matchBranch = currentRuleBranch === 'all' || item.branchId == currentRuleBranch;
+        const matchBranch = window.matchesOrganizationFilter(item,currentRuleBranch);
         const matchSearch = !search ||
             (item.title || '').toLowerCase().includes(search) ||
             (item.summary || '').toLowerCase().includes(search) ||

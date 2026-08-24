@@ -154,7 +154,7 @@ window.filterClassrooms = async function () {
     const capacity = document.getElementById('filterClassroomCapacity')?.value || '';
 
     filteredClassrooms = allClassrooms.filter(item => {
-        const matchBranch = currentClassroomBranchFilter === 'all' || item.branchId == currentClassroomBranchFilter;
+        const matchBranch = window.matchesOrganizationFilter(item,currentClassroomBranchFilter);
         const matchSearch = !search || (item.name || '').toLowerCase().includes(search);
         const matchStatus = !status || item.status === status;
         const matchEquip = !equipment || (item.equipment || []).some(e => e.name === equipment);

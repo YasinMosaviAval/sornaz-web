@@ -156,7 +156,7 @@ window.filterLessons = async function () {
     const level = document.getElementById('filterLessonLevel') && document.getElementById('filterLessonLevel').value || '';
 
     filteredLessons = allUserLessons.filter(function (item) {
-        const matchBranch = currentLesnBranch === 'all' || item.branchId == currentLesnBranch;
+        const matchBranch = window.matchesOrganizationFilter(item,currentLesnBranch);
         const matchSearch = !search || (item.title || '').toLowerCase().includes(search) || (item.summary || '').toLowerCase().includes(search);
         const matchStatus = !status || item.status === status;
         const matchLevel = !level || String(item.level_id) === String(level);

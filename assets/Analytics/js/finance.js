@@ -228,7 +228,7 @@ window.filterFinance = async function () {
         if (item.status === 'حذف‌شده' && status !== 'حذف‌شده') {
             // still show if explicitly filtered; otherwise hide deleted by default? user asked for filter by status so show all unless filtered
         }
-        const matchBranch = currentFinanceBranch === 'all' || item.branchId == currentFinanceBranch;
+        const matchBranch = window.matchesOrganizationFilter(item,currentFinanceBranch);
         const matchSearch = !search || (item.title || '').toLowerCase().includes(search) || (item.course || '').toLowerCase().includes(search) || (item.summary || '').toLowerCase().includes(search);
         const matchStatus = !status || item.status === status;
         const matchType = !type || item.type === type;

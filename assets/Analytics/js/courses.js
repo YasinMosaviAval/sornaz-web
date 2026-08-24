@@ -124,7 +124,7 @@ window.filterCourses = async function () {
     const instrument = document.getElementById('filterCourseInstrument')?.value || '';
 
     filteredCourses = allCourses.filter(item => {
-        const matchBranch = currentCourseBranch === 'all' || item.branchId == currentCourseBranch;
+        const matchBranch = window.matchesOrganizationFilter(item,currentCourseBranch);
         const matchSearch = !search || (item.name || '').toLowerCase().includes(search);
         const matchStatus = !status || item.status === status;
         const matchInstrument = !instrument || item.instrument === instrument;

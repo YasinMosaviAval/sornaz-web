@@ -549,7 +549,7 @@ window.filterTerms = async function () {
     const weekday = document.getElementById('filterTermWeekday') && document.getElementById('filterTermWeekday').value || '';
 
     filteredTerms = allTerms.filter(function (item) {
-        const matchBranch = currentTermBranch === 'all' || item.branchId == currentTermBranch;
+        const matchBranch = window.matchesOrganizationFilter(item,currentTermBranch);
         const matchSearch = !search || (item.name || '').toLowerCase().includes(search);
         const matchStatus = !status || item.status === status;
         const matchCourse = !course || item.course === course;

@@ -215,7 +215,7 @@ window.filterHolidayLeaves = async function () {
     const type = document.getElementById('filterHolidayLeaveType') && document.getElementById('filterHolidayLeaveType').value || '';
 
     filteredHolidayLeaves = allHolidayLeaves.filter(function (s) {
-        const matchBranch = currentHolidayLeaveBranch === 'all' || s.branchId == currentHolidayLeaveBranch;
+        const matchBranch = window.matchesOrganizationFilter(s,currentHolidayLeaveBranch);
         const matchSearch = !search || (s.name || '').toLowerCase().includes(search) || (s.summary || '').toLowerCase().includes(search);
         const matchDate = !date || s.date === date;
         const matchStatus = !status || s.status === status;

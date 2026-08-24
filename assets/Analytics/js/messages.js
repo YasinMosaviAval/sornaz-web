@@ -150,7 +150,7 @@ window.filterMessages = async function () {
     const type = document.getElementById('filterMessageType') && document.getElementById('filterMessageType').value || '';
 
     filteredMessages = allMessages.filter(function (m) {
-        const matchBranch = currentMessageBranch === 'all' || String(m.branchId) === String(currentMessageBranch);
+        const matchBranch = window.matchesOrganizationFilter(m,currentMessageBranch);
         const matchSearch = !search ||
             (m.title || '').toLowerCase().includes(search) ||
             (m.sender || '').toLowerCase().includes(search) ||

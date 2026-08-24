@@ -206,7 +206,7 @@ window.filterPoints = async function () {
     const status = document.getElementById('filterPointStatus') && document.getElementById('filterPointStatus').value || '';
 
     filteredPoints = allPoints.filter(function (p) {
-        const matchBranch = currentPointBranch === 'all' || String(p.branchId) === String(currentPointBranch);
+        const matchBranch = window.matchesOrganizationFilter(p,currentPointBranch);
         const matchSearch = !search ||
             (p.title || '').toLowerCase().includes(search) ||
             (p.action || '').toLowerCase().includes(search) ||

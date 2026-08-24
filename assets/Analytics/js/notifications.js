@@ -140,7 +140,7 @@ window.filterNotifications = async function () {
     const audience = document.getElementById('filterNotificationAudience') && document.getElementById('filterNotificationAudience').value || '';
 
     filteredNotifications = allNotifications.filter(function (n) {
-        const matchBranch = currentNotificationBranch === 'all' || String(n.branchId) === String(currentNotificationBranch);
+        const matchBranch = window.matchesOrganizationFilter(n,currentNotificationBranch);
         const matchSearch = !search ||
             (n.title || '').toLowerCase().includes(search) ||
             (n.body || '').toLowerCase().includes(search);
