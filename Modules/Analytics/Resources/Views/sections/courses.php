@@ -40,7 +40,7 @@
 
     <!-- فیلترها -->
     <div class="bg-white rounded-3xl p-5 mb-6 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             <div>
                 <input type="text" id="courseSearch" placeholder="جستجوی نام دوره..."
                        class="w-full border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500"
@@ -50,16 +50,22 @@
                 <select id="filterCourseStatus" onchange="filterCourses()"
                         class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                     <option value="">همه وضعیت‌ها</option>
-                    <option value="در انتظار">در انتظار</option>
-                    <option value="باز">باز</option>
-                    <option value="در حال برگزاری">در حال برگزاری</option>
-                    <option value="پایان‌یافته">پایان‌یافته</option>
+                    <option value="pending">در انتظار تأیید</option>
+                    <option value="open">باز</option>
+                    <option value="ongoing">در حال برگزاری</option>
+                    <option value="finished">پایان یافته</option>
                 </select>
             </div>
             <div>
                 <select id="filterCourseInstrument" onchange="filterCourses()"
                         class="w-full border border-gray-300 rounded-2xl py-3 px-4">
-                    <option value="">همه سازها</option>
+                    <option value="">همه درس‌ها</option>
+                </select>
+            </div>
+            <div>
+                <select id="filterCourseLevel" onchange="filterCourses()"
+                        class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                    <option value="">همه سطح‌ها</option>
                 </select>
             </div>
         </div>
@@ -83,22 +89,22 @@
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortCoursesBy('branchName')" class="flex items-center gap-1">
-                                شعبه <span id="courseSortIcon-branchName">↕</span>
+                                سازمان <span id="courseSortIcon-branchName">↕</span>
                             </button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortCoursesBy('instrument')" class="flex items-center gap-1">
-                                ساز / تخصص <span id="courseSortIcon-instrument">↕</span>
-                            </button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortCoursesBy('student_capacity')" class="flex items-center gap-1">
-                                ظرفیت هنرجوها <span id="courseSortIcon-student_capacity">↕</span>
+                                درس <span id="courseSortIcon-instrument">↕</span>
                             </button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortCoursesBy('teacher_capacity')" class="flex items-center gap-1">
                                 ظرفیت اساتید <span id="courseSortIcon-teacher_capacity">↕</span>
+                            </button>
+                        </th>
+                        <th class="text-right py-5 px-5 font-medium">
+                            <button onclick="sortCoursesBy('student_capacity')" class="flex items-center gap-1">
+                                ظرفیت هنرجوها <span id="courseSortIcon-student_capacity">↕</span>
                             </button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
@@ -114,7 +120,7 @@
         </div>
 
         <!-- صفحه‌بندی -->
-        <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
+        <div id="coursesPagination" class="hidden px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="coursesPaginationInfo">نمایش ۱ تا ۱۰ از ۴۰ دوره</span>
             <div class="flex items-center gap-2" id="coursesPaginationButtons"></div>
         </div>

@@ -67,6 +67,8 @@ Router::get('/academy/admin/courses', [AcademyCourseController::class, 'index'])
 Router::post('/academy/admin/courses', [AcademyCourseController::class, 'store'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/courses/{id}/update', [AcademyCourseController::class, 'update'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/courses/{id}/delete', [AcademyCourseController::class, 'destroy'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/courses/{id}/status', [AcademyCourseController::class, 'cycleStatus'])->middleware(['academy-panel','csrf']);
+Router::get('/academy/admin/courses/realtime-version', [AcademyCourseController::class, 'realtimeVersion'])->middleware('academy-panel');
 Router::post('/academy/admin/course-levels', [AcademyCourseController::class, 'storeLevel'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/course-levels/{id}/update', [AcademyCourseController::class, 'updateLevel'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/course-levels/{id}/delete', [AcademyCourseController::class, 'deleteLevel'])->middleware(['academy-panel','csrf']);
