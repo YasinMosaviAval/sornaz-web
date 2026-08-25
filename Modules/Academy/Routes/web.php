@@ -40,13 +40,15 @@ Router::post('/academy/admin/members', [AcademyBranchController::class, 'storeMe
 Router::post('/academy/admin/members/{id}/update', [AcademyBranchController::class, 'updateMember'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/members/{id}/delete', [AcademyBranchController::class, 'deleteMember'])->middleware(['academy-panel', 'csrf']);
 Router::get('/academy/admin/classrooms', [AcademyClassroomController::class, 'index'])->middleware('academy-panel');
+Router::get('/academy/admin/classrooms/realtime-version', [AcademyClassroomController::class, 'classroomsRealtimeVersion'])->middleware('academy-panel');
 Router::post('/academy/admin/classrooms', [AcademyClassroomController::class, 'store'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/classrooms/{id}/update', [AcademyClassroomController::class, 'update'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/classrooms/{id}/delete', [AcademyClassroomController::class, 'delete'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/classrooms/{id}/status', [AcademyClassroomController::class, 'cycleRoomStatus'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/classroom-types', [AcademyClassroomController::class, 'storeType'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/classroom-types/{id}/update', [AcademyClassroomController::class, 'updateType'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/classroom-types/{id}/delete', [AcademyClassroomController::class, 'deleteType'])->middleware(['academy-panel','csrf']);
-Router::post('/academy/admin/classroom-types/{id}/status', [AcademyClassroomController::class, 'cycleTypeStatus'])->middleware(['site-admin','csrf']);
+Router::post('/academy/admin/classroom-types/{id}/status', [AcademyClassroomController::class, 'cycleTypeStatus'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/classroom-type-categories', [AcademyClassroomController::class, 'storeTypeCategory'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/classroom-type-categories/{value}/update', [AcademyClassroomController::class, 'updateTypeCategory'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/classroom-type-categories/{value}/delete', [AcademyClassroomController::class, 'deleteTypeCategory'])->middleware(['academy-panel','csrf']);

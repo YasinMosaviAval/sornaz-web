@@ -38,7 +38,7 @@ class AcademyClassroomController {
 
 
     public function index() {
-        return $this->run(fn()=>$this->s->bootstrap((int)auth()->id(),$this->admin()));
+        return $this->run(function(){$actor=(int)auth()->id();$admin=$this->admin();$data=$this->s->bootstrap($actor,$admin);$data['permissions']['isBranchContext']=$this->s->isBranchContext($actor,$admin);return$data;});
     }
 
 
@@ -59,6 +59,10 @@ class AcademyClassroomController {
                 return null;
             }
         );
+    }
+
+    public function cycleRoomStatus(int $id) {
+        return $this->run(fn()=>$this->s->cycleRoomStatus((int)auth()->id(),$id,$this->admin()));
     }
 
 
@@ -99,6 +103,10 @@ class AcademyClassroomController {
 
     public function realtimeVersion() {
         return $this->run(fn()=>$this->s->realtimeVersion((int)auth()->id(),$this->admin()));
+    }
+
+    public function classroomsRealtimeVersion() {
+        return $this->run(fn()=>$this->s->classroomsRealtimeVersion((int)auth()->id(),$this->admin()));
     }
 
 

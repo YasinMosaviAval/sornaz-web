@@ -22,6 +22,13 @@
         return equipment.map(item => `${item.name} (${item.qty})`).join('، ');
     }
 
+    function equipmentListPDFHTML(equipment) {
+        if (!Array.isArray(equipment) || !equipment.length) return '—';
+        return equipment.map(item =>
+            `<span dir="rtl" style="display:inline-block; white-space:nowrap; unicode-bidi:isolate;">${escapeHtml(item.name)} <span dir="ltr" style="display:inline-block; unicode-bidi:isolate;">(${escapeHtml(item.qty)})</span></span>`
+        ).join('<span aria-hidden="true">، </span>');
+    }
+
     window.getClassroomRowHTML = function (item, statusClass) {
         return `
             <td class="py-4 px-5 font-medium">${escapeHtml(item.name)}</td>
@@ -30,7 +37,7 @@
             <td class="py-4 px-5">${item.capacity} نفر</td>
             <td class="py-4 px-5 text-sm text-gray-600 max-w-[220px] truncate" title="${escapeHtml(equipmentListText(item.equipment))}">${escapeHtml(equipmentListText(item.equipment))}</td>
             <td class="py-4 px-5">
-                <span class="px-3 py-1 rounded-full text-xs ${statusClass}">${escapeHtml(item.status)}</span>
+                ${item.canChangeStatus?`<button type="button" onclick="cycleClassroomStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${statusClass}" title="برای تغییر وضعیت کلیک کنید">${escapeHtml(item.status)}</button>`:`<span class="px-3 py-1 rounded-full text-xs ${statusClass}">${escapeHtml(item.status)}</span>`}
             </td>
             <td class="py-4 px-5 text-left">
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
@@ -73,7 +80,7 @@
         const id = (name) => prefix ? `${prefix}${name}` : `classroom${name}`;
         const branches = getBranchesList().map(b => ({ value: b.id, label: b.name }));
         const types = (typeof allClassroomTypes !== 'undefined' ? allClassroomTypes : []).map(t => ({ value: t.id, label: t.name }));
-        const statuses = (typeof classroomStatuses !== 'undefined' ? classroomStatuses : ['فعال', 'تعمیر', 'غیرفعال']).map(s => ({ value: s, label: s }));
+        const statuses = typeof classroomStatuses !== 'undefined' ? classroomStatuses : [{value:'available',label:'در دسترس'},{value:'unavailable',label:'خارج از دسترس'}];
         const equipment = (item.equipment && item.equipment.length) ? item.equipment : [{}];
         const equipContainer = prefix ? `${prefix}EquipmentContainer` : 'classroomEquipmentContainer';
         const equipHtml = equipment.map(e => window.getClassroomEquipmentFieldHTML(e)).join('');
@@ -91,24 +98,25 @@
                     </select>
                     ${window.classroomPermissions?.canCreate ? '<button type="button" onclick="promptAddClassroomType()" class="text-sm text-indigo-600 mt-1">+ نوع جدید</button>' : ''}
                 </div>
-                <div>
+                ${window.classroomPermissions?.isBranchContext?`<input id="${id('Branch')}" type="hidden" value="${escapeHtml(item.branchId || (branches[0]&&branches[0].value) || '')}">`:`<div>
                     <label class="block text-sm font-medium mb-2">شعبه *</label>
                     <select id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                         ${renderOptions(branches, item.branchId)}
                     </select>
-                </div>
+                </div>`}
                 <div>
                     <label class="block text-sm font-medium mb-2">ظرفیت</label>
                     <input id="${id('Capacity')}" type="number" min="1" value="${escapeHtml(item.capacity ?? 8)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                 </div>
-                <div>
+                ${window.classroomPermissions?.isReceptionist?'':`<div>
                     <label class="block text-sm font-medium mb-2">وضعیت</label>
                     <select id="${id('Status')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(statuses, item.status || 'فعال')}
+                        ${renderOptions(statuses, item.statusValue || 'available')}
                     </select>
-                </div>
+                </div>`}
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5"><div><label class="block text-sm font-medium mb-2">خلاصه کلاس</label><textarea id="${id('Summary')}" rows="2" class="w-full border border-gray-300 rounded-2xl py-3 px-4">${escapeHtml(item.summary||'')}</textarea></div><div><label class="block text-sm font-medium mb-2">شرح کلاس</label><textarea id="${id('Description')}" rows="2" class="w-full border border-gray-300 rounded-2xl py-3 px-4">${escapeHtml(item.description||'')}</textarea></div></div>
+            <div class="mt-5"><label class="block text-sm font-medium mb-2">خلاصه کلاس</label><textarea id="${id('Summary')}" rows="2" class="w-full border border-gray-300 rounded-2xl py-3 px-4">${escapeHtml(item.summary||'')}</textarea></div>
+            <div class="mt-5"><label class="block text-sm font-medium mb-2">شرح کلاس</label><textarea id="${id('Description')}" rows="4" class="w-full border border-gray-300 rounded-2xl py-3 px-4">${escapeHtml(item.description||'')}</textarea></div>
             <div class="mt-5">
                 <label class="block text-sm font-medium mb-2">تجهیزات</label>
                 <div id="${equipContainer}">${equipHtml}</div>
@@ -316,10 +324,10 @@
                                     ${selectedColumns.map(col => {
                                         let value;
                                         if (col.field === 'index') value = (pageNumber - 1) * rowsPerPage + index + 1;
-                                        else if (col.field === 'equipment') value = equipmentListText(item.equipment);
+                                        else if (col.field === 'equipment') value = equipmentListPDFHTML(item.equipment);
                                         else if (col.field === 'capacity') value = `${item.capacity} نفر`;
                                         else value = item[col.field];
-                                        return `<td style="padding: 12px 14px; text-align: right;">${escapeHtml(value)}</td>`;
+                                        return `<td style="padding: 12px 14px; text-align: right;">${col.field === 'equipment' ? value : escapeHtml(value)}</td>`;
                                     }).join('')}
                                 </tr>
                             `).join('')}
