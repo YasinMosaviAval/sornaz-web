@@ -70,6 +70,10 @@ class AcademyClassroomController {
         return $this->run(fn()=>$this->s->saveType((int)auth()->id(),$this->data(),$this->admin()),201);
     }
 
+    public function storeTypeFromClassroom() {
+        return $this->run(fn()=>$this->s->saveType((int)auth()->id(),$this->data(),$this->admin(),0,true),201);
+    }
+
 
     public function updateType(int $id) {
         return $this->run(fn()=>$this->s->saveType((int)auth()->id(),$this->data(),$this->admin(),$id));
