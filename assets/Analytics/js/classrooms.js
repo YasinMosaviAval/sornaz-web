@@ -256,7 +256,7 @@ window.changeClassroomPage = async function (page) {
 };
 
 // ==================== نوع کلاس ====================
-window.promptAddClassroomType=()=>window.classroomPermissions?.canCreate?window.openClassroomTypeAdmin?.():alert('مجوز ایجاد نوع کلاس را ندارید.');
+window.promptAddClassroomType=()=>window.classroomPermissions?.canCreate?window.openClassroomTypeAdmin?.(true):alert('مجوز ایجاد نوع کلاس را ندارید.');
 
 // ==================== تجهیزات ====================
 window.addClassroomEquipmentField = async function (containerId) {
