@@ -36,6 +36,9 @@ class AcademyCourseController {
         );
     }
 
+    public function cycleStatus(int$id){return$this->run(fn()=>['success'=>true,'data'=>$this->s->cycleStatus((int)auth()->id(),$id)]);}
+    public function realtimeVersion(){return$this->run(fn()=>['success'=>true,'data'=>$this->s->realtimeVersion((int)auth()->id())]);}
+
 
     public function storeLevel() {
         return $this->level();

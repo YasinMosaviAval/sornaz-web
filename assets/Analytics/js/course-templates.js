@@ -22,17 +22,17 @@
             <td class="py-4 px-5 font-medium">${escapeHtml(item.name)}</td>
             <td class="py-4 px-5">${escapeHtml(item.level || '—')}</td>
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.instrument)}</td>
-            <td class="py-4 px-5">${item.student_capacity}</td>
+            <td class="py-4 px-5">${escapeHtml(item.lessonLabel || item.instrument)}</td>
             <td class="py-4 px-5">${item.teacher_capacity}</td>
+            <td class="py-4 px-5">${item.student_capacity}</td>
             <td class="py-4 px-5">
-                <span class="px-3 py-1 rounded-full text-xs ${statusClass}">${escapeHtml(item.status)}</span>
+                ${window.coursePermissions?.isReceptionist||item.canChangeStatus===false?`<span class="px-3 py-1 rounded-full text-xs ${statusClass}">${escapeHtml(item.status)}</span>`:`<button type="button" onclick="cycleCourseStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${statusClass}">${escapeHtml(item.status)}</button>`}
             </td>
             <td class="py-4 px-5 text-left">
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
                     <button onclick="viewCourse(${item.id})" class="text-indigo-600 hover:underline text-sm leading-6">جزئیات</button>
-                    <button type="button" data-course-action="inline-edit" data-course-id="${item.id}" data-no-inline-edit class="text-gray-500 hover:text-indigo-600 text-sm leading-6">ویرایش</button>
-                    <button onclick="deleteCourse(${item.id})" class="text-red-500 hover:text-red-700 text-sm leading-6">حذف</button>
+                    ${item.canEdit===false?'':`<button type="button" data-course-action="inline-edit" data-course-id="${item.id}" data-no-inline-edit class="text-gray-500 hover:text-indigo-600 text-sm leading-6">ویرایش</button>`}
+                    ${item.canDelete===false?'':`<button onclick="deleteCourse(${item.id})" class="text-red-500 hover:text-red-700 text-sm leading-6">حذف</button>`}
                 </div>
             </td>
         `;
@@ -48,11 +48,10 @@
 
     function courseFormFields(item, prefix) {
         const id = (name) => prefix ? `${prefix}${name}` : `course${name}`;
-        const branches = (window.courseBranches || []).map(b => ({ value: b.id, label: b.name }));
-        const levels = (window.allCourseLevels || []).map(l => ({ value: l.id, label: l.name }));
-        const branchId = item.branchId || '';
-        const instruments = (window.courseLessons || []).filter(i => i.branchId == branchId).map(i => ({ value: i.id, label: i.name }));
-        const statuses = [{value:'pending',label:'در انتظار'},{value:'open',label:'باز'},{value:'ongoing',label:'در حال برگزاری'},{value:'finished',label:'پایان‌یافته'}];
+        const organizations = (window.courseOrganizations || []).map(o => ({ value: o.user_id, label: o.name }));
+        const organizationUserId = item.organizationUserId || organizations[0]?.value || '';
+        const lessons = (window.courseLessons || []).filter(i => Number(i.organizationUserId) === Number(organizationUserId)).map(i => ({ value: i.id, label: i.name }));
+        const statuses = [{value:'open',label:'باز'},{value:'ongoing',label:'در حال برگزاری'},{value:'finished',label:'پایان یافته'}];
 
         return `
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -60,39 +59,29 @@
                     <label class="block text-sm font-medium mb-2">نام دوره *</label>
                     <input id="${id('Name')}" type="text" value="${escapeHtml(item.name || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">سطح دوره *</label>
-                    <select id="${id('Level')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(levels, item.level_id || (levels[0] && levels[0].value))}
+                ${window.coursePermissions?.isBranchContext?`<input id="${id('Organization')}" type="hidden" value="${escapeHtml(organizationUserId)}">`:`<div>
+                    <label class="block text-sm font-medium mb-2">سازمان *</label>
+                    <select id="${id('Organization')}" onchange="refreshCourseLessons('${prefix}')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                        <option value="">سازمان را انتخاب کنید</option>${renderOptions(organizations, organizationUserId)}
                     </select>
-                    <button type="button" onclick="promptAddCourseLevel()" class="text-sm text-indigo-600 mt-1">+ سطح جدید</button>
-                </div>
+                </div>`}
                 <div>
-                    <label class="block text-sm font-medium mb-2">شعبه *</label>
-                    <select id="${id('Branch')}" onchange="refreshCourseLessons('${prefix}')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        <option value="">شعبه را انتخاب کنید</option>${renderOptions(branches, item.branchId)}
+                    <label class="block text-sm font-medium mb-2">درس</label>
+                    <select id="${id('Instrument')}" ${organizationUserId?'':'disabled'} class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 disabled:bg-gray-100">
+                        <option value="">درس را انتخاب کنید</option>${renderOptions(lessons, item.lesson_id)}
                     </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">ساز / تخصص</label>
-                    <select id="${id('Instrument')}" ${branchId?'':'disabled'} class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 disabled:bg-gray-100">
-                        <option value="">درس / تخصص را انتخاب کنید</option>${renderOptions(instruments, item.lesson_id)}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">ظرفیت هنرجوها</label>
-                    <input id="${id('StudentCapacity')}" type="number" min="1" value="${escapeHtml(item.student_capacity ?? 1)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">ظرفیت اساتید</label>
                     <input id="${id('TeacherCapacity')}" type="number" min="1" value="${escapeHtml(item.teacher_capacity ?? 1)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                 </div>
-                <div>
+                <div><label class="block text-sm font-medium mb-2">ظرفیت هنرجوها</label><input id="${id('StudentCapacity')}" type="number" min="1" value="${escapeHtml(item.student_capacity ?? 1)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"></div>
+                ${window.coursePermissions?.isReceptionist?'':`<div>
                     <label class="block text-sm font-medium mb-2">وضعیت</label>
                     <select id="${id('Status')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(statuses, item.status_code || 'pending')}
+                        ${renderOptions(statuses, item.status_code === 'pending' ? 'open' : (item.status_code || 'open'))}
                     </select>
-                </div>
+                </div>`}
                 <div class="sm:col-span-2 lg:col-span-3">
                     <label class="block text-sm font-medium mb-2">خلاصه دوره</label>
                     <input id="${id('Summary')}" value="${escapeHtml(item.summary || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
@@ -165,7 +154,7 @@
                             <p class="text-sm text-gray-500 mt-1">کد دوره: #${item.id}</p>
                         </div>
                         <div class="flex items-center gap-3">
-                            <button type="button" data-course-action="edit" data-course-id="${item.id}" data-no-inline-edit class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm">ویرایش</button>
+                            ${item.canEdit===false?'':`<button type="button" onclick="editCourse(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm">ویرایش</button>`}
                             <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                         </div>
                     </div>
@@ -174,11 +163,10 @@
                             <h3 class="font-semibold text-indigo-700 mb-4 flex items-center gap-2"><i class="fas fa-graduation-cap"></i> اطلاعات دوره</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">نام دوره</span><span class="font-medium">${escapeHtml(item.name)}</span></div>
-                                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">سطح</span><span class="font-medium">${escapeHtml(item.level || '—')}</span></div>
-                                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">شعبه</span><span class="font-medium">${escapeHtml(item.branchName)}</span></div>
-                                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ساز / تخصص</span><span class="font-medium">${escapeHtml(item.instrument)}</span></div>
-                                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ظرفیت هنرجوها</span><span class="font-medium">${item.student_capacity}</span></div>
+                                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">سازمان</span><span class="font-medium">${escapeHtml(item.organizationName)}</span></div>
+                                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">درس</span><span class="font-medium">${escapeHtml(item.lessonLabel)}</span></div>
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ظرفیت اساتید</span><span class="font-medium">${item.teacher_capacity}</span></div>
+                                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ظرفیت هنرجوها</span><span class="font-medium">${item.student_capacity}</span></div>
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">وضعیت</span><span class="font-medium">${escapeHtml(item.status)}</span></div>
                             </div>
                         </div>
