@@ -41,9 +41,9 @@
             <div>
                 <select id="filterClassroomStatus" onchange="filterClassrooms()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                     <option value="">همه وضعیت‌ها</option>
-                    <option value="فعال">فعال</option>
-                    <option value="تعمیر">تعمیر</option>
-                    <option value="غیرفعال">غیرفعال</option>
+                    <option value="در انتظار تأیید">در انتظار تأیید</option>
+                    <option value="در دسترس">در دسترس</option>
+                    <option value="خارج از دسترس">خارج از دسترس</option>
                 </select>
             </div>
             <div>
@@ -96,7 +96,7 @@
         </div>
 
         <!-- صفحه‌بندی -->
-        <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
+        <div id="classroomPagination" class="hidden px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="classroomPaginationInfo">نمایش ۱ تا ۱۰ از ۴۰ کلاس</span>
             <div class="flex items-center gap-2" id="classroomPaginationButtons"></div>
         </div>

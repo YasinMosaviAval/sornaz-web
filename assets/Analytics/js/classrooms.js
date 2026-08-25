@@ -2,7 +2,7 @@
 let allClassroomTypes = [];
 let allClassroomBranches = [];
 let classroomPermissions = {};
-const classroomStatuses = ['فعال', 'تعمیر', 'غیرفعال'];
+const classroomStatuses = [{value:'available',label:'در دسترس'},{value:'unavailable',label:'خارج از دسترس'}];
 
 function getBranchesList() {
     return allClassroomBranches;
@@ -10,11 +10,15 @@ function getBranchesList() {
 
 // ==================== نمونه داده — ۴۰ کلاس ====================
 let allClassrooms = [];
+let classroomRealtimeVersion=null,classroomRealtimeBusy=false;
+const classroomRealtimeChannel='BroadcastChannel'in window?new BroadcastChannel('sornaz-admin-data'):null;
 
 window.classroomApi=async function(url,data=null,method='POST'){const o={method,credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}};if(data!==null){const token=window.adminCsrfToken||'';o.headers['Content-Type']='application/x-www-form-urlencoded;charset=UTF-8';o.headers['X-CSRF-TOKEN']=token;o.body=new URLSearchParams({_token:token,payload_b64:encodeBranchPayload(data)}).toString();}const r=await fetch(url,o),raw=await r.text();let p;try{p=JSON.parse(raw)}catch(e){throw new Error('پاسخ معتبر JSON دریافت نشد.')}const x=p.data??p;if(!r.ok||x.success===false)throw new Error(x.message||'عملیات ناموفق بود');return x.data??x;};
 window.addEventListener('sornaz:data-changed',event=>{if(event.detail?.resource==='classroom_types')loadClassrooms();});
-async function loadClassrooms(){try{const d=await classroomApi('/academy/admin/classrooms',null,'GET');allClassroomBranches=d.branches||[];allClassroomTypes=d.types||[];classroomPermissions=d.permissions||{};window.classroomPermissions=classroomPermissions;allClassrooms=d.classrooms||[];filteredClassrooms=allClassrooms.slice();renderClassroomBranchTabs();renderClassroomEquipmentFilter();renderClassroomTypeFilter();renderClassroomCapacityFilter();filterClassrooms();}catch(e){alert(e.message);}}
-window.syncClassroomTypeState=function(item,selectNew=false){if(!item?.id)return;const index=allClassroomTypes.findIndex(type=>Number(type.id)===Number(item.id));const normalized={...item,name:item.title||item.name};if(index>=0)allClassroomTypes[index]={...allClassroomTypes[index],...normalized};else allClassroomTypes.push(normalized);document.querySelectorAll('#classroomType,#editClassroomType,[id^="inlineClassroom"][id$="Type"]').forEach(select=>{const selected=selectNew?item.id:select.value;select.innerHTML=allClassroomTypes.map(type=>`<option value="${type.id}" ${String(type.id)===String(selected)?'selected':''}>${type.name}</option>`).join('');if(selectNew)select.value=String(item.id);select.dispatchEvent(new Event('change',{bubbles:true}));});renderClassroomTypeFilter();};
+async function loadClassrooms(){try{const d=await classroomApi('/academy/admin/classrooms',null,'GET');allClassroomBranches=d.branches||[];allClassroomTypes=d.classroomTypes||[];classroomPermissions=d.permissions||{};window.classroomPermissions=classroomPermissions;allClassrooms=d.classrooms||[];filteredClassrooms=allClassrooms.slice();renderClassroomBranchTabs();renderClassroomEquipmentFilter();renderClassroomTypeFilter();renderClassroomCapacityFilter();filterClassrooms();}catch(e){alert(e.message);}}
+async function pollClassroomsRealtime(){if(classroomRealtimeBusy||document.hidden||!document.getElementById('classroomsTable'))return;classroomRealtimeBusy=true;try{const state=await classroomApi('/academy/admin/classrooms/realtime-version',null,'GET');if(classroomRealtimeVersion===null){classroomRealtimeVersion=state.version;return;}if(state.version!==classroomRealtimeVersion){classroomRealtimeVersion=state.version;editingClassroomRowId=null;await loadClassrooms();window.dispatchEvent(new CustomEvent('sornaz:data-changed',{detail:{resource:'classrooms'}}));classroomRealtimeChannel?.postMessage({resource:'classrooms',version:state.version});}}catch(e){}finally{classroomRealtimeBusy=false;}}
+classroomRealtimeChannel?.addEventListener('message',async event=>{if(event.data?.resource!=='classrooms'||event.data.version===classroomRealtimeVersion||!document.getElementById('classroomsTable'))return;classroomRealtimeVersion=event.data.version;editingClassroomRowId=null;await loadClassrooms();window.dispatchEvent(new CustomEvent('sornaz:data-changed',{detail:{resource:'classrooms'}}));});
+window.syncClassroomTypeState=function(item,selectNew=false){if(!item?.id)return;const index=allClassroomTypes.findIndex(type=>Number(type.id)===Number(item.id)),approved=item.status==='approved';const normalized={...item,name:item.title||item.name};if(index>=0&&!approved)allClassroomTypes.splice(index,1);else if(index>=0)allClassroomTypes[index]={...allClassroomTypes[index],...normalized};else if(approved)allClassroomTypes.push(normalized);document.querySelectorAll('#classroomType,#editClassroomType,[id^="inlineClassroom"][id$="Type"]').forEach(select=>{const selected=selectNew&&approved?item.id:select.value;select.innerHTML=allClassroomTypes.map(type=>`<option value="${type.id}" ${String(type.id)===String(selected)?'selected':''}>${type.name}</option>`).join('');if(selectNew&&approved)select.value=String(item.id);select.dispatchEvent(new Event('change',{bubbles:true}));});renderClassroomTypeFilter();};
 window.addEventListener('classroom-type-saved',event=>window.syncClassroomTypeState(event.detail,true));
 window.addEventListener('classroom-type-deleted',event=>{allClassroomTypes=allClassroomTypes.filter(type=>Number(type.id)!==Number(event.detail.id));document.querySelectorAll('#classroomType,#editClassroomType,[id^="inlineClassroom"][id$="Type"]').forEach(select=>{const selected=select.value;select.innerHTML=allClassroomTypes.map(type=>`<option value="${type.id}" ${String(type.id)===String(selected)?'selected':''}>${type.name}</option>`).join('');});renderClassroomTypeFilter();});
 
@@ -188,10 +192,10 @@ window.renderClassroomsTable = async function (list = filteredClassrooms) {
         tbody.innerHTML = window.getClassroomEmptyRowHTML ? window.getClassroomEmptyRowHTML() : '';
     } else {
         pageItems.forEach(item => {
-            const statusClass = item.status === 'فعال'
+            const statusClass = item.statusValue === 'available'
                 ? 'bg-green-100 text-green-700'
-                : item.status === 'تعمیر'
-                    ? 'bg-orange-100 text-orange-700'
+                : item.statusValue === 'pending'
+                    ? 'bg-amber-100 text-amber-700'
                     : 'bg-red-100 text-red-700';
             const tr = document.createElement('tr');
             tr.className = 'hover:bg-gray-50 transition';
@@ -213,6 +217,7 @@ window.renderClassroomsTable = async function (list = filteredClassrooms) {
 };
 
 function updateClassroomPagination(total, start, end, totalPages) {
+    document.getElementById('classroomPagination')?.classList.toggle('hidden',total<=classroomPerPage);
     const info = document.getElementById('classroomPaginationInfo');
     if (info) {
         const from = total === 0 ? 0 : start + 1;
@@ -286,7 +291,7 @@ function readClassroomForm(prefix) {
     const typeObj=allClassroomTypes.find(x=>x.id===typeId);
     const branchId = parseInt(field('Branch')?.value, 10);
     const capacity = parseInt(field('Capacity')?.value || '8', 10) || 8;
-    const status = field('Status')?.value || 'فعال';
+    const statusValue = field('Status')?.value || (classroomPermissions?.isReceptionist?'pending':'available');
     const equipContainerId = prefix
         ? (prefix.startsWith('inline') ? `${prefix}EquipmentContainer` : `${prefix}EquipmentContainer`)
         : 'classroomEquipmentContainer';
@@ -301,7 +306,7 @@ function readClassroomForm(prefix) {
         branchId,
         branchName: branch ? branch.name : '',
         capacity,
-        status,
+        statusValue,
         equipment,summary:field('Summary')?.value.trim()||'',description:field('Description')?.value.trim()||''
     };
 }
@@ -312,6 +317,8 @@ window.openAddClassroomModal = async function () {
     document.getElementById('modalContainer').innerHTML = window.getClassroomAddModalHTML
         ? window.getClassroomAddModalHTML() : '';
 };
+
+window.cycleClassroomStatus=async function(id){try{await classroomApi(`/academy/admin/classrooms/${id}/status`,{});await loadClassrooms();}catch(e){alert(e.message);}};
 
 window.saveClassroom = async function () {
     const data = readClassroomForm('');
@@ -382,7 +389,7 @@ window.deleteClassroom = async function (id) {
 };
 
 // ==================== خروجی اکسل ====================
-document.addEventListener('DOMContentLoaded',()=>{if(document.getElementById('classroomsTable'))loadClassrooms();});
+document.addEventListener('DOMContentLoaded',()=>{if(document.getElementById('classroomsTable')){loadClassrooms();pollClassroomsRealtime();setInterval(pollClassroomsRealtime,2000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollClassroomsRealtime();});}});
 window.exportClassroomsToExcel = async function () {
     const data = filteredClassrooms.length ? filteredClassrooms : allClassrooms;
     let csv = '\uFEFF';

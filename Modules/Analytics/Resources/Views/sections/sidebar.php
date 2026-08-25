@@ -18,11 +18,8 @@ $isAcademyManager = $panelUserId && (bool)\Core\database\DB::table('academy_bran
     ->where('academy_branch_members.user_id',$panelUserId)
     ->whereRaw("(access_system_roles.name LIKE 'academy_%manager%' AND access_system_roles.name NOT LIKE '%branch%')")
     ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->first();
-$ownsMainBranch = $panelUserId && (bool)\Core\database\DB::table('academy_branches')->where('user_id',$panelUserId)->where('is_main',1)->whereNull('deleted_at')->first();
-if (!$ownsMainBranch && $panelUserId) foreach (\Core\database\DB::table('academy_branch_members')->where('user_id',$panelUserId)->where('status','active')->whereNull('deleted_at')->get() as $classroomMember) {
-    if (\Core\database\DB::table('academy_branches')->where('branch_id',(int)$classroomMember['branch_id'])->where('is_main',1)->whereNull('deleted_at')->first()) { $ownsMainBranch=true; break; }
-}
-$canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager || $ownsMainBranch;
+$canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager
+    || ($panelUserId && (new \Modules\System\Services\AccessControl())->allows($panelUserId, \Modules\Academy\Services\AcademyClassroomService::CREATE_TYPE_PERMISSION));
 ?>
 <div id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-indigo-900 text-white flex flex-col shadow-2xl transform -translate-x-full transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:shadow-none">
     <!-- Header -->
