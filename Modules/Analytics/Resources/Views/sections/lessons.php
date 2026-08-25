@@ -33,8 +33,7 @@
                 <option value="">همه وضعیت‌ها</option>
                 <option value="active">فعال</option>
                 <option value="inactive">غیرفعال</option>
-                <option value="pending">در انتظار</option>
-                <option value="removed">حذف‌شده</option>
+                <option value="pending">در انتظار تأیید</option>
             </select>
             <select id="filterLessonLevel" onchange="filterLessons()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
@@ -61,10 +60,10 @@
                             <button onclick="sortLessonsBy('is_primary')" class="flex items-center gap-1">اصلی <span id="lesnSortIcon-is_primary">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortLessonsBy('status')" class="flex items-center gap-1">وضعیت <span id="lesnSortIcon-status">↕</span></button>
+                            <button onclick="sortLessonsBy('branchName')" class="flex items-center gap-1">سازمان <span id="lesnSortIcon-branchName">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortLessonsBy('branchName')" class="flex items-center gap-1">سازمان <span id="lesnSortIcon-branchName">↕</span></button>
+                            <button onclick="sortLessonsBy('status')" class="flex items-center gap-1">وضعیت <span id="lesnSortIcon-status">↕</span></button>
                         </th>
                         <th class="w-40 py-5 px-5"></th>
                     </tr>
@@ -72,7 +71,7 @@
                 <tbody class="divide-y text-sm"></tbody>
             </table>
         </div>
-        <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
+        <div id="lessonsPagination" class="hidden px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="lessonsPaginationInfo">نمایش ۱ تا ۱۰ از ۴۰ مورد</span>
             <div class="flex items-center gap-2" id="lessonsPaginationButtons"></div>
         </div>

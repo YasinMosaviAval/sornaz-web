@@ -8,6 +8,11 @@ use RuntimeException;
 
 class AcademyBranchOfferingService
 {
+    private function now(): string
+    {
+        return (new \DateTimeImmutable('now', new \DateTimeZone('Asia/Tehran')))->format('Y-m-d H:i:s');
+    }
+
     public function all(int $actor): array
     {
         $branches = $this->scopedBranches($actor);
@@ -27,10 +32,12 @@ class AcademyBranchOfferingService
             'organization_selection' => 'select',
         ];
 
-        $organizations = $this->scopedOrganizations($actor);
-        $organizationUserIds = array_map(fn(array $row): int => (int) $row['user_id'], $organizations);
-        $result['organizations'] = $organizations;
-        $result['organization_selection'] = count($organizations) === 1 && $organizations[0]['kind'] === 'branch' ? 'fixed' : 'select';
+        $manageableOrganizations = $this->scopedOrganizations($actor);
+        $lessonOrganizations = $this->organizationsForDisplay($actor, $manageableOrganizations);
+        $organizationUserIds = array_map(fn(array $row): int => (int) $row['user_id'], $manageableOrganizations);
+        $lessonOrganizationUserIds = array_map(fn(array $row): int => (int) $row['user_id'], $lessonOrganizations);
+        $result['organizations'] = $manageableOrganizations;
+        $result['organization_selection'] = count($manageableOrganizations) === 1 && $manageableOrganizations[0]['kind'] === 'branch' ? 'fixed' : 'select';
         $result['lesson_status_mode'] = $this->lessonStatusMode($actor);
 
         $branchesByUser = [];
@@ -80,7 +87,9 @@ class AcademyBranchOfferingService
         }
 
         $organizationsByUser = [];
-        foreach ($organizations as $organization) $organizationsByUser[(int) $organization['user_id']] = $organization;
+        foreach ($manageableOrganizations as $organization) $organizationsByUser[(int) $organization['user_id']] = $organization;
+        $lessonOrganizationsByUser = [];
+        foreach ($lessonOrganizations as $organization) $lessonOrganizationsByUser[(int) $organization['user_id']] = $organization;
 
         $this->appendOfferings(
             $result['instruments'],
@@ -96,8 +105,8 @@ class AcademyBranchOfferingService
             'user_lessons',
             'user_lesson_id',
             'lesson_id',
-            $organizationUserIds,
-            $organizationsByUser,
+            $lessonOrganizationUserIds,
+            $lessonOrganizationsByUser,
             $lessonTitles
         );
 
@@ -147,12 +156,12 @@ class AcademyBranchOfferingService
         $level = DB::table('levels')->where('level_id', $levelId)->where('type', 'learning')->where('is_active', 1)->whereNull('deleted_at')->first();
         if (!$level) throw new RuntimeException('سطح انتخاب‌شده معتبر نیست.');
         $statusMode = $this->lessonStatusMode($actor);
-        $status = $statusMode === 'pending' ? 'pending' : ($statusMode === 'active' ? 'active' : (string) ($data['status'] ?? 'pending'));
-        if (!in_array($status, ['pending', 'active', 'inactive', 'removed'], true)) throw new RuntimeException('وضعیت انتخاب‌شده معتبر نیست.');
+        $status = $statusMode === 'pending' ? 'pending' : (string) ($data['status'] ?? 'active');
+        if (!in_array($status, ['pending', 'active', 'inactive'], true)) throw new RuntimeException('وضعیت انتخاب‌شده معتبر نیست.');
         $startDate = trim((string) ($data['start_date'] ?? ''));
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate)) throw new RuntimeException('زمان شروع معتبر نیست.');
         $isPrimary = !empty($data['is_primary']) ? 1 : 0;
-        $now = date('Y-m-d H:i:s');
+        $now = $this->now();
 
         return transaction(function () use ($actor, $data, $id, $organization, $lessonId, $levelId, $status, $startDate, $isPrimary, $now) {
             $existing = null;
@@ -171,7 +180,7 @@ class AcademyBranchOfferingService
                 'start_date' => $startDate, 'status' => $status, 'is_primary' => $isPrimary,
                 'updated_at' => $now, 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null,
             ];
-            if ($this->shouldApprove($actor)) $values += ['approved_at' => $now, 'approved_by' => $actor];
+            $values += ['approved_at' => $status === 'pending' ? null : ($existing['approved_at'] ?? $now), 'approved_by' => $status === 'pending' ? null : ($existing['approved_by'] ?? $actor)];
             if ($existing) {
                 DB::table('user_lessons')->where('user_lesson_id', $id)->update($values);
                 $savedId = $id;
@@ -184,13 +193,44 @@ class AcademyBranchOfferingService
         });
     }
 
+    public function cycleLessonStatus(int $actor, int $id): array
+    {
+        $row = DB::table('user_lessons')->where('user_lesson_id', $id)->whereNull('deleted_at')->first();
+        if (!$row) throw new RuntimeException('درس موردنظر یافت نشد.');
+        $this->allowedOrganization($actor, (int) $row['user_id']);
+        $next = match ((string) ($row['status'] ?? 'pending')) {
+            'pending' => 'active',
+            'active' => 'inactive',
+            default => 'pending',
+        };
+        $now = $this->now();
+        DB::table('user_lessons')->where('user_lesson_id', $id)->update([
+            'status' => $next,
+            'approved_at' => $next === 'pending' ? null : ($row['approved_at'] ?? $now),
+            'approved_by' => $next === 'pending' ? null : ($row['approved_by'] ?? $actor),
+            'updated_at' => $now,
+            'updated_by' => $actor,
+        ]);
+        return ['id' => $id, 'status' => $next];
+    }
+
+    public function lessonsRealtimeVersion(int $actor): array
+    {
+        $data = $this->all($actor);
+        $payload = [
+            'lessons' => array_map(fn(array $row): array => [$row['id'], $row['status'], $row['lesson_id'], $row['level_id'], $row['start_date'], $row['is_primary'], $row['summary'], $row['description']], $data['lessons']),
+            'catalog' => array_map(fn(array $row): array => [$row['id'], $row['title']], $data['lessons_catalog']),
+        ];
+        return ['resource' => 'lessons', 'version' => sha1(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))];
+    }
+
     public function createLesson(int $actor, array $data): array
     {
         $title = trim((string) ($data['title'] ?? ''));
         if ($title === '' || mb_strlen($title) > 190) throw new RuntimeException('نام درس جدید معتبر نیست.');
         $duplicate = DB::table('translations')->where('table_name', 'lessons')->where('field', 'title')->where('locale', 'fa')->where('value', $title)->whereNull('deleted_at')->first();
         if ($duplicate) throw new RuntimeException('این درس قبلاً وجود دارد.');
-        $now = date('Y-m-d H:i:s');
+        $now = $this->now();
         $values = ['created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor];
         if ($this->shouldApprove($actor)) $values += ['approved_at' => $now, 'approved_by' => $actor];
         $id = DB::table('lessons')->insertGetId($values);
@@ -232,7 +272,7 @@ class AcademyBranchOfferingService
                     'repeat_period' => $repeat,
                     'is_closed' => (($data['status'] ?? 'فعال') === 'غیرفعال') ? 1 : 0,
                     'priority' => $index + 1,
-                    'updated_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => $this->now(),
                     'updated_by' => $actor,
                     'deleted_at' => null,
                     'deleted_by' => null,
@@ -243,7 +283,7 @@ class AcademyBranchOfferingService
                     DB::table('user_availabilities')->where('user_availability_id', $id)->update($values);
                     $savedId = $id;
                 } else {
-                    $savedId = DB::table('user_availabilities')->insertGetId(['created_at' => date('Y-m-d H:i:s'), 'created_by' => $actor] + $values);
+                    $savedId = DB::table('user_availabilities')->insertGetId(['created_at' => $this->now(), 'created_by' => $actor] + $values);
                 }
                 $this->setTranslations($savedId, ['summary' => trim((string) ($data['summary'] ?? '')), 'description' => trim((string) ($data['description'] ?? ''))], $actor);
                 $savedIds[] = $savedId;
@@ -277,9 +317,9 @@ class AcademyBranchOfferingService
     {
         foreach ($values as $field => $value) {
             $row = DB::table('translations')->where('table_name', $table)->where('table_id', $id)->where('field', $field)->where('locale', 'fa')->first();
-            $update = ['value' => $value, 'version' => 1, 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
+            $update = ['value' => $value, 'version' => 1, 'updated_at' => $this->now(), 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
             if ($row) DB::table('translations')->where('translation_id', (int) $row['translation_id'])->update($update);
-            else DB::table('translations')->insert(['table_name' => $table, 'table_id' => $id, 'field' => $field, 'locale' => 'fa', 'created_at' => date('Y-m-d H:i:s'), 'created_by' => $actor] + $update);
+            else DB::table('translations')->insert(['table_name' => $table, 'table_id' => $id, 'field' => $field, 'locale' => 'fa', 'created_at' => $this->now(), 'created_by' => $actor] + $update);
         }
     }
 
@@ -302,6 +342,7 @@ class AcademyBranchOfferingService
         foreach ($rows as $row) {
             $id = (int) $row[$primaryKey];
             $branch = $branchesByUser[(int) $row['user_id']];
+            if (!empty($branch['read_only']) && ($table !== 'user_lessons' || ($row['status'] ?? 'pending') !== 'active')) continue;
             $target[] = [
                 'id' => $id,
                 'user_id' => (int) $row['user_id'],
@@ -313,9 +354,12 @@ class AcademyBranchOfferingService
                 'status' => $row['status'] ?? 'pending',
                 'summary' => $translations[$id]['summary'] ?? '',
                 'description' => $translations[$id]['description'] ?? '',
-                'branchId' => $branch['id'],
+                'branchId' => $branch['kind'] === 'branch' ? $branch['id'] : null,
                 'branchName' => $branch['name'],
+                'organizationKind' => $branch['kind'],
+                'organizationId' => $branch['id'],
                 'organization_user_id' => (int) $row['user_id'],
+                'canChangeStatus' => empty($branch['read_only']),
             ];
         }
     }
@@ -361,13 +405,12 @@ class AcademyBranchOfferingService
             if (!$branch) throw new RuntimeException('شعبه مرتبط با این رکورد یافت نشد.');
             $this->allowedBranch($actor, (int) $branch['branch_id']);
         }
-        $now = date('Y-m-d H:i:s');
+        $now = $this->now();
         $deleteValues = [
             'deleted_at' => $now,
             'deleted_by' => $actor,
             'updated_by' => $actor,
         ];
-        if ($table === 'user_lessons') $deleteValues['status'] = 'removed';
         DB::table($table)->where($primaryKey, $id)->whereNull('deleted_at')->update($deleteValues);
         DB::table('translations')->where('table_name', $table)->where('table_id', $id)->whereNull('deleted_at')->update([
             'deleted_at' => $now,
@@ -450,6 +493,34 @@ class AcademyBranchOfferingService
         foreach ($branches as $branch) {
             $id = (int) $branch['branch_id'];
             $organizations[] = ['id' => $id, 'user_id' => (int) $branch['user_id'], 'kind' => 'branch', 'name' => $branchNames[$id]['name'] ?? ('شعبه ' . $id)];
+        }
+        return $organizations;
+    }
+
+    private function organizationsForDisplay(int $actor, array $manageable): array
+    {
+        $organizations = array_map(function (array $organization): array {
+            $organization['read_only'] = false;
+            return $organization;
+        }, $manageable);
+        if (!$organizations || array_filter($organizations, fn(array $organization): bool => $organization['kind'] === 'academy')) return $organizations;
+
+        $branchIds = array_map(fn(array $organization): int => (int) $organization['id'], array_filter($organizations, fn(array $organization): bool => $organization['kind'] === 'branch'));
+        if (!$branchIds) return $organizations;
+        $branches = DB::table('academy_branches')->whereIn('branch_id', $branchIds)->whereNull('deleted_at')->get();
+        $academyIds = array_values(array_unique(array_map(fn(array $branch): int => (int) $branch['academy_id'], $branches)));
+        if (!$academyIds) return $organizations;
+        $academies = DB::table('academies')->whereIn('academy_id', $academyIds)->whereNull('deleted_at')->get();
+        $names = $this->translations('academies', $academyIds, ['title', 'name']);
+        foreach ($academies as $academy) {
+            $id = (int) $academy['academy_id'];
+            $organizations[] = [
+                'id' => $id,
+                'user_id' => (int) $academy['user_id'],
+                'kind' => 'academy',
+                'name' => $names[$id]['title'] ?? $names[$id]['name'] ?? ('آموزشگاه ' . $id),
+                'read_only' => true,
+            ];
         }
         return $organizations;
     }

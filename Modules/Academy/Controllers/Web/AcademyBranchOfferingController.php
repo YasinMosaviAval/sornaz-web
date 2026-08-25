@@ -31,6 +31,22 @@ class AcademyBranchOfferingController {
 
     public function updateLesson(int $id) { return $this->saveLesson($id); }
 
+    public function cycleLessonStatus(int $id) {
+        try {
+            return ResponseFactory::json(['success' => true, 'data' => $this->service->cycleLessonStatus((int) auth()->id(), $id)]);
+        } catch (Throwable $e) {
+            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    public function lessonsRealtimeVersion() {
+        try {
+            return ResponseFactory::json(['success' => true, 'data' => $this->service->lessonsRealtimeVersion((int) auth()->id())]);
+        } catch (Throwable $e) {
+            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
     public function storeLessonCatalog() {
         try {
             $data = $this->payload('اطلاعات درس جدید معتبر نیست.');
