@@ -16,8 +16,8 @@ window.branchLessonLevels = [
     { level_id: 5, title: "کارشناسی", type: "academic", sort_order: 5 },
     { level_id: 6, title: "کارشناسی ارشد", type: "academic", sort_order: 6 }
 ];
-const lessonStatuses = ['pending', 'active', 'inactive', 'removed'];
-const lessonStatusLabels = { pending: 'در انتظار', active: 'فعال', inactive: 'غیرفعال', removed: 'حذف‌شده' };
+const lessonStatuses = ['pending', 'active', 'inactive'];
+const lessonStatusLabels = { pending: 'در انتظار تأیید', active: 'فعال', inactive: 'غیرفعال' };
 
 function getLesnBranches() {
     return Array.isArray(window.branchOfferingBranches) ? window.branchOfferingBranches : [];
@@ -65,6 +65,9 @@ let filteredLessons = allUserLessons.slice();
 let editingLessonRowId = null;
 let lessonSortField = '';
 let lessonSortDirection = 'asc';
+let lessonRealtimeVersion = null;
+let lessonRealtimeBusy = false;
+const lessonRealtimeChannel = 'BroadcastChannel' in window ? new BroadcastChannel('sornaz-admin-data') : null;
 
 const lessonPdfColumns = [
     { field: 'index', label: 'ردیف' },
@@ -79,6 +82,16 @@ const lessonPdfColumns = [
 function getLessonLevelTitle(levelId) {
     const l = window.branchLessonLevels.find(function (x) { return x.level_id === levelId; });
     return l ? l.title : '—';
+}
+
+function lessonFilterMatchesOrganization(filter, organizationUserId) {
+    if (filter === 'all') return true;
+    const organization = (window.branchOfferingData?.organizations || []).find(function (item) {
+        return Number(item.user_id) === Number(organizationUserId);
+    });
+    if (!organization) return false;
+    if (filter === 'academy') return organization.kind === 'academy';
+    return organization.kind === 'branch' && String(organization.id) === String(filter);
 }
 
 function sortLessonItems() {
@@ -117,6 +130,14 @@ window.renderLessonsBranchTabs = async function () {
     const container = document.getElementById('lessonsBranchTabs');
     if (!container) return;
     container.querySelectorAll('.lesn-branch-tab:not(:first-child)').forEach(function (t) { t.remove(); });
+    const allTab = container.querySelector('.lesn-branch-tab');
+    if (allTab) {
+        const active = currentLesnBranch === 'all';
+        allTab.classList.toggle('bg-indigo-600', active);
+        allTab.classList.toggle('text-white', active);
+        allTab.classList.toggle('border-indigo-600', active);
+        allTab.classList.toggle('border-gray-200', !active);
+    }
     getLesnBranches().forEach(function (b) {
         const active = currentLesnBranch == b.id;
         const btn = document.createElement('button');
@@ -130,6 +151,8 @@ window.renderLessonsBranchTabs = async function () {
 
 window.filterLessonsByBranch = async function (branchId) {
     currentLesnBranch = branchId;
+    const container = document.getElementById('lessonsBranchTabs');
+    if (container) container.dataset.selectedValue = String(branchId);
     document.querySelectorAll('#lessonsBranchTabs .lesn-branch-tab').forEach(function (tab) {
         tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
         tab.classList.add('border', 'border-gray-200');
@@ -138,6 +161,12 @@ window.filterLessonsByBranch = async function (branchId) {
     if (branchId === 'all' && tabs[0]) {
         tabs[0].classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
         tabs[0].classList.remove('border-gray-200');
+    } else if (branchId === 'academy') {
+        const academyTab = document.querySelector('#lessonsBranchTabs [data-value="academy"], #lessonsBranchTabs [data-staff-organization="academy"]');
+        if (academyTab) {
+            academyTab.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
+            academyTab.classList.remove('border-gray-200');
+        }
     } else {
         const name = getLesnBranches().find(function (b) { return b.id == branchId; });
         tabs.forEach(function (tab) {
@@ -156,7 +185,9 @@ window.filterLessons = async function () {
     const level = document.getElementById('filterLessonLevel') && document.getElementById('filterLessonLevel').value || '';
 
     filteredLessons = allUserLessons.filter(function (item) {
-        const matchBranch = window.matchesOrganizationFilter(item,currentLesnBranch);
+        const matchBranch = currentLesnBranch === 'all'
+            || (currentLesnBranch === 'academy' && item.organizationKind === 'academy')
+            || (currentLesnBranch !== 'academy' && item.organizationKind === 'branch' && String(item.organizationId) === String(currentLesnBranch));
         const matchSearch = !search || (item.title || '').toLowerCase().includes(search) || (item.summary || '').toLowerCase().includes(search);
         const matchStatus = !status || item.status === status;
         const matchLevel = !level || String(item.level_id) === String(level);
@@ -198,6 +229,8 @@ window.renderLessonsTable = async function (list) {
 };
 
 function updateLessonsPagination(total, start, end, totalPages) {
+    const wrapper = document.getElementById('lessonsPagination');
+    if (wrapper) wrapper.classList.toggle('hidden', totalPages <= 1);
     const info = document.getElementById('lessonsPaginationInfo');
     if (info) info.textContent = 'نمایش ' + (total === 0 ? 0 : start + 1) + ' تا ' + Math.min(end, total) + ' از ' + total + ' مورد';
     const pagination = document.getElementById('lessonsPaginationButtons');
@@ -219,6 +252,14 @@ window.changeLessonsPage = async function (page) {
     if (page < 1 || page > totalPages) return;
     lessonsCurrentPage = page;
     renderLessonsTable(filteredLessons);
+};
+
+window.cycleLessonStatus = async function (id) {
+    if (editingLessonRowId !== null) { editingLessonRowId = null; renderLessonsTable(filteredLessons); }
+    try {
+        await lessonApi('/academy/admin/branch-offerings/lessons/' + id + '/status', {});
+        await loadLessonDatabaseData(true);
+    } catch (error) { alert(error.message); }
 };
 
 window.promptAddLessonType = async function () {
@@ -252,7 +293,7 @@ function readLessonForm(prefix) {
         level_id: parseInt(f('Level') && f('Level').value, 10),
         start_date: f('StartDate') && f('StartDate').value || '',
         is_primary: f('Primary') && f('Primary').checked ? 1 : 0,
-        status: f('Status') && f('Status').value || 'pending',
+        status: f('Status') && f('Status').value || (window.branchOfferingData?.lesson_status_mode === 'pending' ? 'pending' : 'active'),
         organization_user_id: organizationUserId,
         branchId: organization ? organization.id : 0,
         branchName: organization ? organization.name : 'نامشخص'
@@ -291,9 +332,10 @@ window.openAddLessonModal = async function () {
 
 window.saveLesson = async function () {
     const data = readLessonForm('');
+    const preservedFilter = lessonFilterMatchesOrganization(currentLesnBranch, data.organization_user_id) ? currentLesnBranch : 'all';
     if (!data.lesson_id) return alert('درس را انتخاب کنید');
     if (!data.level_id || !data.start_date) return alert('سطح و زمان شروع را وارد کنید');
-    try { await lessonApi('/academy/admin/branch-offerings/lessons', data); closeModal(); await loadLessonDatabaseData(true); alert('✅ ثبت شد'); }
+    try { await lessonApi('/academy/admin/branch-offerings/lessons', data); closeModal(); await loadLessonDatabaseData(true, preservedFilter); alert('✅ ثبت شد'); }
     catch (error) { alert(error.message); }
 };
 
@@ -319,7 +361,9 @@ window.saveEditedLesson = async function (id) {
     const index = allUserLessons.findIndex(function (x) { return x.id === id; });
     if (index === -1) return;
     if (!data.level_id || !data.start_date) return alert('سطح و زمان شروع را وارد کنید');
-    try { await lessonApi('/academy/admin/branch-offerings/lessons/' + id + '/update', data); editingLessonRowId = null; closeModal(); await loadLessonDatabaseData(true); alert('✅ ذخیره شد'); }
+    const organizationChanged = Number(allUserLessons[index].user_id) !== Number(data.organization_user_id);
+    const preservedFilter = organizationChanged ? 'all' : currentLesnBranch;
+    try { await lessonApi('/academy/admin/branch-offerings/lessons/' + id + '/update', data); editingLessonRowId = null; closeModal(); await loadLessonDatabaseData(true, preservedFilter); alert('✅ ذخیره شد'); }
     catch (error) { alert(error.message); }
 };
 
@@ -334,14 +378,17 @@ window.saveInlineLesson = async function (id) {
     const index = allUserLessons.findIndex(function (x) { return x.id === id; });
     if (index === -1) return;
     if (!data.level_id || !data.start_date) return alert('سطح و زمان شروع را وارد کنید');
-    try { await lessonApi('/academy/admin/branch-offerings/lessons/' + id + '/update', data); editingLessonRowId = null; await loadLessonDatabaseData(true); alert('✅ ذخیره شد'); }
+    const organizationChanged = Number(allUserLessons[index].user_id) !== Number(data.organization_user_id);
+    const preservedFilter = organizationChanged ? 'all' : currentLesnBranch;
+    try { await lessonApi('/academy/admin/branch-offerings/lessons/' + id + '/update', data); editingLessonRowId = null; await loadLessonDatabaseData(true, preservedFilter); alert('✅ ذخیره شد'); }
     catch (error) { alert(error.message); }
 };
 
-async function lessonApi(url, data) {
+async function lessonApi(url, data = null, method = 'POST') {
     const token = window.adminCsrfToken || '';
-    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    const response = await fetch(url, { method: 'POST', credentials: 'same-origin', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', 'X-CSRF-TOKEN': token }, body: new URLSearchParams({ _token: token, payload_b64: encoded }) });
+    const options = { method: method, credentials: 'same-origin', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } };
+    if (data !== null) { const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); options.headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8'; options.headers['X-CSRF-TOKEN'] = token; options.body = new URLSearchParams({ _token: token, payload_b64: encoded }); }
+    const response = await fetch(url, options);
     const payload = await response.json(), envelope = payload.data ?? payload;
     if (!response.ok || envelope.success === false) throw new Error(envelope.message || 'ذخیره درس ناموفق بود.');
     return envelope.data ?? envelope;
@@ -362,20 +409,49 @@ window.applyLessonDatabaseData=function(data){
     window.branchLessonLevels=Array.isArray(data.levels)?data.levels:[];
     window.allUserLessons=data.lessons;
     filteredLessons=window.allUserLessons.slice();
-    currentLesnBranch='all';
+    const branchFilterExists=currentLesnBranch==='all'||currentLesnBranch==='academy'||window.branchOfferingBranches.some(function(branch){return String(branch.id)===String(currentLesnBranch);});
+    if(!branchFilterExists)currentLesnBranch='all';
     const levelFilter=document.getElementById('filterLessonLevel');
     if(levelFilter)levelFilter.innerHTML='<option value="">همه سطوح</option>'+window.branchLessonLevels.map(function(level){return '<option value="'+level.level_id+'">'+level.title+'</option>';}).join('');
     window.renderLessonsBranchTabs();
-    window.filterLessons();
+    window.filterLessonsByBranch(currentLesnBranch);
     return window.allUserLessons.length;
 };
-window.loadLessonDatabaseData=async function(force=false){
+window.loadLessonDatabaseData=async function(force=false,preservedFilter=currentLesnBranch){
     if(force){window.branchOfferingData=null;window.branchOfferingLoadPromise=null;}
     const data=window.branchOfferingData||(typeof window.loadBranchOfferings==='function'?await window.loadBranchOfferings():null);
+    currentLesnBranch=preservedFilter;
     return window.applyLessonDatabaseData(data);
 };
 window.addEventListener('branch-offerings-loaded',function(e){window.applyLessonDatabaseData(e.detail);});
 if(window.branchOfferingData)window.applyLessonDatabaseData(window.branchOfferingData);
+
+async function pollLessonsRealtime() {
+    if (lessonRealtimeBusy || document.hidden || !document.getElementById('lessonsTable')) return;
+    lessonRealtimeBusy = true;
+    try {
+        const state = await lessonApi('/academy/admin/branch-offerings/lessons/realtime-version', null, 'GET');
+        if (lessonRealtimeVersion === null) { lessonRealtimeVersion = state.version; return; }
+        if (state.version !== lessonRealtimeVersion) {
+            lessonRealtimeVersion = state.version;
+            editingLessonRowId = null;
+            await loadLessonDatabaseData(true);
+            lessonRealtimeChannel?.postMessage({ resource: 'lessons', version: state.version });
+        }
+    } catch (error) {} finally { lessonRealtimeBusy = false; }
+}
+lessonRealtimeChannel?.addEventListener('message', async function (event) {
+    if (event.data?.resource !== 'lessons' || event.data.version === lessonRealtimeVersion || !document.getElementById('lessonsTable')) return;
+    lessonRealtimeVersion = event.data.version;
+    editingLessonRowId = null;
+    await loadLessonDatabaseData(true);
+});
+document.addEventListener('DOMContentLoaded', function () {
+    if (!document.getElementById('lessonsTable')) return;
+    pollLessonsRealtime();
+    setInterval(pollLessonsRealtime, 2000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) pollLessonsRealtime(); });
+});
 
 window.exportLessonsToExcel = async function () {
     const data = filteredLessons.length ? filteredLessons : allUserLessons;

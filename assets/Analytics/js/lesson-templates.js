@@ -14,11 +14,11 @@
     }
     function statusBadge(status) {
         return {
-            active: 'bg-green-100 text-green-700', inactive: 'bg-gray-100 text-gray-600',
-            pending: 'bg-yellow-100 text-yellow-700', removed: 'bg-red-100 text-red-700'
+            active: 'bg-green-100 text-green-700', inactive: 'bg-red-100 text-red-700',
+            pending: 'bg-yellow-100 text-yellow-700'
         }[status] || 'bg-gray-100 text-gray-600';
     }
-    const statusLabels = { pending: 'در انتظار', active: 'فعال', inactive: 'غیرفعال', removed: 'حذف‌شده' };
+    const statusLabels = { pending: 'در انتظار تأیید', active: 'فعال', inactive: 'غیرفعال' };
     function formatLessonStartDate(value) {
         const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
         if (!match) return value || '—';
@@ -47,13 +47,15 @@
             <td class="py-4 px-5">${escapeHtml(levelTitle || '—')}</td>
             <td class="py-4 px-5 text-center" dir="ltr">${escapeHtml(formatLessonStartDate(item.start_date))}</td>
             <td class="py-4 px-5">${item.is_primary ? '<span class="px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700">اصلی</span>' : '—'}</td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${sc}">${escapeHtml(statusLabels[item.status] || item.status || 'در انتظار')}</span></td>
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
+            <td class="py-4 px-5">${item.canChangeStatus === false
+                ? `<span class="px-3 py-1 rounded-full text-xs ${sc}">${escapeHtml(statusLabels[item.status] || item.status || 'در انتظار تأیید')}</span>`
+                : `<button type="button" onclick="cycleLessonStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${sc}" title="برای تغییر وضعیت کلیک کنید">${escapeHtml(statusLabels[item.status] || item.status || 'در انتظار تأیید')}</button>`}</td>
             <td class="py-4 px-5 text-left">
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewLesson(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
-                    <button onclick="toggleLessonInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
-                    <button onclick="deleteLesson(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>
+                    ${item.canChangeStatus === false ? '' : `<button onclick="toggleLessonInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
+                    <button onclick="deleteLesson(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>`}
                 </div>
             </td>`;
     };
@@ -66,12 +68,12 @@
 
     function formFields(item, prefix) {
         const id = function (n) { return prefix ? prefix + n : 'lesn' + n; };
-        const organizations = (window.branchOfferingData?.organizations || []).map(function (b) { return { value: b.user_id, label: b.name }; });
+        const organizations = (window.branchOfferingData?.organizations || []).filter(function (b) { return !b.read_only; }).map(function (b) { return { value: b.user_id, label: b.name }; });
         const fixedOrganization = window.branchOfferingData?.organization_selection === 'fixed';
         const statusMode = window.branchOfferingData?.lesson_status_mode || 'pending';
         const lessons = (typeof window.sampleLessons !== 'undefined' ? window.sampleLessons : []).map(function (i) { return { value: i.id, label: i.title }; });
         const levels = (typeof window.branchLessonLevels !== 'undefined' ? window.branchLessonLevels : []).filter(function (l) { return !l.type || l.type === 'learning'; }).map(function (l) { return { value: l.level_id, label: l.title }; });
-        const statuses = Object.entries(statusLabels).map(function (s) { return { value: s[0], label: s[1] }; });
+        const statuses = [{ value: 'active', label: 'فعال' }, { value: 'inactive', label: 'غیرفعال' }];
         const selectedOrganizationUserId = item.organization_user_id || item.user_id || organizations[0]?.value;
         const hasPrimary = (window.allUserLessons || []).some(function (lesson) { return lesson.user_id === selectedOrganizationUserId && lesson.is_primary && lesson.id !== item.id; });
         const primaryDisabled = hasPrimary && !item.is_primary;
@@ -101,12 +103,12 @@
                     <label class="block text-sm font-medium mb-2">زمان شروع *</label>
                     <input id="${id('StartDate')}" type="date" value="${escapeHtml(item.start_date || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                 </div>
-                ${statusMode === 'active' ? '' : `<div>
+                <div>
                     <label class="block text-sm font-medium mb-2">وضعیت</label>
                     ${statusMode === 'pending'
-                        ? `<input type="text" value="در انتظار" disabled class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-100 py-3.5 px-5 text-gray-500">`
-                        : `<select id="${id('Status')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${renderOptions(statuses, item.status || 'pending')}</select>`}
-                </div>`}
+                        ? `<input type="text" value="در انتظار تأیید" disabled class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-100 py-3.5 px-5 text-gray-500">`
+                        : `<select id="${id('Status')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${renderOptions(statuses, item.status === 'inactive' ? 'inactive' : 'active')}</select>`}
+                </div>
                 <div class="flex items-end">
                     <label class="flex items-center gap-2 pb-3 text-sm ${primaryDisabled ? 'text-gray-400' : ''}" ${primaryDisabled ? `style="cursor:${prohibitedCursor}"` : ''}>
                         <input type="checkbox" id="${id('Primary')}" class="h-4 w-4 ${primaryDisabled ? 'border-gray-300 bg-gray-200 accent-gray-400' : ''}" ${item.is_primary ? 'checked' : ''} ${primaryDisabled ? 'disabled' : ''}>
@@ -176,7 +178,7 @@
                         <p class="text-sm text-gray-500 mt-1">${escapeHtml(levelTitle || '')} ${item.is_primary ? '— درس اصلی' : ''}</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="editLesson(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm">ویرایش</button>
+                        ${item.canChangeStatus === false ? '' : `<button onclick="editLesson(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm">ویرایش</button>`}
                         <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                     </div>
                 </div>
