@@ -24,6 +24,7 @@ use Modules\Analytics\Controllers\Web\PublicCommentController;
 Router::get('/analytics/admin-panel', [AnalyticsController::class, 'adminPanel'])->middleware('academy-panel');
 Router::get('/analytics/admin-account', [AdminAccountController::class, 'show'])->middleware('academy-panel');
 Router::get('/analytics/admin-gallery', [AdminGalleryController::class, 'index'])->middleware('academy-panel');
+Router::get('/analytics/admin-gallery/realtime-version', [AdminGalleryController::class, 'realtimeVersion'])->middleware('academy-panel');
 Router::post('/analytics/admin-gallery', [AdminGalleryController::class, 'store'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-gallery/{id}/update', [AdminGalleryController::class, 'update'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-gallery/{id}/delete', [AdminGalleryController::class, 'delete'])->middleware(['academy-panel','csrf']);

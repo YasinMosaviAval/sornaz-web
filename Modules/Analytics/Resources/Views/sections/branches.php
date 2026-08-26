@@ -62,6 +62,7 @@
                     <option value="">همه وضعیت‌ها</option>
                     <option value="فعال">فعال</option>
                     <option value="غیرفعال">غیرفعال</option>
+                    <option value="حذف‌شده">حذف‌شده</option>
                 </select>
             </div>
         </div>

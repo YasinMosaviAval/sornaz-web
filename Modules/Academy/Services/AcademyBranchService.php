@@ -43,10 +43,16 @@ class AcademyBranchService {
             ];
         }
         $branchAccount = $this->branchForUser($ownerUserId);
-        if(!$branchAccount){$managed=DB::table('academy_branch_members')->join('academy_branch_member_roles','academy_branch_member_roles.member_id','=','academy_branch_members.member_id')->join('access_system_roles','access_system_roles.role_id','=','academy_branch_member_roles.role_id')->where('academy_branch_members.user_id',$ownerUserId)->whereRaw("(access_system_roles.name LIKE '%branch_manager%' OR access_system_roles.name LIKE '%branch_receptionist%')")->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->first();if($managed&&$managed['branch_id']!==null)$branchAccount=DB::table('academy_branches')->where('branch_id',(int)$managed['branch_id'])->whereNull('deleted_at')->first();}
-        $academy = $branchAccount
-            ? DB::table('academies')->where('academy_id', (int)$branchAccount['academy_id'])->whereNull('deleted_at')->first()
-            : $this->academyForUser($ownerUserId);
+        $academy = null;
+        if (!$branchAccount) {
+            try {
+                $academy = $this->academyForUser($ownerUserId);
+            } catch (RuntimeException) {
+                $managed=DB::table('academy_branch_members')->join('academy_branch_member_roles','academy_branch_member_roles.member_id','=','academy_branch_members.member_id')->join('access_system_roles','access_system_roles.role_id','=','academy_branch_member_roles.role_id')->where('academy_branch_members.user_id',$ownerUserId)->whereRaw("(access_system_roles.name LIKE '%branch_manager%' OR access_system_roles.name LIKE '%branch_receptionist%')")->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->first();
+                if($managed&&$managed['branch_id']!==null)$branchAccount=DB::table('academy_branches')->where('branch_id',(int)$managed['branch_id'])->whereNull('deleted_at')->first();
+            }
+        }
+        if ($branchAccount) $academy = DB::table('academies')->where('academy_id', (int)$branchAccount['academy_id'])->whereNull('deleted_at')->first();
         if (!$academy) throw new RuntimeException('آموزشگاه مرتبط یافت نشد.');
         $this->normalizeMain((int)$academy['academy_id'], $ownerUserId);
         $this->repairRegisteredMainBranchIdentity($academy, $ownerUserId);
@@ -67,9 +73,39 @@ class AcademyBranchService {
         ];
     }
 
+    public function realtimeVersion(int $ownerUserId, bool $siteAdmin = false): array {
+        $branchAccount = null;
+        if ($siteAdmin) {
+            $branches = $this->allBranches();
+        } else {
+            $branchAccount = $this->branchForUser($ownerUserId);
+            $academy = null;
+            if (!$branchAccount) {
+                try {
+                    $academy = $this->academyForUser($ownerUserId);
+                } catch (RuntimeException) {
+                    $managed=DB::table('academy_branch_members')->join('academy_branch_member_roles','academy_branch_member_roles.member_id','=','academy_branch_members.member_id')->join('access_system_roles','access_system_roles.role_id','=','academy_branch_member_roles.role_id')->where('academy_branch_members.user_id',$ownerUserId)->whereRaw("(access_system_roles.name LIKE '%branch_manager%' OR access_system_roles.name LIKE '%branch_receptionist%')")->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->first();
+                    if($managed&&$managed['branch_id']!==null)$branchAccount=DB::table('academy_branches')->where('branch_id',(int)$managed['branch_id'])->whereNull('deleted_at')->first();
+                }
+            }
+            if ($branchAccount) $branches = [$this->decorate($branchAccount)];
+            else {
+                if (!$academy) throw new RuntimeException('آموزشگاه مرتبط یافت نشد.');
+                $branches = $this->branches((int)$academy['academy_id']);
+            }
+        }
+        return [
+            'resource' => 'branches',
+            'version' => sha1(json_encode([
+                $branches,
+                !$branchAccount,
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)),
+        ];
+    }
+
     private function staffCatalog(int $actor, ?array $academy, bool $siteAdmin): array {
         $branchAccount=$this->branchForUser($actor);$organizations=[];
-        if(!$branchAccount&&!$siteAdmin){$managed=DB::table('academy_branch_members')->join('academy_branch_member_roles','academy_branch_member_roles.member_id','=','academy_branch_members.member_id')->join('access_system_roles','access_system_roles.role_id','=','academy_branch_member_roles.role_id')->where('academy_branch_members.user_id',$actor)->whereRaw("(access_system_roles.name LIKE '%branch_manager%' OR access_system_roles.name LIKE '%branch_receptionist%')")->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->first();if($managed&&$managed['branch_id']!==null)$branchAccount=DB::table('academy_branches')->where('branch_id',(int)$managed['branch_id'])->whereNull('deleted_at')->first();}
+        if(!$branchAccount&&!$academy&&!$siteAdmin){$managed=DB::table('academy_branch_members')->join('academy_branch_member_roles','academy_branch_member_roles.member_id','=','academy_branch_members.member_id')->join('access_system_roles','access_system_roles.role_id','=','academy_branch_member_roles.role_id')->where('academy_branch_members.user_id',$actor)->whereRaw("(access_system_roles.name LIKE '%branch_manager%' OR access_system_roles.name LIKE '%branch_receptionist%')")->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->first();if($managed&&$managed['branch_id']!==null)$branchAccount=DB::table('academy_branches')->where('branch_id',(int)$managed['branch_id'])->whereNull('deleted_at')->first();}
         if($branchAccount){$organizations[]=['user_id'=>(int)$branchAccount['user_id'],'academy_id'=>(int)$branchAccount['academy_id'],'branch_id'=>(int)$branchAccount['branch_id'],'name'=>$this->tr('academy_branches',(int)$branchAccount['branch_id'],'name','شعبه')];}
         elseif($academy){$aid=(int)$academy['academy_id'];$organizations[]=['user_id'=>(int)$academy['user_id'],'academy_id'=>$aid,'branch_id'=>null,'name'=>$this->tr('academies',$aid,'title','آموزشگاه')];foreach(DB::table('academy_branches')->where('academy_id',$aid)->whereNull('deleted_at')->get()as$b)$organizations[]=['user_id'=>(int)$b['user_id'],'academy_id'=>$aid,'branch_id'=>(int)$b['branch_id'],'name'=>$this->tr('academy_branches',(int)$b['branch_id'],'name','شعبه')];}
         elseif($siteAdmin)foreach(DB::table('academy_branches')->whereNull('deleted_at')->get()as$b)$organizations[]=['user_id'=>(int)$b['user_id'],'academy_id'=>(int)$b['academy_id'],'branch_id'=>(int)$b['branch_id'],'name'=>$this->tr('academy_branches',(int)$b['branch_id'],'name','شعبه')];
@@ -230,7 +266,7 @@ class AcademyBranchService {
                 'email' => !empty($data['email']) ? strtolower(trim((string)$data['email'])) : null,
                 'phone' => !empty($data['phone']) ? preg_replace('/\D+/', '', (string)$data['phone']) : null,
                 'password' => password_hash($data['password'], PASSWORD_DEFAULT),
-                'type' => 'branch', 'status' => $this->activeStatus($data['status'] ?? null) ? 'approved' : 'inactive',
+                'type' => 'branch', 'status' => $this->userStatus($data['status'] ?? null),
                 'locale' => 'fa', 'timezone' => 'Asia/Tehran', 'register_method' => !empty($data['email']) ? 'email' : 'phone',
                 'visibility' => 'unlisted', 'created_by' => $ownerUserId, 'updated_by' => $ownerUserId,
                 'approved_at' => date('Y-m-d H:i:s'), 'approved_by' => $ownerUserId,
@@ -273,13 +309,28 @@ class AcademyBranchService {
                 'mode' => $data['physical_type'], 'updated_by' => $ownerUserId,
             ]);
             DB::table('users')->where('user_id', (int)$branch['user_id'])->update([
-                'username' => $data['username'], 'status' => $this->activeStatus($data['status'] ?? null) ? 'approved' : 'inactive', 'updated_by' => $ownerUserId,
+                'username' => $data['username'], 'status' => $this->userStatus($data['status'] ?? null), 'updated_by' => $ownerUserId,
             ]);
             $this->softDeleteDetails((int)$branch['user_id'], $ownerUserId);
             $this->saveDetails($branchId, (int)$branch['user_id'], $ownerUserId, $data);
             if (!empty($data['manager_user_id'])) $this->assignBranchManager($academyId, $branchId, (int)$data['manager_user_id'], $ownerUserId);
             return $this->findOwned($academyId, $branchId);
         });
+    }
+
+    public function cycleStatus(int $ownerUserId, int $branchId, bool $siteAdmin = false): array {
+        if (!$siteAdmin && !$this->canAccessBranch($ownerUserId, $branchId)) throw new RuntimeException('دسترسی تغییر وضعیت این شعبه را ندارید.');
+        $branch = DB::table('academy_branches')->where('branch_id', $branchId)->whereNull('deleted_at')->first();
+        if (!$branch) throw new RuntimeException('شعبه یافت نشد.');
+        $user = DB::table('users')->where('user_id', (int)$branch['user_id'])->whereNull('deleted_at')->first();
+        if (!$user) throw new RuntimeException('حساب کاربری شعبه یافت نشد.');
+        $next = match ((string)($user['status'] ?? 'inactive')) {
+            'approved' => 'inactive',
+            'inactive' => 'removed',
+            default => 'approved',
+        };
+        DB::table('users')->where('user_id', (int)$branch['user_id'])->update(['status'=>$next, 'updated_by'=>$ownerUserId]);
+        return $this->decorate($branch);
     }
 
     public function delete(int $ownerUserId, int $branchId, bool $siteAdmin = false): void {
@@ -449,7 +500,8 @@ class AcademyBranchService {
             return ['province' => $province['province_name'] ?? '', 'city' => $county['county_name'] ?? '', 'address' => $tr->get('user_addresses', (int)$address['address_id'], 'address', 'fa') ?: '', 'postal_code' => $address['postal_code'], 'lat' => $address['latitude'], 'lng' => $address['longitude'], 'is_main' => (bool)$address['is_main']];
         }, DB::table('user_addresses')->where('user_id', $userId)->whereNull('deleted_at')->get());
         $manager=$this->branchManager($branchId);
-        return ['id' => $branchId, 'user_id'=>$userId, 'username'=>$branchUser['username']??'', 'email'=>$branchUser['email']??'', 'phone'=>$branchUser['phone']??'', 'academy_id' => $academyId, 'academy_name' => $academyName, 'name' => $tr->get('academy_branches', $branchId, 'name', 'fa') ?: $tr->get('users', $userId, 'full_name', 'fa') ?: 'شعبه', 'type' => $typeName, 'type_id' => $row['academy_branch_type_id'] ?? null, 'physical_type' => $row['mode'] ?? 'physical', 'is_main' => (bool)($row['is_main'] ?? false), 'slogan' => $tr->get('academy_branches', $branchId, 'slogan', 'fa') ?: '', 'short_description'=>$tr->get('academy_branches',$branchId,'short_description','fa')?:'', 'bio' => $tr->get('academy_branches', $branchId, 'description', 'fa') ?: '', 'manager_user_id'=>$manager['user_id']??null, 'manager' => $manager['name']??($tr->get('academy_branches', $branchId, 'manager', 'fa') ?: ''), 'classrooms' => DB::table('academy_branch_classrooms')->where('branch_id', $branchId)->whereNull('deleted_at')->count(), 'status' => ($row['status'] ?? null) === 'approved' ? 'فعال' : 'غیرفعال', 'phones' => $phones, 'links' => $links, 'addresses' => $addresses];
+        $status = match ((string)($branchUser['status'] ?? 'inactive')) {'approved'=>'فعال','removed'=>'حذف‌شده',default=>'غیرفعال'};
+        return ['id' => $branchId, 'user_id'=>$userId, 'username'=>$branchUser['username']??'', 'email'=>$branchUser['email']??'', 'phone'=>$branchUser['phone']??'', 'academy_id' => $academyId, 'academy_name' => $academyName, 'name' => $tr->get('academy_branches', $branchId, 'name', 'fa') ?: $tr->get('users', $userId, 'full_name', 'fa') ?: 'شعبه', 'type' => $typeName, 'type_id' => $row['academy_branch_type_id'] ?? null, 'physical_type' => $row['mode'] ?? 'physical', 'is_main' => (bool)($row['is_main'] ?? false), 'slogan' => $tr->get('academy_branches', $branchId, 'slogan', 'fa') ?: '', 'short_description'=>$tr->get('academy_branches',$branchId,'short_description','fa')?:'', 'bio' => $tr->get('academy_branches', $branchId, 'description', 'fa') ?: '', 'manager_user_id'=>$manager['user_id']??null, 'manager' => $manager['name']??($tr->get('academy_branches', $branchId, 'manager', 'fa') ?: ''), 'classrooms' => DB::table('academy_branch_classrooms')->where('branch_id', $branchId)->whereNull('deleted_at')->count(), 'status' => $status, 'status_code'=>(string)($branchUser['status']??'inactive'), 'phones' => $phones, 'links' => $links, 'addresses' => $addresses];
     }
 
     private function branchManager(int $branchId): ?array {
@@ -475,6 +527,13 @@ class AcademyBranchService {
     }
 
     private function activeStatus(mixed $status): bool { return in_array(trim((string)$status), ['active', 'approved', 'فعال'], true); }
+    private function userStatus(mixed $status): string {
+        return match (trim((string)$status)) {
+            'active', 'approved', 'فعال' => 'approved',
+            'removed', 'حذف‌شده' => 'removed',
+            default => 'inactive',
+        };
+    }
 
     private function validate(array $data): array {
         if (trim((string)($data['name'] ?? '')) === '') throw new RuntimeException('نام شعبه الزامی است.');

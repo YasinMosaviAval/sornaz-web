@@ -91,8 +91,32 @@ window.handleAcademyRegistrationSubmit = function(form) {
     const code = Array.from(document.querySelectorAll('.academy-otp')).map(input => input.value).join('');
     if (!/^\d{6}$/.test(code)) { academyToast(academyText('error.otp_incomplete')); return false; }
     document.getElementById('academyRegOtp').value = code;
+    if (form.action.includes('/academy/admin/branches/registration')) {
+        submitAdminBranchRegistration(form);
+        return false;
+    }
     return true;
 };
+
+async function submitAdminBranchRegistration(form) {
+    const button = form.querySelector('#academyOtpStep button[type="submit"]');
+    if (button?.disabled) return;
+    if (button) button.disabled = true;
+    try {
+        const response = await fetch(form.action, {method:'POST', credentials:'same-origin', headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}, body:new FormData(form)});
+        const payload = await response.json();
+        const result = payload.data || payload;
+        if (!response.ok || result.success === false) throw new Error(result.message || 'ثبت شعبه انجام نشد.');
+        if (academyRegistrationTimer) clearInterval(academyRegistrationTimer);
+        window.handleAdminBranchCreated?.(result.branch);
+        window.closeModal?.();
+        alert(result.message || 'شعبه جدید با موفقیت ایجاد شد.');
+    } catch (error) {
+        academyToast(error.message || 'ثبت شعبه انجام نشد.');
+    } finally {
+        if (button?.isConnected) button.disabled = false;
+    }
+}
 
 window.sendAcademyRegistrationOtp = async function() {
     const form = document.getElementById('academyRegistrationForm');

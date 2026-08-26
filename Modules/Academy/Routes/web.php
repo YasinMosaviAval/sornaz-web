@@ -27,6 +27,7 @@ Router::post('/academy/_test/delete-sample-academies', [AcademyRegistrationContr
 Router::post('/academy/_test/seed-branch-network', [AcademyRegistrationController::class, 'seedBranchNetwork'])->middleware(['site-admin', 'csrf']);
 Router::post('/academy/_test/delete-branch-network', [AcademyRegistrationController::class, 'deleteBranchNetwork'])->middleware(['site-admin', 'csrf']);
 Router::get('/academy/admin/branches', [AcademyBranchController::class, 'index'])->middleware('academy-panel');
+Router::get('/academy/admin/branches/realtime-version', [AcademyBranchController::class, 'realtimeVersion'])->middleware('academy-panel');
 Router::get('/academy/admin/branches/registration-form', [AcademyRegistrationController::class, 'createAdminBranchDialog'])->middleware('academy-panel');
 Router::post('/academy/admin/branches/registration/send-otp', [AcademyRegistrationController::class, 'sendAdminBranchOtp'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/branches/registration', [AcademyRegistrationController::class, 'storeAdminBranch'])->middleware(['academy-panel', 'csrf']);
@@ -35,6 +36,7 @@ Router::post('/academy/admin/branches/types', [AcademyBranchController::class, '
 Router::post('/academy/admin/branch-types/{id}/update', [AcademyBranchController::class, 'updateType'])->middleware(['site-admin', 'csrf']);
 Router::post('/academy/admin/branch-types/{id}/delete', [AcademyBranchController::class, 'deleteType'])->middleware(['site-admin', 'csrf']);
 Router::post('/academy/admin/branches/{id}/update', [AcademyBranchController::class, 'update'])->middleware(['academy-panel', 'csrf']);
+Router::post('/academy/admin/branches/{id}/status', [AcademyBranchController::class, 'cycleStatus'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/branches/{id}/delete', [AcademyBranchController::class, 'destroy'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/members', [AcademyBranchController::class, 'storeMember'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/members/{id}/update', [AcademyBranchController::class, 'updateMember'])->middleware(['academy-panel', 'csrf']);

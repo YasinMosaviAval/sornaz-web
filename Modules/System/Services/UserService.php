@@ -88,7 +88,7 @@ class UserService {
         if (!$role) throw new \RuntimeException('نقش ' . $roleName . ' یافت نشد.');
         $existing = DB::table('user_roles')->where('user_id', $userId)->where('role_id', (int)$role['role_id'])->whereNull('deleted_at')->first();
         if ($existing) return (int)$existing['user_role_id'];
-        return (int)DB::table('user_roles')->insertGetId(['user_id'=>$userId,'role_id'=>(int)$role['role_id'],'is_main'=>$roleName==='user'?1:0,'granted_by'=>$actor,'created_by'=>$actor,'updated_by'=>$actor,'approved_at'=>date('Y-m-d H:i:s'),'approved_by'=>$actor]);
+        return (int)DB::table('user_roles')->insertGetId(['user_id'=>$userId,'role_id'=>(int)$role['role_id'],'is_main'=>$roleName==='user'?1:0,'created_by'=>$actor,'updated_by'=>$actor,'approved_at'=>date('Y-m-d H:i:s'),'approved_by'=>$actor]);
     }
 
     public function attempt(string $identifier, string $password): array|false {

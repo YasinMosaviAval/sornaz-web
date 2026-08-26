@@ -164,19 +164,23 @@ window.openAdminImageEditor=function(file,mode,options={}){openImageCropModal(fi
 function initCropFrame() {
     const s = cropState;
     const img = s.img;
-    // بزرگ‌ترین کادر با نسبت aspect داخل تصویر
-    if (img.width / img.height > s.aspect) {
-        s.ch = img.height;
-        s.cw = img.height * s.aspect;
-        s.cx = (img.width - s.cw) / 2;
-        s.cy = 0;
-    } else {
-        s.cw = img.width;
-        s.ch = img.width / s.aspect;
-        s.cx = 0;
-        s.cy = (img.height - s.ch) / 2;
-    }
+    // حالت اولیه Fit Width است: تمام عرض تصویر داخل کادر ثابت دیده می‌شود.
+    s.cw = img.width;
+    s.ch = img.width / s.aspect;
+    s.initialCropW = s.cw;
+    s.initialCropH = s.ch;
+    s.cx = 0;
+    s.cy = (img.height - s.ch) / 2;
     s.minCrop = Math.min(img.width, img.height) * 0.15;
+}
+
+function clampCropPosition(s) {
+    const minX = Math.min(0, s.img.width - s.cw);
+    const maxX = Math.max(0, s.img.width - s.cw);
+    const minY = Math.min(0, s.img.height - s.ch);
+    const maxY = Math.max(0, s.img.height - s.ch);
+    s.cx = clamp(s.cx, minX, maxX);
+    s.cy = clamp(s.cy, minY, maxY);
 }
 
 function drawCropCanvas() {
@@ -187,35 +191,47 @@ function drawCropCanvas() {
     const ctx = canvas.getContext('2d');
     const maxW = Math.min(720, window.innerWidth - 64);
     const maxH = Math.min(420, window.innerHeight * 0.5);
-    const scale = Math.min(maxW / s.img.width, maxH / s.img.height, 1);
+    canvas.width = Math.max(240, Math.round(maxW));
+    canvas.height = Math.max(200, Math.round(maxH));
+    const padding = Math.min(28, canvas.width * 0.06, canvas.height * 0.06);
+    let frameW = canvas.width - padding * 2;
+    let frameH = frameW / s.aspect;
+    if (frameH > canvas.height - padding * 2) {
+        frameH = canvas.height - padding * 2;
+        frameW = frameH * s.aspect;
+    }
+    const rx = (canvas.width - frameW) / 2;
+    const ry = (canvas.height - frameH) / 2;
+    const scale = frameW / s.cw;
     s.viewScale = scale;
-    canvas.width = Math.round(s.img.width * scale);
-    canvas.height = Math.round(s.img.height * scale);
+    s.frameX = rx;
+    s.frameY = ry;
+    s.frameW = frameW;
+    s.frameH = frameH;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(s.img, 0, 0, canvas.width, canvas.height);
+    const imageX = rx - s.cx * scale;
+    const imageY = ry - s.cy * scale;
+    const imageW = s.img.width * scale;
+    const imageH = s.img.height * scale;
+    ctx.drawImage(s.img, imageX, imageY, imageW, imageH);
 
     // لایه تیره
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const rx = s.cx * scale;
-    const ry = s.cy * scale;
-    const rw = s.cw * scale;
-    const rh = s.ch * scale;
-
     // ناحیه روشن کراپ
     ctx.save();
     if (s.mode === 'avatar') {
         ctx.beginPath();
-        ctx.arc(rx + rw / 2, ry + rh / 2, rw / 2, 0, Math.PI * 2);
+        ctx.arc(rx + frameW / 2, ry + frameH / 2, frameW / 2, 0, Math.PI * 2);
         ctx.clip();
     } else {
         ctx.beginPath();
-        ctx.rect(rx, ry, rw, rh);
+        ctx.rect(rx, ry, frameW, frameH);
         ctx.clip();
     }
-    ctx.drawImage(s.img, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(s.img, imageX, imageY, imageW, imageH);
     ctx.restore();
 
     // حاشیه کادر
@@ -223,23 +239,23 @@ function drawCropCanvas() {
     ctx.lineWidth = 2;
     if (s.mode === 'avatar') {
         ctx.beginPath();
-        ctx.arc(rx + rw / 2, ry + rh / 2, rw / 2, 0, Math.PI * 2);
+        ctx.arc(rx + frameW / 2, ry + frameH / 2, frameW / 2, 0, Math.PI * 2);
         ctx.stroke();
     } else {
-        ctx.strokeRect(rx, ry, rw, rh);
+        ctx.strokeRect(rx, ry, frameW, frameH);
     }
 
     // دستگیره‌های گوشه (فقط برای نمایش)
     const hs = 6;
     ctx.fillStyle = '#6366f1';
-    [[rx, ry], [rx + rw, ry], [rx, ry + rh], [rx + rw, ry + rh]].forEach(function (p) {
+    [[rx, ry], [rx + frameW, ry], [rx, ry + frameH], [rx + frameW, ry + frameH]].forEach(function (p) {
         ctx.fillRect(p[0] - hs / 2, p[1] - hs / 2, hs, hs);
     });
 
     const info = document.getElementById('accountCropInfo');
     if (info) {
         info.textContent = Math.round(s.cw) + ' × ' + Math.round(s.ch) + ' px · نسبت ' +
-            (s.mode === 'avatar' ? '۱:۱' : '۱۶:۹');
+            (s.mode === 'avatar' ? '۱:۱' : (s.mode === 'gallery' ? (s.img.width + ':' + s.img.height) : '۱۶:۹'));
     }
 }
 
@@ -256,8 +272,9 @@ function bindCropEvents(canvas) {
         const dy = (e.clientY - cropState.lastY) / cropState.viewScale;
         cropState.lastX = e.clientX;
         cropState.lastY = e.clientY;
-        cropState.cx = clamp(cropState.cx + dx, 0, cropState.img.width - cropState.cw);
-        cropState.cy = clamp(cropState.cy + dy, 0, cropState.img.height - cropState.ch);
+        cropState.cx -= dx;
+        cropState.cy -= dy;
+        clampCropPosition(cropState);
         drawCropCanvas();
     };
     window.onmouseup = async function () {
@@ -276,8 +293,9 @@ function bindCropEvents(canvas) {
         const dy = (e.touches[0].clientY - cropState.lastY) / cropState.viewScale;
         cropState.lastX = e.touches[0].clientX;
         cropState.lastY = e.touches[0].clientY;
-        cropState.cx = clamp(cropState.cx + dx, 0, cropState.img.width - cropState.cw);
-        cropState.cy = clamp(cropState.cy + dy, 0, cropState.img.height - cropState.ch);
+        cropState.cx -= dx;
+        cropState.cy -= dy;
+        clampCropPosition(cropState);
         drawCropCanvas();
         e.preventDefault();
     };
@@ -293,13 +311,13 @@ function clamp(v, min, max) {
 window.zoomCrop = async function (delta) {
     const s = cropState;
     if (!s) return;
-    const factor = delta > 0 ? 0.92 : 1.08; // + زوم این (کادر کوچکتر) / - زوم اوت
+    const factor = delta > 0 ? 0.92 : 1.08; // کادر نمایش ثابت است؛ تغییر محدوده منبع باعث زوم خود تصویر می‌شود.
     let newW = s.cw * factor;
     let newH = newW / s.aspect;
 
     // محدودیت اندازه
-    const maxW = s.img.width;
-    const maxH = s.img.height;
+    const maxW = s.initialCropW;
+    const maxH = s.initialCropH;
     if (newW > maxW) { newW = maxW; newH = newW / s.aspect; }
     if (newH > maxH) { newH = maxH; newW = newH * s.aspect; }
     const minSide = s.minCrop;
@@ -315,8 +333,9 @@ window.zoomCrop = async function (delta) {
     const centerY = s.cy + s.ch / 2;
     s.cw = newW;
     s.ch = newH;
-    s.cx = clamp(centerX - s.cw / 2, 0, s.img.width - s.cw);
-    s.cy = clamp(centerY - s.ch / 2, 0, s.img.height - s.ch);
+    s.cx = centerX - s.cw / 2;
+    s.cy = centerY - s.ch / 2;
+    clampCropPosition(s);
     drawCropCanvas();
 };
 
@@ -336,6 +355,8 @@ window.applyImageCrop = async function () {
     out.width = outW;
     out.height = outH;
     const ctx = out.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, outW, outH);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(s.img, s.cx, s.cy, s.cw, s.ch, 0, 0, outW, outH);

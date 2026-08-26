@@ -21,6 +21,11 @@ class AcademyBranchController {
         return ResponseFactory::json(['success'=>true, 'csrf_token'=>csrf_token()] + $this->service->bootstrap((int)auth()->id(), SiteAdminAccess::allows($user)));
     }
 
+    public function realtimeVersion() {
+        $user = auth()->user();
+        return ResponseFactory::json(['success' => true, 'data' => $this->service->realtimeVersion((int)auth()->id(), SiteAdminAccess::allows($user))]);
+    }
+
 
     public function store() { 
         return $this->run(fn() => $this->service->store((int)auth()->id(), $this->payload(), SiteAdminAccess::allows(auth()->user())), 201); 
@@ -29,6 +34,10 @@ class AcademyBranchController {
 
     public function update(int $id) { 
         return $this->run(fn() => $this->service->update((int)auth()->id(), $id, $this->payload(), SiteAdminAccess::allows(auth()->user()))); 
+    }
+
+    public function cycleStatus(int $id) {
+        return $this->run(fn() => $this->service->cycleStatus((int)auth()->id(), $id, SiteAdminAccess::allows(auth()->user())));
     }
 
 
