@@ -16,26 +16,28 @@
     function statusClass(status) {
         return {
             'فعال': 'bg-green-100 text-green-700',
-            'غیرفعال': 'bg-gray-100 text-gray-600',
+            'غیرفعال': 'bg-red-100 text-red-700',
             'در انتظار تأیید': 'bg-yellow-100 text-yellow-700',
-            'حذف‌شده': 'bg-red-100 text-red-700'
+            'حذف‌شده': 'bg-gray-100 text-gray-600'
         }[status] || 'bg-gray-100 text-gray-600';
     }
 
     function formFields(item, prefix) {
         const id = function (n) { return prefix ? prefix + n : 'rule' + n; };
         const branches = (typeof window.getRuleBranches === 'function' ? window.getRuleBranches() : []).map(function (b) {
-            return { value: b.id, label: b.name };
+            return { value: b.key, label: b.name };
         });
         const types = (window.ruleTypesList || []).map(function (t) { return { value: t, label: t }; });
-        const statuses = (window.ruleStatusesList || []).map(function (s) { return { value: s, label: s }; });
+        const statuses = ['فعال','غیرفعال'].map(function (s) { return { value: s, label: s }; });
         const units = (window.ruleValueUnitsList || []).map(function (u) { return { value: u, label: u }; });
+        const fixedOrganization = window.ruleOrganizationSelection === 'fixed';
+        const showStatus = window.ruleShowStatusField !== false;
         return `
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                    <label class="block text-sm font-medium mb-2">شعبه *</label>
+                <div class="${fixedOrganization ? 'hidden' : ''}">
+                    <label class="block text-sm font-medium mb-2">سازمان *</label>
                     <select id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(branches, item.branchId)}
+                        ${renderOptions(branches, item.organizationKey || (branches[0] && branches[0].value))}
                     </select>
                 </div>
                 <div>
@@ -55,7 +57,7 @@
                         <select id="${id('ValueUnit')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${renderOptions(units, item.valueUnit || 'ساعت')}</select>
                     </div>
                 </div>
-                <div>
+                <div class="${showStatus ? '' : 'hidden'}">
                     <label class="block text-sm font-medium mb-2">وضعیت</label>
                     <select id="${id('Status')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                         ${renderOptions(statuses, item.status || 'فعال')}
@@ -78,12 +80,11 @@
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
             <td class="py-4 px-5">${escapeHtml(item.type)}</td>
             <td class="py-4 px-5">${escapeHtml(item.value)}</td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td>
+            <td class="py-4 px-5"><button type="button" ${item.canChangeStatus ? `onclick="cycleRuleStatus(${item.id})"` : 'disabled'} class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)} disabled:cursor-default">${escapeHtml(item.status)}</button></td>
             <td class="py-4 px-5 text-left">
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewRule(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
-                    <button onclick="toggleRuleInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
-                    <button onclick="deleteRule(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>
+                    ${item.canEdit ? `<button data-rule-inline-toggle="${item.id}" onclick="toggleRuleInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button><button onclick="deleteRule(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>` : ''}
                 </div>
             </td>`;
     };
@@ -94,7 +95,7 @@
         return `<td colspan="6" class="p-5 border-t">${window.getRuleInlineEditRowHTML(item)}</td>`;
     };
     window.getRuleInlineEditRowHTML = function (item) {
-        return `<div class="space-y-6">
+        return `<div class="rule-inline-editor space-y-6">
             ${formFields(item, 'inlineRule' + item.id)}
             <div class="flex flex-col sm:flex-row gap-4 pt-2">
                 <button onclick="saveInlineRule(${item.id})" class="w-full sm:w-auto min-w-[140px] bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-4 rounded-2xl font-medium">ذخیره</button>
@@ -145,7 +146,7 @@
                         <p class="text-sm text-gray-500 mt-1">کد قانون: #${item.id}</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="editRule(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm">ویرایش</button>
+                        ${item.canEdit ? `<button onclick="editRule(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm">ویرایش</button>` : ''}
                         <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                     </div>
                 </div>
@@ -153,7 +154,7 @@
                     ${item.summary ? `<p class="text-indigo-600 font-medium">${escapeHtml(item.summary)}</p>` : ''}
                     ${item.description ? `<p class="text-gray-600 leading-relaxed">${escapeHtml(item.description)}</p>` : ''}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">شعبه</span><span class="font-medium">${escapeHtml(item.branchName)}</span></div>
+                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">سازمان</span><span class="font-medium">${escapeHtml(item.organizationName || item.branchName)}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">نوع</span><span class="font-medium">${escapeHtml(item.type)}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">مقدار</span><span class="font-medium">${escapeHtml(item.value)}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">وضعیت</span><span class="font-medium">${escapeHtml(item.status)}</span></div>

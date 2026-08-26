@@ -2,7 +2,7 @@
 'use strict';
 // ==================== قوانین زمان‌بندی (ایزوله) ====================
 window.ruleTypesList = ['لغو', 'جبرانی', 'رزرو', 'زمان‌بندی'];
-window.ruleStatusesList = ['فعال', 'غیرفعال', 'در انتظار تأیید', 'حذف‌شده'];
+window.ruleStatusesList = ['در انتظار تأیید', 'فعال', 'غیرفعال', 'حذف‌شده'];
 window.ruleValueUnitsList = ['ساعت', 'دقیقه', 'روز', 'جلسه', 'غیبت', 'نفر', 'سال', 'بله/خیر', 'درصد', 'مبلغ'];
 
 window.getRuleBranches = function () {
@@ -11,10 +11,13 @@ window.getRuleBranches = function () {
 
 let allRules = [];
 let ruleBranches = [];
+let ruleFilterOrganizations = [];
+let ruleOrganizationSelection = 'select';
+let ruleShowStatusField = true;
 
 function encodeRulePayload(data){return btoa(unescape(encodeURIComponent(JSON.stringify(data)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 async function ruleApi(url,data=null){const token=window.adminCsrfToken||'',options={method:data===null?'GET':'POST',credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}};if(data!==null){options.headers['Content-Type']='application/x-www-form-urlencoded;charset=UTF-8';options.headers['X-CSRF-TOKEN']=token;options.body=new URLSearchParams({_token:token,payload_b64:encodeRulePayload(data)}).toString();}const response=await fetch(url,options),raw=await response.text();let body;try{body=JSON.parse(raw);}catch(e){throw new Error('پاسخ معتبر JSON از سرور دریافت نشد.');}const envelope=body.data??body;if(!response.ok||envelope.success===false)throw new Error(envelope.message||'عملیات قانون زمان‌بندی ناموفق بود.');return envelope.data??envelope;}
-async function loadSchedulingRules(){const data=await ruleApi('/analytics/admin-scheduling-rules');ruleBranches=data.branches||[];allRules=data.rules||[];filteredRules=allRules.slice();window.renderRulesBranchTabs();window.renderRuleTypeFilter();window.filterRules();}
+async function loadSchedulingRules(){const data=await ruleApi('/analytics/admin-scheduling-rules');ruleBranches=data.organizations||[];ruleFilterOrganizations=data.filter_organizations||ruleBranches;ruleOrganizationSelection=data.organization_selection||'select';ruleShowStatusField=data.show_status_field!==false;window.ruleOrganizationSelection=ruleOrganizationSelection;window.ruleShowStatusField=ruleShowStatusField;allRules=data.rules||[];filteredRules=allRules.slice();window.renderRulesBranchTabs();window.renderRuleTypeFilter();window.filterRules();return data;}
 
 let currentRuleBranch = 'all';
 let rulesCurrentPage = 1;
@@ -23,11 +26,14 @@ let filteredRules = allRules.slice();
 let editingRuleRowId = null;
 let ruleSortField = '';
 let ruleSortDirection = 'asc';
+let ruleRealtimeVersion = null;
+let ruleRealtimeBusy = false;
+const ruleRealtimeChannel = 'BroadcastChannel' in window ? new BroadcastChannel('sornaz-admin-data') : null;
 
 const rulePdfColumns = [
     { field: 'index', label: 'ردیف' },
     { field: 'title', label: 'عنوان' },
-    { field: 'branchName', label: 'شعبه' },
+    { field: 'branchName', label: 'سازمان' },
     { field: 'type', label: 'نوع' },
     { field: 'value', label: 'مقدار' },
     { field: 'status', label: 'وضعیت' }
@@ -74,13 +80,17 @@ window.renderRulesBranchTabs = async function () {
     const container = document.getElementById('rulesBranchTabs');
     if (!container) return;
     container.querySelectorAll('.rule-branch-tab:not(:first-child)').forEach(function (t) { t.remove(); });
-    window.getRuleBranches().forEach(function (b) {
-        const active = currentRuleBranch == b.id;
+    if(ruleFilterOrganizations.some(function(organization){return organization.kind==='academy';})){
+        const academyButton=document.createElement('button');academyButton.className='rule-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border '+(currentRuleBranch==='academy'?'bg-indigo-600 text-white border-indigo-600':'border-gray-200 hover:bg-gray-50')+' transition';academyButton.textContent='آموزشگاه';academyButton.dataset.value='academy';academyButton.onclick=function(){window.filterRulesByBranch('academy');};container.appendChild(academyButton);
+    }
+    ruleFilterOrganizations.filter(function(organization){return organization.kind==='branch';}).forEach(function (b) {
+        const active = currentRuleBranch === b.key;
         const btn = document.createElement('button');
         btn.className = 'rule-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ' +
             (active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50') + ' transition';
         btn.textContent = b.name;
-        btn.onclick = function () { window.filterRulesByBranch(b.id); };
+        btn.dataset.value = b.key;
+        btn.onclick = function () { window.filterRulesByBranch(b.key); };
         container.appendChild(btn);
     });
 };
@@ -96,7 +106,7 @@ window.filterRulesByBranch = async function (branchId) {
         tabs[0].classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
         tabs[0].classList.remove('border-gray-200');
     } else {
-        const name = window.getRuleBranches().find(function (b) { return b.id == branchId; });
+        const name = branchId==='academy'?{name:'آموزشگاه'}:ruleFilterOrganizations.find(function (b) { return b.key === branchId; });
         tabs.forEach(function (tab) {
             if (name && tab.textContent === name.name) {
                 tab.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
@@ -113,7 +123,7 @@ window.filterRules = async function () {
     const type = document.getElementById('filterRuleType') && document.getElementById('filterRuleType').value || '';
 
     filteredRules = allRules.filter(function (item) {
-        const matchBranch = window.matchesOrganizationFilter(item,currentRuleBranch);
+        const matchBranch = currentRuleBranch === 'all' || (currentRuleBranch === 'academy' ? item.organizationKind === 'academy' : item.organizationKey === currentRuleBranch);
         const matchSearch = !search ||
             (item.title || '').toLowerCase().includes(search) ||
             (item.summary || '').toLowerCase().includes(search) ||
@@ -162,6 +172,8 @@ window.renderRulesTable = async function (list) {
 };
 
 function updateRulesPagination(total, start, end, totalPages) {
+    const wrapper = document.getElementById('rulesPagination');
+    if (wrapper) wrapper.classList.toggle('hidden', total < 11);
     const info = document.getElementById('rulesPaginationInfo');
     if (info) {
         info.textContent = 'نمایش ' + (total === 0 ? 0 : start + 1) + ' تا ' + Math.min(end, total) + ' از ' + total + ' قانون';
@@ -189,10 +201,10 @@ window.changeRulesPage = async function (page) {
 
 function readRuleForm(prefix) {
     const f = function (s) { return document.getElementById(prefix ? prefix + s : 'rule' + s); };
-    const branchId = parseInt(f('Branch') && f('Branch').value, 10);
-    const branch = window.getRuleBranches().find(function (b) { return b.id === branchId; });
+    const organizationKey = f('Branch') ? f('Branch').value : (window.getRuleBranches()[0] && window.getRuleBranches()[0].key || '');
+    const branch = window.getRuleBranches().find(function (b) { return b.key === organizationKey; });
     return {
-        branchId: branchId,
+        organizationKey: organizationKey,
         branchName: branch ? branch.name : 'نامشخص',
         title: f('Title') && f('Title').value.trim() || '',
         type: f('Type') && f('Type').value || '',
@@ -225,7 +237,7 @@ window.viewRule = async function (id) {
 
 window.editRule = async function (id) {
     const item = allRules.find(function (x) { return x.id === id; });
-    if (!item) return;
+    if (!item || !item.canEdit) return;
     document.getElementById('modalContainer').innerHTML = window.getRuleEditModalHTML
         ? window.getRuleEditModalHTML(item) : '';
 };
@@ -238,9 +250,20 @@ window.saveEditedRule = async function (id) {
 };
 
 window.toggleRuleInlineEdit = async function (id) {
+    const item = allRules.find(function (rule) { return rule.id === id; });
+    if (!item || !item.canEdit) return;
     editingRuleRowId = editingRuleRowId === id ? null : id;
     window.renderRulesTable(filteredRules);
 };
+
+document.addEventListener('click',function(event){
+    if(editingRuleRowId&&!event.target.closest('.rule-inline-editor')){
+        const toggle=event.target.closest('[data-rule-inline-toggle]');
+        if(toggle&&String(toggle.dataset.ruleInlineToggle)===String(editingRuleRowId))return;
+        editingRuleRowId=null;
+        window.renderRulesTable(filteredRules);
+    }
+},true);
 
 window.saveInlineRule = async function (id) {
     const data = readRuleForm('inlineRule' + id);
@@ -250,13 +273,23 @@ window.saveInlineRule = async function (id) {
 };
 
 window.deleteRule = async function (id) {
+    const item = allRules.find(function (rule) { return rule.id === id; });
+    if (!item || !item.canEdit) return;
     if (!(await AppDialog.confirmDelete(allRules, id, 'قانون'))) return;
     try{await ruleApi('/analytics/admin-scheduling-rules/'+id+'/delete',{});if(editingRuleRowId===id)editingRuleRowId=null;await loadSchedulingRules();}catch(error){alert(error.message);}
 };
 
+window.cycleRuleStatus = async function (id) {
+    const item=allRules.find(function(rule){return rule.id===id;});if(!item||!item.canChangeStatus)return;
+    try{await ruleApi('/analytics/admin-scheduling-rules/'+id+'/status',{});await loadSchedulingRules();}catch(error){alert(error.message);}
+};
+
+async function pollRulesRealtime(){if(ruleRealtimeBusy||document.hidden||!document.getElementById('rulesTable'))return;ruleRealtimeBusy=true;try{const state=await ruleApi('/analytics/admin-scheduling-rules/realtime-version');if(ruleRealtimeVersion===null){ruleRealtimeVersion=state.version;return;}if(state.version!==ruleRealtimeVersion){ruleRealtimeVersion=state.version;editingRuleRowId=null;await loadSchedulingRules();ruleRealtimeChannel?.postMessage({resource:'scheduling_rules',version:state.version});}}catch(error){}finally{ruleRealtimeBusy=false;}}
+ruleRealtimeChannel?.addEventListener('message',async function(event){if(event.data?.resource!=='scheduling_rules'||event.data.version===ruleRealtimeVersion)return;ruleRealtimeVersion=event.data.version;editingRuleRowId=null;await loadSchedulingRules();});
+
 window.exportRulesToExcel = async function () {
     const data = filteredRules.length ? filteredRules : allRules;
-    let csv = '\uFEFFردیف,عنوان,شعبه,نوع,مقدار,وضعیت,خلاصه\n';
+    let csv = '\uFEFFردیف,عنوان,سازمان,نوع,مقدار,وضعیت,خلاصه\n';
     data.forEach(function (item, i) {
         csv += (i + 1) + ',"' + item.title + '","' + item.branchName + '","' + item.type + '","' +
             item.value + '","' + item.status + '","' + (item.summary || '') + '"\n';
@@ -322,4 +355,6 @@ setTimeout(function () {
         loadSchedulingRules().catch(function(error){alert(error.message);});
     }
 }, 200);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){pollRulesRealtime();setInterval(pollRulesRealtime,2000);document.addEventListener('visibilitychange',function(){if(!document.hidden)pollRulesRealtime();});});
+else{pollRulesRealtime();setInterval(pollRulesRealtime,2000);document.addEventListener('visibilitychange',function(){if(!document.hidden)pollRulesRealtime();});}
 })();

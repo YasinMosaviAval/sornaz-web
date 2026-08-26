@@ -20,12 +20,12 @@
         </div>
     </div>
 
-    <!-- تاپ‌بار شعبه‌ها -->
+    <!-- تاپ‌بار سازمان‌ها -->
     <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
         <div class="flex gap-2 min-w-max" id="rulesBranchTabs">
             <button onclick="filterRulesByBranch('all')"
                     class="rule-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium bg-indigo-600 text-white">
-                همه شعبه‌ها
+                همه
             </button>
         </div>
     </div>
@@ -39,9 +39,9 @@
             <select id="filterRuleStatus" onchange="filterRules()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه وضعیت‌ها</option>
+                <option value="در انتظار تأیید">در انتظار تأیید</option>
                 <option value="فعال">فعال</option>
                 <option value="غیرفعال">غیرفعال</option>
-                <option value="در انتظار تأیید">در انتظار تأیید</option>
                 <option value="حذف‌شده">حذف‌شده</option>
             </select>
             <select id="filterRuleType" onchange="filterRules()"
@@ -61,7 +61,7 @@
                             <button onclick="sortRulesBy('title')" class="flex items-center gap-1">عنوان قانون <span id="ruleSortIcon-title">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortRulesBy('branchName')" class="flex items-center gap-1">شعبه <span id="ruleSortIcon-branchName">↕</span></button>
+                            <button onclick="sortRulesBy('branchName')" class="flex items-center gap-1">سازمان <span id="ruleSortIcon-branchName">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortRulesBy('type')" class="flex items-center gap-1">نوع <span id="ruleSortIcon-type">↕</span></button>
@@ -78,7 +78,7 @@
                 <tbody class="divide-y text-sm"></tbody>
             </table>
         </div>
-        <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
+        <div id="rulesPagination" class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="rulesPaginationInfo">نمایش ۱ تا ۱۰ از ۳۰ قانون</span>
             <div class="flex items-center gap-2" id="rulesPaginationButtons"></div>
         </div>
