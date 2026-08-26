@@ -52,11 +52,13 @@ $showAcademyPanelSections = $isSiteAdminPanel || $hasMemberManagementRole || in_
             component('availabilities');
             component('availability-exceptions');
             component('points');
-            component('users');
-            component('roles');
-            component('permissions');
             component('settings');
-            component('guides', ['guides'=>$guides??[]]);
+            if ($isSiteAdminPanel) {
+                component('users');
+                component('roles');
+                component('permissions');
+                component('guides', ['guides'=>$guides??[]]);
+            }
 
             //component('awards');
             //component('certificates');

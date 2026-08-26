@@ -59,6 +59,7 @@ Router::post('/academy/admin/branch-offerings/lessons', [AcademyBranchOfferingCo
 Router::post('/academy/admin/branch-offerings/lessons/{id}/update', [AcademyBranchOfferingController::class, 'updateLesson'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/branch-offerings/lessons/{id}/status', [AcademyBranchOfferingController::class, 'cycleLessonStatus'])->middleware(['academy-panel','csrf']);
 Router::get('/academy/admin/branch-offerings/lessons/realtime-version', [AcademyBranchOfferingController::class, 'lessonsRealtimeVersion'])->middleware('academy-panel');
+Router::get('/academy/admin/branch-offerings/schedules/realtime-version', [AcademyBranchOfferingController::class, 'schedulesRealtimeVersion'])->middleware('academy-panel');
 Router::post('/academy/admin/branch-offerings/lesson-catalog', [AcademyBranchOfferingController::class, 'storeLessonCatalog'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/branch-offerings/schedules', [AcademyBranchOfferingController::class, 'storeSchedule'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/branch-offerings/schedules/{id}/update', [AcademyBranchOfferingController::class, 'updateSchedule'])->middleware(['academy-panel','csrf']);

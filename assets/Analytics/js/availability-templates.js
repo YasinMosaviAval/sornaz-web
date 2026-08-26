@@ -24,87 +24,59 @@
 
     function formFields(item, prefix) {
         const id = function (n) { return prefix ? prefix + n : 'bs' + n; };
-        const branches = (typeof window.getBranchScheduleBranches === 'function' ? window.getBranchScheduleBranches() : []).map(function (b) {
+        const branches = (typeof window.getBranchScheduleOrganizations === 'function' ? window.getBranchScheduleOrganizations() : []).map(function (b) {
             return { value: b.id, label: b.name };
         });
         const days = (window.branchScheduleDaysList || []).map(function (d) { return { value: d, label: d }; });
         const statuses = (window.branchScheduleStatusesList || []).map(function (s) { return { value: s, label: s }; });
-        const repeats = (window.branchScheduleRepeatList || []).map(function (r) { return { value: r, label: r }; });
         const timezones = (window.branchScheduleTimezoneList || []).map(function (tz) {
             return { value: tz.value, label: tz.label };
         });
         const branchId = item.branchId || (branches[0] && branches[0].value) || 1;
-        const repeatVal = item.repeatPeriod || 'هفتگی';
-        const showDate = (repeatVal === 'ماهانه' || repeatVal === 'سالانه');
+        const fixedOrganization = (window.branchOfferingData && window.branchOfferingData.organization_selection === 'fixed') || window.branchScheduleOrganizationSelection === 'fixed';
+        const editing = Boolean(item.id || (prefix && (prefix.indexOf('editBs') === 0 || prefix.indexOf('inlineBs') === 0)));
+        const inlineEditing = Boolean(prefix && prefix.indexOf('inlineBs') === 0);
         const slotsHtml = typeof window.buildBranchScheduleTimeSlotsHTML === 'function'
-            ? window.buildBranchScheduleTimeSlotsHTML(id('TimeSlots'), branchId, item.slots || [])
+            ? window.buildBranchScheduleTimeSlotsHTML(id('TimeSlots'), branchId, item.slots || [], item.rangeStatuses || [], item.ranges || [])
             : '';
 
         return `
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                <div>
-                    <label class="block text-sm font-medium mb-2">شعبه *</label>
-                    <select id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
-                            onchange="window.refreshBranchScheduleTimeSlots('${id('TimeSlots')}', this.value, [])">
-                        ${renderOptions(branches, item.branchId)}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                ${inlineEditing ? '' : `<div class="${fixedOrganization ? 'hidden' : ''}">
+                    <label class="block text-sm font-medium mb-2">سازمان *</label>
+                    <select id="${id('Branch')}" ${editing ? 'disabled' : ''} class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            onchange="window.loadExistingBranchScheduleDay('${prefix}',false)">
+                        ${renderOptions(branches, item.user_id || item.organizationUserId || item.branchId)}
                     </select>
-                </div>
-                <div>
+                </div>`}
+                ${inlineEditing ? '' : `<div>
                     <label class="block text-sm font-medium mb-2">روز *</label>
-                    <select id="${id('Day')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <select id="${id('Day')}" ${editing ? 'disabled' : ''} onchange="window.loadExistingBranchScheduleDay('${prefix}',false)" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
                         ${renderOptions(days, item.day || 'شنبه')}
                     </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">دوره تکرار</label>
-                    <select id="${id('Repeat')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
-                            onchange="window.toggleBranchScheduleRepeatDate('${id('RepeatDateWrap')}', this.value)">
-                        ${renderOptions(repeats, repeatVal)}
-                    </select>
-                </div>
-                <div id="${id('RepeatDateWrap')}" class="${showDate ? '' : 'hidden'}">
-                    <label class="block text-sm font-medium mb-2">تاریخ مرجع (ماهانه/سالانه)</label>
-                    <input id="${id('RepeatDate')}" type="date" value="${escapeHtml(item.repeatDate || '')}"
-                           class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">وضعیت</label>
-                    <select id="${id('Status')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(statuses, item.status || 'فعال')}
-                    </select>
-                </div>
+                </div>`}
                 <div>
                     <label class="block text-sm font-medium mb-2">منطقه زمانی</label>
-                    <select id="${id('Timezone')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <select id="${id('Timezone')}" data-previous-timezone="${escapeHtml(item.timezone || 'Asia/Tehran')}" onchange="changeBranchScheduleTimezone(this, '${prefix}')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                         ${renderOptions(timezones, item.timezone || 'Asia/Tehran')}
                     </select>
                 </div>
-                <div class="sm:col-span-3">
-                    <label class="block text-sm font-medium mb-2">ساعات کاری (هر نیم‌ساعت)</label>
-                    <div id="${id('TimeSlots')}" class="border border-gray-200 rounded-2xl p-4 max-h-48 overflow-y-auto">
-                        ${slotsHtml}
-                    </div>
-                    <p class="text-xs text-gray-400 mt-1">ساعات پیاپی به‌صورت یک بازه ذخیره می‌شوند؛ بازه‌های با فاصله به‌صورت آیتم جدا در جدول نمایش داده می‌شوند.</p>
-                </div>
-                <div class="sm:col-span-3">
-                    <label class="block text-sm font-medium mb-2">خلاصه</label>
-                    <input id="${id('Summary')}" type="text" value="${escapeHtml(item.summary || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                </div>
-                <div class="sm:col-span-3">
-                    <label class="block text-sm font-medium mb-2">توضیحات</label>
-                    <textarea id="${id('Description')}" rows="3" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${escapeHtml(item.description || '')}</textarea>
+                <div class="sm:col-span-2 rounded-2xl border border-indigo-100 bg-indigo-50/40 p-5 space-y-5">
+                    <div><label class="block text-sm font-medium mb-2">ساعات کاری</label><div id="${id('TimeSlots')}">${slotsHtml}</div></div>
+                    <div><label class="block text-sm font-medium mb-2">خلاصه</label><input id="${id('Summary')}" type="text" value="${escapeHtml(item.summary || '')}" class="w-full border rounded-2xl py-3.5 px-5 bg-white"></div>
+                    <div><label class="block text-sm font-medium mb-2">توضیحات</label><textarea id="${id('Description')}" rows="3" class="w-full border rounded-2xl py-3.5 px-5 bg-white">${escapeHtml(item.description || '')}</textarea></div>
                 </div>
             </div>`;
     }
 
     window.getBranchScheduleRowHTML = function (item) {
         return `
+            <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
             <td class="py-4 px-5">${escapeHtml(item.day)}</td>
             <td class="py-4 px-5 font-mono text-sm">${escapeHtml(item.timeLabel || item.time || '—')}</td>
             <td class="py-4 px-5 text-sm">${escapeHtml(item.repeatPeriod || 'هفتگی')}</td>
             <td class="py-4 px-5 text-xs text-gray-500">${escapeHtml(item.timezone || 'Asia/Tehran')}</td>
-            <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td>
+            <td class="py-4 px-5"><button type="button" onclick="cycleBranchScheduleStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</button></td>
             <td class="py-4 px-5 text-left">
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewBranchSchedule(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
@@ -120,7 +92,7 @@
         return `<td colspan="7" class="p-5 border-t">${window.getBranchScheduleInlineEditRowHTML(item)}</td>`;
     };
     window.getBranchScheduleInlineEditRowHTML = function (item) {
-        return `<div class="space-y-6">
+        return `<div class="bs-inline-editor space-y-6">
             ${formFields(item, 'inlineBs' + item.id)}
             <div class="flex flex-col sm:flex-row gap-4 pt-2">
                 <button onclick="saveInlineBranchSchedule(${item.id})" class="w-full sm:w-auto min-w-[140px] bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-4 rounded-2xl font-medium">ذخیره</button>
@@ -132,7 +104,7 @@
         return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-3xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                 <div class="px-8 py-5 border-b flex justify-between items-center">
-                    <h2 class="text-2xl font-bold">افزودن زمان‌بندی شعبه</h2>
+                    <h2 class="text-2xl font-bold">افزودن برنامه زمانی سازمان</h2>
                     <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                 </div>
                 <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto">
@@ -149,7 +121,7 @@
         return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-3xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                 <div class="px-8 py-5 border-b flex justify-between items-center">
-                    <h2 class="text-2xl font-bold">ویرایش زمان‌بندی شعبه</h2>
+                    <h2 class="text-2xl font-bold">ویرایش برنامه زمانی سازمان</h2>
                     <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                 </div>
                 <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto">
@@ -179,7 +151,7 @@
                     ${item.summary ? `<p class="text-indigo-600 font-medium">${escapeHtml(item.summary)}</p>` : ''}
                     ${item.description ? `<p class="text-gray-600 leading-relaxed">${escapeHtml(item.description)}</p>` : ''}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">شعبه</span><span class="font-medium">${escapeHtml(item.branchName)}</span></div>
+                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">سازمان</span><span class="font-medium">${escapeHtml(item.branchName)}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">روز</span><span class="font-medium">${escapeHtml(item.day)}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ساعت</span><span class="font-medium">${escapeHtml(item.timeLabel || item.time || '—')}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">دوره تکرار</span><span class="font-medium">${escapeHtml(item.repeatPeriod || 'هفتگی')}</span></div>
@@ -196,12 +168,12 @@
         return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl">
-                    <h2 class="text-2xl font-bold">تنظیمات خروجی PDF برنامه زمانی شعبه‌ها</h2>
+                    <h2 class="text-2xl font-bold">تنظیمات خروجی PDF برنامه زمانی سازمان</h2>
                     <button onclick="closeModal()" class="text-3xl text-gray-300">×</button>
                 </div>
                 <div class="p-8 space-y-6" style="max-height:calc(100vh - 10rem);overflow-y:auto;">
-                    <input id="bsPdfTitle" type="text" value="گزارش برنامه زمانی شعبه‌ها" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                    <input id="bsPdfSubtitle" type="text" value="ساعات کاری و برنامه زمانی شعبه‌ها" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <input id="bsPdfTitle" type="text" value="گزارش برنامه زمانی سازمان" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <input id="bsPdfSubtitle" type="text" value="ساعات کاری و برنامه زمانی سازمان‌ها" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                     <div class="grid grid-cols-2 gap-5">
                         <select id="bsPdfFormat" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"><option value="a4">A4</option><option value="letter">Letter</option></select>
                         <select id="bsPdfOrientation" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"><option value="landscape">افقی</option><option value="portrait">عمودی</option></select>
