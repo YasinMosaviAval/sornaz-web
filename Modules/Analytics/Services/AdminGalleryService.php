@@ -23,6 +23,12 @@ final class AdminGalleryService
         return ['owners'=>$owners,'items'=>array_map(fn($row)=>$this->map($row,$ownerMap[(int)$row['user_id']]),$rows),'hideOwnerFilters'=>$branchAccount];
     }
 
+    public function realtimeVersion(int $actor): array
+    {
+        $data = $this->data($actor);
+        return ['resource'=>'gallery','version'=>sha1(json_encode([$data['owners'],$data['items'],$data['hideOwnerFilters']], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))];
+    }
+
     public function store(int $actor, array $input, array $file): array
     {
         $owner=$this->allowedOwner($actor,(int)($input['ownerId']??0));

@@ -189,8 +189,8 @@
     window.getAccountCropModalHTML = function (mode, title, meta) {
         meta=meta||{};
         const hint = mode === 'avatar'
-            ? 'کادر دایره‌ای ۱×۱ را جابه‌جا کنید و با دکمه‌های زوم اندازه را تغییر دهید. نسبت همیشه مربعی می‌ماند.'
-            : mode === 'gallery' ? 'کادر تصویر را جابه‌جا کنید و اندازه دلخواه را با زوم تنظیم کنید.' : 'کادر ۱۶×۹ را جابه‌جا کنید و با زوم کوچک/بزرگ کنید. نسبت افقی ثابت می‌ماند و به هم نمی‌ریزد.';
+            ? 'کادر دایره‌ای ۱×۱ ثابت است؛ تصویر را جابه‌جا و با دکمه‌ها زوم کنید.'
+            : mode === 'gallery' ? 'کادر برش ثابت است؛ تصویر را جابه‌جا و زوم کنید.' : 'کادر ۱۶×۹ ثابت است؛ تصویر را جابه‌جا و با دکمه‌ها زوم کنید.';
         return `<div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) cancelImageCrop()">
             <div class="bg-white rounded-3xl w-full max-w-3xl my-6 shadow-2xl" onclick="event.stopPropagation()">
                 <div class="px-6 py-4 border-b flex justify-between items-center gap-3">
@@ -207,10 +207,10 @@
                     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
                         <p id="accountCropInfo" class="text-sm text-gray-500"></p>
                         <div class="flex items-center gap-2">
-                            <button type="button" onclick="zoomCrop(1)" class="px-4 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-sm" title="کوچک‌تر کردن کادر (زوم این)">
+                            <button type="button" onclick="zoomCrop(1)" class="px-4 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-sm" title="زوم کردن تصویر">
                                 <i class="fas fa-search-plus"></i> زوم +
                             </button>
-                            <button type="button" onclick="zoomCrop(-1)" class="px-4 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-sm" title="بزرگ‌تر کردن کادر (زوم اوت)">
+                            <button type="button" onclick="zoomCrop(-1)" class="px-4 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-sm" title="کوچک‌نمایی تصویر">
                                 <i class="fas fa-search-minus"></i> زوم −
                             </button>
                         </div>

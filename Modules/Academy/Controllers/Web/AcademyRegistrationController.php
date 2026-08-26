@@ -56,7 +56,7 @@ class AcademyRegistrationController {
             if (!$verification['ok']) throw new ValidationException(['otp' => $verification['message']]);
             $type = DB::table('academy_branch_types')->whereNull('deleted_at')->orderBy('academy_branch_type_id')->first();
             if (!$type) throw new \RuntimeException('نوع آموزشی معتبری برای ثبت شعبه یافت نشد.');
-            $this->branchService->store((int)auth()->id(), [
+            $branch = $this->branchService->store((int)auth()->id(), [
                 'academy_id'=>$data['academy_id'], 'name'=>$data['name'], 'username'=>$data['username'],
                 'email'=>$data['email'], 'phone'=>$data['phone'], 'password'=>$data['password'], 'password2'=>$data['password2'],
                 'type_id'=>(int)$type['academy_branch_type_id'], 'physical_type'=>'physical', 'status'=>'active',
@@ -64,15 +64,14 @@ class AcademyRegistrationController {
                 'phones'=>[], 'links'=>[], 'addresses'=>[],
             ], SiteAdminAccess::allows(auth()->user()));
             $this->otp->clear();
-            session()->flash('admin_test_message', 'شعبه جدید با موفقیت ثبت شد.');
+            return ResponseFactory::json(['success'=>true, 'message'=>'شعبه جدید با موفقیت ایجاد شد.', 'branch'=>$branch], 201);
         } catch (ValidationException $e) {
             $errors = $e->getErrors();
-            session()->flash('admin_test_error', reset($errors) ?: 'ثبت شعبه انجام نشد.');
+            return ResponseFactory::json(['success'=>false, 'message'=>reset($errors) ?: 'ثبت شعبه انجام نشد.', 'errors'=>$errors], 422);
         } catch (Throwable $e) {
             error_log('[Admin Branch Registration Error] ' . $e->getMessage());
-            session()->flash('admin_test_error', $e->getMessage());
+            return ResponseFactory::json(['success'=>false, 'message'=>$e->getMessage()], 422);
         }
-        return redirect('/analytics/admin-panel#branches');
     }
 
 
