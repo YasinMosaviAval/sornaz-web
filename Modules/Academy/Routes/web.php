@@ -39,7 +39,10 @@ Router::post('/academy/admin/branches/{id}/update', [AcademyBranchController::cl
 Router::post('/academy/admin/branches/{id}/status', [AcademyBranchController::class, 'cycleStatus'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/branches/{id}/delete', [AcademyBranchController::class, 'destroy'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/members', [AcademyBranchController::class, 'storeMember'])->middleware(['academy-panel', 'csrf']);
+Router::get('/academy/admin/members/realtime-version', [AcademyBranchController::class, 'staffRealtimeVersion'])->middleware('academy-panel');
+Router::get('/academy/admin/members/data', [AcademyBranchController::class, 'staffIndex'])->middleware('academy-panel');
 Router::post('/academy/admin/members/{id}/update', [AcademyBranchController::class, 'updateMember'])->middleware(['academy-panel', 'csrf']);
+Router::post('/academy/admin/members/{id}/status', [AcademyBranchController::class, 'cycleMemberStatus'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/members/{id}/delete', [AcademyBranchController::class, 'deleteMember'])->middleware(['academy-panel', 'csrf']);
 Router::get('/academy/admin/classrooms', [AcademyClassroomController::class, 'index'])->middleware('academy-panel');
 Router::get('/academy/admin/classrooms/realtime-version', [AcademyClassroomController::class, 'classroomsRealtimeVersion'])->middleware('academy-panel');

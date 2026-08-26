@@ -219,6 +219,7 @@ window.renderLessonsTable = async function (list) {
             if (editingLessonRowId === item.id) {
                 const expand = document.createElement('tr');
                 expand.className = 'bg-gray-50';
+                expand.dataset.lessonInlineEditor = 'true';
                 expand.innerHTML = window.getLessonInlineExpandRowHTML ? window.getLessonInlineExpandRowHTML(item) : '';
                 tbody.appendChild(expand);
             }
@@ -372,6 +373,26 @@ window.toggleLessonInlineEdit = async function (id) {
     renderLessonsTable(filteredLessons);
 };
 
+document.addEventListener('click', function (event) {
+    if (editingLessonRowId === null) return;
+
+    const target = event.target instanceof Element ? event.target : null;
+    if (target && target.closest('[data-lesson-inline-editor="true"]')) return;
+
+    const editButton = target && target.closest('[data-lesson-inline-edit-id]');
+    const isCurrentEditButton = editButton
+        && String(editButton.dataset.lessonInlineEditId) === String(editingLessonRowId);
+
+    editingLessonRowId = null;
+    const editorRow = document.querySelector('[data-lesson-inline-editor="true"]');
+    if (editorRow) editorRow.remove();
+
+    if (isCurrentEditButton) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    }
+}, true);
+
 window.saveInlineLesson = async function (id) {
     const data = readLessonForm('inlineLesn' + id);
     if (!data.lesson_id) return alert('درس را انتخاب کنید');
@@ -408,6 +429,8 @@ window.applyLessonDatabaseData=function(data){
     sampleLessons=Array.isArray(data.lessons_catalog)?data.lessons_catalog:[];
     window.branchLessonLevels=Array.isArray(data.levels)?data.levels:[];
     window.allUserLessons=data.lessons;
+    window.lessonsReadOnly=Boolean(data.lessons_read_only);
+    document.getElementById('addLessonButton')?.classList.toggle('hidden',window.lessonsReadOnly);
     filteredLessons=window.allUserLessons.slice();
     const branchFilterExists=currentLesnBranch==='all'||currentLesnBranch==='academy'||window.branchOfferingBranches.some(function(branch){return String(branch.id)===String(currentLesnBranch);});
     if(!branchFilterExists)currentLesnBranch='all';

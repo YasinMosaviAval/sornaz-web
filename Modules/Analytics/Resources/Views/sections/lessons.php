@@ -5,7 +5,7 @@
             <p class="text-gray-500 mt-1">درس‌ها و سطح مهارت اعضا</p>
         </div>
         <div class="flex flex-wrap gap-3">
-            <button onclick="openAddLessonModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
+            <button id="addLessonButton" onclick="openAddLessonModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
                 <i class="fas fa-plus"></i> افزودن درس
             </button>
             <button onclick="exportLessonsToExcel()" class="border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl flex items-center gap-2">

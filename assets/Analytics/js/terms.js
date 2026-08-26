@@ -617,6 +617,7 @@ window.renderTermsTable = async function (list) {
 
 function updateTermsPagination(total, start, end, totalPages) {
     const info = document.getElementById('termsPaginationInfo');
+    if (info?.parentElement) info.parentElement.classList.toggle('hidden', totalPages <= 1);
     if (info) {
         const from = total === 0 ? 0 : start + 1;
         const to = Math.min(end, total);

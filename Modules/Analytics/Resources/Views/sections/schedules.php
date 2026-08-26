@@ -131,7 +131,7 @@
                 <tbody class="divide-y text-sm"></tbody>
             </table>
         </div>
-        <div class="px-6 py-4 border-t flex flex-col lg:flex-row items-center justify-between gap-4 text-sm text-gray-500">
+        <div id="schedulesPagination" class="px-6 py-4 border-t flex flex-col lg:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="schedulesPaginationInfo">نمایش ۱ تا ۱۰ از ۲۰۰ برنامه</span>
             <label class="flex items-center gap-2 whitespace-nowrap">
                 تعداد ردیف در صفحه

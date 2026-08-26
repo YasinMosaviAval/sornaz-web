@@ -10,7 +10,7 @@
             <td class="py-4 px-5">${item.endDate}</td>
             <td class="py-4 px-5">${item.price.toLocaleString('fa-IR')} ${item.currency}</td>
             <td class="py-4 px-5">
-                <span class="px-3 py-1 rounded-full text-xs ${statusClass}">${item.status}</span>
+                <button type="button" onclick="cycleStaffStatus(${item.id},this)" class="px-3 py-1 rounded-full text-xs transition ${statusClass}" title="برای تغییر وضعیت کلیک کنید">${item.status}</button>
             </td>
             <td class="py-4 px-5 text-left">
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">

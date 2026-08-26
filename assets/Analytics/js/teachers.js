@@ -117,7 +117,7 @@ if (false) for (let i = 1; i <= 28; i++) {
         lessons: lessons
     });
 }
-window.addEventListener('academy-data-loaded',function(event){window.staffCatalog=event.detail.staff_catalog||{};window.contractCurrencies=(window.staffCatalog.currencies||[]).map(x=>({id:x.id,label:x.name}));window.lessonTypes=(window.staffCatalog.lessons||[]).map(x=>({value:x.lesson_id,label:x.name,organization_user_id:x.organization_user_id}));window.lessonLevels=(window.staffCatalog.levels||[]).map(x=>({value:x.id,label:x.name}));allStaff=(event.detail.members||[]).filter(item=>item.type!=='student');filteredStaff=allStaff.slice();if(document.getElementById('staffTable')){window.renderStaffBranchTabs?.();window.renderStaffLessonFilter?.();window.filterStaff();}});
+window.addEventListener('academy-data-loaded',function(event){applyStaffData(event.detail);});
 
 // ==================== متغیرهای صفحه‌بندی ====================
 let staffCurrentPage = 1;
@@ -126,6 +126,40 @@ let filteredStaff = [...allStaff];
 let editingRowId = null;
 let staffSortField = '';
 let staffSortDirection = 'asc';
+let staffRealtimeVersion = null;
+let staffRealtimeBusy = false;
+const staffRealtimeChannel = 'BroadcastChannel' in window ? new BroadcastChannel('sornaz-admin-data') : null;
+
+function applyStaffData(data, preservePage = false) {
+    const previousPage = staffCurrentPage;
+    window.staffCatalog=data.staff_catalog||{};
+    window.contractCurrencies=(window.staffCatalog.currencies||[]).map(x=>({id:x.id,label:x.name}));
+    window.lessonTypes=(window.staffCatalog.lessons||[]).map(x=>({value:x.lesson_id,label:x.name,organization_user_id:x.organization_user_id}));
+    window.lessonLevels=(window.staffCatalog.levels||[]).map(x=>({value:x.id,label:x.name}));
+    allStaff=(data.members||[]).filter(item=>item.type!=='student');
+    filteredStaff=allStaff.slice();
+    if(!document.getElementById('staffTable'))return;
+    window.renderStaffBranchTabs?.();window.renderStaffLessonFilter?.();window.filterStaff();
+    if(preservePage){staffCurrentPage=Math.min(previousPage,Math.ceil(filteredStaff.length/staffPerPage)||1);window.renderStaffTable(filteredStaff);}
+}
+
+async function loadStaffData(preservePage = true) {
+    const data=await branchRequest('/academy/admin/members/data',null,'GET');
+    applyStaffData(data,preservePage);
+}
+
+function announceStaffChange() {
+    staffRealtimeChannel?.postMessage({resource:'staff',version:`local-${Date.now()}`});
+}
+
+async function pollStaffRealtime() {
+    if(staffRealtimeBusy||document.hidden||!document.getElementById('staffTable'))return;
+    staffRealtimeBusy=true;
+    try{const state=await branchRequest('/academy/admin/members/realtime-version',null,'GET');if(staffRealtimeVersion===null){staffRealtimeVersion=state.version;return;}if(state.version!==staffRealtimeVersion){staffRealtimeVersion=state.version;editingRowId=null;await loadStaffData(true);}}
+    catch(error){}finally{staffRealtimeBusy=false;}
+}
+
+staffRealtimeChannel?.addEventListener('message',async event=>{if(event.data?.resource!=='staff'||event.data.version===staffRealtimeVersion)return;editingRowId=null;await loadStaffData(true);staffRealtimeVersion=null;});
 let currentStaffBranch = 'all';
 
 function sortStaffItems() {
@@ -247,11 +281,14 @@ window.renderStaffTable = async function (staff = filteredStaff) {
         tbody.innerHTML = window.getStaffEmptyRowHTML ? window.getStaffEmptyRowHTML() : '';
     } else {
         pageStaff.forEach(item => {
-            const statusClass = item.status === 'فعال'
-                ? 'bg-green-100 text-green-700'
-                : item.status === 'مرخصی'
-                    ? 'bg-yellow-100 text-yellow-700'
-                    : 'bg-red-100 text-red-700';
+            const statusClass = {
+                pending: 'bg-yellow-100 text-yellow-700',
+                active: 'bg-green-100 text-green-700',
+                approved: 'bg-green-100 text-green-700',
+                inactive: 'bg-red-100 text-red-700',
+                removed: 'bg-gray-200 text-gray-700',
+                rejected: 'bg-black text-white'
+            }[item.status_code] || 'bg-red-100 text-red-700';
 
             const tr = document.createElement('tr');
             tr.className = "hover:bg-gray-50 transition";
@@ -274,6 +311,7 @@ window.renderStaffTable = async function (staff = filteredStaff) {
 // ==================== صفحه‌بندی ====================
 function updateStaffPagination(total, start, end, totalPages) {
     const info = document.getElementById('staffPaginationInfo');
+    if (info?.parentElement) info.parentElement.classList.toggle('hidden', totalPages <= 1);
     if (info) {
         const from = total === 0 ? 0 : start + 1;
         const to = Math.min(end, total);
@@ -388,15 +426,25 @@ window.toggleStaffInlineEdit = async function (id) {
     renderStaffTable(filteredStaff);
 };
 
+window.cycleStaffStatus = async function (id, button = null) {
+    if (button?.disabled) return;
+    if (button) button.disabled = true;
+    try {
+        await branchRequest(`/academy/admin/members/${id}/status`, {});
+        await loadStaffData(true);
+        announceStaffChange();
+    } catch (error) {
+        alert(error.message);
+    } finally {
+        if (button?.isConnected) button.disabled = false;
+    }
+};
+
 window.deleteStaff = async function (id) {
     if(editingRowId!==null){editingRowId=null;renderStaffTable(filteredStaff);}
     if (!(await AppDialog.confirmDelete(allStaff, id, 'عضو'))) return;
     await branchRequest(`/academy/admin/members/${id}/delete`,{});
-    allStaff = allStaff.filter(item => item.id !== id);
-    filteredStaff = filteredStaff.filter(item => item.id !== id);
-    if (editingRowId === id) editingRowId = null;
-    staffCurrentPage = 1;
-    renderStaffTable(filteredStaff);
+    editingRowId=null;await loadStaffData(true);announceStaffChange();
 };
 
 window.getInlineEditRowHTML = async function (item) {
@@ -407,7 +455,7 @@ window.saveInlineStaff = async function (id) {
     const p='inlineStaff'+id,get=s=>document.getElementById(p+s),type=get('Type')?.value,lessons=type==='teacher'?readLessonsFromPrefix(p):[],index=allStaff.findIndex(x=>x.id===id);
     const data={...allStaff[index],name:get('Name')?.value.trim(),phone:get('Phone')?.value.trim(),nationalId:get('NationalId')?.value.trim(),gender:get('Gender')?.value,birthDate:get('BirthDate')?.value,profileVisibility:get('ProfileVisibility')?.value,type,roleId:Number(get('Role')?.value),organizationUserId:Number(get('Organization')?.value||window.staffCatalog?.organizations?.[0]?.user_id),contractTitle:get('ContractTitle')?.value.trim(),contractDescription:get('ContractDescription')?.value.trim(),currencyId:Number(get('Currency')?.value),price:Number(get('Price')?.value),startDate:get('StartDate')?.value,endDate:get('EndDate')?.value,lessons,lessonId:Number(lessons[0]?.type||0),levelId:Number(lessons[0]?.level||0)};
     if(index<0||!data.name||!data.phone||!data.nationalId||!data.birthDate||!data.roleId||!data.contractTitle||!data.startDate||!data.endDate||data.price<=0||(type==='teacher'&&!lessons.length))return alert('لطفاً تمام فیلدهای الزامی را تکمیل کنید.');
-    try{await branchRequest(`/academy/admin/members/${id}/update`,{payload_b64:encodeBranchPayload(data)});editingRowId=null;await loadBranches();alert('✅ تغییرات با موفقیت ذخیره شد');}catch(error){alert(error.message);}
+    try{await branchRequest(`/academy/admin/members/${id}/update`,{payload_b64:encodeBranchPayload(data)});editingRowId=null;await loadStaffData(true);announceStaffChange();alert('✅ تغییرات با موفقیت ذخیره شد');}catch(error){alert(error.message);}
 };
 
 // ==================== خروجی اکسل ====================
@@ -561,7 +609,7 @@ window.saveStaff = async function () {
     const lesson=lessons[0]||{};
     const data={name,phone,nationalId:document.getElementById('staffNationalId')?.value.trim(),gender:document.getElementById('staffGender')?.value,birthDate:document.getElementById('staffBirthDate')?.value,profileVisibility,type:type.value,roleId:Number(document.getElementById('staffRole')?.value),organizationUserId:Number(document.getElementById('staffOrganization')?.value||window.staffCatalog?.organizations?.[0]?.user_id),contractTitle,contractDescription,startDate,endDate,price,currencyId,lessonId:Number(lesson.type||0),levelId:Number(lesson.level||0)};
     if(!data.nationalId||!data.birthDate||!data.roleId)return alert('کد ملی، تاریخ تولد و نقش الزامی است.');
-    try{await branchRequest('/academy/admin/members',{payload_b64:encodeBranchPayload(data)});closeModal();await loadBranches();alert('✅ پرسنل با موفقیت ثبت شد');}catch(error){alert(error.message);}
+    try{await branchRequest('/academy/admin/members',{payload_b64:encodeBranchPayload(data)});closeModal();await loadStaffData(true);announceStaffChange();alert('✅ پرسنل با موفقیت ثبت شد');}catch(error){alert(error.message);}
 };
 
 // ==================== نمایش جزئیات پرسنل ====================
@@ -640,7 +688,7 @@ window.saveEditedStaff = async function (id) {
         lessonId:Number(lessons[0]?.type||0),levelId:Number(lessons[0]?.level||0)
     };
 
-    try{await branchRequest(`/academy/admin/members/${id}/update`,{payload_b64:encodeBranchPayload(allStaff[index])});closeModal();await loadBranches();alert('✅ تغییرات با موفقیت ذخیره شد');}catch(error){alert(error.message);}
+    try{await branchRequest(`/academy/admin/members/${id}/update`,{payload_b64:encodeBranchPayload(allStaff[index])});closeModal();await loadStaffData(true);announceStaffChange();alert('✅ تغییرات با موفقیت ذخیره شد');}catch(error){alert(error.message);}
 };
 
 // ==================== اجرای اولیه ====================
@@ -648,6 +696,9 @@ window.saveEditedStaff = async function (id) {
     if (document.querySelector('#staffTable tbody')) {
         window.renderStaffBranchTabs();
         renderStaffTable();
+        pollStaffRealtime();
+        setInterval(pollStaffRealtime,2000);
+        document.addEventListener('visibilitychange',function(){if(!document.hidden)pollStaffRealtime();});
     } else {
         setTimeout(function () {
             if (document.querySelector('#staffTable tbody')) {

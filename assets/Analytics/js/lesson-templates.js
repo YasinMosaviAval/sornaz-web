@@ -24,6 +24,9 @@
         if (!match) return value || '—';
         const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
         const today = new Date();
+        const elapsedDays = Math.max(0, Math.floor(
+            (Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) - Date.UTC(year, month - 1, day)) / 86400000
+        ));
         let totalMonths = (today.getFullYear() - year) * 12 + (today.getMonth() + 1 - month);
         if (today.getDate() < day) totalMonths--;
         totalMonths = Math.max(0, totalMonths);
@@ -31,12 +34,20 @@
         const date = `${match[1]}/${match[2]}/${match[3]}`;
         const isEnglish = String(window.adminLocale || document.documentElement.lang || 'fa').toLowerCase().startsWith('en');
         if (isEnglish) {
-            const duration = fullYears >= 1
-                ? `${fullYears} ${fullYears === 1 ? 'year' : 'years'}`
-                : `${totalMonths} ${totalMonths === 1 ? 'month' : 'months'}`;
+            const duration = elapsedDays === 0
+                ? 'Today'
+                : totalMonths < 1
+                    ? `${elapsedDays} ${elapsedDays === 1 ? 'day' : 'days'}`
+                    : fullYears >= 1
+                        ? `${fullYears} ${fullYears === 1 ? 'year' : 'years'}`
+                        : `${totalMonths} ${totalMonths === 1 ? 'month' : 'months'}`;
             return `${date}  (${duration})`;
         }
-        const duration = fullYears >= 1 ? `${fullYears} سال` : `${totalMonths} ماه`;
+        const duration = elapsedDays === 0
+            ? 'امروز'
+            : totalMonths < 1
+                ? `${elapsedDays} روز`
+                : fullYears >= 1 ? `${fullYears} سال` : `${totalMonths} ماه`;
         return `(${duration})  ${date}`;
     }
 
@@ -54,7 +65,7 @@
             <td class="py-4 px-5 text-left">
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewLesson(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
-                    ${item.canChangeStatus === false ? '' : `<button onclick="toggleLessonInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
+                    ${item.canChangeStatus === false ? '' : `<button data-lesson-inline-edit-id="${item.id}" onclick="toggleLessonInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
                     <button onclick="deleteLesson(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>`}
                 </div>
             </td>`;
@@ -187,7 +198,7 @@
                     ${item.description ? `<p class="text-gray-600 leading-relaxed">${escapeHtml(item.description)}</p>` : ''}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">سطح</span><span class="font-medium">${escapeHtml(levelTitle || '—')}</span></div>
-                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">زمان شروع</span><span class="font-medium">${escapeHtml(item.start_date || '—')}</span></div>
+                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">زمان شروع</span><span class="font-medium">${escapeHtml(formatLessonStartDate(item.start_date))}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">اصلی</span><span class="font-medium">${item.is_primary ? 'بله' : 'خیر'}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">وضعیت</span><span class="font-medium">${escapeHtml(statusLabels[item.status] || item.status || 'در انتظار')}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">سازمان</span><span class="font-medium">${escapeHtml(item.branchName)}</span></div>

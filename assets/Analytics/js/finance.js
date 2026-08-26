@@ -310,6 +310,7 @@ window.renderFinanceTable = async function (list) {
 
 function updateFinancePagination(total, start, end, totalPages) {
     const info = document.getElementById('financePaginationInfo');
+    if (info?.parentElement) info.parentElement.classList.toggle('hidden', totalPages <= 1);
     if (info) {
         info.textContent = 'نمایش ' + (total === 0 ? 0 : start + 1) + ' تا ' + Math.min(end, total) + ' از ' + total + ' فاکتور';
     }

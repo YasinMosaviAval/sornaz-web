@@ -20,7 +20,7 @@ window.studentLevelsList = studentLevels;
 window.studentTeachersList = studentTeachers;
 window.studentFinancialsList = studentFinancials;
 
-window.getStudentBranches = async function () {
+window.getStudentBranches = function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) {
         return allBranches.map(function (b) { return { id: b.id, name: b.name }; });
     }
@@ -181,6 +181,7 @@ window.renderStudentBranchTabs = async function () {
     const container = document.getElementById('studentBranchTabs');
     if (!container) return;
     container.querySelectorAll('.student-branch-tab:not([data-value="all"])').forEach(function (t) { t.remove(); });
+    const academyButton=document.createElement('button');academyButton.type='button';academyButton.dataset.value='academy';academyButton.className='student-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border transition-colors '+(currentStudentBranch==='academy'?'bg-indigo-600 text-white border-indigo-600':'border-gray-200 hover:bg-gray-50');academyButton.textContent='آموزشگاه';academyButton.onclick=function(){window.filterStudentsByBranch('academy');};container.appendChild(academyButton);
     window.getStudentBranches().forEach(function (b) {
         const active = String(currentStudentBranch) === String(b.id);
         const btn = document.createElement('button');
@@ -293,6 +294,7 @@ window.renderStudentsTable = async function (list) {
 
 function updateStudentsPagination(total, start, end, totalPages) {
     const info = document.getElementById('studentsPaginationInfo');
+    if (info?.parentElement) info.parentElement.classList.toggle('hidden', totalPages <= 1);
     if (info) {
         info.textContent = 'نمایش ' + (total === 0 ? 0 : start + 1) + ' تا ' + Math.min(end, total) + ' از ' + total + ' هنرجو';
     }
