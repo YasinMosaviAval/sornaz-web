@@ -45,7 +45,9 @@ Router::post('/analytics/admin-notifications/{id}/delete', [AdminNotificationCon
 Router::get('/analytics/admin-scheduling-rules', [AdminSchedulingRuleController::class, 'index'])->middleware('academy-panel');
 Router::post('/analytics/admin-scheduling-rules', [AdminSchedulingRuleController::class, 'store'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-scheduling-rules/{id}/update', [AdminSchedulingRuleController::class, 'update'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-scheduling-rules/{id}/status', [AdminSchedulingRuleController::class, 'cycleStatus'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-scheduling-rules/{id}/delete', [AdminSchedulingRuleController::class, 'delete'])->middleware(['academy-panel','csrf']);
+Router::get('/analytics/admin-scheduling-rules/realtime-version', [AdminSchedulingRuleController::class, 'realtimeVersion'])->middleware('academy-panel');
 Router::get('/analytics/admin-posts', [AdminPostController::class, 'index'])->middleware('academy-panel');
 Router::get('/analytics/admin-posts/{id}', [AdminPostController::class, 'show'])->middleware('academy-panel');
 Router::post('/analytics/admin-posts', [AdminPostController::class, 'store'])->middleware(['academy-panel','csrf']);
