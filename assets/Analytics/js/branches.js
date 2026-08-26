@@ -10,8 +10,10 @@ window.branchSiteAdmin = false;
 window.branchAccount = false;
 window.matchesOrganizationFilter = function (item, filter) {
     if (filter === 'all' || filter === '' || filter == null) return true;
+    if (filter === 'academy') return item?.organizationKind === 'academy' || Number(item?.branchId ?? item?.branch_id ?? -1) === 0;
     const branchId = item?.branchId ?? item?.branch_id ?? item?.branchID ?? null;
-    if (filter === 'academy') return branchId == null || Number(branchId) === 0;
+    if (branchId != null && String(branchId) === String(filter)) return true;
+    if (item?.organizationUserId != null || item?.user_id != null) return String(item.organizationUserId ?? item.user_id) === String(filter);
     return String(branchId) === String(filter) || String(item?.branch || item?.branchName || '') === String(filter);
 };
 window.academyOrganizationTabHandlers = {

@@ -47,6 +47,14 @@ class AcademyBranchOfferingController {
         }
     }
 
+    public function schedulesRealtimeVersion() {
+        try {
+            return ResponseFactory::json(['success' => true, 'data' => $this->service->schedulesRealtimeVersion((int) auth()->id())]);
+        } catch (\Throwable $e) {
+            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
     public function storeLessonCatalog() {
         try {
             $data = $this->payload('اطلاعات درس جدید معتبر نیست.');

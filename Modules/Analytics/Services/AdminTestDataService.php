@@ -193,9 +193,10 @@ class AdminTestDataService {
         $days=['saturday'=>'شنبه','sunday'=>'یکشنبه','monday'=>'دوشنبه','tuesday'=>'سه‌شنبه','wednesday'=>'چهارشنبه','thursday'=>'پنجشنبه','friday'=>'جمعه'];
         $repeat=['week'=>'هفتگی','2-week'=>'دو هفته','3-week'=>'سه هفته','4-week'=>'چهار هفته','month'=>'ماهانه','year'=>'سالانه','none'=>'بی‌تکرار'];
         $status=['available'=>'فعال','unavailable'=>'غیرفعال','reserved'=>'پر شده','pending'=>'در انتظار تأیید'];
+        $timezoneRows=DB::table('f_timezone')->whereNull('deleted_at')->get();$timezones=[];foreach($timezoneRows as $timezoneRow)$timezones[(int)$timezoneRow['timezone_id']]=$timezoneRow['timezone'];
         $schedules=[];$exceptions=[];
         foreach($users as $user){$uid=(int)$user['user_id'];
-            foreach(DB::table('user_availabilities')->where('user_id',$uid)->whereNull('deleted_at')->get() as $row){$id=(int)$row['user_availability_id'];$schedules[]=['id'=>$id,'memberId'=>$uid,'name'=>$names[$uid],'role'=>'مدیر','day'=>$row['date']?:($days[$row['day_of_week']]??'—'),'timeLabel'=>substr((string)$row['start_time'],0,5).'-'.substr((string)$row['end_time'],0,5),'time'=>substr((string)$row['start_time'],0,5).'-'.substr((string)$row['end_time'],0,5),'branchId'=>0,'branchName'=>'محل ثبت‌شده کاربر','status'=>$status[$row['type']]??'فعال','repeatPeriod'=>$repeat[$row['repeat_period']]??'هفتگی','repeatDate'=>$row['date']?:'','timezone'=>$row['timezone'],'summary'=>$this->translatedValue('user_availabilities',$id,'summary'),'description'=>$this->translatedValue('user_availabilities',$id,'description')];}
+            foreach(DB::table('user_availabilities')->where('user_id',$uid)->whereNull('deleted_at')->get() as $row){$id=(int)$row['user_availability_id'];$schedules[]=['id'=>$id,'memberId'=>$uid,'name'=>$names[$uid],'role'=>'مدیر','day'=>$row['date']?:($days[$row['day_of_week']]??'—'),'timeLabel'=>substr((string)$row['start_time'],0,5).'-'.substr((string)$row['end_time'],0,5),'time'=>substr((string)$row['start_time'],0,5).'-'.substr((string)$row['end_time'],0,5),'branchId'=>0,'branchName'=>'محل ثبت‌شده کاربر','status'=>$status[$row['type']]??'فعال','repeatPeriod'=>$repeat[$row['repeat_period']]??'هفتگی','repeatDate'=>$row['date']?:'','timezone'=>$timezones[(int)($row['timezone_id']??0)]??'Asia/Tehran','summary'=>$this->translatedValue('user_availabilities',$id,'summary'),'description'=>$this->translatedValue('user_availabilities',$id,'description')];}
             foreach(DB::table('user_availability_exceptions')->where('user_id',$uid)->whereNull('deleted_at')->get() as $row){$id=(int)$row['user_availability_exception_id'];$typeLabels=['holiday'=>'تعطیل رسمی','closed'=>'تعطیل','unavailable'=>'مرخصی','busy'=>'ماموریت','vacation'=>'مرخصی','blocked'=>'عدم حضور'];$label=$row['start_time']?substr((string)$row['start_time'],0,5).'-'.substr((string)$row['end_time'],0,5):'تمام‌روز';$exceptions[]=['id'=>$id,'memberId'=>$uid,'name'=>$names[$uid],'date'=>$row['date'],'timeLabel'=>$label,'time'=>$label,'branchId'=>0,'branchName'=>'محل ثبت‌شده کاربر','status'=>'فعال','type'=>$row['type'],'typeLabel'=>$typeLabels[$row['type']]??'عدم حضور','timezone'=>'Asia/Tehran','summary'=>$this->translatedValue('user_availability_exceptions',$id,'summary'),'description'=>$this->translatedValue('user_availability_exceptions',$id,'description')];}
         }
         return ['schedules'=>$schedules,'exceptions'=>$exceptions];
@@ -321,14 +322,14 @@ class AdminTestDataService {
                 $locationId=$locationIds ? $locationIds[($dayIndex+$partIndex)%count($locationIds)] : 0;
                 $location=$locationId ? $this->translatedValue('user_addresses',$locationId,'address') : 'محل فعالیت کاربر';
                 $this->syncAvailabilityRow($userId,$registeredAt,['date'=>null,'day_of_week'=>$day,'start_time'=>$range[0].':00','end_time'=>$range[1].':00',
-                    'timezone'=>'Asia/Tehran','type'=>'available','is_repeating'=>1,'repeat_period'=>'week','is_closed'=>0,'priority'=>$partIndex+1],
+                    'timezone_id'=>1,'type'=>'available','is_repeating'=>1,'repeat_period'=>'week','is_closed'=>0,'priority'=>$partIndex+1],
                     'حضور هفتگی در ' . $dayLabels[$dayIndex] . ' از ' . $range[0] . ' تا ' . $range[1],
                     'بازه حضور دوره‌ای کاربر در ' . $location . '؛ فاصله میان این بازه و بازه بعدی زمان استراحت یا جابه‌جایی است.');
             }
         }
         $specificDate=sprintf('2026-%02d-%02d',9+($userIndex%3),1+(($userIndex*3)%27));
         $this->syncAvailabilityRow($userId,$registeredAt,['date'=>$specificDate,'day_of_week'=>null,'start_time'=>'16:00:00','end_time'=>'19:00:00',
-            'timezone'=>'Asia/Tehran','type'=>'available','is_repeating'=>0,'repeat_period'=>'none','is_closed'=>0,'priority'=>1],
+            'timezone_id'=>1,'type'=>'available','is_repeating'=>0,'repeat_period'=>'none','is_closed'=>0,'priority'=>1],
             'حضور ویژه در تاریخ ' . $specificDate,'حضور غیرتکراری کاربر برای جلسه، ارزیابی یا برنامه ویژه در تاریخ مشخص‌شده.');
 
         $exceptionCount=$this->fixtureCount($userIndex,$options['exceptions_min']??2,$options['exceptions_max']??4);for($i=0;$i<$exceptionCount;$i++){

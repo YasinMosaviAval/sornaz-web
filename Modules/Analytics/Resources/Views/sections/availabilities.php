@@ -1,8 +1,8 @@
 <div id="availabilities" class="section hidden">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
-            <h1 class="text-3xl font-bold">برنامه زمانی شعبه‌ها</h1>
-            <p class="text-gray-500 mt-1">برنامه زمانی و ساعات کاری شعبه‌ها</p>
+            <h1 class="text-3xl font-bold">برنامه زمانی سازمان</h1>
+            <p class="text-gray-500 mt-1">برنامه زمانی و ساعات کاری آموزشگاه و شعبه‌ها</p>
         </div>
         <div class="flex flex-wrap gap-3">
             <button onclick="openAddBranchScheduleModal()"
@@ -25,7 +25,7 @@
         <div class="flex gap-2 min-w-max" id="branchSchedulesBranchTabs">
             <button onclick="filterBranchSchedulesByBranch('all')"
                     class="branch-schedule-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium bg-indigo-600 text-white">
-                همه شعبه‌ها
+                همه
             </button>
         </div>
     </div>
@@ -77,8 +77,11 @@
                 <option value="">همه وضعیت‌ها</option>
                 <option value="فعال">فعال</option>
                 <option value="غیرفعال">غیرفعال</option>
-                <option value="پر شده">پر شده</option>
                 <option value="در انتظار تأیید">در انتظار تأیید</option>
+            </select>
+            <select id="displayBranchTimezone" onchange="filterBranchSchedules()"
+                    class="w-full border border-indigo-200 bg-indigo-50 rounded-2xl py-3 px-4">
+                <option value="">نمایش پیش‌فرض مناطق زمانی</option>
             </select>
         </div>
     </div>
@@ -89,6 +92,9 @@
             <table class="w-full min-w-[1100px]" id="branchSchedulesTable">
                 <thead class="bg-gray-50 border-b">
                     <tr>
+                        <th class="text-right py-5 px-5 font-medium">
+                            <button onclick="sortBranchSchedulesBy('branchName')" class="flex items-center gap-1">سازمان <span id="bsSortIcon-branchName">↕</span></button>
+                        </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortBranchSchedulesBy('day')" class="flex items-center gap-1">روز <span id="bsSortIcon-day">↕</span></button>
                         </th>
@@ -102,9 +108,6 @@
                             <button onclick="sortBranchSchedulesBy('timezone')" class="flex items-center gap-1">منطقه زمانی <span id="bsSortIcon-timezone">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortBranchSchedulesBy('branchName')" class="flex items-center gap-1">شعبه <span id="bsSortIcon-branchName">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortBranchSchedulesBy('status')" class="flex items-center gap-1">وضعیت <span id="bsSortIcon-status">↕</span></button>
                         </th>
                         <th class="w-40 py-5 px-5"></th>
@@ -113,7 +116,7 @@
                 <tbody class="divide-y text-sm"></tbody>
             </table>
         </div>
-        <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
+        <div id="branchSchedulesPagination" class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="branchSchedulesPaginationInfo">نمایش ۱ تا ۱۰ از ۱۰۰ زمان‌بندی</span>
             <div class="flex items-center gap-2" id="branchSchedulesPaginationButtons"></div>
         </div>
