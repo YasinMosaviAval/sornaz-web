@@ -38,7 +38,7 @@ let holidayLeaveMembers = [
     { id: 9, name: 'پارسا جعفری' }, { id: 10, name: 'هستی محمدی' }
 ];
 
-window.getHolidayLeaveBranches = async function () {
+window.getHolidayLeaveBranches = function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
     return [
         { id: 1, name: 'شعبه مرکزی' }, { id: 2, name: 'شعبه ونک' },
@@ -174,12 +174,14 @@ window.renderHolidayLeavesBranchTabs = async function () {
     const container = document.getElementById('holidayLeavesBranchTabs');
     if (!container) return;
     container.querySelectorAll('.holiday-leave-branch-tab:not(:first-child)').forEach(function (t) { t.remove(); });
+    const academyButton=document.createElement('button');academyButton.dataset.value='academy';academyButton.className='holiday-leave-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border '+(currentHolidayLeaveBranch==='academy'?'bg-indigo-600 text-white border-indigo-600':'border-gray-200 hover:bg-gray-50')+' transition';academyButton.textContent='آموزشگاه';academyButton.onclick=function(){window.filterHolidayLeavesByBranch('academy');};container.appendChild(academyButton);
     window.getHolidayLeaveBranches().forEach(function (b) {
         const active = currentHolidayLeaveBranch == b.id;
         const btn = document.createElement('button');
         btn.className = 'holiday-leave-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ' +
             (active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50') + ' transition';
         btn.textContent = b.name;
+        btn.dataset.value = b.id;
         btn.onclick = function () { window.filterHolidayLeavesByBranch(b.id); };
         container.appendChild(btn);
     });
@@ -187,23 +189,13 @@ window.renderHolidayLeavesBranchTabs = async function () {
 
 window.filterHolidayLeavesByBranch = async function (branchId) {
     currentHolidayLeaveBranch = branchId;
+    const container=document.getElementById('holidayLeavesBranchTabs');if(container)container.dataset.selectedValue=String(branchId);
     document.querySelectorAll('.holiday-leave-branch-tab').forEach(function (tab) {
         tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
         tab.classList.add('border', 'border-gray-200');
     });
     const tabs = document.querySelectorAll('.holiday-leave-branch-tab');
-    if (branchId === 'all' && tabs[0]) {
-        tabs[0].classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
-        tabs[0].classList.remove('border-gray-200');
-    } else {
-        const name = window.getHolidayLeaveBranches().find(function (b) { return b.id == branchId; });
-        tabs.forEach(function (tab) {
-            if (name && tab.textContent === name.name) {
-                tab.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
-                tab.classList.remove('border-gray-200');
-            }
-        });
-    }
+    tabs.forEach(function(tab,index){const value=tab.dataset.value||(index===0?'all':'');if(String(value)===String(branchId)){tab.classList.add('bg-indigo-600','text-white','border-indigo-600');tab.classList.remove('border-gray-200');}});
     window.filterHolidayLeaves();
 };
 
@@ -264,6 +256,7 @@ window.renderHolidayLeavesTable = async function (list) {
 
 function updateHolidayLeavesPagination(total, start, end, totalPages) {
     const info = document.getElementById('holidayLeavesPaginationInfo');
+    if (info?.parentElement) info.parentElement.classList.toggle('hidden', totalPages <= 1);
     if (info) {
         info.textContent = 'نمایش ' + (total === 0 ? 0 : start + 1) + ' تا ' + Math.min(end, total) + ' از ' + total + ' مورد';
     }

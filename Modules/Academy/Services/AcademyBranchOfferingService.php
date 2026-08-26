@@ -62,6 +62,7 @@ class AcademyBranchOfferingService
         $result['organizations'] = $manageableOrganizations;
         $result['organization_selection'] = $this->hasFixedBranchOrganization($actor, $manageableOrganizations) ? 'fixed' : 'select';
         $result['lesson_status_mode'] = $this->lessonStatusMode($actor);
+        $result['lessons_read_only'] = false;
 
         $branchesByUser = [];
         foreach ($branches as $branch) {
@@ -178,6 +179,7 @@ class AcademyBranchOfferingService
 
     public function saveLesson(int $actor, array $data, int $id = 0): array
     {
+        $this->assertLessonWritable($actor);
         $organization = $this->allowedOrganization($actor, (int) ($data['organization_user_id'] ?? 0));
         $lessonId = (int) ($data['lesson_id'] ?? 0);
         $levelId = (int) ($data['level_id'] ?? 0);
@@ -225,6 +227,7 @@ class AcademyBranchOfferingService
 
     public function cycleLessonStatus(int $actor, int $id): array
     {
+        $this->assertLessonWritable($actor);
         $row = DB::table('user_lessons')->where('user_lesson_id', $id)->whereNull('deleted_at')->first();
         if (!$row) throw new RuntimeException('درس موردنظر یافت نشد.');
         $this->allowedOrganization($actor, (int) $row['user_id']);
@@ -270,6 +273,7 @@ class AcademyBranchOfferingService
 
     public function createLesson(int $actor, array $data): array
     {
+        $this->assertLessonWritable($actor);
         $title = trim((string) ($data['title'] ?? ''));
         if ($title === '' || mb_strlen($title) > 190) throw new RuntimeException('نام درس جدید معتبر نیست.');
         $duplicate = DB::table('translations')->where('table_name', 'lessons')->where('field', 'title')->where('locale', 'fa')->where('value', $title)->whereNull('deleted_at')->first();
@@ -477,6 +481,7 @@ class AcademyBranchOfferingService
         $record = DB::table($table)->where($primaryKey, $id)->whereNull('deleted_at')->first();
         if (!$record) throw new RuntimeException('رکورد موردنظر یافت نشد.');
         if (in_array($type, ['instrument', 'lesson'], true)) {
+            if ($type === 'lesson') $this->assertLessonWritable($actor);
             $this->allowedOrganization($actor, (int) $record['user_id']);
         } else {
             $branch = DB::table('academy_branches')->where('user_id', (int) $record['user_id'])->whereNull('deleted_at')->first();
@@ -616,10 +621,18 @@ class AcademyBranchOfferingService
         return $organizations;
     }
 
+    private function assertLessonWritable(int $actor): void
+    {
+        if (!$this->scopedOrganizations($actor)) throw new RuntimeException('شما اجازه مدیریت درس‌ها را ندارید.');
+    }
+
     private function allowedOrganization(int $actor, int $userId): array
     {
         $organizations = $this->scopedOrganizations($actor);
-        if (count($organizations) === 1 && $organizations[0]['kind'] === 'branch') return $organizations[0];
+        if (count($organizations) === 1 && $organizations[0]['kind'] === 'branch') {
+            if ($userId === 0 || (int) $organizations[0]['user_id'] === $userId) return $organizations[0];
+            throw new RuntimeException('شما اجازه تغییر درس‌های آموزشگاه را ندارید.');
+        }
         foreach ($organizations as $organization) if ((int) $organization['user_id'] === $userId) return $organization;
         throw new RuntimeException('شما به سازمان انتخاب‌شده دسترسی ندارید.');
     }

@@ -26,6 +26,14 @@ class AcademyBranchController {
         return ResponseFactory::json(['success' => true, 'data' => $this->service->realtimeVersion((int)auth()->id(), SiteAdminAccess::allows($user))]);
     }
 
+    public function staffIndex() {
+        return $this->run(fn()=>$this->service->staffData((int)auth()->id(),SiteAdminAccess::allows(auth()->user())));
+    }
+
+    public function staffRealtimeVersion() {
+        return $this->run(fn()=>$this->service->staffRealtimeVersion((int)auth()->id(),SiteAdminAccess::allows(auth()->user())));
+    }
+
 
     public function store() { 
         return $this->run(fn() => $this->service->store((int)auth()->id(), $this->payload(), SiteAdminAccess::allows(auth()->user())), 201); 
@@ -79,6 +87,10 @@ class AcademyBranchController {
 
     public function storeMember() {
         return $this->run(fn()=>$this->service->storeMember((int)auth()->id(),$this->payload(),SiteAdminAccess::allows(auth()->user())), 201);
+    }
+
+    public function cycleMemberStatus(int $id) {
+        return $this->run(fn()=>$this->service->cycleMemberStatus((int)auth()->id(),$id,SiteAdminAccess::allows(auth()->user())));
     }
 
 

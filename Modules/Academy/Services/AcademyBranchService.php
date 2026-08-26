@@ -103,6 +103,23 @@ class AcademyBranchService {
         ];
     }
 
+    public function staffData(int $actor, bool $siteAdmin = false): array {
+        if($siteAdmin)return['members'=>$this->members(null),'staff_catalog'=>$this->staffCatalog($actor,null,true)];
+        $branch=$this->branchForUser($actor);$academy=null;
+        if(!$branch){
+            try{$academy=$this->academyForUser($actor);}
+            catch(RuntimeException){$managed=DB::table('academy_branch_members')->join('academy_branch_member_roles','academy_branch_member_roles.member_id','=','academy_branch_members.member_id')->join('access_system_roles','access_system_roles.role_id','=','academy_branch_member_roles.role_id')->where('academy_branch_members.user_id',$actor)->whereRaw("(access_system_roles.name LIKE '%branch_manager%' OR access_system_roles.name LIKE '%branch_receptionist%')")->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->first();if($managed&&$managed['branch_id']!==null)$branch=DB::table('academy_branches')->where('branch_id',(int)$managed['branch_id'])->whereNull('deleted_at')->first();}
+        }
+        if($branch)$academy=DB::table('academies')->where('academy_id',(int)$branch['academy_id'])->whereNull('deleted_at')->first();
+        if(!$academy)throw new RuntimeException('آموزشگاه مرتبط یافت نشد.');
+        return['members'=>$this->members((int)$academy['academy_id'],$branch?[(int)$branch['branch_id']]:null),'staff_catalog'=>$this->staffCatalog($actor,$academy,false)];
+    }
+
+    public function staffRealtimeVersion(int $actor, bool $siteAdmin = false): array {
+        $data=$this->staffData($actor,$siteAdmin);
+        return['resource'=>'staff','version'=>sha1(json_encode($data,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES))];
+    }
+
     private function staffCatalog(int $actor, ?array $academy, bool $siteAdmin): array {
         $branchAccount=$this->branchForUser($actor);$organizations=[];
         if(!$branchAccount&&!$academy&&!$siteAdmin){$managed=DB::table('academy_branch_members')->join('academy_branch_member_roles','academy_branch_member_roles.member_id','=','academy_branch_members.member_id')->join('access_system_roles','access_system_roles.role_id','=','academy_branch_member_roles.role_id')->where('academy_branch_members.user_id',$actor)->whereRaw("(access_system_roles.name LIKE '%branch_manager%' OR access_system_roles.name LIKE '%branch_receptionist%')")->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->first();if($managed&&$managed['branch_id']!==null)$branchAccount=DB::table('academy_branches')->where('branch_id',(int)$managed['branch_id'])->whereNull('deleted_at')->first();}
@@ -160,7 +177,7 @@ class AcademyBranchService {
                 'nationalId'=>$r['national_code']?:'','gender'=>$r['gender']?:'other','birthDate'=>$r['birthday']?:'','roleId'=>$memberRoles[(int)$r['member_id']]??0,'organizationUserId'=>$r['branch_id']?($branchUsers[(int)$r['branch_id']]??0):($academyUsers[(int)$r['academy_id']]??0),'branchId'=>(int)$r['branch_id'],'branch'=>$r['branch_id']?($branches[(int)$r['branch_id']]??('شعبه '.$r['branch_id'])):'آموزشگاه',
                 'type'=>$student?'student':($r['contract_type']?:'other'),'typeLabel'=>$student?'هنرجو':match($r['contract_type']){'teacher'=>'مدرس','receptionist'=>'پذیرش','manager'=>'مدیر',default=>'کارمند'},
                 'contractTitle'=>$student?'قرارداد آموزشی':($contractTexts[(int)$r['member_contract_id']]['title']??'قرارداد همکاری'),'contractDescription'=>$contractTexts[(int)$r['member_contract_id']]['description']??'','startDate'=>$r['start_date']?:$r['joined_at'],'endDate'=>$r['end_date']?:'',
-                'price'=>(float)($r['price']?:0),'currencyId'=>(int)($r['currency_id']?:1),'currency'=>$currencyNames[(int)($r['currency_id']?:1)]??'—','status'=>in_array($r['status'],['active','approved'],true)?'فعال':($r['status']==='pending'?'در انتظار تأیید':'غیرفعال'),
+                'price'=>(float)($r['price']?:0),'currencyId'=>(int)($r['currency_id']?:1),'currency'=>$currencyNames[(int)($r['currency_id']?:1)]??'—','status_code'=>(string)$r['status'],'status'=>match((string)$r['status']){'pending'=>'در انتظار تأیید','active','approved'=>'فعال','inactive'=>'غیرفعال','removed'=>'حذف شده','rejected'=>'رد شده',default=>'غیرفعال'},
                 'profileVisibility'=>$r['visibility']?:'private','userLessonId'=>(int)($r['user_lesson_id']??0),'lessonId'=>(int)($r['lesson_id']??0),'levelId'=>(int)($r['level_id']??0),'lessons'=>$r['lesson_id']?[['type'=>(int)$r['lesson_id'],'level'=>(int)($r['level_id']??0)]]:[],'lessonName'=>$lessonNames[(int)($r['lesson_id']??0)]??'—','instrument'=>'','level'=>'','teacher'=>'','remaining'=>0,'financial'=>'تسویه','attendance'=>'—','registrationDate'=>$r['joined_at']?:''];
         },$rows);
     }
@@ -197,7 +214,7 @@ class AcademyBranchService {
             $staffAcademy=null;if(!$siteAdmin){try{$staffAcademy=$this->academyForUser($actorId);}catch(RuntimeException){$membership=DB::table('academy_branch_members')->where('user_id',$actorId)->whereNull('deleted_at')->first();if($membership)$staffAcademy=DB::table('academies')->where('academy_id',(int)$membership['academy_id'])->whereNull('deleted_at')->first();}}$catalog=$this->staffCatalog($actorId,$staffAcademy,$siteAdmin);$organization=null;foreach($catalog['organizations']as$o)if((int)$o['user_id']===(int)($data['organizationUserId']??0))$organization=$o;if(!$organization&&count($catalog['organizations'])===1)$organization=$catalog['organizations'][0];if(!$organization)throw new RuntimeException('سازمان انتخاب‌شده معتبر نیست.');
             $type=(string)($data['type']??'other');if(!in_array($type,['teacher','receptionist','manager','other'],true))$type='other';
             $roleId=(int)($data['roleId']??0);$role=DB::table('access_system_roles')->where('role_id',$roleId)->where('type','academy')->whereNull('deleted_at')->first();if(!$role)throw new RuntimeException('نقش قرارداد معتبر نیست.');if($organization['branch_id']!==null&&!str_contains((string)$role['name'],'branch'))throw new RuntimeException('برای پرسنل شعبه باید نقش شعبه انتخاب شود.');if($organization['branch_id']===null&&str_contains((string)$role['name'],'branch'))throw new RuntimeException('برای پرسنل آموزشگاه باید نقش آموزشگاه انتخاب شود.');if($type!=='other'&&!str_contains((string)$role['name'],$type))throw new RuntimeException('نقش با نوع قرارداد هماهنگ نیست.');
-            $approved=$this->staffActorApproves($actorId);$userStatus=$approved?'approved':'pending';$memberStatus=$approved?'active':'pending';$now=date('Y-m-d H:i:s');$approval=['approved_at'=>$approved?$now:null,'approved_by'=>$approved?$actorId:null];
+            $approved=$siteAdmin||$this->staffActorApproves($actorId);$userStatus=$approved?'approved':'pending';$memberStatus=$approved?'active':'pending';$now=date('Y-m-d H:i:s');$approval=['approved_at'=>$approved?$now:null,'approved_by'=>$approved?$actorId:null];
             $userId=DB::table('users')->insertGetId(['username'=>'academy_staff_'.$phone.'_'.bin2hex(random_bytes(3)),'phone'=>$phone,'national_code'=>$national,'gender'=>$gender,'type'=>'human','status'=>$userStatus,'locale'=>'fa','timezone'=>'Asia/Tehran','visibility'=>in_array(($data['profileVisibility']??''),['public','private','unlisted'],true)?$data['profileVisibility']:'private','birthday'=>$birthday,'register_time'=>$now,'register_method'=>'academy','created_at'=>$now,'created_by'=>$actorId,'updated_at'=>$now,'updated_by'=>$actorId]+$approval);
             TranslationService::manager()->set('users',$userId,'full_name',$name,'fa');
             DB::table('user_roles')->insert(['user_id'=>$userId,'role_id'=>14,'is_main'=>1,'created_at'=>$now,'created_by'=>$actorId,'updated_at'=>$now,'updated_by'=>$actorId]+$approval);
@@ -233,7 +250,7 @@ class AcademyBranchService {
             if($contract){$contractId=(int)$contract['member_contract_id'];DB::table('academy_branch_member_contracts')->where('member_contract_id',$contractId)->update($values);}else$contractId=DB::table('academy_branch_member_contracts')->insertGetId(['member_id'=>$memberId,'created_at'=>$now,'created_by'=>$actorId]+$values);
             TranslationService::manager()->set('academy_branch_member_contracts',$contractId,'title',trim((string)($data['contractTitle']??'')),'fa');TranslationService::manager()->set('academy_branch_member_contracts',$contractId,'description',trim((string)($data['contractDescription']??'')),'fa');
             $firstContract=DB::table('academy_branch_member_contracts')->where('member_id',$memberId)->whereNull('deleted_at')->orderBy('start_date')->first();
-            DB::table('academy_branch_members')->where('member_id',$memberId)->update(['academy_id'=>(int)$organization['academy_id'],'branch_id'=>$organization['branch_id'],'status'=>$approved?'active':'pending','joined_at'=>$firstContract['start_date']??($data['startDate']??null),'updated_at'=>$now,'updated_by'=>$actorId]+$approval);
+            DB::table('academy_branch_members')->where('member_id',$memberId)->update(['academy_id'=>(int)$organization['academy_id'],'branch_id'=>$organization['branch_id'],'joined_at'=>$firstContract['start_date']??($data['startDate']??null),'updated_at'=>$now,'updated_by'=>$actorId]+$approval);
             $mr=DB::table('academy_branch_member_roles')->where('member_id',$memberId)->whereNull('deleted_at')->orderBy('member_role_id')->first();$rv=['role_id'=>$roleId,'updated_at'=>$now,'updated_by'=>$actorId]+$approval;if($mr)DB::table('academy_branch_member_roles')->where('member_role_id',(int)$mr['member_role_id'])->update($rv);else DB::table('academy_branch_member_roles')->insert(['member_id'=>$memberId,'role_id'=>$roleId,'is_main'=>1,'created_at'=>$now,'created_by'=>$actorId]+$rv);
             $userRole=DB::table('user_roles')->where('user_id',$userId)->where('role_id',14)->whereNull('deleted_at')->first();$urv=['is_main'=>1,'updated_at'=>$now,'updated_by'=>$actorId]+$approval;if($userRole)DB::table('user_roles')->where('user_role_id',(int)$userRole['user_role_id'])->update($urv);else DB::table('user_roles')->insert(['user_id'=>$userId,'role_id'=>14,'created_at'=>$now,'created_by'=>$actorId]+$urv);
             return ['member_id'=>$memberId];
@@ -245,6 +262,18 @@ class AcademyBranchService {
         if(!$siteAdmin && !$this->canAccessBranch($actorId, (int)$member['branch_id']))throw new RuntimeException('دسترسی حذف این عضو را ندارید.');
         $now=date('Y-m-d H:i:s');DB::table('academy_branch_member_contracts')->where('member_id',$memberId)->whereNull('deleted_at')->update(['deleted_at'=>$now,'deleted_by'=>$actorId,'updated_by'=>$actorId]);
         DB::table('academy_branch_members')->where('member_id',$memberId)->update(['deleted_at'=>$now,'deleted_by'=>$actorId,'updated_by'=>$actorId]);
+    }
+
+    public function cycleMemberStatus(int $actorId,int $memberId,bool $siteAdmin=false): array {
+        $member=DB::table('academy_branch_members')->where('member_id',$memberId)->whereNull('deleted_at')->first();
+        if(!$member)throw new RuntimeException('پرسنل مورد نظر یافت نشد.');
+        if(!$siteAdmin&&!$this->canAccessMember($actorId,$member))throw new RuntimeException('دسترسی تغییر وضعیت این پرسنل را ندارید.');
+        $statuses=['pending','active','inactive','removed','rejected'];$current=(string)($member['status']??'pending');if($current==='approved')$current='active';$index=array_search($current,$statuses,true);$next=$statuses[$index===false?0:($index+1)%count($statuses)];$now=date('Y-m-d H:i:s');
+        $values=['status'=>$next,'updated_at'=>$now,'updated_by'=>$actorId];
+        if($next==='active')$values+=['approved_at'=>$now,'approved_by'=>$actorId];
+        elseif($next==='pending')$values+=['approved_at'=>null,'approved_by'=>null];
+        DB::table('academy_branch_members')->where('member_id',$memberId)->update($values);
+        return ['member_id'=>$memberId,'status'=>$next];
     }
 
     public function store(int $ownerUserId, array $data, bool $siteAdmin = false): array {
@@ -449,6 +478,12 @@ class AcademyBranchService {
         } catch (RuntimeException) {
             return false;
         }
+    }
+
+    private function canAccessMember(int $actorId,array $member): bool {
+        if($member['branch_id']!==null)return $this->canAccessBranch($actorId,(int)$member['branch_id']);
+        try{return(int)$this->academyForUser($actorId)['academy_id']===(int)$member['academy_id'];}
+        catch(RuntimeException){return false;}
     }
 
     private function allBranches(): array {

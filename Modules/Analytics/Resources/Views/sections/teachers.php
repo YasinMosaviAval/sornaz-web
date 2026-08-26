@@ -54,9 +54,11 @@
             <div>
                 <select id="filterStaffStatus" onchange="filterStaff()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                     <option value="">همه وضعیت‌ها</option>
+                    <option value="در انتظار تأیید">در انتظار تأیید</option>
                     <option value="فعال">فعال</option>
-                    <option value="مرخصی">مرخصی</option>
                     <option value="غیرفعال">غیرفعال</option>
+                    <option value="حذف شده">حذف شده</option>
+                    <option value="رد شده">رد شده</option>
                 </select>
             </div>
             <div>
