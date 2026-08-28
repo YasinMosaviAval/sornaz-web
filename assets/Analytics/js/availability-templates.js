@@ -76,12 +76,11 @@
             <td class="py-4 px-5 font-mono text-sm">${escapeHtml(item.timeLabel || item.time || '—')}</td>
             <td class="py-4 px-5 text-sm">${escapeHtml(item.repeatPeriod || 'هفتگی')}</td>
             <td class="py-4 px-5 text-xs text-gray-500">${escapeHtml(item.timezone || 'Asia/Tehran')}</td>
-            <td class="py-4 px-5"><button type="button" onclick="cycleBranchScheduleStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</button></td>
+            <td class="py-4 px-5">${item.readOnly?`<span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span>`:`<button type="button" onclick="cycleBranchScheduleStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</button>`}</td>
             <td class="py-4 px-5 text-left">
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewBranchSchedule(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
-                    <button onclick="toggleBranchScheduleInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
-                    <button onclick="deleteBranchSchedule(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>
+                    ${item.readOnly?'':`<button onclick="toggleBranchScheduleInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button><button onclick="deleteBranchSchedule(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>`}
                 </div>
             </td>`;
     };
@@ -143,7 +142,7 @@
                         <p class="text-sm text-gray-500 mt-1">${escapeHtml(item.day)} · ${escapeHtml(item.timeLabel || item.time || '')}</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="editBranchSchedule(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm">ویرایش</button>
+                        ${item.readOnly?'':`<button onclick="editBranchSchedule(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm">ویرایش</button>`}
                         <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                     </div>
                 </div>

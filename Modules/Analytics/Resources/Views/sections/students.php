@@ -74,36 +74,20 @@
                     <option value="کمانچه">کمانچه</option>
                 </select>
             </div>
-            <div>
-                <select id="filterStudentFinancial" onchange="filterStudents()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
-                    <option value="">همه وضعیت‌های مالی</option>
-                    <option value="تسویه">تسویه</option>
-                    <option value="بدهکار">بدهکار</option>
-                </select>
-            </div>
-            <div>
-                <select id="filterStudentRemaining" onchange="filterStudents()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
-                    <option value="">همه جلسات باقی‌مانده</option>
-                    <option value="0">۰ جلسه</option>
-                    <option value="1-2">۱ تا ۲ جلسه</option>
-                    <option value="3-5">۳ تا ۵ جلسه</option>
-                    <option value="6+">۶ جلسه و بیشتر</option>
-                </select>
-            </div>
         </div>
     </div>
 
     <!-- جدول -->
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1300px]" id="studentsTable">
+            <table class="w-full min-w-[900px]" id="studentsTable">
                 <thead class="bg-gray-50 border-b">
                     <tr>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortStudentsBy('name')" class="flex items-center gap-1">نام هنرجو <span id="stuSortIcon-name">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortStudentsBy('instrument')" class="flex items-center gap-1">ساز <span id="stuSortIcon-instrument">↕</span></button>
+                            <button onclick="sortStudentsBy('instrument')" class="flex items-center gap-1">ترم آموزشی <span id="stuSortIcon-instrument">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortStudentsBy('level')" class="flex items-center gap-1">سطح <span id="stuSortIcon-level">↕</span></button>
@@ -112,16 +96,7 @@
                             <button onclick="sortStudentsBy('teacher')" class="flex items-center gap-1">استاد <span id="stuSortIcon-teacher">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortStudentsBy('branch')" class="flex items-center gap-1">شعبه <span id="stuSortIcon-branch">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortStudentsBy('remaining')" class="flex items-center gap-1">جلسات باقی‌مانده <span id="stuSortIcon-remaining">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortStudentsBy('financial')" class="flex items-center gap-1">وضعیت مالی <span id="stuSortIcon-financial">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortStudentsBy('attendance')" class="flex items-center gap-1">حضور <span id="stuSortIcon-attendance">↕</span></button>
+                            <button onclick="sortStudentsBy('branch')" class="flex items-center gap-1">سازمان <span id="stuSortIcon-branch">↕</span></button>
                         </th>
                         <th class="w-40 py-5 px-5"></th>
                     </tr>
