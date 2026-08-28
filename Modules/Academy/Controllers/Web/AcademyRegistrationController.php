@@ -81,6 +81,7 @@ class AcademyRegistrationController {
             'academies' => $this->service->all($filters),
             'academyFilters' => $filters,
             'academySearchOptions' => $this->service->searchOptions(),
+            'academyUiLabels' => $this->service->publicSearchLabels(locale()),
         ])->layout('main')->title('سُرناز | آموزشگاه‌ها');
     }
 

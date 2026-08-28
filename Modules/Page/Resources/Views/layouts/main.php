@@ -50,6 +50,7 @@
         <?=$slot?>
     </main>
     <? component('main-footer'); ?>
+    <script>window.siteUserAuthenticated=<?= auth()->check()?'true':'false' ?>;</script>
     <?
         pushScript('home.js');
         pushScript('Page::site-pages.js');

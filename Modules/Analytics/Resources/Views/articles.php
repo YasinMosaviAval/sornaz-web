@@ -12,7 +12,7 @@
         <div class="bg-white rounded-3xl p-4 mb-6 shadow-sm">
             <p class="text-sm font-medium text-gray-500 mb-3">فیلتر بر اساس دسته‌بندی</p>
             <div class="flex flex-wrap gap-2" id="siteArticleCats">
-                <button onclick="filterSiteArticles('all')" class="site-art-cat px-4 py-2 rounded-xl text-sm bg-indigo-600 hover:bg-indigo-700 text-white">همه</button>
+                <button type="button" data-category="all" onclick="filterSiteArticles('all')" class="site-art-cat px-4 py-2 rounded-xl text-sm bg-indigo-600 hover:bg-indigo-700 text-white">همه</button>
             </div>
         </div>
 

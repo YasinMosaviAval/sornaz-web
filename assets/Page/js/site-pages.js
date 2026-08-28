@@ -341,6 +341,7 @@ window.renderSiteArticleCats = async function () {
         const btn = document.createElement('button');
         btn.className = 'site-art-cat px-4 py-2 rounded-xl text-sm border border-gray-200 hover:bg-gray-50';
         btn.textContent = cat;
+        btn.dataset.category = cat;
         btn.onclick = () => filterSiteArticles(cat);
         box.appendChild(btn);
     });
@@ -349,7 +350,7 @@ window.renderSiteArticleCats = async function () {
 window.filterSiteArticles = async function (cat) {
     if (typeof cat === 'string') siteArtCat = cat;
     document.querySelectorAll('.site-art-cat').forEach(tab => {
-        const active = (siteArtCat === 'all' && tab.textContent === 'همه') || tab.textContent === siteArtCat;
+        const active = tab.dataset.category === siteArtCat;
         tab.classList.toggle('bg-indigo-600', active);
         tab.classList.toggle('hover:bg-indigo-700', active);
         tab.classList.toggle('hover:bg-gray-50', !active);
@@ -407,7 +408,7 @@ window.renderSiteAcademies = async function () {
     );
 
     box.innerHTML = list.length === 0
-        ? `<p class="col-span-full text-center text-gray-400 py-16">آموزشگاهی یافت نشد</p>`
+        ? `<p class="col-span-full text-center text-gray-400 py-16">${window.siteAcademyUiLabels?.empty || 'آموزشگاهی یافت نشد'}</p>`
         : list.map(a => `
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-50 hover:shadow-md transition">
                 <h3 class="text-xl font-bold mb-1">${a.name}</h3>
@@ -424,12 +425,10 @@ window.renderSiteAcademies = async function () {
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <a href="/academy/academy" class="flex-1 border border-indigo-200 text-indigo-600 py-2.5 rounded-xl text-sm hover:bg-indigo-50 text-center block">
-                        مشاهده
+                    <a href="/academy/academy?id=${encodeURIComponent(a.id)}" class="flex-1 border border-indigo-200 text-indigo-600 py-2.5 rounded-xl text-sm hover:bg-indigo-50 text-center block">
+                        ${window.siteAcademyUiLabels?.view || 'مشاهده'}
                     </a>
-                    <a href="/academy/academy-enroll" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm hover:bg-indigo-700 text-center block">
-                        ثبت‌نام
-                    </a>
+                    ${window.siteUserAuthenticated ? `<a href="/academy/academy-enroll?academy=${encodeURIComponent(a.id)}" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm hover:bg-indigo-700 text-center block">${document.documentElement.lang === 'en' ? 'Register' : 'ثبت‌نام'}</a>` : ''}
                 </div>
             </div>
         `).join('');
@@ -489,12 +488,16 @@ window.openSiteAcademyProfile = async function (id) {
     }
 
     window._currentProfileAcademyId = a.id;
+    const enrollmentLink = document.getElementById('academyEnrollLink');
+    if (enrollmentLink) enrollmentLink.href = '/academy/academy-enroll?academy=' + encodeURIComponent(a.id);
 
     // نام و آواتار
     document.getElementById('apName').textContent = a.name || 'آموزشگاه';
     const initial = (a.name || 'آ').charAt(0);
     const avatar = document.getElementById('apAvatar');
-    if (avatar) avatar.textContent = initial;
+    if (avatar) avatar.innerHTML = a.avatar ? `<img src="${a.avatar}" alt="${a.name || ''}" class="w-full h-full object-cover">` : initial;
+    const academyCover = document.getElementById('apCover');
+    if (academyCover) academyCover.style.backgroundImage = a.cover ? `url("${a.cover}")` : '';
 
     // شعار
     const sloganEl = document.getElementById('apSlogan');
@@ -561,6 +564,14 @@ function renderProfileContacts(a) {
     const box = document.getElementById('apContacts');
     if (!box) return;
     const items = [];
+    const contacts = Array.isArray(a.contacts) ? a.contacts : [];
+    contacts.forEach(contact => {
+        const value = contact.value || '';
+        if (!value) return;
+        const isPhone = contact.mode === 'phone';
+        const href = isPhone ? `tel:${value}` : (contact.mode === 'email' ? `mailto:${value}` : (/^https?:\/\//i.test(value) ? value : '#'));
+        items.push(`<a href="${href}" ${!isPhone && contact.mode !== 'email' ? 'target="_blank" rel="noopener"' : ''} class="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-indigo-50 transition"><span class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center"><i class="fas ${isPhone ? 'fa-phone' : contact.mode === 'email' ? 'fa-envelope' : 'fa-link'}"></i></span><span class="truncate" dir="ltr">${value}</span></a>`);
+    });
 
     // phones: آرایه رشته یا آبجکت
     const phones = a.phones || (a.phone ? [a.phone] : []);
@@ -638,64 +649,40 @@ function renderProfileCourses(a) {
     const box = document.getElementById('apCourses');
     if (!box) return;
 
-    // از داده آموزشگاه یا نمونه
     let courses = a.courses || a.course_list || [];
-    if (!courses.length) {
-        courses = [
-            { title: 'پیانو مبتدی', level: 'مبتدی', students: 12 },
-            { title: 'تئوری موسیقی', level: 'همه سطوح', students: 20 },
-            { title: 'گیتار کلاسیک', level: 'متوسط', students: 8 }
-        ];
-    }
-
-    box.innerHTML = courses.map(c => `
+    box.innerHTML = courses.length ? courses.map(c => `
         <div class="flex items-center justify-between gap-3 p-4 rounded-2xl border border-gray-100 hover:border-indigo-100 transition">
             <div>
                 <div class="font-medium">${c.title || c.name}</div>
                 <div class="text-xs text-gray-400 mt-0.5">${c.level || ''} ${c.students != null ? '· ' + c.students + ' هنرجو' : ''}</div>
             </div>
-            <button type="button" onclick="goEnrollFromProfile()"
-                    class="text-indigo-600 text-sm shrink-0 hover:underline">ثبت‌نام</button>
+            ${window.siteUserAuthenticated ? `<button type="button" onclick="goEnrollFromProfile(${c.termId || c.term_id || ''})"
+                    class="text-indigo-600 text-sm shrink-0 hover:underline">${document.documentElement.lang === 'en' ? 'Register' : 'ثبت‌نام'}</button>` : ''}
         </div>
-    `).join('');
+    `).join('') : `<p class="text-sm text-gray-400 text-center py-6">${document.documentElement.lang === 'en' ? 'No open or ongoing courses.' : 'دوره باز یا در حال برگزاری وجود ندارد.'}</p>`;
 }
 
 function renderProfileTeachers(a) {
     const box = document.getElementById('apTeachersList');
     if (!box) return;
 
-    let teachers = a.teachers || [];
-    if (!teachers.length && typeof getSiteUsers === 'function') {
-        teachers = getSiteUsers().filter(u => u.role === 'teacher').slice(0, 4);
-    }
-    if (!teachers.length) {
-        teachers = [
-            { name: 'علی رضایی', instruments: 'پیانو', roleLabel: 'مدرس' },
-            { name: 'سارا موسوی', instruments: 'گیتار', roleLabel: 'مدرس' }
-        ];
-    }
-
-    box.innerHTML = teachers.map(t => `
+    const teachers = a.teachers || [];
+    box.innerHTML = teachers.length ? teachers.map(t => `
         <div class="flex items-center gap-3 p-3 rounded-2xl border border-gray-100">
             <div class="w-11 h-11 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold shrink-0">
-                ${(t.name || '?').charAt(0)}
+                ${t.avatar ? `<img src="${t.avatar}" alt="${t.name || ''}" class="w-full h-full rounded-full object-cover">` : (t.name || '?').charAt(0)}
             </div>
             <div class="min-w-0">
                 <div class="font-medium text-sm truncate">${t.name}</div>
                 <div class="text-xs text-gray-400 truncate">${t.instruments || t.roleLabel || 'مدرس'}</div>
             </div>
         </div>
-    `).join('');
+    `).join('') : `<p class="text-sm text-gray-400 col-span-full text-center py-6">${document.documentElement.lang === 'en' ? 'No teachers to display.' : 'استادی نمایش داده نشده است.'}</p>`;
 }
 
-window.goEnrollFromProfile = async function () {
+window.goEnrollFromProfile = async function (termId) {
     const id = window._currentProfileAcademyId;
-    showSitePage('academy-enroll');
-    setTimeout(() => {
-        if (typeof renderSiteEnrollPage === 'function') renderSiteEnrollPage();
-        const sel = document.getElementById('siteEnrollAcademy');
-        if (sel && id != null) sel.value = String(id);
-    }, 80);
+    if (id != null) location.href = `/academy/academy-enroll?academy=${encodeURIComponent(id)}${termId ? '&term=' + encodeURIComponent(termId) : ''}`;
 };
 
 
@@ -745,7 +732,7 @@ window.renderSiteUsers = async function () {
                 ${u.rating ? `<p class="text-amber-500 text-sm mt-2">⭐ ${u.rating}</p>` : ''}
                 <div class="flex gap-2 mt-auto pt-4">
                     <button type="button" onclick="event.stopPropagation();openSiteUser(${u.id})" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm hover:bg-indigo-700 text-center block">
-                        مشاهده
+                        ${window.siteUserUiLabels?.view || 'مشاهده'}
                     </button>
                 </div>
             </div>
@@ -776,7 +763,7 @@ window.renderSiteUsers = async function () {
 
 
 window.openSiteUser = async function (id) {
-    openSiteUserProfile(id);
+    location.href = '/analytics/user?id=' + encodeURIComponent(id);
 };
 
 window.openSiteUserProfile = async function (id) {

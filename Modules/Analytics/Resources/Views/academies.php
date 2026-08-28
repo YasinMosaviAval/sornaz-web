@@ -10,8 +10,8 @@
 
         <form action="/academy/academies" method="GET" class="mb-6 grid grid-cols-1 gap-3 md:grid-cols-4">
             <input type="text" name="q" value="<?= htmlspecialchars($academyFilters['q'] ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="نام یا معرفی آموزشگاه" class="border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500">
-            <select name="instrument" class="border border-gray-300 rounded-2xl py-3 px-4 bg-white focus:outline-none focus:border-indigo-500"><option value="">همه سازها</option><?php foreach (($academySearchOptions['instruments'] ?? []) as $instrument): ?><option value="<?= (int)$instrument['id'] ?>" <?= (int)($academyFilters['instrument']??0)===(int)$instrument['id']?'selected':'' ?>><?= htmlspecialchars($instrument['title'], ENT_QUOTES, 'UTF-8') ?></option><?php endforeach; ?></select>
-            <select name="city" dir="<?= e(direction()) ?>" class="border border-gray-300 rounded-2xl py-3 px-4 bg-white focus:outline-none focus:border-indigo-500 <?= locale()==='en'?'text-left':'text-right' ?>"><option value="">همه شهرها</option><?php foreach (($academySearchOptions['cities'] ?? []) as $city): ?><option value="<?= (int)$city['id'] ?>" <?= (int)($academyFilters['city']??0)===(int)$city['id']?'selected':'' ?>><?= htmlspecialchars($city['title'], ENT_QUOTES, 'UTF-8') ?></option><?php endforeach; ?></select>
+            <select name="instrument" dir="<?= e(direction()) ?>" class="border border-gray-300 rounded-2xl py-3 px-4 bg-white focus:outline-none focus:border-indigo-500 <?= locale()==='en'?'text-left':'text-right' ?>"><option value=""><?= htmlspecialchars($academyUiLabels['allInstruments'], ENT_QUOTES, 'UTF-8') ?></option><?php foreach (($academySearchOptions['instruments'] ?? []) as $instrument): ?><option value="<?= (int)$instrument['id'] ?>" <?= (int)($academyFilters['instrument']??0)===(int)$instrument['id']?'selected':'' ?>><?= htmlspecialchars($instrument['title'], ENT_QUOTES, 'UTF-8') ?></option><?php endforeach; ?></select>
+            <select name="city" dir="<?= e(direction()) ?>" class="border border-gray-300 rounded-2xl py-3 px-4 bg-white focus:outline-none focus:border-indigo-500 <?= locale()==='en'?'text-left':'text-right' ?>"><option value=""><?= htmlspecialchars($academyUiLabels['allCities'], ENT_QUOTES, 'UTF-8') ?></option><?php foreach (($academySearchOptions['cities'] ?? []) as $city): ?><option value="<?= (int)$city['id'] ?>" <?= (int)($academyFilters['city']??0)===(int)$city['id']?'selected':'' ?>><?= htmlspecialchars($city['title'], ENT_QUOTES, 'UTF-8') ?></option><?php endforeach; ?></select>
             <button type="submit" class="rounded-2xl bg-indigo-600 px-5 py-3 text-white hover:bg-indigo-700">جستجو</button>
         </form>
 
@@ -21,6 +21,7 @@
 
 <script>
 window.siteAcademiesData = <?= json_encode($academies ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+window.siteAcademyUiLabels = <?= json_encode($academyUiLabels ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 </script>
 
 <!-- جزئیات آموزشگاه -->

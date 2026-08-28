@@ -9,6 +9,8 @@
     <script src="/assets/vendor/tailwind/tailwindcss.js"></script>
     <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
+    <link rel="stylesheet" href="/assets/vendor/sweetalert2/sweetalert2.min.css">
+    <script src="/assets/vendor/sweetalert2/sweetalert2.all.min.js"></script>
     <link rel="stylesheet" href="/assets/theme/theme.css?v=<?= filemtime(base_path('assets/theme/theme.css')) ?: 1 ?>">
     <style>
         body { font-family: Vazirmatn, Tahoma, sans-serif; }
@@ -19,14 +21,19 @@
         .accordion-body.open { max-height: 800px; }
         .accordion-icon { transition: transform 0.3s; }
         .accordion-icon.open { transform: rotate(180deg); }
+        .auth-toast-success { background:#ecfdf5 !important; color:#065f46 !important; border:1px solid #a7f3d0 !important; }
+        .auth-toast-error { background:#fef2f2 !important; color:#991b1b !important; border:1px solid #fecaca !important; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+    <?php $authSuccess=session()->getFlash('auth_success'); ?>
+    <div id="authFlashMessage" class="hidden" data-success="<?= e($authSuccess??'') ?>" data-error=""></div>
     <? component('Page::sections.main-header'); ?>
     <main class="flex-1">
         <?=$slot?>
     </main>
     <? component('Page::sections.main-footer'); ?>
+    <script>window.siteUserAuthenticated=<?= auth()->check()?'true':'false' ?>;</script>
     <?
         pushScript('home.js');
         pushScript('Page::site-pages.js');
@@ -34,6 +41,8 @@
     ?>
     <div id="modalContainer"></div>
     <script>window.adminCsrfToken=<?= json_encode(csrf_token()) ?>;</script>
+    <script>window.authTranslations=<?= json_encode(translations('auth.js.'),JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;</script>
+    <script src="/assets/System/js/auth.js?v=<?= filemtime(base_path('assets/System/js/auth.js')) ?: 1 ?>"></script>
     <script>
         (function(){
             const bar=document.getElementById('siteScrollProgressBar');

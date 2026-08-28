@@ -1,5 +1,5 @@
 <div id="page-academy-profile" class="">
-    <div class="max-w-5xl mx-auto px-4 py-8 md:py-12">
+    <div class="max-w-7xl mx-auto px-4 py-8 md:py-12">
 
         <!-- بازگشت -->
         <a href="/academy/academies" class="text-indigo-600 text-sm mb-6 hover:underline flex items-center gap-2">
@@ -9,17 +9,17 @@
         <!-- هدر پروفایل -->
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-6">
             <!-- کاور -->
-            <div id="apCover" class="h-36 md:h-48 bg-gradient-to-l from-indigo-600 via-violet-600 to-indigo-800 relative">
+            <div id="apCover" class="relative aspect-[3/1] min-h-[150px] w-full overflow-hidden bg-gradient-to-l from-indigo-600 via-violet-600 to-indigo-800 bg-cover bg-center">
                 <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 20% 50%, white 0%, transparent 50%);"></div>
             </div>
 
-            <div class="px-6 md:px-10 pb-8">
+            <div class="border-t border-gray-100 bg-white px-6 py-6 md:px-10">
                 <!-- آواتار + نام -->
-                <div class="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12 md:-mt-14 mb-6">
-                    <div id="apAvatar" class="w-24 h-24 md:w-28 md:h-28 rounded-3xl bg-white border-4 border-white shadow-lg flex items-center justify-center text-3xl font-bold text-indigo-600 shrink-0">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center mb-6">
+                    <div id="apAvatar" class="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden bg-white border-4 border-white shadow-lg flex items-center justify-center text-3xl font-bold text-indigo-600 shrink-0">
                         آ
                     </div>
-                    <div class="flex-1 pb-1">
+                    <div class="flex-1 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-center sm:text-start">
                         <div class="flex flex-wrap items-center gap-3">
                             <h1 id="apName" class="text-2xl md:text-3xl font-bold"></h1>
                             <span id="apTypeBadge" class="px-3 py-1 rounded-full text-xs bg-indigo-50 text-indigo-700 hidden"></span>
@@ -28,7 +28,7 @@
                         <p id="apLocation" class="text-sm text-gray-500 mt-1"></p>
                     </div>
                     <div class="flex flex-wrap gap-2 shrink-0">
-                        <a href="/academy/academy-enroll" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm font-medium text-center block">ثبت‌نام در کلاس</a>
+                        <?php if(auth()->check()): ?><a id="academyEnrollLink" href="/academy/academy-enroll" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm font-medium text-center block"><?= locale()==='en'?'Register for a class':'ثبت‌نام در کلاس' ?></a><?php endif; ?>
                         <a href="#" class="border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl text-sm">تماس</a>
                     </div>
                 </div>
@@ -107,3 +107,4 @@
         </div>
     </div>
 </div>
+<script>window.siteAcademiesData=<?= json_encode($academies??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;document.addEventListener('DOMContentLoaded',()=>window.openSiteAcademyProfile?.(<?= (int)($selectedAcademyId??0) ?>));</script>

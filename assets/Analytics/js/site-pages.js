@@ -429,12 +429,10 @@ window.renderSiteAcademies = async function () {
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <a href="/academy/academy" class="flex-1 border border-indigo-200 text-indigo-600 py-2.5 rounded-xl text-sm hover:bg-indigo-50 text-center block">
+                    <a href="/academy/academy?id=${encodeURIComponent(a.id)}" class="flex-1 border border-indigo-200 text-indigo-600 py-2.5 rounded-xl text-sm hover:bg-indigo-50 text-center block">
                         مشاهده
                     </a>
-                    <a href="/academy/academy-enroll" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm hover:bg-indigo-700 text-center block">
-                        ثبت‌نام
-                    </a>
+                    ${window.siteUserAuthenticated ? `<a href="/academy/academy-enroll?academy=${encodeURIComponent(a.id)}" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm hover:bg-indigo-700 text-center block">${document.documentElement.lang === 'en' ? 'Register' : 'ثبت‌نام'}</a>` : ''}
                 </div>
             </div>
         `).join('');

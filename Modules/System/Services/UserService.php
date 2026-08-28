@@ -107,7 +107,7 @@ class UserService {
 
     public function publicDirectory(): array {
         $rows = $this->repository->builder()
-            ->select('user_id', 'username', 'type', 'gender', 'status', 'visibility', 'email', 'phone', 'birthday', 'register_time', 'register_method', 'last_login_at')
+            ->select('user_id', 'username', 'type', 'gender', 'status', 'visibility', 'email', 'phone', 'birthday', 'register_time', 'register_method', 'last_login_at','avatar_file_id')
             ->where('type', 'human')
             ->where('visibility', 'public')
             ->whereIn('register_method', ['email', 'phone'])
@@ -116,10 +116,9 @@ class UserService {
             ->get();
         $translations = TranslationService::manager();
         $locale = app()->getLocale();
-        $labels = [
-            'teacher' => 'مدرس', 'student' => 'هنرجو', 'manager' => 'مدیر',
-            'parent' => 'والد', 'employee' => 'همکار', 'company' => 'مجموعه',
-        ];
+        $labels = $locale === 'en'
+            ? ['teacher'=>'Teacher','student'=>'Student','manager'=>'Manager','parent'=>'Parent','employee'=>'Staff','company'=>'Organization','user'=>'User']
+            : ['teacher'=>'مدرس','student'=>'هنرجو','manager'=>'مدیر','parent'=>'والد','employee'=>'همکار','company'=>'مجموعه','user'=>'کاربر'];
 
         return array_map(function (array $user) use ($translations, $locale, $labels) {
             $id = (int)$user['user_id'];
@@ -159,6 +158,8 @@ class UserService {
             $availabilities = $this->translatedRows('user_availabilities', 'user_availability_id', $id, ['summary', 'description'], $translations, $locale);
             $availabilityExceptions = $this->translatedRows('user_availability_exceptions', 'user_availability_exception_id', $id, ['summary', 'description'], $translations, $locale);
             $firstAddress = $addresses[0]['address'] ?? '';
+            $avatarFile=!empty($user['avatar_file_id'])?DB::table('media_files')->where('media_file_id',(int)$user['avatar_file_id'])->whereNull('deleted_at')->first():null;
+            $starts=array_values(array_filter(array_merge(array_column($instruments,'start_date'),array_column($lessons,'start_date'))));sort($starts);$startYear=$starts?(int)substr((string)$starts[0],0,4):0;$currentYear=$startYear&&$startYear<1700?(int)date('Y')-621:(int)date('Y');$years=$startYear?max(0,$currentYear-$startYear):null;
             return [
                 'id' => $id,
                 'name' => $translations->get('users', $id, 'full_name', $locale) ?: $user['username'],
@@ -167,14 +168,14 @@ class UserService {
                 'roles' => $roleNames,
                 'roleLabels' => $roleLabels,
                 'roleLabel' => $directoryRole !== 'user'
-                    ? ($labels[$directoryRole] ?? 'کاربر')
-                    : (implode('، ', $roleLabels) ?: 'کاربر'),
+                    ? ($labels[$directoryRole] ?? $labels['user'])
+                    : (implode($locale==='en'?', ':'، ', $roleLabels) ?: $labels['user']),
                 'bio' => $translations->get('users', $id, 'bio', $locale) ?: '',
                 'username' => $user['username'], 'gender' => $user['gender'], 'status' => $user['status'],
                 'visibility' => $user['visibility'], 'email' => $user['email'], 'phone' => $user['phone'],
                 'birthday' => $user['birthday'], 'register_time' => $user['register_time'],
                 'register_method' => $user['register_method'], 'last_login_at' => $user['last_login_at'],
-                'avatar' => $byCollection['teacher_avatar'][0] ?? null,
+                'avatar' => $avatarFile?'/'.ltrim((string)$avatarFile['path'],'/'):($byCollection['avatar'][0]??$byCollection['logo'][0]??null),
                 'cover' => $byCollection['cover'][0] ?? null,
                 'gallery' => $byCollection['teacher_gallery'] ?? [],
                 'intro_video' => $byCollection['intro_video'][0] ?? null,
@@ -184,6 +185,7 @@ class UserService {
                 'addresses' => $addresses, 'contacts' => $contacts,
                 'availabilities' => $availabilities, 'availability_exceptions' => $availabilityExceptions,
                 'city' => $firstAddress ? (explode('،', $firstAddress)[0] ?? '') : '',
+                'years_of_experience'=>$years,
                 'headline' => count($instruments) ? 'فعال در زمینه ' . implode('، ', array_slice(array_column($instruments, 'title'), 0, 3)) : 'مدیر آموزشگاه موسیقی',
             ];
         }, $rows);
@@ -203,6 +205,11 @@ class UserService {
         }, $rows);
     }
 
+    public function publicDirectoryUiLabels():array {
+        $locale=app()->getLocale()==='en'?'en':'fa';$row=DB::table('settings')->join('translations','translations.table_id','=','settings.setting_id')->select('translations.value')->where('settings.variable_name','public_view_action')->where('translations.table_name','settings')->where('translations.field','value')->where('translations.locale',$locale)->whereNull('settings.deleted_at')->whereNull('translations.deleted_at')->first();
+        return['view'=>(string)($row['value']??($locale==='en'?'View':'مشاهده'))];
+    }
+
     private function directoryRoles(array $roles, string $type, string $username): array {
         $result = [];
         if (array_filter($roles, fn(string $role) => str_contains($role, 'teacher'))) $result[] = 'teacher';
@@ -214,14 +221,14 @@ class UserService {
     }
 
     private function roleLabels(array $roles, $translations, string $locale): array {
-        $fallbacks = [
-            'user'=>'کاربر', 'teacher'=>'مدرس', 'student'=>'هنرجو', 'manager'=>'مدیر',
-            'owner'=>'مدیر', 'receptionist'=>'پذیرش', 'admin'=>'مدیر سایت', 'superadmin'=>'مدیر کل',
-        ];
+        $fallbacks = $locale==='en'
+            ? ['user'=>'User','teacher'=>'Teacher','student'=>'Student','manager'=>'Manager','owner'=>'Manager','receptionist'=>'Receptionist','admin'=>'Site administrator','superadmin'=>'Super administrator']
+            : ['user'=>'کاربر','teacher'=>'مدرس','student'=>'هنرجو','manager'=>'مدیر','owner'=>'مدیر','receptionist'=>'پذیرش','admin'=>'مدیر سایت','superadmin'=>'مدیر کل'];
         $labels = [];
         foreach ($roles as $name) {
             $role = DB::table('access_system_roles')->where('name', $name)->whereNull('deleted_at')->first();
-            $label = $role ? $translations->get('access_system_roles', (int)$role['role_id'], 'title', $locale) : '';
+            $roleTranslation=$role?DB::table('f_translations')->where('table_name','access_system_roles')->where('table_id',(int)$role['role_id'])->where('field','title')->where('locale',$locale)->whereNull('deleted_at')->first():null;
+            $label = (string)($roleTranslation['value']??'');
             if (!$label) foreach ($fallbacks as $needle => $fallback) {
                 if ($name === $needle || str_contains($name, $needle)) { $label = $fallback; break; }
             }
@@ -229,7 +236,7 @@ class UserService {
             $label = trim((string)$label, " \t\n\r\0\x0B،,");
             if ($label !== '') $labels[] = $label;
         }
-        return array_values(array_unique($labels ?: ['کاربر']));
+        return array_values(array_unique($labels ?: [$locale==='en'?'User':'کاربر']));
     }
 
     private function userMusicRows(string $pivot, string $pivotKey, string $foreignKey, string $catalog, int $userId, $translations, string $locale): array {
