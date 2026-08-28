@@ -161,7 +161,7 @@ window.renderRulesTable = async function (list) {
             tbody.appendChild(tr);
             if (editingRuleRowId === item.id) {
                 const expand = document.createElement('tr');
-                expand.className = 'bg-gray-50';
+                expand.className = 'bg-gray-50 admin-inline-expand';
                 expand.innerHTML = window.getRuleInlineExpandRowHTML ? window.getRuleInlineExpandRowHTML(item) : '';
                 tbody.appendChild(expand);
             }

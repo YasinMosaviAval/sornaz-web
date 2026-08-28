@@ -80,6 +80,7 @@ Router::post('/academy/admin/students', [AcademyCourseController::class, 'storeS
 Router::post('/academy/admin/course-levels', [AcademyCourseController::class, 'storeLevel'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/course-levels/{id}/update', [AcademyCourseController::class, 'updateLevel'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/course-levels/{id}/delete', [AcademyCourseController::class, 'deleteLevel'])->middleware(['academy-panel','csrf']);
+Router::get('/academy/admin/terms/realtime-version', [AcademyTermController::class, 'realtimeVersion'])->middleware('academy-panel');
 Router::get('/academy/admin/terms', [AcademyTermController::class, 'index'])->middleware('academy-panel');
 Router::get('/academy/admin/term-available-times', [AcademyTermAvailabilityController::class, 'index'])->middleware('academy-panel');
 Router::get('/academy/admin/term-invoices', [AcademyTermController::class, 'invoices'])->middleware('academy-panel');

@@ -293,12 +293,12 @@ window.renderFinanceTable = async function (list) {
             tbody.appendChild(tr);
             if (editingFinanceRowId === item.id) {
                 const expand = document.createElement('tr');
-                expand.className = 'bg-gray-50';
+                expand.className = 'bg-gray-50 admin-inline-expand';
                 expand.innerHTML = window.getFinanceInlineExpandRowHTML ? window.getFinanceInlineExpandRowHTML(item) : '';
                 tbody.appendChild(expand);
             } else if (installmentFinanceRowId === item.id) {
                 const expand = document.createElement('tr');
-                expand.className = 'bg-gray-50';
+                expand.className = 'bg-gray-50 admin-inline-expand';
                 expand.innerHTML = window.getFinanceInlineInstallmentsRowHTML ? window.getFinanceInlineInstallmentsRowHTML(item) : '';
                 tbody.appendChild(expand);
             }

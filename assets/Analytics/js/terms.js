@@ -333,11 +333,14 @@ let filteredTerms = allTerms.slice();
 let currentTermBranch = 'all';
 let editingTermRowId = null;
 let attendanceTermRowId = null;
+let termsRealtimeVersion = null;
+let termsRealtimeBusy = false;
 let termSortField = '';
 let termSortDirection = 'asc';
 
 function closeTermInlineEdit(render=true){if(editingTermRowId===null)return false;editingTermRowId=null;if(render)renderTermsTable(filteredTerms);return true;}
 function closeTermInlineAttendance(render=true){if(attendanceTermRowId===null)return false;attendanceTermRowId=null;if(render)renderTermsTable(filteredTerms);return true;}
+async function pollTermsRealtime(){if(termsRealtimeBusy||document.hidden||(!document.getElementById('termsTable')&&!document.getElementById('financeTable')))return;termsRealtimeBusy=true;try{const state=await termApi('/academy/admin/terms/realtime-version');if(termsRealtimeVersion===null){termsRealtimeVersion=state.version;return;}if(state.version!==termsRealtimeVersion){termsRealtimeVersion=state.version;editingTermRowId=null;attendanceTermRowId=null;if(document.getElementById('termsTable'))await loadTerms();if(document.getElementById('financeTable')&&typeof loadFinanceInvoices==='function')await loadFinanceInvoices();}}catch(error){}finally{termsRealtimeBusy=false;}}
 if(!window.termInlineOutsideCloseBound){
     window.termInlineOutsideCloseBound=true;
     document.addEventListener('click',function(event){
@@ -1097,6 +1100,7 @@ window.addEventListener('sornaz:data-changed',async function(event){if(event.det
     setTimeout(function () {
         if (document.getElementById('termsTable')) {
             loadTerms().catch(function(e){console.error(e);alert(e.message)});
+            pollTermsRealtime();setInterval(pollTermsRealtime,2000);document.addEventListener('visibilitychange',function(){if(!document.hidden)pollTermsRealtime();});
         }
     }, 200);
 })();

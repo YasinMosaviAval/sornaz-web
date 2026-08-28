@@ -252,7 +252,7 @@ window.renderMemberSchedulesTable = async function (list) {
             tbody.appendChild(tr);
             if (editingMemberScheduleRowId === item.id) {
                 const expand = document.createElement('tr');
-                expand.className = 'bg-gray-50';
+                expand.className = 'bg-gray-50 admin-inline-expand';
                 expand.innerHTML = window.getMemberScheduleInlineExpandRowHTML ? window.getMemberScheduleInlineExpandRowHTML(item) : '';
                 tbody.appendChild(expand);
             }

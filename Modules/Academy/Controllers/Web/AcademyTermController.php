@@ -33,6 +33,8 @@ class AcademyTermController {
         return $this->run(fn()=>['success'=>true,'data'=>$this->service->invoiceBootstrap((int)auth()->id())]);
     }
 
+    public function realtimeVersion(){return$this->run(fn()=>['success'=>true,'data'=>$this->service->realtimeVersion((int)auth()->id())]);}
+
 
     public function updateInvoice(int $id) {
         return $this->run(
