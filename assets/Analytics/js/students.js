@@ -19,6 +19,12 @@ window.studentInstrumentsList = studentInstruments;
 window.studentLevelsList = studentLevels;
 window.studentTeachersList = studentTeachers;
 window.studentFinancialsList = studentFinancials;
+window.studentOrganizations=[];
+window.studentTermGroups=[];
+window.studentIsBranchContext=false;
+window.studentProvinces=[];
+window.studentCounties=[];
+window.studentTimezones=[];
 
 window.getStudentBranches = function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) {
@@ -42,18 +48,28 @@ function calcAge(birthDate) {
     return age;
 }
 
-window.isStudentUnder18 = async function (birthDate) {
+window.isStudentUnder18 = function (birthDate) {
     const age = calcAge(birthDate);
     return age !== null && age < 18;
 };
 
-window.toggleStudentParentFields = async function (birthInputId, wrapId) {
+window.toggleStudentParentFields = function (birthInputId, wrapId) {
     const input = document.getElementById(birthInputId);
     const wrap = document.getElementById(wrapId);
     if (!wrap) return;
-    const show = input && window.isStudentUnder18(input.value);
+    const show = !!(input && input.value && window.isStudentUnder18(input.value));
     wrap.classList.toggle('hidden', !show);
 };
+
+let studentFormOptionsPromise=null;
+window.ensureStudentFormOptions=function(){if(studentFormOptionsPromise)return studentFormOptionsPromise;studentFormOptionsPromise=fetch('/academy/admin/courses/student-options',{credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}}).then(r=>r.json()).then(response=>{const payload=response.data??response,data=payload.data??payload;if(data.success===false)throw new Error(data.message||'دریافت اطلاعات ترم‌ها ناموفق بود.');window.studentOrganizations=(data.organizations||[]).slice().sort((a,b)=>(a.kind==='academy'?0:1)-(b.kind==='academy'?0:1));window.studentIsBranchContext=!!data.permissions?.isBranchContext;window.studentProvinces=data.provinces||[];window.studentCounties=data.counties||[];window.studentTimezones=data.timezones||[];window.studentTermGroups=(data.terms||[]).map(term=>({...term,key:String(term.id),levels:[{name:term.level,termIds:[term.id]}]}));return true;}).catch(error=>{studentFormOptionsPromise=null;throw error;});return studentFormOptionsPromise;};
+window.getStudentOrganizations=function(){return window.studentOrganizations||[];};
+window.refreshStudentTerms=function(prefix,selectedKey=''){const organization=document.getElementById(prefix+'Organization'),term=document.getElementById(prefix+'Instrument');if(!term)return;const groups=(window.studentTermGroups||[]).filter(x=>Number(x.organizationUserId)===Number(organization?.value||0));term.disabled=!organization?.value;term.innerHTML='<option value="">ترم آموزشی را انتخاب کنید</option>'+groups.map(x=>`<option value="${x.key.replace(/"/g,'&quot;')}" ${x.key===selectedKey?'selected':''}>${x.name}</option>`).join('');if(!groups.some(x=>x.key===term.value))term.value='';};
+window.updateStudentTermFields=function(prefix){const term=window.studentTermGroups.find(x=>x.key===document.getElementById(prefix+'Instrument')?.value),wrap=document.getElementById(prefix+'AvailabilityWrap');if(wrap)wrap.classList.toggle('hidden',term?.status!=='ongoing');};
+window.updateStudentCountySelect=function(select){const block=select.closest('.student-address-block'),city=block?.querySelector('.student-address-city'),province=window.studentProvinces.find(x=>String(x.province_name)===select.value);if(!city)return;const rows=window.studentCounties.filter(x=>province&&String(x.province_id)===String(province.province_id));city.disabled=!province;city.innerHTML='<option value="">'+(province?'انتخاب شهر':'ابتدا استان را انتخاب کنید')+'</option>'+rows.map(x=>`<option value="${x.county_name}">${x.county_name}</option>`).join('');};
+window.addStudentAvailability=function(prefix){document.getElementById(prefix+'AvailabilityRows')?.insertAdjacentHTML('beforeend',window.getStudentAvailabilityHTML({},prefix));};
+function clearStudentFieldErrors(){document.querySelectorAll('.student-field-error').forEach(x=>x.remove());document.querySelectorAll('.student-field-invalid').forEach(x=>x.classList.remove('student-field-invalid','border-red-500','ring-1','ring-red-200'));}
+function showStudentFieldError(error){const match=String(error?.message||error||'').match(/^FIELD:([^:]+):(.*)$/s);if(!match)return false;const field=document.getElementById(match[1]);if(!field)return false;field.classList.add('student-field-invalid','border-red-500','ring-1','ring-red-200');const message=document.createElement('p');message.className='student-field-error mt-1.5 text-sm text-red-600';message.textContent=match[2];field.insertAdjacentElement('afterend',message);field.addEventListener('input',()=>{field.classList.remove('student-field-invalid','border-red-500','ring-1','ring-red-200');message.remove();},{once:true});alert(match[2]);field.focus();field.scrollIntoView({behavior:'smooth',block:'center'});return true;}
 
 function randomNationalId() {
     let s = '';
@@ -136,9 +152,6 @@ const studentPdfColumns = [
     { field: 'level', label: 'سطح' },
     { field: 'teacher', label: 'استاد' },
     { field: 'branch', label: 'شعبه' },
-    { field: 'remaining', label: 'جلسات باقی‌مانده' },
-    { field: 'financial', label: 'وضعیت مالی' },
-    { field: 'attendance', label: 'حضور' },
     { field: 'registrationDate', label: 'تاریخ ثبت‌نام' }
 ];
 
@@ -321,8 +334,14 @@ window.changeStudentsPage = async function (page) {
 
 function readStudentForm(prefix) {
     const g = function (id) { return document.getElementById(prefix + id); };
-    const branchId = parseInt(g('Branch') && g('Branch').value, 10);
-    const branchObj = window.getStudentBranches().find(function (b) { return b.id === branchId; });
+    const organizationUserId = parseInt(g('Organization') && g('Organization').value, 10);
+    const organization = window.studentOrganizations.find(o=>Number(o.user_id)===organizationUserId);
+    const branchId = organization?.kind==='branch'?Number(organization.id):null;
+    const selectedGroup=(window.studentTermGroups||[]).find(x=>x.key===(g('Instrument')?.value||''));
+    const selectedLevel=selectedGroup?.levels?.[0];
+    const addressBlock=g('Addresses')?.querySelector('.student-address-block');
+    const addresses=addressBlock?[{province:addressBlock.querySelector('.student-address-province')?.value||'',city:addressBlock.querySelector('.student-address-city')?.value||'',address:addressBlock.querySelector('.student-address-text')?.value.trim()||'',postal_code:addressBlock.querySelector('.student-address-postal')?.value.trim()||'',lat:addressBlock.querySelector('.student-address-lat')?.value.trim()||'',lng:addressBlock.querySelector('.student-address-lng')?.value.trim()||'',is_main:true}]:[];
+    const availabilities=[...(g('AvailabilityRows')?.querySelectorAll('.student-availability-row')||[])].map(row=>({day:row.querySelector('.student-availability-day')?.value||'',timezoneId:Number(row.querySelector('.student-availability-timezone')?.value||0),startTime:row.querySelector('.student-availability-start')?.value||'',endTime:row.querySelector('.student-availability-end')?.value||'',status:'available'})).filter(x=>x.startTime&&x.endTime);
     const birthDate = g('BirthDate') && g('BirthDate').value || '';
     const under18 = window.isStudentUnder18(birthDate);
     const data = {
@@ -333,21 +352,26 @@ function readStudentForm(prefix) {
         phone: (g('Phone') && g('Phone').value || '').trim(),
         address: (g('Address') && g('Address').value || '').trim(),
         registrationDate: (g('RegistrationDate') && g('RegistrationDate').value) || todayISO(),
-        instrument: g('Instrument') && g('Instrument').value || '',
-        level: g('Level') && g('Level').value || '',
-        teacher: g('Teacher') && g('Teacher').value || '',
-        remaining: parseInt(g('Remaining') && g('Remaining').value, 10),
-        financial: g('Financial') && g('Financial').value || 'تسویه',
-        attendance: (g('Attendance') && g('Attendance').value || '').trim() || '—',
+        termKey: g('Instrument') && g('Instrument').value || '',
+        instrument: g('Instrument')?.selectedOptions?.[0]?.textContent || '',
+        level: selectedLevel?.name || '',
+        teacher: (selectedLevel?.teachers||[]).join('، '),
+        termId: Number(selectedLevel?.termIds?.[0]||0),
+        termStatus: selectedGroup?.status||'',
+        type: 'student',
+        organizationUserId: organizationUserId,
         branchId: branchId,
-        branch: branchObj ? branchObj.name : 'نامشخص',
+        branch: organization ? organization.name : 'نامشخص',
         parentName: '',
         parentNationalId: '',
         parentFatherName: '',
         parentBirthDate: '',
         parentPhone: ''
+        ,addresses: addresses
+        ,availabilities: availabilities
+        ,availabilitySummary: g('AvailabilitySummary')?.value.trim()||''
+        ,availabilityDescription: g('AvailabilityDescription')?.value.trim()||''
     };
-    if (isNaN(data.remaining)) data.remaining = 0;
     if (under18) {
         data.parentName = (g('ParentName') && g('ParentName').value || '').trim();
         data.parentNationalId = (g('ParentNationalId') && g('ParentNationalId').value || '').trim();
@@ -355,6 +379,7 @@ function readStudentForm(prefix) {
         data.parentBirthDate = g('ParentBirthDate') && g('ParentBirthDate').value || '';
         data.parentPhone = (g('ParentPhone') && g('ParentPhone').value || '').trim();
     }
+    data.parent={name:data.parentName,nationalId:data.parentNationalId,fatherName:data.parentFatherName,birthDate:data.parentBirthDate,phone:data.parentPhone};
     return data;
 }
 
@@ -363,10 +388,13 @@ function validateStudentData(data) {
         alert('لطفاً نام، شماره تماس، کد ملی، نام پدر و تاریخ تولد را وارد کنید.');
         return false;
     }
-    if (!data.branchId) {
-        alert('انتخاب شعبه الزامی است.');
+    if (!data.organizationUserId) {
+        alert('انتخاب سازمان الزامی است.');
         return false;
     }
+    if(!data.termKey){alert('انتخاب ترم آموزشی الزامی است.');return false;}
+    if(!data.addresses.length||!data.addresses.some(x=>x.province&&x.city&&x.address)){alert('ثبت حداقل یک آدرس کامل الزامی است.');return false;}
+    if(data.termStatus==='ongoing'&&!data.availabilities.length){alert('برای قرارگیری در لیست انتظار، حداقل یک برنامه زمانی هنرجو ثبت کنید.');return false;}
     if (window.isStudentUnder18(data.birthDate)) {
         if (!data.parentName || !data.parentNationalId || !data.parentFatherName || !data.parentBirthDate || !data.parentPhone) {
             alert('برای هنرجویان زیر ۱۸ سال، تکمیل تمام اطلاعات والد الزامی است.');
@@ -378,22 +406,16 @@ function validateStudentData(data) {
 
 window.openAddStudentModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
+    try{await window.ensureStudentFormOptions();}catch(e){return alert('دریافت اطلاعات ترم‌ها ناموفق بود.');}
     document.getElementById('modalContainer').innerHTML = window.getStudentAddModalHTML
         ? window.getStudentAddModalHTML() : '';
 };
 
 window.saveStudent = async function () {
+    clearStudentFieldErrors();
     const data = readStudentForm('stu');
     if (!validateStudentData(data)) return;
-    allStudents.unshift(Object.assign({}, data, {
-        id: Date.now(),
-        remaining: typeof data.remaining === 'number' ? data.remaining : 8,
-        financial: data.financial || 'تسویه',
-        attendance: data.attendance || '—'
-    }));
-    window.filterStudents();
-    closeModal();
-    alert('✅ هنرجو با موفقیت ثبت شد');
+    try{const saved=await branchRequest('/academy/admin/students',{payload_b64:encodeBranchPayload(data)});allStudents.unshift(Object.assign({},data,{id:Number(saved.id||saved.member_id),status_code:saved.status,remaining:0,financial:'صادرشده',attendance:'—'}));window.filterStudents();closeModal();alert('✅ هنرجو با موفقیت ثبت شد');}catch(error){if(!showStudentFieldError(error))alert(error.message||'ثبت هنرجو ناموفق بود.');}
 };
 
 window.viewStudent = async function (id) {
@@ -406,6 +428,7 @@ window.viewStudent = async function (id) {
 window.editStudent = async function (id) {
     const item = allStudents.find(function (x) { return x.id === id; });
     if (!item) return;
+    try{await window.ensureStudentFormOptions();}catch(e){return alert('دریافت اطلاعات ترم‌ها ناموفق بود.');}
     document.getElementById('modalContainer').innerHTML = window.getStudentEditModalHTML
         ? window.getStudentEditModalHTML(item) : '';
 };
@@ -423,6 +446,7 @@ window.saveEditedStudent = async function (id) {
 };
 
 window.toggleStudentInlineEdit = async function (id) {
+    if(editingStudentRowId!==id)try{await window.ensureStudentFormOptions();}catch(e){return alert('دریافت اطلاعات ترم‌ها ناموفق بود.');}
     editingStudentRowId = editingStudentRowId === id ? null : id;
     window.renderStudentsTable(filteredStudents);
 };
@@ -449,12 +473,12 @@ window.deleteStudent = async function (id) {
 
 window.exportStudentsToExcel = async function () {
     const data = filteredStudents.length ? filteredStudents : allStudents;
-    let csv = '\uFEFFردیف,نام,کد ملی,نام پدر,تاریخ تولد,شماره تماس,آدرس,تاریخ ثبت‌نام,ساز,سطح,استاد,شعبه,جلسات باقی‌مانده,وضعیت مالی,حضور,نام والد,کد ملی والد,تلفن والد\n';
+    let csv = '\uFEFFردیف,نام,کد ملی,نام پدر,تاریخ تولد,شماره تماس,آدرس,تاریخ ثبت‌نام,ترم آموزشی,سطح,استاد,سازمان,نام والد,کد ملی والد,تلفن والد\n';
     data.forEach(function (item, i) {
         csv += (i + 1) + ',"' + item.name + '","' + (item.nationalId || '') + '","' + (item.fatherName || '') + '","' +
             (item.birthDate || '') + '","' + (item.phone || '') + '","' + (item.address || '') + '","' +
             (item.registrationDate || '') + '","' + item.instrument + '","' + item.level + '","' + item.teacher + '","' +
-            item.branch + '",' + item.remaining + ',"' + item.financial + '","' + item.attendance + '","' +
+            item.branch + '","' +
             (item.parentName || '') + '","' + (item.parentNationalId || '') + '","' + (item.parentPhone || '') + '"\n';
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

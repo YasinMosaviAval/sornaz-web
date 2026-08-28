@@ -106,7 +106,7 @@
                 </div>`}
                 <div>
                     <label class="block text-sm font-medium mb-2">ظرفیت</label>
-                    <input id="${id('Capacity')}" type="number" min="1" value="${escapeHtml(item.capacity ?? 8)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <input id="${id('Capacity')}" type="number" min="1" value="${escapeHtml(item.capacity ?? 1)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                 </div>
                 ${window.classroomPermissions?.isReceptionist?'':`<div>
                     <label class="block text-sm font-medium mb-2">وضعیت</label>

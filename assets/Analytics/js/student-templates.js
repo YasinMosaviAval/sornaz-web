@@ -17,6 +17,12 @@
         }).join('');
     }
 
+    window.getStudentAddressHTML=function(address,prefix){address=address||{};const province=address.province||'',cities=(window.studentCounties||[]).filter(x=>{const p=(window.studentProvinces||[]).find(y=>y.province_name===province);return p&&String(x.province_id)===String(p.province_id);});return `<div class="student-address-block address-block rounded-2xl border border-gray-200 p-4 space-y-3"><div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><div><label class="text-xs text-gray-500 block mb-1">استان</label><select class="student-address-province ${fieldClass}" onchange="updateStudentCountySelect(this)"><option value="">انتخاب استان</option>${renderOptions((window.studentProvinces||[]).map(x=>({value:x.province_name,label:x.province_name})),province)}</select></div><div><label class="text-xs text-gray-500 block mb-1">شهر</label><select class="student-address-city ${fieldClass}" ${province?'':'disabled'}><option value="">${province?'انتخاب شهر':'ابتدا استان را انتخاب کنید'}</option>${renderOptions(cities.map(x=>({value:x.county_name,label:x.county_name})),address.city||'')}</select></div></div><div><label class="text-xs text-gray-500 block mb-1">ادامه آدرس</label><input class="student-address-text ${fieldClass}" value="${escapeHtml(address.address||'')}" placeholder="خیابان، پلاک، واحد..."></div><div class="grid grid-cols-1 sm:grid-cols-3 gap-3"><div><label class="text-xs text-gray-500 block mb-1">کد پستی</label><input class="student-address-postal ${fieldClass}" value="${escapeHtml(address.postal_code||'')}"></div><div><label class="text-xs text-gray-500 block mb-1">عرض جغرافیایی</label><input class="student-address-lat addr-lat ${fieldClass}" value="${escapeHtml(address.lat||'')}"></div><div><label class="text-xs text-gray-500 block mb-1">طول جغرافیایی</label><input class="student-address-lng addr-lng ${fieldClass}" value="${escapeHtml(address.lng||'')}"></div></div><div class="text-left"><button type="button" onclick="openGoogleMapsPicker(this)" class="text-sm text-indigo-600"><i class="fas fa-map-marker-alt"></i> انتخاب روی نقشه</button></div></div>`;};
+    window.getStudentAvailabilityHTML=function(row,prefix){row=row||{};const days=[['saturday','شنبه'],['sunday','یکشنبه'],['monday','دوشنبه'],['tuesday','سه‌شنبه'],['wednesday','چهارشنبه'],['thursday','پنجشنبه'],['friday','جمعه']];return `<div class="student-availability-row rounded-2xl border border-indigo-100 bg-white p-4"><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3"><div><label class="text-xs text-gray-500 block mb-1">روز *</label><select class="student-availability-day ${fieldClass}">${renderOptions(days.map(x=>({value:x[0],label:x[1]})),row.day||'saturday')}</select></div><div><label class="text-xs text-gray-500 block mb-1">منطقه زمانی *</label><select class="student-availability-timezone ${fieldClass}">${renderOptions((window.studentTimezones||[]).map(x=>({value:x.timezone_id,label:x.timezone})),row.timezoneId||'')}</select></div><div><label class="text-xs text-gray-500 block mb-1">ساعت شروع *</label><input type="time" class="student-availability-start ${fieldClass}" value="${escapeHtml(row.startTime||'')}"></div><div><label class="text-xs text-gray-500 block mb-1">ساعت پایان *</label><input type="time" class="student-availability-end ${fieldClass}" value="${escapeHtml(row.endTime||'')}"></div><div><label class="text-xs text-gray-500 block mb-1">وضعیت</label><select class="student-availability-status ${fieldClass}"><option value="available" ${(row.status||'available')==='available'?'selected':''}>فعال</option><option value="unavailable" ${row.status==='unavailable'?'selected':''}>غیرفعال</option></select></div></div><button type="button" onclick="this.closest('.student-availability-row').remove()" class="mt-3 text-sm text-red-500">حذف بازه</button></div>`;};
+
+    function studentTimeOptions(selected){let html='<option value="">انتخاب ساعت</option>';for(let minutes=0;minutes<1440;minutes+=30){const value=String(Math.floor(minutes/60)).padStart(2,'0')+':'+String(minutes%60).padStart(2,'0');html+=`<option value="${value}" ${value===selected?'selected':''}>${value}</option>`;}return html;}
+    window.getStudentAvailabilityHTML=function(row,prefix){row=row||{};const days=[['saturday','شنبه'],['sunday','یکشنبه'],['monday','دوشنبه'],['tuesday','سه‌شنبه'],['wednesday','چهارشنبه'],['thursday','پنجشنبه'],['friday','جمعه']];return `<div class="student-availability-row rounded-2xl border border-indigo-100 bg-white p-4"><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"><div><label class="text-xs text-gray-500 block mb-1">روز *</label><select class="student-availability-day ${fieldClass}">${renderOptions(days.map(x=>({value:x[0],label:x[1]})),row.day||'saturday')}</select></div><div><label class="text-xs text-gray-500 block mb-1">منطقه زمانی *</label><select class="student-availability-timezone ${fieldClass}">${renderOptions((window.studentTimezones||[]).map(x=>({value:x.timezone_id,label:x.timezone})),row.timezoneId||'')}</select></div><div><label class="text-xs text-gray-500 block mb-1">ساعت شروع *</label><select class="student-availability-start ${fieldClass}" dir="ltr">${studentTimeOptions(row.startTime||'')}</select></div><div><label class="text-xs text-gray-500 block mb-1">ساعت پایان *</label><select class="student-availability-end ${fieldClass}" dir="ltr">${studentTimeOptions(row.endTime||'')}</select></div></div><button type="button" onclick="this.closest('.student-availability-row').remove()" class="mt-3 text-sm text-red-500">حذف بازه</button></div>`;};
+
     function todayISO() {
         return new Date().toISOString().split('T')[0];
     }
@@ -24,26 +30,25 @@
     function formFields(item, prefix) {
         item = item || {};
         const id = function (n) { return prefix + n; };
-        const branches = (typeof window.getStudentBranches === 'function' ? window.getStudentBranches() : []).map(function (b) {
-            return { value: b.id, label: b.name };
-        });
-        const instruments = (window.studentInstrumentsList || []).map(function (x) { return { value: x, label: x }; });
-        const levels = (window.studentLevelsList || []).map(function (x) { return { value: x, label: x }; });
-        const teachers = (window.studentTeachersList || []).map(function (x) { return { value: x, label: 'استاد ' + x }; });
-        const financials = (window.studentFinancialsList || []).map(function (x) { return { value: x, label: x }; });
+        const organizations = (window.getStudentOrganizations?.() || []);
+        const inferredOrganization=organizations.find(o=>Number(o.user_id)===Number(item.organizationUserId))||organizations.find(o=>o.kind==='branch'&&Number(o.id)===Number(item.branchId))||(window.studentIsBranchContext?organizations.find(o=>o.kind==='branch'):organizations[0]);
+        const organizationUserId=Number(item.organizationUserId||inferredOrganization?.user_id||0);
+        const groups=(window.studentTermGroups||[]).filter(x=>Number(x.organizationUserId)===organizationUserId);
+        const selectedGroup=groups.find(x=>x.key===item.termKey)||groups.find(x=>x.name===item.instrument);
+        const selectedTermKey=selectedGroup?.key||'';
         const under18 = typeof window.isStudentUnder18 === 'function' && window.isStudentUnder18(item.birthDate);
         const birthId = id('BirthDate');
         const parentWrapId = id('ParentWrap');
 
         return `
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                <div>
-                    <label class="block text-sm font-medium mb-2">شعبه *</label>
-                    <select id="${id('Branch')}" class="${fieldClass}">
-                        <option value="">انتخاب شعبه</option>
-                        ${renderOptions(branches, item.branchId)}
+                ${window.studentIsBranchContext?`<input id="${id('Organization')}" type="hidden" value="${escapeHtml(organizationUserId)}">`:`<div>
+                    <label class="block text-sm font-medium mb-2">سازمان *</label>
+                    <select id="${id('Organization')}" onchange="refreshStudentTerms('${prefix}')" class="${fieldClass}">
+                        <option value="">انتخاب سازمان</option>
+                        ${renderOptions(organizations.map(o=>({value:o.user_id,label:o.name})),organizationUserId)}
                     </select>
-                </div>
+                </div>`}
                 <div>
                     <label class="block text-sm font-medium mb-2">نام و نام خانوادگی *</label>
                     <input id="${id('Name')}" type="text" value="${escapeHtml(item.name || '')}" class="${fieldClass}">
@@ -65,15 +70,13 @@
                     <label class="block text-sm font-medium mb-2">شماره تماس *</label>
                     <input id="${id('Phone')}" type="tel" value="${escapeHtml(item.phone || '')}" class="${fieldClass}">
                 </div>
-                <div class="sm:col-span-2 lg:col-span-3">
-                    <label class="block text-sm font-medium mb-2">آدرس</label>
-                    <input id="${id('Address')}" type="text" value="${escapeHtml(item.address || '')}" class="${fieldClass}">
-                </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">تاریخ ثبت‌نام</label>
                     <input id="${id('RegistrationDate')}" type="date" value="${escapeHtml(item.registrationDate || todayISO())}" class="${fieldClass}">
                 </div>
             </div>
+
+            <div class="space-y-3"><h3 class="font-semibold text-indigo-700">آدرس</h3><div id="${id('Addresses')}" class="space-y-3">${window.getStudentAddressHTML(item.addresses?.[0]||{address:item.address||''},prefix)}</div></div>
 
             <div id="${parentWrapId}" class="student-parent-fields border border-amber-200 bg-amber-50/50 rounded-2xl p-5 space-y-4 ${under18 ? '' : 'hidden'}">
                 <h3 class="font-semibold text-amber-800 flex items-center gap-2"><i class="fas fa-user-shield"></i> اطلاعات والد (الزامی برای زیر ۱۸ سال)</h3>
@@ -105,53 +108,24 @@
                 <h3 class="font-semibold mb-4 text-indigo-700">اطلاعات آموزشی</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     <div>
-                        <label class="block text-sm font-medium mb-2">ساز / ترم آموزشی *</label>
-                        <select id="${id('Instrument')}" class="${fieldClass}">
-                            ${renderOptions(instruments, item.instrument || 'پیانو')}
+                        <label class="block text-sm font-medium mb-2">ترم آموزشی *</label>
+                        <select id="${id('Instrument')}" onchange="updateStudentTermFields('${prefix}')" class="${fieldClass}" ${organizationUserId?'':'disabled'}>
+                            <option value="">ترم آموزشی را انتخاب کنید</option>
+                            ${renderOptions(groups.map(x=>({value:x.key,label:x.name})),selectedTermKey)}
                         </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">سطح</label>
-                        <select id="${id('Level')}" class="${fieldClass}">
-                            ${renderOptions(levels, item.level || 'مبتدی')}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">استاد</label>
-                        <select id="${id('Teacher')}" class="${fieldClass}">
-                            ${renderOptions(teachers, item.teacher || '')}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">جلسات باقی‌مانده</label>
-                        <input id="${id('Remaining')}" type="number" min="0" value="${escapeHtml(item.remaining != null ? item.remaining : 8)}" class="${fieldClass}">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">وضعیت مالی</label>
-                        <select id="${id('Financial')}" class="${fieldClass}">
-                            ${renderOptions(financials, item.financial || 'تسویه')}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">درصد حضور</label>
-                        <input id="${id('Attendance')}" type="text" value="${escapeHtml(item.attendance || '')}" class="${fieldClass}" placeholder="مثلاً ۸۵٪">
                     </div>
                 </div>
-            </div>`;
+            </div>
+            <div id="${id('AvailabilityWrap')}" class="${selectedGroup?.status==='ongoing'?'':'hidden'} border border-indigo-200 bg-indigo-50/40 rounded-2xl p-5 space-y-4"><h3 class="font-semibold text-indigo-700">افزودن برنامه زمانی هنرجو</h3><div id="${id('AvailabilityRows')}" class="space-y-3">${(item.availabilities?.length?item.availabilities:[{}]).map(x=>window.getStudentAvailabilityHTML(x,prefix)).join('')}</div><button type="button" onclick="addStudentAvailability('${prefix}')" class="text-sm text-indigo-600">+ افزودن بازه زمانی جدید</button><div><label class="block text-sm font-medium mb-2">خلاصه</label><input id="${id('AvailabilitySummary')}" class="${fieldClass}" value="${escapeHtml(item.availabilitySummary||'')}"></div><div><label class="block text-sm font-medium mb-2">توضیحات</label><textarea id="${id('AvailabilityDescription')}" class="${fieldClass}" rows="3">${escapeHtml(item.availabilityDescription||'')}</textarea></div></div>`;
     }
 
     window.getStudentRowHTML = function (item) {
-        const financialClass = item.financial === 'تسویه' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
-        const remainingClass = item.remaining <= 2 ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700';
         return `
             <td class="py-4 px-5 font-medium">${escapeHtml(item.name)}</td>
             <td class="py-4 px-5">${escapeHtml(item.instrument)}</td>
             <td class="py-4 px-5">${escapeHtml(item.level)}</td>
             <td class="py-4 px-5">${escapeHtml(item.teacher)}</td>
             <td class="py-4 px-5">${escapeHtml(item.branch)}</td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${remainingClass}">${item.remaining} جلسه</span></td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${financialClass}">${escapeHtml(item.financial)}</span></td>
-            <td class="py-4 px-5">${escapeHtml(item.attendance)}</td>
             <td class="py-4 px-5 text-left">
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
                     <button onclick="viewStudent(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
@@ -162,11 +136,11 @@
     };
 
     window.getStudentEmptyRowHTML = function () {
-        return '<tr><td colspan="9" class="py-12 text-center text-gray-400">هیچ هنرجویی یافت نشد</td></tr>';
+        return '<tr><td colspan="6" class="py-12 text-center text-gray-400">هیچ هنرجویی یافت نشد</td></tr>';
     };
 
     window.getStudentInlineExpandRowHTML = function (item) {
-        return '<td colspan="9" class="p-5 border-t">' + (window.getStudentInlineEditRowHTML ? window.getStudentInlineEditRowHTML(item) : '') + '</td>';
+        return '<td colspan="6" class="p-5 border-t">' + (window.getStudentInlineEditRowHTML ? window.getStudentInlineEditRowHTML(item) : '') + '</td>';
     };
 
     window.getStudentInlineEditRowHTML = function (item) {
@@ -248,13 +222,8 @@
                             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">تاریخ تولد</span><span class="font-medium">${escapeHtml(item.birthDate || '—')}</span></div>
                             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">سن</span><span class="font-medium">${escapeHtml(age)}</span></div>
                             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">تاریخ ثبت‌نام</span><span class="font-medium">${escapeHtml(item.registrationDate || '—')}</span></div>
-                            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">شعبه</span><span class="font-medium">${escapeHtml(item.branch)}</span></div>
+                            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">سازمان</span><span class="font-medium">${escapeHtml(item.branch)}</span></div>
                             <div class="flex justify-between border-b pb-2 md:col-span-2"><span class="text-gray-500">آدرس</span><span class="font-medium text-left max-w-[70%]">${escapeHtml(item.address || '—')}</span></div>
-                            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">وضعیت</span>
-                                <span class="px-3 py-1 rounded-full text-xs ${item.financial === 'تسویه' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
-                                    ${item.financial === 'تسویه' ? 'فعال' : 'بدهکار'}
-                                </span>
-                            </div>
                         </div>
                     </div>
                     ${under18 ? `
@@ -271,29 +240,10 @@
                     <div>
                         <h3 class="font-semibold text-indigo-700 mb-4 flex items-center gap-2"><i class="fas fa-music"></i> اطلاعات آموزشی</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ساز / ترم آموزشی</span><span class="font-medium">${escapeHtml(item.instrument)}</span></div>
+                            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ترم آموزشی</span><span class="font-medium">${escapeHtml(item.instrument)}</span></div>
                             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">سطح</span><span class="font-medium">${escapeHtml(item.level)}</span></div>
                             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">استاد</span><span class="font-medium">استاد ${escapeHtml(item.teacher)}</span></div>
-                            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">جلسات باقی‌مانده</span><span class="font-medium">${item.remaining} جلسه</span></div>
-                            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">درصد حضور</span><span class="font-medium">${escapeHtml(item.attendance)}</span></div>
                             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">نوع کلاس</span><span class="font-medium">خصوصی</span></div>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-indigo-700 mb-4 flex items-center gap-2"><i class="fas fa-money-bill-wave"></i> خلاصه مالی</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="bg-gray-50 rounded-2xl p-4 text-center">
-                                <p class="text-sm text-gray-500">وضعیت</p>
-                                <p class="text-lg font-bold mt-1 ${item.financial === 'تسویه' ? 'text-green-600' : 'text-red-600'}">${escapeHtml(item.financial)}</p>
-                            </div>
-                            <div class="bg-gray-50 rounded-2xl p-4 text-center">
-                                <p class="text-sm text-gray-500">آخرین پرداخت</p>
-                                <p class="text-lg font-bold mt-1">۱,۲۰۰,۰۰۰ تومان</p>
-                            </div>
-                            <div class="bg-gray-50 rounded-2xl p-4 text-center">
-                                <p class="text-sm text-gray-500">بدهی فعلی</p>
-                                <p class="text-lg font-bold mt-1">${item.financial === 'بدهکار' ? '۸۵۰,۰۰۰' : '۰'} تومان</p>
-                            </div>
                         </div>
                     </div>
                     <div>

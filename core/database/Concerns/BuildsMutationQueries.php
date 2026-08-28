@@ -3,6 +3,7 @@
 namespace Core\database\Concerns;
 
 use Core\database\DatabaseChangeNotifier;
+use Core\database\AcademyInsertApproval;
 
 trait BuildsMutationQueries {
 
@@ -11,6 +12,7 @@ trait BuildsMutationQueries {
 
 
     public function insert(array $data): bool {
+        $data = AcademyInsertApproval::apply($this->pdo, $this->table, $data);
         $columns = array_keys($data);
         $placeholders = array_fill(0, count($columns), '?');
         $sql = "INSERT INTO {$this->table} (" . implode(',', $columns) . ") VALUES (" . implode(',', $placeholders) . ")";

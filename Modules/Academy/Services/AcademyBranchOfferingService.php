@@ -114,7 +114,7 @@ class AcademyBranchOfferingService
         }
 
         $organizationsByUser = [];
-        foreach ($manageableOrganizations as $organization) $organizationsByUser[(int) $organization['user_id']] = $organization;
+        foreach ($lessonOrganizations as $organization) $organizationsByUser[(int) $organization['user_id']] = $organization;
         $lessonOrganizationsByUser = [];
         foreach ($lessonOrganizations as $organization) $lessonOrganizationsByUser[(int) $organization['user_id']] = $organization;
 
@@ -138,7 +138,7 @@ class AcademyBranchOfferingService
         );
 
         $scheduleRows = DB::table('user_availabilities')
-            ->whereIn('user_id', $organizationUserIds)
+            ->whereIn('user_id', $lessonOrganizationUserIds)
             ->whereNull('deleted_at')
             ->get();
         $scheduleIds = array_map(fn(array $row): int => (int) $row['user_availability_id'], $scheduleRows);
@@ -164,6 +164,7 @@ class AcademyBranchOfferingService
                 'branchId' => $organization['kind'] === 'branch' ? $organization['id'] : 0,
                 'organizationUserId' => (int) $organization['user_id'],
                 'organizationKind' => $organization['kind'],
+                'readOnly' => !empty($organization['read_only']),
                 'branchName' => $organization['name'],
                 'status' => $statuses[$row['type']] ?? 'در انتظار تأیید',
                 'repeatPeriod' => $repeats[$row['repeat_period']] ?? 'هفتگی',
@@ -321,6 +322,7 @@ class AcademyBranchOfferingService
                 if($currentStart < $previousEnd + 30) throw new RuntimeException('بین بازه‌های زمانی باید حداقل ۳۰ دقیقه فاصله وجود داشته باشد.');
             }
             $ranges = $normalized;
+            $this->assertBranchRangesWithinAcademy($organization, $day, $ranges);
             $existingDayRows = DB::table('user_availabilities')->where('user_id', (int) $organization['user_id'])->where('day_of_week', $day)->whereNull('date')->whereNull('deleted_at')->get();
             foreach ($existingDayRows as $existingDayRow) {
                 $existingDayId = (int) $existingDayRow['user_availability_id'];
@@ -371,6 +373,30 @@ class AcademyBranchOfferingService
     private function validTime(string $time): ?string
     {
         return preg_match('/^(?:(?:[01]\d|2[0-3]):[0-5]\d|24:00)$/', $time) ? $time : null;
+    }
+
+    private function assertBranchRangesWithinAcademy(array $organization, string $day, array $ranges): void
+    {
+        if (($organization['kind'] ?? '') !== 'branch') return;
+        $branch = DB::table('academy_branches')->where('branch_id', (int) $organization['id'])->whereNull('deleted_at')->first();
+        $academy = $branch ? DB::table('academies')->where('academy_id', (int) $branch['academy_id'])->whereNull('deleted_at')->first() : null;
+        if (!$academy) return;
+        $academyRanges = DB::table('user_availabilities')->where('user_id', (int) $academy['user_id'])->where('day_of_week', $day)->whereNull('date')->where('is_repeating', 1)->whereNull('deleted_at')->get();
+        if (!$academyRanges) return;
+        $allowed = array_values(array_filter($academyRanges, fn(array $row): bool => ($row['type'] ?? '') === 'available' && !(int) ($row['is_closed'] ?? 0)));
+        foreach ($ranges as $range) {
+            if (($range['status'] ?? '') !== 'فعال') continue;
+            $start = $this->timeToMinutes($range['start']);
+            $end = $this->timeToMinutes($range['end']);
+            $inside = false;
+            foreach ($allowed as $academyRange) {
+                if ($start >= $this->timeToMinutes(substr((string) $academyRange['start_time'], 0, 5)) && $end <= $this->timeToMinutes(substr((string) $academyRange['end_time'], 0, 5))) {
+                    $inside = true;
+                    break;
+                }
+            }
+            if (!$inside) throw new RuntimeException('بازه زمانی شعبه باید کاملاً داخل ساعات کاری آموزشگاه در همان روز باشد.');
+        }
     }
 
     private function timeToMinutes(string $time): int

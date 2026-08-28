@@ -290,7 +290,7 @@ function readClassroomForm(prefix) {
     const typeId = parseInt(field('Type')?.value,10);
     const typeObj=allClassroomTypes.find(x=>x.id===typeId);
     const branchId = parseInt(field('Branch')?.value, 10);
-    const capacity = parseInt(field('Capacity')?.value || '8', 10) || 8;
+    const capacity = parseInt(field('Capacity')?.value || '1', 10) || 1;
     const statusValue = field('Status')?.value || (classroomPermissions?.isReceptionist?'pending':'available');
     const equipContainerId = prefix
         ? (prefix.startsWith('inline') ? `${prefix}EquipmentContainer` : `${prefix}EquipmentContainer`)
