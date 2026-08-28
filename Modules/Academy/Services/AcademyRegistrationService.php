@@ -739,6 +739,7 @@ class AcademyRegistrationService {
                 if ($title) $instruments[] = $title;
             }
             $cities = [];
+            $cityIds = [];
             $addressUserIds = $organizationUserIds;
             $organizationAddresses = $organizationUserIds ? DB::table('user_addresses')->select('county_id')->whereIn('user_id',$organizationUserIds)->whereNull('deleted_at')->get() : [];
             if (!$organizationAddresses && $branchIds) {
@@ -747,9 +748,16 @@ class AcademyRegistrationService {
             if ($addressUserIds) foreach (DB::table('user_addresses')->select('county_id')->whereIn('user_id',array_values(array_unique($addressUserIds)))->whereNull('deleted_at')->get() as $address) {
                 if (!$address['county_id']) continue;
                 $county = DB::table('world_iran_counties')->where('county_id',(int)$address['county_id'])->first();
-                if (!empty($county['county_name'])) $cities[] = (string)$county['county_name'];
+                if (!empty($county['county_name'])) {
+                    $countyId = (int)$county['county_id'];
+                    $cities[$countyId] = $this->frameworkTranslation('world_iran_counties',$countyId,'county_name',$locale)
+                        ?: $this->frameworkTranslation('world_iran_counties',$countyId,'county_name','fa')
+                        ?: (string)$county['county_name'];
+                    $cityIds[] = $countyId;
+                }
             }
             $cities = array_values(array_unique($cities));
+            $cityIds = array_values(array_unique($cityIds));
             return [
                 'id' => $academyId,
                 'name' => $translations->get('academies', $academyId, 'title', $locale) ?: $row['username'],
@@ -762,16 +770,17 @@ class AcademyRegistrationService {
                 'students' => (int)$row['students'],
                 'city' => $cities[0] ?? '',
                 'cities' => $cities,
+                'city_ids' => $cityIds,
                 'instrument_ids' => $instrumentIds,
                 'instruments' => $instruments,
             ];
         }, $rows);
         $q = mb_strtolower(trim((string)($filters['q'] ?? '')));
-        $city = trim((string)($filters['city'] ?? ''));
+        $city = (int)($filters['city'] ?? 0);
         $instrument = (int)($filters['instrument'] ?? 0);
         return array_values(array_filter($items, function(array $item) use ($q,$city,$instrument): bool {
             if ($q !== '' && !str_contains(mb_strtolower(implode(' ', [$item['name'],$item['summary'],$item['bio']])), $q)) return false;
-            if ($city !== '' && !in_array($city, $item['cities'], true)) return false;
+            if ($city > 0 && !in_array($city, $item['city_ids'], true)) return false;
             if ($instrument > 0 && !in_array($instrument, $item['instrument_ids'], true)) return false;
             return true;
         }));
@@ -783,7 +792,7 @@ class AcademyRegistrationService {
         $cities = [];
         foreach ($items as $item) {
             foreach ($item['instrument_ids'] as $id) $instrumentIds[$id] = true;
-            foreach ($item['cities'] as $city) $cities[$city] = true;
+            foreach ($item['city_ids'] as $index=>$id) $cities[(int)$id] = $item['cities'][$index] ?? '';
         }
         $translations = TranslationService::manager();
         $locale = app()->getLocale();
@@ -795,8 +804,21 @@ class AcademyRegistrationService {
             if ($title) $instruments[] = ['id'=>(int)$id,'title'=>$title];
         }
         usort($instruments, fn($a,$b)=>strnatcasecmp($a['title'],$b['title']));
-        $cityNames = array_keys($cities);
-        sort($cityNames, SORT_NATURAL | SORT_FLAG_CASE);
-        return ['instruments'=>$instruments,'cities'=>$cityNames];
+        $cityOptions = [];
+        foreach ($cities as $id=>$title) if ($title !== '') $cityOptions[] = ['id'=>(int)$id,'title'=>$title];
+        usort($cityOptions, fn($a,$b)=>strnatcasecmp($a['title'],$b['title']));
+        return ['instruments'=>$instruments,'cities'=>$cityOptions];
+    }
+
+    private function frameworkTranslation(string $table, int $id, string $field, string $locale): string {
+        $translation = DB::table('f_translations')
+            ->where('table_name',$table)
+            ->where('table_id',$id)
+            ->where('field',$field)
+            ->where('locale',$locale)
+            ->whereNull('deleted_at')
+            ->orderBy('translation_id','DESC')
+            ->first();
+        return (string)($translation['value'] ?? '');
     }
 }

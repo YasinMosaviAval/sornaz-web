@@ -1483,7 +1483,14 @@ window.renderSitePageContent = async function (page) {
         setTimeout(() => {
             if (document.getElementById('siteArticlesList')) {
                 if (typeof renderSiteArticleCats === 'function') renderSiteArticleCats();
-                if (typeof filterSiteArticles === 'function') filterSiteArticles('all');
+                if (typeof filterSiteArticles === 'function') {
+                    const requestedCategoryId = Number(new URLSearchParams(location.search).get('category') || 0);
+                    const matchingArticle = requestedCategoryId > 0
+                        ? getSiteArticles().find(article => (article.category_ids || []).map(Number).includes(requestedCategoryId))
+                        : null;
+                    const categoryIndex = matchingArticle ? (matchingArticle.category_ids || []).map(Number).indexOf(requestedCategoryId) : -1;
+                    filterSiteArticles(categoryIndex >= 0 ? matchingArticle.categories[categoryIndex] : 'all');
+                }
             }
             if (document.getElementById('siteAcademiesGrid')) {
                 if (typeof renderSiteAcademies === 'function') renderSiteAcademies();
