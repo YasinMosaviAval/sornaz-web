@@ -108,7 +108,9 @@ class UserService {
     public function publicDirectory(): array {
         $rows = $this->repository->builder()
             ->select('user_id', 'username', 'type', 'gender', 'status', 'visibility', 'email', 'phone', 'birthday', 'register_time', 'register_method', 'last_login_at')
-            ->whereRaw("((status = 'approved' AND visibility = 'public') OR username LIKE 'test_academy_manager_%')")
+            ->where('type', 'human')
+            ->where('visibility', 'public')
+            ->whereIn('register_method', ['email', 'phone'])
             ->whereNull('deleted_at')
             ->latest('user_id')
             ->get();
@@ -121,6 +123,32 @@ class UserService {
 
         return array_map(function (array $user) use ($translations, $locale, $labels) {
             $id = (int)$user['user_id'];
+            $roleNames = array_column(DB::table('user_roles')
+                ->join('access_system_roles', 'access_system_roles.role_id', '=', 'user_roles.role_id')
+                ->select('access_system_roles.name')
+                ->where('user_roles.user_id', $id)
+                ->whereNull('user_roles.deleted_at')
+                ->whereNull('access_system_roles.deleted_at')
+                ->get(), 'name');
+            $memberRows = DB::table('academy_branch_members')->where('user_id', $id)->whereNull('deleted_at')->get();
+            foreach ($memberRows as $member) {
+                foreach (DB::table('academy_branch_member_roles')
+                    ->join('access_system_roles', 'access_system_roles.role_id', '=', 'academy_branch_member_roles.role_id')
+                    ->select('access_system_roles.name')
+                    ->where('academy_branch_member_roles.member_id', (int)$member['member_id'])
+                    ->whereNull('academy_branch_member_roles.deleted_at')
+                    ->whereNull('access_system_roles.deleted_at')
+                    ->get() as $memberRole) $roleNames[] = (string)$memberRole['name'];
+                foreach (DB::table('academy_branch_member_contracts')
+                    ->select('type')
+                    ->where('member_id', (int)$member['member_id'])
+                    ->whereNull('deleted_at')
+                    ->get() as $contract) $roleNames[] = (string)$contract['type'];
+            }
+            $roleNames = array_values(array_unique(array_filter($roleNames)));
+            $directoryRoles = $this->directoryRoles($roleNames, (string)$user['type'], (string)$user['username']);
+            $directoryRole = $directoryRoles[0] ?? 'user';
+            $roleLabels = $this->roleLabels($roleNames, $translations, $locale);
             $media = DB::table('media_files')->where('user_id', $id)->whereNull('deleted_at')->orderBy('sort_order')->get();
             $byCollection = [];
             foreach ($media as $file) $byCollection[$file['collection']][] = '/' . ltrim((string)$file['path'], '/');
@@ -134,8 +162,13 @@ class UserService {
             return [
                 'id' => $id,
                 'name' => $translations->get('users', $id, 'full_name', $locale) ?: $user['username'],
-                'role' => str_starts_with($user['username'], 'test_academy_manager_') ? 'manager' : $user['type'],
-                'roleLabel' => str_starts_with($user['username'], 'test_academy_manager_') ? 'مدیر آموزشگاه' : ($labels[$user['type']] ?? 'کاربر'),
+                'role' => $directoryRole,
+                'directoryRoles' => $directoryRoles,
+                'roles' => $roleNames,
+                'roleLabels' => $roleLabels,
+                'roleLabel' => $directoryRole !== 'user'
+                    ? ($labels[$directoryRole] ?? 'کاربر')
+                    : (implode('، ', $roleLabels) ?: 'کاربر'),
                 'bio' => $translations->get('users', $id, 'bio', $locale) ?: '',
                 'username' => $user['username'], 'gender' => $user['gender'], 'status' => $user['status'],
                 'visibility' => $user['visibility'], 'email' => $user['email'], 'phone' => $user['phone'],
@@ -154,6 +187,49 @@ class UserService {
                 'headline' => count($instruments) ? 'فعال در زمینه ' . implode('، ', array_slice(array_column($instruments, 'title'), 0, 3)) : 'مدیر آموزشگاه موسیقی',
             ];
         }, $rows);
+    }
+
+    public function publicDirectoryCategories(): array {
+        $locale = app()->getLocale();
+        $translations = TranslationService::manager();
+        $rows = DB::table('categories')->where('`group`', 'users')->whereNull('deleted_at')->orderBy('category_id')->get();
+        return array_map(function (array $category) use ($translations, $locale) {
+            $id = (int)$category['category_id'];
+            return [
+                'id' => $id,
+                'role' => (string)$category['slug'],
+                'title' => $translations->get('categories', $id, 'title', $locale) ?: (string)$category['name'],
+            ];
+        }, $rows);
+    }
+
+    private function directoryRoles(array $roles, string $type, string $username): array {
+        $result = [];
+        if (array_filter($roles, fn(string $role) => str_contains($role, 'teacher'))) $result[] = 'teacher';
+        if (array_filter($roles, fn(string $role) => str_contains($role, 'student'))) $result[] = 'student';
+        if (array_filter($roles, fn(string $role) => str_contains($role, 'manager') || str_contains($role, 'owner'))) $result[] = 'manager';
+        if (str_starts_with($username, 'test_academy_manager_')) $result[] = 'manager';
+        if (in_array($type, ['teacher', 'student', 'manager'], true)) $result[] = $type;
+        return array_values(array_unique($result ?: ['user']));
+    }
+
+    private function roleLabels(array $roles, $translations, string $locale): array {
+        $fallbacks = [
+            'user'=>'کاربر', 'teacher'=>'مدرس', 'student'=>'هنرجو', 'manager'=>'مدیر',
+            'owner'=>'مدیر', 'receptionist'=>'پذیرش', 'admin'=>'مدیر سایت', 'superadmin'=>'مدیر کل',
+        ];
+        $labels = [];
+        foreach ($roles as $name) {
+            $role = DB::table('access_system_roles')->where('name', $name)->whereNull('deleted_at')->first();
+            $label = $role ? $translations->get('access_system_roles', (int)$role['role_id'], 'title', $locale) : '';
+            if (!$label) foreach ($fallbacks as $needle => $fallback) {
+                if ($name === $needle || str_contains($name, $needle)) { $label = $fallback; break; }
+            }
+            $label = preg_replace('/[\p{Cf}\p{Z}]+/u', ' ', (string)$label);
+            $label = trim((string)$label, " \t\n\r\0\x0B،,");
+            if ($label !== '') $labels[] = $label;
+        }
+        return array_values(array_unique($labels ?: ['کاربر']));
     }
 
     private function userMusicRows(string $pivot, string $pivotKey, string $foreignKey, string $catalog, int $userId, $translations, string $locale): array {

@@ -680,7 +680,7 @@ class AcademyRegistrationService {
         return $samples;
     }
 
-    public function all(): array {
+    public function all(array $filters = []): array {
         $statement = db()->prepare(<<<SQL
             SELECT
                 academies.academy_id AS id,
@@ -718,8 +718,38 @@ class AcademyRegistrationService {
         $translations = TranslationService::manager();
         $locale = app()->getLocale();
 
-        return array_map(function (array $row) use ($translations, $locale) {
+        $items = array_map(function (array $row) use ($translations, $locale) {
             $academyId = (int)$row['id'];
+            $organizationUserIds = [(int)$row['user_id']];
+            $branchIds = [];
+            foreach (DB::table('academy_branches')->select('branch_id','user_id')->where('academy_id',$academyId)->whereNull('deleted_at')->get() as $branch) {
+                $branchIds[] = (int)$branch['branch_id'];
+                $organizationUserIds[] = (int)$branch['user_id'];
+            }
+            $organizationUserIds = array_values(array_unique(array_filter($organizationUserIds)));
+            $instrumentIds = $organizationUserIds ? array_values(array_unique(array_map('intval', array_column(DB::table('user_instruments')->select('instrument_id')->whereIn('user_id',$organizationUserIds)->whereNull('deleted_at')->get(), 'instrument_id')))) : [];
+            $instrumentCatalogIds = array_map('intval', array_column(DB::table('instruments')->select('instrument_id')->whereNull('deleted_at')->get(), 'instrument_id'));
+            $courseInstrumentIds = $branchIds && $instrumentCatalogIds ? array_values(array_unique(array_map('intval', array_column(DB::table('academy_branch_courses')->select('lesson_id')->whereIn('branch_id',$branchIds)->whereIn('lesson_id',$instrumentCatalogIds)->whereNull('deleted_at')->get(), 'lesson_id')))) : [];
+            $instrumentIds = array_values(array_unique(array_merge($instrumentIds, $courseInstrumentIds)));
+            $instruments = [];
+            foreach ($instrumentIds as $instrumentId) {
+                $title = $translations->get('lessons', $instrumentId, 'title', $locale)
+                    ?: $translations->get('instruments', $instrumentId, 'title', $locale)
+                    ?: ($locale !== 'fa' ? ($translations->get('lessons', $instrumentId, 'title', 'fa') ?: $translations->get('instruments', $instrumentId, 'title', 'fa')) : '');
+                if ($title) $instruments[] = $title;
+            }
+            $cities = [];
+            $addressUserIds = $organizationUserIds;
+            $organizationAddresses = $organizationUserIds ? DB::table('user_addresses')->select('county_id')->whereIn('user_id',$organizationUserIds)->whereNull('deleted_at')->get() : [];
+            if (!$organizationAddresses && $branchIds) {
+                foreach (DB::table('academy_branch_members')->select('user_id')->whereIn('branch_id',$branchIds)->whereNull('deleted_at')->get() as $member) $addressUserIds[] = (int)$member['user_id'];
+            }
+            if ($addressUserIds) foreach (DB::table('user_addresses')->select('county_id')->whereIn('user_id',array_values(array_unique($addressUserIds)))->whereNull('deleted_at')->get() as $address) {
+                if (!$address['county_id']) continue;
+                $county = DB::table('world_iran_counties')->where('county_id',(int)$address['county_id'])->first();
+                if (!empty($county['county_name'])) $cities[] = (string)$county['county_name'];
+            }
+            $cities = array_values(array_unique($cities));
             return [
                 'id' => $academyId,
                 'name' => $translations->get('academies', $academyId, 'title', $locale) ?: $row['username'],
@@ -730,7 +760,43 @@ class AcademyRegistrationService {
                 'branches' => (int)$row['branches'],
                 'classes' => (int)$row['classes'],
                 'students' => (int)$row['students'],
+                'city' => $cities[0] ?? '',
+                'cities' => $cities,
+                'instrument_ids' => $instrumentIds,
+                'instruments' => $instruments,
             ];
         }, $rows);
+        $q = mb_strtolower(trim((string)($filters['q'] ?? '')));
+        $city = trim((string)($filters['city'] ?? ''));
+        $instrument = (int)($filters['instrument'] ?? 0);
+        return array_values(array_filter($items, function(array $item) use ($q,$city,$instrument): bool {
+            if ($q !== '' && !str_contains(mb_strtolower(implode(' ', [$item['name'],$item['summary'],$item['bio']])), $q)) return false;
+            if ($city !== '' && !in_array($city, $item['cities'], true)) return false;
+            if ($instrument > 0 && !in_array($instrument, $item['instrument_ids'], true)) return false;
+            return true;
+        }));
+    }
+
+    public function searchOptions(): array {
+        $items = $this->all();
+        $instrumentIds = [];
+        $cities = [];
+        foreach ($items as $item) {
+            foreach ($item['instrument_ids'] as $id) $instrumentIds[$id] = true;
+            foreach ($item['cities'] as $city) $cities[$city] = true;
+        }
+        $translations = TranslationService::manager();
+        $locale = app()->getLocale();
+        $instruments = [];
+        foreach (array_keys($instrumentIds) as $id) {
+            $title = $translations->get('lessons',(int)$id,'title',$locale)
+                ?: $translations->get('instruments',(int)$id,'title',$locale)
+                ?: ($locale !== 'fa' ? ($translations->get('lessons',(int)$id,'title','fa') ?: $translations->get('instruments',(int)$id,'title','fa')) : '');
+            if ($title) $instruments[] = ['id'=>(int)$id,'title'=>$title];
+        }
+        usort($instruments, fn($a,$b)=>strnatcasecmp($a['title'],$b['title']));
+        $cityNames = array_keys($cities);
+        sort($cityNames, SORT_NATURAL | SORT_FLAG_CASE);
+        return ['instruments'=>$instruments,'cities'=>$cityNames];
     }
 }

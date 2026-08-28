@@ -31,13 +31,20 @@ $footer_array = setIndexforDataArray($footer, 'variable_name');
                     <p class="text-white/90 md:text-lg leading-8 mb-8 drop-shadow">آموزشگاه‌ها، اساتید، کلاس‌ها و دوره‌های موسیقی سراسر ایران را جستجو و مقایسه کنید.</p>
 
                     <form action="/academy/academies" method="GET" class="grid grid-cols-1 sm:grid-cols-[1fr_100px_1fr_108px] gap-3 bg-white/95 backdrop-blur rounded-3xl p-4 shadow-2xl">
-                        <input name="name" type="search" placeholder="نام آموزشگاه" class="bg-gray-50 rounded-2xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-400">
+                        <input name="q" type="search" placeholder="نام آموزشگاه" class="bg-gray-50 rounded-2xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-400">
                         <select name="instrument" aria-label="ساز" class="bg-gray-50 rounded-2xl px-3 py-3.5 outline-none focus:ring-2 focus:ring-indigo-400">
                             <option value="">ساز</option>
-                            <option>پیانو</option><option>گیتار</option><option>تار</option><option>سنتور</option>
+                            <?php foreach (($academySearchOptions['instruments'] ?? []) as $instrument): ?>
+                                <option value="<?= (int)$instrument['id'] ?>"><?= htmlspecialchars($instrument['title'], ENT_QUOTES, 'UTF-8') ?></option>
+                            <?php endforeach; ?>
                         </select>
-                        <input name="city" type="search" placeholder="شهر" class="bg-gray-50 rounded-2xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-400">
-                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-5 py-3.5 transition">جستجو</button>
+                        <select name="city" aria-label="شهر" class="bg-gray-50 rounded-2xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-400">
+                            <option value="">شهر</option>
+                            <?php foreach (($academySearchOptions['cities'] ?? []) as $city): ?>
+                                <option value="<?= htmlspecialchars($city, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($city, ENT_QUOTES, 'UTF-8') ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-5 py-3.5 transition">جستجو</button>
                     </form>
             </div>
         </div>

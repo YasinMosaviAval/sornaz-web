@@ -76,7 +76,12 @@ class AcademyRegistrationController {
 
 
     public function index() {
-        return ResponseFactory::view('Analytics::academies', ['academies' => $this->service->all()])->layout('main')->title('سُرناز | آموزشگاه‌ها');
+        $filters = ['q'=>(string)($_GET['q']??''), 'instrument'=>(int)($_GET['instrument']??0), 'city'=>(string)($_GET['city']??'')];
+        return ResponseFactory::view('Analytics::academies', [
+            'academies' => $this->service->all($filters),
+            'academyFilters' => $filters,
+            'academySearchOptions' => $this->service->searchOptions(),
+        ])->layout('main')->title('سُرناز | آموزشگاه‌ها');
     }
 
 

@@ -8,9 +8,12 @@
             <a href="/academy/send-academy-request" class="border border-indigo-300 text-indigo-600 hover:bg-indigo-50 px-5 py-3 rounded-2xl text-sm">ثبت آموزشگاه</a>
         </div>
 
-        <div class="mb-6">
-            <input type="text" id="siteAcademySearch" placeholder="جستجو نام یا معرفی آموزشگاه..." onkeyup="renderSiteAcademies()" class="w-full md:w-80 border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500">
-        </div>
+        <form action="/academy/academies" method="GET" class="mb-6 grid grid-cols-1 gap-3 md:grid-cols-4">
+            <input type="text" name="q" value="<?= htmlspecialchars($academyFilters['q'] ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="نام یا معرفی آموزشگاه" class="border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500">
+            <select name="instrument" class="border border-gray-300 rounded-2xl py-3 px-4 bg-white focus:outline-none focus:border-indigo-500"><option value="">همه سازها</option><?php foreach (($academySearchOptions['instruments'] ?? []) as $instrument): ?><option value="<?= (int)$instrument['id'] ?>" <?= (int)($academyFilters['instrument']??0)===(int)$instrument['id']?'selected':'' ?>><?= htmlspecialchars($instrument['title'], ENT_QUOTES, 'UTF-8') ?></option><?php endforeach; ?></select>
+            <select name="city" class="border border-gray-300 rounded-2xl py-3 px-4 bg-white focus:outline-none focus:border-indigo-500"><option value="">همه شهرها</option><?php foreach (($academySearchOptions['cities'] ?? []) as $city): ?><option value="<?= htmlspecialchars($city, ENT_QUOTES, 'UTF-8') ?>" <?= ($academyFilters['city']??'')===$city?'selected':'' ?>><?= htmlspecialchars($city, ENT_QUOTES, 'UTF-8') ?></option><?php endforeach; ?></select>
+            <button type="submit" class="rounded-2xl bg-indigo-600 px-5 py-3 text-white hover:bg-indigo-700">جستجو</button>
+        </form>
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="siteAcademiesGrid"></div>
     </div>

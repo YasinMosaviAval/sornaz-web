@@ -8,23 +8,36 @@
         <!-- فیلتر نقش -->
         <div class="bg-white rounded-3xl p-4 mb-6 shadow-sm flex flex-wrap gap-2 justify-center" id="siteUserRoleTabs">
             <button onclick="filterSiteUsers('all')" class="site-user-role px-4 py-2 rounded-xl text-sm bg-indigo-600 text-white">همه</button>
-            <button onclick="filterSiteUsers('teacher')" class="site-user-role px-4 py-2 rounded-xl text-sm border border-gray-200 hover:bg-gray-50">اساتید</button>
-            <button onclick="filterSiteUsers('student')" class="site-user-role px-4 py-2 rounded-xl text-sm border border-gray-200 hover:bg-gray-50">هنرجویان</button>
-            <button onclick="filterSiteUsers('manager')" class="site-user-role px-4 py-2 rounded-xl text-sm border border-gray-200 hover:bg-gray-50">مدیران</button>
+            <?php foreach (($userCategories ?? []) as $category): ?>
+                <button onclick="filterSiteUsers(<?= htmlspecialchars(json_encode($category['role'], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>)" data-role="<?= htmlspecialchars($category['role'], ENT_QUOTES, 'UTF-8') ?>" class="site-user-role px-4 py-2 rounded-xl text-sm border border-gray-200 hover:bg-gray-50"><?= htmlspecialchars($category['title'], ENT_QUOTES, 'UTF-8') ?></button>
+            <?php endforeach; ?>
         </div>
 
         <div class="mb-6 flex justify-center">
             <input type="text" id="siteUserSearch" placeholder="جستجو نام..." onkeyup="filterSiteUsers()" class="w-full md:w-80 border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500">
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" id="siteUsersGrid"></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" id="siteUsersGrid" data-dynamic-content></div>
     </div>
 </div>
+
+<style>
+.site-user-card-role::before {
+    content: attr(data-role-label);
+    display: block;
+    min-height: 1.5rem;
+    color: #4f46e5;
+    font-size: .875rem;
+    font-weight: 500;
+    line-height: 1.5rem;
+}
+</style>
 
 <?php require __DIR__ . '/user.php'; ?>
 
 <script>
 window.siteUsersData = <?= json_encode($users ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+window.siteUserCategories = <?= json_encode($userCategories ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 </script>
 
 <!-- پروفایل کاربر -->
