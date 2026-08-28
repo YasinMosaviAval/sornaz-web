@@ -188,7 +188,7 @@ window.renderInstrumentsTable = async function (list) {
             tbody.appendChild(tr);
             if (editingInstrumentRowId === item.id) {
                 const expand = document.createElement('tr');
-                expand.className = 'bg-gray-50';
+                expand.className = 'bg-gray-50 admin-inline-expand';
                 expand.innerHTML = window.getInstrumentInlineExpandRowHTML ? window.getInstrumentInlineExpandRowHTML(item) : '';
                 tbody.appendChild(expand);
             }

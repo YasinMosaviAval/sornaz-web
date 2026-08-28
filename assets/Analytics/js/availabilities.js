@@ -463,7 +463,7 @@ window.renderBranchSchedulesTable = async function (list) {
             if (editingBranchScheduleRowId === item.id) {
                 const editItem = item.displaySourceIds ? allBranchSchedules.find(function (source) { return source.id === item.displaySourceIds[0]; }) || item : item;
                 const expand = document.createElement('tr');
-                expand.className = 'bg-gray-50';
+                expand.className = 'bg-gray-50 admin-inline-expand';
                 expand.innerHTML = window.getBranchScheduleInlineExpandRowHTML ? window.getBranchScheduleInlineExpandRowHTML(withOrganizationDayRanges(editItem)) : '';
                 tbody.appendChild(expand);
                 setTimeout(function(){const box=document.querySelector('#inlineBs'+item.id+'TimeSlots .bs-ranges');if(box)window.refreshBranchScheduleRanges(box);},0);

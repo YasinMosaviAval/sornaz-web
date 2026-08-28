@@ -141,8 +141,15 @@ let studentsCurrentPage = 1;
 const studentsPerPage = 10;
 let filteredStudents = allStudents.slice();
 let editingStudentRowId = null;
+let studentRealtimeVersion = null;
+let studentRealtimeBusy = false;
 let stuSortField = '';
 let stuSortDirection = 'asc';
+
+async function fetchStudentRealtime(url){const response=await fetch(url,{credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}}),payload=await response.json(),envelope=payload.data??payload;if(!response.ok||envelope.success===false)throw new Error(envelope.message||'دریافت اطلاعات هنرجویان ناموفق بود.');return envelope.data??envelope;}
+async function refreshStudentsFromDatabase(){const data=await fetchStudentRealtime('/academy/admin/members/data');editingStudentRowId=null;allStudents=(data.members||[]).filter(item=>item.type==='student');filteredStudents=allStudents.slice();if(document.getElementById('studentsTable')){window.renderStudentBranchTabs();window.filterStudents();}}
+async function pollStudentsRealtime(){if(studentRealtimeBusy||document.hidden||!document.getElementById('studentsTable'))return;studentRealtimeBusy=true;try{const state=await fetchStudentRealtime('/academy/admin/members/realtime-version');if(studentRealtimeVersion===null){studentRealtimeVersion=state.version;return;}if(state.version!==studentRealtimeVersion){studentRealtimeVersion=state.version;await refreshStudentsFromDatabase();}}catch(error){}finally{studentRealtimeBusy=false;}}
+window.AdminPanelRuntime?.register(/\/academy\/admin\/(?:students|members)(?:\/|$)/,refreshStudentsFromDatabase);
 
 const studentPdfColumns = [
     { field: 'index', label: 'ردیف' },
@@ -541,6 +548,9 @@ setTimeout(function () {
     if (document.getElementById('studentsTable')) {
         window.renderStudentBranchTabs();
         window.filterStudents();
+        pollStudentsRealtime();
+        setInterval(pollStudentsRealtime,2000);
+        document.addEventListener('visibilitychange',function(){if(!document.hidden)pollStudentsRealtime();});
     }
 }, 200);
 })();

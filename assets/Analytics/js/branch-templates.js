@@ -50,7 +50,7 @@
         return `<tr class="border-t ${branch.is_main ? 'border-amber-200 bg-amber-50' : 'border-gray-100'}"><td class="p-4">${branch.academy_name || '—'}</td><td class="p-4 font-medium">${branch.name}${branch.is_main ? ' <span class="text-xs text-amber-700">(اصلی)</span>' : ''}</td><td class="p-4">${branch.type}</td><td class="p-4">${window.getBranchPhysicalTypeLabel(branch.physical_type)}</td><td class="p-4">${branch.manager || '—'}</td><td class="p-4">${statusButton(branch)}</td><td class="p-4"><div class="flex gap-2"><button onclick="viewBranch(${branch.id})" class="rounded-lg border px-3 py-1.5 text-indigo-600">مشاهده</button><button onclick="editBranch(${branch.id})" class="rounded-lg bg-indigo-600 px-3 py-1.5 text-white">ویرایش</button>${window.branchCanDelete === false || branch.is_main ? '' : `<button onclick="deleteBranch(${branch.id})" class="rounded-lg bg-red-600 px-3 py-1.5 text-white">حذف</button>`}</div></td></tr>`;
     };
 
-    window.getBranchInlineEditRowHTML = function (branch) { return `<tr class="border-t ${branch.is_main ? 'border-amber-200 bg-amber-50' : 'border-indigo-100 bg-indigo-50/60'}"><td colspan="7" class="p-5">${branchForm(branch, true, true)}</td></tr>`; };
+    window.getBranchInlineEditRowHTML = function (branch) { return `<tr class="admin-inline-expand border-t ${branch.is_main ? 'border-amber-200 bg-amber-50' : 'border-indigo-100 bg-indigo-50/60'}"><td colspan="7" class="p-5">${branchForm(branch, true, true)}</td></tr>`; };
 
     window.getBranchPhoneFieldHTML = function (phone = {}) {
         return `<div class="border border-gray-200 rounded-2xl p-4 space-y-3 mb-3">

@@ -36,6 +36,7 @@
     pushScript('sidebar.js');
     pushScript('add-user-modal.js');
     
+    pushScript('admin-runtime.js');
     pushScript('dashboard-templates.js');
     pushScript('dashboard.js');
     pushScript('account-templates.js');

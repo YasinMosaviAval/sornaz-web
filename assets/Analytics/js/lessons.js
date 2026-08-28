@@ -218,7 +218,7 @@ window.renderLessonsTable = async function (list) {
             tbody.appendChild(tr);
             if (editingLessonRowId === item.id) {
                 const expand = document.createElement('tr');
-                expand.className = 'bg-gray-50';
+                expand.className = 'bg-gray-50 admin-inline-expand';
                 expand.dataset.lessonInlineEditor = 'true';
                 expand.innerHTML = window.getLessonInlineExpandRowHTML ? window.getLessonInlineExpandRowHTML(item) : '';
                 tbody.appendChild(expand);

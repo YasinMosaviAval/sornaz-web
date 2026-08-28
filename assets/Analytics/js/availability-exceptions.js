@@ -244,7 +244,7 @@ window.renderHolidayLeavesTable = async function (list) {
             tbody.appendChild(tr);
             if (editingHolidayLeaveRowId === item.id) {
                 const expand = document.createElement('tr');
-                expand.className = 'bg-gray-50';
+                expand.className = 'bg-gray-50 admin-inline-expand';
                 expand.innerHTML = window.getHolidayLeaveInlineExpandRowHTML ? window.getHolidayLeaveInlineExpandRowHTML(item) : '';
                 tbody.appendChild(expand);
             }
