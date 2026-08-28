@@ -5,12 +5,13 @@ namespace Modules\Page\Controllers\Web;
 use Core\http\ResponseFactory;
 use Modules\Page\Services\PageService;
 use Modules\Academy\Services\AcademyRegistrationService;
+use Modules\Analytics\Services\PublicPostService;
 
 
 class PageController {
 
 
-    public function __construct(protected PageService $service, protected AcademyRegistrationService $academies) {
+    public function __construct(protected PageService $service, protected AcademyRegistrationService $academies, protected PublicPostService $posts) {
     }
 
     public function home() {
@@ -21,6 +22,11 @@ class PageController {
                 'header' => $this->service->getByPage('header'),
                 'footer' => $this->service->getByPage('footer'),
                 'academySearchOptions' => $this->academies->searchOptions(),
+                'homeStatistics' => $this->service->homeStatistics(),
+                'activityOverviewHtml' => $this->service->activityOverviewHtml(locale()),
+                'homeSearchSelectLabels' => $this->service->homeSearchSelectLabels(locale()),
+                'latestArticles' => $this->posts->latest(locale(), 3),
+                'homeLearningPath' => $this->service->homeLearningPath(locale()),
             ]
         )
         ->layout('main')

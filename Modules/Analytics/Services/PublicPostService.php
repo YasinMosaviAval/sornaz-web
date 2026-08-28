@@ -14,6 +14,20 @@ class PublicPostService
         return array_map(fn(array $row) => $this->map($row, $locale, false), $rows);
     }
 
+    public function latest(string $locale, int $limit = 3): array
+    {
+        $locale = $this->locale($locale);
+        $rows = DB::table('posts')
+            ->whereNull('deleted_at')
+            ->where('status', 'published')
+            ->where('visibility', 'public')
+            ->where('type', '<>', 'page')
+            ->orderBy('created_at', 'DESC')
+            ->limit(max(1, $limit))
+            ->get();
+        return array_map(fn(array $row) => $this->map($row, $locale, false), $rows);
+    }
+
     public function find(int $id, string $locale): array
     {
         $row = DB::table('posts')->where('post_id', $id)->whereNull('deleted_at')->where('status', 'published')->first();
@@ -41,6 +55,7 @@ class PublicPostService
         $result = [
             'id'=>$id, 'slug'=>$row['slug'] ?? '', 'title'=>$texts['title'] ?? '',
             'summary'=>$texts['brief'] ?? '', 'description'=>$texts['description'] ?? '',
+            'category_ids'=>array_map('intval', $categoryIds),
             'categories'=>array_values(array_filter(array_map(fn($id) => $categoryTitles[(int)$id] ?? null, $categoryIds))),
             'cover'=>$images['main'] ?: ($row['cover'] ?? ''), 'thumbnail'=>$images['thumbnail'], 'content_images'=>$images['content'], 'author_name'=>$authorName,
             'related_posts'=>$related,
