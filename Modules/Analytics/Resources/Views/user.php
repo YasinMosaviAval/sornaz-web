@@ -1,5 +1,5 @@
 <div id="page-user-profile" class="site-page">
-    <div class="max-w-5xl mx-auto px-4 py-8 md:py-12">
+    <div class="max-w-7xl mx-auto px-4 py-8 md:py-12">
 
         <a href="/users" class="text-indigo-600 text-sm mb-6 hover:underline flex items-center gap-2">
             <div><i class="fas fa-arrow-right"></i> &nbsp; بازگشت به کاربران</div>
@@ -7,16 +7,16 @@
 
         <!-- هدر پروفایل -->
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-            <div id="upCover" class="h-32 md:h-40 bg-gradient-to-l from-violet-600 via-indigo-600 to-indigo-800 relative">
+            <div id="upCover" class="relative aspect-[3/1] min-h-[150px] w-full overflow-hidden bg-gradient-to-l from-violet-600 via-indigo-600 to-indigo-800 bg-cover bg-center">
                 <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 80% 40%, white 0%, transparent 45%);"></div>
             </div>
 
-            <div class="px-6 md:px-10 pb-8">
-                <div class="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12 md:-mt-14 mb-6">
+            <div class="border-t border-gray-100 bg-white px-6 py-6 md:px-10">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center mb-6">
                     <div id="upAvatar" class="w-24 h-24 md:w-28 md:h-28 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center text-3xl font-bold text-indigo-600 shrink-0">
                         ?
                     </div>
-                    <div class="flex-1 pb-1 min-w-0">
+                    <div class="flex-1 min-w-0 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-center sm:text-start">
                         <div class="flex flex-wrap items-center gap-2">
                             <h1 id="upName" class="text-2xl md:text-3xl font-bold"></h1>
                             <span id="upRoleBadge" class="px-3 py-1 rounded-full text-xs font-medium"></span>
@@ -135,6 +135,7 @@
         </div>
     </div>
 </div>
+<?php if(isset($selectedUserId)): ?><script>window.siteUsersData=<?= json_encode($users??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;document.addEventListener('DOMContentLoaded',()=>window.openSiteUserProfile?.(<?= (int)$selectedUserId ?>));</script><?php endif; ?>
 
 <div id="userGalleryDialog" class="hidden fixed inset-0 z-[100] bg-black/90 p-4 items-center justify-center" role="dialog" aria-modal="true">
     <button type="button" onclick="closeUserGalleryDialog()" class="absolute top-5 left-5 w-11 h-11 rounded-full bg-white/15 text-white text-xl" aria-label="بستن"><i class="fas fa-times"></i></button>

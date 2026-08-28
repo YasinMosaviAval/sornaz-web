@@ -1,76 +1,11 @@
-<div id="page-academy-enroll" class="">
-    <div class="max-w-xl mx-auto px-4 py-12 md:py-16">
-        <div class="text-center mb-10">
-            <h1 class="text-3xl md:text-4xl font-bold mb-3">ثبت‌نام در کلاس</h1>
-            <p class="text-gray-500 leading-relaxed">
-                پس از ثبت‌نام، با شما تماس گرفته می‌شود تا زمان کلاس نهایی شود.
-            </p>
-        </div>
-
-        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 space-y-5">
-            <!-- آی دی آموزشگاه مورد نظر را از آدرس سایت بگیر -->
-            <!-- <div>
-                <label class="block text-sm font-medium mb-2">آموزشگاه *</label>
-                <select id="siteEnrollAcademy"
-                        class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 focus:outline-none focus:border-indigo-500">
-                    <option value="">انتخاب آموزشگاه</option>
-                </select>
-            </div> -->
-            <div>
-                <label class="block text-sm font-medium mb-2">دوره / کلاس مورد نظر *</label>
-                <select id="siteEnrollCourse"
-                        class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 focus:outline-none focus:border-indigo-500">
-                    <option value="">انتخاب کنید</option>
-                    <option value="piano-beginner">پیانو مبتدی</option>
-                    <option value="piano-advanced">پیانو پیشرفته</option>
-                    <option value="guitar">گیتار کلاسیک</option>
-                    <option value="violin">ویولن</option>
-                    <option value="santur">سنتور</option>
-                    <option value="theory">تئوری موسیقی</option>
-                    <option value="vocal">آواز</option>
-                </select>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium mb-2">نام و نام خانوادگی *</label>
-                    <input id="siteEnrollName" type="text"
-                           class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 focus:outline-none focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">شماره موبایل *</label>
-                    <input id="siteEnrollPhone" type="tel" placeholder="09123456789" dir="ltr"
-                           class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 text-left focus:outline-none focus:border-indigo-500">
-                </div>
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-2">ایمیل</label>
-                <input id="siteEnrollEmail" type="email"
-                       class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 focus:outline-none focus:border-indigo-500">
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-2">سطح فعلی</label>
-                <select id="siteEnrollLevel"
-                        class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 focus:outline-none focus:border-indigo-500">
-                    <option value="beginner">مبتدی</option>
-                    <option value="intermediate">متوسط</option>
-                    <option value="advanced">پیشرفته</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-2">توضیحات / درخواست خاص</label>
-                <textarea id="siteEnrollNote" rows="3"
-                          placeholder="زمان ترجیحی، اهداف یادگیری و ..."
-                          class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 focus:outline-none focus:border-indigo-500"></textarea>
-            </div>
-            <button type="button" onclick="submitSiteEnroll()"
-                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-medium transition">
-                ثبت‌نام در کلاس
-            </button>
-        </div>
-
-        <p class="text-center text-sm text-gray-400 mt-8">
-            آموزشگاه دارید؟
-            <a href="/academy/academy" class="text-indigo-600 hover:underline">بازگشت به آموزشگاه</a>
-        </p>
-    </div>
-</div>
+<?php $isEnglish=locale()==='en';$data=$enrollmentData??['academy'=>[],'terms'=>[],'needsPhone'=>true]; ?>
+<div id="page-academy-enroll"><div class="max-w-xl mx-auto px-4 py-12 md:py-16" dir="<?= $isEnglish?'ltr':'rtl' ?>">
+<div class="<?= $isEnglish?'text-left':'text-center' ?> mb-10"><h1 class="text-3xl md:text-4xl font-bold mb-3"><?= $isEnglish?'Register for a class':'ثبت‌نام در کلاس' ?></h1><p class="text-gray-500"><?= e($data['academy']['title']??'') ?></p></div>
+<form id="siteEnrollmentForm" method="POST" action="/academy/academy-enroll" class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 space-y-5"><input type="hidden" name="_token" value="<?= e(csrf_token()) ?>"><input type="hidden" name="academy_id" value="<?= (int)($data['academy']['id']??0) ?>">
+<div><label class="block text-sm font-medium mb-2"><?= $isEnglish?'Course / term *':'دوره / ترم مورد نظر *' ?></label><select id="siteEnrollCourse" name="term_id" required class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 bg-white"><option value=""><?= $isEnglish?'Select a course':'انتخاب دوره' ?></option><?php foreach($data['terms']as$term): ?><option value="<?= (int)$term['id'] ?>"><?= e($term['title']) ?></option><?php endforeach; ?></select></div>
+<div><label class="block text-sm font-medium mb-2"><?= $isEnglish?'Level *':'سطح *' ?></label><select id="siteEnrollLevel" name="level_id" required disabled class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 bg-white"><option value=""><?= $isEnglish?'Select a course first':'ابتدا دوره را انتخاب کنید' ?></option></select></div>
+<?php if(!empty($data['needsPhone'])): ?><div><label class="block text-sm font-medium mb-2"><?= $isEnglish?'Mobile number *':'شماره تماس *' ?></label><input name="phone" type="tel" required placeholder="09123456789" dir="ltr" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 text-left"></div><?php endif; ?>
+<div><label class="block text-sm font-medium mb-2"><?= $isEnglish?'Notes':'توضیحات / درخواست خاص' ?></label><textarea name="note" rows="3" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"></textarea></div>
+<?php if(empty($data['terms'])): ?><p class="rounded-2xl bg-amber-50 p-4 text-sm text-amber-700"><?= $isEnglish?'This academy has no open or ongoing terms.':'این آموزشگاه در حال حاضر ترم باز یا در حال برگزاری ندارد.' ?></p><?php endif; ?><p id="siteEnrollMessage" class="hidden text-sm"></p>
+<button type="submit" <?= empty($data['terms'])?'disabled':'' ?> class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white py-4 rounded-2xl font-medium"><?= $isEnglish?'Join the waiting list':'قرارگیری در لیست انتظار' ?></button></form></div></div>
+<script>window.siteEnrollmentTerms=<?= json_encode(array_column($data['terms'],null,'id'),JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;(function(){const f=document.getElementById('siteEnrollmentForm'),t=document.getElementById('siteEnrollCourse'),l=document.getElementById('siteEnrollLevel'),m=document.getElementById('siteEnrollMessage'),en=<?= $isEnglish?'true':'false' ?>,esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));t?.addEventListener('change',()=>{const a=window.siteEnrollmentTerms[t.value]?.levels||[];l.innerHTML='<option value="">'+(en?'Select a level':'انتخاب سطح')+'</option>'+a.map(x=>`<option value="${x.id}">${esc(x.title)}</option>`).join('');l.disabled=!a.length});const selected=<?= (int)($data['selectedTerm']??0) ?>;if(selected&&window.siteEnrollmentTerms[selected]){t.value=String(selected);t.dispatchEvent(new Event('change'))}f?.addEventListener('submit',async e=>{e.preventDefault();const b=f.querySelector('button[type=submit]');b.disabled=true;m.classList.add('hidden');try{const r=await fetch(f.action,{method:'POST',credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':f._token.value},body:new FormData(f)}),p=await r.json(),x=p.data??p;if(!r.ok||x.success===false)throw Error(x.message||(en?'Registration failed.':'ثبت‌نام انجام نشد.'));location.href=x.redirect||('/academy/academy?id='+encodeURIComponent(f.academy_id.value))}catch(x){m.textContent=x.message;m.className='text-sm text-red-600';b.disabled=false}})})();</script>

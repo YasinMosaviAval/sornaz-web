@@ -758,6 +758,12 @@ class AcademyRegistrationService {
             }
             $cities = array_values(array_unique($cities));
             $cityIds = array_values(array_unique($cityIds));
+            $courses=[];foreach(DB::table('academy_branch_course_terms')->join('academy_branch_courses','academy_branch_courses.course_id','=','academy_branch_course_terms.course_id')->select('academy_branch_course_terms.term_id','academy_branch_course_terms.course_id','academy_branch_courses.lesson_id')->where('academy_branch_courses.academy_id',$academyId)->whereIn('academy_branch_course_terms.status',['open','ongoing'])->whereNull('academy_branch_course_terms.deleted_at')->whereNull('academy_branch_courses.deleted_at')->orderBy('academy_branch_course_terms.term_id','DESC')->get()as$term){$termId=(int)$term['term_id'];$courseId=(int)$term['course_id'];$lessonId=(int)$term['lesson_id'];$courseTitle=$translations->get('academy_branch_courses',$courseId,'title',$locale)?:$translations->get('lessons',$lessonId,'title',$locale)?:($locale==='en'?'Course '.$courseId:'دوره '.$courseId);$termTitle=$translations->get('academy_branch_course_terms',$termId,'title',$locale);$courses[]=['termId'=>$termId,'title'=>$courseTitle.($termTitle?' — '.$termTitle:''),'level'=>''];}
+            $media=DB::table('media_files')->where('user_id',(int)$row['user_id'])->where('visibility','public')->whereNull('deleted_at')->orderBy('sort_order')->get();$mediaBy=[];foreach($media as$file)$mediaBy[(string)$file['collection']][]='/'.ltrim((string)$file['path'],'/');$account=DB::table('users')->where('user_id',(int)$row['user_id'])->first();$avatar=null;if(!empty($account['avatar_file_id'])){$avatarRow=DB::table('media_files')->where('media_file_id',(int)$account['avatar_file_id'])->whereNull('deleted_at')->first();if($avatarRow)$avatar='/'.ltrim((string)$avatarRow['path'],'/');}$avatar=$avatar?:($mediaBy['logo'][0]??$mediaBy['avatar'][0]??null);
+            $addresses=[];foreach(DB::table('user_addresses')->where('user_id',(int)$row['user_id'])->whereNull('deleted_at')->orderBy('is_main','DESC')->get()as$address){$address['address']=$translations->get('user_addresses',(int)$address['address_id'],'address',$locale)?:'';$addresses[]=$address;}
+            $contacts=[];foreach(DB::table('user_contacts')->where('user_id',(int)$row['user_id'])->where('status','active')->whereNull('deleted_at')->orderBy('is_main','DESC')->get()as$contact){$contact['value']=$translations->get('user_contacts',(int)$contact['user_contact_id'],'value',$locale)?:'';if($contact['value']!=='')$contacts[]=$contact;}
+            $teachers=[];if($branchIds){foreach(DB::table('academy_branch_members')->join('academy_branch_member_contracts','academy_branch_member_contracts.member_id','=','academy_branch_members.member_id')->join('users','users.user_id','=','academy_branch_members.user_id')->select('users.user_id','users.username','users.avatar_file_id')->whereIn('academy_branch_members.branch_id',$branchIds)->where('academy_branch_member_contracts.type','teacher')->where('academy_branch_members.status','active')->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_contracts.deleted_at')->get()as$teacher){$teacherId=(int)$teacher['user_id'];$teacherAvatar=null;if($teacher['avatar_file_id']){$tf=DB::table('media_files')->where('media_file_id',(int)$teacher['avatar_file_id'])->whereNull('deleted_at')->first();if($tf)$teacherAvatar='/'.ltrim((string)$tf['path'],'/');}$teachers[$teacherId]=['id'=>$teacherId,'name'=>$translations->get('users',$teacherId,'full_name',$locale)?:$teacher['username'],'avatar'=>$teacherAvatar];}}$teachers=array_values($teachers);
+            $managerId=(int)($account['created_by']??0);$manager=$managerId?DB::table('users')->where('user_id',$managerId)->first():null;
             return [
                 'id' => $academyId,
                 'name' => $translations->get('academies', $academyId, 'title', $locale) ?: $row['username'],
@@ -773,6 +779,9 @@ class AcademyRegistrationService {
                 'city_ids' => $cityIds,
                 'instrument_ids' => $instrumentIds,
                 'instruments' => $instruments,
+                'courses' => $courses,
+                'avatar'=>$avatar,'cover'=>$mediaBy['cover'][0]??null,'gallery'=>$mediaBy['gallery']??[],'intro_video'=>$mediaBy['intro_video'][0]??null,
+                'addresses'=>$addresses,'contacts'=>$contacts,'teachers'=>$teachers,'teachers_count'=>count($teachers),'manager'=>$manager?($translations->get('users',$managerId,'full_name',$locale)?:$manager['username']):'',
             ];
         }, $rows);
         $q = mb_strtolower(trim((string)($filters['q'] ?? '')));
@@ -808,6 +817,14 @@ class AcademyRegistrationService {
         foreach ($cities as $id=>$title) if ($title !== '') $cityOptions[] = ['id'=>(int)$id,'title'=>$title];
         usort($cityOptions, fn($a,$b)=>strnatcasecmp($a['title'],$b['title']));
         return ['instruments'=>$instruments,'cities'=>$cityOptions];
+    }
+
+    public function publicSearchLabels(string $locale): array {
+        $locale=$locale==='en'?'en':'fa';
+        $keys=['allInstruments'=>'academy_filter_all_instruments','allCities'=>'academy_filter_all_cities','empty'=>'academy_search_empty','view'=>'public_view_action'];$values=[];
+        foreach(DB::table('settings')->join('translations','translations.table_id','=','settings.setting_id')->select('settings.variable_name','translations.value')->where('translations.table_name','settings')->where('translations.field','value')->where('translations.locale',$locale)->whereIn('settings.variable_name',array_values($keys))->whereNull('settings.deleted_at')->whereNull('translations.deleted_at')->get()as$row)$values[$row['variable_name']]=$row['value'];
+        $fallback=$locale==='en'?['allInstruments'=>'All instruments','allCities'=>'All cities','empty'=>'No academies found','view'=>'View']:['allInstruments'=>'همه سازها','allCities'=>'همه شهرها','empty'=>'آموزشگاهی یافت نشد','view'=>'مشاهده'];$result=[];
+        foreach($keys as$name=>$key)$result[$name]=(string)($values[$key]??$fallback[$name]);return$result;
     }
 
     private function frameworkTranslation(string $table, int $id, string $field, string $locale): string {

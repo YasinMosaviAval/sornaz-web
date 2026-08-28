@@ -24,6 +24,7 @@ class UserController {
         return ResponseFactory::view('Analytics::users', [
             'users' => $this->service->publicDirectory(),
             'userCategories' => $this->service->publicDirectoryCategories(),
+            'userUiLabels' => $this->service->publicDirectoryUiLabels(),
         ])
             ->layout('main')
             ->title('سُرناز | کاربران');

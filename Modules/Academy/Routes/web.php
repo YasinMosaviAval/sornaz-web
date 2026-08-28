@@ -15,7 +15,8 @@ use Modules\Academy\Controllers\Web\AcademyWeeklyScheduleBoundsController;
 
 Router::get('/academy/academy', [AnalyticsController::class, 'academy']);
 Router::get('/academy/academies', [AcademyRegistrationController::class, 'index']);
-Router::get('/academy/academy-enroll', [AnalyticsController::class, 'academyEnroll']);
+Router::get('/academy/academy-enroll', [AnalyticsController::class, 'academyEnroll'])->middleware('auth');
+Router::post('/academy/academy-enroll', [AnalyticsController::class, 'academyEnrollStore'])->middleware(['auth','csrf']);
 Router::get('/academy/send-academy-request', [AcademyRegistrationController::class, 'create']);
 Router::post('/academy/send-academy-request', [AcademyRegistrationController::class, 'store']);
 Router::post('/academy/send-academy-request/send-otp', [AcademyRegistrationController::class, 'sendOtp']);
