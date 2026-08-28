@@ -711,8 +711,7 @@ window.goEnrollFromProfile = async function () {
 window.filterSiteUsers = async function (role) {
     if (typeof role === 'string') siteUserRole = role;
     document.querySelectorAll('.site-user-role').forEach(tab => {
-        const map = { all: 'همه', teacher: 'اساتید', student: 'هنرجویان', manager: 'مدیران' };
-        const active = tab.textContent === map[siteUserRole];
+        const active = (tab.dataset.role || 'all') === siteUserRole;
         tab.classList.toggle('bg-indigo-600', active);
         tab.classList.toggle('text-white', active);
         tab.classList.toggle('border', !active);
@@ -726,32 +725,25 @@ window.renderSiteUsers = async function () {
     if (!box) return;
     const q = (document.getElementById('siteUserSearch')?.value || '').trim().toLowerCase();
     let list = getSiteUsers();
-    if (siteUserRole !== 'all') list = list.filter(u => u.role === siteUserRole);
+    if (siteUserRole !== 'all') list = list.filter(u => (u.directoryRoles || [u.role]).includes(siteUserRole));
     if (q) list = list.filter(u => (u.name || '').toLowerCase().includes(q));
-
-    const roleColors = {
-        teacher: 'bg-purple-100 text-purple-700',
-        student: 'bg-blue-100 text-blue-700',
-        manager: 'bg-amber-100 text-amber-700'
-    };
+    const roleLabel = u => u.roleLabel || (u.roleLabels || []).join('، ') || 'کاربر';
+    const attr = value => String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
     box.innerHTML = list.length === 0
         ? `<p class="col-span-full text-center text-gray-400 py-16">کاربری یافت نشد</p>`
         : list.map(u => `
-            <div class="relative bg-white rounded-3xl p-6 shadow-sm border border-gray-50 text-center hover:shadow-md transition cursor-pointer"
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-50 text-center hover:shadow-md transition cursor-pointer flex flex-col"
                  onclick="openSiteUser(${u.id})">
                 <div class="w-20 h-20 mx-auto mb-3 rounded-full bg-indigo-100 text-indigo-600 overflow-hidden flex items-center justify-center text-2xl font-bold">
                     ${u.avatar ? `<img src="${u.avatar}" alt="${u.name || 'کاربر'}" class="w-full h-full object-cover" loading="lazy">` : (u.name || '?').charAt(0)}
                 </div>
                 <h3 class="font-bold text-lg mb-1">${u.name}</h3>
-                <span class="inline-block px-2.5 py-0.5 rounded-lg text-xs ${roleColors[u.role] || 'bg-gray-100'} mb-2">
-                    ${u.roleLabel || u.role}
-                </span>
+                <div class="site-user-card-role mb-2" data-role-label="${attr(roleLabel(u))}" aria-label="نقش: ${attr(roleLabel(u))}"></div>
                 ${u.city ? `<p class="text-xs text-gray-400 mb-2">📍 ${u.city}</p>` : ''}
                 <p class="text-sm text-gray-500 line-clamp-2">${u.bio || ''}</p>
                 ${u.rating ? `<p class="text-amber-500 text-sm mt-2">⭐ ${u.rating}</p>` : ''}
-                <br>
-                <div class="flex gap-2 absolute bottom-0 left-0 right-0 p-4 bg-white">
+                <div class="flex gap-2 mt-auto pt-4">
                     <button type="button" onclick="event.stopPropagation();openSiteUser(${u.id})" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm hover:bg-indigo-700 text-center block">
                         مشاهده
                     </button>

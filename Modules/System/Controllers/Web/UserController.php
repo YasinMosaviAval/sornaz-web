@@ -21,7 +21,10 @@ class UserController {
     }
 
     public function directory() {
-        return ResponseFactory::view('Analytics::users', ['users' => $this->service->publicDirectory()])
+        return ResponseFactory::view('Analytics::users', [
+            'users' => $this->service->publicDirectory(),
+            'userCategories' => $this->service->publicDirectoryCategories(),
+        ])
             ->layout('main')
             ->title('سُرناز | کاربران');
     }

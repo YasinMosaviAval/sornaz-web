@@ -4,12 +4,13 @@ namespace Modules\Page\Controllers\Web;
 
 use Core\http\ResponseFactory;
 use Modules\Page\Services\PageService;
+use Modules\Academy\Services\AcademyRegistrationService;
 
 
 class PageController {
 
 
-    public function __construct(protected PageService $service) {
+    public function __construct(protected PageService $service, protected AcademyRegistrationService $academies) {
     }
 
     public function home() {
@@ -19,6 +20,7 @@ class PageController {
                 'home' => $this->service->getByPage('home'),
                 'header' => $this->service->getByPage('header'),
                 'footer' => $this->service->getByPage('footer'),
+                'academySearchOptions' => $this->academies->searchOptions(),
             ]
         )
         ->layout('main')
