@@ -15,19 +15,22 @@
     }
     function statusClass(status) {
         return {
-            'فعال': 'bg-green-100 text-green-700',
-            'غیرفعال': 'bg-gray-100 text-gray-600',
-            'پر شده': 'bg-amber-100 text-amber-700',
-            'در انتظار تأیید': 'bg-yellow-100 text-yellow-700'
+            'فعال': 'bg-green-100 text-green-700 hover:bg-green-200',
+            'غیرفعال': 'bg-red-100 text-red-700 hover:bg-red-200',
+            'پر شده': 'bg-gray-200 text-gray-700 hover:bg-gray-300',
+            'در انتظار تأیید': 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200',
+            'در انتظار تایید': 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
         }[status] || 'bg-gray-100 text-gray-600';
     }
 
     function formFields(item, prefix) {
         const id = function (n) { return prefix ? prefix + n : 'ms' + n; };
+        const selectedMembership = (typeof window.getMemberScheduleMemberOptions === 'function' ? window.getMemberScheduleMemberOptions() : []).find(function(m){return String(m.value)===String(item.membershipId||'');});
+        const selectedOrganization = item.organizationUserId || selectedMembership?.organizationUserId;
         const branches = (typeof window.getMemberScheduleBranches === 'function' ? window.getMemberScheduleBranches() : []).map(function (b) {
             return { value: b.id, label: b.name };
         });
-        const members = (typeof window.getMemberScheduleMemberOptions === 'function' ? window.getMemberScheduleMemberOptions() : []);
+        const members = (typeof window.getMemberScheduleMemberOptions === 'function' ? window.getMemberScheduleMemberOptions() : []).filter(function(m){return String(m.organizationUserId)===String(selectedOrganization || branches[0]?.value);});
         const roles = (window.memberScheduleRolesList || []).map(function (r) { return { value: r, label: r }; });
         const days = (window.memberScheduleDaysList || []).map(function (d) { return { value: d, label: d }; });
         const statuses = (window.memberScheduleStatusesList || []).map(function (s) { return { value: s, label: s }; });
@@ -38,55 +41,49 @@
         const branchId = item.branchId || (branches[0] && branches[0].value) || 1;
         const repeatVal = item.repeatPeriod || 'هفتگی';
         const showDate = (repeatVal === 'ماهانه' || repeatVal === 'سالانه');
+        const fixedOrganization = window.staffCatalog?.organization_selection === 'fixed';
         const slotsHtml = typeof window.buildMemberScheduleTimeSlotsHTML === 'function'
             ? window.buildMemberScheduleTimeSlotsHTML(id('TimeSlots'), branchId, item.slots || [])
             : '';
 
         return `
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                <div>
-                    <label class="block text-sm font-medium mb-2">شعبه *</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <input id="${id('RecordId')}" type="hidden" value="${escapeHtml(item.id || '')}">
+                <div class="${fixedOrganization ? 'hidden' : ''}">
+                    <label class="block text-sm font-medium mb-2">سازمان *</label>
                     <select id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
-                            onchange="window.refreshMemberScheduleTimeSlots('${id('TimeSlots')}', this.value, [])">
-                        ${renderOptions(branches, item.branchId)}
+                            onchange="window.refreshMemberScheduleMembers('${prefix}');window.refreshMemberScheduleTimeSlots('${id('TimeSlots')}', this.value, [])">
+                        ${renderOptions(branches, selectedOrganization || item.branchId)}
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">عضو *</label>
                     <select id="${id('Member')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
-                            onchange="if(this.value==='__new__'){window.promptAddMemberScheduleMember('${id('Member')}');}">
+                            onchange="window.refreshMemberScheduleConflicts('${prefix}')">
                         <option value="">انتخاب عضو</option>
-                        ${renderOptions(members, item.memberId || item.name || '')}
-                        <option value="__new__">+ افزودن عضو جدید</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">نقش</label>
-                    <select id="${id('Role')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(roles, item.role || 'استاد')}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">روز *</label>
-                    <select id="${id('Day')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(days, item.day || 'شنبه')}
+                        ${renderOptions(members, item.membershipId || '')}
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">دوره تکرار</label>
                     <select id="${id('Repeat')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
-                            onchange="window.toggleMemberScheduleRepeatDate('${id('RepeatDateWrap')}', this.value)">
+                            onchange="window.refreshMemberScheduleRepeatFields('${prefix}')">
                         ${renderOptions(repeats, repeatVal)}
                     </select>
                 </div>
-                <div id="${id('RepeatDateWrap')}" class="${showDate ? '' : 'hidden'}">
-                    <label class="block text-sm font-medium mb-2">تاریخ مرجع (ماهانه/سالانه)</label>
+                <div id="${id('DayWrap')}" class="${['ماهانه','سالانه','بی‌تکرار'].includes(repeatVal) ? 'hidden' : ''}">
+                    <label class="block text-sm font-medium mb-2">روز *</label>
+                    <select id="${id('Day')}" onchange="window.refreshMemberScheduleRepeatFields('${prefix}');window.refreshMemberScheduleConflicts('${prefix}')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                        ${renderOptions(days, item.day || 'شنبه')}
+                    </select>
+                </div>
+                <div id="${id('RepeatDateWrap')}" class="${repeatVal === 'هفتگی' ? 'hidden' : ''}">
+                    <label class="block text-sm font-medium mb-2">اولین تاریخ *</label>
                     <input id="${id('RepeatDate')}" type="date" value="${escapeHtml(item.repeatDate || '')}"
                            class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">وضعیت</label>
-                    <select id="${id('Status')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                <div class="hidden">
+                    <select id="${id('Status')}">
                         ${renderOptions(statuses, item.status || 'فعال')}
                     </select>
                 </div>
@@ -96,20 +93,10 @@
                         ${renderOptions(timezones, item.timezone || 'Asia/Tehran')}
                     </select>
                 </div>
-                <div class="sm:col-span-3">
-                    <label class="block text-sm font-medium mb-2">ساعات کاری (هر نیم‌ساعت)</label>
-                    <div id="${id('TimeSlots')}" class="border border-gray-200 rounded-2xl p-4 max-h-48 overflow-y-auto">
-                        ${slotsHtml}
-                    </div>
-                    <p class="text-xs text-gray-400 mt-1">ساعات پیاپی به‌صورت یک بازه ذخیره می‌شوند؛ بازه‌های با فاصله به‌صورت آیتم جدا در جدول نمایش داده می‌شوند.</p>
-                </div>
-                <div class="sm:col-span-3">
-                    <label class="block text-sm font-medium mb-2">خلاصه</label>
-                    <input id="${id('Summary')}" type="text" value="${escapeHtml(item.summary || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                </div>
-                <div class="sm:col-span-3">
-                    <label class="block text-sm font-medium mb-2">توضیحات</label>
-                    <textarea id="${id('Description')}" rows="3" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${escapeHtml(item.description || '')}</textarea>
+                <div class="sm:col-span-2 rounded-2xl border border-indigo-100 bg-indigo-50/40 p-5 space-y-5">
+                    <div><label class="block text-sm font-medium mb-2">ساعات کاری</label><div id="${id('TimeSlots')}" class="max-h-64 overflow-y-auto">${slotsHtml}</div></div>
+                    <div><label class="block text-sm font-medium mb-2">خلاصه</label><input id="${id('Summary')}" type="text" value="${escapeHtml(item.summary || '')}" class="w-full border rounded-2xl py-3.5 px-5 bg-white"></div>
+                    <div><label class="block text-sm font-medium mb-2">توضیحات</label><textarea id="${id('Description')}" rows="3" class="w-full border rounded-2xl py-3.5 px-5 bg-white">${escapeHtml(item.description || '')}</textarea></div>
                 </div>
             </div>`;
     }
@@ -123,12 +110,11 @@
             <td class="py-4 px-5 text-sm">${escapeHtml(item.repeatPeriod || 'هفتگی')}</td>
             <td class="py-4 px-5 text-xs text-gray-500">${escapeHtml(item.timezone || 'Asia/Tehran')}</td>
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td>
+            <td class="py-4 px-5"><button type="button" onclick="cycleMemberScheduleStatus(${item.id})" ${item.readOnly ? 'disabled title="این برنامه متعلق به سازمان دیگری است"' : 'title="تغییر وضعیت"'} class="min-w-[92px] px-3 py-1.5 rounded-full text-xs font-medium transition disabled:cursor-not-allowed disabled:hover:bg-inherit ${statusClass(item.status)}">${escapeHtml(item.status)}</button></td>
             <td class="py-4 px-5 text-left">
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewMemberSchedule(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
-                    <button onclick="toggleMemberScheduleInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
-                    <button onclick="deleteMemberSchedule(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>
+                    ${item.readOnly ? '' : `<button onclick="toggleMemberScheduleInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button><button onclick="deleteMemberSchedule(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>`}
                 </div>
             </td>`;
     };

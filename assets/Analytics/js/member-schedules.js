@@ -21,12 +21,33 @@ window.memberScheduleTimezoneList = [
     { value: 'UTC', label: 'UTC' }
 ];
 
-window.toggleMemberScheduleRepeatDate = async function (wrapId, repeatValue) {
-    const wrap = document.getElementById(wrapId);
-    if (!wrap) return;
-    const show = (repeatValue === 'ماهانه' || repeatValue === 'سالانه');
-    wrap.classList.toggle('hidden', !show);
+function memberScheduleField(prefix, name) { return document.getElementById(prefix ? prefix + name : 'ms' + name); }
+function memberScheduleIso(date) { return date.toISOString().slice(0, 10); }
+function memberScheduleDateLabel(iso) {
+    const locale = (document.documentElement.lang || 'fa').toLowerCase().startsWith('fa') ? 'fa-IR-u-ca-persian' : 'en-US';
+    return new Intl.DateTimeFormat(locale, {year:'numeric', month:'long', day:'numeric', weekday:'long'}).format(new Date(iso + 'T12:00:00'));
+}
+window.refreshMemberScheduleRepeatFields = function (prefix) {
+    const repeat = memberScheduleField(prefix, 'Repeat')?.value || 'هفتگی';
+    const dayWrap = memberScheduleField(prefix, 'DayWrap'), dateWrap = memberScheduleField(prefix, 'RepeatDateWrap');
+    const day = memberScheduleField(prefix, 'Day'), date = memberScheduleField(prefix, 'RepeatDate');
+    const interval = {'دو هفته':2,'سه هفته':3,'چهار هفته':4}[repeat] || 0;
+    const dated = ['ماهانه','سالانه','بی‌تکرار'].includes(repeat);
+    dayWrap?.classList.toggle('hidden', dated);
+    dateWrap?.classList.toggle('hidden', repeat === 'هفتگی');
+    if (!date) return;
+    if (interval) {
+        const jsDays={'یکشنبه':0,'دوشنبه':1,'سه‌شنبه':2,'چهارشنبه':3,'پنجشنبه':4,'جمعه':5,'شنبه':6};
+        const target=jsDays[day?.value] ?? 6, today=new Date(); today.setHours(12,0,0,0);
+        const delta=(target-today.getDay()+7)%7;
+        const options=Array.from({length:interval},(_,i)=>{const d=new Date(today);d.setDate(today.getDate()+delta+i*7);return memberScheduleIso(d);});
+        const selected=date.value;
+        date.outerHTML='<select id="'+date.id+'" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">'+options.map(iso=>'<option value="'+iso+'" '+(iso===selected?'selected':'')+'>'+memberScheduleDateLabel(iso)+'</option>').join('')+'</select>';
+    } else if (dated && date.tagName !== 'INPUT') {
+        date.outerHTML='<input id="'+date.id+'" type="date" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">';
+    }
 };
+window.toggleMemberScheduleRepeatDate = function (_, repeatValue) { window.refreshMemberScheduleRepeatFields(''); };
 
 const branchWorkingHours = {
     1: { start: '08:00', end: '22:00' },
@@ -44,6 +65,8 @@ let memberScheduleMembers = [
 ];
 
 window.getMemberScheduleBranches = function () {
+    if (typeof window.getBranchScheduleOrganizations === 'function') return window.getBranchScheduleOrganizations().map(function(o){return {id:o.user_id||o.id,name:o.name,kind:o.kind};});
+    if (window.staffCatalog?.organizations?.length) return window.staffCatalog.organizations.map(function(o){return {id:o.user_id,name:o.name,kind:o.branch_id?'branch':'academy'};});
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
     return [
         { id: 1, name: 'شعبه مرکزی' }, { id: 2, name: 'شعبه ونک' },
@@ -51,11 +74,32 @@ window.getMemberScheduleBranches = function () {
     ];
 };
 
-window.getMemberScheduleMemberOptions = async function () {
+window.getMemberScheduleMemberOptions = function () {
     if (typeof allStaff !== 'undefined' && allStaff.length) {
-        return allStaff.map(function (s) { return { value: s.id, label: s.name, id: s.id, name: s.name }; });
+        return allStaff.filter(function(s){return s.type!=='student'&&s.type!=='waiting'&&s.type!=='waiting-list';}).map(function (s) {
+            const lesson=(s.type==='teacher'&&s.lessonName&&s.lessonName!=='—')?' '+s.lessonName:'';
+            const level=(window.staffCatalog?.levels||[]).find(function(x){return String(x.id)===String(s.levelId);});
+            const label=s.name+' - '+(s.typeLabel||'عضو')+lesson+(level?' سطح '+level.name:'');
+            return {value:s.id,label:label,id:s.id,userId:s.user_id||s.id,name:s.name,organizationUserId:s.organizationUserId,role:s.typeLabel||'عضو'};
+        });
     }
     return memberScheduleMembers.map(function (m) { return { value: m.id, label: m.name, id: m.id, name: m.name }; });
+};
+
+window.refreshMemberScheduleMembers = function(prefix, selected) {
+    const organization=memberScheduleField(prefix,'Branch')?.value;
+    const select=memberScheduleField(prefix,'Member'); if(!select)return;
+    const options=window.getMemberScheduleMemberOptions().filter(function(m){return !organization||String(m.organizationUserId)===String(organization);});
+    select.innerHTML='<option value="">انتخاب عضو</option>'+options.map(function(m){return '<option value="'+m.value+'" data-role="'+m.role+'" '+(String(m.value)===String(selected||'')?'selected':'')+'>'+m.label+'</option>';}).join('');
+    window.refreshMemberScheduleConflicts(prefix);
+};
+
+window.refreshMemberScheduleConflicts = function(prefix) {
+    const membershipId=memberScheduleField(prefix,'Member')?.value, selectedMember=window.getMemberScheduleMemberOptions().find(function(row){return String(row.value)===String(membershipId);}),memberId=selectedMember?.userId,day=memberScheduleField(prefix,'Day')?.value;
+    const ownId=Number(memberScheduleField(prefix,'RecordId')?.value||0);
+    const busy=new Set(allMemberSchedules.filter(function(row){return String(row.memberId)===String(memberId)&&row.day===day&&row.id!==ownId;}).flatMap(function(row){return row.slots||[];}));
+    const box=memberScheduleField(prefix,'TimeSlots'); if(!box)return;
+    box.querySelectorAll('.ms-range-start option,.ms-range-end option').forEach(function(option){option.disabled=busy.has(option.value);});
 };
 
 function timeToMinutes(t) {
@@ -93,22 +137,21 @@ function mergeConsecutiveSlots(slots) {
 }
 function rangeLabel(range) { return range.start + '-' + range.end; }
 
-window.buildMemberScheduleTimeSlotsHTML = async function (containerId, branchId, selectedSlots) {
-    const slots = getBranchSlots(parseInt(branchId, 10) || 1);
-    const selected = (selectedSlots || []).map(String);
-    return '<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">' +
-        slots.map(function (s) {
-            const checked = selected.indexOf(s) !== -1 ? 'checked' : '';
-            return '<label class="inline-flex items-center gap-2 text-sm border border-gray-200 rounded-xl px-2 py-1.5 hover:bg-gray-50 cursor-pointer">' +
-                '<input type="checkbox" class="ms-time-slot" value="' + s + '" ' + checked + '> ' + s +
-                '</label>';
-        }).join('') + '</div>';
+window.buildMemberScheduleTimeSlotsHTML = function (containerId, branchId, selectedSlots) {
+    const ranges=mergeConsecutiveSlots(selectedSlots||[]);
+    return '<div class="ms-ranges space-y-3">'+(ranges.length?ranges:[{start:'',end:'',status:'فعال'}]).map(renderMemberScheduleRange).join('')+'</div><button type="button" onclick="addMemberScheduleRange(this)" class="mt-3 text-sm text-indigo-600"><i class="fas fa-plus ml-1"></i>افزودن بازه زمانی جدید</button>';
 };
+function memberScheduleTimeOptions(selected, end) { const values=[];for(let m=0;m<1440+(end?30:0);m+=30)values.push(minutesToTime(m));return '<option value="">انتخاب کنید</option>'+values.map(function(v){return '<option value="'+v+'" '+(v===selected?'selected':'')+'>'+v+'</option>';}).join(''); }
+function renderMemberScheduleRange(range) { const status=range.status||'فعال',statuses=['فعال','غیرفعال','پر شده','در انتظار تأیید'];return '<div class="ms-range grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end rounded-2xl border bg-white p-4"><label class="text-sm">ساعت شروع<select class="ms-range-start mt-2 w-full border rounded-xl py-3 px-3" onchange="refreshMemberScheduleConflicts(\'\')">'+memberScheduleTimeOptions(range.start,false)+'</select></label><label class="text-sm">ساعت پایان<select class="ms-range-end mt-2 w-full border rounded-xl py-3 px-3">'+memberScheduleTimeOptions(range.end,true)+'</select></label><label class="text-sm">وضعیت<select class="ms-range-status mt-2 w-full border rounded-xl py-3 px-3">'+statuses.map(function(value){return '<option '+(value===status?'selected':'')+'>'+value+'</option>';}).join('')+'</select></label><button type="button" onclick="removeMemberScheduleRange(this)" class="mb-3 text-red-500">×</button></div>'; }
+window.addMemberScheduleRange=function(button){button.previousElementSibling.insertAdjacentHTML('beforeend',renderMemberScheduleRange({}));};
+window.removeMemberScheduleRange=function(button){const box=button.closest('.ms-ranges');button.closest('.ms-range').remove();if(!box.children.length)box.insertAdjacentHTML('beforeend',renderMemberScheduleRange({}));};
 
 window.refreshMemberScheduleTimeSlots = async function (containerId, branchId, selectedSlots) {
     const el = document.getElementById(containerId);
     if (!el) return;
     el.innerHTML = window.buildMemberScheduleTimeSlotsHTML(containerId, branchId, selectedSlots || []);
+    const prefix=containerId.endsWith('TimeSlots')?containerId.slice(0,-9):'';
+    window.refreshMemberScheduleConflicts(prefix==='ms'?'':prefix);
 };
 
 window.promptAddMemberScheduleMember = async function (selectId) {
@@ -126,6 +169,14 @@ window.promptAddMemberScheduleMember = async function (selectId) {
 };
 
 let allMemberSchedules = Array.isArray(window.adminMemberSchedulesData) ? window.adminMemberSchedulesData.slice() : [];
+let memberScheduleRealtimeVersion=null,memberScheduleRealtimeBusy=false;
+const memberScheduleRealtimeChannel='BroadcastChannel'in window?new BroadcastChannel('sornaz-admin-data'):null;
+function encodeMemberSchedulePayload(data){const bytes=new TextEncoder().encode(JSON.stringify(data));let binary='';bytes.forEach(b=>binary+=String.fromCharCode(b));return btoa(binary);}
+async function memberScheduleApi(url,data){const token=window.adminCsrfToken||'',options={credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}};if(data){options.method='POST';options.headers['Content-Type']='application/x-www-form-urlencoded;charset=UTF-8';options.headers['X-CSRF-TOKEN']=token;options.body=new URLSearchParams({_token:token,payload_b64:encodeMemberSchedulePayload(data)}).toString();}const response=await fetch(url,options),payload=await response.json(),envelope=payload.data??payload;if(!response.ok||envelope.success===false)throw new Error(envelope.message||'عملیات برنامه زمانی ناموفق بود.');return envelope.data??envelope;}
+window.loadMemberSchedules=async function(){const data=await memberScheduleApi('/academy/admin/member-schedules');window.staffCatalog=data.staff_catalog||window.staffCatalog||{};if(Array.isArray(data.members)){allStaff=data.members.filter(x=>x.type!=='student');}allMemberSchedules=data.schedules||[];filteredMemberSchedules=allMemberSchedules.slice();memberScheduleRealtimeVersion=data.version;window.renderMemberSchedulesBranchTabs();window.filterMemberSchedules();return data;};
+async function saveMemberScheduleRequest(data,id){const result=await memberScheduleApi('/academy/admin/member-schedules'+(id?'/'+id+'/update':''),data);await window.loadMemberSchedules();memberScheduleRealtimeChannel?.postMessage({resource:'member_schedules',version:Date.now()});return result;}
+async function pollMemberSchedules(){if(memberScheduleRealtimeBusy||document.hidden||!document.getElementById('memberSchedulesTable'))return;memberScheduleRealtimeBusy=true;try{const data=await memberScheduleApi('/academy/admin/member-schedules');if(memberScheduleRealtimeVersion!==null&&data.version!==memberScheduleRealtimeVersion){window.staffCatalog=data.staff_catalog||window.staffCatalog;allStaff=(data.members||[]).filter(x=>x.type!=='student');allMemberSchedules=data.schedules||[];filteredMemberSchedules=allMemberSchedules.slice();editingMemberScheduleRowId=null;window.filterMemberSchedules();}memberScheduleRealtimeVersion=data.version;}catch(e){}finally{memberScheduleRealtimeBusy=false;}}
+setInterval(pollMemberSchedules,5000);memberScheduleRealtimeChannel?.addEventListener('message',function(e){if(e.data?.resource==='member_schedules')window.loadMemberSchedules();});
 
 let currentMemberScheduleBranch = 'all';
 let memberSchedulesCurrentPage = 1;
@@ -293,29 +344,29 @@ function readSelectedSlots(prefix) {
     const containerId = prefix ? prefix + 'TimeSlots' : 'msTimeSlots';
     const container = document.getElementById(containerId);
     if (!container) return [];
-    return Array.from(container.querySelectorAll('.ms-time-slot:checked')).map(function (cb) { return cb.value; });
+    const slots=[];container.querySelectorAll('.ms-range').forEach(function(row){const start=row.querySelector('.ms-range-start')?.value,end=row.querySelector('.ms-range-end')?.value;if(start&&end&&start<end)for(let m=timeToMinutes(start);m<timeToMinutes(end);m+=30)slots.push(minutesToTime(m));});return slots;
 }
 
 function readMemberScheduleForm(prefix) {
     const f = function (s) { return document.getElementById(prefix ? prefix + s : 'ms' + s); };
-    const branchId = parseInt(f('Branch') && f('Branch').value, 10);
+    const branchId = parseInt(f('Branch') && f('Branch').value || window.getMemberScheduleBranches()[0]?.id, 10);
     const branch = window.getMemberScheduleBranches().find(function (b) { return b.id === branchId; });
     const memberSel = f('Member');
     const memberId = memberSel && memberSel.value;
-    const memberName = memberSel && memberSel.selectedOptions[0] && memberId && memberId !== '__new__'
-        ? memberSel.selectedOptions[0].textContent : '';
+    const memberOption=memberSel && memberSel.selectedOptions[0];
+    const member=window.getMemberScheduleMemberOptions().find(function(row){return String(row.value)===String(memberId)&&String(row.organizationUserId)===String(branchId);});
+    const memberName = member?.name || memberOption?.textContent || '';
     const slots = readSelectedSlots(prefix);
-    const ranges = mergeConsecutiveSlots(slots);
+    const ranges = Array.from(f('TimeSlots')?.querySelectorAll('.ms-range') || []).map(function(row){return {start:row.querySelector('.ms-range-start')?.value||'',end:row.querySelector('.ms-range-end')?.value||'',status:row.querySelector('.ms-range-status')?.value||'فعال'};}).filter(function(range){return range.start&&range.end&&range.start<range.end;});
     const repeatPeriod = f('Repeat') && f('Repeat').value || 'هفتگی';
     return {
-        branchId: branchId, branchName: branch ? branch.name : 'نامشخص',
-        memberId: memberId, name: memberName,
-        role: f('Role') && f('Role').value || 'استاد',
-        day: f('Day') && f('Day').value || '',
+        branchId: branchId, organizationUserId: branchId, branchName: branch ? branch.name : 'نامشخص',
+        memberId: member?.userId || memberId, membershipId: Number(memberId), name: memberName,
+        role: member?.role || f('Role') && f('Role').value || 'استاد',
+        day: f('Day') && !f('DayWrap')?.classList.contains('hidden') ? f('Day').value : '',
         status: f('Status') && f('Status').value || 'فعال',
         repeatPeriod: repeatPeriod,
-        repeatDate: (repeatPeriod === 'ماهانه' || repeatPeriod === 'سالانه')
-            ? (f('RepeatDate') && f('RepeatDate').value || '') : '',
+        repeatDate: repeatPeriod === 'هفتگی' ? '' : (f('RepeatDate') && f('RepeatDate').value || ''),
         timezone: f('Timezone') && f('Timezone').value || 'Asia/Tehran',
         summary: f('Summary') && f('Summary').value.trim() || '',
         description: f('Description') && f('Description').value.trim() || '',
@@ -329,6 +380,7 @@ function expandRangesToRows(base, ranges) {
         for (let m = timeToMinutes(range.start); m < timeToMinutes(range.end); m += 30) rangeSlots.push(minutesToTime(m));
         return Object.assign({}, base, {
             id: Date.now() + idx, slots: rangeSlots,
+            status: range.status || base.status,
             timeLabel: rangeLabel(range), time: rangeLabel(range)
         });
     });
@@ -336,24 +388,29 @@ function expandRangesToRows(base, ranges) {
 
 window.openAddMemberScheduleModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
+    try {
+        if (!window.branchOfferingData && typeof window.loadBranchOfferings === 'function') await window.loadBranchOfferings();
+        if ((!window.staffCatalog?.organizations?.length || typeof allStaff === 'undefined' || !allStaff.length) && typeof loadStaffData === 'function') await loadStaffData(false);
+    } catch(error) { return alert(error.message || 'بارگذاری سازمان‌ها و اعضا ناموفق بود.'); }
     document.getElementById('modalContainer').innerHTML = window.getMemberScheduleAddModalHTML
         ? window.getMemberScheduleAddModalHTML() : '';
+    window.refreshMemberScheduleRepeatFields('');
+    window.refreshMemberScheduleMembers('');
+};
+
+window.cycleMemberScheduleStatus = async function(id) {
+    const item=allMemberSchedules.find(function(row){return row.id===id;});
+    if(!item||item.readOnly)return;
+    try{await memberScheduleApi('/academy/admin/member-schedules/'+id+'/status',{});await window.loadMemberSchedules();memberScheduleRealtimeChannel?.postMessage({resource:'member_schedules',version:Date.now()});}catch(error){alert(error.message);}
 };
 
 window.saveMemberSchedule = async function () {
     const data = readMemberScheduleForm('');
     if (!data.memberId || data.memberId === '__new__') return alert('انتخاب عضو الزامی است');
-    if (!data.day) return alert('روز الزامی است');
+    if (!data.day && !data.repeatDate) return alert('روز یا تاریخ شروع الزامی است');
+    if (data.repeatPeriod !== 'هفتگی' && !data.repeatDate) return alert('انتخاب اولین تاریخ الزامی است');
     if (!data.ranges.length) return alert('حداقل یک بازه ساعتی انتخاب کنید');
-    expandRangesToRows({
-        memberId: data.memberId, name: data.name, role: data.role, day: data.day,
-        branchId: data.branchId, branchName: data.branchName, status: data.status,
-        repeatPeriod: data.repeatPeriod, repeatDate: data.repeatDate, timezone: data.timezone,
-        summary: data.summary, description: data.description
-    }, data.ranges).forEach(function (r) { allMemberSchedules.unshift(r); });
-    window.filterMemberSchedules();
-    closeModal();
-    alert('✅ بازه(های) زمانی ثبت شد');
+    try{await saveMemberScheduleRequest(data,0);closeModal();alert('✅ بازه(های) زمانی در دیتابیس ثبت شد');}catch(error){alert(error.message);}
 };
 
 window.viewMemberSchedule = async function (id) {
@@ -375,17 +432,7 @@ window.saveEditedMemberSchedule = async function (id) {
     if (!data.memberId || data.memberId === '__new__') return alert('انتخاب عضو الزامی است');
     if (!data.day) return alert('روز الزامی است');
     if (!data.ranges.length) return alert('حداقل یک بازه ساعتی انتخاب کنید');
-    allMemberSchedules = allMemberSchedules.filter(function (x) { return x.id !== id; });
-    expandRangesToRows({
-        memberId: data.memberId, name: data.name, role: data.role, day: data.day,
-        branchId: data.branchId, branchName: data.branchName, status: data.status,
-        repeatPeriod: data.repeatPeriod, repeatDate: data.repeatDate, timezone: data.timezone,
-        summary: data.summary, description: data.description
-    }, data.ranges).forEach(function (r) { allMemberSchedules.unshift(r); });
-    editingMemberScheduleRowId = null;
-    window.filterMemberSchedules();
-    closeModal();
-    alert('✅ تغییرات ذخیره شد');
+    try{await saveMemberScheduleRequest(data,id);editingMemberScheduleRowId=null;closeModal();alert('✅ تغییرات در دیتابیس ذخیره شد');}catch(error){alert(error.message);}
 };
 
 window.toggleMemberScheduleInlineEdit = async function (id) {
@@ -398,25 +445,14 @@ window.saveInlineMemberSchedule = async function (id) {
     if (!data.memberId || data.memberId === '__new__') return alert('انتخاب عضو الزامی است');
     if (!data.day) return alert('روز الزامی است');
     if (!data.ranges.length) return alert('حداقل یک بازه ساعتی انتخاب کنید');
-    allMemberSchedules = allMemberSchedules.filter(function (x) { return x.id !== id; });
-    expandRangesToRows({
-        memberId: data.memberId, name: data.name, role: data.role, day: data.day,
-        branchId: data.branchId, branchName: data.branchName, status: data.status,
-        repeatPeriod: data.repeatPeriod, repeatDate: data.repeatDate, timezone: data.timezone,
-        summary: data.summary, description: data.description
-    }, data.ranges).forEach(function (r) { allMemberSchedules.unshift(r); });
-    editingMemberScheduleRowId = null;
-    window.filterMemberSchedules();
-    alert('✅ تغییرات ذخیره شد');
+    try{await saveMemberScheduleRequest(data,id);editingMemberScheduleRowId=null;alert('✅ تغییرات در دیتابیس ذخیره شد');}catch(error){alert(error.message);}
 };
 
 window.deleteMemberSchedule = async function (id) {
     if (!(await AppDialog.confirmDelete(allMemberSchedules, id, 'زمان‌بندی'))) return;
     try {
         const body=new FormData(); body.append('_token',window.adminCsrfToken||'');
-        const response=await fetch('/analytics/member-schedules/'+id+'/delete',{method:'POST',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'},body});
-        const envelope=await response.json(); const result=envelope.data||{}; if(!response.ok||result.success===false)throw new Error(result.message||'حذف ناموفق بود.');
-        allMemberSchedules=allMemberSchedules.filter(s=>s.id!==id); if(editingMemberScheduleRowId===id)editingMemberScheduleRowId=null; window.filterMemberSchedules();
+        await memberScheduleApi('/academy/admin/member-schedules/'+id+'/delete',{});editingMemberScheduleRowId=null;await window.loadMemberSchedules();memberScheduleRealtimeChannel?.postMessage({resource:'member_schedules',version:Date.now()});
     } catch(error) { alert(error.message||'حذف برنامه زمانی ناموفق بود.'); }
 };
 

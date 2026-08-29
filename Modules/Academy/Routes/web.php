@@ -61,6 +61,11 @@ Router::post('/academy/admin/classroom-type-categories/{value}/update', [Academy
 Router::post('/academy/admin/classroom-type-categories/{value}/delete', [AcademyClassroomController::class, 'deleteTypeCategory'])->middleware(['academy-panel','csrf']);
 Router::get('/academy/admin/classroom-types/realtime-version', [AcademyClassroomController::class, 'realtimeVersion'])->middleware('academy-panel');
 Router::get('/academy/admin/branch-offerings', [AcademyBranchOfferingController::class, 'index'])->middleware('academy-panel');
+Router::get('/academy/admin/member-schedules', [AcademyBranchController::class, 'memberSchedules'])->middleware('academy-panel');
+Router::post('/academy/admin/member-schedules', [AcademyBranchController::class, 'storeMemberSchedule'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/member-schedules/{id}/update', [AcademyBranchController::class, 'updateMemberSchedule'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/member-schedules/{id}/delete', [AcademyBranchController::class, 'deleteMemberSchedule'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/member-schedules/{id}/status', [AcademyBranchController::class, 'cycleMemberScheduleStatus'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/branch-offerings/lessons', [AcademyBranchOfferingController::class, 'storeLesson'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/branch-offerings/lessons/{id}/update', [AcademyBranchOfferingController::class, 'updateLesson'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/branch-offerings/lessons/{id}/status', [AcademyBranchOfferingController::class, 'cycleLessonStatus'])->middleware(['academy-panel','csrf']);
