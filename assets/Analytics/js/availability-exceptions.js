@@ -46,7 +46,7 @@ window.getHolidayLeaveBranches = function () {
     ];
 };
 
-window.getHolidayLeaveMemberOptions = async function () {
+window.getHolidayLeaveMemberOptions = function () {
     if (typeof allStaff !== 'undefined' && allStaff.length) {
         return allStaff.map(function (s) { return { value: s.id, label: s.name, id: s.id, name: s.name }; });
     }
@@ -337,6 +337,7 @@ window.saveHolidayLeave = async function () {
     hlExpandRangesToRows({
         memberId: data.memberId, name: data.name, date: data.date,
         branchId: data.branchId, branchName: data.branchName, status: data.status,
+        type: data.type, typeLabel: data.typeLabel,
         timezone: data.timezone, summary: data.summary, description: data.description
     }, data.ranges).forEach(function (r) { allHolidayLeaves.unshift(r); });
     window.filterHolidayLeaves();
@@ -367,6 +368,7 @@ window.saveEditedHolidayLeave = async function (id) {
     hlExpandRangesToRows({
         memberId: data.memberId, name: data.name, date: data.date,
         branchId: data.branchId, branchName: data.branchName, status: data.status,
+        type: data.type, typeLabel: data.typeLabel,
         timezone: data.timezone, summary: data.summary, description: data.description
     }, data.ranges).forEach(function (r) { allHolidayLeaves.unshift(r); });
     editingHolidayLeaveRowId = null;
@@ -389,6 +391,7 @@ window.saveInlineHolidayLeave = async function (id) {
     hlExpandRangesToRows({
         memberId: data.memberId, name: data.name, date: data.date,
         branchId: data.branchId, branchName: data.branchName, status: data.status,
+        type: data.type, typeLabel: data.typeLabel,
         timezone: data.timezone, summary: data.summary, description: data.description
     }, data.ranges).forEach(function (r) { allHolidayLeaves.unshift(r); });
     editingHolidayLeaveRowId = null;

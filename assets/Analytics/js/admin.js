@@ -46,8 +46,11 @@ function showSection(id) {
         if (typeof renderDashboard === 'function') renderDashboard();
     }
     if (section === 'member-schedules') {
-        if (typeof renderMemberSchedulesBranchTabs === 'function') renderMemberSchedulesBranchTabs();
-        if (typeof filterMemberSchedules === 'function') filterMemberSchedules();
+        if (typeof loadMemberSchedules === 'function') loadMemberSchedules().catch(error=>alert(error.message));
+        else {
+            if (typeof renderMemberSchedulesBranchTabs === 'function') renderMemberSchedulesBranchTabs();
+            if (typeof filterMemberSchedules === 'function') filterMemberSchedules();
+        }
     }
     // if (section === 'experiences') {
     //     if (typeof renderExperiencesBranchTabs === 'function') renderExperiencesBranchTabs();
