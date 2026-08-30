@@ -54,6 +54,7 @@ $showAcademyPanelSections = $isSiteAdminPanel || $hasMemberManagementRole || in_
             component('points');
             component('settings');
             if ($isSiteAdminPanel) {
+                component('tracking');
                 component('users');
                 component('roles');
                 component('permissions');
