@@ -24,6 +24,16 @@ class AcademyPanelMiddleware {
         if ($path === '/analytics/admin-panel' || str_starts_with($path, '/analytics/admin-account') || $path === '/analytics/admin-dashboard') {
             return $next($request);
         }
+        if (str_starts_with($path, '/analytics/admin-messages')) {
+            $hasMembership = DB::table('academy_branch_members')->where('user_id', (int)$user['user_id'])->whereNull('deleted_at')->first();
+            if ($hasMembership) return $next($request);
+        }
+        if (str_starts_with($path, '/analytics/admin-notifications')) {
+            $method = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+            $readOnly = $method === 'GET' || str_ends_with($path, '/read');
+            $hasMembership = $readOnly ? DB::table('academy_branch_members')->where('user_id', (int)$user['user_id'])->whereNull('deleted_at')->first() : null;
+            if ($hasMembership) return $next($request);
+        }
         if (SiteAdminAccess::allows($user)) return $next($request);
         $userId = (int)$user['user_id'];
         $academy = DB::table('academies')->where('user_id', $userId)->whereNull('deleted_at')->first()

@@ -4,48 +4,20 @@
             <h1 class="text-3xl font-bold">مدیریت پیام‌ها</h1>
             <p class="text-gray-500 mt-1">پیام‌های داخلی شعبه‌ها و سیستم</p>
         </div>
-        <button onclick="openAddMessageModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
-            <i class="fas fa-plus"></i> ارسال پیام جدید
-        </button>
-    </div>
-
-    <!-- تاپ‌بار شعبه‌ها -->
-    <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
-        <div class="flex gap-2 min-w-max" id="messagesBranchTabs">
-            <button type="button" onclick="filterMessagesByBranch('all')"
-                    class="message-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium bg-indigo-600 text-white"
-                    data-value="all">
-                همه شعبه‌ها
-            </button>
-        </div>
+        <div class="flex flex-wrap gap-3"><button onclick="openAddMessageModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2"><i class="fas fa-plus"></i> ارسال پیام جدید</button><button onclick="exportMessagesToExcel()" class="border px-5 py-3 rounded-2xl"><i class="fas fa-file-excel text-green-600 ml-2"></i>خروجی اکسل</button><button onclick="exportMessagesToPDF()" class="border px-5 py-3 rounded-2xl"><i class="fas fa-file-pdf text-red-600 ml-2"></i>خروجی PDF</button></div>
     </div>
 
     <!-- فیلترها -->
     <div class="bg-white rounded-3xl p-5 mb-6 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input type="text" id="messageSearch" placeholder="جستجو عنوان / فرستنده / گیرنده..."
                    class="w-full border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500"
                    onkeyup="filterMessages()">
             <select id="filterMessageStatus" onchange="filterMessages()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
-                <option value="">همه وضعیت‌ها</option>
+                <option value="">همه وضعیت‌های مطالعه</option>
                 <option value="خوانده‌نشده">خوانده‌نشده</option>
                 <option value="خوانده‌شده">خوانده‌شده</option>
-            </select>
-            <select id="filterMessagePriority" onchange="filterMessages()"
-                    class="w-full border border-gray-300 rounded-2xl py-3 px-4">
-                <option value="">همه اولویت‌ها</option>
-                <option value="عادی">عادی</option>
-                <option value="مهم">مهم</option>
-                <option value="فوری">فوری</option>
-            </select>
-            <select id="filterMessageType" onchange="filterMessages()"
-                    class="w-full border border-gray-300 rounded-2xl py-3 px-4">
-                <option value="">همه انواع</option>
-                <option value="اطلاعیه">اطلاعیه</option>
-                <option value="یادآوری">یادآوری</option>
-                <option value="هشدار">هشدار</option>
-                <option value="شخصی">شخصی</option>
             </select>
         </div>
     </div>
@@ -63,9 +35,6 @@
                             <button onclick="sortMessagesBy('sender')" class="flex items-center gap-1">فرستنده <span id="msgSortIcon-sender">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortMessagesBy('branchName')" class="flex items-center gap-1">شعبه <span id="msgSortIcon-branchName">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortMessagesBy('receiver')" class="flex items-center gap-1">گیرنده <span id="msgSortIcon-receiver">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
@@ -77,13 +46,16 @@
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortMessagesBy('status')" class="flex items-center gap-1">وضعیت <span id="msgSortIcon-status">↕</span></button>
                         </th>
+                        <th class="text-right py-5 px-5 font-medium">
+                            <button onclick="sortMessagesBy('readStatus')" class="flex items-center gap-1">وضعیت مطالعه <span id="msgSortIcon-readStatus">↕</span></button>
+                        </th>
                         <th class="w-40 py-5 px-5"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y text-sm"></tbody>
             </table>
         </div>
-        <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
+        <div id="messagesPagination" class="hidden px-6 py-4 border-t flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="messagesPaginationInfo">نمایش ۱ تا ۱۰ از ۰ پیام</span>
             <div class="flex items-center gap-2" id="messagesPaginationButtons"></div>
         </div>

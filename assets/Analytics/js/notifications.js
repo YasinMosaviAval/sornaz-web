@@ -2,7 +2,7 @@
 'use strict';
 // ==================== مدیریت اعلان‌های سیستم ====================
 
-window.notificationStatusesList = ['منتشر شده', 'پیش‌نویس', 'منقضی'];
+window.notificationStatusesList = ['در انتظار', 'پیش‌نویس', 'منتشر شده', 'خصوصی', 'زباله‌دان'];
 window.notificationPrioritiesList = ['بالا', 'متوسط', 'کم'];
 window.notificationAudiencesList = ['همه', 'هنرجویان', 'اساتید', 'والدین', 'پرسنل'];
 
@@ -24,6 +24,9 @@ const notificationsPerPage = 10;
 let filteredNotifications = allNotifications.slice();
 let notifSortField = '';
 let notifSortDirection = 'asc';
+let lastNotificationId = 0;
+let notificationPolling = false;
+const notificationChannel = 'BroadcastChannel' in window ? new BroadcastChannel('sornaz-admin-notifications') : null;
 
 function notificationEncode(data) {
     const bytes = new TextEncoder().encode(JSON.stringify(data));
@@ -47,13 +50,32 @@ async function notificationApi(url, data = null) {
     return envelope.data ?? envelope;
 }
 
-window.loadAdminNotifications = async function () {
+window.loadAdminNotifications = async function (notify = false) {
     const data = await notificationApi('/analytics/admin-notifications');
-    allNotifications = data.notifications || [];
+    const incoming = data.notifications || [];
+    const fresh = incoming.find(function (item) { return item.id > lastNotificationId && item.readStatus === 'خوانده‌نشده'; });
+    allNotifications = incoming;
     filteredNotifications = allNotifications.slice();
-    window.filterNotifications();
+    window.filterNotifications(false);
+    if (notify && fresh) showIncomingNotificationToast(fresh);
+    lastNotificationId = Math.max(lastNotificationId, ...incoming.map(function (item) { return Number(item.id) || 0; }), 0);
     return data;
 };
+
+function showIncomingNotificationToast(item) {
+    const toast = document.createElement('button');
+    toast.type = 'button';
+    toast.className = 'fixed left-5 bottom-5 z-[2147483000] w-[min(380px,calc(100vw-2.5rem))] rounded-2xl border border-amber-200 bg-white p-4 text-right shadow-2xl';
+    const heading = document.createElement('b');
+    heading.textContent = 'اعلان جدید';
+    const text = document.createElement('span');
+    text.className = 'mt-1 block truncate text-sm text-gray-600';
+    text.textContent = item.title || 'بدون عنوان';
+    toast.append(heading, text);
+    toast.onclick = function () { toast.remove(); showSection('notifications'); viewNotification(item.id); };
+    document.body.appendChild(toast);
+    setTimeout(function () { toast.remove(); }, 9000);
+}
 
 function sortNotificationItems() {
     if (!notifSortField) return;
@@ -73,7 +95,7 @@ function sortNotificationItems() {
 }
 
 window.updateNotificationSortIcons = async function () {
-    ['title', 'branchName', 'audience', 'priority', 'date', 'status'].forEach(function (f) {
+    ['title', 'branchName', 'audience', 'priority', 'date', 'status', 'readStatus'].forEach(function (f) {
         const icon = document.getElementById('notifSortIcon-' + f);
         if (!icon) return;
         icon.textContent = notifSortField === f ? (notifSortDirection === 'asc' ? '↑' : '↓') : '↕';
@@ -133,7 +155,7 @@ window.filterNotificationsByBranch = async function (branchId) {
     window.filterNotifications();
 };
 
-window.filterNotifications = async function () {
+window.filterNotifications = async function (resetPage = true) {
     const search = (document.getElementById('notificationSearch') && document.getElementById('notificationSearch').value || '').trim().toLowerCase();
     const status = document.getElementById('filterNotificationStatus') && document.getElementById('filterNotificationStatus').value || '';
     const priority = document.getElementById('filterNotificationPriority') && document.getElementById('filterNotificationPriority').value || '';
@@ -150,7 +172,7 @@ window.filterNotifications = async function () {
         return matchBranch && matchSearch && matchStatus && matchPriority && matchAudience;
     });
 
-    notificationsCurrentPage = 1;
+    if (resetPage) notificationsCurrentPage = 1;
     sortNotificationItems();
     window.renderNotificationsTable(filteredNotifications);
 };
@@ -183,6 +205,11 @@ window.renderNotificationsTable = async function (list) {
 };
 
 function updateNotificationsPagination(total, start, end, totalPages) {
+    const wrapper = document.getElementById('notificationsPagination');
+    if (wrapper) {
+        wrapper.classList.toggle('hidden', total <= 10);
+        wrapper.classList.toggle('flex', total > 10);
+    }
     const info = document.getElementById('notificationsPaginationInfo');
     if (info) {
         info.textContent = 'نمایش ' + (total === 0 ? 0 : start + 1) + ' تا ' + Math.min(end, total) + ' از ' + total + ' اعلان';
@@ -221,16 +248,25 @@ window.saveNotification = async function (asDraft) {
     if (!body) return alert('متن اعلان الزامی است');
 
     try {
-        await notificationApi('/analytics/admin-notifications', { title: title, body: body, asDraft: Boolean(asDraft) });
+        const audience = document.getElementById('notifAudience')?.value || 'همه';
+        await notificationApi('/analytics/admin-notifications', { title: title, body: body, audience: audience, asDraft: Boolean(asDraft) });
         await window.loadAdminNotifications();
+        notificationChannel?.postMessage(Date.now());
         closeModal();
-        alert(asDraft ? '✅ پیش‌نویس ذخیره شد' : '✅ اعلان منتشر شد');
+        alert(asDraft ? '✅ اعلان ذخیره شد' : '✅ اعلان ثبت شد');
     } catch (error) { alert(error.message); }
 };
 
 window.viewNotification = async function (id) {
-    const item = allNotifications.find(function (x) { return x.id === id; });
+    let item = allNotifications.find(function (x) { return x.id === id; });
     if (!item) return;
+    if (item.readStatus === 'خوانده‌نشده') {
+        try {
+            await notificationApi('/analytics/admin-notifications/' + id + '/read', {});
+            await window.loadAdminNotifications();
+            item = allNotifications.find(function (x) { return x.id === id; }) || item;
+        } catch (error) { return alert(error.message); }
+    }
     document.getElementById('modalContainer').innerHTML = window.getNotificationDetailsModalHTML
         ? window.getNotificationDetailsModalHTML(item) : '';
 };
@@ -258,4 +294,7 @@ setTimeout(async function () {
         try { await window.loadAdminNotifications(); } catch (error) { console.error(error); alert(error.message); }
     }
 }, 200);
+async function pollAdminNotifications() { if (notificationPolling || document.hidden) return; notificationPolling = true; try { await window.loadAdminNotifications(true); } catch (error) {} finally { notificationPolling = false; } }
+notificationChannel && (notificationChannel.onmessage = pollAdminNotifications);
+setInterval(pollAdminNotifications, 4000);
 })();

@@ -29,9 +29,11 @@
             <select id="filterNotificationStatus" onchange="filterNotifications()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه وضعیت‌ها</option>
+                <option value="در انتظار">در انتظار</option>
                 <option value="منتشر شده">منتشر شده</option>
                 <option value="پیش‌نویس">پیش‌نویس</option>
-                <option value="منقضی">منقضی</option>
+                <option value="خصوصی">خصوصی</option>
+                <option value="زباله‌دان">زباله‌دان</option>
             </select>
             <select id="filterNotificationPriority" onchange="filterNotifications()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
@@ -77,13 +79,16 @@
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortNotificationsBy('status')" class="flex items-center gap-1">وضعیت <span id="notifSortIcon-status">↕</span></button>
                         </th>
+                        <th class="text-right py-5 px-5 font-medium">
+                            <button onclick="sortNotificationsBy('readStatus')" class="flex items-center gap-1">وضعیت مطالعه <span id="notifSortIcon-readStatus">↕</span></button>
+                        </th>
                         <th class="w-40 py-5 px-5"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y text-sm"></tbody>
             </table>
         </div>
-        <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
+        <div id="notificationsPagination" class="hidden px-6 py-4 border-t flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="notificationsPaginationInfo">نمایش ۱ تا ۱۰ از ۰ اعلان</span>
             <div class="flex items-center gap-2" id="notificationsPaginationButtons"></div>
         </div>

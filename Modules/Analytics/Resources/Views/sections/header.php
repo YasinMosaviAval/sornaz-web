@@ -6,6 +6,8 @@ $headerHasAcademyAccess = \Modules\System\Services\SiteAdminAccess::allows($head
         ->join('academy_branch_member_roles', 'academy_branch_member_roles.member_id', '=', 'academy_branch_members.member_id')
         ->where('academy_branch_members.user_id', (int)$headerPanelUser['user_id'])->whereIn('academy_branch_member_roles.role_id', [7,16])
         ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->first());
+$headerHasMessageAccess=$headerPanelUser&&(bool)\Core\database\DB::table('academy_branch_members')->where('user_id',(int)$headerPanelUser['user_id'])->whereNull('deleted_at')->first();
+$headerHasMessageAccess=$headerHasMessageAccess||$headerHasAcademyAccess;
 ?>
 <header class="bg-white border-b shadow-sm">
     <div class="flex items-center justify-between gap-2 px-2 sm:px-3 md:px-8 py-3 md:py-4">
@@ -20,13 +22,15 @@ $headerHasAcademyAccess = \Modules\System\Services\SiteAdminAccess::allows($head
             <button onclick="showSection('points')" class="relative p-1.5 hidden md:block">
                 <i class="fas fa-coins text-xl md:text-2xl text-gray-600"></i>
             </button>
+            <?php endif; ?>
+            <?php if($headerHasMessageAccess): ?>
             <button onclick="showSection('messages')" class="relative p-1.5 hidden sm:block">
                 <i class="fas fa-envelope text-xl md:text-2xl text-gray-600"></i>
-                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 md:w-5 md:h-5 flex items-center justify-center">۳</span>
+                <span id="headerUnreadMessages" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full min-w-4 h-4 md:min-w-5 md:h-5 px-1 flex items-center justify-center">0</span>
             </button>
             <button onclick="showSection('notifications')" class="relative p-1.5 hidden sm:block">
                 <i class="fas fa-bell text-xl md:text-2xl text-gray-600"></i>
-                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 md:w-5 md:h-5 flex items-center justify-center">۳</span>
+                <span id="headerUnreadNotifications" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full min-w-4 h-4 md:min-w-5 md:h-5 px-1 flex items-center justify-center">0</span>
             </button>
             <?php endif; ?>
             <div class="hidden md:flex items-center gap-2 min-w-0">

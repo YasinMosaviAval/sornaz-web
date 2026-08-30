@@ -17,6 +17,7 @@ use Modules\Analytics\Controllers\Web\AdminAccessCatalogController;
 use Modules\Analytics\Controllers\Web\AdminDashboardController;
 use Modules\Analytics\Controllers\Web\AdminAccountController;
 use Modules\Analytics\Controllers\Web\AdminGalleryController;
+use Modules\Analytics\Controllers\Web\AdminMessageController;
 use Modules\Analytics\Controllers\Web\PublicCommentController;
 
 
@@ -39,8 +40,14 @@ Router::post('/analytics/admin-account/sessions/{id}/end', [AdminAccountControll
 Router::post('/analytics/admin-account/backups', [AdminAccountController::class, 'backup'])->middleware(['academy-panel','csrf']);
 Router::get('/analytics/admin-account/backups/{id}/download', [AdminAccountController::class, 'download'])->middleware('academy-panel');
 Router::get('/analytics/admin-notifications', [AdminNotificationController::class, 'index'])->middleware('academy-panel');
+Router::get('/analytics/admin-messages', [AdminMessageController::class, 'index'])->middleware('academy-panel');
+Router::post('/analytics/admin-messages', [AdminMessageController::class, 'store'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-messages/{id}/read', [AdminMessageController::class, 'read'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-messages/{id}/unread', [AdminMessageController::class, 'unread'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-messages/{id}/delete', [AdminMessageController::class, 'delete'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-notifications', [AdminNotificationController::class, 'store'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-notifications/{id}/publish', [AdminNotificationController::class, 'publish'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-notifications/{id}/read', [AdminNotificationController::class, 'read'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-notifications/{id}/expire', [AdminNotificationController::class, 'expire'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-notifications/{id}/delete', [AdminNotificationController::class, 'delete'])->middleware(['academy-panel','csrf']);
 Router::get('/analytics/admin-scheduling-rules', [AdminSchedulingRuleController::class, 'index'])->middleware('academy-panel');
