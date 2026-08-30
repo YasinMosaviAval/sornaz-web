@@ -155,8 +155,9 @@ class UserService {
             $lessons = $this->userMusicRows('user_lessons', 'user_lesson_id', 'lesson_id', 'lessons', $id, $translations, $locale);
             $addresses = $this->translatedRows('user_addresses', 'address_id', $id, ['address', 'note'], $translations, $locale);
             $contacts = $this->translatedRows('user_contacts', 'user_contact_id', $id, ['value', 'note'], $translations, $locale);
-            $availabilities = $this->translatedRows('user_availabilities', 'user_availability_id', $id, ['summary', 'description'], $translations, $locale);
-            $availabilityExceptions = $this->translatedRows('user_availability_exceptions', 'user_availability_exception_id', $id, ['summary', 'description'], $translations, $locale);
+            $availabilityRows = $this->translatedRows('user_availabilities', 'user_availability_id', $id, ['summary', 'description'], $translations, $locale);
+            $availabilityExceptions = array_values(array_filter($availabilityRows, fn(array $row): bool => !empty($row['unavailable_type'])));
+            $availabilities = array_values(array_filter($availabilityRows, fn(array $row): bool => empty($row['unavailable_type'])));
             $firstAddress = $addresses[0]['address'] ?? '';
             $avatarFile=!empty($user['avatar_file_id'])?DB::table('media_files')->where('media_file_id',(int)$user['avatar_file_id'])->whereNull('deleted_at')->first():null;
             $starts=array_values(array_filter(array_merge(array_column($instruments,'start_date'),array_column($lessons,'start_date'))));sort($starts);$startYear=$starts?(int)substr((string)$starts[0],0,4):0;$currentYear=$startYear&&$startYear<1700?(int)date('Y')-621:(int)date('Y');$years=$startYear?max(0,$currentYear-$startYear):null;

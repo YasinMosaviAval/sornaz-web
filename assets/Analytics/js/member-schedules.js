@@ -46,6 +46,7 @@ window.refreshMemberScheduleRepeatFields = function (prefix) {
     } else if (dated && date.tagName !== 'INPUT') {
         date.outerHTML='<input id="'+date.id+'" type="date" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">';
     }
+    window.initLocalizedDateInputs?.(dateWrap || document);
 };
 window.toggleMemberScheduleRepeatDate = function (_, repeatValue) { window.refreshMemberScheduleRepeatFields(''); };
 
@@ -97,7 +98,8 @@ window.refreshMemberScheduleMembers = function(prefix, selected) {
 window.refreshMemberScheduleConflicts = function(prefix) {
     const membershipId=memberScheduleField(prefix,'Member')?.value, selectedMember=window.getMemberScheduleMemberOptions().find(function(row){return String(row.value)===String(membershipId);}),memberId=selectedMember?.userId,day=memberScheduleField(prefix,'Day')?.value;
     const ownId=Number(memberScheduleField(prefix,'RecordId')?.value||0);
-    const busy=new Set(allMemberSchedules.filter(function(row){return String(row.memberId)===String(memberId)&&row.day===day&&row.id!==ownId;}).flatMap(function(row){return row.slots||[];}));
+    const repeatDate=memberScheduleField(prefix,'RepeatDate')?.value||'',busy=new Set(allMemberSchedules.filter(function(row){return String(row.memberId)===String(memberId)&&row.day===day&&row.id!==ownId;}).flatMap(function(row){return row.slots||[];}));
+    if(repeatDate)(window.allHolidayLeavesShared||[]).filter(function(row){return String(row.memberId)===String(memberId)&&row.date===repeatDate;}).forEach(function(row){(row.slots||[]).forEach(slot=>busy.add(slot));});
     const box=memberScheduleField(prefix,'TimeSlots'); if(!box)return;
     box.querySelectorAll('.ms-range-start option,.ms-range-end option').forEach(function(option){option.disabled=busy.has(option.value);});
 };
@@ -177,6 +179,7 @@ window.loadMemberSchedules=async function(){const data=await memberScheduleApi('
 async function saveMemberScheduleRequest(data,id){const result=await memberScheduleApi('/academy/admin/member-schedules'+(id?'/'+id+'/update':''),data);await window.loadMemberSchedules();memberScheduleRealtimeChannel?.postMessage({resource:'member_schedules',version:Date.now()});return result;}
 async function pollMemberSchedules(){if(memberScheduleRealtimeBusy||document.hidden||!document.getElementById('memberSchedulesTable'))return;memberScheduleRealtimeBusy=true;try{const data=await memberScheduleApi('/academy/admin/member-schedules');if(memberScheduleRealtimeVersion!==null&&data.version!==memberScheduleRealtimeVersion){window.staffCatalog=data.staff_catalog||window.staffCatalog;allStaff=(data.members||[]).filter(x=>x.type!=='student');allMemberSchedules=data.schedules||[];filteredMemberSchedules=allMemberSchedules.slice();editingMemberScheduleRowId=null;window.filterMemberSchedules();}memberScheduleRealtimeVersion=data.version;}catch(e){}finally{memberScheduleRealtimeBusy=false;}}
 setInterval(pollMemberSchedules,5000);memberScheduleRealtimeChannel?.addEventListener('message',function(e){if(e.data?.resource==='member_schedules')window.loadMemberSchedules();});
+window.addEventListener('sornaz:data-changed',function(event){if(event.detail?.resource==='availability_exceptions')document.querySelectorAll('[id$="TimeSlots"]').forEach(function(box){if(!box.querySelector('.ms-range'))return;const prefix=box.id.slice(0,-9);window.refreshMemberScheduleConflicts(prefix==='ms'?'':prefix);});});
 
 let currentMemberScheduleBranch = 'all';
 let memberSchedulesCurrentPage = 1;
@@ -395,6 +398,7 @@ window.openAddMemberScheduleModal = async function () {
     document.getElementById('modalContainer').innerHTML = window.getMemberScheduleAddModalHTML
         ? window.getMemberScheduleAddModalHTML() : '';
     window.refreshMemberScheduleRepeatFields('');
+    window.initLocalizedDateInputs?.(document.getElementById('modalContainer'));
     window.refreshMemberScheduleMembers('');
 };
 
@@ -425,6 +429,8 @@ window.editMemberSchedule = async function (id) {
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getMemberScheduleEditModalHTML
         ? window.getMemberScheduleEditModalHTML(item) : '';
+    window.refreshMemberScheduleRepeatFields('editMs');
+    window.initLocalizedDateInputs?.(document.getElementById('modalContainer'));
 };
 
 window.saveEditedMemberSchedule = async function (id) {

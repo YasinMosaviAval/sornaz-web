@@ -38,6 +38,11 @@ class AcademyBranchController {
     public function updateMemberSchedule(int$id){return $this->run(fn()=>$this->service->saveMemberSchedule((int)auth()->id(),$this->payload(),$id,SiteAdminAccess::allows(auth()->user())));}
     public function deleteMemberSchedule(int$id){return $this->run(function()use($id){$this->service->deleteMemberSchedule((int)auth()->id(),$id,SiteAdminAccess::allows(auth()->user()));return null;});}
     public function cycleMemberScheduleStatus(int$id){return $this->run(fn()=>$this->service->cycleMemberScheduleStatus((int)auth()->id(),$id,SiteAdminAccess::allows(auth()->user())));}
+    public function availabilityExceptions(){return $this->run(fn()=>$this->service->availabilityExceptions((int)auth()->id(),SiteAdminAccess::allows(auth()->user())));}
+    public function storeAvailabilityException(){return $this->run(fn()=>$this->service->saveAvailabilityException((int)auth()->id(),$this->payload(),0,SiteAdminAccess::allows(auth()->user())),201);}
+    public function updateAvailabilityException(int$id){return $this->run(fn()=>$this->service->saveAvailabilityException((int)auth()->id(),$this->payload(),$id,SiteAdminAccess::allows(auth()->user())));}
+    public function deleteAvailabilityException(int$id){return $this->run(function()use($id){$this->service->deleteAvailabilityException((int)auth()->id(),$id,SiteAdminAccess::allows(auth()->user()));return null;});}
+    public function cycleAvailabilityExceptionStatus(int$id){return $this->run(fn()=>$this->service->cycleAvailabilityExceptionStatus((int)auth()->id(),$id,SiteAdminAccess::allows(auth()->user())));}
 
 
     public function store() { 

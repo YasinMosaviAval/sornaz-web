@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
     <link rel="stylesheet" href="/assets/vendor/sweetalert2/sweetalert2.min.css">
+    <link rel="stylesheet" href="/assets/vendor/jalalidatepicker/jalalidatepicker.min.css">
     <script src="/assets/vendor/sweetalert2/sweetalert2.all.min.js"></script>
     <link rel="stylesheet" href="/assets/theme/theme.css?v=<?= filemtime(base_path('assets/theme/theme.css')) ?: 1 ?>">
     <style>
@@ -56,6 +57,9 @@
     <script src="/assets/theme/dialog.js?v=<?= filemtime(base_path('assets/theme/dialog.js')) ?: 1 ?>"></script>
     <script src="/assets/Analytics/js/admin-inline-editor.js?v=<?= filemtime(base_path('assets/Analytics/js/admin-inline-editor.js')) ?: 1 ?>"></script>
     <?= scripts() ?>
+    <script src="/assets/vendor/jalalidatepicker/jalalidatepicker.min.js?v=<?= filemtime(base_path('assets/vendor/jalalidatepicker/jalalidatepicker.min.js')) ?: 1 ?>"></script>
+    <script src="/assets/theme/localized-date.js?v=<?= filemtime(base_path('assets/theme/localized-date.js')) ?: 1 ?>"></script>
+    <script>window.initLocalizedDateInputs?.(document);</script>
     <script src="/assets/Page/js/page-content-editor.js?v=<?= filemtime(base_path('assets/Page/js/page-content-editor.js')) ?: 1 ?>"></script>
     <script src="/assets/theme/theme.js?v=<?= filemtime(base_path('assets/theme/theme.js')) ?: 1 ?>"></script>
     <script src="/assets/theme/help-center.js?v=<?= filemtime(base_path('assets/theme/help-center.js')) ?: 1 ?>"></script>

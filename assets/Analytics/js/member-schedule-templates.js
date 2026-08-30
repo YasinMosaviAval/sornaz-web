@@ -79,7 +79,7 @@
                 </div>
                 <div id="${id('RepeatDateWrap')}" class="${repeatVal === 'هفتگی' ? 'hidden' : ''}">
                     <label class="block text-sm font-medium mb-2">اولین تاریخ *</label>
-                    <input id="${id('RepeatDate')}" type="date" value="${escapeHtml(item.repeatDate || '')}"
+                    <input id="${id('RepeatDate')}" type="date" value="${escapeHtml(item.repeatDate || '')}" onchange="window.refreshMemberScheduleConflicts('${prefix}')"
                            class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                 </div>
                 <div class="hidden">

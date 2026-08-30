@@ -10,6 +10,7 @@
     <script src="/assets/vendor/tailwind/tailwindcss.js"></script>
     <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="/assets/vendor/sweetalert2/sweetalert2.min.css">
+    <link rel="stylesheet" href="/assets/vendor/jalalidatepicker/jalalidatepicker.min.css">
     <link rel="stylesheet" href="/assets/theme/theme.css?v=<?= filemtime(base_path('assets/theme/theme.css')) ?: 1 ?>">
     <script src="/assets/vendor/sweetalert2/sweetalert2.all.min.js"></script>
     <style>
@@ -75,6 +76,10 @@
     <script src="/assets/theme/dialog.js?v=<?= filemtime(base_path('assets/theme/dialog.js')) ?: 1 ?>"></script>
     <script src="/assets/Analytics/js/admin-inline-editor.js?v=<?= filemtime(base_path('assets/Analytics/js/admin-inline-editor.js')) ?: 1 ?>"></script>
     <?= scripts() ?>
+    <script src="/assets/vendor/jalalidatepicker/jalalidatepicker.min.js?v=<?= filemtime(base_path('assets/vendor/jalalidatepicker/jalalidatepicker.min.js')) ?: 1 ?>"></script>
+    <script>
+        window.jalaliDatepicker?.startWatch({selector:'input[data-jdp]',autoShow:true,persianDigits:true});
+    </script>
     <script src="/assets/System/js/auth.js?v=<?= filemtime(base_path('assets/System/js/auth.js')) ?: 1 ?>"></script>
     <script src="/assets/Page/js/page-content-editor.js?v=<?= filemtime(base_path('assets/Page/js/page-content-editor.js')) ?: 1 ?>"></script>
     <script src="/assets/theme/theme.js?v=<?= filemtime(base_path('assets/theme/theme.js')) ?: 1 ?>"></script>
