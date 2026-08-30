@@ -27,10 +27,16 @@
 
     function statusClass(status) {
         return {
+            'در انتظار': 'bg-yellow-100 text-yellow-700',
             'منتشر شده': 'bg-green-100 text-green-700',
             'پیش‌نویس': 'bg-gray-100 text-gray-600',
-            'منقضی': 'bg-slate-200 text-slate-600'
+            'خصوصی': 'bg-purple-100 text-purple-700',
+            'زباله‌دان': 'bg-slate-200 text-slate-600'
         }[status] || 'bg-gray-100 text-gray-600';
+    }
+
+    function readStatusClass(status) {
+        return status === 'خوانده‌شده' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
     }
 
     window.getNotificationRowHTML = function (item) {
@@ -42,6 +48,7 @@
             <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${priorityClass(item.priority)}">${escapeHtml(item.priority)}</span></td>
             <td class="py-4 px-5">${escapeHtml(item.date)}</td>
             <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td>
+            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${readStatusClass(item.readStatus)}">${escapeHtml(item.readStatus)}</span></td>
             <td class="py-4 px-5 text-left">
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
                     <button onclick="viewNotification(${item.id})" class="text-indigo-600 hover:underline text-sm">مشاهده</button>
@@ -51,14 +58,10 @@
     };
 
     window.getNotificationEmptyRowHTML = function () {
-        return '<tr><td colspan="8" class="py-12 text-center text-gray-400">اعلانی یافت نشد</td></tr>';
+        return '<tr><td colspan="9" class="py-12 text-center text-gray-400">اعلانی یافت نشد</td></tr>';
     };
 
     window.getNotificationAddModalHTML = function () {
-        const branches = (typeof window.getNotificationBranches === 'function' ? window.getNotificationBranches() : []).map(function (b) {
-            return { value: b.id, label: b.name };
-        });
-        const priorities = (window.notificationPrioritiesList || []).map(function (p) { return { value: p, label: p }; });
         const audiences = (window.notificationAudiencesList || []).map(function (a) { return { value: a, label: a }; });
 
         return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
@@ -69,28 +72,14 @@
                 </div>
                 <div class="p-8 space-y-5">
                     <div>
+                        <label class="block text-sm font-medium mb-2">مخاطب</label>
+                        <select id="notifAudience" class="${fieldClass}">
+                            ${renderOptions(audiences, 'همه')}
+                        </select>
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium mb-2">عنوان اعلان *</label>
                         <input id="notifTitle" type="text" class="${fieldClass}" placeholder="عنوان کوتاه و واضح">
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div>
-                            <label class="block text-sm font-medium mb-2">شعبه *</label>
-                            <select id="notifBranch" class="${fieldClass}">
-                                ${renderOptions(branches)}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">مخاطب</label>
-                            <select id="notifAudience" class="${fieldClass}">
-                                ${renderOptions(audiences, 'همه')}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">اولویت</label>
-                            <select id="notifPriority" class="${fieldClass}">
-                                ${renderOptions(priorities, 'متوسط')}
-                            </select>
-                        </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-2">متن اعلان *</label>
@@ -113,6 +102,7 @@
                     <div class="min-w-0">
                         <div class="flex flex-wrap items-center gap-2 mb-1">
                             <span class="px-2.5 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span>
+                            <span class="px-2.5 py-1 rounded-full text-xs ${readStatusClass(item.readStatus)}">${escapeHtml(item.readStatus)}</span>
                             <span class="px-2.5 py-1 rounded-full text-xs ${priorityClass(item.priority)}">${escapeHtml(item.priority)}</span>
                             <span class="px-2.5 py-1 rounded-full text-xs bg-slate-100 text-slate-600">${escapeHtml(item.audience || 'همه')}</span>
                             <span class="px-2.5 py-1 rounded-full text-xs bg-indigo-50 text-indigo-700">${escapeHtml(item.source || 'سیستم')}</span>
@@ -130,6 +120,7 @@
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">منبع</span><span class="font-medium">${escapeHtml(item.source || 'سیستم')}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">تاریخ انتشار</span><span class="font-medium">${escapeHtml(item.date)}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">وضعیت</span><span class="font-medium">${escapeHtml(item.status)}</span></div>
+                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">وضعیت مطالعه</span><span class="font-medium">${escapeHtml(item.readStatus)}</span></div>
                     </div>
                     <div>
                         <h3 class="font-semibold text-indigo-700 mb-3 flex items-center gap-2"><i class="fas fa-bell"></i> متن اعلان</h3>
