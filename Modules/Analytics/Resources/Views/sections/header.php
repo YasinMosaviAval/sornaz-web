@@ -18,9 +18,11 @@ $headerHasMessageAccess=$headerHasMessageAccess||$headerHasAcademyAccess;
             <? component('inline-edit-switch'); ?>
             <? component('language-switcher'); ?>
             <? component('theme-switcher'); ?>
-            <?php if($headerHasAcademyAccess): ?>
-            <button onclick="showSection('points')" class="relative p-1.5 hidden md:block">
+            <?php if($headerPanelUser): ?>
+            <?php $headerPointStmt=db()->prepare('SELECT COALESCE(SUM(points),0) FROM user_points WHERE user_id=? AND deleted_at IS NULL AND approved_at IS NOT NULL');$headerPointStmt->execute([(int)$headerPanelUser['user_id']]);$headerPointBalance=(int)$headerPointStmt->fetchColumn(); ?>
+            <button onclick="showSection('points')" title="امتیازهای من" class="relative p-1.5 hidden md:flex items-center gap-1">
                 <i class="fas fa-coins text-xl md:text-2xl text-gray-600"></i>
+                <span id="headerPointBalance" class="text-xs font-bold text-amber-600"><?= number_format($headerPointBalance) ?></span>
             </button>
             <?php endif; ?>
             <?php if($headerHasMessageAccess): ?>

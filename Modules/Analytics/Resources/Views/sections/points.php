@@ -8,9 +8,17 @@
             <h1 class="text-3xl font-bold">سیستم امتیازها</h1>
             <p class="text-gray-500 mt-1">تعریف و مدیریت قوانین امتیازدهی عمومی، تخصصی و اختصاصی</p>
         </div>
+        <?php if (\Modules\System\Services\SiteAdminAccess::allows(auth()->user())): ?>
         <button onclick="openAddPointModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
             <i class="fas fa-plus"></i> افزودن قانون امتیاز
         </button>
+        <?php endif; ?>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="rounded-3xl bg-gradient-to-l from-amber-400 to-yellow-500 p-5 text-white shadow"><p class="text-sm opacity-90">امتیاز عمومی من</p><strong id="pointGeneralBalance" class="block mt-2 text-3xl">۰</strong></div>
+        <div class="rounded-3xl bg-gradient-to-l from-violet-600 to-indigo-600 p-5 text-white shadow"><p class="text-sm opacity-90">امتیاز حرفه‌ای من</p><strong id="pointProfessionalBalance" class="block mt-2 text-3xl">۰</strong></div>
+        <div class="rounded-3xl bg-white p-5 shadow"><p class="text-sm text-gray-500">قوانین فعال</p><strong id="pointActiveRules" class="block mt-2 text-3xl text-gray-800">۰</strong><p class="mt-1 text-xs text-gray-400">اعمال خودکار با سقف و کنترل تکرار</p></div>
     </div>
 
     <!-- تاپ‌بار شعبه‌ها -->
@@ -47,6 +55,8 @@
                 <option value="financial">مالی</option>
                 <option value="profile">پروفایل</option>
                 <option value="achievement">دستاورد</option>
+                <option value="engagement">تعامل</option>
+                <option value="management">مدیریت</option>
             </select>
             <select id="filterPointStatus" onchange="filterPoints()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
@@ -76,13 +86,13 @@
                             <button onclick="sortPointsBy('points')" class="flex items-center gap-1">امتیاز <span id="pointSortIcon-points">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortPointsBy('action')" class="flex items-center gap-1">عملیات <span id="pointSortIcon-action">↕</span></button>
+                            <button onclick="sortPointsBy('source')" class="flex items-center gap-1">منبع / عملیات <span id="pointSortIcon-source">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortPointsBy('branchName')" class="flex items-center gap-1">شعبه <span id="pointSortIcon-branchName">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortPointsBy('status')" class="flex items-center gap-1">وضعیت <span id="pointSortIcon-status">↕</span></button>
+                            کنترل تکرار / وضعیت
                         </th>
                         <th class="w-40 py-5 px-5"></th>
                     </tr>

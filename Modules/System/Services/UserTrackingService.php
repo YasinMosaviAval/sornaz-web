@@ -28,6 +28,7 @@ final class UserTrackingService
             $claim->execute([$batchUuid,$sessionId,$pageViewId]);
             if($claim->rowCount()===0){if($owns)$pdo->commit();return ['visitId'=>$sessionId,'pageViewId'=>$pageViewId,'acceptedEvents'=>0,'duplicate'=>true];}
             $events = $this->insertEvents($pdo, $userId, $sessionId, $pageViewId, $payload['events'] ?? []);
+            \Modules\Analytics\Services\UserPointService::recordTrackingEvents($pdo, $userId, is_array($payload['events'] ?? null) ? $payload['events'] : [], $pageViewId);
             $this->upsertEngagements($pdo, $userId, $sessionId, $pageViewId, $payload['sections'] ?? []);
             $this->insertIntervals($pdo, $userId, $sessionId, $pageViewId, $payload['intervals'] ?? []);
             if ($events) {

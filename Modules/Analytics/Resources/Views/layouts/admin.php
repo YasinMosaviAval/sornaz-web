@@ -40,6 +40,7 @@
     pushScript('admin-runtime.js');
     pushScript('dashboard-templates.js');
     pushScript('dashboard.js');
+    pushScript('tracking.js');
     pushScript('account-templates.js');
     pushScript('account.js');
     pushScript('report-templates.js');
