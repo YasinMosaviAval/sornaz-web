@@ -89,7 +89,7 @@ class AcademyCourseService
                     if(!in_array($day,['saturday','sunday','monday','tuesday','wednesday','thursday','friday'],true))throw new RuntimeException('روز بازه زمانی هنرجو معتبر نیست.');
                     if(!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/',$start)||!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/',$end)||$end<=$start)throw new RuntimeException('ساعت شروع و پایان بازه زمانی هنرجو معتبر نیست.');
                     if(!$timezoneId||!DB::table('f_timezone')->where('timezone_id',$timezoneId)->whereNull('deleted_at')->first())throw new RuntimeException('منطقه زمانی بازه هنرجو معتبر نیست.');
-                    $availabilityId=DB::table('user_availabilities')->insertGetId(['user_id'=>$userId,'day_of_week'=>$day,'start_time'=>$start,'end_time'=>$end,'timezone_id'=>$timezoneId,'type'=>'available','is_repeating'=>1,'repeat_period'=>'week','is_closed'=>0,'priority'=>$i+1,'created_at'=>$now,'created_by'=>$actor,'updated_at'=>$now,'updated_by'=>$actor]+$approval);
+                    $availabilityId=DB::table('user_availabilities')->insertGetId(['user_id'=>$userId,'day_of_week'=>$day,'start_time'=>$start,'end_time'=>$end,'timezone_id'=>$timezoneId,'status'=>'available','unavailable_type'=>null,'is_repeating'=>1,'repeat_period'=>'week','is_closed'=>0,'priority'=>$i+1,'created_at'=>$now,'created_by'=>$actor,'updated_at'=>$now,'updated_by'=>$actor]+$approval);
                     $this->setTranslations('user_availabilities',$availabilityId,['summary'=>trim((string)($d['availabilitySummary']??'')),'description'=>trim((string)($d['availabilityDescription']??''))],$actor);
                 }
                 $savedAvailabilityCount=DB::table('user_availabilities')->where('user_id',$userId)->whereNull('deleted_at')->count();

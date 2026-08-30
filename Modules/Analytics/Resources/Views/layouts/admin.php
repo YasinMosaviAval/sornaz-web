@@ -8,6 +8,7 @@
     <script src="/assets/vendor/tailwind/tailwindcss.js"></script>
     <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
+    <link rel="stylesheet" href="/assets/vendor/jalalidatepicker/jalalidatepicker.min.css">
     <link rel="stylesheet" href="/assets/theme/theme.css?v=<?= filemtime(base_path('assets/theme/theme.css')) ?: 1 ?>">
     <style>
         body { font-family: Vazirmatn, Tahoma, sans-serif; }
@@ -132,6 +133,9 @@
     <script src="/assets/Analytics/js/charts.js?v=<?= filemtime(base_path('assets/Analytics/js/charts.js')) ?: 1 ?>"></script>
     <script src="/assets/Academy/js/academy-registration.js?v=<?= filemtime(base_path('assets/Academy/js/academy-registration.js')) ?: 1 ?>"></script>
     <?=scripts()?>
+    <script src="/assets/vendor/jalalidatepicker/jalalidatepicker.min.js?v=<?= filemtime(base_path('assets/vendor/jalalidatepicker/jalalidatepicker.min.js')) ?: 1 ?>"></script>
+    <script src="/assets/theme/localized-date.js?v=<?= filemtime(base_path('assets/theme/localized-date.js')) ?: 1 ?>"></script>
+    <script>window.initLocalizedDateInputs?.(document);</script>
     <script src="/assets/theme/theme.js?v=<?= filemtime(base_path('assets/theme/theme.js')) ?: 1 ?>"></script>
     <script src="/assets/theme/help-center.js?v=<?= filemtime(base_path('assets/theme/help-center.js')) ?: 1 ?>"></script>
 </body>

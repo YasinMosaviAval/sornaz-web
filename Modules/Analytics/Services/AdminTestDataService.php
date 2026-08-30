@@ -77,7 +77,7 @@ class AdminTestDataService {
         $users=DB::table('users')->whereRaw("username LIKE '".self::USERNAME_PREFIX."%'")->get();$userIds=array_map(fn(array $u)=>(int)$u['user_id'],$users);
         if(!$userIds)return;
         $targets=['users'=>$userIds];
-        foreach(['user_addresses'=>'address_id','user_contacts'=>'user_contact_id','user_instruments'=>'user_instrument_id','user_lessons'=>'user_lesson_id','user_availabilities'=>'user_availability_id','user_availability_exceptions'=>'user_availability_exception_id'] as $table=>$key){$rows=DB::table($table)->whereIn('user_id',$userIds)->get();$targets[$table]=array_map(fn(array $r)=>(int)$r[$key],$rows);}
+        foreach(['user_addresses'=>'address_id','user_contacts'=>'user_contact_id','user_instruments'=>'user_instrument_id','user_lessons'=>'user_lesson_id','user_availabilities'=>'user_availability_id'] as $table=>$key){$rows=DB::table($table)->whereIn('user_id',$userIds)->get();$targets[$table]=array_map(fn(array $r)=>(int)$r[$key],$rows);}
         foreach($targets as $table=>$ids){if(!$ids)continue;$rows=DB::table('translations')->where('table_name',$table)->whereIn('table_id',$ids)->where('locale','fa')->whereNull('deleted_at')->get();foreach($rows as $row)$this->setTranslation($table,(int)$row['table_id'],(int)($row['created_by']?:1),(string)$row['field'],$this->englishTestValue($table,(string)$row['field'],(string)$row['value']),(string)$row['created_at'],(string)$row['updated_at'],'en');}
         foreach(['instruments'=>'instrument_id','lessons'=>'lesson_id','levels'=>'level_id'] as $table=>$key){$rows=DB::table($table)->whereNull('deleted_at')->get();$ids=array_map(fn(array $r)=>(int)$r[$key],$rows);if(!$ids)continue;foreach(DB::table('translations')->where('table_name',$table)->whereIn('table_id',$ids)->where('locale','fa')->whereNull('deleted_at')->get() as $row)$this->setTranslation($table,(int)$row['table_id'],1,(string)$row['field'],$this->englishTestValue($table,(string)$row['field'],(string)$row['value']),(string)$row['created_at'],(string)$row['updated_at'],'en');}
     }
@@ -90,7 +90,7 @@ class AdminTestDataService {
         $titles=['تار'=>'Tar','سه‌تار'=>'Setar','سنتور'=>'Santur','پیانو'=>'Piano','ویولن'=>'Violin','نی'=>'Ney','دف'=>'Daf','تنبک'=>'Tombak','هارمونی'=>'Harmony','سلفژ'=>'Solfège','تئوری موسیقی'=>'Music Theory','خیلی تازه‌کار'=>'Absolute Beginner','تازه‌کار'=>'Beginner','مقدماتی'=>'Elementary','پایه'=>'Foundation','متوسط'=>'Intermediate','متوسط رو به بالا'=>'Upper Intermediate','نیمه‌پیشرفته'=>'Pre-advanced','پیشرفته'=>'Advanced','حرفه‌ای'=>'Professional'];
         if($field==='title'&&isset($titles[$value]))return $titles[$value];
         if($field==='title')return 'Music course or instrument: '.substr(hash('sha1',$value),0,8);
-        if($field==='summary')return match($table){'levels'=>'A concise description of this learning level.','user_availabilities'=>'Recurring or date-specific availability for this member.','user_availability_exceptions'=>'A scheduled leave, holiday, or availability exception.','user_instruments'=>'A concise summary of the member’s experience with this instrument.','user_lessons'=>'A concise summary of the member’s experience in this lesson.',default=>'Concise English information for this record.'};
+        if($field==='summary')return match($table){'levels'=>'A concise description of this learning level.','user_availabilities'=>'Recurring availability, leave, holiday, or date-specific exception.','user_instruments'=>'A concise summary of the member’s experience with this instrument.','user_lessons'=>'A concise summary of the member’s experience in this lesson.',default=>'Concise English information for this record.'};
         if($field==='description')return 'Detailed English description for this music education record, including its background, purpose, and relevant experience.';
         if($field==='address')return 'Sample registered address for the academy manager in Iran.';
         if($field==='note')return 'Additional sample notes for this record.';
@@ -140,8 +140,8 @@ class AdminTestDataService {
             'instruments' => $userIds ? DB::table('user_instruments')->whereIn('user_id', $userIds)->count() : 0,
             'lessons' => $userIds ? DB::table('user_lessons')->whereIn('user_id', $userIds)->count() : 0,
             'media' => $userIds ? DB::table('media_files')->whereIn('user_id', $userIds)->count() : 0,
-            'availabilities' => $userIds ? DB::table('user_availabilities')->whereIn('user_id', $userIds)->whereNull('deleted_at')->count() : 0,
-            'exceptions' => $userIds ? DB::table('user_availability_exceptions')->whereIn('user_id', $userIds)->whereNull('deleted_at')->count() : 0,
+            'availabilities' => $userIds ? DB::table('user_availabilities')->whereIn('user_id', $userIds)->whereNull('unavailable_type')->whereNull('deleted_at')->count() : 0,
+            'exceptions' => $userIds ? DB::table('user_availabilities')->whereIn('user_id', $userIds)->whereNotNull('unavailable_type')->whereNull('deleted_at')->count() : 0,
             'catalog_instruments' => DB::table('instruments')->whereNull('deleted_at')->count(),
             'catalog_lessons' => DB::table('lessons')->whereNull('deleted_at')->count(),
             'levels' => DB::table('levels')->whereNull('deleted_at')->count(),
@@ -196,8 +196,8 @@ class AdminTestDataService {
         $timezoneRows=DB::table('f_timezone')->whereNull('deleted_at')->get();$timezones=[];foreach($timezoneRows as $timezoneRow)$timezones[(int)$timezoneRow['timezone_id']]=$timezoneRow['timezone'];
         $schedules=[];$exceptions=[];
         foreach($users as $user){$uid=(int)$user['user_id'];
-            foreach(DB::table('user_availabilities')->where('user_id',$uid)->whereNull('deleted_at')->get() as $row){$id=(int)$row['user_availability_id'];$schedules[]=['id'=>$id,'memberId'=>$uid,'name'=>$names[$uid],'role'=>'مدیر','day'=>$row['date']?:($days[$row['day_of_week']]??'—'),'timeLabel'=>substr((string)$row['start_time'],0,5).'-'.substr((string)$row['end_time'],0,5),'time'=>substr((string)$row['start_time'],0,5).'-'.substr((string)$row['end_time'],0,5),'branchId'=>0,'branchName'=>'محل ثبت‌شده کاربر','status'=>$status[$row['type']]??'فعال','repeatPeriod'=>$repeat[$row['repeat_period']]??'هفتگی','repeatDate'=>$row['date']?:'','timezone'=>$timezones[(int)($row['timezone_id']??0)]??'Asia/Tehran','summary'=>$this->translatedValue('user_availabilities',$id,'summary'),'description'=>$this->translatedValue('user_availabilities',$id,'description')];}
-            foreach(DB::table('user_availability_exceptions')->where('user_id',$uid)->whereNull('deleted_at')->get() as $row){$id=(int)$row['user_availability_exception_id'];$typeLabels=['holiday'=>'تعطیل رسمی','closed'=>'تعطیل','unavailable'=>'مرخصی','busy'=>'ماموریت','vacation'=>'مرخصی','blocked'=>'عدم حضور'];$label=$row['start_time']?substr((string)$row['start_time'],0,5).'-'.substr((string)$row['end_time'],0,5):'تمام‌روز';$exceptions[]=['id'=>$id,'memberId'=>$uid,'name'=>$names[$uid],'date'=>$row['date'],'timeLabel'=>$label,'time'=>$label,'branchId'=>0,'branchName'=>'محل ثبت‌شده کاربر','status'=>'فعال','type'=>$row['type'],'typeLabel'=>$typeLabels[$row['type']]??'عدم حضور','timezone'=>'Asia/Tehran','summary'=>$this->translatedValue('user_availability_exceptions',$id,'summary'),'description'=>$this->translatedValue('user_availability_exceptions',$id,'description')];}
+            foreach(DB::table('user_availabilities')->where('user_id',$uid)->whereNull('unavailable_type')->whereNull('deleted_at')->get() as $row){$id=(int)$row['user_availability_id'];$schedules[]=['id'=>$id,'memberId'=>$uid,'name'=>$names[$uid],'role'=>'مدیر','day'=>$row['date']?:($days[$row['day_of_week']]??'—'),'timeLabel'=>substr((string)$row['start_time'],0,5).'-'.substr((string)$row['end_time'],0,5),'time'=>substr((string)$row['start_time'],0,5).'-'.substr((string)$row['end_time'],0,5),'branchId'=>0,'branchName'=>'محل ثبت‌شده کاربر','status'=>$status[$row['status']]??'فعال','repeatPeriod'=>$repeat[$row['repeat_period']]??'هفتگی','repeatDate'=>$row['date']?:'','timezone'=>$timezones[(int)($row['timezone_id']??0)]??'Asia/Tehran','summary'=>$this->translatedValue('user_availabilities',$id,'summary'),'description'=>$this->translatedValue('user_availabilities',$id,'description')];}
+            foreach(DB::table('user_availabilities')->where('user_id',$uid)->whereNotNull('unavailable_type')->whereNull('deleted_at')->get() as $row){$id=(int)$row['user_availability_id'];$typeLabels=['holiday'=>'تعطیل رسمی','closed'=>'تعطیل','unavailable'=>'مرخصی','busy'=>'ماموریت','vacation'=>'مرخصی','blocked'=>'عدم حضور'];$label=$row['start_time']?substr((string)$row['start_time'],0,5).'-'.substr((string)$row['end_time'],0,5):'تمام‌روز';$exceptions[]=['id'=>$id,'memberId'=>$uid,'name'=>$names[$uid],'date'=>$row['date'],'timeLabel'=>$label,'time'=>$label,'branchId'=>0,'branchName'=>'محل ثبت‌شده کاربر','status'=>$status[$row['status']]??'غیرفعال','type'=>$row['unavailable_type'],'typeLabel'=>$typeLabels[$row['unavailable_type']]??'عدم حضور','timezone'=>$timezones[(int)($row['timezone_id']??0)]??'Asia/Tehran','summary'=>$this->translatedValue('user_availabilities',$id,'summary'),'description'=>$this->translatedValue('user_availabilities',$id,'description')];}
         }
         return ['schedules'=>$schedules,'exceptions'=>$exceptions];
     }
@@ -215,11 +215,11 @@ class AdminTestDataService {
 
     public function deleteAvailabilityException(int $id, int $actorId): array {
         return transaction(function() use($id,$actorId){
-            $row=DB::table('user_availability_exceptions')->where('user_availability_exception_id',$id)->whereNull('deleted_at')->first();
+            $row=DB::table('user_availabilities')->where('user_availability_id',$id)->whereNotNull('unavailable_type')->whereNull('deleted_at')->first();
             if(!$row)throw new RuntimeException('تعطیلی یا مرخصی موردنظر یافت نشد.');
             $now=date('Y-m-d H:i:s');
-            DB::table('translations')->where('table_name','user_availability_exceptions')->where('table_id',$id)->whereNull('deleted_at')->update(['deleted_at'=>$now,'deleted_by'=>$actorId,'updated_at'=>$now,'updated_by'=>$actorId]);
-            DB::table('user_availability_exceptions')->where('user_availability_exception_id',$id)->update(['deleted_at'=>$now,'deleted_by'=>$actorId,'updated_at'=>$now,'updated_by'=>$actorId]);
+            DB::table('translations')->where('table_name','user_availabilities')->where('table_id',$id)->whereNull('deleted_at')->update(['deleted_at'=>$now,'deleted_by'=>$actorId,'updated_at'=>$now,'updated_by'=>$actorId]);
+            DB::table('user_availabilities')->where('user_availability_id',$id)->update(['deleted_at'=>$now,'deleted_by'=>$actorId,'updated_at'=>$now,'updated_by'=>$actorId]);
             return ['success'=>true,'id'=>$id,'message'=>'تعطیلی یا مرخصی حذف شد.'];
         });
     }
@@ -252,7 +252,7 @@ class AdminTestDataService {
                     DB::table($table)->whereIn($key, $ids)->delete();
                 }
             }
-            foreach ([['user_availabilities', 'user_availability_id'], ['user_availability_exceptions', 'user_availability_exception_id']] as [$table, $key]) {
+            foreach ([['user_availabilities', 'user_availability_id']] as [$table, $key]) {
                 $rows=DB::table($table)->whereIn('user_id',$userIds)->get(); $ids=array_map(fn(array $row)=>(int)$row[$key],$rows);
                 if($ids){DB::table('translations')->where('table_name',$table)->whereIn('table_id',$ids)->delete();DB::table($table)->whereIn($key,$ids)->delete();}
             }
@@ -322,21 +322,21 @@ class AdminTestDataService {
                 $locationId=$locationIds ? $locationIds[($dayIndex+$partIndex)%count($locationIds)] : 0;
                 $location=$locationId ? $this->translatedValue('user_addresses',$locationId,'address') : 'محل فعالیت کاربر';
                 $this->syncAvailabilityRow($userId,$registeredAt,['date'=>null,'day_of_week'=>$day,'start_time'=>$range[0].':00','end_time'=>$range[1].':00',
-                    'timezone_id'=>1,'type'=>'available','is_repeating'=>1,'repeat_period'=>'week','is_closed'=>0,'priority'=>$partIndex+1],
+                    'timezone_id'=>1,'status'=>'available','unavailable_type'=>null,'is_repeating'=>1,'repeat_period'=>'week','is_closed'=>0,'priority'=>$partIndex+1],
                     'حضور هفتگی در ' . $dayLabels[$dayIndex] . ' از ' . $range[0] . ' تا ' . $range[1],
                     'بازه حضور دوره‌ای کاربر در ' . $location . '؛ فاصله میان این بازه و بازه بعدی زمان استراحت یا جابه‌جایی است.');
             }
         }
         $specificDate=sprintf('2026-%02d-%02d',9+($userIndex%3),1+(($userIndex*3)%27));
         $this->syncAvailabilityRow($userId,$registeredAt,['date'=>$specificDate,'day_of_week'=>null,'start_time'=>'16:00:00','end_time'=>'19:00:00',
-            'timezone_id'=>1,'type'=>'available','is_repeating'=>0,'repeat_period'=>'none','is_closed'=>0,'priority'=>1],
+            'timezone_id'=>1,'status'=>'available','unavailable_type'=>null,'is_repeating'=>0,'repeat_period'=>'none','is_closed'=>0,'priority'=>1],
             'حضور ویژه در تاریخ ' . $specificDate,'حضور غیرتکراری کاربر برای جلسه، ارزیابی یا برنامه ویژه در تاریخ مشخص‌شده.');
 
         $exceptionCount=$this->fixtureCount($userIndex,$options['exceptions_min']??2,$options['exceptions_max']??4);for($i=0;$i<$exceptionCount;$i++){
             $date=sprintf('2026-%02d-%02d',9+(($userIndex+$i)%3),1+(($userIndex*5+$i*7)%27));
             $types=['vacation','unavailable','busy','holiday']; $type=$types[($userIndex+$i)%count($types)];
             $allDay=$i===0; $values=['date'=>$date,'start_time'=>$allDay?null:sprintf('%02d:00:00',10+(($userIndex+$i)%6)),
-                'end_time'=>$allDay?null:sprintf('%02d:00:00',13+(($userIndex+$i)%6)),'type'=>$type];
+                'end_time'=>$allDay?null:sprintf('%02d:00:00',13+(($userIndex+$i)%6)),'unavailable_type'=>$type];
             $this->syncAvailabilityExceptionRow($userId,$registeredAt,$values,
                 ($allDay?'عدم حضور تمام‌روز':'عدم حضور ساعتی') . ' در تاریخ ' . $date,
                 'این استثنا بر برنامه هفتگی مقدم است و برای مرخصی، تعطیلی یا مشغله کاربر در تاریخ مشخص ثبت شده است.');
@@ -350,7 +350,7 @@ class AdminTestDataService {
     }
 
     private function syncAvailabilityRow(int $userId,string $createdAt,array $values,string $summary,string $description): void {
-        $query=DB::table('user_availabilities')->where('user_id',$userId)->where('start_time',$values['start_time'])->where('end_time',$values['end_time']);
+        $query=DB::table('user_availabilities')->where('user_id',$userId)->whereNull('unavailable_type')->where('start_time',$values['start_time'])->where('end_time',$values['end_time']);
         $query=$values['date']===null?$query->whereNull('date')->where('day_of_week',$values['day_of_week']):$query->where('date',$values['date']);
         $row=$query->first(); $base=$values+['created_at'=>$createdAt,'created_by'=>$userId,'updated_at'=>$createdAt,'updated_by'=>$userId,'deleted_at'=>null,'deleted_by'=>null];
         if($row){$id=(int)$row['user_availability_id'];DB::table('user_availabilities')->where('user_availability_id',$id)->update($base);}else{$id=DB::table('user_availabilities')->insertGetId(['user_id'=>$userId]+$base);}
@@ -359,12 +359,12 @@ class AdminTestDataService {
     }
 
     private function syncAvailabilityExceptionRow(int $userId,string $createdAt,array $values,string $summary,string $description): void {
-        $query=DB::table('user_availability_exceptions')->where('user_id',$userId)->where('date',$values['date']);
+        $query=DB::table('user_availabilities')->where('user_id',$userId)->whereNotNull('unavailable_type')->where('date',$values['date']);
         $query=$values['start_time']===null?$query->whereNull('start_time'):$query->where('start_time',$values['start_time']); $row=$query->first();
-        $base=$values+['created_at'=>$createdAt,'created_by'=>$userId,'updated_at'=>$createdAt,'updated_by'=>$userId,'deleted_at'=>null,'deleted_by'=>null];
-        if($row){$id=(int)$row['user_availability_exception_id'];DB::table('user_availability_exceptions')->where('user_availability_exception_id',$id)->update($base);}else{$id=DB::table('user_availability_exceptions')->insertGetId(['user_id'=>$userId]+$base);}
+        $base=$values+['day_of_week'=>null,'timezone_id'=>1,'status'=>'unavailable','is_repeating'=>0,'repeat_period'=>'none','is_closed'=>1,'priority'=>1,'created_at'=>$createdAt,'created_by'=>$userId,'updated_at'=>$createdAt,'updated_by'=>$userId,'deleted_at'=>null,'deleted_by'=>null];
+        if($row){$id=(int)$row['user_availability_id'];DB::table('user_availabilities')->where('user_availability_id',$id)->update($base);}else{$id=DB::table('user_availabilities')->insertGetId(['user_id'=>$userId]+$base);}
         if(!$id)throw new RuntimeException('ثبت مرخصی آزمایشی ناموفق بود.');
-        $this->setTranslation('user_availability_exceptions',$id,$userId,'summary',$summary,$createdAt,$createdAt);$this->setTranslation('user_availability_exceptions',$id,$userId,'description',$description,$createdAt,$createdAt);
+        $this->setTranslation('user_availabilities',$id,$userId,'summary',$summary,$createdAt,$createdAt);$this->setTranslation('user_availabilities',$id,$userId,'description',$description,$createdAt,$createdAt);
     }
 
     private function translatedValue(string $table,int $id,string $field): string {

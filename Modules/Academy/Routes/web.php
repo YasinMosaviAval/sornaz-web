@@ -66,6 +66,11 @@ Router::post('/academy/admin/member-schedules', [AcademyBranchController::class,
 Router::post('/academy/admin/member-schedules/{id}/update', [AcademyBranchController::class, 'updateMemberSchedule'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/member-schedules/{id}/delete', [AcademyBranchController::class, 'deleteMemberSchedule'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/member-schedules/{id}/status', [AcademyBranchController::class, 'cycleMemberScheduleStatus'])->middleware(['academy-panel','csrf']);
+Router::get('/academy/admin/availability-exceptions', [AcademyBranchController::class, 'availabilityExceptions'])->middleware('academy-panel');
+Router::post('/academy/admin/availability-exceptions', [AcademyBranchController::class, 'storeAvailabilityException'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/availability-exceptions/{id}/update', [AcademyBranchController::class, 'updateAvailabilityException'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/availability-exceptions/{id}/delete', [AcademyBranchController::class, 'deleteAvailabilityException'])->middleware(['academy-panel','csrf']);
+Router::post('/academy/admin/availability-exceptions/{id}/status', [AcademyBranchController::class, 'cycleAvailabilityExceptionStatus'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/branch-offerings/lessons', [AcademyBranchOfferingController::class, 'storeLesson'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/branch-offerings/lessons/{id}/update', [AcademyBranchOfferingController::class, 'updateLesson'])->middleware(['academy-panel','csrf']);
 Router::post('/academy/admin/branch-offerings/lessons/{id}/status', [AcademyBranchOfferingController::class, 'cycleLessonStatus'])->middleware(['academy-panel','csrf']);

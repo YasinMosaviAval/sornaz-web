@@ -36,9 +36,6 @@
             <input type="text" id="holidayLeaveSearch" placeholder="جستجو نام عضو..."
                    class="w-full border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500"
                    onkeyup="filterHolidayLeaves()">
-            <input type="date" id="filterHolidayLeaveDate" onchange="filterHolidayLeaves()"
-                   class="w-full border border-gray-300 rounded-2xl py-3 px-4"
-                   title="فیلتر تاریخ">
             <select id="filterHolidayLeaveTimezone" onchange="filterHolidayLeaves()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه مناطق زمانی</option>
@@ -61,15 +58,17 @@
                 <option value="">همه وضعیت‌ها</option>
                 <option value="فعال">فعال</option>
                 <option value="غیرفعال">غیرفعال</option>
-                <option value="پر شده">پر شده</option>
                 <option value="در انتظار تأیید">در انتظار تأیید</option>
             </select>
             <select id="filterHolidayLeaveType" onchange="filterHolidayLeaves()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه انواع</option>
-                <option value="leave">مرخصی</option>
-                <option value="official-holiday">تعطیل رسمی</option>
-                <option value="mission">ماموریت</option>
+                <option value="holiday">تعطیل رسمی</option>
+                <option value="closed">تعطیل</option>
+                <option value="unavailable">عدم دسترسی</option>
+                <option value="busy">مشغول</option>
+                <option value="vacation">مرخصی</option>
+                <option value="blocked">مسدود</option>
             </select>
         </div>
     </div>

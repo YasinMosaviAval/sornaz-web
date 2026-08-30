@@ -139,6 +139,7 @@ class AcademyBranchOfferingService
 
         $scheduleRows = DB::table('user_availabilities')
             ->whereIn('user_id', $lessonOrganizationUserIds)
+            ->whereNull('unavailable_type')
             ->whereNull('deleted_at')
             ->get();
         $scheduleIds = array_map(fn(array $row): int => (int) $row['user_availability_id'], $scheduleRows);
@@ -166,7 +167,7 @@ class AcademyBranchOfferingService
                 'organizationKind' => $organization['kind'],
                 'readOnly' => !empty($organization['read_only']),
                 'branchName' => $organization['name'],
-                'status' => $statuses[$row['type']] ?? 'در انتظار تأیید',
+                'status' => $statuses[$row['status']] ?? 'در انتظار تأیید',
                 'repeatPeriod' => $repeats[$row['repeat_period']] ?? 'هفتگی',
                 'repeatDate' => $row['date'] ?: '',
                 'timezone' => $timezonesById[(int) ($row['timezone_id'] ?? 0)] ?? 'Asia/Tehran',
@@ -262,11 +263,11 @@ class AcademyBranchOfferingService
     {
         $organizations = $this->scopedOrganizations($actor);
         $userIds = array_map(fn(array $row): int => (int) $row['user_id'], $organizations);
-        $rows = $userIds ? DB::table('user_availabilities')->whereIn('user_id', $userIds)->whereNull('deleted_at')->get() : [];
+        $rows = $userIds ? DB::table('user_availabilities')->whereIn('user_id', $userIds)->whereNull('unavailable_type')->whereNull('deleted_at')->get() : [];
         $ids = array_map(fn(array $row): int => (int) $row['user_availability_id'], $rows);
         $translations = $ids ? DB::table('translations')->where('table_name', 'user_availabilities')->whereIn('table_id', $ids)->whereNull('deleted_at')->get() : [];
         $payload = [
-            'rows' => array_map(fn(array $row): array => [$row['user_availability_id'], $row['user_id'], $row['day_of_week'], $row['start_time'], $row['end_time'], $row['timezone_id'] ?? null, $row['type'], $row['updated_at'] ?? null], $rows),
+            'rows' => array_map(fn(array $row): array => [$row['user_availability_id'], $row['user_id'], $row['day_of_week'], $row['start_time'], $row['end_time'], $row['timezone_id'] ?? null, $row['status'], $row['unavailable_type'] ?? null, $row['updated_at'] ?? null], $rows),
             'translations' => array_map(fn(array $row): array => [$row['table_id'], $row['locale'], $row['field'], $row['value'], $row['updated_at'] ?? null], $translations),
         ];
         return ['resource' => 'organization_schedules', 'version' => sha1(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))];
@@ -294,8 +295,16 @@ class AcademyBranchOfferingService
 
         $days = ['شنبه' => 'saturday', 'یکشنبه' => 'sunday', 'دوشنبه' => 'monday', 'سه‌شنبه' => 'tuesday', 'چهارشنبه' => 'wednesday', 'پنجشنبه' => 'thursday', 'جمعه' => 'friday'];
         $statuses = ['فعال' => 'available', 'غیرفعال' => 'unavailable'];
+        $repeats = ['هفتگی'=>'week','دو هفته'=>'2-week','سه هفته'=>'3-week','چهار هفته'=>'4-week','ماهانه'=>'month','سالانه'=>'year','بی‌تکرار'=>'none'];
+        $repeat = $repeats[(string)($data['repeatPeriod'] ?? 'هفتگی')] ?? null;
+        if (!$repeat) throw new RuntimeException('دوره تکرار معتبر نیست.');
+        $specificDate = trim((string)($data['repeatDate'] ?? ''));
+        if ($repeat !== 'week' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $specificDate)) throw new RuntimeException('اولین تاریخ معتبر الزامی است.');
         $day = $days[(string) ($data['day'] ?? '')] ?? null;
-        if (!$day) throw new RuntimeException('روز برنامه زمانی معتبر نیست.');
+        $dateOnly = in_array($repeat, ['month','year','none'], true);
+        if (!$dateOnly && !$day) throw new RuntimeException('روز برنامه زمانی معتبر نیست.');
+        $validationDay = $day ?: strtolower(date('l', strtotime($specificDate)));
+        if (in_array($repeat, ['2-week','3-week','4-week'], true) && strtolower(date('l', strtotime($specificDate))) !== $day) throw new RuntimeException('اولین تاریخ باید با روز هفته انتخاب‌شده یکسان باشد.');
         $ranges = $data['ranges'] ?? [];
         if (!is_array($ranges) || !$ranges) throw new RuntimeException('حداقل یک بازه زمانی الزامی است.');
         $timezoneValue = trim((string) ($data['timezone'] ?? 'Asia/Tehran')) ?: 'Asia/Tehran';
@@ -305,7 +314,7 @@ class AcademyBranchOfferingService
         $pendingApproval = $this->isReceptionist($actor);
         $approvalTime = $this->now();
 
-        return transaction(function () use ($actor, $data, $id, $organization, $day, $statuses, $ranges, $timezoneId, $pendingApproval, $approvalTime) {
+        return transaction(function () use ($actor, $data, $id, $organization, $day, $validationDay, $repeat, $specificDate, $dateOnly, $statuses, $ranges, $timezoneId, $pendingApproval, $approvalTime) {
             $savedIds = [];
             $normalized = [];
             foreach ($ranges as $range) {
@@ -322,8 +331,11 @@ class AcademyBranchOfferingService
                 if($currentStart < $previousEnd + 30) throw new RuntimeException('بین بازه‌های زمانی باید حداقل ۳۰ دقیقه فاصله وجود داشته باشد.');
             }
             $ranges = $normalized;
-            $this->assertBranchRangesWithinAcademy($organization, $day, $ranges);
-            $existingDayRows = DB::table('user_availabilities')->where('user_id', (int) $organization['user_id'])->where('day_of_week', $day)->whereNull('date')->whereNull('deleted_at')->get();
+            $this->assertBranchRangesWithinAcademy($organization, $validationDay, $ranges);
+            $existingQuery = DB::table('user_availabilities')->where('user_id', (int) $organization['user_id'])->where('repeat_period', $repeat)->whereNull('unavailable_type')->whereNull('deleted_at');
+            if ($repeat === 'week') $existingQuery->where('day_of_week', $day)->whereNull('date');
+            else $existingQuery->where('date', $specificDate);
+            $existingDayRows = $existingQuery->get();
             foreach ($existingDayRows as $existingDayRow) {
                 $existingDayId = (int) $existingDayRow['user_availability_id'];
                 if ($id && $existingDayId === $id) continue;
@@ -333,16 +345,15 @@ class AcademyBranchOfferingService
                 $start = $this->validTime((string) ($range['start'] ?? ''));
                 $end = $this->validTime((string) ($range['end'] ?? ''));
                 if (!$start || !$end || $start >= $end) throw new RuntimeException('بازه زمانی واردشده معتبر نیست.');
-                $repeat = 'week';
-                $specificDate = '';
                 $values = [
                     'user_id' => (int) $organization['user_id'],
-                    'date' => $specificDate !== '' ? $specificDate : null,
-                    'day_of_week' => $day,
+                    'date' => $repeat !== 'week' ? $specificDate : null,
+                    'day_of_week' => $dateOnly ? null : $day,
                     'start_time' => $start . ':00',
                     'end_time' => $end . ':00',
                     'timezone_id' => $timezoneId,
-                    'type' => $pendingApproval ? 'pending' : ($statuses[$range['status']] ?? 'available'),
+                    'status' => $pendingApproval ? 'pending' : ($statuses[$range['status']] ?? 'available'),
+                    'unavailable_type' => null,
                     'is_repeating' => $repeat === 'none' ? 0 : 1,
                     'repeat_period' => $repeat,
                     'is_closed' => $range['status'] === 'غیرفعال' ? 1 : 0,
@@ -381,9 +392,9 @@ class AcademyBranchOfferingService
         $branch = DB::table('academy_branches')->where('branch_id', (int) $organization['id'])->whereNull('deleted_at')->first();
         $academy = $branch ? DB::table('academies')->where('academy_id', (int) $branch['academy_id'])->whereNull('deleted_at')->first() : null;
         if (!$academy) return;
-        $academyRanges = DB::table('user_availabilities')->where('user_id', (int) $academy['user_id'])->where('day_of_week', $day)->whereNull('date')->where('is_repeating', 1)->whereNull('deleted_at')->get();
+        $academyRanges = DB::table('user_availabilities')->where('user_id', (int) $academy['user_id'])->where('day_of_week', $day)->whereNull('date')->where('is_repeating', 1)->whereNull('unavailable_type')->whereNull('deleted_at')->get();
         if (!$academyRanges) return;
-        $allowed = array_values(array_filter($academyRanges, fn(array $row): bool => ($row['type'] ?? '') === 'available' && !(int) ($row['is_closed'] ?? 0)));
+        $allowed = array_values(array_filter($academyRanges, fn(array $row): bool => ($row['status'] ?? '') === 'available' && !(int) ($row['is_closed'] ?? 0)));
         foreach ($ranges as $range) {
             if (($range['status'] ?? '') !== 'فعال') continue;
             $start = $this->timeToMinutes($range['start']);

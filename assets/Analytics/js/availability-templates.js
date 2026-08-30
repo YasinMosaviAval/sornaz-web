@@ -29,6 +29,7 @@
         });
         const days = (window.branchScheduleDaysList || []).map(function (d) { return { value: d, label: d }; });
         const statuses = (window.branchScheduleStatusesList || []).map(function (s) { return { value: s, label: s }; });
+        const repeats = (window.branchScheduleRepeatList || []).map(function (value) { return { value: value, label: value }; });
         const timezones = (window.branchScheduleTimezoneList || []).map(function (tz) {
             return { value: tz.value, label: tz.label };
         });
@@ -36,6 +37,8 @@
         const fixedOrganization = (window.branchOfferingData && window.branchOfferingData.organization_selection === 'fixed') || window.branchScheduleOrganizationSelection === 'fixed';
         const editing = Boolean(item.id || (prefix && (prefix.indexOf('editBs') === 0 || prefix.indexOf('inlineBs') === 0)));
         const inlineEditing = Boolean(prefix && prefix.indexOf('inlineBs') === 0);
+        const repeatValue = item.repeatPeriod || 'هفتگی';
+        const datedRepeat = ['ماهانه', 'سالانه', 'بی‌تکرار'].includes(repeatValue);
         const slotsHtml = typeof window.buildBranchScheduleTimeSlotsHTML === 'function'
             ? window.buildBranchScheduleTimeSlotsHTML(id('TimeSlots'), branchId, item.slots || [], item.rangeStatuses || [], item.ranges || [])
             : '';
@@ -49,12 +52,23 @@
                         ${renderOptions(branches, item.user_id || item.organizationUserId || item.branchId)}
                     </select>
                 </div>`}
-                ${inlineEditing ? '' : `<div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">دوره تکرار *</label>
+                    <select id="${id('Repeat')}" onchange="window.refreshBranchScheduleRepeatFields('${prefix}')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                        ${renderOptions(repeats, repeatValue)}
+                    </select>
+                </div>
+                <div id="${id('DayWrap')}" class="${datedRepeat ? 'hidden' : ''}">
                     <label class="block text-sm font-medium mb-2">روز *</label>
-                    <select id="${id('Day')}" ${editing ? 'disabled' : ''} onchange="window.loadExistingBranchScheduleDay('${prefix}',false)" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+                    <select id="${id('Day')}" onchange="window.refreshBranchScheduleRepeatFields('${prefix}');window.loadExistingBranchScheduleDay('${prefix}',false)" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                         ${renderOptions(days, item.day || 'شنبه')}
                     </select>
-                </div>`}
+                </div>
+                <div id="${id('RepeatDateWrap')}" class="${repeatValue === 'هفتگی' ? 'hidden' : ''}">
+                    <label class="block text-sm font-medium mb-2">اولین تاریخ *</label>
+                    <input id="${id('RepeatDate')}" type="date" lang="${(document.documentElement.lang || 'fa').startsWith('fa') ? 'fa' : 'en'}" value="${escapeHtml(item.repeatDate || '')}" onchange="window.updateBranchScheduleLocalizedDate('${prefix}')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <p id="${id('RepeatDateLabel')}" class="mt-2 text-xs text-indigo-600">${item.repeatDate ? escapeHtml(new Intl.DateTimeFormat((document.documentElement.lang || 'fa').startsWith('fa') ? 'fa-IR-u-ca-persian' : 'en-US', {year:'numeric',month:'long',day:'numeric',weekday:'long'}).format(new Date(item.repeatDate+'T12:00:00'))) : ''}</p>
+                </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">منطقه زمانی</label>
                     <select id="${id('Timezone')}" data-previous-timezone="${escapeHtml(item.timezone || 'Asia/Tehran')}" onchange="changeBranchScheduleTimezone(this, '${prefix}')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
@@ -154,7 +168,7 @@
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">روز</span><span class="font-medium">${escapeHtml(item.day)}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ساعت</span><span class="font-medium">${escapeHtml(item.timeLabel || item.time || '—')}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">دوره تکرار</span><span class="font-medium">${escapeHtml(item.repeatPeriod || 'هفتگی')}</span></div>
-                        ${(item.repeatPeriod === 'ماهانه' || item.repeatPeriod === 'سالانه') && item.repeatDate
+                        ${item.repeatPeriod !== 'هفتگی' && item.repeatDate
                             ? `<div class="flex justify-between border-b pb-2"><span class="text-gray-500">تاریخ مرجع</span><span class="font-medium">${escapeHtml(item.repeatDate)}</span></div>` : ''}
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">منطقه زمانی</span><span class="font-medium">${escapeHtml(item.timezone || 'Asia/Tehran')}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">وضعیت</span><span class="font-medium">${escapeHtml(item.status)}</span></div>

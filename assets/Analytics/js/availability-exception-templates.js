@@ -16,8 +16,7 @@
     function statusClass(status) {
         return {
             'فعال': 'bg-green-100 text-green-700',
-            'غیرفعال': 'bg-gray-100 text-gray-600',
-            'پر شده': 'bg-amber-100 text-amber-700',
+            'غیرفعال': 'bg-red-100 text-red-700',
             'در انتظار تأیید': 'bg-yellow-100 text-yellow-700'
         }[status] || 'bg-gray-100 text-gray-600';
     }
@@ -28,49 +27,43 @@
             return { value: b.id, label: b.name };
         });
         const members = (typeof window.getHolidayLeaveMemberOptions === 'function' ? window.getHolidayLeaveMemberOptions() : []);
-        const statuses = (window.holidayLeaveStatusesList || []).map(function (s) { return { value: s, label: s }; });
         const types = (window.holidayLeaveTypeList || []).map(function (t) { return { value: t.value, label: t.label }; });
         const timezones = (window.holidayLeaveTimezoneList || []).map(function (tz) {
             return { value: tz.value, label: tz.label };
         });
-        const branchId = item.branchId || (branches[0] && branches[0].value) || 1;
+        const branchId = item.organizationUserId || (branches[0] && branches[0].value) || '';
+        const fixedOrganization=typeof window.isHolidayLeaveOrganizationFixed==='function'&&window.isHolidayLeaveOrganizationFixed();
         const slotsHtml = typeof window.buildHolidayLeaveTimeSlotsHTML === 'function'
             ? window.buildHolidayLeaveTimeSlotsHTML(id('TimeSlots'), branchId, item.slots || [])
             : '';
 
         return `
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                <div>
-                    <label class="block text-sm font-medium mb-2">شعبه *</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <input id="${id('RecordId')}" type="hidden" value="${escapeHtml(item.id||'')}">
+                <div class="${fixedOrganization?'hidden':''}">
+                    <label class="block text-sm font-medium mb-2">سازمان *</label>
                     <select id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
-                            onchange="window.refreshHolidayLeaveTimeSlots('${id('TimeSlots')}', this.value, [])">
-                        ${renderOptions(branches, item.branchId)}
+                            onchange="window.refreshHolidayLeaveMembers('${prefix}');window.refreshHolidayLeaveTimeSlots('${id('TimeSlots')}', this.value, [])">
+                        ${renderOptions(branches, branchId)}
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">عضو *</label>
                     <select id="${id('Member')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
-                            onchange="if(this.value==='__new__'){window.promptAddHolidayLeaveMember('${id('Member')}');}">
+                            onchange="window.refreshHolidayLeaveConflicts('${prefix}')">
                         <option value="">انتخاب عضو</option>
-                        ${renderOptions(members, item.memberId || item.name || '')}
-                        <option value="__new__">+ افزودن عضو جدید</option>
+                        ${renderOptions(members, item.membershipId || '')}
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">تاریخ *</label>
-                    <input id="${id('Date')}" type="date" value="${escapeHtml(item.date || '')}"
+                    <input id="${id('Date')}" type="date" value="${escapeHtml(item.date || '')}" onchange="window.refreshHolidayLeaveConflicts('${prefix}')"
                            class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">نوع</label>
                     <select id="${id('Type')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(types, item.type || 'leave')}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">وضعیت</label>
-                    <select id="${id('Status')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(statuses, item.status || 'فعال')}
+                        ${renderOptions(types, item.type || 'vacation')}
                     </select>
                 </div>
                 <div>
@@ -79,20 +72,19 @@
                         ${renderOptions(timezones, item.timezone || 'Asia/Tehran')}
                     </select>
                 </div>
-                <div class="sm:col-span-3">
-                    <label class="block text-sm font-medium mb-2">ساعات (بر اساس ساعات کاری شعبه)</label>
-                    <div id="${id('TimeSlots')}" class="border border-gray-200 rounded-2xl p-4 max-h-48 overflow-y-auto">
+                <div class="sm:col-span-2 rounded-2xl border border-indigo-100 bg-indigo-50/40 p-5 space-y-5">
+                    <div><label class="block text-sm font-medium mb-2">ساعات کاری</label>
+                    <div id="${id('TimeSlots')}" class="max-h-64 overflow-y-auto">
                         ${slotsHtml}
-                    </div>
-                    <p class="text-xs text-gray-400 mt-1">ساعات پیاپی به‌صورت یک بازه ذخیره می‌شوند؛ بازه‌های با فاصله به‌صورت آیتم جدا در جدول نمایش داده می‌شوند.</p>
-                </div>
-                <div class="sm:col-span-3">
+                    </div></div>
+                <div>
                     <label class="block text-sm font-medium mb-2">خلاصه</label>
-                    <input id="${id('Summary')}" type="text" value="${escapeHtml(item.summary || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <input id="${id('Summary')}" type="text" value="${escapeHtml(item.summary || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 bg-white">
                 </div>
-                <div class="sm:col-span-3">
+                <div>
                     <label class="block text-sm font-medium mb-2">توضیحات</label>
-                    <textarea id="${id('Description')}" rows="3" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${escapeHtml(item.description || '')}</textarea>
+                    <textarea id="${id('Description')}" rows="3" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 bg-white">${escapeHtml(item.description || '')}</textarea>
+                </div></div>
                 </div>
             </div>`;
     }
@@ -100,17 +92,16 @@
     window.getHolidayLeaveRowHTML = function (item) {
         return `
             <td class="py-4 px-5 font-medium">${escapeHtml(item.name)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.date || '—')}</td>
+            <td class="py-4 px-5">${escapeHtml(window.formatLocalizedDate?window.formatLocalizedDate(item.date):(item.date||'—'))}</td>
             <td class="py-4 px-5 font-mono text-sm">${escapeHtml(item.timeLabel || item.time || '—')}</td>
             <td class="py-4 px-5">${escapeHtml(item.typeLabel || '—')}</td>
             <td class="py-4 px-5 text-xs text-gray-500">${escapeHtml(item.timezone || 'Asia/Tehran')}</td>
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td>
+            <td class="py-4 px-5"><button type="button" onclick="cycleHolidayLeaveStatus(${item.id})" ${item.readOnly?'disabled title="این مورد متعلق به سازمان دیگری است"':'title="تغییر وضعیت"'} class="min-w-[92px] px-3 py-1.5 rounded-full text-xs font-medium disabled:cursor-not-allowed ${statusClass(item.status)}">${escapeHtml(item.status)}</button></td>
             <td class="py-4 px-5 text-left">
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewHolidayLeave(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
-                    <button onclick="toggleHolidayLeaveInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
-                    <button onclick="deleteHolidayLeave(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>
+                    ${item.readOnly?'':`<button onclick="toggleHolidayLeaveInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button><button onclick="deleteHolidayLeave(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>`}
                 </div>
             </td>`;
     };
@@ -169,10 +160,10 @@
                 <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl">
                     <div>
                         <h2 class="text-2xl font-bold">${escapeHtml(item.name)}</h2>
-                        <p class="text-sm text-gray-500 mt-1">${escapeHtml(item.date || '')} · ${escapeHtml(item.timeLabel || item.time || '')}</p>
+                        <p class="text-sm text-gray-500 mt-1">${escapeHtml(window.formatLocalizedDate?window.formatLocalizedDate(item.date):(item.date||''))} · ${escapeHtml(item.timeLabel || item.time || '')}</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="editHolidayLeave(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm">ویرایش</button>
+                        ${item.readOnly?'':`<button onclick="editHolidayLeave(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm">ویرایش</button>`}
                         <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                     </div>
                 </div>
@@ -181,7 +172,7 @@
                     ${item.description ? `<p class="text-gray-600 leading-relaxed">${escapeHtml(item.description)}</p>` : ''}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">شعبه</span><span class="font-medium">${escapeHtml(item.branchName)}</span></div>
-                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">تاریخ</span><span class="font-medium">${escapeHtml(item.date || '—')}</span></div>
+                        <div class="flex justify-between border-b pb-2"><span class="text-gray-500">تاریخ</span><span class="font-medium">${escapeHtml(window.formatLocalizedDate?window.formatLocalizedDate(item.date):(item.date||'—'))}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">نوع</span><span class="font-medium">${escapeHtml(item.typeLabel || '—')}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ساعت</span><span class="font-medium">${escapeHtml(item.timeLabel || item.time || '—')}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">منطقه زمانی</span><span class="font-medium">${escapeHtml(item.timezone || 'Asia/Tehran')}</span></div>
