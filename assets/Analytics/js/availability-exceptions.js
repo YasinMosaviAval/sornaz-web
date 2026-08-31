@@ -41,8 +41,9 @@ let holidayLeaveMembers = [
 window.getHolidayLeaveBranches = function () { return (window.holidayLeaveCatalog?.organizations||window.staffCatalog?.organizations||[]).map(function(o){return{id:o.user_id,name:o.name,kind:o.branch_id?'branch':'academy',branchId:o.branch_id||0};}); };
 window.isHolidayLeaveOrganizationFixed = function(){return (window.holidayLeaveCatalog?.organization_selection||window.staffCatalog?.organization_selection)==='fixed';};
 
-window.getHolidayLeaveMemberOptions = function () {return (window.holidayLeaveMembers||[]).map(function(s){return{value:s.id,label:s.name+' - '+(s.typeLabel||s.role||'عضو'),id:s.id,userId:s.user_id,name:s.name,organizationUserId:s.organizationUserId,role:s.typeLabel||'عضو'};});};
-window.refreshHolidayLeaveMembers=function(prefix,selected){const f=n=>document.getElementById(prefix?prefix+n:'hl'+n),org=f('Branch')?.value,select=f('Member');if(!select)return;const options=window.getHolidayLeaveMemberOptions().filter(m=>!org||String(m.organizationUserId)===String(org));select.innerHTML='<option value="">انتخاب عضو</option>'+options.map(m=>'<option value="'+m.value+'" '+(String(m.value)===String(selected||'')?'selected':'')+'>'+m.label+'</option>').join('');window.refreshHolidayLeaveConflicts(prefix);};
+window.getHolidayLeaveMemberOptions = function (organizationUserId) {const organizations=window.getHolidayLeaveBranches().filter(o=>!organizationUserId||String(o.id)===String(organizationUserId)).map(o=>({value:'organization:'+o.id,label:(o.kind==='academy'?'آموزشگاه: ':'شعبه: ')+o.name,userId:o.id,name:o.name,organizationUserId:o.id,targetType:'organization'}));const members=(window.holidayLeaveMembers||[]).filter(s=>!organizationUserId||String(s.organizationUserId)===String(organizationUserId)).map(function(s){return{value:'member:'+s.id,label:s.name+' - '+(s.typeLabel||s.role||'عضو'),id:s.id,userId:s.user_id,name:s.name,organizationUserId:s.organizationUserId,role:s.typeLabel||'عضو',targetType:'member'};});return organizations.concat(members);};
+window.refreshHolidayLeaveMembers=function(prefix,selected){const f=n=>document.getElementById(prefix?prefix+n:'hl'+n),org=f('Branch')?.value,select=f('Member');if(!select)return;const options=window.getHolidayLeaveMemberOptions(org),selectedValue=selected?(String(selected).includes(':')?selected:'member:'+selected):'';select.innerHTML='<option value="">انتخاب شخص یا سازمان</option>'+options.map(m=>'<option value="'+m.value+'" '+(String(m.value)===String(selectedValue)?'selected':'')+'>'+m.label+'</option>').join('');window.refreshHolidayLeaveConflicts(prefix);};
+window.toggleHolidayLeaveAllDay=function(prefix){const f=n=>document.getElementById(prefix?prefix+n:'hl'+n),allDay=!!f('AllDay')?.checked;f('TimeSection')?.classList.toggle('hidden',allDay);};
 
 function hlTimeToMinutes(t) {
     if (!t) return 0;
@@ -90,7 +91,7 @@ window.refreshHolidayLeaveTimeSlots = async function (containerId, branchId, sel
     el.innerHTML = window.buildHolidayLeaveTimeSlotsHTML(containerId, branchId, selectedSlots || []);
 };
 
-window.refreshHolidayLeaveConflicts=function(prefix){const f=n=>document.getElementById(prefix?prefix+n:'hl'+n),membership=f('Member')?.value,member=window.getHolidayLeaveMemberOptions().find(x=>String(x.value)===String(membership)),date=f('DateValue')?.value||f('Date')?.value,own=Number(f('RecordId')?.value||0);const busy=new Set((window.allHolidayLeavesShared||[]).filter(x=>String(x.memberId)===String(member?.userId)&&x.date===date&&Number(x.id)!==own).flatMap(x=>x.slots||[]));f('TimeSlots')?.querySelectorAll('.hl-range-start option,.hl-range-end option').forEach(o=>o.disabled=busy.has(o.value));};
+window.refreshHolidayLeaveConflicts=function(prefix){const f=n=>document.getElementById(prefix?prefix+n:'hl'+n),target=f('Member')?.value,member=window.getHolidayLeaveMemberOptions(f('Branch')?.value).find(x=>String(x.value)===String(target)),date=f('DateValue')?.value||f('Date')?.value,own=Number(f('RecordId')?.value||0);const busy=new Set((window.allHolidayLeavesShared||[]).filter(x=>String(x.memberId)===String(member?.userId)&&x.date===date&&Number(x.id)!==own).flatMap(x=>x.slots||[]));f('TimeSlots')?.querySelectorAll('.hl-range-start option,.hl-range-end option').forEach(o=>o.disabled=busy.has(o.value));};
 
 let allHolidayLeaves = Array.isArray(window.adminAvailabilityExceptionsData) ? window.adminAvailabilityExceptionsData.slice() : [];
 window.allHolidayLeavesShared=allHolidayLeaves;
@@ -268,15 +269,19 @@ function readHolidayLeaveForm(prefix) {
     const branchId = f('Branch') && f('Branch').value;
     const branch = window.getHolidayLeaveBranches().find(function (b) { return String(b.id) === String(branchId); });
     const memberSel = f('Member');
-    const memberId = memberSel && memberSel.value;
-    const memberName = memberSel && memberSel.selectedOptions[0] && memberId
+    const targetValue = memberSel && memberSel.value;
+    const targetParts = String(targetValue||'').split(':');
+    const targetType = targetParts[0] === 'organization' ? 'organization' : 'member';
+    const memberId = targetType === 'member' ? Number(targetParts[1]||0) : 0;
+    const memberName = memberSel && memberSel.selectedOptions[0] && targetValue
         ? memberSel.selectedOptions[0].textContent : '';
-    const slots = hlReadSelectedSlots(prefix);
-    const ranges = hlMergeConsecutiveSlots(slots);
+    const allDay = !!f('AllDay')?.checked;
+    const slots = allDay ? [] : hlReadSelectedSlots(prefix);
+    const ranges = allDay ? [] : hlMergeConsecutiveSlots(slots);
     return {
         branchId: branchId, branchName: branch ? branch.name : 'نامشخص',
-        memberId: memberId, name: memberName,
-        membershipId: Number(memberId), organizationUserId: Number(branchId),
+        memberId: memberId, name: memberName, targetType: targetType,
+        membershipId: Number(memberId), organizationUserId: Number(branchId), allDay: allDay,
         date: f('DateValue') && f('DateValue').value || f('Date') && f('Date').value || '',
         type: f('Type') && f('Type').value || 'vacation',
         typeLabel: (window.holidayLeaveTypeList || []).find(function (item) { return item.value === (f('Type') && f('Type').value || 'vacation'); })?.label || 'مرخصی',
@@ -306,9 +311,9 @@ window.openAddHolidayLeaveModal = async function () {
 
 window.saveHolidayLeave = async function () {
     const data = readHolidayLeaveForm('');
-    if (!data.memberId) return alert('انتخاب عضو الزامی است');
+    if (!data.memberId && data.targetType!=='organization') return alert('انتخاب شخص یا سازمان الزامی است');
     if (!data.date) return alert('تاریخ الزامی است');
-    if (!data.ranges.length) return alert('حداقل یک بازه ساعتی انتخاب کنید');
+    if (!data.allDay && !data.ranges.length) return alert('حداقل یک بازه ساعت تعطیلی انتخاب کنید');
     try{await holidayLeaveApi('/academy/admin/availability-exceptions',data);await window.loadHolidayLeaves();holidayLeaveChannel?.postMessage({resource:'availability_exceptions',version:Date.now()});closeModal();alert('✅ در دیتابیس ثبت شد');}catch(error){alert(error.message);}
 };
 
@@ -323,28 +328,28 @@ window.editHolidayLeave = async function (id) {
     const item = allHolidayLeaves.find(function (x) { return x.id === id; });
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getHolidayLeaveEditModalHTML
-        ? window.getHolidayLeaveEditModalHTML(item) : '';window.initLocalizedDateInputs?.(document.getElementById('modalContainer'));window.refreshHolidayLeaveMembers('editHl',item.membershipId);
+        ? window.getHolidayLeaveEditModalHTML(item) : '';window.initLocalizedDateInputs?.(document.getElementById('modalContainer'));window.refreshHolidayLeaveMembers('editHl',item.membershipId?'member:'+item.membershipId:'organization:'+item.organizationUserId);window.toggleHolidayLeaveAllDay('editHl');
 };
 
 window.saveEditedHolidayLeave = async function (id) {
     const data = readHolidayLeaveForm('editHl');
-    if (!data.memberId) return alert('انتخاب عضو الزامی است');
+    if (!data.memberId && data.targetType!=='organization') return alert('انتخاب شخص یا سازمان الزامی است');
     if (!data.date) return alert('تاریخ الزامی است');
-    if (!data.ranges.length) return alert('حداقل یک بازه ساعتی انتخاب کنید');
+    if (!data.allDay && !data.ranges.length) return alert('حداقل یک بازه ساعت تعطیلی انتخاب کنید');
     try{await holidayLeaveApi('/academy/admin/availability-exceptions/'+id+'/update',data);editingHolidayLeaveRowId=null;await window.loadHolidayLeaves();holidayLeaveChannel?.postMessage({resource:'availability_exceptions',version:Date.now()});closeModal();alert('✅ تغییرات در دیتابیس ذخیره شد');}catch(error){alert(error.message);}
 };
 
 window.toggleHolidayLeaveInlineEdit = async function (id) {
     editingHolidayLeaveRowId = editingHolidayLeaveRowId === id ? null : id;
     window.renderHolidayLeavesTable(filteredHolidayLeaves);
-    if(editingHolidayLeaveRowId===id){const item=allHolidayLeaves.find(x=>x.id===id);window.initLocalizedDateInputs?.(document);window.refreshHolidayLeaveMembers('inlineHl'+id,item?.membershipId);}
+    if(editingHolidayLeaveRowId===id){const item=allHolidayLeaves.find(x=>x.id===id);window.initLocalizedDateInputs?.(document);window.refreshHolidayLeaveMembers('inlineHl'+id,item?.membershipId?'member:'+item.membershipId:'organization:'+item?.organizationUserId);window.toggleHolidayLeaveAllDay('inlineHl'+id);}
 };
 
 window.saveInlineHolidayLeave = async function (id) {
     const data = readHolidayLeaveForm('inlineHl' + id);
-    if (!data.memberId) return alert('انتخاب عضو الزامی است');
+    if (!data.memberId && data.targetType!=='organization') return alert('انتخاب شخص یا سازمان الزامی است');
     if (!data.date) return alert('تاریخ الزامی است');
-    if (!data.ranges.length) return alert('حداقل یک بازه ساعتی انتخاب کنید');
+    if (!data.allDay && !data.ranges.length) return alert('حداقل یک بازه ساعت تعطیلی انتخاب کنید');
     try{await holidayLeaveApi('/academy/admin/availability-exceptions/'+id+'/update',data);editingHolidayLeaveRowId=null;await window.loadHolidayLeaves();holidayLeaveChannel?.postMessage({resource:'availability_exceptions',version:Date.now()});alert('✅ تغییرات در دیتابیس ذخیره شد');}catch(error){alert(error.message);}
 };
 

@@ -76,6 +76,15 @@
                 <option value="">همه کلاس‌ها</option>
             </select>
             <div>
+                <label class="block text-xs text-gray-500 mb-1">نوع نمایش تاریخ</label>
+                <select id="scheduleCalendarDisplay" onchange="changeScheduleCalendarDisplay(this.value)"
+                        class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                    <option value="default">تاریخ پیش‌فرض</option>
+                    <option value="persian">تاریخ شمسی</option>
+                    <option value="gregorian">تاریخ میلادی</option>
+                </select>
+            </div>
+            <div>
                 <label class="block text-xs text-gray-500 mb-1">از ساعت</label>
                 <select id="filterScheduleTimeFrom" onchange="filterSchedules()"
                         class="w-full border border-gray-300 rounded-2xl py-3 px-4">

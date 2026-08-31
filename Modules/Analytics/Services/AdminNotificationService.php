@@ -39,7 +39,21 @@ class AdminNotificationService {
     }
 
     public function delete(int $id, int $actor): void {
-        $this->setStatus($id, 'expired', $actor);
+        $row = DB::table('user_messages')
+            ->where('user_message_id', $id)
+            ->where('receiver_user_id', $actor)
+            ->where('type', 'notification')
+            ->whereNull('deleted_at')
+            ->first();
+        if (!$row) throw new RuntimeException('اعلان موردنظر در دسترس نیست.');
+
+        $now = date('Y-m-d H:i:s');
+        DB::table('user_messages')->where('user_message_id', $id)->update([
+            'deleted_at' => $now,
+            'deleted_by' => $actor,
+            'updated_at' => $now,
+            'updated_by' => $actor,
+        ]);
     }
 
     public function markRead(int $id, int $actor): void {
