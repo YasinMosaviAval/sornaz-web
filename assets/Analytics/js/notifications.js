@@ -285,7 +285,11 @@ window.expireNotification = async function (id) {
 
 window.deleteNotification = async function (id) {
     if (!(await AppDialog.confirmDelete(allNotifications, id, 'اعلان'))) return;
-    try { await notificationApi('/analytics/admin-notifications/' + id + '/delete', {}); await window.loadAdminNotifications(); } catch (error) { alert(error.message); }
+    try {
+        await notificationApi('/analytics/admin-notifications/' + id + '/delete', {});
+        await window.loadAdminNotifications();
+        notificationChannel?.postMessage(Date.now());
+    } catch (error) { alert(error.message); }
 };
 
 setTimeout(async function () {

@@ -26,12 +26,12 @@
         const branches = (typeof window.getHolidayLeaveBranches === 'function' ? window.getHolidayLeaveBranches() : []).map(function (b) {
             return { value: b.id, label: b.name };
         });
-        const members = (typeof window.getHolidayLeaveMemberOptions === 'function' ? window.getHolidayLeaveMemberOptions() : []);
         const types = (window.holidayLeaveTypeList || []).map(function (t) { return { value: t.value, label: t.label }; });
         const timezones = (window.holidayLeaveTimezoneList || []).map(function (tz) {
             return { value: tz.value, label: tz.label };
         });
         const branchId = item.organizationUserId || (branches[0] && branches[0].value) || '';
+        const members = (typeof window.getHolidayLeaveMemberOptions === 'function' ? window.getHolidayLeaveMemberOptions(branchId) : []);
         const fixedOrganization=typeof window.isHolidayLeaveOrganizationFixed==='function'&&window.isHolidayLeaveOrganizationFixed();
         const slotsHtml = typeof window.buildHolidayLeaveTimeSlotsHTML === 'function'
             ? window.buildHolidayLeaveTimeSlotsHTML(id('TimeSlots'), branchId, item.slots || [])
@@ -48,11 +48,11 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-2">عضو *</label>
+                    <label class="block text-sm font-medium mb-2">شخص یا سازمان *</label>
                     <select id="${id('Member')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
                             onchange="window.refreshHolidayLeaveConflicts('${prefix}')">
-                        <option value="">انتخاب عضو</option>
-                        ${renderOptions(members, item.membershipId || '')}
+                        <option value="">انتخاب شخص یا سازمان</option>
+                        ${renderOptions(members, item.targetValue || (item.membershipId ? 'member:' + item.membershipId : 'organization:' + item.organizationUserId))}
                     </select>
                 </div>
                 <div>
@@ -73,7 +73,8 @@
                     </select>
                 </div>
                 <div class="sm:col-span-2 rounded-2xl border border-indigo-100 bg-indigo-50/40 p-5 space-y-5">
-                    <div><label class="block text-sm font-medium mb-2">ساعات کاری</label>
+                    <label class="flex items-center gap-3 text-sm font-medium"><input id="${id('AllDay')}" type="checkbox" ${item.fullDay||item.timeLabel==='تمام‌روز'?'checked':''} onchange="window.toggleHolidayLeaveAllDay('${prefix}')" class="h-5 w-5 rounded border-gray-300 text-indigo-600"><span>تعطیلی کل روز</span></label>
+                    <div id="${id('TimeSection')}" class="${item.fullDay||item.timeLabel==='تمام‌روز'?'hidden':''}"><label class="block text-sm font-medium mb-2">ساعت تعطیلی</label>
                     <div id="${id('TimeSlots')}" class="max-h-64 overflow-y-auto">
                         ${slotsHtml}
                     </div></div>
