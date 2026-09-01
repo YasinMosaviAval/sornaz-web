@@ -295,6 +295,7 @@ class AcademyRegistrationService {
 
         $academyId = DB::table('academies')->insertGetId(['user_id' => $userId, 'created_by' => $requesterId, 'updated_by' => $requesterId]);
         if (!$academyId) throw new RuntimeException('ایجاد آموزشگاه ناموفق بود.');
+        (new AcademySubscriptionService())->sync((int)$academyId);
         $this->ensureAcademyMember($academyId, $requesterId, null);
 
         $profile = DB::table('z_user_profiles')->where('user_id', $userId)->whereNull('deleted_at')->first();
@@ -352,6 +353,7 @@ class AcademyRegistrationService {
             DB::table('academies')->where('academy_id', $academyId)->update($academyData);
         } else $academyId = DB::table('academies')->insertGetId($academyData);
         if (!$academyId) throw new RuntimeException('ایجاد آموزشگاه نمونه ناموفق بود.');
+        (new AcademySubscriptionService())->sync((int)$academyId);
 
         $this->setTranslations('academies', $academyId, [
             'title' => $sample['academy_name'],

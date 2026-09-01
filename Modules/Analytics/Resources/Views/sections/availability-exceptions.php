@@ -1,4 +1,5 @@
 <div id="availability-exceptions" class="section hidden">
+    <div id="academyNationalHolidaySettings" class="mb-6"></div>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-3xl font-bold">تعطیلات و مرخصی‌ها</h1>

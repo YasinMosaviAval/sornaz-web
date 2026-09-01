@@ -21,6 +21,11 @@
     <!-- کارت‌های آماری -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8" id="dashboardStats"></div>
 
+    <div class="mb-8 overflow-hidden rounded-3xl border border-red-100 bg-white shadow">
+        <div class="flex items-center justify-between border-b border-red-100 bg-red-50/60 p-6"><div><h2 class="text-xl font-semibold text-red-800"><i class="fas fa-tasks ml-2"></i>اقدامات نیازمند بررسی</h2><p class="mt-1 text-sm text-red-600">تمام مواردی که به تأیید یا تعیین تاریخ جدید نیاز دارند</p></div><span id="dashboardActionCount" class="rounded-full bg-red-600 px-3 py-1 text-sm text-white">۰</span></div>
+        <div id="dashboardActionItems" class="grid gap-4 p-6 xl:grid-cols-2"></div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <!-- کلاس‌های امروز -->
         <div class="bg-white rounded-3xl p-6 shadow">

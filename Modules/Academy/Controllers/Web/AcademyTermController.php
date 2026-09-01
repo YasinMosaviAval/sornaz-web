@@ -23,7 +23,8 @@ class AcademyTermController {
             $data['branchAcademies']=[];
             if($branchIds)foreach(\Core\database\DB::table('academy_branches')->whereIn('branch_id',$branchIds)->whereNull('deleted_at')->get() as $branch)$data['branchAcademies'][(int)$branch['branch_id']]=(int)$branch['academy_id'];
             $data['timezones']=array_map(fn($timezone)=>['id'=>(int)$timezone['timezone_id'],'name'=>(string)$timezone['timezone']],\Core\database\DB::table('f_timezone')->where('status','active')->whereNull('deleted_at')->orderBy('sort_order')->get());
-            $data['permissions']=['isReceptionist'=>$this->isReceptionist($actor),'isBranchContext'=>$this->isBranchContext($actor)];
+            $isReceptionist=$this->isReceptionist($actor);
+            $data['permissions']=['isReceptionist'=>$isReceptionist,'isBranchContext'=>$this->isBranchContext($actor),'canCancelSessions'=>true,'canApproveSessionCancellations'=>!$isReceptionist];
             return['success'=>true,'data'=>$data];
         });
     }
@@ -78,6 +79,11 @@ class AcademyTermController {
     public function cycleStatus(int $id) {
         return $this->run(function()use($id){$actor=(int)auth()->id();if($this->isReceptionist($actor))throw new RuntimeException('کاربر پذیرش مجوز تغییر وضعیت ترم را ندارد.');return['success'=>true,'data'=>$this->service->cycleStatus($actor,$id)];});
     }
+
+    public function cancelSession(int$id,int$sessionId){return$this->run(function()use($id,$sessionId){$actor=(int)auth()->id();return['success'=>true,'data'=>$this->service->cancelSession($actor,$id,$sessionId,$this->payload(),$this->isReceptionist($actor))];});}
+    public function approveSessionCancellation(int$id,int$sessionId){return$this->run(function()use($id,$sessionId){$actor=(int)auth()->id();if($this->isReceptionist($actor))throw new RuntimeException('کاربر پذیرش مجوز تأیید لغو جلسه را ندارد.');return['success'=>true,'data'=>$this->service->decideSessionCancellation($actor,$id,$sessionId,true)];});}
+    public function rejectSessionCancellation(int$id,int$sessionId){return$this->run(function()use($id,$sessionId){$actor=(int)auth()->id();if($this->isReceptionist($actor))throw new RuntimeException('کاربر پذیرش مجوز رد لغو جلسه را ندارد.');return['success'=>true,'data'=>$this->service->decideSessionCancellation($actor,$id,$sessionId,false)];});}
+    public function restoreSession(int$id,int$sessionId){return$this->run(function()use($id,$sessionId){$actor=(int)auth()->id();return['success'=>true,'data'=>$this->service->restoreCanceledSession($actor,$id,$sessionId,$this->isReceptionist($actor))];});}
 
 
     private function save(int$id=0) {

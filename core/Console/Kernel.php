@@ -3,10 +3,11 @@
 namespace Core\console;
 
 use Core\commands\MakeModuleCommand;
+use Core\commands\SyncAcademySubscriptionsCommand;
 
 class Kernel {
 
-    protected array $commands = ['make:module'=> MakeModuleCommand::class,];
+    protected array $commands = ['make:module'=> MakeModuleCommand::class,'subscriptions:sync'=>SyncAcademySubscriptionsCommand::class];
 
 
 

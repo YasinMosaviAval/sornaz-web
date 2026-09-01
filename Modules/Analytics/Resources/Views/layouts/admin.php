@@ -83,6 +83,7 @@
     pushScript('availabilities.js');
     pushScript('availability-exception-templates.js');
     pushScript('availability-exceptions.js');
+    pushScript('national-holidays.js');
     pushScript('point-templates.js');
     pushScript('points.js');
     pushScript('user-templates.js');

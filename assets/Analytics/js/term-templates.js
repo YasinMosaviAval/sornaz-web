@@ -324,14 +324,24 @@
     }
 
     window.getTermDetailsModalHTML = function (item) {
+        const hasSessionHistory=(item.sessions||[]).some(s=>s.type==='makeup'||(s.cancellationStatus&&s.cancellationStatus!=='none'));
+        const sessionOrdinals={1:'اول',2:'دوم',3:'سوم',4:'چهارم',5:'پنجم',6:'ششم',7:'هفتم',8:'هشتم',9:'نهم',10:'دهم',11:'یازدهم',12:'دوازدهم',13:'سیزدهم',14:'چهاردهم',15:'پانزدهم',16:'شانزدهم',17:'هفدهم',18:'هجدهم',19:'نوزدهم',20:'بیستم'};
         const teachers = (item.teachers || []).map(function (t) { return escapeHtml(t.name || t); }).join('، ') || '—';
         const students = (item.students || []).map(function (s) { return escapeHtml(s.name || s); }).join('، ') || '—';
         const installments = (item.installments || []).map(function (x, i) {
             return `<div class="flex justify-between border-b pb-2 text-sm"><span>قسط ${i + 1}</span><span class="font-medium">${Number(x.amount || 0).toLocaleString('fa-IR')}</span></div>`;
         }).join('') || '<p class="text-sm text-gray-400">قسطی ثبت نشده</p>';
         const sessions = (item.sessions || []).map(function (s, i) {
-            return `<div class="flex justify-between border-b pb-2 text-sm"><span>جلسه ${i + 1}</span><span class="font-medium">${escapeHtml(s.date || '—')}، ${escapeHtml(s.startTime || '—')} تا ${escapeHtml(s.endTime || '—')}</span></div>`;
+            const number=s.number||i+1;
+            const title=s.type==='makeup'?`جلسه جبرانی برای جلسه ${sessionOrdinals[number]||number} برگزار نشده ترم ${escapeHtml(item.name)}`:`جلسه ${number}`;
+            const cancellation=s.cancellationStatus||'none',booking=s.bookingStatus||'';
+            const status=cancellation==='pending'?'در انتظار تأیید لغو':cancellation==='approved'||booking==='canceled'?'لغوشده':cancellation==='rejected'?'درخواست لغو رد شده':s.type==='makeup'&&booking==='pending'?'جبرانی در انتظار تأیید':s.type==='makeup'&&booking==='rejected'?'جلسه جبرانی رد شده':'';
+            const canCancel=['none','rejected'].includes(cancellation)&&!['canceled','rejected','completed','held'].includes(booking)&&window.termPermissions?.canCancelSessions;
+            const canDecide=cancellation==='pending'&&window.termPermissions?.canApproveSessionCancellations;
+            const canRestore=cancellation==='pending'||((cancellation==='approved'||booking==='canceled')&&window.termPermissions?.canApproveSessionCancellations);
+            return `<div class="rounded-xl border p-3 text-sm ${s.type==='makeup'?'border-amber-200 bg-amber-50/40':''}"><div class="flex flex-wrap items-center justify-between gap-3"><div><span class="font-medium">${title}</span><div class="mt-1 text-xs text-gray-500">${escapeHtml(window.localizedDateValue?.(s.date)||s.date||'—')}، ${escapeHtml(s.startTime||'—')} تا ${escapeHtml(s.endTime||'—')}</div>${status?`<div class="mt-1 text-xs font-medium text-${cancellation==='approved'||booking==='canceled'?'red':'amber'}-600">${status}</div>`:''}</div><div class="flex gap-2">${canCancel?`<button onclick="openTermSessionCancellation(${item.id},${s.id})" class="rounded-lg border border-red-200 px-3 py-2 text-xs text-red-600">لغو جلسه و تعیین جبرانی</button>`:''}${canRestore?`<button onclick="restoreTermSession(${item.id},${s.id})" class="rounded-lg border border-emerald-200 px-3 py-2 text-xs text-emerald-700">بازگردانی جلسه و حذف جبرانی</button>`:''}${canDecide?`<button onclick="decideTermSessionCancellation(${item.id},${s.id},true)" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs text-white">تأیید</button><button onclick="decideTermSessionCancellation(${item.id},${s.id},false)" class="rounded-lg border border-red-200 px-3 py-2 text-xs text-red-600">رد</button>`:''}</div></div>${s.cancellationReason?`<div class="mt-2 rounded-lg bg-red-50 p-2 text-xs text-red-700"><b>دلیل لغو تاریخ ${escapeHtml(window.localizedDateValue?.(s.date)||s.date)}:</b> ${escapeHtml(s.cancellationReason)}</div>`:''}</div>`;
         }).join('') || '<p class="text-sm text-gray-400">جلسه‌ای ثبت نشده</p>';
+        const skippedHistory=(item.skippedDates||[]).map(function(skip){const official=skip.reasonType==='national_holiday';return `<div class="rounded-xl border p-3 text-sm ${official?'border-red-200 bg-red-50':'border-amber-200 bg-amber-50'}"><div class="font-medium ${official?'text-red-700':'text-amber-700'}">تاریخ برنامه‌ریزی‌شده جلسه ${skip.sessionNumber} حذف شد</div><div class="mt-1 text-xs text-gray-600">تاریخ حذف‌شده: <b>${escapeHtml(window.localizedDateValue?.(skip.skippedDate)||skip.skippedDate)}</b> · دلیل: ${escapeHtml(skip.reason)}</div><div class="mt-1 text-xs text-gray-500">تاریخ جایگزین: ${escapeHtml(window.localizedDateValue?.(skip.replacementDate)||skip.replacementDate)}</div></div>`;}).join('');
 
         return `
             <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
@@ -342,7 +352,7 @@
                             <p class="text-sm text-gray-500 mt-1">کد ترم: #${item.id}</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button onclick="editTerm(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm">ویرایش</button>
+                            ${hasSessionHistory?'':`<button onclick="editTerm(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm">ویرایش</button>`}
                             <button onclick="openTermAttendanceModal(${item.id})" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-sm">حضور و غیاب</button>
                             <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                         </div>
@@ -376,6 +386,7 @@
                             <div><h3 class="font-semibold text-indigo-700 mb-3">جلسات</h3><div class="space-y-2">${sessions}</div></div>
                             <div><h3 class="font-semibold text-indigo-700 mb-3">اقساط</h3><div class="space-y-2">${installments}</div></div>
                         </div>
+                        ${skippedHistory?`<div><h3 class="mb-3 font-semibold text-amber-700">تاریخ‌های حذف‌شده از برنامه خودکار</h3><div class="space-y-2">${skippedHistory}</div></div>`:''}
                     </div>
                 </div>
             </div>`;
@@ -418,7 +429,7 @@
                 <div class="border border-gray-200 rounded-2xl p-4 mb-4">
                     <div class="font-medium mb-3 flex justify-between">
                         <span>جلسه ${si + 1}</span>
-                        <span class="text-sm text-gray-500">${escapeHtml(s.date || 'بدون تاریخ')}</span>
+                        <span class="text-sm text-gray-500">${escapeHtml(s.date ? (window.formatLocalizedDate?.(s.date) || s.date) : 'بدون تاریخ')}</span>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>

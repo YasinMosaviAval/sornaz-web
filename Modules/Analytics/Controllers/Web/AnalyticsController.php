@@ -30,7 +30,7 @@ class AnalyticsController {
 
     public function user() {$id=(int)($_GET['id']??0);$items=$this->users->publicDirectory();if($id<1||!array_filter($items,fn($x)=>(int)$x['id']===$id))abort(404);return ResponseFactory::view('Analytics::user',['users'=>$items,'selectedUserId'=>$id])->layout('main')->title(locale()==='en'?'User profile | Sornaz':'پروفایل کاربر | سُرناز');}
     public function users() { return ResponseFactory::view('Analytics::users')->layout('main')->title('سُرناز | صفحه اصلی'); }
-    public function academy() {$id=(int)($_GET['id']??0);$items=$this->academies->all();if($id<1||!array_filter($items,fn($x)=>(int)$x['id']===$id))abort(404);return ResponseFactory::view('Analytics::academy',['academies'=>$items,'selectedAcademyId'=>$id])->layout('main')->title(locale()==='en'?'Music academy | Sornaz':'آموزشگاه موسیقی | سُرناز');}
+    public function academy() {$id=(int)($_GET['id']??0);$items=$this->academies->all();if($id<1||!array_filter($items,fn($x)=>(int)$x['id']===$id))abort(404);$branches=(new \Modules\Analytics\Services\PublicRatingService())->branchesForAcademy($id,locale());return ResponseFactory::view('Analytics::academy',['academies'=>$items,'selectedAcademyId'=>$id,'publicBranches'=>$branches])->layout('main')->title(locale()==='en'?'Music academy | Sornaz':'آموزشگاه موسیقی | سُرناز');}
     public function academies() { return ResponseFactory::view('Analytics::academies')->layout('main')->title('سُرناز | صفحه اصلی'); }
     public function academyEnroll() {
         $academyId=(int)($_GET['academy']??0);if($academyId<1)abort(404);

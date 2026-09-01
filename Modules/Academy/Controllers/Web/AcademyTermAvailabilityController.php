@@ -54,7 +54,7 @@ class AcademyTermAvailabilityController {
                 $targetTimezone=\Core\database\DB::table('f_timezone')->where('timezone_id',$targetTimezoneId)->first();
                 if($sourceTimezone&&$targetTimezone)$selectedStart=(new \DateTimeImmutable((string)($_GET['date']??'').' '.$selectedStart,new \DateTimeZone($sourceTimezone['timezone'])))->setTimezone(new \DateTimeZone($targetTimezone['timezone']))->format('H:i');
             }
-            return ResponseFactory::json(['success' => true, 'data' => ['times' => $times, 'closed' => $closed || !$workingTimes, 'full' => !$closed && (bool) $workingTimes && !$times, 'timezoneId'=>$targetTimezoneId, 'selectedStart'=>$selectedStart, 'organizationKind'=>$organizationKind]]);
+            return ResponseFactory::json(['success' => true, 'data' => ['times' => $times, 'closed' => $closed || !$workingTimes, 'full' => !$closed && (bool) $workingTimes && !$times, 'timezoneId'=>$targetTimezoneId, 'selectedStart'=>$selectedStart, 'organizationKind'=>$organizationKind,'closureType'=>$availability['closureType']??null,'closureReason'=>$availability['closureReason']??null]]);
         } catch (Throwable $e) {
             return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
         }

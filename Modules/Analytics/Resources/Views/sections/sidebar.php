@@ -61,6 +61,7 @@ $canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager
             <li><a href="#" onclick="showSection('dashboard')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-home w-5 text-center"></i> داشبورد</a></li>
             <li><a href="#" onclick="showSection('account')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-user-cog w-5 text-center"></i> حساب کاربری</a></li>
             <?php if($isSiteAdmin): ?><li><a href="#" onclick="showSection('tracking')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-chart-line w-5 text-center"></i> تحلیل رفتار کاربران</a></li><?php endif; ?>
+            <?php if($isSiteAdmin): ?><li><a href="#" onclick="showSection('national-holidays')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-calendar-times w-5 text-center"></i> تعطیلات رسمی کشور</a></li><?php endif; ?>
             <?php if($hasAcademyPanelAccess): ?>
             <?php if(!$isBranchAccount): ?>
             <li>
@@ -75,7 +76,7 @@ $canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager
                     </ul>
                 </li>
             <?php endif; ?>
-            <?php if($isSiteAdmin): ?>
+<?php if($isSiteAdmin || $ownsAcademy || $isAcademyManager || $isBranchAccount || $hasAcademyManagementRole): ?>
             <li>
                 <button type="button" onclick="toggleSidebarSubmenu('profilesSubmenu', this)" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-right text-white">
                     <span class="flex items-center gap-3"><i class="fas fa-id-card w-5 text-center"></i> نقش‌ها و دسترسی‌ها</span>
@@ -83,8 +84,10 @@ $canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager
                 </button>
                 <ul id="profilesSubmenu" class="mt-1 mr-4 space-y-1 hidden border-r border-indigo-700/60 pr-2">
                     <li><a href="#" onclick="showSection('users')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 transition text-sm text-white"><i class="fas fa-users w-4"></i>کاربران</a></li>
+                    <?php if($isSiteAdmin): ?>
                     <li><a href="#" onclick="showSection('roles')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 transition text-sm text-white"><i class="fas fa-user-tag w-4"></i>نقش‌ها</a></li>
                     <li><a href="#" onclick="showSection('permissions')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 transition text-sm text-white"><i class="fas fa-key w-4"></i>دسترسی‌ها</a></li>
+                    <?php endif; ?>
                 </ul>
             </li>
             <?php endif; ?>

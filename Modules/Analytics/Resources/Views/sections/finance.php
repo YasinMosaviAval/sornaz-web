@@ -1,4 +1,8 @@
 <div id="finance" class="section hidden">
+    <section class="mb-8 rounded-3xl border border-indigo-100 bg-white p-6 shadow-sm">
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-3"><div><h2 class="text-xl font-bold">اشتراک ماهانه سامانه مدیریت آموزشگاه</h2><p class="mt-1 text-sm text-gray-500">ماه اول رایگان است و صورت‌حساب ماه بعد، سه روز پیش از پایان دوره ایجاد می‌شود.</p></div><span id="academySubscriptionPrice" class="rounded-xl bg-indigo-50 px-4 py-2 text-sm text-indigo-700">در حال دریافت...</span></div>
+        <div id="academySubscriptionPeriods" class="space-y-3"><div class="py-8 text-center text-gray-400">در حال دریافت وضعیت اشتراک...</div></div>
+    </section>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-3xl font-bold">امور مالی</h1>
