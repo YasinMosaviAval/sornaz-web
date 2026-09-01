@@ -72,6 +72,14 @@
         }).join('');
     };
 
+    window.getDashboardActionItemsHTML=function(list){
+        if(!list||!list.length)return emptyState('موردی نیازمند بررسی نیست');
+        return list.map(function(item){
+            if(item.type==='cancellation_pending')return `<article class="rounded-2xl border border-amber-200 bg-amber-50 p-4"><div class="font-bold text-amber-800">درخواست لغو در انتظار تأیید</div><p class="mt-2 text-sm text-gray-700">جلسه #${escapeHtml(item.sessionId)} از ${escapeHtml(item.termName)} در تاریخ ${escapeHtml(window.formatLocalizedDate?.(item.date)||item.date)}</p><p class="mt-1 text-xs text-gray-500">${escapeHtml(item.branchName)}</p><div class="mt-4 flex gap-2">${window.termPermissions?.canApproveSessionCancellations!==false?`<button onclick="decideDashboardCancellation(${item.termId},${item.sessionId},true)" class="rounded-xl bg-emerald-600 px-4 py-2 text-sm text-white">تأیید</button><button onclick="decideDashboardCancellation(${item.termId},${item.sessionId},false)" class="rounded-xl border border-red-300 px-4 py-2 text-sm text-red-700">رد</button>`:'<span class="text-xs text-amber-700">در انتظار تأیید مدیر</span>'}</div></article>`;
+            return `<article class="rounded-2xl border border-red-200 bg-red-50 p-4"><div class="font-bold text-red-800">تداخل جلسه با تعطیل رسمی</div><p class="mt-2 text-sm text-gray-700">جلسه #${escapeHtml(item.sessionId)} از ${escapeHtml(item.termName)} در تاریخ ${escapeHtml(window.formatLocalizedDate?.(item.date)||item.date)} ساعت ${escapeHtml(item.startTime)}</p><p class="mt-1 text-sm text-red-700">${escapeHtml(item.holidayTitle)}</p><p class="mt-1 text-xs text-gray-500">${escapeHtml(item.branchName)}</p><button onclick="openDashboardHolidayConflict(${item.termId},${item.sessionId})" class="mt-4 rounded-xl bg-red-600 px-4 py-2 text-sm text-white">تأیید حذف و تعیین جلسه جبرانی</button></article>`;
+        }).join('');
+    };
+
     window.getDashboardPaymentsHTML = function (list) {
         if (!list || !list.length) return emptyState('پرداختی ثبت نشده');
         return list.map(function (p) {

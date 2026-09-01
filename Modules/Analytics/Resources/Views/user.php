@@ -33,7 +33,7 @@
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div class="bg-gray-50 rounded-2xl py-4 text-center">
                         <div class="text-xs text-gray-400">امتیاز</div>
-                        <div class="text-xl font-bold mt-1" id="upRating">—</div>
+                        <div class="text-xl font-bold mt-1" id="upRating">—</div><div class="mt-2 flex justify-center" data-public-rating data-rating-type="user" data-rating-id="<?= (int)($selectedUserId??0) ?>" data-rating-output="upRating"></div>
                     </div>
                     <div class="bg-gray-50 rounded-2xl py-4 text-center">
                         <div class="text-xs text-gray-400">سازها</div>

@@ -17,11 +17,7 @@ use Modules\Analytics\Controllers\Web\AdminAccessCatalogController;
 use Modules\Analytics\Controllers\Web\AdminDashboardController;
 use Modules\Analytics\Controllers\Web\AdminAccountController;
 use Modules\Analytics\Controllers\Web\AdminGalleryController;
-use Modules\Analytics\Controllers\Web\AdminMessageController;
 use Modules\Analytics\Controllers\Web\PublicCommentController;
-use Modules\Analytics\Controllers\Web\PublicRatingController;
-use Modules\Analytics\Controllers\Web\AdminTrackingController;
-use Modules\Analytics\Controllers\Web\AdminPointController;
 
 
 
@@ -43,14 +39,8 @@ Router::post('/analytics/admin-account/sessions/{id}/end', [AdminAccountControll
 Router::post('/analytics/admin-account/backups', [AdminAccountController::class, 'backup'])->middleware(['academy-panel','csrf']);
 Router::get('/analytics/admin-account/backups/{id}/download', [AdminAccountController::class, 'download'])->middleware('academy-panel');
 Router::get('/analytics/admin-notifications', [AdminNotificationController::class, 'index'])->middleware('academy-panel');
-Router::get('/analytics/admin-messages', [AdminMessageController::class, 'index'])->middleware('academy-panel');
-Router::post('/analytics/admin-messages', [AdminMessageController::class, 'store'])->middleware(['academy-panel','csrf']);
-Router::post('/analytics/admin-messages/{id}/read', [AdminMessageController::class, 'read'])->middleware(['academy-panel','csrf']);
-Router::post('/analytics/admin-messages/{id}/unread', [AdminMessageController::class, 'unread'])->middleware(['academy-panel','csrf']);
-Router::post('/analytics/admin-messages/{id}/delete', [AdminMessageController::class, 'delete'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-notifications', [AdminNotificationController::class, 'store'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-notifications/{id}/publish', [AdminNotificationController::class, 'publish'])->middleware(['academy-panel','csrf']);
-Router::post('/analytics/admin-notifications/{id}/read', [AdminNotificationController::class, 'read'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-notifications/{id}/expire', [AdminNotificationController::class, 'expire'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-notifications/{id}/delete', [AdminNotificationController::class, 'delete'])->middleware(['academy-panel','csrf']);
 Router::get('/analytics/admin-scheduling-rules', [AdminSchedulingRuleController::class, 'index'])->middleware('academy-panel');
@@ -80,14 +70,9 @@ Router::post('/analytics/admin-media/{id}/update', [AdminMediaController::class,
 Router::post('/analytics/admin-media/{id}/delete', [AdminMediaController::class, 'delete'])->middleware(['academy-panel','csrf']);
 Router::get('/analytics/site-settings', [AdminSettingController::class, 'show']);
 Router::post('/analytics/admin-settings', [AdminSettingController::class, 'save'])->middleware(['academy-panel','csrf']);
-Router::get('/analytics/admin-user-access', [AdminUserAccessController::class, 'index'])->middleware('academy-panel');
+Router::get('/analytics/admin-user-access', [AdminUserAccessController::class, 'index'])->middleware('site-admin');
 Router::get('/analytics/admin-dashboard', [AdminDashboardController::class, 'index'])->middleware('academy-panel');
-Router::get('/analytics/admin-tracking', [AdminTrackingController::class, 'index'])->middleware('site-admin');
-Router::get('/analytics/admin-points', [AdminPointController::class, 'index'])->middleware('academy-panel');
-Router::post('/analytics/admin-points', [AdminPointController::class, 'store'])->middleware(['site-admin','csrf']);
-Router::post('/analytics/admin-points/{id}/update', [AdminPointController::class, 'update'])->middleware(['site-admin','csrf']);
-Router::post('/analytics/admin-points/{id}/delete', [AdminPointController::class, 'delete'])->middleware(['site-admin','csrf']);
-Router::post('/analytics/admin-user-access/{id}', [AdminUserAccessController::class, 'save'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-user-access/{id}', [AdminUserAccessController::class, 'save'])->middleware(['site-admin','csrf']);
 Router::get('/analytics/admin-access-catalog', [AdminAccessCatalogController::class, 'index'])->middleware('site-admin');
 Router::post('/analytics/admin-roles', [AdminAccessCatalogController::class, 'saveRole'])->middleware(['site-admin','csrf']);
 Router::post('/analytics/admin-roles/{id}', [AdminAccessCatalogController::class, 'saveRole'])->middleware(['site-admin','csrf']);
@@ -119,8 +104,6 @@ Router::get('/analytics/admin-inline-translations', [AdminTestController::class,
 Router::get('/analytics/articles', [AnalyticsController::class, 'articles']);
 Router::get('/analytics/article-details', [AnalyticsController::class, 'articleDetails']);
 Router::post('/analytics/article-comments/{id}', [PublicCommentController::class, 'store'])->middleware(['csrf']);
-Router::get('/analytics/public-ratings/{type}/{id}', [PublicRatingController::class, 'show']);
-Router::post('/analytics/public-ratings/{type}/{id}', [PublicRatingController::class, 'store'])->middleware(['auth','csrf']);
 
 
 

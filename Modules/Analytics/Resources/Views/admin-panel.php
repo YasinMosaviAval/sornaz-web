@@ -53,9 +53,10 @@ $showAcademyPanelSections = $isSiteAdminPanel || $hasMemberManagementRole || in_
             component('availability-exceptions');
             component('points');
             component('settings');
+            component('users');
             if ($isSiteAdminPanel) {
+                component('national-holidays');
                 component('tracking');
-                component('users');
                 component('roles');
                 component('permissions');
                 component('guides', ['guides'=>$guides??[]]);

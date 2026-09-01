@@ -32,7 +32,7 @@ final class UserPointService
 
     public static function recordDatabaseAction(PDO$pdo,string$table,string$operation,array$data,?int$entityId,?int$actor):void
     {
-        if(!$actor||in_array($table,['user_points','user_point_rules','user_messages','translations','tracking_ingestion_batches','tracking_user_events','tracking_user_page_views','tracking_user_sessions','tracking_user_activity_intervals','tracking_user_content_engagements'],true))return;
+        if(!$actor||in_array($table,['user_points','user_point_rules','user_messages','translations','comments','public_ratings','tracking_ingestion_batches','tracking_user_events','tracking_user_page_views','tracking_user_sessions','tracking_user_activity_intervals','tracking_user_content_engagements'],true))return;
         if(!self::ensureSchema($pdo))return;$recipient=self::recipient($pdo,$data,$actor);self::award($pdo,$recipient,'database',$table.'.'.$operation,$table,$entityId,(string)($entityId??''));
     }
 
@@ -40,6 +40,12 @@ final class UserPointService
     {
         if(!$userId||!self::ensureSchema($pdo))return;
         foreach($events as$event){if(!is_array($event))continue;$name=preg_replace('/[^a-zA-Z0-9_.:-]+/','_',trim((string)($event['name']??'')));if(!$name)continue;$uuid=(string)($event['uuid']??'');self::award($pdo,$userId,'tracking',$name,'tracking_event',$pageViewId,$uuid);}
+    }
+
+    public static function recordPublicAction(PDO $pdo,?int $userId,string $action,string $referenceType,int $referenceId):void
+    {
+        if(!$userId||!self::ensureSchema($pdo))return;
+        self::award($pdo,$userId,'database',$action,$referenceType,$referenceId,$referenceType.':'.$referenceId);
     }
 
     private static function award(PDO$pdo,int$userId,string$source,string$action,string$referenceType,?int$referenceId,string$eventKey):void
@@ -75,6 +81,10 @@ final class UserPointService
             ['ثبت قسط فاکتور','general','financial',15,'database','academy_branch_course_term_invoice_installments.insert','event',0,0],
             ['ارسال بازخورد یا دیدگاه','general','social',10,'database','comments.insert','daily',3,0],
             ['به‌روزرسانی دیدگاه','general','social',3,'database','comments.update','daily',2,0],
+            ['امتیاز به مقاله','general','social',3,'database','public.article.rate','event',10,0],
+            ['امتیاز به نظر مقاله','general','social',2,'database','public.comment.rate','event',15,0],
+            ['پاسخ به نظر مقاله','general','social',5,'database','public.comment.reply','event',10,0],
+            ['ارسال نظر برای مقاله','general','social',8,'database','public.comment.submit','event',5,0],
             ['ثبت محتوای آموزشی','professional','academic',30,'database','posts.insert','daily',3,0],
             ['بهبود محتوای آموزشی','professional','academic',8,'database','posts.update','daily',5,0],
             ['بارگذاری رسانه','professional','achievement',10,'database','media_files.insert','daily',5,0],

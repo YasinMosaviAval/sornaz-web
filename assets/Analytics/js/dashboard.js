@@ -79,6 +79,9 @@
             if (element) element.innerHTML = html;
         };
         setList('dashboardStats', window.getDashboardStatsHTML?.(dashboardData.stats) || '');
+        setList('dashboardActionItems', window.getDashboardActionItemsHTML?.(dashboardData.actionItems) || '');
+        window.dashboardActionItems=dashboardData.actionItems||[];
+        const actionCount=document.getElementById('dashboardActionCount');if(actionCount)actionCount.textContent=String((dashboardData.actionItems||[]).length);
         setList('todayClassesList', window.getDashboardTodayClassesHTML?.(dashboardData.todayClasses) || '');
         setList('urgentItemsList', window.getDashboardUrgentHTML?.(dashboardData.urgentItems) || '');
         setList('recentPaymentsList', window.getDashboardPaymentsHTML?.(dashboardData.recentPayments) || '');
@@ -97,8 +100,9 @@
         refreshIcon?.classList.add('fa-spin');
         try {
             dashboardData = await requestDashboard();
+            if(!window.termPermissions&&typeof window.loadTerms==='function')await window.loadTerms();
             if(currentDashboardBranch==='academy'){
-                ['todayClasses','urgentItems','recentPayments','recentDeposits','todayAbsences','unreadMessages','recentRegistrations','upcomingHolidays'].forEach(key=>{dashboardData[key]=(dashboardData[key]||[]).filter(item=>window.matchesOrganizationFilter(item,'academy'));});
+                ['todayClasses','actionItems','urgentItems','recentPayments','recentDeposits','todayAbsences','unreadMessages','recentRegistrations','upcomingHolidays'].forEach(key=>{dashboardData[key]=(dashboardData[key]||[]).filter(item=>window.matchesOrganizationFilter(item,'academy'));});
                 dashboardData.stats={...(dashboardData.stats||{}),activeStudents:0,todayClasses:0,monthlyIncome:'0',attendanceRate:'۰٪',pendingPayments:0,absencesToday:0,newMessages:dashboardData.unreadMessages.length,urgentAlerts:dashboardData.urgentItems.length,newStudentsWeek:0,pointsAwarded:0};
             }
             window.renderDashboardBranchTabs();
@@ -115,7 +119,15 @@
         }
     };
 
+    window.openDashboardHolidayConflict=async function(termId,sessionId){if(typeof window.loadTerms==='function')await window.loadTerms();await window.openTermSessionCancellation?.(termId,sessionId);const item=(window.dashboardActionItems||[]).find(row=>row.type==='national_holiday_conflict'&&row.termId===termId&&row.sessionId===sessionId),reason=document.getElementById('termCancellationReason');if(reason&&item){const description=String(item.holidayDescription||'').trim();reason.value=`تعطیلی رسمی «${item.holidayTitle}» در تاریخ ${window.formatLocalizedDate?.(item.date)||item.date}${description?' — '+description:''}`;reason.dispatchEvent(new Event('input',{bubbles:true}));}};
+    window.decideDashboardCancellation=async function(termId,sessionId,approve){await window.decideTermSessionCancellation?.(termId,sessionId,approve);window.closeModal?.();await window.refreshDashboard();};
+
     setTimeout(() => {
         if (document.getElementById('dashboard')) window.refreshDashboard();
     }, 200);
+    const dashboardHolidayChannel='BroadcastChannel' in window?new BroadcastChannel('sornaz-national-holidays'):null;
+    const refreshForHolidayChange=()=>{if(document.getElementById('dashboard')&&!document.getElementById('dashboard').classList.contains('hidden'))window.refreshDashboard();};
+    window.addEventListener('sornaz:data-changed',event=>{if(event.detail?.resource==='national_holidays')refreshForHolidayChange();});
+    if(dashboardHolidayChannel)dashboardHolidayChannel.onmessage=event=>{if(event.data?.resource==='national_holidays')refreshForHolidayChange();};
+    setInterval(refreshForHolidayChange,2000);
 })();

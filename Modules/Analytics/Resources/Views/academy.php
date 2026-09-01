@@ -37,7 +37,7 @@
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="apStats">
                     <div class="bg-gray-50 rounded-2xl py-4 text-center">
                         <div class="text-xs text-gray-400">امتیاز</div>
-                        <div class="text-xl font-bold mt-1" id="apRating">—</div>
+                        <div class="text-xl font-bold mt-1" id="apRating">—</div><div class="mt-2 flex justify-center" data-public-rating data-rating-type="academy" data-rating-id="<?= (int)($selectedAcademyId??0) ?>" data-rating-output="apRating"></div>
                     </div>
                     <div class="bg-gray-50 rounded-2xl py-4 text-center">
                         <div class="text-xs text-gray-400">کلاس‌ها</div>
@@ -82,8 +82,8 @@
                         <p class="text-sm text-gray-400 col-span-full text-center py-6">استادی نمایش داده نشده</p>
                     </div>
                 </section>
+                <?php if(!empty($publicBranches)): ?><section class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8"><h2 class="text-lg font-bold mb-4"><?= locale()==='en'?'Rate academy branches':'امتیازدهی به شعبه‌ها' ?></h2><div class="space-y-4"><?php foreach($publicBranches as$branch): ?><div class="rounded-2xl border border-gray-100 p-4"><h3 class="font-medium mb-2"><?= htmlspecialchars($branch['name']) ?></h3><div data-public-rating data-rating-type="branch" data-rating-id="<?= (int)$branch['id'] ?>"></div></div><?php endforeach; ?></div></section><?php endif; ?>
             </div>
-
             <!-- سایدبار -->
             <div class="space-y-6">
                 <!-- تماس و لینک‌ها -->

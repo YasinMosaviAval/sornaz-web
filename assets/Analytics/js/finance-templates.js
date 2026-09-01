@@ -56,7 +56,7 @@
                 : (installment.statusCode === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700');
             const isNextPayable = firstUnpaid && firstUnpaid.id === installment.id;
             const payButton = installment.statusCode === 'paid' ? '' : (isNextPayable
-                ? `<button onclick="payFinanceInstallment(${item.id}, ${installment.id}, ${isInline ? 'true' : 'false'})" class="rounded-xl bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700">پرداخت</button>`
+                ? `<div class="flex flex-wrap justify-end gap-2"><button onclick="payFinanceInstallment(${item.id}, ${installment.id}, ${isInline ? 'true' : 'false'})" class="rounded-xl bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700"><i class="fas fa-credit-card ml-1"></i> پرداخت با زرین‌پال</button><button onclick="openOfflineInstallmentPayment(${item.id},${installment.id})" class="rounded-xl border border-emerald-200 px-4 py-2 text-sm text-emerald-700">ثبت پرداخت دیگر</button></div>`
                 : '<button type="button" disabled title="ابتدا قسط قبلی را پرداخت کنید" class="cursor-not-allowed rounded-xl bg-gray-200 px-4 py-2 text-sm text-gray-400">پرداخت</button>');
             return `<div class="grid grid-cols-2 md:grid-cols-5 gap-3 items-center border border-gray-200 rounded-2xl p-4">
                 <div><span class="block text-xs text-gray-400 mb-1">شماره قسط</span><strong>${Number(installment.number).toLocaleString('fa-IR')}</strong></div>
