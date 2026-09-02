@@ -298,7 +298,7 @@ setTimeout(async function () {
         try { await window.loadAdminNotifications(); } catch (error) { console.error(error); alert(error.message); }
     }
 }, 200);
-async function pollAdminNotifications() { if (notificationPolling || document.hidden) return; notificationPolling = true; try { await window.loadAdminNotifications(true); } catch (error) {} finally { notificationPolling = false; } }
+async function pollAdminNotifications() { if (notificationPolling || document.hidden || !document.getElementById('notificationsTable')) return; notificationPolling = true; try { await window.loadAdminNotifications(true); } catch (error) {} finally { notificationPolling = false; } }
 notificationChannel && (notificationChannel.onmessage = pollAdminNotifications);
 setInterval(pollAdminNotifications, 4000);
 })();

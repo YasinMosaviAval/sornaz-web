@@ -102,6 +102,22 @@ html[data-mode="dark"] .dashboard-unread-sender { color:var(--theme-200); }
 html[data-mode="dark"] .dashboard-unread-preview { color:#cbd5e1!important; }
 html[data-mode="dark"] .dashboard-unread-action { padding:.35rem .6rem;border-radius:.6rem;background:color-mix(in srgb,var(--theme-500) 15%,var(--surface-muted));color:var(--theme-300)!important;text-decoration:none!important; }
 html[data-mode="dark"] .dashboard-unread-action:hover { background:color-mix(in srgb,var(--theme-500) 27%,var(--surface-muted));color:var(--theme-100)!important; }
+
+/* Chat follows the active semantic surface and color theme. */
+#chat>div,#chat #chatSidebar,#chat #chatRoom { background:var(--surface-card)!important;color:var(--text)!important; }
+#chat #chatSidebar,#chat #chatSidebar>div,#chat #chatRoom>header,#chat #chatSendForm,#chat #chatFileName { border-color:var(--border)!important; }
+#chat #chatMessages { background:var(--surface)!important; }
+#chat #chatConversationSearch,#chat #chatBody { background:transparent!important;color:var(--text)!important; }
+#chat #chatConversationSearch::placeholder,#chat #chatBody::placeholder { color:var(--text-muted)!important; }
+#chat label:has(#chatConversationSearch),#chat label:has(#chatFile) { background:var(--surface-muted)!important;border-color:var(--border)!important;color:var(--text)!important; }
+#chat #chatConversationList button { color:var(--text)!important;transition:background-color 140ms ease,color 140ms ease; }
+#chat #chatConversationList button:hover { background:var(--surface-muted)!important; }
+#chat #chatConversationList button.bg-indigo-50 { background:color-mix(in srgb,var(--theme-500) 14%,var(--surface-card))!important;box-shadow:inset 3px 0 0 var(--theme-500); }
+#chat #chatMessages [data-chat-message]>.bg-white,#chat #chatMessages [data-chat-message]>a,#chat [data-chat-date]>span { background:var(--surface-card)!important;border-color:var(--border)!important;color:var(--text)!important; }
+#chat #chatMessages [data-chat-message]>.bg-indigo-600 { background:var(--theme-600)!important;color:#fff!important; }
+#chat #chatMessages [data-chat-message]>p,#chat #chatMessages [data-chat-message]>div:has([data-chat-like]) { color:var(--text-muted)!important; }
+html[data-mode="dark"] #chat #chatConversationList button.bg-indigo-50 { background:color-mix(in srgb,var(--theme-500) 23%,var(--surface-card))!important;box-shadow:inset 3px 0 0 var(--theme-400); }
+html[data-mode="dark"] #chat #chatMessages [data-chat-message]>.bg-indigo-600 { background:var(--theme-700)!important;color:#fff!important; }
 body,header,footer,input,textarea,select,.theme-switcher,.language-switcher { transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease; }
 #sidebar,#sidebar a,#sidebar button,#sidebar [class*="border-indigo-"] { transition-property:background-color,border-color,color,transform;transition-duration:200ms;transition-timing-function:ease; }
 .admin-edit-switch { background:var(--surface-card);border-color:var(--border);color:var(--text); }

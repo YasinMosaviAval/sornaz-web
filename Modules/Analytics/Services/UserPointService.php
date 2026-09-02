@@ -42,10 +42,10 @@ final class UserPointService
         foreach($events as$event){if(!is_array($event))continue;$name=preg_replace('/[^a-zA-Z0-9_.:-]+/','_',trim((string)($event['name']??'')));if(!$name)continue;$uuid=(string)($event['uuid']??'');self::award($pdo,$userId,'tracking',$name,'tracking_event',$pageViewId,$uuid);}
     }
 
-    public static function recordPublicAction(PDO $pdo,?int $userId,string $action,string $referenceType,int $referenceId):void
+    public static function recordPublicAction(PDO $pdo,?int $userId,string $action,string $referenceType,int $referenceId,?string $eventKey=null):void
     {
         if(!$userId||!self::ensureSchema($pdo))return;
-        self::award($pdo,$userId,'database',$action,$referenceType,$referenceId,$referenceType.':'.$referenceId);
+        self::award($pdo,$userId,'database',$action,$referenceType,$referenceId,$eventKey?:$referenceType.':'.$referenceId);
     }
 
     private static function award(PDO$pdo,int$userId,string$source,string$action,string$referenceType,?int$referenceId,string$eventKey):void
@@ -85,6 +85,10 @@ final class UserPointService
             ['امتیاز به نظر مقاله','general','social',2,'database','public.comment.rate','event',15,0],
             ['پاسخ به نظر مقاله','general','social',5,'database','public.comment.reply','event',10,0],
             ['ارسال نظر برای مقاله','general','social',8,'database','public.comment.submit','event',5,0],
+            ['دریافت نظر برای مقاله','general','social',4,'database','public.article.comment.received','event',20,0],
+            ['دریافت پاسخ برای نظر مقاله','general','social',3,'database','public.comment.reply.received','event',20,0],
+            ['امتیاز دادن به پروفایل کاربر','general','social',3,'database','public.profile.rate','event',10,0],
+            ['دریافت امتیاز برای پروفایل','professional','social',5,'database','public.profile.rating.received','event',20,0],
             ['ثبت محتوای آموزشی','professional','academic',30,'database','posts.insert','daily',3,0],
             ['بهبود محتوای آموزشی','professional','academic',8,'database','posts.update','daily',5,0],
             ['بارگذاری رسانه','professional','achievement',10,'database','media_files.insert','daily',5,0],

@@ -28,6 +28,10 @@ class PublicRatingService
         if($existing)DB::table('public_ratings')->where('public_rating_id',(int)$existing['public_rating_id'])->update(['score'=>$score,'updated_at'=>$now,'updated_by'=>$userId,'deleted_at'=>null,'deleted_by'=>null]);
         else DB::table('public_ratings')->insert(['target_type'=>$type,'target_id'=>$id,'user_id'=>$userId,'score'=>$score,'created_at'=>$now,'created_by'=>$userId,'updated_at'=>$now,'updated_by'=>$userId]);
         if(in_array($type,['post','comment'],true))UserPointService::recordPublicAction(db(),$userId,$type==='post'?'public.article.rate':'public.comment.rate','public_'.$type,$id);
+        if($type==='user'){
+            UserPointService::recordPublicAction(db(),$userId,'public.profile.rate','public_user',$id);
+            UserPointService::recordPublicAction(db(),$id,'public.profile.rating.received','public_user',$id,'profile-rating:'.$id.':'.$userId);
+        }
         return$this->summary($type,$id,$userId);
     }
 

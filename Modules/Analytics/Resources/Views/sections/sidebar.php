@@ -4,9 +4,10 @@ $isSiteAdmin = \Modules\System\Services\SiteAdminAccess::allows($panelUser);
 $isBranchAccount = ($panelUser['type'] ?? '') === 'branch';
 $hasAcademyManagementRole = $panelUser && (bool)\Core\database\DB::table('academy_branch_members')
     ->join('academy_branch_member_roles', 'academy_branch_member_roles.member_id', '=', 'academy_branch_members.member_id')
+    ->join('access_system_roles','access_system_roles.role_id','=','academy_branch_member_roles.role_id')
     ->where('academy_branch_members.user_id', (int)$panelUser['user_id'])
-    ->whereIn('academy_branch_member_roles.role_id', [7, 16])
-    ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->first();
+    ->whereRaw("(access_system_roles.name LIKE '%manager%' OR access_system_roles.name LIKE '%reception%')")
+    ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->first();
 $hasAcademyPanelAccess = $isSiteAdmin || $isBranchAccount || $hasAcademyManagementRole
     || in_array(($panelUser['type'] ?? ''), ['academy', 'branch'], true);
 $panelUserId = (int)($panelUser['user_id'] ?? 0);
@@ -60,6 +61,21 @@ $canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager
             <? } ?>
             <li><a href="#" onclick="showSection('dashboard')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-home w-5 text-center"></i> داشبورد</a></li>
             <li><a href="#" onclick="showSection('account')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-user-cog w-5 text-center"></i> حساب کاربری</a></li>
+            <li><a href="#" onclick="showSection('chat')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-comment-dots w-5 text-center"></i> گفتگوها</a></li>
+            <?php if($hasAcademyPanelAccess): ?>
+            <li><button type="button" onclick="toggleSidebarSubmenu('profileAchievementsSubmenu',this)" class="flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-right transition hover:bg-indigo-800"><span class="flex items-center gap-3"><i class="fas fa-trophy w-5 text-center"></i> سوابق و دستاوردها</span><i class="fas fa-chevron-down text-xs submenu-chevron"></i></button>
+                <ul id="profileAchievementsSubmenu" class="mt-1 mr-4 hidden space-y-1 border-r border-indigo-700/60 pr-2">
+                    <li><a href="#" onclick="showSection('awards')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-award w-4"></i>پاداش‌ها و جوایز</a></li>
+                    <li><a href="#" onclick="showSection('badges')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-medal w-4"></i>نشان‌ها</a></li>
+                    <li><a href="#" onclick="showSection('experiences')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-briefcase w-4"></i>تجربه‌ها</a></li>
+                    <li><a href="#" onclick="showSection('certificates')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-certificate w-4"></i>تأییدیه‌ها</a></li>
+                    <li><a href="#" onclick="showSection('educations')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-graduation-cap w-4"></i>تحصیلات</a></li>
+                    <li><a href="#" onclick="showSection('events')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-calendar-day w-4"></i>رویدادها</a></li>
+                    <li><a href="#" onclick="showSection('polls')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-poll w-4"></i>نظرسنجی‌ها</a></li>
+                    <li><a href="#" onclick="showSection('publications')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-book-open w-4"></i>انتشارات</a></li>
+                </ul>
+            </li>
+            <?php endif; ?>
             <?php if($isSiteAdmin): ?><li><a href="#" onclick="showSection('tracking')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-chart-line w-5 text-center"></i> تحلیل رفتار کاربران</a></li><?php endif; ?>
             <?php if($isSiteAdmin): ?><li><a href="#" onclick="showSection('national-holidays')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-calendar-times w-5 text-center"></i> تعطیلات رسمی کشور</a></li><?php endif; ?>
             <?php if($hasAcademyPanelAccess): ?>

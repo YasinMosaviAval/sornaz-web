@@ -8,6 +8,7 @@
     <link rel="icon" type="image/jpeg" href="/assets/images/logo/cropped-favicon_512x512.jpg">
     <link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
     <script src="/assets/vendor/tailwind/tailwindcss.js"></script>
+    <script>tailwind.config={darkMode:['class','[data-mode="dark"]']};</script>
     <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="/assets/vendor/sweetalert2/sweetalert2.min.css">
     <link rel="stylesheet" href="/assets/theme/theme.css?v=<?= filemtime(base_path('assets/theme/theme.css')) ?: 1 ?>">

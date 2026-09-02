@@ -6,6 +6,7 @@
     <title><?= e(trans('admin.meta.title','پنل کاربری سرناز')) ?></title>
     <script>(function(){const r=document.documentElement;r.dataset.theme=localStorage.getItem('sornaz.theme')||'indigo';r.dataset.mode=localStorage.getItem('sornaz.mode')||'light';})();</script>
     <script src="/assets/vendor/tailwind/tailwindcss.js"></script>
+    <script>tailwind.config={darkMode:['class','[data-mode="dark"]']};</script>
     <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
     <link rel="stylesheet" href="/assets/vendor/jalalidatepicker/jalalidatepicker.min.css">
@@ -43,6 +44,7 @@
     pushScript('tracking.js');
     pushScript('account-templates.js');
     pushScript('account.js');
+    pushScript('chat.js');
     pushScript('report-templates.js');
     pushScript('reports.js');
     pushScript('chart-gallery.js');
@@ -97,12 +99,7 @@
     // pushScript('contracts.js');
 
 
-    // pushScript('awards.js');
-    // pushScript('certificates.js');
-    // pushScript('educations.js');
-    // pushScript('events.js');
-    // pushScript('publications.js');
-    // pushScript('badges.js');
+    pushScript('profile-content.js');
     // pushScript('approvals.js');
     // pushScript('experiences.js');
 

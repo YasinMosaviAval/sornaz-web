@@ -42,6 +42,8 @@
         document.getElementById(sectionId)?.classList.remove('hidden');
     };
 
+    window.decideDashboardUserMerge=async function(id,decision){const verb=decision==='approved'?'تأیید و منتقل':'رد';if(!(await AppDialog.confirm('این درخواست '+verb+' شود؟')))return;const json=JSON.stringify({decision,note:''}),bytes=new TextEncoder().encode(json);let binary='';bytes.forEach(byte=>binary+=String.fromCharCode(byte));const body=new URLSearchParams();body.set('_token',window.adminCsrfToken||'');body.set('payload_b64',btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''));try{const response=await fetch('/analytics/admin-account/merges/'+Number(id)+'/decision',{method:'POST',credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':window.adminCsrfToken||''},body}),payload=await response.json(),result=payload.data??payload;if(!response.ok||result.success===false)throw new Error(result.message||'ثبت تصمیم ناموفق بود.');await window.refreshDashboard();}catch(error){alert(error.message);}};
+
     window.renderDashboardBranchTabs = function () {
         const container = document.getElementById('dashboardBranchTabs');
         if (!container || !dashboardData) return;
@@ -100,7 +102,7 @@
         refreshIcon?.classList.add('fa-spin');
         try {
             dashboardData = await requestDashboard();
-            if(!window.termPermissions&&typeof window.loadTerms==='function')await window.loadTerms();
+            if(document.getElementById('terms')&&!window.termPermissions&&typeof window.loadTerms==='function')await window.loadTerms();
             if(currentDashboardBranch==='academy'){
                 ['todayClasses','actionItems','urgentItems','recentPayments','recentDeposits','todayAbsences','unreadMessages','recentRegistrations','upcomingHolidays'].forEach(key=>{dashboardData[key]=(dashboardData[key]||[]).filter(item=>window.matchesOrganizationFilter(item,'academy'));});
                 dashboardData.stats={...(dashboardData.stats||{}),activeStudents:0,todayClasses:0,monthlyIncome:'0',attendanceRate:'۰٪',pendingPayments:0,absencesToday:0,newMessages:dashboardData.unreadMessages.length,urgentAlerts:dashboardData.urgentItems.length,newStudentsWeek:0,pointsAwarded:0};

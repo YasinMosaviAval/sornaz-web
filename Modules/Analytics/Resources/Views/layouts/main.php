@@ -7,6 +7,7 @@
     <title><?= e($title ?: trans('public.site_name', 'برنامه موسیقی سُرناز')) ?></title>
     <link rel="icon" type="image/jpeg" href="/assets/images/logo/cropped-favicon_512x512.jpg">
     <script src="/assets/vendor/tailwind/tailwindcss.js"></script>
+    <script>tailwind.config={darkMode:['class','[data-mode="dark"]']};</script>
     <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
     <link rel="stylesheet" href="/assets/vendor/sweetalert2/sweetalert2.min.css">
