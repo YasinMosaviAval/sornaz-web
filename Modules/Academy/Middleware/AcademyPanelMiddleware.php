@@ -21,7 +21,7 @@ class AcademyPanelMiddleware {
             return redirect('/system/login');
         }
         $path = parse_url((string)($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '';
-        if ($path === '/analytics/admin-panel' || str_starts_with($path, '/analytics/admin-account') || $path === '/analytics/admin-dashboard') {
+        if ($path === '/analytics/admin-panel' || str_starts_with($path, '/analytics/admin-account') || str_starts_with($path, '/analytics/chat') || $path === '/analytics/admin-dashboard') {
             return $next($request);
         }
         if (str_starts_with($path, '/analytics/admin-messages')) {

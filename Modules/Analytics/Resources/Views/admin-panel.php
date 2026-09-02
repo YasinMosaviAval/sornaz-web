@@ -3,8 +3,9 @@ $panelUser = auth()->user();
 $isSiteAdminPanel = \Modules\System\Services\SiteAdminAccess::allows($panelUser);
 $hasMemberManagementRole = $panelUser && (bool)\Core\database\DB::table('academy_branch_members')
     ->join('academy_branch_member_roles', 'academy_branch_member_roles.member_id', '=', 'academy_branch_members.member_id')
-    ->where('academy_branch_members.user_id', (int)$panelUser['user_id'])->whereIn('academy_branch_member_roles.role_id', [7, 16])
-    ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->first();
+    ->join('access_system_roles','access_system_roles.role_id','=','academy_branch_member_roles.role_id')
+    ->where('academy_branch_members.user_id', (int)$panelUser['user_id'])->whereRaw("(access_system_roles.name LIKE '%manager%' OR access_system_roles.name LIKE '%reception%')")
+    ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->first();
 $showAcademyPanelSections = $isSiteAdminPanel || $hasMemberManagementRole || in_array(($panelUser['type'] ?? ''), ['academy','branch'], true);
 ?>
 <div class="relative h-screen overflow-hidden">
@@ -28,6 +29,7 @@ $showAcademyPanelSections = $isSiteAdminPanel || $hasMemberManagementRole || in_
             component('add-user-modal');
             component('dashboard');
             component('account');
+            component('chat');
             if ($showAcademyPanelSections) {
             component('reports');
             component('chart-gallery');
@@ -62,16 +64,16 @@ $showAcademyPanelSections = $isSiteAdminPanel || $hasMemberManagementRole || in_
                 component('guides', ['guides'=>$guides??[]]);
             }
 
-            //component('awards');
-            //component('certificates');
-            //component('experiences');
-            //component('educations');
-            //component('events');
-            //component('polls');
+            component('awards');
+            component('certificates');
+            component('experiences');
+            component('educations');
+            component('events');
+            component('polls');
             //component('favorites');
-            //component('publications');
+            component('publications');
             //component('ratings');
-            //component('badges');
+            component('badges');
             //component('approvals');
             //component('contracts');
             //component('profiles');

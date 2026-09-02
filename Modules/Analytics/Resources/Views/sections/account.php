@@ -71,6 +71,19 @@
         <p class="mt-3 text-xs text-gray-400">کد اختصاصی: <b id="accountInviteCode" dir="ltr">—</b></p>
     </div>
 
+    <div class="bg-white rounded-3xl p-6 shadow mt-8" id="accountMergeCard">
+        <h3 class="font-bold text-lg"><i class="fas fa-link text-indigo-600 ml-2"></i>اتصال سوابق عضویت به حساب من</h3>
+        <p class="mt-2 text-sm leading-7 text-gray-500">شناسه کاربری و شماره عضویتی را که از آموزشگاه یا شعبه دریافت کرده‌اید وارد کنید. انتقال سوابق فقط پس از بررسی مدیر سایت انجام می‌شود.</p>
+        <form id="accountMergeForm" class="mt-5 grid gap-4 md:grid-cols-2" onsubmit="submitUserMerge(event)">
+            <label class="text-sm">شناسه کاربری دریافتی<input id="mergeSourceUserId" inputmode="numeric" required class="mt-2 w-full rounded-2xl border px-4 py-3" dir="ltr"></label>
+            <label class="text-sm">شماره عضویت<input id="mergeMemberId" inputmode="numeric" required class="mt-2 w-full rounded-2xl border px-4 py-3" dir="ltr"></label>
+            <label class="text-sm md:col-span-2">توضیح اختیاری<textarea id="mergeReason" rows="2" class="mt-2 w-full rounded-2xl border px-4 py-3"></textarea></label>
+            <button type="submit" class="rounded-2xl bg-indigo-600 px-6 py-3 text-white md:w-max disabled:cursor-not-allowed">ارسال درخواست بررسی</button>
+        </form>
+        <div id="accountMergeIneligible" class="mt-4 hidden rounded-2xl bg-amber-50 p-4 text-sm text-amber-800">این بخش فقط برای حساب حقیقی کامل که سابقه ورود ثبت‌شده دارد فعال است.</div>
+        <div id="accountMergeRequests" class="mt-6 space-y-3"></div>
+    </div>
+
     <!-- معرفی و بیوگرافی -->
     <div class="bg-white rounded-3xl p-6 shadow mt-8">
         <div class="flex items-center justify-between mb-5">

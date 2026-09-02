@@ -6,11 +6,15 @@ use Core\http\DownloadResponse;
 use Core\http\ResponseFactory;
 use Modules\Analytics\Services\AdminAccountService;
 use Modules\Analytics\Services\AcademyScopedBackupService;
+use Modules\Analytics\Services\UserMergeService;
 
 final class AdminAccountController
 {
-    public function __construct(private AdminAccountService $service,private AcademyScopedBackupService $backups){}
-    public function show(){return$this->run(fn()=>['success'=>true,'data'=>$this->service->data((int)auth()->id())]);}
+    public function __construct(private AdminAccountService $service,private AcademyScopedBackupService $backups,private UserMergeService $merges){}
+    public function show(){return$this->run(function(){$actor=(int)auth()->id();return['success'=>true,'data'=>$this->service->data($actor)+['merges'=>$this->merges->data($actor)]];});}
+    public function requestMerge(){return$this->mutate(fn($d)=>$this->merges->request((int)auth()->id(),$d));}
+    public function cancelMerge(int$id){return$this->mutate(fn()=> $this->merges->cancel((int)auth()->id(),$id),false);}
+    public function decideMerge(int$id){return$this->mutate(fn($d)=>$this->merges->decide((int)auth()->id(),$id,$d));}
     public function profile(){return$this->mutate(fn($d)=>$this->service->saveProfile((int)auth()->id(),$d));}
     public function bio(){return$this->mutate(fn($d)=>$this->service->saveBio((int)auth()->id(),$d));}
     public function privacy(){return$this->mutate(fn($d)=>$this->service->savePrivacy((int)auth()->id(),$d));}

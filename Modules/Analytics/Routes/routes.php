@@ -22,10 +22,27 @@ use Modules\Analytics\Controllers\Web\PublicCommentController;
 use Modules\Analytics\Controllers\Web\PublicRatingController;
 use Modules\Analytics\Controllers\Web\AdminTrackingController;
 use Modules\Analytics\Controllers\Web\AdminPointController;
+use Modules\Analytics\Controllers\Web\AdminProfileContentController;
+use Modules\Analytics\Controllers\Web\ChatController;
 
 
 
 Router::get('/analytics/admin-panel', [AnalyticsController::class, 'adminPanel'])->middleware('academy-panel');
+Router::get('/analytics/chat', [ChatController::class, 'index'])->middleware('academy-panel');
+Router::post('/analytics/chat', [ChatController::class, 'create'])->middleware(['academy-panel','csrf']);
+Router::get('/analytics/chat/{id}/messages', [ChatController::class, 'messages'])->middleware('academy-panel');
+Router::post('/analytics/chat/{id}/messages', [ChatController::class, 'send'])->middleware(['academy-panel','csrf']);
+Router::get('/analytics/chat/{id}/details', [ChatController::class, 'details'])->middleware('academy-panel');
+Router::post('/analytics/chat/{id}/rename', [ChatController::class, 'rename'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/chat/{id}/avatar', [ChatController::class, 'avatar'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/chat/{id}/members', [ChatController::class, 'addMembers'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/chat/{id}/members/{userId}/remove', [ChatController::class, 'removeMember'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/chat/{id}/delete', [ChatController::class, 'delete'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/chat/messages/{id}/like', [ChatController::class, 'like'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/chat/messages/{id}/edit', [ChatController::class, 'editMessage'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/chat/messages/{id}/delete', [ChatController::class, 'deleteMessage'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/chat/messages/{id}/forward', [ChatController::class, 'forward'])->middleware(['academy-panel','csrf']);
+Router::get('/analytics/chat/messages/{id}/file', [ChatController::class, 'file'])->middleware('academy-panel');
 Router::get('/analytics/admin-account', [AdminAccountController::class, 'show'])->middleware('academy-panel');
 Router::get('/analytics/admin-gallery', [AdminGalleryController::class, 'index'])->middleware('academy-panel');
 Router::get('/analytics/admin-gallery/realtime-version', [AdminGalleryController::class, 'realtimeVersion'])->middleware('academy-panel');
@@ -36,6 +53,9 @@ Router::post('/analytics/admin-account/profile', [AdminAccountController::class,
 Router::post('/analytics/admin-account/bio', [AdminAccountController::class, 'bio'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-account/privacy', [AdminAccountController::class, 'privacy'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-account/security', [AdminAccountController::class, 'security'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-account/merges', [AdminAccountController::class, 'requestMerge'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-account/merges/{id}/cancel', [AdminAccountController::class, 'cancelMerge'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-account/merges/{id}/decision', [AdminAccountController::class, 'decideMerge'])->middleware(['site-admin','csrf']);
 Router::post('/analytics/admin-account/media/{kind}', [AdminAccountController::class, 'upload'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-account/media/{id}/delete', [AdminAccountController::class, 'deleteMedia'])->middleware(['academy-panel','csrf']);
 Router::get('/analytics/admin-account/media/{id}/download', [AdminAccountController::class, 'downloadMedia'])->middleware('academy-panel');
@@ -87,6 +107,12 @@ Router::get('/analytics/admin-points', [AdminPointController::class, 'index'])->
 Router::post('/analytics/admin-points', [AdminPointController::class, 'store'])->middleware(['site-admin','csrf']);
 Router::post('/analytics/admin-points/{id}/update', [AdminPointController::class, 'update'])->middleware(['site-admin','csrf']);
 Router::post('/analytics/admin-points/{id}/delete', [AdminPointController::class, 'delete'])->middleware(['site-admin','csrf']);
+Router::get('/analytics/admin-profile-content/{entity}', [AdminProfileContentController::class, 'index'])->middleware('academy-panel');
+Router::post('/analytics/admin-profile-content/polls/{id}/vote', [AdminProfileContentController::class, 'vote'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-profile-content/{entity}', [AdminProfileContentController::class, 'store'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-profile-content/{entity}/{id}', [AdminProfileContentController::class, 'update'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-profile-content/{entity}/{id}/status', [AdminProfileContentController::class, 'status'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/admin-profile-content/{entity}/{id}/delete', [AdminProfileContentController::class, 'delete'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/admin-user-access/{id}', [AdminUserAccessController::class, 'save'])->middleware(['academy-panel','csrf']);
 Router::get('/analytics/admin-access-catalog', [AdminAccessCatalogController::class, 'index'])->middleware('site-admin');
 Router::post('/analytics/admin-roles', [AdminAccessCatalogController::class, 'saveRole'])->middleware(['site-admin','csrf']);
