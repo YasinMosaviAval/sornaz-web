@@ -6,11 +6,24 @@ $hasAcademyManagementRole = $panelUser && (bool)\Core\database\DB::table('academ
     ->join('academy_branch_member_roles', 'academy_branch_member_roles.member_id', '=', 'academy_branch_members.member_id')
     ->join('access_system_roles','access_system_roles.role_id','=','academy_branch_member_roles.role_id')
     ->where('academy_branch_members.user_id', (int)$panelUser['user_id'])
-    ->whereRaw("(access_system_roles.name LIKE '%manager%' OR access_system_roles.name LIKE '%reception%')")
+    ->where('academy_branch_members.status', 'active')
+    ->whereIn('access_system_roles.name', ['academy_owner','academy_manager','branch_manager','academy_receptionist','branch_receptionist'])
     ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->first();
-$hasAcademyPanelAccess = $isSiteAdmin || $isBranchAccount || $hasAcademyManagementRole
+$hasContractManagementRole = $panelUser && (bool)\Core\database\DB::table('academy_branch_members')
+    ->join('academy_branch_member_contracts', 'academy_branch_member_contracts.member_id', '=', 'academy_branch_members.member_id')
+    ->where('academy_branch_members.user_id', (int)$panelUser['user_id'])
+    ->where('academy_branch_members.status', 'active')
+    ->whereIn('academy_branch_member_contracts.type', ['owner','manager','receptionist'])
+    ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_contracts.deleted_at')->first();
+$hasAcademyPanelAccess = $isSiteAdmin || $isBranchAccount || $hasAcademyManagementRole || $hasContractManagementRole
     || in_array(($panelUser['type'] ?? ''), ['academy', 'branch'], true);
 $panelUserId = (int)($panelUser['user_id'] ?? 0);
+$hasLearningEnrollment = $panelUserId && (bool)\Core\database\DB::table('academy_branch_members')
+    ->join('academy_branch_course_term_enrollments', 'academy_branch_course_term_enrollments.member_id', '=', 'academy_branch_members.member_id')
+    ->where('academy_branch_members.user_id', $panelUserId)
+    ->where('academy_branch_members.status', 'active')
+    ->whereIn('academy_branch_course_term_enrollments.type', ['teacher','student'])
+    ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_course_term_enrollments.deleted_at')->first();
 $ownsAcademy = $panelUserId && (\Core\database\DB::table('academies')->where('user_id',$panelUserId)->whereNull('deleted_at')->first()
     || \Core\database\DB::table('academies')->where('created_by',$panelUserId)->whereNull('deleted_at')->first());
 $isAcademyManager = $panelUserId && (bool)\Core\database\DB::table('academy_branch_members')
@@ -62,6 +75,11 @@ $canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager
             <li><a href="#" onclick="showSection('dashboard')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-home w-5 text-center"></i> داشبورد</a></li>
             <li><a href="#" onclick="showSection('account')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-user-cog w-5 text-center"></i> حساب کاربری</a></li>
             <li><a href="#" onclick="showSection('chat')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-comment-dots w-5 text-center"></i> گفتگوها</a></li>
+            <?php if(!$hasAcademyPanelAccess && $hasLearningEnrollment): ?>
+            <li><a href="#" onclick="showSection('my-classrooms')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-chalkboard w-5 text-center"></i> کلاس‌های من</a></li>
+            <li><a href="#" onclick="showSection('my-courses')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-book-open w-5 text-center"></i> دوره‌های من</a></li>
+            <li><a href="#" onclick="showSection('my-terms')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-calendar-check w-5 text-center"></i> ترم‌های من</a></li>
+            <?php endif; ?>
             <?php if($hasAcademyPanelAccess): ?>
             <li><button type="button" onclick="toggleSidebarSubmenu('profileAchievementsSubmenu',this)" class="flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-right transition hover:bg-indigo-800"><span class="flex items-center gap-3"><i class="fas fa-trophy w-5 text-center"></i> سوابق و دستاوردها</span><i class="fas fa-chevron-down text-xs submenu-chevron"></i></button>
                 <ul id="profileAchievementsSubmenu" class="mt-1 mr-4 hidden space-y-1 border-r border-indigo-700/60 pr-2">

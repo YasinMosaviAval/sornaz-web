@@ -1415,8 +1415,13 @@ window.shareArticle = async function (type) {
 window.renderSitePageContent = async function (page) {
     if (page === 'articles' || page === 'article-detail') {
         if (typeof renderSiteArticleCats === 'function') renderSiteArticleCats();
-        // مهم: حتماً با 'all' تا لیست از اول پر شود
-        if (typeof filterSiteArticles === 'function') filterSiteArticles('all');
+        const requestedCategory = new URLSearchParams(location.search).get('category');
+        const category = requestedCategory
+            ? [...new Set(getSiteArticles().flatMap(article => article.categories || []))].find(item =>
+                item.replace(/\s+/g, '-') === requestedCategory.replace(/\s+/g, '-')
+            )
+            : 'all';
+        if (typeof filterSiteArticles === 'function') filterSiteArticles(category || 'all');
         else if (typeof renderSiteArticlesList === 'function') renderSiteArticlesList();
     }
     if (page === 'academies' || page === 'academy-detail') {
