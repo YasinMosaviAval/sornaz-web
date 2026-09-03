@@ -10,7 +10,7 @@ class PublicPostService
     public function all(string $locale): array
     {
         $locale = $this->locale($locale);
-        $rows = DB::table('posts')->whereNull('deleted_at')->where('status', 'published')->where('type', '<>', 'page')->orderBy('published_at', 'DESC')->get();
+        $rows = DB::table('posts')->whereNull('deleted_at')->where('status', 'published')->where('visibility', 'public')->where('type', 'post')->orderBy('published_at', 'DESC')->get();
         return array_map(fn(array $row) => $this->map($row, $locale, false), $rows);
     }
 
@@ -21,7 +21,7 @@ class PublicPostService
             ->whereNull('deleted_at')
             ->where('status', 'published')
             ->where('visibility', 'public')
-            ->where('type', '<>', 'page')
+            ->where('type', 'post')
             ->orderBy('created_at', 'DESC')
             ->limit(max(1, $limit))
             ->get();
@@ -30,7 +30,7 @@ class PublicPostService
 
     public function find(int $id, string $locale): array
     {
-        $row = DB::table('posts')->where('post_id', $id)->whereNull('deleted_at')->where('status', 'published')->first();
+        $row = DB::table('posts')->where('post_id', $id)->where('type', 'post')->where('visibility', 'public')->whereNull('deleted_at')->where('status', 'published')->first();
         if (!$row) throw new RuntimeException('مقاله یافت نشد.');
         return $this->map($row, $this->locale($locale), true);
     }
@@ -104,7 +104,7 @@ class PublicPostService
     private function relatedPosts(string $value,string $locale,int $currentId): array
     {
         $ids=array_values(array_filter(array_map('intval',preg_split('/[,\s]+/',trim($value)))));$ids=array_values(array_filter($ids,fn($id)=>$id!==$currentId));if(!$ids)return[];$out=[];
-        foreach($ids as $id){$post=DB::table('posts')->where('post_id',$id)->where('status','published')->whereNull('deleted_at')->first();if(!$post)continue;$texts=$this->texts($id,$locale,['title','brief','description']);if($locale!=='fa')$texts+=$this->texts($id,'fa',['title','brief','description']);$categoryIds=array_values(array_filter(array_map('trim',explode(',',(string)($post['categories']??''))),fn($value)=>ctype_digit($value)));$categoryTitles=$this->categoryTitles($categoryIds,$locale);$img=$this->articleImages($id);$out[]=['id'=>$id,'title'=>$texts['title']??'مقاله','summary'=>$texts['brief']??($texts['description']??''),'categories'=>array_values(array_filter(array_map(fn($categoryId)=>$categoryTitles[(int)$categoryId]??null,$categoryIds))),'published_at'=>$post['published_at']??$post['created_at']??null,'thumbnail'=>$img['thumbnail']?:$img['main']];}return$out;
+        foreach($ids as $id){$post=DB::table('posts')->where('post_id',$id)->where('type','post')->where('status','published')->whereNull('deleted_at')->first();if(!$post)continue;$texts=$this->texts($id,$locale,['title','brief','description']);if($locale!=='fa')$texts+=$this->texts($id,'fa',['title','brief','description']);$categoryIds=array_values(array_filter(array_map('trim',explode(',',(string)($post['categories']??''))),fn($value)=>ctype_digit($value)));$categoryTitles=$this->categoryTitles($categoryIds,$locale);$img=$this->articleImages($id);$out[]=['id'=>$id,'title'=>$texts['title']??'مقاله','summary'=>$texts['brief']??($texts['description']??''),'categories'=>array_values(array_filter(array_map(fn($categoryId)=>$categoryTitles[(int)$categoryId]??null,$categoryIds))),'published_at'=>$post['published_at']??$post['created_at']??null,'thumbnail'=>$img['thumbnail']?:$img['main']];}return$out;
     }
 
     private function locale(string $locale): string
