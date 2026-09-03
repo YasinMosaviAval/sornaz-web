@@ -26,7 +26,9 @@
     <main class="flex-1">
         <?=$slot?>
     </main>
-    <?// component('main-footer'); ?>
+    <footer class="bg-gray-900 text-gray-300 px-4 py-6">
+        <? component('Page::sections.trust-badges'); ?>
+    </footer>
     <?
         pushScript('home.js');
         pushScript('auth.js');
