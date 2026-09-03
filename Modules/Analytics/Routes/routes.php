@@ -24,6 +24,7 @@ use Modules\Analytics\Controllers\Web\AdminTrackingController;
 use Modules\Analytics\Controllers\Web\AdminPointController;
 use Modules\Analytics\Controllers\Web\AdminProfileContentController;
 use Modules\Analytics\Controllers\Web\ChatController;
+use Modules\Analytics\Controllers\Api\ArticleController;
 
 
 
@@ -145,6 +146,11 @@ Router::get('/analytics/admin-inline-translations', [AdminTestController::class,
 Router::get('/analytics/articles', [AnalyticsController::class, 'articles']);
 Router::get('/analytics/article-details', [AnalyticsController::class, 'articleDetails']);
 Router::post('/analytics/article-comments/{id}', [PublicCommentController::class, 'store'])->middleware(['csrf']);
+Router::get('/api/sornaz/v1/articles', [ArticleController::class, 'index']);
+Router::get('/api/sornaz/v1/article-categories', [ArticleController::class, 'categories']);
+Router::get('/api/sornaz/v1/articles/{id}/related', [ArticleController::class, 'related']);
+Router::get('/api/sornaz/v1/articles/{id}/comments', [ArticleController::class, 'comments']);
+Router::post('/api/sornaz/v1/articles/{id}/comments', [ArticleController::class, 'storeComment']);
 Router::get('/analytics/public-ratings/{type}/{id}', [PublicRatingController::class, 'show']);
 Router::post('/analytics/public-ratings/{type}/{id}', [PublicRatingController::class, 'store'])->middleware(['auth','csrf']);
 
