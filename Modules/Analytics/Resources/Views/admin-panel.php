@@ -4,9 +4,17 @@ $isSiteAdminPanel = \Modules\System\Services\SiteAdminAccess::allows($panelUser)
 $hasMemberManagementRole = $panelUser && (bool)\Core\database\DB::table('academy_branch_members')
     ->join('academy_branch_member_roles', 'academy_branch_member_roles.member_id', '=', 'academy_branch_members.member_id')
     ->join('access_system_roles','access_system_roles.role_id','=','academy_branch_member_roles.role_id')
-    ->where('academy_branch_members.user_id', (int)$panelUser['user_id'])->whereRaw("(access_system_roles.name LIKE '%manager%' OR access_system_roles.name LIKE '%reception%')")
+    ->where('academy_branch_members.user_id', (int)$panelUser['user_id'])
+    ->where('academy_branch_members.status', 'active')
+    ->whereIn('access_system_roles.name', ['academy_owner','academy_manager','branch_manager','academy_receptionist','branch_receptionist'])
     ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->first();
-$showAcademyPanelSections = $isSiteAdminPanel || $hasMemberManagementRole || in_array(($panelUser['type'] ?? ''), ['academy','branch'], true);
+$hasContractManagementRole = $panelUser && (bool)\Core\database\DB::table('academy_branch_members')
+    ->join('academy_branch_member_contracts', 'academy_branch_member_contracts.member_id', '=', 'academy_branch_members.member_id')
+    ->where('academy_branch_members.user_id', (int)$panelUser['user_id'])
+    ->where('academy_branch_members.status', 'active')
+    ->whereIn('academy_branch_member_contracts.type', ['owner','manager','receptionist'])
+    ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_contracts.deleted_at')->first();
+$showAcademyPanelSections = $isSiteAdminPanel || $hasMemberManagementRole || $hasContractManagementRole || in_array(($panelUser['type'] ?? ''), ['academy','branch'], true);
 ?>
 <div class="relative h-screen overflow-hidden">
     <script>window.adminCsrfToken=<?= json_encode(csrf_token()) ?>;window.adminMemberSchedulesData=<?= json_encode($scheduleFixtures['schedules']??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;window.adminAvailabilityExceptionsData=<?= json_encode($scheduleFixtures['exceptions']??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;window.adminInlineTranslations=<?= json_encode($inlineTranslationCatalog??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;</script>
@@ -30,6 +38,7 @@ $showAcademyPanelSections = $isSiteAdminPanel || $hasMemberManagementRole || in_
             component('dashboard');
             component('account');
             component('chat');
+            if (!$showAcademyPanelSections) component('my-learning');
             if ($showAcademyPanelSections) {
             component('reports');
             component('chart-gallery');

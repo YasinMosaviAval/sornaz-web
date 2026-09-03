@@ -25,12 +25,6 @@ class SiteAdminAccess {
             ->first();
         if ($role) return true;
 
-        $firstManager = DB::table('users')
-            ->where('type', 'manager')
-            ->whereNull('deleted_at')
-            ->orderBy('user_id')
-            ->first();
-
-        return (int)($firstManager['user_id'] ?? 0) === $userId;
+        return false;
     }
 }
