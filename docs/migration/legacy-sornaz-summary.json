@@ -1,0 +1,19 @@
+{
+  "generated_at": "2026-09-03T12:19:18.475Z",
+  "origin": "https://sornaz.com",
+  "sitemap_index": "https://sornaz.com/sitemap_index.xml",
+  "sitemaps": [
+    "https://sornaz.com/post-sitemap.xml",
+    "https://sornaz.com/page-sitemap.xml",
+    "https://sornaz.com/category-sitemap.xml"
+  ],
+  "sitemap_url_count": 142,
+  "total_internal_url_count": 196,
+  "crawled_count": 196,
+  "discovered_link_count": 54,
+  "status_counts": {
+    "200": 195,
+    "404": 1
+  },
+  "crawl_limit": 1000
+}

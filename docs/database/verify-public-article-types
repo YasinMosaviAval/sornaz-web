@@ -1,0 +1,15 @@
+<?php
+declare(strict_types=1);
+require dirname(__DIR__, 2) . '/vendor/autoload.php';
+$app = require dirname(__DIR__, 2) . '/bootstrap/app.php';
+$service = new Modules\Analytics\Services\PublicPostService();
+$articles = $service->all('fa');
+$types = array_values(array_unique(array_column($articles, 'type')));
+$productId = (int) db()->query("SELECT post_id FROM posts WHERE type='product' AND status='published' AND deleted_at IS NULL LIMIT 1")->fetchColumn();
+$productRejected = false;
+if ($productId > 0) {
+    try { $service->find($productId, 'fa'); } catch (RuntimeException) { $productRejected = true; }
+}
+$result = ['article_count' => count($articles), 'types' => $types, 'product_detail_rejected' => $productRejected];
+echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . PHP_EOL;
+exit($types === ['post'] && $productRejected ? 0 : 1);
