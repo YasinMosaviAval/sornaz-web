@@ -1,3 +1,11 @@
 /.vscode
 /old
 /storage/sessions/sess_*
+
+# Local database sources and safety backups
+/docs/database/backups/
+/docs/database/sornaz database/
+
+# Runtime chat uploads
+/assets/media/chat-groups/
+/storage/chat/
