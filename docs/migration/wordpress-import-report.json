@@ -1,0 +1,30 @@
+{
+    "mode": "apply",
+    "source_database": "sornaz_wp_import_20260903",
+    "target_database": "sornazco_maindb",
+    "started_at": "2026-09-03T15:21:12+02:00",
+    "posts": {
+        "source": 456,
+        "target": 455,
+        "matched": 455,
+        "updated": 455,
+        "unmatched": []
+    },
+    "categories": {
+        "source": 6,
+        "matched": 6,
+        "relationships": 191,
+        "unmatched": []
+    },
+    "comments": {
+        "source": 75,
+        "approved": 43,
+        "trash": 32,
+        "matched_existing": 0,
+        "planned_inserts": 0,
+        "inserted": 0,
+        "updated": 75,
+        "unmatched_posts": []
+    },
+    "completed_at": "2026-09-03T15:21:12+02:00"
+}

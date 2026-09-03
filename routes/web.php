@@ -11,3 +11,5 @@ foreach (glob(base_path('Modules/*/Routes/web.php')) as $file) {
 foreach (glob(base_path('Modules/*/Routes/api.php')) as $file) {
     require $file;
 }
+
+require base_path('routes/legacy.php');
