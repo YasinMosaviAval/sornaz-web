@@ -38,6 +38,7 @@ Router::post('/analytics/chat/{id}/rename', [ChatController::class, 'rename'])->
 Router::post('/analytics/chat/{id}/avatar', [ChatController::class, 'avatar'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/chat/{id}/members', [ChatController::class, 'addMembers'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/chat/{id}/members/{userId}/remove', [ChatController::class, 'removeMember'])->middleware(['academy-panel','csrf']);
+Router::post('/analytics/chat/{id}/leave', [ChatController::class, 'leave'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/chat/{id}/delete', [ChatController::class, 'delete'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/chat/messages/{id}/like', [ChatController::class, 'like'])->middleware(['academy-panel','csrf']);
 Router::post('/analytics/chat/messages/{id}/edit', [ChatController::class, 'editMessage'])->middleware(['academy-panel','csrf']);
