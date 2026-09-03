@@ -6,13 +6,15 @@ class RedirectResponse implements ResponseInterface {
 
 
     protected string $url;
+    protected int $status;
     protected array $oldInput = [];
     protected array $errors = [];
 
 
 
-    public function __construct(string $url) {
+    public function __construct(string $url, int $status = 302) {
         $this->url = $url;
+        $this->status = in_array($status, [301, 302, 303, 307, 308], true) ? $status : 302;
     }
 
 
@@ -22,7 +24,7 @@ class RedirectResponse implements ResponseInterface {
             session()->forget('_old_input');
             session()->forget('_errors');
         });
-        header("Location: {$this->url}");
+        header("Location: {$this->url}", true, $this->status);
         exit;
     }
 

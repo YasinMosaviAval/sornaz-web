@@ -1,9 +1,9 @@
 <IfModule mod_rewrite.c>
-    DirectoryIndex index.php
+    DirectoryIndex app_entry.php
     RewriteEngine On
 
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
 
-    RewriteRule ^(.*)$ index.php [L,QSA]
+    RewriteRule ^(.*)$ app_entry.php [L,QSA]
 </IfModule>
