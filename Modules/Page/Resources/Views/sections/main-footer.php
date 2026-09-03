@@ -54,6 +54,10 @@
 
 
 
+        <div class="mt-10">
+            <? component('Page::sections.trust-badges'); ?>
+        </div>
+
         <div class="border-t border-gray-800 mt-10 pt-6 text-center text-sm text-gray-500">
             <?= e(trans('public.footer.copyright', '© ۱۴۰۳ تمامی حقوق برای برنامه موسیقی سُرناز محفوظ می‌باشد.')) ?>
         </div>

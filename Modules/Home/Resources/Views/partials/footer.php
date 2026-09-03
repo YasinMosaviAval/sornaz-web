@@ -1,4 +1,5 @@
 <footer class="footer">
+    <? component('Page::sections.trust-badges'); ?>
     <div class="container">
         <div class="footer-about">
             <h3>سُرناز</h3>
