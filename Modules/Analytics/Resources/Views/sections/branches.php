@@ -25,10 +25,13 @@
         <div class="rounded-3xl border border-indigo-100 bg-indigo-50 p-5"><span class="text-sm text-indigo-700">تعداد شعبه‌ها</span><strong id="branchesCount" class="mt-2 block text-3xl text-indigo-900">۰</strong></div>
     </div>
 
-    <div class="mb-5 flex gap-2">
-        <button id="branchesTableViewButton" onclick="setBranchesView('table')" class="rounded-xl border px-4 py-2 text-sm"><i class="fas fa-table ml-1"></i>نمایش جدولی</button>
-        <button id="branchesCardViewButton" onclick="setBranchesView('cards')" class="rounded-xl border px-4 py-2 text-sm"><i class="fas fa-th-large ml-1"></i>نمایش کارتی</button>
-    </div>
+    <?php
+    $viewModeTableId='branchesTableViewButton';
+    $viewModeCardsId='branchesCardViewButton';
+    $viewModeTableAttributes='onclick="setBranchesView(\'table\')"';
+    $viewModeCardsAttributes='onclick="setBranchesView(\'cards\')"';
+    require __DIR__.'/view-mode-toggle.php';
+    ?>
 
     <!-- فیلتر -->
     <div class="bg-white rounded-3xl p-5 mb-6 shadow-sm">

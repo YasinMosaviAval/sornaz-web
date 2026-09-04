@@ -20,6 +20,14 @@
         body.language-changing main.site-content { opacity:0; transform:translateY(4px); }
         @keyframes admin-page-in { from { opacity:0;transform:translateY(4px); } to { opacity:1;transform:none; } }
         @media (prefers-reduced-motion:reduce) { main.site-content { animation:none;transition:none; } }
+        .admin-ui-primary-action { background:#4f46e5; color:#fff; border-color:#4f46e5; }
+        .admin-ui-primary-action:hover { background:#4338ca; }
+        .admin-ui-table table { width:100%; }
+        .admin-ui-table thead { border-bottom:1px solid #e5e7eb; background:#f9fafb; }
+        .admin-ui-table tbody tr { transition:background-color .15s ease; }
+        .admin-ui-table tbody tr:hover { background:#f9fafb; }
+        [data-mode="dark"] .admin-ui-organization-tabs,[data-mode="dark"] .admin-ui-filters,[data-mode="dark"] .admin-ui-table { background:#111827; }
+        [data-mode="dark"] .admin-ui-table thead { background:#1f2937; border-color:#374151; }
     </style>
     
     <script src="/assets/vendor/jspdf/jspdf.umd.min.js"></script>
@@ -39,6 +47,7 @@
     pushScript('add-user-modal.js');
     
     pushScript('admin-runtime.js');
+    pushScript('admin-ui-templates.js');
     pushScript('dashboard-templates.js');
     pushScript('dashboard.js');
     pushScript('tracking.js');
