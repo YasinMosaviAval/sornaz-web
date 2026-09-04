@@ -1,6 +1,7 @@
 <footer class="bg-gray-900 text-gray-300 mt-auto">
     <div class="max-w-7xl mx-auto px-4 py-12">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div class="flex flex-col lg:flex-row gap-10 items-start">
+        <div class="grid flex-1 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 w-full">
             <!-- درباره -->
             <div>
                 <div class="flex items-center gap-2 mb-4">
@@ -49,9 +50,9 @@
                 </ul>
             </div>
         </div>
-
-        <div class="mt-10">
+        <div class="shrink-0 lg:w-56 flex justify-center lg:pt-0 w-full">
             <? component('Page::sections.trust-badges'); ?>
+        </div>
         </div>
 
         <div class="border-t border-gray-800 mt-10 pt-6 text-center text-sm text-gray-500">

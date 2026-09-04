@@ -22,7 +22,7 @@
 <style>
     .sornaz-trust-badges {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         align-items: center;
         justify-content: center;
         gap: 1rem;
