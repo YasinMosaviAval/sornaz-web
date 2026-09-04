@@ -19,6 +19,9 @@
             'پرداخت جزئی': 'bg-yellow-100 text-yellow-700',
             'پرداخت‌شده': 'bg-green-100 text-green-700',
             'لغوشده': 'bg-red-100 text-red-700',
+            'ماه اول رایگان': 'bg-indigo-100 text-indigo-700',
+            'در انتظار پرداخت': 'bg-yellow-100 text-yellow-700',
+            'منقضی‌شده': 'bg-red-100 text-red-700',
             'تأیید شده': 'bg-green-100 text-green-700',
             'در انتظار تأیید': 'bg-yellow-100 text-yellow-700',
             'رد شده': 'bg-red-100 text-red-700',
@@ -27,6 +30,9 @@
     }
 
     window.getFinanceRowHTML = function (item) {
+        const actions = item.invoiceKind === 'subscription'
+            ? (item.canPay ? `<button onclick="openAcademySubscriptionPlans(${Number(item.subscriptionId)})" class="rounded-xl bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700">انتخاب پلن و پرداخت</button>` : '<span class="text-xs text-gray-400">—</span>')
+            : `<div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap"><button onclick="viewTransaction(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button><button onclick="toggleFinanceInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button><button onclick="toggleFinanceInlineInstallments(${item.id})" class="text-emerald-600 hover:underline text-sm">مشاهده اقساط</button></div>`;
         return `
             <td class="py-4 px-5 font-medium">#${escapeHtml(item.id)} — ${escapeHtml(item.termName)}</td>
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
@@ -35,16 +41,12 @@
             <td class="py-4 px-5">${escapeHtml(item.date || '—')}</td>
             <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td>
             <td class="py-4 px-5 text-left">
-                <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
-                    <button onclick="viewTransaction(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
-                    <button onclick="toggleFinanceInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
-                    <button onclick="toggleFinanceInlineInstallments(${item.id})" class="text-emerald-600 hover:underline text-sm">مشاهده اقساط</button>
-                </div>
+                ${actions}
             </td>`;
     };
 
     window.getFinanceEmptyRowHTML = function () {
-        return `<tr><td colspan="7" class="py-12 text-center text-gray-400">فاکتور ترمی یافت نشد</td></tr>`;
+        return `<tr><td colspan="7" class="py-12 text-center text-gray-400">فاکتوری یافت نشد</td></tr>`;
     };
 
     function financeInstallmentsPanel(item, isInline) {

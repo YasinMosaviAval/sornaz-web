@@ -1,8 +1,4 @@
 <div id="finance" class="section hidden">
-    <section class="mb-8 rounded-3xl border border-indigo-100 bg-white p-6 shadow-sm">
-        <div class="mb-5 flex flex-wrap items-center justify-between gap-3"><div><h2 class="text-xl font-bold">اشتراک ماهانه سامانه مدیریت آموزشگاه</h2><p class="mt-1 text-sm text-gray-500">ماه اول رایگان است و صورت‌حساب ماه بعد، سه روز پیش از پایان دوره ایجاد می‌شود.</p></div><span id="academySubscriptionPrice" class="rounded-xl bg-indigo-50 px-4 py-2 text-sm text-indigo-700">در حال دریافت...</span></div>
-        <div id="academySubscriptionPeriods" class="space-y-3"><div class="py-8 text-center text-gray-400">در حال دریافت وضعیت اشتراک...</div></div>
-    </section>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-3xl font-bold">امور مالی</h1>
@@ -23,6 +19,11 @@
             </button>
         </div>
     </div>
+
+    <section class="mb-6 flex flex-col gap-3 rounded-3xl border border-indigo-100 bg-indigo-50/50 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div><h2 class="font-bold">اشتراک سامانه مدیریت آموزشگاه</h2><p class="mt-1 text-sm text-gray-500">ماه اول رایگان است؛ پلن‌های ۱ ماهه ۲ میلیون، ۳ ماهه ۵ میلیون، ۶ ماهه ۹ میلیون و یک‌ساله ۱۶ میلیون تومان هستند.</p></div>
+        <span id="academySubscriptionPrice" class="whitespace-nowrap rounded-xl bg-white px-4 py-2 text-sm text-indigo-700">ماه اول رایگان</span>
+    </section>
 
     <!-- تاپ‌بار شعبه‌ها -->
     <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
@@ -50,12 +51,16 @@
                 <option value="صادرشده">صادرشده</option>
                 <option value="پرداخت جزئی">پرداخت جزئی</option>
                 <option value="پرداخت‌شده">پرداخت‌شده</option>
+                <option value="ماه اول رایگان">ماه اول رایگان</option>
+                <option value="در انتظار پرداخت">در انتظار پرداخت</option>
+                <option value="منقضی‌شده">منقضی‌شده</option>
                 <option value="لغوشده">لغوشده</option>
             </select>
             <select id="filterFinanceType" onchange="filterFinance()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه انواع</option>
                 <option value="فاکتور ترم">فاکتور ترم</option>
+                <option value="اشتراک سامانه">اشتراک سامانه</option>
             </select>
             <select id="filterFinanceRange" onchange="onFinanceRangeChange()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
@@ -87,7 +92,7 @@
                 <thead class="bg-gray-50 border-b">
                     <tr>
                         <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortFinanceBy('title')" class="flex items-center gap-1">فاکتور / ترم <span id="financeSortIcon-title">↕</span></button>
+                            <button onclick="sortFinanceBy('title')" class="flex items-center gap-1">فاکتور <span id="financeSortIcon-title">↕</span></button>
                         </th>
                         <th class="text-right py-5 px-5 font-medium">
                             <button onclick="sortFinanceBy('branchName')" class="flex items-center gap-1">شعبه <span id="financeSortIcon-branchName">↕</span></button>

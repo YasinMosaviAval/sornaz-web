@@ -70,6 +70,14 @@ let allTransactions = [];
 
 // داده‌های نمونه بالا برای استفاده‌های بعدی نگه داشته شده‌اند؛ جدول فعلی فقط فاکتورهای واقعی ترم‌ها را نمایش می‌دهد.
 let allTermInvoices = [];
+let allCourseInvoices = [];
+let allSubscriptionInvoices = [];
+let academySubscriptionPlans = [];
+
+function refreshFinanceInvoices() {
+    allTermInvoices = allCourseInvoices.concat(allSubscriptionInvoices);
+    filterFinance();
+}
 
 let currentFinanceBranch = 'all';
 let financeCurrentPage = 1;
@@ -249,6 +257,7 @@ window.renderFinanceSummary = async function () {
 
     const total = filteredTransactions.reduce(function (sum, invoice) { return sum + (Number(invoice.amount) || 0); }, 0);
     const paid = filteredTransactions.reduce(function (sum, invoice) {
+        if (invoice.invoiceKind === 'subscription' && invoice.statusCode === 'paid') return sum + (Number(invoice.amount) || 0);
         return sum + (invoice.installments || []).filter(function (installment) { return installment.statusCode === 'paid'; })
             .reduce(function (subtotal, installment) { return subtotal + (Number(installment.amount) || 0); }, 0);
     }, 0);
@@ -386,7 +395,7 @@ async function loadFinanceInvoices() {
     const data = envelope.data ?? envelope;
     if (!response.ok || envelope.success === false) throw new Error(envelope.message || 'دریافت فاکتورها ناموفق بود.');
     window.allBranches = data.branches || window.allBranches || [];
-    allTermInvoices = (data.invoices || []).map(function (invoice) {
+    allCourseInvoices = (data.invoices || []).map(function (invoice) {
         return Object.assign({}, invoice, {
             title: invoice.termName,
             type: 'فاکتور ترم',
@@ -395,7 +404,7 @@ async function loadFinanceInvoices() {
         });
     });
     renderFinanceBranchTabs();
-    filterFinance();
+    refreshFinanceInvoices();
 }
 
 // ==================== CRUD ====================
@@ -449,8 +458,9 @@ window.payFinanceInstallment = async function (invoiceId, installmentId, isInlin
 window.openOfflineInstallmentPayment=function(invoiceId,installmentId){const now=new Date(),date=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-'),time=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),banks=[['melli','ملی'],['sepah','سپه'],['mellat','ملت'],['tejarat','تجارت'],['saderat','صادرات'],['refah','رفاه'],['keshavarzi','کشاورزی'],['maskan','مسکن'],['post','پست بانک'],['tosee_saderat','توسعه صادرات'],['sanat_madan','صنعت و معدن'],['eghtesad_novin','اقتصاد نوین'],['parsian','پارسیان'],['pasargad','پاسارگاد'],['saman','سامان'],['sarmayeh','سرمایه'],['sina','سینا'],['shahr','شهر'],['ayandeh','آینده'],['gardeshgari','گردشگری'],['iran_zamin','ایران زمین'],['resalat','رسالت'],['melal','ملل'],['karafarin','کارآفرین'],['dey','دی'],['middle_east','خاورمیانه'],['other','سایر']];document.getElementById('modalContainer').innerHTML=`<div id="offlinePaymentModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onclick="if(event.target===this)this.remove()"><div class="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-7"><div class="mb-5 flex justify-between"><h2 class="text-xl font-bold">ثبت پرداخت خارج از درگاه</h2><button onclick="offlinePaymentModal.remove()" class="text-3xl text-gray-300">×</button></div><div class="space-y-4"><label class="block text-sm">روش پرداخت *<select id="offlinePaymentMethod" class="mt-2 w-full rounded-2xl border p-3"><option value="card_to_card">کارت‌به‌کارت</option><option value="pos">دستگاه POS</option></select></label><label class="block text-sm">شخص پرداخت‌کننده *<input id="offlinePaymentPayerName" class="mt-2 w-full rounded-2xl border p-3" placeholder="نام و نام خانوادگی"></label><label class="block text-sm">نوع کارت بانکی *<select id="offlinePaymentBankCardType" class="mt-2 w-full rounded-2xl border p-3"><option value="">انتخاب بانک کارت</option>${banks.map(b=>`<option value="${b[0]}">${b[1]}</option>`).join('')}</select></label><div class="grid grid-cols-2 gap-3"><label class="block text-sm">روز پرداخت *<input id="offlinePaymentDate" type="date" value="${date}" class="mt-2 w-full rounded-2xl border p-3"></label><label class="block text-sm">ساعت پرداخت *<input id="offlinePaymentTime" type="time" value="${time}" class="mt-2 w-full rounded-2xl border p-3"></label></div><label class="block text-sm">شماره پیگیری *<input id="offlinePaymentReference" class="mt-2 w-full rounded-2xl border p-3" placeholder="شماره پیگیری پرداخت"></label><textarea id="offlinePaymentDescription" class="w-full rounded-2xl border p-3" rows="3" placeholder="توضیحات اختیاری"></textarea><div class="flex gap-3"><button onclick="saveOfflineInstallmentPayment(${invoiceId},${installmentId})" class="flex-1 rounded-2xl bg-emerald-600 p-3 text-white">ثبت پرداخت</button><button onclick="offlinePaymentModal.remove()" class="flex-1 rounded-2xl border p-3">انصراف</button></div></div></div></div>`;window.initLocalizedDateInputs?.(document.getElementById('offlinePaymentModal'));};
 window.saveOfflineInstallmentPayment=async function(invoiceId,installmentId){const method=document.getElementById('offlinePaymentMethod')?.value,reference=document.getElementById('offlinePaymentReference')?.value.trim(),description=document.getElementById('offlinePaymentDescription')?.value.trim(),payerName=document.getElementById('offlinePaymentPayerName')?.value.trim(),bankCardType=document.getElementById('offlinePaymentBankCardType')?.value,paymentDate=document.getElementById('offlinePaymentDate')?.value,paymentTime=document.getElementById('offlinePaymentTime')?.value;if(!payerName)return AppDialog.alert('نام شخص پرداخت‌کننده را وارد کنید.');if(!bankCardType)return AppDialog.alert('نوع کارت بانکی را انتخاب کنید.');if(!paymentDate||!paymentTime)return AppDialog.alert('روز و ساعت پرداخت را وارد کنید.');if(!reference)return AppDialog.alert('شماره پیگیری پرداخت را وارد کنید.');try{await financeApi(`/academy/admin/term-invoices/${invoiceId}/installments/${installmentId}/offline`,{method,reference,description,payerName,bankCardType,paymentDate,paymentTime});document.getElementById('offlinePaymentModal')?.remove();await loadFinanceInvoices();AppDialog.alert('پرداخت با موفقیت در سیستم ثبت شد.');}catch(e){AppDialog.alert(e.message);}};
 
-async function loadAcademySubscriptions(){const host=document.getElementById('academySubscriptionPeriods');if(!host)return;try{const response=await fetch('/academy/admin/subscriptions',{credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}}),body=await response.json(),envelope=body.data??body,data=envelope.data??envelope;if(!response.ok||envelope.success===false)throw new Error(envelope.message||'دریافت اشتراک ناموفق بود.');document.getElementById('academySubscriptionPrice').textContent=data.monthlyPrice>0?`هزینه ماهانه: ${Number(data.monthlyPrice).toLocaleString('fa-IR')} ${data.currency==='IRR'?'ریال':'تومان'}`:'هزینه ماهانه هنوز تنظیم نشده است';host.innerHTML=(data.periods||[]).map(p=>`<div class="grid items-center gap-3 rounded-2xl border p-4 md:grid-cols-5"><div><span class="block text-xs text-gray-400">آموزشگاه</span><b>${String(p.academyName||'')}</b></div><div><span class="block text-xs text-gray-400">دوره</span><b>${formatDisplayDate(p.start)} تا ${formatDisplayDate(p.end)}</b></div><div><span class="block text-xs text-gray-400">مبلغ</span><b>${Number(p.amount).toLocaleString('fa-IR')}</b></div><div><span class="rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700">${p.status}</span></div><div class="text-left">${p.canPay?`<button onclick="payAcademySubscription(${p.id})" class="rounded-xl bg-indigo-600 px-4 py-2 text-white">پرداخت اشتراک</button>`:''}</div></div>`).join('')||'<div class="py-8 text-center text-gray-400">دوره اشتراکی یافت نشد.</div>';}catch(e){host.innerHTML=`<div class="py-6 text-center text-red-500">${e.message}</div>`;}}
-window.payAcademySubscription=async function(id){if(!await AppDialog.confirm('برای پرداخت اشتراک ماهانه به زرین‌پال منتقل شوید؟'))return;try{const payment=await financeApi(`/academy/admin/subscriptions/${id}/zarinpal`,{});if(!payment.redirectUrl)throw new Error('لینک پرداخت دریافت نشد.');location.assign(payment.redirectUrl);}catch(e){AppDialog.alert(e.message);}};
+async function loadAcademySubscriptions(){try{const response=await fetch('/academy/admin/subscriptions',{credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}}),body=await response.json(),envelope=body.data??body,data=envelope.data??envelope;if(!response.ok||envelope.success===false)throw new Error(envelope.message||'دریافت اشتراک ناموفق بود.');academySubscriptionPlans=data.plans||[];const price=document.getElementById('academySubscriptionPrice');allSubscriptionInvoices=(data.periods||[]).map(function(p){return{id:'subscription-'+p.id,subscriptionId:p.id,invoiceKind:'subscription',title:'اشتراک سامانه مدیریت آموزشگاه',termName:'اشتراک سامانه مدیریت آموزشگاه',branchId:0,branchName:p.academyName||'آموزشگاه',organizationKind:'academy',course:`${formatDisplayDate(p.start)} تا ${formatDisplayDate(p.end)}`,type:'اشتراک سامانه',amount:Number(p.amount)||0,dateIso:p.dueDate||p.start,date:formatDisplayDate(p.dueDate||p.start),statusCode:p.statusCode,status:p.status,canPay:p.canPay,installments:[]};});refreshFinanceInvoices();}catch(e){console.error(e);}}
+window.openAcademySubscriptionPlans=function(id){const plans=academySubscriptionPlans.map(function(p){return`<button onclick="payAcademySubscription(${id},${p.months})" class="flex w-full items-center justify-between rounded-2xl border border-gray-200 p-4 text-right hover:border-indigo-400 hover:bg-indigo-50"><span class="font-bold">${p.label}</span><span class="text-indigo-700">${Number(p.amount).toLocaleString('fa-IR')} تومان</span></button>`;}).join('');document.getElementById('modalContainer').innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onclick="if(event.target===this)closeModal()"><div class="w-full max-w-md rounded-3xl bg-white p-7"><div class="mb-5 flex items-center justify-between"><div><h2 class="text-xl font-bold">انتخاب پلن اشتراک</h2><p class="mt-1 text-sm text-gray-500">مدت اشتراک موردنظر را انتخاب کنید.</p></div><button onclick="closeModal()" class="text-3xl text-gray-300">×</button></div><div class="space-y-3">${plans}</div></div></div>`;};
+window.payAcademySubscription=async function(id,months){const plan=academySubscriptionPlans.find(p=>Number(p.months)===Number(months));if(!plan||!await AppDialog.confirm(`برای پرداخت ${plan.label} به مبلغ ${Number(plan.amount).toLocaleString('fa-IR')} تومان به زرین‌پال منتقل شوید؟`))return;try{const payment=await financeApi(`/academy/admin/subscriptions/${id}/zarinpal`,{months:Number(months)});if(!payment.redirectUrl)throw new Error('لینک پرداخت دریافت نشد.');location.assign(payment.redirectUrl);}catch(e){AppDialog.alert(e.message);}};
 
 function showFinancePaymentCallback(){const params=new URLSearchParams(window.location.search),status=params.get('payment')||params.get('subscription_payment');if(!status)return;setTimeout(function(){if(status==='success')AppDialog.alert('پرداخت با موفقیت تأیید شد.'+(params.get('ref')?' کد رهگیری: '+params.get('ref'):''));else AppDialog.alert(params.get('message')||'پرداخت انجام نشد یا تأیید آن ناموفق بود.');history.replaceState({},document.title,window.location.pathname+window.location.hash);loadFinanceInvoices().catch(function(){});loadAcademySubscriptions().catch(function(){});},300);}
 
@@ -587,8 +597,8 @@ window.generateFinancePDF = async function () {
                 await loadFinanceInvoices();
             } catch (error) {
                 console.error(error);
-                allTermInvoices = [];
-                filterFinance();
+                allCourseInvoices = [];
+                refreshFinanceInvoices();
             }
         }
     }, 200);
