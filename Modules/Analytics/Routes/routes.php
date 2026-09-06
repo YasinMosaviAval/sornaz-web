@@ -147,6 +147,10 @@ Router::get('/analytics/admin-inline-translations', [AdminTestController::class,
 Router::get('/analytics/articles', [AnalyticsController::class, 'articles']);
 Router::get('/analytics/article-details', [AnalyticsController::class, 'articleDetails']);
 Router::post('/analytics/article-comments/{id}', [PublicCommentController::class, 'store'])->middleware(['csrf']);
+Router::get('/api/sornaz/v1/articles/manifest', [ArticleController::class, 'manifest']);
+Router::get('/api/sornaz/v1/articles/{id}', [ArticleController::class, 'show']);
+Router::get('/api/sornaz/v1/article-ratings/{type}/{id}', [ArticleController::class, 'rating']);
+Router::post('/api/sornaz/v1/article-ratings/{type}/{id}', [ArticleController::class, 'rate']);
 Router::get('/api/sornaz/v1/articles', [ArticleController::class, 'index']);
 Router::get('/api/sornaz/v1/article-categories', [ArticleController::class, 'categories']);
 Router::get('/api/sornaz/v1/articles/{id}/related', [ArticleController::class, 'related']);
