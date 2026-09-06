@@ -1,0 +1,14 @@
+<?php
+if(PHP_SAPI!=='cli'){http_response_code(404);exit;}
+require_once dirname(__DIR__,2).'/vendor/autoload.php';
+$app=require base_path('bootstrap/app.php');
+db()->exec(file_get_contents(__DIR__.'/schema.sql'));
+$r=new \Modules\CourseMarket\Repositories\CourseRepository(db());
+$s=new \Modules\CourseMarket\Services\CourseService($r);$count=0;
+foreach($r->query('SELECT id,owner_id,curriculum FROM creator_courses') as $row){
+ $legacy=false;foreach(json_decode($row['curriculum'],true)?:[] as $chapter)foreach($chapter['lessons']??[] as $lesson)if(empty($lesson['post_id']))$legacy=true;
+ if(!$legacy)continue;
+ if(file_put_contents(base_path('storage/course-media/migration-'.$row['id'].'-'.date('YmdHis').'.json'),$row['curriculum'])===false)throw new RuntimeException('Migration backup failed.');
+ $s->save((int)$row['owner_id'],(int)$row['id'],$s->course((int)$row['id']));$count++;
+}
+echo "Course schema ready; $count courses migrated.\n";

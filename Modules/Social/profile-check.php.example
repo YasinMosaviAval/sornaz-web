@@ -1,0 +1,45 @@
+<?php
+// CLI integration check. Every fixture lives in connection-local temporary tables.
+if(PHP_SAPI!=='cli')exit;
+require 'vendor/autoload.php';$app=require 'bootstrap/app.php';
+$db=db();
+foreach(['users','posts','translations','social_profiles','social_follows','social_media','social_posts','social_reactions','social_notifications','creator_courses','creator_course_media','creator_course_orders','creator_course_lessons','creator_lesson_access','social_bookmarks','social_lesson_progress','social_account_settings'] as $table){$db->exec("CREATE TEMPORARY TABLE fixture_$table LIKE $table");$db->exec("ALTER TABLE fixture_$table RENAME TO $table");}
+$r=new \Modules\Social\Repositories\SocialRepository($db);
+$social=new \Modules\Social\Services\SocialService($r);
+$courses=new \Modules\CourseMarket\Services\CourseService($r);
+$learning=new \Modules\Social\Services\LearningService($r,$courses,$social);
+$count=0;
+function check($condition,$name){global $count;if(!$condition)throw new RuntimeException($name);$count++;echo "PASS $name\n";}
+function denied($call,$code){try{$call();}catch(RuntimeException $e){check($e->getCode()===$code,'access denied '.$code);return;}throw new RuntimeException('Expected denial');}
+foreach([1,2,3] as $id)$r->query('INSERT INTO users(user_id,username) VALUES(?,?)',[$id,'profile-test-'.$id]);
+$c=$courses->save(1,0,['title'=>'Guitar','description'=>'Learn guitar','price'=>0,'status'=>'draft','curriculum'=>[['title'=>'Basics','lessons'=>[['title'=>'Lesson one','text'=>'private lesson text','password'=>'lesson-secret','media'=>[]]]]]]);
+$id=(int)$c['id'];$post=(int)$c['curriculum'][0]['lessons'][0]['post_id'];
+$r->query("UPDATE creator_courses SET status='published' WHERE id=?",[$id]);
+check(count($learning->home(0)['courses'])===1,'guest catalog');
+check(!str_contains(json_encode($learning->home(0)),'private lesson text'),'home has no lesson content');
+$guest=$courses->detail(0,$id);check(!$guest['access']&&!isset($guest['curriculum'][0]['lessons'][0]['text']),'guest cannot read lesson');
+$learning->bookmark(2,'course',$id,true);$learning->bookmark(2,'course',$id,true);
+check(count($learning->bookmarks(2)['courses'])===1,'bookmark retry is idempotent');
+check(count($learning->bookmarks(3)['courses'])===0,'bookmarks isolated by account');
+$learning->bookmark(2,'author',1,true);check(count($learning->bookmarks(2)['authors'])===1,'author saved');
+$learning->bookmark(2,'course',$id,false);check(count($learning->bookmarks(2)['courses'])===0,'bookmark removed');
+denied(fn()=>$learning->bookmark(2,'invalid',$id,true),422);
+denied(fn()=>$learning->progress(2,$id,$post,true),403);
+$r->insert('creator_course_orders',['course_id'=>$id,'buyer_id'=>2,'seller_id'=>1,'amount'=>0,'status'=>'paid','token'=>str_repeat('a',64)]);
+denied(fn()=>$learning->progress(2,$id,$post,true),403);
+$courses->unlockLesson(2,$id,$post,'lesson-secret');
+$learning->progress(2,$id,$post,true);$learning->progress(2,$id,$post,true);
+check($learning->dashboard(2)['courses'][0]['progress']===100,'completed progress');
+check($learning->dashboard(2)['completed_lessons']===1,'completion retry is idempotent');
+check($learning->dashboard(2)['completed_courses']===1,'course achievement');
+check($learning->dashboard(3)['completed_lessons']===0,'progress isolated');
+denied(fn()=>$learning->progress(2,$id,$post+100,true),404);
+$learning->progress(2,$id,$post,false);check($learning->dashboard(2)['completed_lessons']===0,'completion undone');
+$learning->updateSettings(2,['follow'=>'0','website'=>'https://example.com']);
+$social->notify(2,1,'follow',1,'test');check(count($social->notifications(2))===0,'disabled notification not emitted');
+$learning->updateSettings(2,['like'=>'0']);check($learning->settings(2)['follow']===false,'partial settings preserve values');
+check($social->profile(0,2)['links']['website']==='https://example.com','public link exposed');
+check(!isset($social->profile(0,2)['links']['follow']),'private preference not exposed');
+denied(fn()=>$learning->updateSettings(2,['website'=>'javascript:alert(1)']),422);
+check($learning->settings(3)['follow']===true,'settings isolated');
+echo "$count checks passed\n";
