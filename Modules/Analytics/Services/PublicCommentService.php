@@ -6,24 +6,24 @@ use RuntimeException;
 
 class PublicCommentService
 {
-    public function forPost(int $postId, string $locale): array
+    public function forPost(int $postId, string $locale, ?int $viewerId = null, array $pendingIds = []): array
     {
         $locale=in_array($locale,['fa','en'],true)?$locale:'fa';
-        $rows=DB::table('comments')->where('post_id',$postId)->whereNull('deleted_at')->whereNotNull('approved_at')->orderBy('created_at','ASC')->get();
-        $items=[];foreach($rows as $row){$translation=DB::table('translations')->where('table_name','comments')->where('table_id',(int)$row['comment_id'])->where('field','content')->where('locale',$locale)->whereNull('deleted_at')->first();if(!$translation)continue;$content=(string)$translation['value'];$content=preg_replace('/<\/?(?:b|strong)(?:\s[^>]*)?>/i','',$content);$items[]=['id'=>(int)$row['comment_id'],'author'=>(string)($row['author']?:($locale==='en'?'User':'کاربر')),'content'=>$content,'locale'=>$locale,'created_at'=>$row['created_at'],'parent'=>(int)($row['parent']??0)];}return $this->threaded($items);
+        $rows=DB::table('comments')->where('post_id',$postId)->whereNull('deleted_at')->orderBy('created_at','ASC')->get();
+        $items=[];foreach($rows as $row){$approved=!empty($row['approved_at']);if(!$approved && !($viewerId && (int)$row['created_by']===$viewerId) && !in_array((int)$row['comment_id'],$pendingIds,true))continue;$translation=DB::table('translations')->where('table_name','comments')->where('table_id',(int)$row['comment_id'])->where('field','content')->where('locale',$locale)->whereNull('deleted_at')->first();if(!$translation)continue;$content=(string)$translation['value'];$content=preg_replace('/<\/?(?:b|strong)(?:\s[^>]*)?>/i','',$content);$items[]=['id'=>(int)$row['comment_id'],'author'=>(string)($row['author']?:($locale==='en'?'User':'کاربر')),'content'=>$content,'locale'=>$locale,'created_at'=>$row['created_at'],'parent'=>(int)($row['parent']??0),'status'=>$approved?'approved':'pending'];}return $this->threaded($items);
     }
 
     public function store(int $postId,array $data,?int $userId=null,string $locale='fa'): int
     {
-        $post=DB::table('posts')->where('post_id',$postId)->where('status','published')->whereNull('deleted_at')->first();
+        $post=DB::table('posts')->where('post_id',$postId)->where('status','published')->where('visibility','public')->where('type','post')->whereNull('deleted_at')->first();
         if(!$post)throw new RuntimeException('مقاله موردنظر یافت نشد.');
         $locale=in_array($locale,['fa','en'],true)?$locale:'fa';
         $content=trim((string)($data['content']??''));if($content==='')throw new RuntimeException('متن نظر الزامی است.');
         $locale=$this->detectContentLocale($content,$locale);
         $user=$userId?DB::table('users')->where('user_id',$userId)->whereNull('deleted_at')->first():null;
         $authorInput=trim((string)($data['author']??''));
-        $author=$authorInput!==''?$authorInput:($user['username']??null);
-        $email=trim((string)($data['author_email']??($user['email']??'')));
+        $author=$user ? (string)$user['username'] : ($authorInput!==''?$authorInput:($locale==='en'?'Guest User':'کاربر مهمان'));
+        $email=trim((string)($user ? ($user['email']??'') : ($data['author_email']??'')));
         if($email!==''&&!filter_var($email,FILTER_VALIDATE_EMAIL))throw new RuntimeException('ایمیل معتبر نیست.');
         $parent=(int)($data['parent']??0);
         $parentRow=null;
@@ -55,6 +55,6 @@ class PublicCommentService
 
     private function threaded(array $items):array
     {
-        $children=[];foreach($items as$item)$children[(int)$item['parent']][]=$item;$result=[];$walk=function(int$parent,int$depth)use(&$walk,&$children,&$result){foreach($children[$parent]??[]as$item){$item['depth']=min($depth,3);$result[]=$item;$walk((int)$item['id'],$depth+1);}};$walk(0,0);return$result;
+        $known=array_column($items,'id');foreach($items as &$item){if($item['parent'] && !in_array($item['parent'],$known,true))$item['parent']=0;}unset($item);$children=[];foreach($items as$item)$children[(int)$item['parent']][]=$item;$result=[];$walk=function(int$parent,int$depth)use(&$walk,&$children,&$result){foreach($children[$parent]??[]as$item){$item['depth']=min($depth,3);$result[]=$item;$walk((int)$item['id'],$depth+1);}};$walk(0,0);return$result;
     }
 }
