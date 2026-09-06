@@ -9,3 +9,8 @@
 # Runtime chat uploads
 /assets/media/chat-groups/
 /storage/chat/
+/storage/course-media/*
+!/storage/course-media/.htaccess
+/storage/social-media/*
+!/storage/social-media/.htaccess
+/storage/mobile-social-stage/

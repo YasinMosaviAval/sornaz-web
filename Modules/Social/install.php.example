@@ -1,0 +1,6 @@
+<?php
+if(PHP_SAPI!=='cli'){http_response_code(404);exit;}
+require dirname(__DIR__).'/CourseMarket/install.php';
+db()->exec(file_get_contents(__DIR__.'/schema.sql'));
+db()->exec(file_get_contents(__DIR__.'/profile-schema.sql'));
+echo "Social schema ready.\n";

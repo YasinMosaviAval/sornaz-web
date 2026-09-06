@@ -75,6 +75,8 @@ $canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager
             <li><a href="#" onclick="showSection('dashboard')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-home w-5 text-center"></i> داشبورد</a></li>
             <li><a href="#" onclick="showSection('account')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-user-cog w-5 text-center"></i> حساب کاربری</a></li>
             <li><a href="#" onclick="showSection('chat')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-comment-dots w-5 text-center"></i> گفتگوها</a></li>
+            <li><a href="/course-market/manage" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-photo-video w-5 text-center"></i> ساخت و فروش دوره</a></li>
+            <li><a href="/course-market/library" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-play-circle w-5 text-center"></i> دوره‌های خریداری‌شده</a></li>
             <?php if(!$hasAcademyPanelAccess && $hasLearningEnrollment): ?>
             <li><a href="#" onclick="showSection('my-classrooms')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-chalkboard w-5 text-center"></i> کلاس‌های من</a></li>
             <li><a href="#" onclick="showSection('my-courses')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-book-open w-5 text-center"></i> دوره‌های من</a></li>
