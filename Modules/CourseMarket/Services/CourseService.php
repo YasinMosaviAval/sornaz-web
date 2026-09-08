@@ -11,10 +11,10 @@ class CourseService
 
     public function listing(int $actor, string $mode): array
     {
-        $columns = 'c.id,c.title,c.description,c.price,c.status,c.cover_id,c.owner_id,c.updated_at';
+        $columns = 'c.id,c.title,c.description,c.price,c.status,c.cover_id,c.owner_id,c.created_at,c.updated_at';
         if ($mode === 'manage') return $this->repo->query("SELECT $columns FROM creator_courses c WHERE owner_id=? ORDER BY id DESC", [$actor]);
         if ($mode === 'library') return $this->repo->query("SELECT $columns FROM creator_courses c WHERE EXISTS (SELECT 1 FROM creator_course_orders o WHERE o.course_id=c.id AND o.buyer_id=? AND o.status='paid') ORDER BY c.id DESC", [$actor]);
-        return $this->repo->query("SELECT $columns FROM creator_courses c WHERE status='published' ORDER BY id DESC LIMIT 100");
+        return $this->repo->query("SELECT $columns FROM creator_courses c WHERE status='published' ORDER BY c.updated_at DESC,c.id DESC LIMIT 100");
     }
 
     public function course(int $id): array
@@ -124,7 +124,8 @@ class CourseService
         if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file($file['tmp_name'] ?? '')) throw new RuntimeException('آپلود انجام نشد. اندازه فایل و محدودیت سرور را بررسی کنید.', 422);
         $size = filesize($file['tmp_name']);
         $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
-        $types = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp','video/mp4'=>'mp4','video/webm'=>'webm'];
+        $types = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp','video/mp4'=>'mp4','video/webm'=>'webm','application/pdf'=>'pdf','application/vnd.openxmlformats-officedocument.wordprocessingml.document'=>'docx'];
+        if($mime==='application/zip'&&class_exists('ZipArchive')){$zip=new \ZipArchive();if($zip->open($file['tmp_name'])===true){if($zip->locateName('word/document.xml')!==false&&$zip->locateName('[Content_Types].xml')!==false)$mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document';$zip->close();}}
         if (!isset($types[$mime]) || !$size || $size > (str_starts_with($mime, 'image/') ? 10*1024*1024 : 250*1024*1024)) throw new RuntimeException('فرمت مجاز: JPG، PNG، WebP تا ۱۰ مگابایت یا MP4 و WebM تا ۲۵۰ مگابایت.', 422);
         if (str_starts_with($mime, 'image/') && !getimagesize($file['tmp_name'])) throw new RuntimeException('تصویر معتبر نیست.', 422);
         $filename = bin2hex(random_bytes(24)).'.'.$types[$mime];
@@ -149,10 +150,14 @@ class CourseService
         if (!$media) throw new RuntimeException('فایل پیدا نشد.', 404);
         $course = $this->course((int)$media['course_id']);
         $publicCover = $course['status'] === 'published' && (int)$course['cover_id'] === $id && str_starts_with($media['mime'], 'image/');
+        $meta=json_decode($this->repo->one('SELECT metadata FROM creator_course_details WHERE course_id=?',[$course['id']])['metadata']??'{}',true)?:[];
+        $privateLesson=$this->repo->one('SELECT post_id FROM creator_course_lessons WHERE course_id=? AND deleted_at IS NULL AND JSON_CONTAINS(media_json,?)',[$course['id'],json_encode($id)]);
+        $publicCover=$publicCover||(!$privateLesson&&$course['status']==='published'&&(int)($meta['preview_id']??0)===$id&&str_starts_with($media['mime'],'video/'));
         if (!$publicCover && !$this->hasAccess($actor, $course)) throw new RuntimeException('برای مشاهده محتوا ابتدا دوره را خریداری کنید.', 403);
         if(!$publicCover&&$actor!==(int)$course['owner_id']){
             $detail=$this->detail($actor,(int)$course['id']);
-            if(!in_array($id,array_map(fn($f)=>(int)$f['id'],$detail['files']??[]),true))throw new RuntimeException('برای این فایل ابتدا رمز درس را وارد کنید.',403);
+            $resourceAllowed=!$privateLesson&&in_array($id,array_map(fn($r)=>(int)($r['media_id']??0),$meta['resources']??[]),true);
+            if(!$resourceAllowed&&!in_array($id,array_map(fn($f)=>(int)$f['id'],$detail['files']??[]),true))throw new RuntimeException('برای این فایل ابتدا رمز درس را وارد کنید.',403);
         }
         return $media;
     }

@@ -14,3 +14,12 @@
 /storage/social-media/*
 !/storage/social-media/.htaccess
 /storage/mobile-social-stage/
+
+# Local build tools, verification workspaces, and packaged desktop artifacts
+/storage/notation-browser-check/
+/storage/windows-build-tools/
+/storage/windows-release/
+/storage/windows-stage/
+/storage/apply-audio-fixes.ps1
+/storage/audio-fix-baseline.json
+/storage/theme-fix-baseline.txt

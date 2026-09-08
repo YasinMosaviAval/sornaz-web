@@ -61,7 +61,11 @@ class SocialController
         foreach($this->chat->details($a,$id)['members'] as $member)$this->social->notify((int)$member['id'],$a,'message',$id,'برای شما پیام فرستاد.');return $result;
     });}
     private function learning(): LearningService {return new LearningService(new SocialRepository(db()),$this->courses,$this->social);}
-    public function home(){return $this->run(fn($a)=>$this->learning()->home($a),true);}
+    private function language(): string {return str_starts_with(strtolower((string)($_GET['locale']??$_SERVER['HTTP_ACCEPT_LANGUAGE']??'fa')),'en')?'en':'fa';}
+    private function experience(): \Modules\CourseMarket\Services\CourseExperienceService {return new \Modules\CourseMarket\Services\CourseExperienceService(new CourseRepository(db()),$this->courses);}
+    public function courseAction(int $id,string $action){return $this->run(fn($a)=>$this->experience()->action($a,$id,$action,$_POST,$this->language()));}
+    public function courseMetadata(int $id){return $this->run(fn($a)=>$this->experience()->saveMetadata($a,$id,json_decode((string)($_POST['payload']??'{}'),true)?:[]));}
+    public function home(){return $this->run(fn($a)=>$this->learning()->home($a,$this->language()),true);}
     public function dashboard(){return $this->run(fn($a)=>$this->learning()->dashboard($a));}
     public function bookmarks(){return $this->run(fn($a)=>$this->learning()->bookmarks($a));}
     public function bookmark(){return $this->run(fn($a)=>$this->learning()->bookmark($a,(string)($_POST['kind']??''),(int)($_POST['id']??0),($_POST['active']??'0')==='1'));}
@@ -71,9 +75,9 @@ class SocialController
     public function courses(){return $this->run(function($a){
         if(!$a&&($_GET['mode']??'catalog')!=='catalog')throw new \RuntimeException('ابتدا وارد شوید.',401);
         $mode=(string)($_GET['mode']??'catalog');$items=$this->courses->listing($a,$mode);
-        $owner=(int)($_GET['owner']??0);if($owner)$items=array_values(array_filter($items,fn($c)=>(int)$c['owner_id']===$owner));return $items;
+        $owner=(int)($_GET['owner']??0);if($owner)$items=array_values(array_filter($items,fn($c)=>(int)$c['owner_id']===$owner));return array_map(fn($c)=>$this->experience()->decorate($c,$a,$this->language()),$items);
     },true);}
-    public function course(int $id){return $this->run(fn($a)=>$this->courses->detail($a,$id),true);}
+    public function course(int $id){return $this->run(fn($a)=>$this->experience()->detail($a,$id,$this->language()),true);}
     public function editCourse(int $id){return $this->run(fn($a)=>$this->courses->owned($a,$id));}
     public function createCourse(){return $this->saveCourse(0);}
     public function updateCourse(int $id){return $this->saveCourse($id);}
