@@ -9,16 +9,17 @@ class LearningService
 {
     public function __construct(private SocialRepository $r, private CourseService $courses, private SocialService $social) {}
 
-    public function home(int $actor): array
+    public function home(int $actor,string $locale='fa'): array
     {
-        $courses=$this->courses->listing($actor,'catalog');
-        foreach($courses as &$c){
-            $c['lesson_count']=(int)($this->r->one('SELECT COUNT(*) n FROM creator_course_lessons WHERE course_id=? AND deleted_at IS NULL',[$c['id']])['n']??0);
-            $c['author']=$this->social->profile($actor,(int)$c['owner_id']);
-        }
-        unset($c);
-        $authors=[];foreach($courses as $c)$authors[$c['owner_id']]=$c['author'];
-        return ['courses'=>$courses,'authors'=>array_values($authors)];
+        $experience=new \Modules\CourseMarket\Services\CourseExperienceService($this->r,$this->courses);
+        $courses=array_map(fn($c)=>$experience->decorate($c,$actor,$locale),array_slice($this->courses->listing($actor,'catalog'),0,10));
+        $recent=$this->r->query("SELECT activity.owner_id,MAX(activity.published_at) last_published FROM (
+            SELECT owner_id,created_at published_at FROM creator_courses WHERE status='published'
+            UNION ALL SELECT owner_id,created_at FROM social_posts WHERE deleted_at IS NULL AND kind='post'
+            UNION ALL SELECT created_by,published_at FROM posts WHERE status='published' AND visibility='public' AND type='post' AND deleted_at IS NULL
+        ) activity JOIN users u ON u.user_id=activity.owner_id AND u.deleted_at IS NULL GROUP BY activity.owner_id ORDER BY last_published DESC,activity.owner_id DESC LIMIT 10");
+        $authors=array_map(fn($a)=>$this->social->profile($actor,(int)$a['owner_id']),$recent);
+        return ['courses'=>$courses,'authors'=>$authors];
     }
 
     public function bookmarks(int $actor): array
