@@ -125,7 +125,10 @@ class UserController {
         $name = TranslationService::manager()->get('users', $id, 'full_name', $locale)
             ?: TranslationService::manager()->get('users', $id, 'full_name', 'fa')
             ?: (string)$user['username'];
-        return ['id'=>$id,'username'=>$user['username'],'full_name'=>$name,'email'=>$user['email'] ?: null,'phone'=>$user['phone'] ?: null];
+        $avatar = !empty($user['avatar_file_id'])
+            ? DB::table('media_files')->where('media_file_id', (int)$user['avatar_file_id'])->whereNull('deleted_at')->first()
+            : null;
+        return ['id'=>$id,'username'=>$user['username'],'full_name'=>$name,'email'=>$user['email'] ?: null,'phone'=>$user['phone'] ?: null,'avatar'=>$avatar ? '/'.ltrim((string)$avatar['path'], '/') : null];
     }
 
     private function recordLogin(int $userId): void {

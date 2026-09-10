@@ -35,6 +35,14 @@ class CourseExperienceService
         $metadata=json_decode($this->r->one('SELECT metadata FROM creator_course_details WHERE course_id=?',[$id])['metadata']??'{}',true)?:[];
         $c['resources']=$c['access']?array_values(array_filter($metadata['resources']??[],fn($r)=>empty($r['media_id'])||!$this->r->one('SELECT post_id FROM creator_course_lessons WHERE course_id=? AND deleted_at IS NULL AND JSON_CONTAINS(media_json,?)',[$id,json_encode((int)$r['media_id'])]))):[];
         // Restricted resource metadata is never included in the public details blob.
+        foreach($c['resources'] as &$resource){
+            if(empty($resource['media_id']))continue;
+            $file=$this->r->one('SELECT id,mime,bytes FROM creator_course_media WHERE id=? AND course_id=?',[(int)$resource['media_id'],$id]);
+            if(!$file)continue;
+            $resource['mime']=$file['mime'];$resource['bytes']=(int)$file['bytes'];
+            if(!in_array((int)$file['id'],array_map(fn($f)=>(int)$f['id'],$c['files']??[]),true))$c['files'][]=$file;
+        }
+        unset($resource);
         unset($c['details']['resources']);
         $catalog=$this->courses->listing($actor,'catalog');
         $c['related']=array_map(fn($row)=>$this->decorate($row,$actor,$locale),array_slice(array_values(array_filter($catalog,fn($r)=>(int)$r['id']!==$id)),0,3));

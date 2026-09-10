@@ -66,6 +66,7 @@ class SocialController
     public function courseAction(int $id,string $action){return $this->run(fn($a)=>$this->experience()->action($a,$id,$action,$_POST,$this->language()));}
     public function courseMetadata(int $id){return $this->run(fn($a)=>$this->experience()->saveMetadata($a,$id,json_decode((string)($_POST['payload']??'{}'),true)?:[]));}
     public function home(){return $this->run(fn($a)=>$this->learning()->home($a,$this->language()),true);}
+    public function community(){return $this->run(fn($a)=>$this->learning()->community($a),true);}
     public function dashboard(){return $this->run(fn($a)=>$this->learning()->dashboard($a));}
     public function bookmarks(){return $this->run(fn($a)=>$this->learning()->bookmarks($a));}
     public function bookmark(){return $this->run(fn($a)=>$this->learning()->bookmark($a,(string)($_POST['kind']??''),(int)($_POST['id']??0),($_POST['active']??'0')==='1'));}
