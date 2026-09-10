@@ -12,14 +12,19 @@ class LearningService
     public function home(int $actor,string $locale='fa'): array
     {
         $experience=new \Modules\CourseMarket\Services\CourseExperienceService($this->r,$this->courses);
-        $courses=array_map(fn($c)=>$experience->decorate($c,$actor,$locale),array_slice($this->courses->listing($actor,'catalog'),0,10));
+        $courses=array_map(fn($c)=>$experience->decorate($c,$actor,$locale),$this->courses->listing($actor,'catalog'));
+        return ['courses'=>$courses,'authors'=>array_slice($this->community($actor),0,10)];
+    }
+
+    public function community(int $actor): array
+    {
         $recent=$this->r->query("SELECT activity.owner_id,MAX(activity.published_at) last_published FROM (
             SELECT owner_id,created_at published_at FROM creator_courses WHERE status='published'
-            UNION ALL SELECT owner_id,created_at FROM social_posts WHERE deleted_at IS NULL AND kind='post'
+            UNION ALL SELECT owner_id,created_at FROM social_posts WHERE deleted_at IS NULL
             UNION ALL SELECT created_by,published_at FROM posts WHERE status='published' AND visibility='public' AND type='post' AND deleted_at IS NULL
-        ) activity JOIN users u ON u.user_id=activity.owner_id AND u.deleted_at IS NULL GROUP BY activity.owner_id ORDER BY last_published DESC,activity.owner_id DESC LIMIT 10");
+        ) activity JOIN users u ON u.user_id=activity.owner_id AND u.deleted_at IS NULL GROUP BY activity.owner_id ORDER BY last_published DESC,activity.owner_id DESC LIMIT 200");
         $authors=array_map(fn($a)=>$this->social->profile($actor,(int)$a['owner_id']),$recent);
-        return ['courses'=>$courses,'authors'=>$authors];
+        return $authors;
     }
 
     public function bookmarks(int $actor): array
