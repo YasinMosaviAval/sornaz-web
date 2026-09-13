@@ -9,7 +9,7 @@ class SocialService
     public function __construct(private SocialRepository $r) {}
     public function user(int $id): array
     {
-        $user = $this->r->one('SELECT user_id,username FROM users WHERE user_id=? AND deleted_at IS NULL', [$id]);
+        $user = $this->r->one('SELECT user_id,username,avatar_file_id FROM users WHERE user_id=? AND deleted_at IS NULL', [$id]);
         if (!$user) throw new RuntimeException('کاربر پیدا نشد.',404);
         return $user;
     }
@@ -17,10 +17,15 @@ class SocialService
     {
         $user = $this->user($id);
         $profile = $this->r->one('SELECT * FROM social_profiles WHERE user_id=?',[$id]) ?: [];
+        $avatar=$this->url($profile['avatar_id']??null);
+        if(!$avatar&&!empty($user['avatar_file_id'])){
+            $legacy=$this->r->one('SELECT path FROM media_files WHERE media_file_id=? AND deleted_at IS NULL',[(int)$user['avatar_file_id']]);
+            if($legacy)$avatar='/'.ltrim((string)$legacy['path'],'/');
+        }
         $count = fn($sql,$args)=>(int)($this->r->one($sql,$args)['n']??0);
         $settings=json_decode($this->r->one('SELECT settings_json FROM social_account_settings WHERE user_id=?',[$id])['settings_json']??'{}',true)?:[];
         return ['links'=>array_intersect_key($settings,array_flip(['website','instagram','youtube'])),'id'=>$id,'username'=>$user['username'],'name'=>($profile['display_name']??'') ?: $user['username'],
-            'bio'=>$profile['bio']??'','avatar'=>$this->url($profile['avatar_id']??null),'cover'=>$this->url($profile['cover_id']??null),
+            'bio'=>$profile['bio']??'','avatar'=>$avatar,'cover'=>$this->url($profile['cover_id']??null),
             'followers'=>$count('SELECT COUNT(*) n FROM social_follows WHERE following_id=?',[$id]),
             'following'=>$count('SELECT COUNT(*) n FROM social_follows WHERE follower_id=?',[$id]),
             'posts'=>$count("SELECT COUNT(*) n FROM social_posts WHERE owner_id=? AND kind='post' AND deleted_at IS NULL",[$id]),

@@ -280,6 +280,7 @@ class AcademyBranchService {
         return transaction(function() use($actorId,$memberId,$data,$siteAdmin){
             $member=DB::table('academy_branch_members')->where('member_id',$memberId)->whereNull('deleted_at')->first();
             if(!$member) throw new RuntimeException('عضو مورد نظر یافت نشد.');
+            if(!$siteAdmin && !$this->canAccessMember($actorId,$member)) throw new RuntimeException('دسترسی ویرایش این عضو را ندارید.');
             $userId=(int)$member['user_id'];
             $approved=$this->staffActorApproves($actorId);$now=date('Y-m-d H:i:s');$approval=['approved_at'=>$approved?$now:null,'approved_by'=>$approved?$actorId:null];
             $gender=(string)($data['gender']??'other');if(!in_array($gender,['male','female','other'],true))$gender='other';
