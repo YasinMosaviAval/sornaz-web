@@ -128,7 +128,12 @@ class UserController {
         $avatar = !empty($user['avatar_file_id'])
             ? DB::table('media_files')->where('media_file_id', (int)$user['avatar_file_id'])->whereNull('deleted_at')->first()
             : null;
-        return ['id'=>$id,'username'=>$user['username'],'full_name'=>$name,'email'=>$user['email'] ?: null,'phone'=>$user['phone'] ?: null,'avatar'=>$avatar ? '/'.ltrim((string)$avatar['path'], '/') : null];
+        $avatarUrl=$avatar ? '/'.ltrim((string)$avatar['path'], '/') : null;
+        try {
+            $social=DB::table('social_profiles')->where('user_id',$id)->first();
+            if(!empty($social['avatar_id']))$avatarUrl='/api/sornaz/v1/social/media/'.(int)$social['avatar_id'];
+        } catch (\Throwable $e) { /* Preserve legacy avatars when the social module is not installed. */ }
+        return ['id'=>$id,'username'=>$user['username'],'full_name'=>$name,'email'=>$user['email'] ?: null,'phone'=>$user['phone'] ?: null,'avatar'=>$avatarUrl];
     }
 
     private function recordLogin(int $userId): void {

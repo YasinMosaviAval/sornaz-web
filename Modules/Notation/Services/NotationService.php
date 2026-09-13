@@ -7,7 +7,7 @@ use RuntimeException;
 class NotationService
 {
     public const KEYS=['C','G','D','A','E','B','F#','C#','F','Bb','Eb','Ab','Db','Gb','Cb','Am','Em','Bm','F#m','C#m','G#m','D#m','A#m','Dm','Gm','Cm','Fm','Bbm','Ebm','Abm'];
-    public const DURATIONS=['w'=>64,'h'=>32,'q'=>16,'8'=>8,'16'=>4,'32'=>2,'64'=>1];
+    public const DURATIONS=['w'=>64,'h'=>32,'q'=>16,'8'=>8,'16'=>4,'32'=>2,'64'=>1,'128'=>.5,'256'=>.25];
     public function __construct(private CourseRepository $r) {}
     public function listing(int $actor,string $mode,int $page=1): array
     {
@@ -42,9 +42,9 @@ class NotationService
     {
         $meta=$data['metadata']??null;$score=$data['score']??null;
         if(!is_array($meta)||!is_array($score)||!isset($score['measures'])||!is_array($score['measures'])||!array_is_list($score['measures'])||count($score['measures'])<1||count($score['measures'])>64)throw new RuntimeException('Use between 1 and 64 measures.',422);
-        $clean=[];foreach(['title','subtitle','composer','arranger','lyricist','copyright','tempo_text'] as $field)$clean[$field]=$this->text($meta[$field]??'');
+        $clean=[];foreach(['title','subtitle','composer','arranger','lyricist','tempo_text'] as $field)$clean[$field]=$this->text($meta[$field]??'');
         if($clean['title']==='')throw new RuntimeException('Enter a title.',422);
-        $enums=['instrument'=>['Tar','Setar','Guitar','Piano','Violin','Flute','Voice'],'key'=>self::KEYS,'time'=>['2/4','3/4','4/4','6/8','9/8','12/8','2/2','6/4'],'tempo_note'=>array_map('strval',array_keys(self::DURATIONS)),'clef'=>['treble','bass']];
+        $enums=['instrument'=>['Tar','Setar','Guitar','Piano','Violin','Flute','Voice'],'key'=>self::KEYS,'time'=>['2/4','3/4','4/4','6/8','9/8','12/8','2/2','6/4'],'tempo_note'=>array_map('strval',array_keys(self::DURATIONS)),'clef'=>['treble','bass','baritone-f','soprano','mezzo-soprano','alto','tenor']];
         foreach($enums as $key=>$values){$v=$meta[$key]??null;if(!in_array($v,$values,true))throw new RuntimeException('Invalid '.$key.'.',422);$clean[$key]=$v;}
         $bpm=filter_var($meta['bpm']??null,FILTER_VALIDATE_INT);if($bpm<20||$bpm>300)throw new RuntimeException('Tempo must be between 20 and 300.',422);$clean['bpm']=$bpm;
         [$top,$bottom]=array_map('intval',explode('/',$clean['time']));$capacity=$top*64/$bottom;$measures=[];
@@ -52,16 +52,19 @@ class NotationService
             if(!is_array($measure)||!isset($measure['notes'])||!is_array($measure['notes'])||!array_is_list($measure['notes'])||count($measure['notes'])>64)throw new RuntimeException('Invalid measure.',422);
             $notes=[];$ticks=0;
             foreach($measure['notes'] as $n){
-                if(!is_array($n)||!isset($n['pitch'])||!is_string($n['pitch'])||!preg_match('/^[A-G][1-7]$/D',$n['pitch'])||!is_string($n['duration']??null)||!isset(self::DURATIONS[$n['duration']]))throw new RuntimeException('Invalid note.',422);
+                if(!is_array($n)||!isset($n['pitch'])||!is_string($n['pitch'])||!preg_match('/^(?:[A-G][1-7]|[AB]0|C8)$/D',$n['pitch'])||!is_string($n['duration']??null)||!isset(self::DURATIONS[$n['duration']]))throw new RuntimeException('Invalid note.',422);
                 $dots=$n['dots']??0;if(!is_int($dots)||$dots<0||$dots>2||!is_bool($n['rest']??null))throw new RuntimeException('Invalid note duration.',422);
                 $acc=$n['accidental']??'';if(!in_array($acc,['','#','b','n','##','bb','+','d'],true))throw new RuntimeException('Invalid accidental.',422);
                 $ticks+=self::DURATIONS[$n['duration']]*(2-pow(.5,$dots));if($ticks>$capacity+.001)throw new RuntimeException('This measure is full.',422);
                 $note=['pitch'=>$n['pitch'],'duration'=>$n['duration'],'dots'=>$dots,'rest'=>$n['rest'],'accidental'=>$acc];
+                foreach(['tieNext','tiePrevious'] as $tie){if(isset($n[$tie])){if(!is_bool($n[$tie])||($n[$tie]&&$n['rest']))throw new RuntimeException('Invalid tie.',422);$note[$tie]=$n[$tie];}}
                 foreach(['dynamic'=>['','ppp','pp','p','mp','mf','f','ff','fff','sf','sff','sfff','sfz','sffz','sfffz','fz','ffz','fffz'],'articulation'=>['','staccato','accent','tenuto','marcato','staccatissimo'],'bow'=>['','up','down'],'ornament'=>['','trill','mordent'],'finger'=>['','0','1','2','3','4','5']] as $field=>$values){$value=$n[$field]??'';if(!in_array($value,$values,true))throw new RuntimeException('Invalid note marking.',422);$note[$field]=$value;}
                 $notes[]=$note;
             }
             $measures[]=['notes'=>$notes];
         }
+        while($measures && !$measures[count($measures)-1]['notes'])array_pop($measures);
+        if(!$measures)throw new RuntimeException('Enter at least one note before saving.',422);
         $visibility=$data['visibility']??'private';if(!in_array($visibility,['private','public'],true))throw new RuntimeException('Invalid visibility.',422);
         return ['title'=>$clean['title'],'metadata'=>json_encode($clean,JSON_UNESCAPED_UNICODE),'score'=>json_encode(['measures'=>$measures],JSON_UNESCAPED_UNICODE),'visibility'=>$visibility];
     }

@@ -2,6 +2,11 @@
 
 use Core\router\Router;
 use Modules\Academy\Controllers\Api\AcademyController;
+use Modules\Academy\Controllers\Api\PublicAcademyController;
+
+Router::get('/api/sornaz/v1/academies/options', [PublicAcademyController::class, 'options']);
+Router::get('/api/sornaz/v1/academies/{id}', [PublicAcademyController::class, 'show']);
+Router::get('/api/sornaz/v1/academies', [PublicAcademyController::class, 'index']);
 
 Router::group(
     ['prefix' => '/api/academy'],
