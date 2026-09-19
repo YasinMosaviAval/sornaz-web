@@ -30,9 +30,13 @@ class SocialController
         if(!$user)throw new \RuntimeException('نشست معتبر نیست. دوباره وارد شوید.',401);
         return (int)$user['user_id'];
     }
+    protected function viewer(bool $public = false): int
+    {
+        return $public ? (int)((new MobileAuthTokenService(new UserRepository()))->userFromRequest()['user_id'] ?? 0) : $this->actor();
+    }
     private function run(callable $f, bool $public=false)
     {
-        try { $actor=$public?(int)((new MobileAuthTokenService(new UserRepository()))->userFromRequest()['user_id']??0):$this->actor(); return ResponseFactory::json(['success'=>true,'data'=>$f($actor)]); }
+        try { $actor=$this->viewer($public); return ResponseFactory::json(['success'=>true,'data'=>$f($actor)]); }
         catch(\Throwable $e){$code=in_array($e->getCode(),[401,403,404,409,422,500,502,503],true)?$e->getCode():422;
             if($e instanceof \PDOException||!($e instanceof \RuntimeException)){error_log('Social API: '.$e->getMessage());$message='ارتباط با سرویس برقرار نشد.';$code=500;}else $message=$e->getMessage();
             return ResponseFactory::json(['success'=>false,'message'=>$message],$code);
@@ -46,10 +50,16 @@ class SocialController
     public function following(int $id){return $this->run(fn($a)=>$this->social->people($a,'',$id,'following'));}
     public function follow(int $id){return $this->run(fn($a)=>$this->social->follow($a,$id,($_POST['active']??'0')==='1'));}
     public function posts(){return $this->run(fn($a)=>$this->social->posts($a,(string)($_GET['kind']??'post'),(int)($_GET['owner']??0),(int)($_GET['before']??0),($_GET['saved']??'')==='1'),($_GET['saved']??'')!=='1');}
-    public function post(int $id){return $this->run(fn($a)=>$this->social->post($a,$id));}
+    public function post(int $id){return $this->run(fn($a)=>$this->social->post($a,$id),true);}
     public function publish(){return $this->run(fn($a)=>$this->social->publish($a,$_POST));}
     public function remove(int $id){return $this->run(fn($a)=>$this->social->remove($a,$id));}
     public function react(int $id){return $this->run(fn($a)=>$this->social->react($a,$id,(string)($_POST['kind']??''),($_POST['active']??'0')==='1'));}
+    private function interactions(): \Modules\Social\Services\SocialInteractionService { return new \Modules\Social\Services\SocialInteractionService(new SocialRepository(db()), $this->social, $this->chat); }
+    public function comments(int $id){return $this->run(fn($a)=>$this->interactions()->comments($a,$id,(int)($_GET['before']??0)),true);}
+    public function comment(int $id){return $this->run(fn($a)=>$this->interactions()->comment($a,$id,(string)($_POST['body']??'')));}
+    public function deleteComment(int $id,int $commentId){return $this->run(fn($a)=>$this->interactions()->deleteComment($a,$id,$commentId));}
+    public function share(int $id){return $this->run(fn($a)=>$this->interactions()->share($a,$id,(array)($_POST['user_ids']??[])));}
+    public function replyStory(int $id){return $this->run(fn($a)=>$this->interactions()->replyStory($a,$id,(string)($_POST['body']??''),(string)($_POST['emoji']??'')));}
     public function notifications(){return $this->run(fn($a)=>$this->social->notifications($a));}
     public function read(int $id){return $this->run(fn($a)=>$this->social->read($a,$id));}
     public function upload(){return $this->run(fn($a)=>$this->social->upload($a,$_FILES['file']??[]));}
@@ -90,7 +100,7 @@ class SocialController
     public function courseMedia(int $id){return $this->stream($id,true);}
     private function stream(int $id,bool $course)
     {
-        try{$a=(int)((new MobileAuthTokenService(new UserRepository()))->userFromRequest()['user_id']??0);$m=$course?$this->courses->media($a,$id):$this->social->media($a,$id);}catch(\Throwable $e){abort(in_array($e->getCode(),[401,403,404],true)?$e->getCode():404);}
+        try{$a=$this->viewer(true);$m=$course?$this->courses->media($a,$id):$this->social->media($a,$id);}catch(\Throwable $e){abort(in_array($e->getCode(),[401,403,404],true)?$e->getCode():404);}
         $path=base_path('storage/'.($course?'course-media':'social-media').'/'.$m['filename']);if(!is_file($path))abort(404);
         $size=filesize($path);$start=0;$end=$size-1;
         header('Content-Type: '.$m['mime']);header('Cache-Control: private, no-store');header('X-Content-Type-Options: nosniff');header('Accept-Ranges: bytes');

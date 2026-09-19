@@ -9,6 +9,18 @@ class NotationService
     public const KEYS=['C','G','D','A','E','B','F#','C#','F','Bb','Eb','Ab','Db','Gb','Cb','Am','Em','Bm','F#m','C#m','G#m','D#m','A#m','Dm','Gm','Cm','Fm','Bbm','Ebm','Abm'];
     public const DURATIONS=['w'=>64,'h'=>32,'q'=>16,'8'=>8,'16'=>4,'32'=>2,'64'=>1,'128'=>.5,'256'=>.25];
     public function __construct(private CourseRepository $r) {}
+    public function instruments(): array
+    {
+        $translations = \Core\translation\TranslationService::manager();
+        $items = [];
+        foreach ($this->r->query('SELECT instrument_id FROM instruments WHERE deleted_at IS NULL ORDER BY instrument_id', []) as $row) {
+            $id = (int)$row['instrument_id'];
+            $fa = $translations->get('instruments', $id, 'title', 'fa') ?: '';
+            $en = $translations->get('instruments', $id, 'title', 'en') ?: '';
+            $items[] = ['id'=>$id, 'fa'=>$fa ?: $en ?: (string)$id, 'en'=>$en ?: $fa ?: (string)$id];
+        }
+        return $items;
+    }
     public function listing(int $actor,string $mode,int $page=1): array
     {
         if(!in_array($mode,['all','mine','saved'],true))throw new RuntimeException('Invalid list.',422);
@@ -44,7 +56,12 @@ class NotationService
         if(!is_array($meta)||!is_array($score)||!isset($score['measures'])||!is_array($score['measures'])||!array_is_list($score['measures'])||count($score['measures'])<1||count($score['measures'])>64)throw new RuntimeException('Use between 1 and 64 measures.',422);
         $clean=[];foreach(['title','subtitle','composer','arranger','lyricist','tempo_text'] as $field)$clean[$field]=$this->text($meta[$field]??'');
         if($clean['title']==='')throw new RuntimeException('Enter a title.',422);
-        $enums=['instrument'=>['Tar','Setar','Guitar','Piano','Violin','Flute','Voice'],'key'=>self::KEYS,'time'=>['2/4','3/4','4/4','6/8','9/8','12/8','2/2','6/4'],'tempo_note'=>array_map('strval',array_keys(self::DURATIONS)),'clef'=>['treble','bass','baritone-f','soprano','mezzo-soprano','alto','tenor']];
+        // Keep legacy names readable; new scores select stable catalog IDs.
+        $clean['instrument']=$this->text($meta['instrument']??'');
+        if ($clean['instrument']==='') throw new RuntimeException('Invalid instrument.',422);
+        if (ctype_digit($clean['instrument']) && !$this->r->one('SELECT instrument_id FROM instruments WHERE instrument_id=? AND deleted_at IS NULL',[(int)$clean['instrument']])) throw new RuntimeException('Invalid instrument.',422);
+        if (!ctype_digit($clean['instrument']) && !in_array($clean['instrument'],['Tar','Setar','Guitar','Piano','Violin','Flute','Voice'],true)) throw new RuntimeException('Invalid instrument.',422);
+        $enums=['key'=>self::KEYS,'time'=>['2/4','3/4','4/4','6/8','9/8','12/8','2/2','6/4'],'tempo_note'=>array_map('strval',array_keys(self::DURATIONS)),'clef'=>['treble','bass','baritone-f','soprano','mezzo-soprano','alto','tenor']];
         foreach($enums as $key=>$values){$v=$meta[$key]??null;if(!in_array($v,$values,true))throw new RuntimeException('Invalid '.$key.'.',422);$clean[$key]=$v;}
         $bpm=filter_var($meta['bpm']??null,FILTER_VALIDATE_INT);if($bpm<20||$bpm>300)throw new RuntimeException('Tempo must be between 20 and 300.',422);$clean['bpm']=$bpm;
         [$top,$bottom]=array_map('intval',explode('/',$clean['time']));$capacity=$top*64/$bottom;$measures=[];

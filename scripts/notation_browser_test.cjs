@@ -16,6 +16,7 @@ const {chromium} = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/notat
           queueMicrotask(()=>{let data=true;
             if(d.action==='list')data={items:window.mockSheet?[{...window.mockSheet,title:window.mockSheet.metadata.title}]:[],has_more:false};
             if(d.action==='get')data=window.mockSheet;
+            if(d.action==='instruments')data=[{id:7,fa:'پیانو',en:'Piano'},{id:42,fa:'سنتور',en:'Santur'}];
             if(d.action==='save'){window.savedPayload=d.payload;data=window.mockSheet={...d.payload,id:1,version:(window.mockSheet?.version||0)+1,editable:true};}
             window.Notation.receive(d.id,data,null);
           });
@@ -24,23 +25,42 @@ const {chromium} = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/notat
       await page.goto(pathToFileURL(path.resolve('assets/notation/index.html')).href);
       await page.locator('[data-action=new]').click();
       await page.locator('[name=title]').fill('Score test');
+      assert.equal(await page.locator('[name=tempo_text]').isDisabled(),true);
+      assert.equal(await page.locator('[name=public]').count(),0);
+      assert.equal(await page.locator('[name=title]').getAttribute('placeholder'),null);
+      await page.locator('[name=instrument]').selectOption('42');
+      await page.locator('.beat-picker summary').click();
+      await page.locator('[data-action=beat-unit][data-value=q]').click();
+      assert.equal(await page.locator('[name=tempo_text]').isDisabled(),true);
       await page.locator('[name=bpm]').fill('12.3abc-');
       assert.equal(await page.locator('[name=bpm]').inputValue(),'12');
       await page.locator('[name=bpm]').fill('100');
       assert.equal(await page.locator('[name=clef] option').count(),7);
-      assert.ok(await page.locator('[name=tempo_text] option').count()>15);
+      assert.deepEqual(await page.locator('[name=tempo_text] option').evaluateAll(es=>es.map(e=>e.value)),['','Andante','Andantino','Andante moderato']);
+      await page.locator('[name=tempo_text]').selectOption('Andante');
+      await page.locator('[name=bpm]').fill('180');
+      assert.equal(await page.locator('[name=tempo_text]').inputValue(),'');
+      assert.deepEqual(await page.locator('[name=tempo_text] option').evaluateAll(es=>es.map(e=>e.value)),['','Presto']);
+      await page.locator('[name=bpm]').fill('100');
+      await page.locator('[name=tempo_text]').selectOption('Andante');
       assert.equal(await page.locator('[name=copyright]').count(),0);
-      assert.deepEqual(await page.locator('[name=tempo_note] option').evaluateAll(es=>es.map(e=>e.value)),['w','h','q','8','16','32','64']);
+      assert.deepEqual(await page.locator('[name=tempo_note] option').evaluateAll(es=>es.map(e=>e.value)),['','w','h','q','8','16','32','64']);
       await page.locator('[name=lyricist]').fill('Lyric writer');
       await page.locator('[name=composer]').fill('Composer name');
       await page.locator('[name=clef]').selectOption('alto');
+      await page.screenshot({path:`storage/notation-browser-check/form-${locale}.png`});
+      const rows=await page.locator('.form-row').evaluateAll(es=>es.map(e=>({top:e.getBoundingClientRect().top,bottom:e.getBoundingClientRect().bottom})));
+      const gaps=rows.slice(1).map((r,i)=>r.top-rows[i].bottom);assert.ok(Math.max(...gaps)-Math.min(...gaps)<2);
       await page.locator('[type=submit]').click();
+      assert.equal(await page.locator('.state.unsaved').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(254, 240, 138)');
       assert.equal(await page.locator('.piano .white').count(),52);
       assert.equal(await page.locator('.piano .black').count(),36);
       assert.equal(await page.locator('.editor-footer [data-action=save]').count(),0);
       assert.equal(await page.locator('.editor-header [data-action=save]').count(),1);
       assert.equal(await page.locator('.editor-header [data-action=pdf],.editor-header [data-action=export]').count(),0);
       assert.equal(await page.locator('.duration-choice .duration-btn').count(),7);
+      assert.equal(await page.locator('.duration-btn svg').count(),7);
+      assert.deepEqual(await page.locator('.rest-key').evaluate(e=>[e.offsetWidth,e.offsetHeight]),await page.locator('.palette-key').evaluate(e=>[e.offsetWidth,e.offsetHeight]));
       assert.equal(await page.locator('.duration-choice .dot-btn').count(),2);
       assert.equal(await page.locator('.duration-choice .duration-btn[aria-pressed=true]').getAttribute('data-value'),'q');
       assert.equal(await page.locator('.tempo').textContent().then(t=>t.includes('4/4')),false);
@@ -69,6 +89,8 @@ const {chromium} = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/notat
       assert.deepEqual(labels,locale==='fa'?['خیر','بلی']:['No','Yes']);
       await page.locator('[data-action=yes]').click();
       await page.waitForFunction(()=>!!window.savedPayload);
+      assert.equal(await page.locator('.state.synced').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(187, 247, 208)');
+      assert.equal(await page.evaluate(()=>window.savedPayload.metadata.instrument),'42');
       const measures=await page.evaluate(()=>window.savedPayload.score.measures);
       assert.ok(measures.some(b=>b.notes.some(n=>n.tieNext)));
       assert.ok(measures.at(-1).notes.length,'saved scores have no trailing empty measures');
@@ -114,6 +136,16 @@ const {chromium} = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/notat
       assert.equal(await page.locator('.editor-header [data-action=export]').count(),0);
       assert.equal(await page.locator('.editor-footer').count(),0);
       assert.equal(await page.locator('.editor-actions button').count(),1);
+
+      const ottavas=await page.evaluate(()=>{
+        const s=NotationModel.fresh();s.score.measures=['A0','B1','C2','G2','A2','C7','B7','C8'].map(pitch=>({notes:[{pitch,duration:'q',dots:0,rest:false}]}));
+        const original=JSON.stringify(s),target=document.createElement('div');target.style.width='340px';document.body.append(target);NotationRenderer.draw(target,s);
+        const labels=[...target.querySelectorAll('.ottava-label')].map(e=>e.textContent);
+        const fits=[...target.querySelectorAll('svg')].every(svg=>{const box=svg.getBBox(),view=svg.viewBox.baseVal;return box.y>=view.y-1&&box.y+box.height<=view.y+view.height+1;});
+        const paper=NotationRenderer.printDocument(s,'en');target.remove();return {labels,fits,unchanged:JSON.stringify(s)===original,paper};
+      });
+      for(const label of ['16vb','8vb','8va','16va']){assert.ok(ottavas.labels.includes(label),label);assert.ok(ottavas.paper.includes('>'+label+'</text>'));}
+      assert.equal(ottavas.fits,true);assert.equal(ottavas.unchanged,true);
       const printHtml=await page.evaluate(()=>{
         const s=NotationModel.fresh();s.metadata.title='A4 pagination';s.metadata.composer='علی حیدری';s.metadata.arranger='یاسین موسوی';
         s.score.measures=Array.from({length:64},()=>({notes:Array.from({length:16},()=>({pitch:'C4',duration:'16',dots:0,rest:false}))}));

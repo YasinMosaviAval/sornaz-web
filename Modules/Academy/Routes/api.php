@@ -3,6 +3,12 @@
 use Core\router\Router;
 use Modules\Academy\Controllers\Api\AcademyController;
 use Modules\Academy\Controllers\Api\PublicAcademyController;
+use Modules\Academy\Controllers\Api\RegistrationController;
+
+Router::get('/api/sornaz/v1/academy-registration', [RegistrationController::class, 'state']);
+Router::post('/api/sornaz/v1/academy-registration/send-code', [RegistrationController::class, 'sendCode']);
+Router::post('/api/sornaz/v1/academy-registration/submit', [RegistrationController::class, 'submit']);
+Router::post('/api/sornaz/v1/academy-registration/without-branch', [RegistrationController::class, 'withoutBranch']);
 
 Router::get('/api/sornaz/v1/academies/options', [PublicAcademyController::class, 'options']);
 Router::get('/api/sornaz/v1/academies/{id}', [PublicAcademyController::class, 'show']);

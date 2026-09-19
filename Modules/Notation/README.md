@@ -13,6 +13,7 @@ List and metadata screens follow light/dark themes and Persian/English locale. T
 Web session endpoints: `/music-sheets/api`. Mobile bearer endpoints: `/api/sornaz/v1/music-sheets`.
 
 - GET root: `mode=all|mine|saved&page=1`, 30 items per page plus `has_more`.
+- GET `/instruments`: active instrument IDs and Persian/English titles from the instruments catalog. New metadata stores the selected ID; legacy instrument names remain readable. Flutter caches the catalog for offline reuse.
 - GET `/{id}`: visible score and metadata.
 - POST root / `/{id}`: create / update with metadata, score, visibility and current version.
 - POST `/{id}/delete`: owner soft-delete with current version.
@@ -51,3 +52,11 @@ The copyright text field is no longer accepted. The existing music_sheets.owner_
 ## Controls revision (2026-09-12)
 
 The editor uses a single top-bar row for save, play/pause and metadata editing. Download and PDF remain list-card actions and are omitted from the editor toolbar. Seven duration buttons and two independently deselectable dot choices share a row above the piano. The other six marking selectors open in a panel anchored to the bottom edge of the viewport, with a close control and backdrop. Selected-note deletion uses a red trash icon. The time signature remains engraved on the staff and is omitted from the tempo caption.
+
+## Form and engraving revision (2026-09-13)
+
+The metadata form has five rows with equal flexible spacing. Description, composer, arranger and lyricist are optional. New scores start private; visibility is changed on the list card. Tempo names become available after selecting a beat unit and valid integer BPM, and only overlapping practice ranges are offered. `ui_symbols.js` supplies proportional vector beat/rest/control symbols without depending on platform music fonts. Saved status is green; unsaved status is yellow.
+
+Low and high pitches use display-only octave shifts with bracket labels: A0–B1 use 16vb, C2–G2 use 8vb, C7–B7 use 8va, and C8 uses 16va (the requested app labels). Stored pitches and playback frequencies are unchanged. Brackets span adjacent notes, restart on wrapped lines, and are included in A4 PDF engraving.
+
+Verification: `node scripts/notation_browser_test.cjs`, `node scripts/notation_model_test.cjs`, `php scripts/notation_validation_test.php`, and `php scripts/notation_instruments_test.php`. Browser checks cover both locales, form spacing, tempo filtering, database IDs, saved-state colors, octave brackets, pitch preservation and PDF output.

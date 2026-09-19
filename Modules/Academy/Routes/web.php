@@ -24,6 +24,8 @@ Router::get('/academy/send-academy-request', [AcademyRegistrationController::cla
 Router::post('/academy/send-academy-request', [AcademyRegistrationController::class, 'store']);
 Router::post('/academy/send-academy-request/send-otp', [AcademyRegistrationController::class, 'sendOtp']);
 Router::get('/academy/register-main-branch', [AcademyRegistrationController::class, 'createMainBranch']);
+Router::get('/academy/registration-complete', [AcademyRegistrationController::class, 'branchChoice']);
+Router::post('/academy/registration-complete/without-branch', [AcademyRegistrationController::class, 'finishWithoutBranch'])->middleware('csrf');
 Router::post('/academy/register-main-branch', [AcademyRegistrationController::class, 'storeMainBranch']);
 Router::post('/academy/register-main-branch/send-otp', [AcademyRegistrationController::class, 'sendMainBranchOtp']);
 Router::post('/academy/_test/seed-sample-academies', [AcademyRegistrationController::class, 'seedSamples'])->middleware(['site-admin', 'csrf']);

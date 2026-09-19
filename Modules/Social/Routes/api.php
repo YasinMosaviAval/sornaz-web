@@ -14,6 +14,9 @@ Router::group(['prefix'=>'/api/sornaz/v1/social'],function(){
     Router::get('/users/{id}/followers',[C::class,'followers']);Router::get('/users/{id}/following',[C::class,'following']);Router::post('/users/{id}/follow',[C::class,'follow']);
     Router::get('/posts',[C::class,'posts']);Router::post('/posts',[C::class,'publish']);Router::get('/posts/{id}',[C::class,'post']);Router::post('/posts/{id}/delete',[C::class,'remove']);Router::post('/posts/{id}/react',[C::class,'react']);
     Router::post('/media',[C::class,'upload']);Router::get('/media/{id}',[C::class,'media']);
+    Router::get('/posts/{id}/comments',[C::class,'comments']);Router::post('/posts/{id}/comments',[C::class,'comment']);
+    Router::post('/posts/{id}/comments/{commentId}/delete',[C::class,'deleteComment']);
+    Router::post('/posts/{id}/share',[C::class,'share']);Router::post('/stories/{id}/reply',[C::class,'replyStory']);
     Router::get('/notifications',[C::class,'notifications']);Router::post('/notifications/{id}/read',[C::class,'read']);
     Router::get('/conversations',[C::class,'conversations']);Router::post('/conversations',[C::class,'conversation']);Router::get('/conversations/{id}/messages',[C::class,'messages']);Router::post('/conversations/{id}/messages',[C::class,'send']);
     Router::post('/courses/{id}/lessons/{postId}/unlock',[C::class,'unlockLesson']);
