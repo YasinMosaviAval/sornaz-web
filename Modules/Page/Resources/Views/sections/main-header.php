@@ -31,6 +31,7 @@
                 <a href="/analytics/articles" data-page="articles" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.articles', 'مقاله‌های آموزشی')) ?></a>
                 <a href="/academy/academies" data-page="academies" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.academies', 'آموزشگاه‌ها')) ?></a>
                 <a href="/users" data-page="users" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.users', 'کاربران')) ?></a>
+                <a href="/community" data-page="community" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= locale()==='en'?'Community':'جامعه سُرناز' ?></a>
                 <?php if ($hasAdminPanel): ?>
                     <a href="/analytics/admin-panel" data-page="contact" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.user_panel', 'پنل کاربری')) ?></a>
                 <?php endif; ?>
@@ -82,6 +83,7 @@
             <a href="/academy/academies" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.academies', 'آموزشگاه‌ها')) ?></a>
             <a href="/course-market" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">دوره‌های آموزشی</a>
             <a href="/users" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.users', 'کاربران')) ?></a>
+            <a href="/community" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= locale()==='en'?'Community':'جامعه سُرناز' ?></a>
             <?php if ($hasAdminPanel): ?>
                 <a href="/analytics/admin-panel" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.user_panel', 'پنل کاربری')) ?></a>
             <?php endif; ?>

@@ -4,6 +4,23 @@ The third main navigation destination is a native Flutter user panel. It uses Ma
 
 The home page replaces New courses with academy search by name, instrument and city. Academy results and details also use Flutter widgets. Updated courses remain available.
 
+## Native academy registration
+
+Home also offers a native academy registration form, available to guests and signed-in users. It shares the website's validation, email/mobile OTP verification and registration services. No WebView is used. The three public hero sentences are the same for guests, members and administrators; position-based CMS overrides cannot replace those marked text nodes.
+
+After registering an academy, both web and app offer **Register main branch** or **Continue without a branch**. Skipping finishes registration without inserting a branch or branch account. Academy-level membership is established at academy creation, so a branch can be added later from the panel. For guest requests, the academy account is the owner used for any subsequent main branch.
+
+Registration endpoints under `/api/sornaz/v1/academy-registration`:
+
+- GET root initializes or resumes a session-bound flow and returns terms and its current stage.
+- POST `/send-code` validates the selected `academy` or `branch` step and sends its OTP.
+- POST `/submit` verifies the code and registers the selected step.
+- POST `/without-branch` completes the academy-only path.
+
+POSTs require the session cookie and `X-Academy-Flow` proof issued by GET. Optional bearer authentication determines the requester; a client cannot choose the academy or manager IDs. OTP state is separate from ordinary account registration, bound to the flow, step and form data, with the existing retry and attempt limits. Completed submissions are idempotent within the flow. The Flutter client retains only the session cookie in secure storage, never form passwords; incomplete branch setup can be resumed during the flow's 24-hour lifetime. Website branch skipping is a CSRF-protected POST.
+
+Checks: `php scripts/academy_registration_flow_test.php`, `node scripts/home_hero_test.cjs`, and Flutter `academy_registration_test.dart` / `site_panel_academy_test.dart`. Tests use fake OTP delivery and do not create live accounts or send messages.
+
 ## Server endpoints and rollout
 
 Deploy the PHP changes alongside the app source before testing against the live site:
@@ -40,7 +57,17 @@ The catalog contains 49 visible sections across personal learning, account setti
 
 Lists support search, pagination where the source supports it, selection, scoped actions and CSV/PDF export of displayed records. Forms support files, nested collections, dates, time, booleans, dependent selections and multiple selections. PDF generation uses the bundled Persian font and A4 pages without a browser or network font download.
 
-Chat supports text, attachments, recording and playback of voice messages, likes, editing/deleting the sender's messages, forwarding, group details, membership management and authorized downloads. Message loading drains the server's batches rather than silently stopping at 200 messages.
+Chat supports text, attachments, recording and playback of voice messages, likes, editing/deleting the sender's messages, forwarding, group details, membership management and authorized downloads. Message history loads one batch per explicit action, with a Load more messages button for subsequent batches. There is no periodic polling or automatic history draining. Sending fetches only the newly sent range; likes, edits and deletions update the displayed message after the mutation succeeds.
+
+## Mobile request budget and navigation
+
+The five destinations are Home, User panel, Feed, Music tools and Profile. Notation is an internal Music tools route. Profile uses the signed-in user's profile and owner-filtered posts, while Feed shows community posts and stories.
+
+Tabs mount only when selected and retain their state after visiting. A non-adjacent tab selection skips intermediate pages so it cannot preload their APIs. Account changes still replace account-bound content.
+
+Panel GETs share in-flight requests, serialize distinct requests and use an account-instance and language-isolated memory cache (10 minutes for the section catalog, 2 minutes for resource data, at most 64 entries). Cached JSON is copied before use. There is no background revalidation. Explicit refresh is throttled to once per key per 10 seconds; successful mutations invalidate the cache. Errors stop queued and subsequent network reads for at least 30 seconds; HTTP 429/503 respect Retry-After up to one hour. Disposed clients and changed accounts cannot return private cached data or start new reads.
+
+Local regression coverage: `test/panel_request_budget_test.dart`, `test/native_panel_test.dart`, `test/main_tabs_notation_test.dart` and `test/site_panel_academy_test.dart`. Tests use mocked HTTP clients, including 100 concurrent identical reads, idle chat, tab revisits and failure cooldown. No production requests or APK build are needed.
 
 The dashboard displays actual API statistics. Website demo-only reports, generated sample charts and destructive development seed tools are not exposed as user data. The native reports destination uses the real scoped dashboard data.
 

@@ -18,10 +18,10 @@ class AcademyRegistrationService {
 
     public function __construct(protected UserService $users, protected UserNotificationService $notifications, protected UserReferralService $referrals) {}
 
-    public function register(array $data): int {
+    public function register(array $data, ?int $actor = null): int {
         session()->put('suppress_database_notifications', true);
-        try { return transaction(function () use ($data) {
-            $academyId = $this->createAcademy($data);
+        try { return transaction(function () use ($data, $actor) {
+            $academyId = $this->createAcademy($data, $actor);
             $managerId = (int)DB::table('academies')->where('academy_id', $academyId)->first()['created_by'];
             $this->notifications->send(1, 'درخواست ثبت آموزشگاه جدید', 'کاربر با آی‌دی ' . $managerId . ' یک درخواست ثبت آموزشگاه با آی‌دی ' . $academyId . ' ارسال کرد', 'academies', $academyId, $managerId);
             $this->notifications->send(1, 'ایجاد نقش موسس آموزشگاه', 'برای کاربر با آی‌دی ' . $managerId . ' نقش موسس آموزشگاه ایجاد شد.', 'user_roles', $managerId, $managerId);
@@ -274,12 +274,12 @@ class AcademyRegistrationService {
 
     private function fixtureCount(int $seed,int $minimum,int $maximum): int {$minimum=max(0,min(100,$minimum));$maximum=max(0,min(100,$maximum));if($minimum>$maximum)[$minimum,$maximum]=[$maximum,$minimum];return $minimum+($seed%($maximum-$minimum+1));}
 
-    private function createAcademy(array $data): int {
+    private function createAcademy(array $data, ?int $actor = null): int {
         $data['type'] = 'academy';
         $data['skip_default_role'] = true;
         $data['full_name'] = $data['academy_name'];
-        $requesterId = 0;
-        try { $requesterId = (int)(auth()->id() ?? 0); } catch (\Throwable) {}
+        $requesterId = $actor ?? 0;
+        if ($actor === null) try { $requesterId = (int)(auth()->id() ?? 0); } catch (\Throwable) {}
         $userId = $this->users->register($data);
         if (!$userId) throw new RuntimeException('ایجاد حساب آموزشگاه ناموفق بود.');
         $requesterId = $requesterId ?: (int)$userId;

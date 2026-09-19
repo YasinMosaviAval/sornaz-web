@@ -32,6 +32,7 @@ class NotationController
         catch(\Throwable $e){$status=in_array($e->getCode(),[401,403,404,409,422],true)?$e->getCode():500;$message=$status===500?'Notation service unavailable.':$e->getMessage();if($status===500)error_log('Notation: '.$e->getMessage());return ResponseFactory::json(['success'=>false,'message'=>$message],$status);}
     }
     public function index(){return $this->run(fn($a)=>$this->service()->listing($a,(string)($_GET['mode']??'all'),max(1,(int)($_GET['page']??1))));}
+    public function instruments(){return $this->run(fn($a)=>$this->service()->instruments());}
     public function show(int $id){return $this->run(fn($a)=>$this->service()->show($a,$id));}
     public function create(){return $this->run(fn($a)=>$this->service()->save($a,0,$this->payload()),true);}
     public function update(int $id){return $this->run(fn($a)=>$this->service()->save($a,$id,$this->payload()),true);}

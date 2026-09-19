@@ -1,0 +1,54 @@
+<?php
+// CLI only. All fixture writes go to connection-local TEMPORARY tables.
+if (PHP_SAPI !== 'cli') exit;
+require dirname(__DIR__,2).'/vendor/autoload.php';
+$app=require dirname(__DIR__,2).'/bootstrap/app.php';
+$db=db();
+if(!preg_match('/localhost|127\.0\.0\.1|UNIX socket/i',(string)$db->getAttribute(PDO::ATTR_CONNECTION_STATUS)))throw new RuntimeException('Local database required.');
+foreach(['users','translations','media_files','social_profiles','social_follows','social_media','social_posts','social_reactions','social_notifications','social_account_settings','social_comments','creator_courses','conversations','conversation_members','conversation_messages','conversation_message_reactions']as$table){
+ $db->exec("CREATE TEMPORARY TABLE fixture_$table LIKE $table");$db->exec("ALTER TABLE fixture_$table RENAME TO $table");
+}
+$r=new \Modules\Social\Repositories\SocialRepository($db);
+$social=new \Modules\Social\Services\SocialService($r);
+$chat=new \Modules\Analytics\Services\ChatService();
+$s=new \Modules\Social\Services\SocialInteractionService($r,$social,$chat);
+$checks=0;
+function check($value,$message){global$checks;if(!$value)throw new RuntimeException($message);$checks++;}
+function denied($callback,$code){try{$callback();}catch(RuntimeException$e){check($e->getCode()===$code,'Wrong denial status');return;}throw new RuntimeException('Expected denial');}
+function socialResponse($value){return[(new ReflectionProperty($value,'status'))->getValue($value),(new ReflectionProperty($value,'data'))->getValue($value)];}
+foreach([1,2,3]as$id)$r->query('INSERT INTO users(user_id,username) VALUES(?,?)',[$id,'community-fixture-'.$id]);
+$p=$social->publish(1,['body'=>'Music','kind'=>'post']);$id=(int)$p['id'];
+$c=$s->comment(2,$id,'A good performance');
+check(count($s->comments(0,$id))===1,'Public comments missing');
+check($s->comments(0,$id)[0]['canDelete']===false,'Guest moderation permission');
+check($s->comments(1,$id)[0]['canDelete']===true,'Post owner moderation permission');
+check($r->one('SELECT COUNT(*) n FROM social_notifications WHERE user_id=1 AND kind=?',['comment'])['n']==1,'Comment notification');
+denied(fn()=>$s->comment(0,$id,'Guest'),401);denied(fn()=>$s->comment(2,$id,''),422);denied(fn()=>$s->comment(2,$id,str_repeat('x',2001)),422);
+denied(fn()=>$s->deleteComment(3,$id,(int)$c['id']),403);
+$other=$social->publish(1,['body'=>'Other']);denied(fn()=>$s->deleteComment(2,(int)$other['id'],(int)$c['id']),404);
+$s->deleteComment(1,$id,(int)$c['id']);check(count($s->comments(0,$id))===0,'Deleted comment still visible');
+for($i=0;$i<31;$i++)$r->insert('social_comments',['post_id'=>$id,'user_id'=>2,'body'=>'comment '.$i]);
+$first=$s->comments(2,$id);check(count($first)===30,'Comment page size');check(count($s->comments(2,$id,(int)end($first)['id']))===1,'Comment cursor');
+check($s->share(1,$id,[2,2,3])['sent']===[2,3],'Recipient deduplication');
+check($r->one('SELECT COUNT(*) n FROM conversation_messages')['n']==2,'One message per recipient');
+check(str_contains($r->one('SELECT body FROM conversation_messages')['body'],'/community/posts/'.$id),'Post link missing');
+denied(fn()=>$s->share(1,$id,[1]),422);denied(fn()=>$s->share(1,$id,['2x']),422);denied(fn()=>$s->share(1,$id,range(2,12)),422);denied(fn()=>$s->share(1,$id,[2,999999]),404);
+check($r->one('SELECT COUNT(*) n FROM conversation_messages')['n']==2,'Invalid recipient caused a partial send');
+$mid=$r->insert('social_media',['owner_id'=>1,'filename'=>'fixture.jpg','mime'=>'image/jpeg','bytes'=>1]);
+$sid=(int)$social->publish(1,['kind'=>'story','body'=>'Story','media_id'=>$mid])['id'];
+foreach(\Modules\Social\Services\SocialInteractionService::EMOJI as$emoji)$s->replyStory(2,$sid,'',$emoji);
+$s->replyStory(2,$sid,'Private reply');check($r->one('SELECT COUNT(*) n FROM conversation_messages')['n']==9,'Six emoji and reply were not stored privately');
+denied(fn()=>$s->replyStory(2,$sid,'','invalid'),422);denied(fn()=>$s->replyStory(1,$sid,'Self'),422);denied(fn()=>$s->replyStory(2,$id,'Not a story'),404);denied(fn()=>$s->comment(2,$sid,'Public story comment'),422);
+$r->query('UPDATE social_posts SET expires_at=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 1 DAY) WHERE id=?',[$sid]);denied(fn()=>$s->replyStory(2,$sid,'Expired'),404);
+check($r->one('SELECT COUNT(*) n FROM conversation_messages')['n']==9,'Expired story sent a message');
+$controller=new \Modules\Social\Controllers\SocialWebController();
+$_SERVER['REQUEST_METHOD']='POST';$_POST=['body'=>'CSRF check'];$_SESSION['_auth_user']=2;$_SERVER['HTTP_X_CSRF_TOKEN']='forged';
+check(socialResponse($controller->comment($id))[0]===403,'CSRF missing');
+$_SERVER['HTTP_X_CSRF_TOKEN']=csrf_token();check(socialResponse($controller->comment($id))[0]===200,'Valid CSRF rejected');
+unset($_SESSION['_auth_user']);check(socialResponse($controller->comment($id))[0]===401,'Guest write accepted');
+$_SERVER['REQUEST_METHOD']='GET';check(socialResponse($controller->comments($id))[0]===200,'Guest read rejected');
+$_SESSION['_auth_user']=2;unset($_SERVER['HTTP_AUTHORIZATION']);$_SERVER['REQUEST_METHOD']='POST';
+$mobile=new \Modules\Social\Controllers\SocialController();check(socialResponse($mobile->comment($id))[0]===401,'Mobile accepted cookie authentication');
+require __DIR__.'/Routes/web.php';
+foreach(['/community','/community/posts/9','/community/stories/11','/community/direct/7','/community/notifications','/community/api/posts/9/comments']as$url)check(\Core\router\Router::dispatch('GET',$url)!==null,'Missing route '.$url);
+echo "Social integration: $checks checks passed in connection-local temporary tables.\n";

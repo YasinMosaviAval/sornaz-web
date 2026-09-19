@@ -36,9 +36,9 @@ $formatNumber = static function (int $number) use ($isEnglish): string {
 
         <div class="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-16 py-8 xl:py-12 pointer-events-none">
             <div class="max-w-4xl text-center <?= $isEnglish ? 'lg:text-left' : 'lg:text-right' ?> pointer-events-auto">
-                    <span class="inline-flex px-5 py-2 rounded-full bg-white/95 text-indigo-600 text-sm shadow-sm mb-4">بزرگ‌ترین مرجع آموزش موسیقی ایران</span>
-                    <h1 class="text-4xl md:text-5xl font-black leading-[1.2] text-white drop-shadow-lg mb-3">بهترین آموزشگاه موسیقی را<br class="hidden sm:block"> پیدا کنید</h1>
-                    <p class="text-white/90 md:text-lg leading-7 mb-5 drop-shadow">آموزشگاه‌ها، اساتید، کلاس‌ها و دوره‌های موسیقی سراسر ایران را جستجو و مقایسه کنید.</p>
+                    <span data-fixed-copy class="inline-flex px-5 py-2 rounded-full bg-white/95 text-indigo-600 text-sm shadow-sm mb-4"><?= $isEnglish?'With you on your music learning journey':'همراه شما در مسیر یادگیری موسیقی' ?></span>
+                    <h1 data-fixed-copy class="text-4xl md:text-5xl font-black leading-[1.2] text-white drop-shadow-lg mb-3"><?= $isEnglish?'Find the best':'بهترین آموزشگاه موسیقی را' ?><br class="hidden sm:block"><?= $isEnglish?' music academy':' پیدا کنید' ?></h1>
+                    <p data-fixed-copy class="text-white/90 md:text-lg leading-7 mb-5 drop-shadow"><?= $isEnglish?'Search and compare music academies, teachers, classes and courses across Iran.':'آموزشگاه‌ها، اساتید، کلاس‌ها و دوره‌های موسیقی سراسر ایران را جستجو و مقایسه کنید.' ?></p>
 
                     <form action="/academy/academies" method="GET" class="grid grid-cols-1 sm:grid-cols-[1fr_100px_1fr_108px] gap-3 bg-white/95 backdrop-blur rounded-3xl p-4 shadow-2xl" dir="<?= e(direction()) ?>">
                         <input name="q" type="search" placeholder="نام آموزشگاه" class="bg-gray-50 rounded-2xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-400 <?= $isEnglish ? 'text-left' : 'text-right' ?>">

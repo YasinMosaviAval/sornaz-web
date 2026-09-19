@@ -17,6 +17,7 @@
 
 # Local build tools, verification workspaces, and packaged desktop artifacts
 /storage/notation-browser-check/
+/storage/social-web-check/
 /storage/windows-build-tools/
 /storage/windows-release/
 /storage/windows-stage/

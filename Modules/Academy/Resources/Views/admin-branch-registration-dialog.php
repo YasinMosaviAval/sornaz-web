@@ -1,4 +1,5 @@
 <?php
+$isAdminBranchRegistration = true;
 ob_start();
 include __DIR__ . '/register-main-branch.php';
 $form = ob_get_clean();

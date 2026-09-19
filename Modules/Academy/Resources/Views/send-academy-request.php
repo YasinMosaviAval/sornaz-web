@@ -11,6 +11,7 @@ $firstError = !empty($errors) ? reset($errors) : '';
             <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-100 text-indigo-600 mb-5"><i class="fas fa-school text-2xl"></i></div>
             <h1 class="text-3xl md:text-4xl font-bold mb-3"><?= e(trans('academy.form.title', 'آموزشگاهتان را به سُرناز بیاورید')) ?></h1>
             <p class="text-gray-500 leading-7 max-w-xl mx-auto"><?= e(trans('academy.form.intro')) ?></p>
+            <?php if (empty($isBranchRegistration)): ?><p class="text-gray-500 leading-7 mt-3"><?= locale()==='en'?'Creating a branch is optional. After registering your academy, you can continue without a branch or register its main branch.':'ایجاد شعبه اختیاری است. پس از ثبت آموزشگاه می‌توانید بدون شعبه ادامه دهید یا شعبه اصلی را ثبت کنید.' ?></p><?php endif; ?>
         </div>
 
         <form id="academyRegistrationForm" method="POST" action="/academy/send-academy-request" novalidate class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8" onsubmit="return handleAcademyRegistrationSubmit(this)">

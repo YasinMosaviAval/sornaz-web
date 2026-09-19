@@ -32,6 +32,19 @@ class AcademyRegistrationController {
         return ResponseFactory::view('Academy::register-main-branch', ['academy' => $setup])->layout('main')->title('سُرناز | ثبت شعبه اصلی');
     }
 
+    public function branchChoice() {
+        $setup=session()->get('academy_branch_setup');
+        if (empty($setup['academy_id'])) return redirect('/academy/send-academy-request');
+        return ResponseFactory::view('Academy::branch-choice')->layout('main')->title(locale()==='en'?'Academy registered':'آموزشگاه ثبت شد');
+    }
+
+    public function finishWithoutBranch() {
+        if (empty(session()->get('academy_branch_setup')['academy_id'])) return redirect('/academy/send-academy-request');
+        session()->forget('academy_branch_setup');
+        session()->flash('auth_success',locale()==='en'?'Your academy was registered without a branch. You can add branches from your panel later.':'آموزشگاه شما بدون شعبه ثبت شد. می‌توانید بعداً از پنل کاربری شعبه اضافه کنید.');
+        return redirect('/');
+    }
+
     public function createAdminBranchDialog() {
         $academyId = (int)($_GET['academy_id'] ?? 0);
         if (!SiteAdminAccess::allows(auth()->user())) $academyId = (int)$this->branchService->academyForUser((int)auth()->id())['academy_id'];
@@ -150,9 +163,10 @@ class AcademyRegistrationController {
             if (!$verification['ok']) return $this->back(['otp' => $verification['message']]);
             $academyId = $this->service->register($data);
             $this->otp->clear();
-            session()->put('academy_branch_setup', ['academy_id' => $academyId, 'manager_id' => (int)auth()->id()]);
-            session()->flash('auth_success', 'آموزشگاه با موفقیت ثبت شد. اکنون اطلاعات شعبه اصلی را ثبت کنید.');
-            return redirect('/academy/register-main-branch');
+            $academy=DB::table('academies')->where('academy_id',$academyId)->first();
+            session()->put('academy_branch_setup', ['academy_id' => $academyId, 'manager_id' => (int)$academy['created_by']]);
+            session()->flash('auth_success', 'آموزشگاه با موفقیت ثبت شد. ایجاد شعبه اختیاری است.');
+            return redirect('/academy/registration-complete');
         } catch (ValidationException $e) {
             return $this->back($e->getErrors());
         } catch (Throwable $e) {
@@ -203,7 +217,7 @@ class AcademyRegistrationController {
 
 
 
-    private function validatedData(): array {
+    protected function validatedData(): array {
         $data = (new AcademyRegistrationRequest($_POST))->validated();
         if (empty($_POST['terms'])) throw new ValidationException(['terms' => trans('academy.error.terms_required', 'پذیرش قوانین ثبت آموزشگاه الزامی است.')]);
         $method = $data['register_method'];
@@ -220,13 +234,13 @@ class AcademyRegistrationController {
     }
 
 
-    private function otpData(array $data): array {
+    protected function otpData(array $data): array {
         unset($data['password2'], $data['terms'], $data['otp']);
         ksort($data);
         return $data;
     }
 
-    private function validatedBranchData(): array {
+    protected function validatedBranchData(): array {
         $method = ($_POST['register_method'] ?? 'email') === 'phone' ? 'phone' : 'email';
         $username = trim((string)($_POST['username'] ?? ''));
         $password = (string)($_POST['password'] ?? '');

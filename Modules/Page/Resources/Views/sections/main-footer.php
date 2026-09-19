@@ -26,6 +26,7 @@
             <div>
                 <h4 class="font-bold text-white mb-4"><?= e(trans('public.footer.community', 'جامعه سُرناز')) ?></h4>
                 <ul class="space-y-2 text-sm">
+                    <li><a href="/community" class="hover:text-white transition"><?= locale()==='en'?'Posts and stories':'پست‌ها و استوری‌ها' ?></a></li>
                     <li><a href="/academy/academies" class="hover:text-white transition"><?= e(trans('public.nav.academies', 'آموزشگاه‌ها')) ?></a></li>
                     <li><a href="/users" class="hover:text-white transition"><?= e(trans('public.nav.users', 'کاربران')) ?></a></li>
                     <li><a href="/academy/send-academy-request" class="hover:text-white transition"><?= e(trans('public.footer.register_academy', 'ثبت آموزشگاه')) ?></a></li>
