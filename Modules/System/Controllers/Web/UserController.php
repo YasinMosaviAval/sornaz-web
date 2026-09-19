@@ -69,7 +69,7 @@ class UserController {
             if (empty($_POST['terms'])) {
                 return redirect('/register')->withInput($_POST)->withErrors(['terms' => trans('auth.error.terms_required', 'پذیرش قوانین الزامی است.')]);
             }
-            $verification = $this->registrationOtp->verify(trim((string)($_POST['otp'] ?? '')), $this->otpData($data));
+            $verification = \Modules\System\Services\RegistrationOtpPolicy::web() ? ['ok'=>true] : $this->registrationOtp->verify(trim((string)($_POST['otp'] ?? '')), $this->otpData($data));
             if (!$verification['ok']) {
                 return redirect('/register')->withInput($_POST)->withErrors(['otp' => $verification['message']]);
             }
@@ -86,7 +86,7 @@ class UserController {
             $verified = ['status' => 'approved', 'type' => 'human', 'approved_at' => $now, 'approved_by' => $userId, 'updated_by' => $userId];
             if (($data['register_method'] ?? '') === 'phone') $verified['phone_verified_at'] = $now;
             DB::table('users')->where('user_id', $userId)->update($verified);
-            auth()->login((int)$userId, true);
+            if (!\Modules\System\Services\RegistrationOtpPolicy::web()) auth()->login((int)$userId, true);
             $this->recordLogin((int)$userId);
             $registeredAt = date('Y-m-d H:i:s');
             $isPhone = ($data['register_method'] ?? '') === 'phone';
@@ -120,7 +120,7 @@ class UserController {
             }
             $method = $data['register_method'];
             $destination = trim((string)$data[$method]);
-            $result = $this->registrationOtp->send($method, $destination, $this->otpData($data));
+            $result = \Modules\System\Services\RegistrationOtpPolicy::web() ? ['ok'=>true,'otp_required'=>false,'expires_in'=>0] : $this->registrationOtp->send($method, $destination, $this->otpData($data));
             $status = $result['ok'] ? 200 : (isset($result['retry_after']) ? 429 : 503);
             return ResponseFactory::json(['success' => $result['ok']] + $result, $status);
         } catch (ValidationException $e) {

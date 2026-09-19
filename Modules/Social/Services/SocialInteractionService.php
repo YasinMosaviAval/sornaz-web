@@ -24,26 +24,44 @@ class SocialInteractionService
     {
         $p = $this->social->post($actor,$post);
         if ($p['kind'] !== 'post') throw new RuntimeException('برای استوری از پاسخ خصوصی استفاده کنید.',422);
-        $params = [$post]; $where = '';
-        if ($before > 0) { $where = ' AND id<?'; $params[] = $before; }
-        $rows = $this->r->query('SELECT * FROM social_comments WHERE post_id=? AND deleted_at IS NULL'.$where.' ORDER BY id DESC LIMIT 30',$params);
+        $params = [$actor,$post]; $where = '';
+        if ($before > 0) { $where = ' AND c.id<?'; $params[] = $before; }
+        $rows = $this->r->query('SELECT c.*,parent.body parent_body,parent.user_id parent_user_id,
+            (SELECT COUNT(*) FROM social_comment_likes l WHERE l.comment_id=c.id) likes,
+            EXISTS(SELECT 1 FROM social_comment_likes l WHERE l.comment_id=c.id AND l.user_id=?) liked
+            FROM social_comments c LEFT JOIN social_comments parent ON parent.id=c.parent_id AND parent.deleted_at IS NULL
+            WHERE c.post_id=? AND c.deleted_at IS NULL'.$where.' ORDER BY c.id DESC LIMIT 30',$params);
         return array_map(function ($c) use ($actor,$p) {
             $c['author'] = $this->social->profile($actor,(int)$c['user_id']);
             $c['canDelete'] = $actor > 0 && ($actor === (int)$c['user_id'] || $actor === (int)$p['owner_id']);
+            $c['liked'] = (bool)$c['liked'];
             return $c;
         },$rows);
     }
-    public function comment(int $actor,int $post,string $body): array
+    public function comment(int $actor,int $post,string $body,int $parent=0): array
     {
         $this->actor($actor); $body = $this->body($body);
         $p = $this->social->post($actor,$post);
         if ($p['kind'] !== 'post') throw new RuntimeException('برای استوری از پاسخ خصوصی استفاده کنید.',422);
-        return $this->r->transaction(function () use ($actor,$post,$body,$p) {
-            $id = $this->r->insert('social_comments',['post_id'=>$post,'user_id'=>$actor,'body'=>$body]);
+        $reply = $parent ? $this->r->one('SELECT * FROM social_comments WHERE id=? AND post_id=? AND deleted_at IS NULL',[$parent,$post]) : null;
+        if ($parent && !$reply) throw new RuntimeException('نظر مورد پاسخ پیدا نشد.',404);
+        return $this->r->transaction(function () use ($actor,$post,$body,$p,$parent,$reply) {
+            $id = $this->r->insert('social_comments',['post_id'=>$post,'user_id'=>$actor,'body'=>$body,'parent_id'=>$parent?:null]);
             $this->social->notify((int)$p['owner_id'],$actor,'comment',$post,'برای پست شما نظر نوشت.');
+            if ($reply && (int)$reply['user_id'] !== (int)$p['owner_id']) $this->social->notify((int)$reply['user_id'],$actor,'comment',$post,'به نظر شما پاسخ داد.');
             return ['id'=>$id,'post_id'=>$post,'body'=>$body,'created_at'=>gmdate('Y-m-d H:i:s'),
+                'parent_id'=>$parent?:null,'parent_body'=>$reply['body']??null,'likes'=>0,'liked'=>false,
                 'author'=>$this->social->profile($actor,$actor),'canDelete'=>true];
         });
+    }
+    public function likeComment(int $actor,int $post,int $id,bool $active): array
+    {
+        $this->actor($actor); $this->social->post($actor,$post);
+        $c=$this->r->one('SELECT id FROM social_comments WHERE id=? AND post_id=? AND deleted_at IS NULL',[$id,$post]);
+        if (!$c) throw new RuntimeException('نظر پیدا نشد.',404);
+        if ($active) $this->r->query('INSERT IGNORE INTO social_comment_likes(comment_id,user_id) VALUES(?,?)',[$id,$actor]);
+        else $this->r->query('DELETE FROM social_comment_likes WHERE comment_id=? AND user_id=?',[$id,$actor]);
+        return ['liked'=>$active,'likes'=>(int)$this->r->one('SELECT COUNT(*) n FROM social_comment_likes WHERE comment_id=?',[$id])['n']];
     }
     public function deleteComment(int $actor,int $post,int $id): array
     {

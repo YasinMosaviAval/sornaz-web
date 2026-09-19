@@ -177,6 +177,7 @@ window.setRegisterMethod = function(method) {
 };
 
 window.handleRegisterSubmit = function(form) {
+    if (form.dataset.otpRequired === '0') return validateRegisterForm(form);
     if (registerStep === 1) {
         if (!validateRegisterForm(form)) return false;
         sendRegistrationOtp();

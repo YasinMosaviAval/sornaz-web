@@ -2,7 +2,7 @@
 namespace Core\http { class ResponseFactory {public static function json($data,$status=200){return ['status'=>$status,'data'=>$data];}} }
 namespace Core\database { class DB {public static function table($table){return new class {public function where(...$a){return $this;}public function first(){return ['created_by'=>$GLOBALS['creator']??42];}};}} }
 namespace Modules\System\Services {
- class MobileAuthTokenService {public function userFromRequest(){return ($_SERVER['HTTP_AUTHORIZATION']??'')==='Bearer valid'?['user_id'=>7]:null;}}
+ class MobileAuthTokenService {public function userFromRequest(){return match($_SERVER['HTTP_AUTHORIZATION']??''){'Bearer valid'=>['user_id'=>7],'Bearer admin'=>['user_id'=>1],default=>null};}}
  class MailService {public function sendRegistrationOtp($to,$code,$minutes){$GLOBALS['otp_code']=$code;return true;}}
  class SmsService {public function sendRegistrationOtp($to,$code,$minutes){$GLOBALS['otp_code']=$code;return true;}}
 }
@@ -52,5 +52,17 @@ $_POST=['step'=>'branch'];check($controller->sendCode()['status']===200,'Branch 
 $_POST=['step'=>'branch','otp'=>$GLOBALS['otp_code']];check($controller->submit()['data']['stage']==='complete','Branch completion failed');
 check(end($service->managers)===42,'Guest academy owner lost');$count=$service->branches;$controller->submit();check($service->branches===$count,'Duplicate branch on retry');
 $_SERVER['HTTP_AUTHORIZATION']='Bearer invalid';check($controller->state()['status']===401,'Invalid bearer accepted');
+$_SESSION=[];$_SERVER['HTTP_AUTHORIZATION']='Bearer admin';$_POST=[];
+$state=$controller->state();check($state['data']['otp_required']===false,'Admin should not require OTP');
+$_SERVER['HTTP_X_ACADEMY_FLOW']=$state['data']['flow_token'];
+unset($GLOBALS['otp_code']);
+check($controller->sendCode()['data']['otp_required']===false,'Admin send-code should be a no-op');
+check(!isset($GLOBALS['otp_code']),'Admin registration sent OTP');
+check($controller->submit()['data']['stage']==='choice','Admin academy needs OTP');
+$_POST=['step'=>'branch'];check($controller->submit()['data']['stage']==='complete','Admin branch needs OTP');
+$_SESSION=[];$_SERVER['HTTP_AUTHORIZATION']='Bearer valid';$_POST=['user_id'=>1];
+$state=$controller->state();$_SERVER['HTTP_X_ACADEMY_FLOW']=$state['data']['flow_token'];
+check($state['data']['otp_required']===true,'Posted user ID bypassed OTP');
+check($controller->submit()['status']===422,'Non-admin registration accepted without OTP');
 echo "Academy registration: guest/member flows, OTP binding and limits, optional no-branch completion, guest ownership and idempotent retries passed.\n";
 }

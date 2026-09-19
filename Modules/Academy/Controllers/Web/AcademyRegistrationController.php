@@ -55,7 +55,7 @@ class AcademyRegistrationController {
     public function sendAdminBranchOtp() {
         try {
             $data = $this->validatedAdminBranchData();
-            $result = $this->otp->send($data['register_method'], (string)$data[$data['register_method']], $this->otpData($data));
+            $result = \Modules\System\Services\RegistrationOtpPolicy::web() ? ['ok'=>true,'otp_required'=>false,'expires_in'=>0] : $this->otp->send($data['register_method'], (string)$data[$data['register_method']], $this->otpData($data));
             return ResponseFactory::json(['success' => $result['ok']] + $result, $result['ok'] ? 200 : (isset($result['retry_after']) ? 429 : 503));
         } catch (ValidationException $e) {
             return ResponseFactory::json(['success' => false, 'message' => 'اطلاعات فرم را بررسی کنید.', 'errors' => $e->getErrors()], 422);
@@ -65,7 +65,7 @@ class AcademyRegistrationController {
     public function storeAdminBranch() {
         try {
             $data = $this->validatedAdminBranchData();
-            $verification = $this->otp->verify(trim((string)($_POST['otp'] ?? '')), $this->otpData($data));
+            $verification = \Modules\System\Services\RegistrationOtpPolicy::web() ? ['ok'=>true] : $this->otp->verify(trim((string)($_POST['otp'] ?? '')), $this->otpData($data));
             if (!$verification['ok']) throw new ValidationException(['otp' => $verification['message']]);
             $type = DB::table('academy_branch_types')->whereNull('deleted_at')->orderBy('academy_branch_type_id')->first();
             if (!$type) throw new \RuntimeException('نوع آموزشی معتبری برای ثبت شعبه یافت نشد.');
@@ -159,7 +159,7 @@ class AcademyRegistrationController {
     public function store() {
         try {
             $data = $this->validatedData();
-            $verification = $this->otp->verify(trim((string)($_POST['otp'] ?? '')), $this->otpData($data));
+            $verification = \Modules\System\Services\RegistrationOtpPolicy::web() ? ['ok'=>true] : $this->otp->verify(trim((string)($_POST['otp'] ?? '')), $this->otpData($data));
             if (!$verification['ok']) return $this->back(['otp' => $verification['message']]);
             $academyId = $this->service->register($data);
             $this->otp->clear();
@@ -179,7 +179,7 @@ class AcademyRegistrationController {
         try {
             $data = $this->validatedData();
             $method = $data['register_method'];
-            $result = $this->otp->send($method, (string)$data[$method], $this->otpData($data));
+            $result = \Modules\System\Services\RegistrationOtpPolicy::web() ? ['ok'=>true,'otp_required'=>false,'expires_in'=>0] : $this->otp->send($method, (string)$data[$method], $this->otpData($data));
             return ResponseFactory::json(['success' => $result['ok']] + $result, $result['ok'] ? 200 : (isset($result['retry_after']) ? 429 : 503));
         } catch (ValidationException $e) {
             return ResponseFactory::json(['success' => false, 'message' => trans('academy.error.review_form', 'اطلاعات فرم را بررسی کنید.'), 'errors' => $e->getErrors()], 422);
@@ -189,7 +189,7 @@ class AcademyRegistrationController {
     public function sendMainBranchOtp() {
         try {
             $data = $this->validatedBranchData();
-            $result = $this->otp->send($data['register_method'], (string)$data[$data['register_method']], $this->otpData($data));
+            $result = \Modules\System\Services\RegistrationOtpPolicy::web() ? ['ok'=>true,'otp_required'=>false,'expires_in'=>0] : $this->otp->send($data['register_method'], (string)$data[$data['register_method']], $this->otpData($data));
             return ResponseFactory::json(['success' => $result['ok']] + $result, $result['ok'] ? 200 : (isset($result['retry_after']) ? 429 : 503));
         } catch (ValidationException $e) {
             return ResponseFactory::json(['success' => false, 'message' => 'اطلاعات فرم را بررسی کنید.', 'errors' => $e->getErrors()], 422);
@@ -201,7 +201,7 @@ class AcademyRegistrationController {
             $setup = session()->get('academy_branch_setup');
             if (!$setup || empty($setup['academy_id'])) return redirect('/academy/send-academy-request');
             $data = $this->validatedBranchData();
-            $verification = $this->otp->verify(trim((string)($_POST['otp'] ?? '')), $this->otpData($data));
+            $verification = \Modules\System\Services\RegistrationOtpPolicy::web() ? ['ok'=>true] : $this->otp->verify(trim((string)($_POST['otp'] ?? '')), $this->otpData($data));
             if (!$verification['ok']) return redirect('/academy/register-main-branch')->withInput($_POST)->withErrors(['otp' => $verification['message']]);
             $this->service->registerMainBranch((int)$setup['academy_id'], (int)$setup['manager_id'], $data);
             $this->otp->clear();

@@ -87,6 +87,11 @@ function validateAcademyRegistration(form) {
 }
 
 window.handleAcademyRegistrationSubmit = function(form) {
+    if (form.dataset.otpRequired === '0') {
+        if (!validateAcademyRegistration(form)) return false;
+        if (form.action.includes('/academy/admin/branches/registration')) { submitAdminBranchRegistration(form); return false; }
+        return true;
+    }
     if (academyRegistrationStep === 1) { if (validateAcademyRegistration(form)) sendAcademyRegistrationOtp(); return false; }
     const code = Array.from(document.querySelectorAll('.academy-otp')).map(input => input.value).join('');
     if (!/^\d{6}$/.test(code)) { academyToast(academyText('error.otp_incomplete')); return false; }
@@ -99,7 +104,7 @@ window.handleAcademyRegistrationSubmit = function(form) {
 };
 
 async function submitAdminBranchRegistration(form) {
-    const button = form.querySelector('#academyOtpStep button[type="submit"]');
+    const button = form.querySelector(form.dataset.otpRequired === '0' ? '#academySendOtpBtn' : '#academyOtpStep button[type="submit"]');
     if (button?.disabled) return;
     if (button) button.disabled = true;
     try {
