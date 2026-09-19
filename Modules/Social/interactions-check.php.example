@@ -5,7 +5,7 @@ require dirname(__DIR__,2).'/vendor/autoload.php';
 $app=require dirname(__DIR__,2).'/bootstrap/app.php';
 $db=db();
 if(!preg_match('/localhost|127\.0\.0\.1|UNIX socket/i',(string)$db->getAttribute(PDO::ATTR_CONNECTION_STATUS)))throw new RuntimeException('Local database required.');
-foreach(['users','translations','media_files','social_profiles','social_follows','social_media','social_posts','social_reactions','social_notifications','social_account_settings','social_comments','creator_courses','conversations','conversation_members','conversation_messages','conversation_message_reactions']as$table){
+foreach(['users','translations','media_files','social_profiles','social_follows','social_media','social_posts','social_reactions','social_notifications','social_account_settings','social_comments','social_comment_likes','creator_courses','conversations','conversation_members','conversation_messages','conversation_message_reactions']as$table){
  $db->exec("CREATE TEMPORARY TABLE fixture_$table LIKE $table");$db->exec("ALTER TABLE fixture_$table RENAME TO $table");
 }
 $r=new \Modules\Social\Repositories\SocialRepository($db);

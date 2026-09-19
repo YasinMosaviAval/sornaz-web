@@ -9,7 +9,7 @@ class SocialService
     public function __construct(private SocialRepository $r) {}
     public function user(int $id): array
     {
-        $user = $this->r->one('SELECT user_id,username,avatar_file_id FROM users WHERE user_id=? AND deleted_at IS NULL', [$id]);
+        $user = $this->r->one('SELECT user_id,username,avatar_file_id,type FROM users WHERE user_id=? AND deleted_at IS NULL', [$id]);
         if (!$user) throw new RuntimeException('کاربر پیدا نشد.',404);
         return $user;
     }
@@ -25,12 +25,18 @@ class SocialService
         $count = fn($sql,$args)=>(int)($this->r->one($sql,$args)['n']??0);
         $settings=json_decode($this->r->one('SELECT settings_json FROM social_account_settings WHERE user_id=?',[$id])['settings_json']??'{}',true)?:[];
         return ['links'=>array_intersect_key($settings,array_flip(['website','instagram','youtube'])),'id'=>$id,'username'=>$user['username'],'name'=>($profile['display_name']??'') ?: $user['username'],
-            'bio'=>$profile['bio']??'','avatar'=>$avatar,'cover'=>$this->url($profile['cover_id']??null),
+            'type'=>$user['type']??'human','bio'=>$profile['bio']??'','avatar'=>$avatar,'cover'=>$this->url($profile['cover_id']??null),
+            'stories'=>$this->storySummary($id),
             'followers'=>$count('SELECT COUNT(*) n FROM social_follows WHERE following_id=?',[$id]),
             'following'=>$count('SELECT COUNT(*) n FROM social_follows WHERE follower_id=?',[$id]),
             'posts'=>$count("SELECT COUNT(*) n FROM social_posts WHERE owner_id=? AND kind='post' AND deleted_at IS NULL",[$id]),
             'courses'=>$count("SELECT COUNT(*) n FROM creator_courses WHERE owner_id=? AND status='published'",[$id]),
             'isFollowing'=>(bool)$this->r->one('SELECT 1 FROM social_follows WHERE follower_id=? AND following_id=?',[$actor,$id]),'isMe'=>$actor===$id];
+    }
+    private function storySummary(int $owner): array
+    {
+        return array_map(function($s){$s['media']=$this->url($s['media_id']);return $s;},
+            $this->r->query("SELECT p.id,p.owner_id,p.media_id,p.expires_at,m.mime FROM social_posts p LEFT JOIN social_media m ON m.id=p.media_id WHERE p.owner_id=? AND p.kind='story' AND p.deleted_at IS NULL AND p.expires_at>UTC_TIMESTAMP() ORDER BY p.id",[$owner]));
     }
     public function updateProfile(int $actor,array $data): array
     {
@@ -66,6 +72,7 @@ class SocialService
     public function posts(int $actor,string $kind='post',int $owner=0,int $before=0,bool $saved=false): array
     {
         $where="p.deleted_at IS NULL AND (p.expires_at IS NULL OR p.expires_at>UTC_TIMESTAMP()) AND p.kind=?"; $params=[$kind==='story'?'story':'post'];
+        if($kind==='story' && !$owner){$where.=' AND (p.owner_id=1 OR EXISTS(SELECT 1 FROM social_follows f WHERE f.follower_id=? AND f.following_id=p.owner_id))';$params[]=$actor;}
         if($owner){$where.=' AND p.owner_id=?';$params[]=$owner;}
         if($before){$where.=' AND p.id<?';$params[]=$before;}
         if($saved){$where.=" AND EXISTS(SELECT 1 FROM social_reactions r WHERE r.post_id=p.id AND r.user_id=? AND r.kind='save')";$params[]=$actor;}
@@ -85,6 +92,10 @@ class SocialService
         $p['liked']=(bool)$this->r->one("SELECT 1 FROM social_reactions WHERE user_id=? AND post_id=? AND kind='like'",[$actor,$id]);
         $p['saved']=(bool)$this->r->one("SELECT 1 FROM social_reactions WHERE user_id=? AND post_id=? AND kind='save'",[$actor,$id]);
         $p['likes']=(int)$this->r->one("SELECT COUNT(*) n FROM social_reactions WHERE post_id=? AND kind='like'",[$id])['n'];
+        if ($p['kind']==='post') {
+            $p['comment_count']=(int)$this->r->one('SELECT COUNT(*) n FROM social_comments WHERE post_id=? AND deleted_at IS NULL',[$id])['n'];
+            $p['comments']=$this->r->query('SELECT c.id,c.body,c.parent_id,c.created_at,u.username,u.user_id FROM social_comments c JOIN users u ON u.user_id=c.user_id WHERE c.post_id=? AND c.deleted_at IS NULL ORDER BY c.id DESC LIMIT 3',[$id]);
+        }
         return $p;
     }
     public function publish(int $actor,array $data): array

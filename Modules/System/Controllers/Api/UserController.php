@@ -34,7 +34,7 @@ class UserController {
     public function sendRegistrationOtp() {
         try {
             $data = $this->registrationData();
-            $result = $this->registrationOtp->send($data['register_method'], (string)$data[$data['register_method']], $this->otpData($data));
+            $result = \Modules\System\Services\RegistrationOtpPolicy::api() ? ['ok'=>true,'otp_required'=>false,'expires_in'=>0] : $this->registrationOtp->send($data['register_method'], (string)$data[$data['register_method']], $this->otpData($data));
             return ResponseFactory::json(['success' => $result['ok']] + $result, $result['ok'] ? 200 : (isset($result['retry_after']) ? 429 : 503));
         } catch (ValidationException $e) {
             return ResponseFactory::json(['success'=>false, 'message'=>'اطلاعات فرم را بررسی کنید.', 'errors'=>$e->getErrors()], 422);
@@ -44,7 +44,7 @@ class UserController {
     public function register() {
         try {
             $data = $this->registrationData();
-            $verification = $this->registrationOtp->verify(trim((string)($_POST['otp'] ?? '')), $this->otpData($data));
+            $verification = \Modules\System\Services\RegistrationOtpPolicy::api() ? ['ok'=>true] : $this->registrationOtp->verify(trim((string)($_POST['otp'] ?? '')), $this->otpData($data));
             if (!$verification['ok']) return $this->error($verification['message'], 422);
             session()->put('suppress_database_notifications', true);
             $userId = $this->service->register($data);
@@ -133,7 +133,7 @@ class UserController {
             $social=DB::table('social_profiles')->where('user_id',$id)->first();
             if(!empty($social['avatar_id']))$avatarUrl='/api/sornaz/v1/social/media/'.(int)$social['avatar_id'];
         } catch (\Throwable $e) { /* Preserve legacy avatars when the social module is not installed. */ }
-        return ['id'=>$id,'username'=>$user['username'],'full_name'=>$name,'email'=>$user['email'] ?: null,'phone'=>$user['phone'] ?: null,'avatar'=>$avatarUrl];
+        return ['id'=>$id,'type'=>$user['type']??'human','username'=>$user['username'],'full_name'=>$name,'email'=>$user['email'] ?: null,'phone'=>$user['phone'] ?: null,'avatar'=>$avatarUrl];
     }
 
     private function recordLogin(int $userId): void {

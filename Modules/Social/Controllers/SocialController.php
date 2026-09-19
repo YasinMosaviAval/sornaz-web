@@ -46,8 +46,8 @@ class SocialController
     public function profile(int $id){return $this->run(fn($a)=>$this->social->profile($a,$id),true);}
     public function updateProfile(){return $this->run(fn($a)=>$this->social->updateProfile($a,$_POST));}
     public function people(){return $this->run(fn($a)=>$this->social->people($a,(string)($_GET['q']??'')));}
-    public function followers(int $id){return $this->run(fn($a)=>$this->social->people($a,'',$id,'followers'));}
-    public function following(int $id){return $this->run(fn($a)=>$this->social->people($a,'',$id,'following'));}
+    public function followers(int $id){return $this->run(fn($a)=>$this->social->people($a,(string)($_GET['q']??''),$id,'followers'));}
+    public function following(int $id){return $this->run(fn($a)=>$this->social->people($a,(string)($_GET['q']??''),$id,'following'));}
     public function follow(int $id){return $this->run(fn($a)=>$this->social->follow($a,$id,($_POST['active']??'0')==='1'));}
     public function posts(){return $this->run(fn($a)=>$this->social->posts($a,(string)($_GET['kind']??'post'),(int)($_GET['owner']??0),(int)($_GET['before']??0),($_GET['saved']??'')==='1'),($_GET['saved']??'')!=='1');}
     public function post(int $id){return $this->run(fn($a)=>$this->social->post($a,$id),true);}
@@ -56,7 +56,8 @@ class SocialController
     public function react(int $id){return $this->run(fn($a)=>$this->social->react($a,$id,(string)($_POST['kind']??''),($_POST['active']??'0')==='1'));}
     private function interactions(): \Modules\Social\Services\SocialInteractionService { return new \Modules\Social\Services\SocialInteractionService(new SocialRepository(db()), $this->social, $this->chat); }
     public function comments(int $id){return $this->run(fn($a)=>$this->interactions()->comments($a,$id,(int)($_GET['before']??0)),true);}
-    public function comment(int $id){return $this->run(fn($a)=>$this->interactions()->comment($a,$id,(string)($_POST['body']??'')));}
+    public function comment(int $id){return $this->run(fn($a)=>$this->interactions()->comment($a,$id,(string)($_POST['body']??''),(int)($_POST['parent_id']??0)));}
+    public function likeComment(int $id,int $commentId){return $this->run(fn($a)=>$this->interactions()->likeComment($a,$id,$commentId,($_POST['active']??'0')==='1'));}
     public function deleteComment(int $id,int $commentId){return $this->run(fn($a)=>$this->interactions()->deleteComment($a,$id,$commentId));}
     public function share(int $id){return $this->run(fn($a)=>$this->interactions()->share($a,$id,(array)($_POST['user_ids']??[])));}
     public function replyStory(int $id){return $this->run(fn($a)=>$this->interactions()->replyStory($a,$id,(string)($_POST['body']??''),(string)($_POST['emoji']??'')));}

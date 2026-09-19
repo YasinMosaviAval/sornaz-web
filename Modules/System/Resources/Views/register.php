@@ -17,7 +17,7 @@ $firstError = !empty($errors) ? reset($errors) : '';
             <p class="text-gray-500 mt-2"><?= $authentication_array["authentication_register_welcome"]["translated_value"] ?></p>
         </div>
 
-        <form id="registerForm" method="POST" action="/register" novalidate class="bg-white rounded-3xl shadow-sm p-8 border border-gray-100" onsubmit="return handleRegisterSubmit(this)">
+        <form data-otp-required="<?= \Modules\System\Services\RegistrationOtpPolicy::web() ? '0' : '1' ?>" id="registerForm" method="POST" action="/register" novalidate class="bg-white rounded-3xl shadow-sm p-8 border border-gray-100" onsubmit="return handleRegisterSubmit(this)">
             <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\csrf\Csrf::class)->token() ?>">
             <input type="hidden" name="register_method" id="regMethod" value="<?= e($oldInput['register_method'] ?? 'email') ?>">
             <input type="hidden" name="otp" id="regOtp" value="">
@@ -139,7 +139,7 @@ $firstError = !empty($errors) ? reset($errors) : '';
                 <?php endif; ?>
 
                 <p id="regFormError" class="hidden text-red-500 text-sm text-center"></p>
-                <button type="submit" id="regSendOtpBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white py-4 rounded-2xl font-medium transition"><?= e(trans('auth.otp.send', 'ارسال کد تأیید')) ?></button>
+                <button type="submit" id="regSendOtpBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white py-4 rounded-2xl font-medium transition"><?= e(\Modules\System\Services\RegistrationOtpPolicy::web() ? (locale()==='en'?'Register':'ثبت') : trans('auth.otp.send', 'ارسال کد تأیید')) ?></button>
             </div>
 
             <div id="regOtpStep" class="hidden space-y-5">

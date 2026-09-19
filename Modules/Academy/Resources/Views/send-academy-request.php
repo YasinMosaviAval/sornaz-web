@@ -14,7 +14,7 @@ $firstError = !empty($errors) ? reset($errors) : '';
             <?php if (empty($isBranchRegistration)): ?><p class="text-gray-500 leading-7 mt-3"><?= locale()==='en'?'Creating a branch is optional. After registering your academy, you can continue without a branch or register its main branch.':'ایجاد شعبه اختیاری است. پس از ثبت آموزشگاه می‌توانید بدون شعبه ادامه دهید یا شعبه اصلی را ثبت کنید.' ?></p><?php endif; ?>
         </div>
 
-        <form id="academyRegistrationForm" method="POST" action="/academy/send-academy-request" novalidate class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8" onsubmit="return handleAcademyRegistrationSubmit(this)">
+        <form data-otp-required="<?= \Modules\System\Services\RegistrationOtpPolicy::web() ? '0' : '1' ?>" id="academyRegistrationForm" method="POST" action="/academy/send-academy-request" novalidate class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8" onsubmit="return handleAcademyRegistrationSubmit(this)">
             <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\csrf\Csrf::class)->token() ?>">
             <input type="hidden" name="register_method" id="academyRegMethod" value="<?= e($oldInput['register_method'] ?? 'email') ?>">
             <input type="hidden" name="otp" id="academyRegOtp" value="">
@@ -52,7 +52,7 @@ $firstError = !empty($errors) ? reset($errors) : '';
                 <label class="flex items-start gap-2 text-sm text-gray-600 cursor-pointer"><input type="checkbox" id="academyTerms" name="terms" value="1" <?= !empty($oldInput['terms']) ? 'checked' : '' ?> class="mt-1 rounded border-gray-300 text-indigo-600"><span><button type="button" onclick="openAcademyTermsModal()" class="text-indigo-600 hover:underline font-medium"><?= e(trans('academy.terms.title')) ?></button> <?= e(trans('academy.terms.agreement')) ?></span></label>
                 <?php if (!empty($errors['terms'])): ?><p class="text-red-500 text-xs"><?= e($errors['terms']) ?></p><?php endif; ?>
                 <p id="academyFormError" class="hidden text-red-500 text-sm text-center"></p>
-                <button type="submit" id="academySendOtpBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white py-4 rounded-2xl font-medium transition"><?= e(trans('academy.form.send_otp')) ?></button>
+                <button type="submit" id="academySendOtpBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white py-4 rounded-2xl font-medium transition"><?= e(\Modules\System\Services\RegistrationOtpPolicy::web() ? (locale()==='en'?'Register':'ثبت') : trans('academy.form.send_otp')) ?></button>
             </div>
 
             <div id="academyOtpStep" class="hidden space-y-5">

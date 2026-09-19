@@ -47,12 +47,13 @@ class RegistrationController extends \Modules\Academy\Controllers\Web\AcademyReg
             $data=$step==='academy'?$this->validatedData():$this->validatedBranchData();
             $bound=$this->otpData($data)+['mobile_stage'=>$step,'mobile_flow'=>$flow['token']];
             if ($operation==='send-code') {
+                if ($actor===1) return ResponseFactory::json(['success'=>true,'otp_required'=>false]);
                 $result=$this->otp->send($data['register_method'],(string)$data[$data['register_method']],$bound);
                 $flow['otp']=session()->get('registration_otp');
                 if (!$result['ok']) return ResponseFactory::json(['success'=>false,'message'=>isset($result['retry_after'])?$result['message']:$this->text('ارسال کد انجام نشد. دوباره تلاش کنید.','Could not send the code. Please try again.'),'retry_after'=>$result['retry_after']??0],isset($result['retry_after'])?429:503);
                 return ResponseFactory::json(['success'=>true,'expires_in'=>$result['expires_in'],'retry_after'=>60]);
             }
-            $verified=$this->otp->verify(trim((string)($_POST['otp']??'')),$bound);
+            $verified=$actor===1 ? ['ok'=>true] : $this->otp->verify(trim((string)($_POST['otp']??'')),$bound);
             $flow['otp']=session()->get('registration_otp');
             if (!$verified['ok']) return ResponseFactory::json(['success'=>false,'message'=>$verified['message'],'errors'=>['otp'=>$verified['message']]],422);
             if ($step==='academy') {
@@ -82,7 +83,7 @@ class RegistrationController extends \Modules\Academy\Controllers\Web\AcademyReg
             "The academy manager is responsible for accurate details, operating licenses and staff identities.\nCourse details, fees, capacity and schedules must be clear and current; intellectual property rights must be respected.\nAcademies must address student requests and payments under their published conditions and applicable rules.\nStudent and teacher information may only be used for authorized services and must not be disclosed without permission.\nSornaz may review documents and suspend publication for violations, incorrect information or valid complaints.");
         $terms=trans('academy.terms.content',$fallback);
         $terms=html_entity_decode(strip_tags(str_replace(['</p>','</h3>','<br>','<br/>'],"\n",$terms)),ENT_QUOTES|ENT_HTML5,'UTF-8');
-        return ResponseFactory::json(['success'=>true,'flow_token'=>$flow['token'],'stage'=>$flow['stage'],'academy_name'=>$flow['academy_name']??'','without_branch'=>$flow['without_branch']??false,'terms'=>$terms,'branch_terms'=>$this->text(
+        return ResponseFactory::json(['success'=>true,'otp_required'=>$flow['actor']!==1,'flow_token'=>$flow['token'],'stage'=>$flow['stage'],'academy_name'=>$flow['academy_name']??'','without_branch'=>$flow['without_branch']??false,'terms'=>$terms,'branch_terms'=>$this->text(
             "مدیر شعبه مسئول صحت اطلاعات تماس، نشانی، ساعات فعالیت و مجوزهای شعبه است.\nفعالیت‌های شعبه باید مطابق مقررات آموزشگاه مادر باشد.\nمدیر شعبه مسئول کیفیت خدمات، پاسخ‌گویی به هنرجویان و رعایت برنامه‌ها است.\nاطلاعات هنرجویان، استادان و کارکنان محرمانه است و فقط برای خدمات مجاز استفاده می‌شود.\nسُرناز و مدیر آموزشگاه می‌توانند در صورت تخلف یا شکایت معتبر فعالیت شعبه را بررسی یا محدود کنند.",
             "The branch manager is responsible for accurate contact details, address, opening hours and licenses.\nBranches must follow their academy's rules.\nManagers are responsible for service quality, student support and published schedules.\nStudent, teacher and staff information is confidential and may only be used for authorized services.\nSornaz and the academy manager may review or restrict branch activity for violations or valid complaints.")]);
     }

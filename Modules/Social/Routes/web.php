@@ -17,6 +17,7 @@ Router::group(['prefix'=>'/community/api'], function () {
     Router::get('/posts/{id}/comments',[C::class,'comments']);
     Router::post('/posts/{id}/comments',[C::class,'comment']);
     Router::post('/posts/{id}/comments/{commentId}/delete',[C::class,'deleteComment']);
+    Router::post('/posts/{id}/comments/{commentId}/like',[C::class,'likeComment']);
     Router::post('/posts/{id}/share',[C::class,'share']);
     Router::post('/stories/{id}/reply',[C::class,'replyStory']);
     Router::post('/media',[C::class,'upload']); Router::get('/media/{id}',[C::class,'media']);
