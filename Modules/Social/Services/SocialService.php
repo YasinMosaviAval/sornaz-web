@@ -24,7 +24,7 @@ class SocialService
         }
         $count = fn($sql,$args)=>(int)($this->r->one($sql,$args)['n']??0);
         $settings=json_decode($this->r->one('SELECT settings_json FROM social_account_settings WHERE user_id=?',[$id])['settings_json']??'{}',true)?:[];
-        return ['links'=>array_intersect_key($settings,array_flip(['website','instagram','youtube'])),'id'=>$id,'username'=>$user['username'],'name'=>($profile['display_name']??'') ?: $user['username'],
+        return ['links'=>array_intersect_key($settings,array_flip(['email','website','instagram','youtube'])),'id'=>$id,'username'=>$user['username'],'name'=>($profile['display_name']??'') ?: $user['username'],
             'type'=>$user['type']??'human','bio'=>$profile['bio']??'','avatar'=>$avatar,'cover'=>$this->url($profile['cover_id']??null),
             'stories'=>$this->storySummary($id),
             'followers'=>$count('SELECT COUNT(*) n FROM social_follows WHERE following_id=?',[$id]),
@@ -35,8 +35,48 @@ class SocialService
     }
     private function storySummary(int $owner): array
     {
-        return array_map(function($s){$s['media']=$this->url($s['media_id']);return $s;},
-            $this->r->query("SELECT p.id,p.owner_id,p.media_id,p.expires_at,m.mime FROM social_posts p LEFT JOIN social_media m ON m.id=p.media_id WHERE p.owner_id=? AND p.kind='story' AND p.deleted_at IS NULL AND p.expires_at>UTC_TIMESTAMP() ORDER BY p.id",[$owner]));
+        return array_map(function($s){$s['media']=$this->url($s['media_id']);$s['summary']=true;return $s;},
+            $this->r->query("SELECT p.id,p.owner_id,p.media_id,p.created_at,p.expires_at,m.mime FROM social_posts p LEFT JOIN social_media m ON m.id=p.media_id WHERE p.owner_id=? AND p.kind='story' AND p.deleted_at IS NULL AND p.expires_at>UTC_TIMESTAMP() ORDER BY p.id",[$owner]));
+    }
+    public function highlights(int $actor,int $owner): array
+    {
+        $this->user($owner);
+        return array_map(function($h){$h['cover']=$this->url($h['cover_id']);return $h;},$this->r->query('SELECT h.*,(SELECT COUNT(*) FROM social_highlight_stories hs JOIN social_posts p ON p.id=hs.story_id WHERE hs.highlight_id=h.id AND p.deleted_at IS NULL) story_count FROM social_highlights h WHERE h.owner_id=? ORDER BY h.id',[$owner]));
+    }
+    public function highlightStories(int $actor,int $id): array
+    {
+        if(!$this->r->one('SELECT id FROM social_highlights WHERE id=?',[$id]))throw new RuntimeException('هایلایت یافت نشد.',404);
+        return array_map(fn($p)=>$this->postData($actor,$p),$this->r->query('SELECT p.*,m.mime FROM social_highlight_stories hs JOIN social_posts p ON p.id=hs.story_id JOIN social_highlights h ON h.id=hs.highlight_id AND h.owner_id=p.owner_id LEFT JOIN social_media m ON m.id=p.media_id WHERE hs.highlight_id=? AND p.deleted_at IS NULL ORDER BY p.created_at,p.id',[$id]));
+    }
+    public function storyArchive(int $actor,int $before=0): array
+    {
+        $params=[$actor];$where='';if($before){$where=' AND p.id<?';$params[]=$before;}
+        return array_map(fn($p)=>$this->postData($actor,$p),$this->r->query("SELECT p.*,m.mime FROM social_posts p LEFT JOIN social_media m ON m.id=p.media_id WHERE p.owner_id=? AND p.kind='story' AND p.deleted_at IS NULL $where ORDER BY p.id DESC LIMIT 100",$params));
+    }
+    public function saveHighlight(int $actor,array $data): array
+    {
+        $id=(int)($data['id']??0);$title=$this->text($data['title']??'',80,true);
+        $ids=json_decode((string)($data['story_ids']??'[]'),true);
+        if(!is_array($ids))throw new RuntimeException('استوری‌ها را انتخاب کنید.',422);
+        $ids=array_values(array_unique(array_filter(array_map('intval',$ids))));
+        if(!$ids||count($ids)>100)throw new RuntimeException('بین یک تا صد استوری انتخاب کنید.',422);
+        $cover=(int)($data['cover_id']??0);$media=$this->ownMedia($actor,$cover);
+        if(!str_starts_with($media['mime'],'image/'))throw new RuntimeException('کاور باید تصویر باشد.',422);
+        return $this->r->transaction(function()use($actor,$id,$title,$ids,$cover){
+            if($id&&!$this->r->one('SELECT id FROM social_highlights WHERE id=? AND owner_id=? FOR UPDATE',[$id,$actor]))throw new RuntimeException('اجازه ویرایش این هایلایت را ندارید.',403);
+            foreach($ids as$storyId)if(!$this->r->one("SELECT id FROM social_posts WHERE id=? AND owner_id=? AND kind='story' AND deleted_at IS NULL",[$storyId,$actor]))throw new RuntimeException('استوری متعلق به شما نیست.',403);
+            if($id)$this->r->query('UPDATE social_highlights SET title=?,cover_id=? WHERE id=?',[$title,$cover,$id]);
+            else $id=$this->r->insert('social_highlights',['owner_id'=>$actor,'title'=>$title,'cover_id'=>$cover]);
+            $this->r->query('DELETE FROM social_highlight_stories WHERE highlight_id=?',[$id]);
+            foreach($ids as$storyId)$this->r->insert('social_highlight_stories',['highlight_id'=>$id,'story_id'=>$storyId]);
+            return ['id'=>$id];
+        });
+    }
+    public function deleteHighlight(int $actor,int $id): array
+    {
+        if(!$this->r->one('SELECT id FROM social_highlights WHERE id=? AND owner_id=?',[$id,$actor]))throw new RuntimeException('اجازه حذف این هایلایت را ندارید.',403);
+        $this->r->transaction(function()use($id){$this->r->query('DELETE FROM social_highlight_stories WHERE highlight_id=?',[$id]);$this->r->query('DELETE FROM social_highlights WHERE id=?',[$id]);});
+        return ['deleted'=>true];
     }
     public function updateProfile(int $actor,array $data): array
     {
@@ -53,7 +93,7 @@ class SocialService
     }
     public function people(int $actor,string $search,int $id=0,string $kind=''): array
     {
-        $params=[]; $where='u.deleted_at IS NULL';
+        $params=[]; $where="u.deleted_at IS NULL AND u.register_method IN ('email','phone')";
         if($id){$this->user($id);$where.=$kind==='followers'?' AND EXISTS(SELECT 1 FROM social_follows f WHERE f.follower_id=u.user_id AND f.following_id=?)':' AND EXISTS(SELECT 1 FROM social_follows f WHERE f.following_id=u.user_id AND f.follower_id=?)';$params[]=$id;}
         if(trim($search)!==''){$where.=' AND u.username LIKE ?';$params[]='%'.mb_substr(trim($search),0,80).'%';}
         return array_map(fn($u)=>$this->profile($actor,(int)$u['user_id']),$this->r->query("SELECT u.user_id FROM users u WHERE $where ORDER BY u.user_id DESC LIMIT 50",$params));
@@ -96,6 +136,7 @@ class SocialService
             $p['comment_count']=(int)$this->r->one('SELECT COUNT(*) n FROM social_comments WHERE post_id=? AND deleted_at IS NULL',[$id])['n'];
             $p['comments']=$this->r->query('SELECT c.id,c.body,c.parent_id,c.created_at,u.username,u.user_id FROM social_comments c JOIN users u ON u.user_id=c.user_id WHERE c.post_id=? AND c.deleted_at IS NULL ORDER BY c.id DESC LIMIT 3',[$id]);
         }
+        if($p['kind']==='story')$p['mentions']=array_map(fn($u)=>$this->profile($actor,(int)$u['user_id']),$this->r->query('SELECT user_id FROM social_story_mentions WHERE story_id=?',[$id]));
         return $p;
     }
     public function publish(int $actor,array $data): array
@@ -104,8 +145,17 @@ class SocialService
         $body=$this->text($data['body']??'',10000);$mid=(int)($data['media_id']??0);
         if($mid)$this->ownMedia($actor,$mid);
         if(($body===''&&!$mid)||($kind==='story'&&!$mid))throw new RuntimeException('برای استوری فایل و برای پست متن یا فایل اضافه کنید.',422);
+        $rawMentions=$data['mention_ids']??[];
+        if(!is_array($rawMentions))$rawMentions=json_decode((string)$rawMentions,true);
+        if(!is_array($rawMentions))throw new RuntimeException('منشن‌ها معتبر نیستند.',422);
+        $mentionIds=$kind==='story'?array_values(array_unique(array_filter(array_map('intval',$rawMentions)))):[];
+        if(count($mentionIds)>30)throw new RuntimeException('حداکثر ۳۰ منشن مجاز است.',422);
+        foreach($mentionIds as$mentioned)$this->user($mentioned);
+        return $this->r->transaction(function()use($actor,$body,$kind,$mid,$mentionIds){
         $id=$this->r->insert('social_posts',['owner_id'=>$actor,'body'=>$body,'kind'=>$kind,'media_id'=>$mid?:null,'expires_at'=>$kind==='story'?gmdate('Y-m-d H:i:s',time()+86400):null]);
+        foreach($mentionIds as$mentioned)$this->r->insert('social_story_mentions',['story_id'=>$id,'user_id'=>$mentioned]);
         return $this->post($actor,$id);
+        });
     }
     public function remove(int $actor,int $id): array
     {
@@ -154,7 +204,7 @@ class SocialService
     public function media(int $actor,int $id): array
     {
         $m=$this->r->one('SELECT * FROM social_media WHERE id=?',[$id]);if(!$m)throw new RuntimeException('فایل پیدا نشد.',404);
-        if((int)$m['owner_id']!==$actor&&!$this->r->one('SELECT 1 FROM social_profiles WHERE avatar_id=? OR cover_id=?',[$id,$id])&&!$this->r->one('SELECT 1 FROM social_posts WHERE media_id=? AND deleted_at IS NULL AND (expires_at IS NULL OR expires_at>UTC_TIMESTAMP())',[$id]))throw new RuntimeException('محتوا در دسترس نیست.',404);
+        if((int)$m['owner_id']!==$actor&&!$this->r->one('SELECT 1 FROM social_highlights h LEFT JOIN social_highlight_stories hs ON hs.highlight_id=h.id LEFT JOIN social_posts p ON p.id=hs.story_id AND p.deleted_at IS NULL WHERE h.cover_id=? OR p.media_id=? LIMIT 1',[$id,$id])&&!$this->r->one('SELECT 1 FROM social_profiles WHERE avatar_id=? OR cover_id=?',[$id,$id])&&!$this->r->one('SELECT 1 FROM social_posts WHERE media_id=? AND deleted_at IS NULL AND (expires_at IS NULL OR expires_at>UTC_TIMESTAMP())',[$id]))throw new RuntimeException('محتوا در دسترس نیست.',404);
         return $m;
     }
     private function ownMedia(int $actor,int $id): array

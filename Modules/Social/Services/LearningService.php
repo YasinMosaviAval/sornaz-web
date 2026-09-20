@@ -89,6 +89,11 @@ class LearningService
             $this->r->one('SELECT user_id FROM users WHERE user_id=? FOR UPDATE',[$actor]);
             $settings=$this->settings($actor);
             foreach(['follow','like','message'] as $key)if(isset($data[$key]))$settings[$key]=$data[$key]==='1';
+            if(array_key_exists('email',$data)){
+                $email=trim((string)$data['email']);
+                if($email!==''&&(strlen($email)>254||!filter_var($email,FILTER_VALIDATE_EMAIL)))throw new RuntimeException('ایمیل عمومی معتبر نیست.',422);
+                $settings['email']=$email;
+            }
             foreach(['website','instagram','youtube'] as $key)if(isset($data[$key])){
                 $url=trim((string)$data[$key]);
                 if($url!==''&&(strlen($url)>500||!filter_var($url,FILTER_VALIDATE_URL)||strtolower(parse_url($url,PHP_URL_SCHEME)??'')!=='https'))throw new RuntimeException('لینک باید آدرس معتبر https باشد.',422);

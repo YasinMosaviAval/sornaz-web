@@ -53,7 +53,7 @@ class PublicPostService
         $images = $this->articleImages($id);
         $related = $this->relatedPosts($row['related_posts_id'] ?? '', $locale, $id);
         $result = [
-            'id'=>$id, 'slug'=>$row['slug'] ?? '', 'title'=>$texts['title'] ?? '',
+            'id'=>$id, 'author_id'=>(int)($row['author_id'] ?? 0), 'slug'=>$row['slug'] ?? '', 'title'=>$texts['title'] ?? '',
             'summary'=>$texts['brief'] ?? '', 'description'=>$texts['description'] ?? '',
             'category_ids'=>array_map('intval', $categoryIds),
             'categories'=>array_values(array_filter(array_map(fn($id) => $categoryTitles[(int)$id] ?? null, $categoryIds))),

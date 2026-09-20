@@ -1,1 +1,1 @@
-<?php $profileContentEntity='experiences';$profileContentTitle='تجربه‌ها';$profileContentDescription='مدیریت سوابق و تجربه‌های حرفه‌ای';require __DIR__.'/profile-content-section.php'; ?>
+<?php $profileContentEntity='experiences';$profileContentTitle='سوابق کاری';$profileContentDescription='مدیریت سوابق و سوابق کاریی حرفه‌ای';require __DIR__.'/profile-content-section.php'; ?>
