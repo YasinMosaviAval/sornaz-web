@@ -42,6 +42,11 @@ class SocialController
             return ResponseFactory::json(['success'=>false,'message'=>$message],$code);
         }
     }
+    public function highlights(int $id){return $this->run(fn($a)=>$this->social->highlights($a,$id),true);}
+    public function highlightStories(int $id){return $this->run(fn($a)=>$this->social->highlightStories($a,$id),true);}
+    public function storyArchive(){return $this->run(fn($a)=>$this->social->storyArchive($a,(int)($_GET['before']??0)));}
+    public function saveHighlight(){return $this->run(fn($a)=>$this->social->saveHighlight($a,$_POST));}
+    public function deleteHighlight(int $id){return $this->run(fn($a)=>$this->social->deleteHighlight($a,$id));}
     public function me(){return $this->run(fn($a)=>$this->social->profile($a,$a));}
     public function profile(int $id){return $this->run(fn($a)=>$this->social->profile($a,$id),true);}
     public function updateProfile(){return $this->run(fn($a)=>$this->social->updateProfile($a,$_POST));}

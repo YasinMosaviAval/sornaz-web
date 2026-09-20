@@ -3,6 +3,11 @@ use Core\router\Router;
 use Modules\Social\Controllers\SocialController as C;
 // Every action validates the existing mobile Bearer token. Cookie authentication is never accepted.
 Router::group(['prefix'=>'/api/sornaz/v1/social'],function(){
+    Router::get('/users/{id}/highlights',[C::class,'highlights']);
+    Router::get('/highlights/{id}/stories',[C::class,'highlightStories']);
+    Router::get('/stories/archive',[C::class,'storyArchive']);
+    Router::post('/highlights',[C::class,'saveHighlight']);
+    Router::post('/highlights/{id}/delete',[C::class,'deleteHighlight']);
     Router::get('/home',[C::class,'home']);
     Router::get('/community',[C::class,'community']);
     Router::get('/dashboard',[C::class,'dashboard']);

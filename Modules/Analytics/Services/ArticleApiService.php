@@ -19,7 +19,9 @@ class ArticleApiService
         $search = mb_strtolower(trim((string)($query['search'] ?? '')));
 
         $ids = isset($query['ids']) ? array_map('intval', explode(',', (string)$query['ids'])) : null;
-        $items = array_values(array_filter($this->available($locale), function (array $post) use ($categoryId, $search, $ids): bool {
+        $authorId = max(0, (int)($query['author'] ?? 0));
+        $items = array_values(array_filter($this->available($locale), function (array $post) use ($categoryId, $search, $ids, $authorId): bool {
+            if ($authorId && (int)($post['author_id'] ?? 0) !== $authorId) return false;
             if ($ids !== null && !in_array((int)$post['id'], $ids, true)) return false;
             if ($categoryId > 0 && !in_array($categoryId, $post['category_ids'] ?? [], true)) return false;
             if ($search === '') return true;

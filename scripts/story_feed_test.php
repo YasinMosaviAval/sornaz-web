@@ -8,6 +8,7 @@ $db->exec('CREATE TABLE social_posts(id INTEGER PRIMARY KEY,owner_id INTEGER,kin
 CREATE TABLE social_media(id INTEGER PRIMARY KEY,mime TEXT);
 CREATE TABLE social_follows(follower_id INTEGER,following_id INTEGER);
 CREATE TABLE social_reactions(user_id INTEGER,post_id INTEGER,kind TEXT);
+CREATE TABLE social_story_mentions(story_id INTEGER,user_id INTEGER);
 CREATE TABLE social_comments(id INTEGER,post_id INTEGER,user_id INTEGER,parent_id INTEGER,body TEXT,created_at TEXT,deleted_at TEXT);
 CREATE TABLE users(user_id INTEGER,username TEXT);
 INSERT INTO social_follows VALUES(7,2);

@@ -88,12 +88,12 @@ $canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager
                 <ul id="profileAchievementsSubmenu" class="mt-1 mr-4 hidden space-y-1 border-r border-indigo-700/60 pr-2">
                     <li><a href="#" onclick="showSection('awards')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-award w-4"></i>پاداش‌ها و جوایز</a></li>
                     <li><a href="#" onclick="showSection('badges')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-medal w-4"></i>نشان‌ها</a></li>
-                    <li><a href="#" onclick="showSection('experiences')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-briefcase w-4"></i>تجربه‌ها</a></li>
-                    <li><a href="#" onclick="showSection('certificates')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-certificate w-4"></i>تأییدیه‌ها</a></li>
+                    <li><a href="#" onclick="showSection('experiences')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-briefcase w-4"></i>سوابق کاری</a></li>
+                    <li><a href="#" onclick="showSection('certificates')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-certificate w-4"></i>گواهی‌ها</a></li>
                     <li><a href="#" onclick="showSection('educations')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-graduation-cap w-4"></i>تحصیلات</a></li>
                     <li><a href="#" onclick="showSection('events')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-calendar-day w-4"></i>رویدادها</a></li>
                     <li><a href="#" onclick="showSection('polls')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-poll w-4"></i>نظرسنجی‌ها</a></li>
-                    <li><a href="#" onclick="showSection('publications')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-book-open w-4"></i>انتشارات</a></li>
+                    <li><a href="#" onclick="showSection('publications')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-book-open w-4"></i>آثار منتشر شده</a></li>
                 </ul>
             </li>
             <?php endif; ?>
