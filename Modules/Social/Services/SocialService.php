@@ -24,7 +24,11 @@ class SocialService
         }
         $count = fn($sql,$args)=>(int)($this->r->one($sql,$args)['n']??0);
         $settings=json_decode($this->r->one('SELECT settings_json FROM social_account_settings WHERE user_id=?',[$id])['settings_json']??'{}',true)?:[];
-        return ['links'=>array_intersect_key($settings,array_flip(['email','website','instagram','youtube'])),'id'=>$id,'username'=>$user['username'],'name'=>($profile['display_name']??'') ?: $user['username'],
+        $locale = str_starts_with(strtolower((string)($_GET['locale'] ?? $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'fa')), 'en') ? 'en' : 'fa';
+        $intro = $this->r->one("SELECT value FROM translations WHERE table_name='users' AND table_id=? AND field='short_description' AND locale=? AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1", [$id, $locale]);
+        if (!$intro && $locale !== 'fa') $intro = $this->r->one("SELECT value FROM translations WHERE table_name='users' AND table_id=? AND field='short_description' AND locale='fa' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1", [$id]);
+        $articleLocale = $locale === 'en' ? " AND EXISTS (SELECT 1 FROM translations t WHERE t.table_name='posts' AND t.table_id=p.post_id AND t.field='title' AND t.locale='en' AND t.deleted_at IS NULL AND TRIM(t.value)<>'')" : '';
+        return ['shortIntro'=>(string)($intro['value']??''),'articles'=>$count("SELECT COUNT(*) n FROM posts p WHERE p.author_id=? AND p.type='post' AND p.status='published' AND p.visibility='public' AND p.deleted_at IS NULL".$articleLocale,[$id]),'links'=>array_intersect_key($settings,array_flip(['email','website','instagram','youtube'])),'id'=>$id,'username'=>$user['username'],'name'=>($profile['display_name']??'') ?: $user['username'],
             'type'=>$user['type']??'human','bio'=>$profile['bio']??'','avatar'=>$avatar,'cover'=>$this->url($profile['cover_id']??null),
             'stories'=>$this->storySummary($id),
             'followers'=>$count('SELECT COUNT(*) n FROM social_follows WHERE following_id=?',[$id]),
