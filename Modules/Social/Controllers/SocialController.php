@@ -69,6 +69,7 @@ class SocialController
     public function notifications(){return $this->run(fn($a)=>$this->social->notifications($a));}
     public function read(int $id){return $this->run(fn($a)=>$this->social->read($a,$id));}
     public function upload(){return $this->run(fn($a)=>$this->social->upload($a,$_FILES['file']??[]));}
+    public function storyFromPost(int $id){return $this->run(fn($actor)=>$this->social->storyFromPost($actor,$id));}
     public function conversations(){return $this->run(fn($a)=>$this->chat->index($a)['conversations']);}
     public function conversation(){return $this->run(function($a){$id=(int)($_POST['user_id']??0);$this->social->user($id);return $this->chat->create($a,['userIds'=>[$id]]);});}
     public function messages(int $id){return $this->run(fn($a)=>$this->chat->messages($a,$id,(int)($_GET['after']??0)));}

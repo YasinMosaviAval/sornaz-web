@@ -22,6 +22,7 @@ Router::group(['prefix'=>'/api/sornaz/v1/social'],function(){
     Router::get('/posts/{id}/comments',[C::class,'comments']);Router::post('/posts/{id}/comments',[C::class,'comment']);
     Router::post('/posts/{id}/comments/{commentId}/delete',[C::class,'deleteComment']);
     Router::post('/posts/{id}/comments/{commentId}/like',[C::class,'likeComment']);
+    Router::post('/posts/{id}/story',[C::class,'storyFromPost']);
     Router::post('/posts/{id}/share',[C::class,'share']);Router::post('/stories/{id}/reply',[C::class,'replyStory']);
     Router::get('/notifications',[C::class,'notifications']);Router::post('/notifications/{id}/read',[C::class,'read']);
     Router::get('/conversations',[C::class,'conversations']);Router::post('/conversations',[C::class,'conversation']);Router::get('/conversations/{id}/messages',[C::class,'messages']);Router::post('/conversations/{id}/messages',[C::class,'send']);
