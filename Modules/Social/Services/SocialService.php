@@ -155,6 +155,9 @@ class SocialService
     {
         $kind=$data['kind']??'post';if(!in_array($kind,['post','story'],true))throw new RuntimeException('نوع محتوا معتبر نیست.',422);
         $body=$this->text($data['body']??'',10000);$mid=(int)($data['media_id']??0);
+        $linkUrl=$kind==='story'?$this->text($data['link_url']??'',2048):'';
+        $linkTitle=$linkUrl!==''?$this->text($data['link_title']??'',180):'';
+        if($linkUrl!==''&&(!filter_var($linkUrl,FILTER_VALIDATE_URL)||!in_array(strtolower((string)parse_url($linkUrl,PHP_URL_SCHEME)),['http','https'],true)))throw new RuntimeException('لینک معتبر وارد کنید.',422);
         if($mid)$this->ownMedia($actor,$mid);
         if(($body===''&&!$mid)||($kind==='story'&&!$mid))throw new RuntimeException('برای استوری فایل و برای پست متن یا فایل اضافه کنید.',422);
         $rawMentions=$data['mention_ids']??[];
@@ -163,8 +166,9 @@ class SocialService
         $mentionIds=$kind==='story'?array_values(array_unique(array_filter(array_map('intval',$rawMentions)))):[];
         if(count($mentionIds)>30)throw new RuntimeException('حداکثر ۳۰ منشن مجاز است.',422);
         foreach($mentionIds as$mentioned)$this->user($mentioned);
-        return $this->r->transaction(function()use($actor,$body,$kind,$mid,$mentionIds){
+        return $this->r->transaction(function()use($actor,$body,$kind,$mid,$mentionIds,$linkUrl,$linkTitle){
         $id=$this->r->insert('social_posts',['owner_id'=>$actor,'body'=>$body,'kind'=>$kind,'media_id'=>$mid?:null,'expires_at'=>$kind==='story'?gmdate('Y-m-d H:i:s',time()+86400):null]);
+        if($linkUrl!=='')$this->r->query('UPDATE social_posts SET link_url=?,link_title=? WHERE id=?',[$linkUrl,$linkTitle,$id]);
         foreach($mentionIds as$mentioned)$this->r->insert('social_story_mentions',['story_id'=>$id,'user_id'=>$mentioned]);
         return $this->post($actor,$id);
         });
