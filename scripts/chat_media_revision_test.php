@@ -18,7 +18,7 @@ CREATE TABLE conversations(conversation_id INTEGER PRIMARY KEY,type TEXT,title T
 CREATE TABLE conversation_members(conversation_member_id INTEGER PRIMARY KEY AUTOINCREMENT,conversation_id INTEGER,user_id INTEGER,role TEXT,is_muted INTEGER,joined_at TEXT,last_read_message_id INTEGER DEFAULT 0,created_at TEXT,created_by INTEGER,updated_at TEXT,updated_by INTEGER,left_at TEXT,deleted_at TEXT,deleted_by INTEGER);
 CREATE TABLE conversation_messages(conversation_message_id INTEGER PRIMARY KEY AUTOINCREMENT,conversation_id INTEGER,sender_id INTEGER,body TEXT,reply_to_id INTEGER,message_kind TEXT DEFAULT 'text',attachment_path TEXT,attachment_name TEXT,attachment_mime TEXT,attachment_size INTEGER,created_at TEXT,created_by INTEGER,updated_at TEXT,updated_by INTEGER,edited_at TEXT,deleted_at TEXT,deleted_by INTEGER);
 CREATE TABLE conversation_message_reactions(conversation_message_reaction_id INTEGER PRIMARY KEY,conversation_message_id INTEGER,user_id INTEGER,reaction TEXT,created_at TEXT,created_by INTEGER);
-CREATE TABLE social_posts(id INTEGER PRIMARY KEY AUTOINCREMENT,owner_id INTEGER,kind TEXT,body TEXT,media_id INTEGER,shared_post_id INTEGER,expires_at TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP,deleted_at TEXT);
+CREATE TABLE social_posts(id INTEGER PRIMARY KEY AUTOINCREMENT,owner_id INTEGER,kind TEXT,body TEXT,link_url TEXT,link_title TEXT,media_id INTEGER,shared_post_id INTEGER,expires_at TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP,deleted_at TEXT);
 CREATE TABLE social_media(id INTEGER PRIMARY KEY,owner_id INTEGER,mime TEXT,path TEXT);
 CREATE TABLE social_reactions(post_id INTEGER,user_id INTEGER,kind TEXT);
 CREATE TABLE social_comments(id INTEGER PRIMARY KEY,post_id INTEGER,user_id INTEGER,body TEXT,parent_id INTEGER,created_at TEXT,deleted_at TEXT);
@@ -71,4 +71,10 @@ denied(fn()=>$social->post(2,1));
 foreach([1,2] as $actor){$story=$social->storyFromPost($actor,2);check($story['kind']==='story' && (int)$story['owner_id']===$actor && (int)$story['shared_post_id']===2 && (int)$story['media_id']===5,'Post sharing lost author, source or media');check(strtotime($story['expires_at'].' UTC')>time(),'Shared story immediately expired');}
 denied(fn()=>$social->storyFromPost(0,2));
 denied(fn()=>$social->storyFromPost(1,1));
+$linked=$social->publish(1,['kind'=>'story','media_id'=>5,'link_url'=>'https://example.com/lesson','link_title'=>'Lesson']);
+check($linked['link_url']==='https://example.com/lesson' && $linked['link_title']==='Lesson','Story link metadata was lost');
+denied(fn()=>$social->publish(1,['kind'=>'story','media_id'=>5,'link_url'=>'javascript:alert(1)']));
+$voice=$chat->send(1,1,'Voice')['id'];
+$pdo->exec("UPDATE conversation_messages SET attachment_path='voice.m4a',attachment_name='voice.m4a',attachment_mime='audio/mp4' WHERE conversation_message_id=$voice");
+denied(fn()=>$chat->editMessage(1,$voice,'Changed voice'));
 echo "Chat, offline sync and story sharing: $checks integration checks passed.\n";
