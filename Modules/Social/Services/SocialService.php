@@ -125,7 +125,7 @@ class SocialService
     }
     public function post(int $actor,int $id): array
     {
-        $p=$this->r->one('SELECT p.*,m.mime FROM social_posts p LEFT JOIN social_media m ON m.id=p.media_id WHERE p.id=? AND p.deleted_at IS NULL AND (p.expires_at IS NULL OR p.expires_at>UTC_TIMESTAMP())',[$id]);
+        $p=$this->r->one('SELECT p.*,m.mime FROM social_posts p LEFT JOIN social_media m ON m.id=p.media_id WHERE p.id=? AND p.deleted_at IS NULL AND (p.owner_id=? OR p.expires_at IS NULL OR p.expires_at>UTC_TIMESTAMP())',[$id,$actor]);
         if(!$p)throw new RuntimeException('محتوا پیدا نشد یا منقضی شده است.',404);
         return $this->postData($actor,$p);
     }
@@ -142,6 +142,14 @@ class SocialService
         }
         if($p['kind']==='story')$p['mentions']=array_map(fn($u)=>$this->profile($actor,(int)$u['user_id']),$this->r->query('SELECT user_id FROM social_story_mentions WHERE story_id=?',[$id]));
         return $p;
+    }
+    public function storyFromPost(int $actor,int $post): array
+    {
+        if($actor<=0)throw new RuntimeException('برای ادامه وارد حساب شوید.',401);
+        $source=$this->post($actor,$post);
+        if($source['kind']!=='post')throw new RuntimeException('پست معتبر نیست.',422);
+        $id=$this->r->insert('social_posts',['owner_id'=>$actor,'kind'=>'story','body'=>($source['author']['name']??$source['author']['username']??'')."\n".$source['body'],'media_id'=>$source['media_id']?:null,'shared_post_id'=>$post,'expires_at'=>gmdate('Y-m-d H:i:s',time()+86400)]);
+        return $this->post($actor,$id);
     }
     public function publish(int $actor,array $data): array
     {
@@ -208,7 +216,7 @@ class SocialService
     public function media(int $actor,int $id): array
     {
         $m=$this->r->one('SELECT * FROM social_media WHERE id=?',[$id]);if(!$m)throw new RuntimeException('فایل پیدا نشد.',404);
-        if((int)$m['owner_id']!==$actor&&!$this->r->one('SELECT 1 FROM social_highlights h LEFT JOIN social_highlight_stories hs ON hs.highlight_id=h.id LEFT JOIN social_posts p ON p.id=hs.story_id AND p.deleted_at IS NULL WHERE h.cover_id=? OR p.media_id=? LIMIT 1',[$id,$id])&&!$this->r->one('SELECT 1 FROM social_profiles WHERE avatar_id=? OR cover_id=?',[$id,$id])&&!$this->r->one('SELECT 1 FROM social_posts WHERE media_id=? AND deleted_at IS NULL AND (expires_at IS NULL OR expires_at>UTC_TIMESTAMP())',[$id]))throw new RuntimeException('محتوا در دسترس نیست.',404);
+        if((int)$m['owner_id']!==$actor&&!$this->r->one('SELECT 1 FROM social_highlights h LEFT JOIN social_highlight_stories hs ON hs.highlight_id=h.id LEFT JOIN social_posts p ON p.id=hs.story_id AND p.deleted_at IS NULL WHERE h.cover_id=? OR p.media_id=? LIMIT 1',[$id,$id])&&!$this->r->one('SELECT 1 FROM social_profiles WHERE avatar_id=? OR cover_id=?',[$id,$id])&&!$this->r->one('SELECT 1 FROM social_posts WHERE media_id=? AND deleted_at IS NULL AND (owner_id=? OR expires_at IS NULL OR expires_at>UTC_TIMESTAMP())',[$id,$actor]))throw new RuntimeException('محتوا در دسترس نیست.',404);
         return $m;
     }
     private function ownMedia(int $actor,int $id): array

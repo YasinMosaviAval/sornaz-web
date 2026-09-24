@@ -8,8 +8,8 @@ final class ChatController
  public function __construct(private ChatService $service){}
  public function index(){return$this->run(fn()=>['success'=>true,'data'=>$this->service->index((int)auth()->id())]);}
  public function create(){return$this->run(fn()=>['success'=>true,'data'=>$this->service->create((int)auth()->id(),$this->payload())]);}
- public function messages(int$id){return$this->run(fn()=>['success'=>true,'data'=>$this->service->messages((int)auth()->id(),$id,(int)($_GET['after']??0))]);}
- public function send(int$id){return$this->run(fn()=>['success'=>true,'data'=>$this->service->send((int)auth()->id(),$id,(string)($_POST['body']??''),$_FILES['file']??[])]);}
+ public function messages(int$id){return$this->run(fn()=>['success'=>true,'data'=>$this->service->messages((int)auth()->id(),$id,(int)($_GET['after']??0),($_GET['read']??'1')!=='0')]);}
+ public function send(int$id){return$this->run(fn()=>['success'=>true,'data'=>$this->service->send((int)auth()->id(),$id,(string)($_POST['body']??''),$_FILES['file']??[],(int)($_POST['replyTo']??0))]);}
  public function details(int$id){return$this->run(fn()=>['success'=>true,'data'=>$this->service->details((int)auth()->id(),$id)]);}
  public function rename(int$id){return$this->run(function()use($id){$d=$this->payload();$this->service->rename((int)auth()->id(),$id,(string)($d['title']??''));return['success'=>true];});}
  public function avatar(int$id){return$this->run(fn()=>['success'=>true,'data'=>$this->service->updateGroupAvatar((int)auth()->id(),$id,$_FILES['file']??[])]);}
