@@ -91,7 +91,7 @@
   const navLink = ([i,url,label]) => `<a href="${url}" class="nav-link${currentRoute === url ? ' active':''}" ${url==='#search'?'data-action="search"':'data-route'} aria-label="${esc(label)}">${icon(i)}<span>${esc(label)}</span></a>`;
   function shell() {
     const brand=`<a class="brand" href="/"><img src="/assets/images/logo/cropped-favicon_512x512.jpg" alt=""><span>${t('سُرناز','Sornaz')}</span></a>`;
-    root.innerHTML=`<aside class="side-nav">${brand}${navItems.map(navLink).join('')}<a href="/" class="nav-link side-bottom">${icon('back')}<span>${t('بازگشت به سایت','Back to website')}</span></a></aside><header class="mobile-top">${brand}<div class="row">${button('search',t('جستجو','Search'),'search')}${button('heart',t('اعلان‌ها','Notifications'),'notifications')}</div></header><main class="main" id="main-content"></main><nav class="mobile-nav" aria-label="${t('ناوبری جامعه','Community navigation')}">${navItems.filter((_,i)=>[0,2,4,6].includes(i)).map(navLink).join('')}</nav>`;
+    root.innerHTML=`<aside class="side-nav">${brand}${navItems.map(navLink).join('')}</aside><header class="mobile-top">${brand}<div class="row">${button('search',t('جستجو','Search'),'search')}${button('heart',t('اعلان‌ها','Notifications'),'notifications')}</div></header><main class="main" id="main-content"></main><nav class="mobile-nav" aria-label="${t('ناوبری جامعه','Community navigation')}">${navItems.filter((_,i)=>[0,2,4,6].includes(i)).map(navLink).join('')}</nav>`;
   }
   const main = () => document.getElementById('main-content');
   function navigate(path, replace = false) {
@@ -138,7 +138,7 @@
   function openDialog(title, content) {
     document.querySelector('dialog')?.close(); document.querySelector('dialog')?.remove();
     const d=document.createElement('dialog');d.className='dialog';d.innerHTML=`<div class="page-head"><h2 class="grow">${esc(title)}</h2>${button('close',t('بستن','Close'),'close-dialog')}</div>${content}`;
-    document.body.append(d); d.addEventListener('close',()=>d.remove()); d.addEventListener('click',e=>{if(e.target===d)d.close();}); d.showModal();return d;
+    document.querySelector('.community-app').append(d); d.addEventListener('close',()=>d.remove()); d.addEventListener('click',e=>{if(e.target===d)d.close();}); d.showModal();return d;
   }
   async function peopleDialog(mode, postId=0) {
     if(!signedIn()) return;
@@ -168,20 +168,18 @@
     const rows=await api('/notifications');if(version!==epoch)return;
     main().innerHTML=`<section class="content-page">${header(t('اعلان‌ها','Notifications'))}${rows.map(n=>`<button class="person-row ${n.read_at?'':'unread'}" data-action="notification" data-id="${Number(n.id)}" data-kind="${esc(n.kind)}" data-target="${Number(n.target_id)}" data-actor="${Number(n.actor_id)}">${avatar(n.actor)}<span class="grow"><strong>${esc(n.actor?.name)}</strong> ${esc(n.body)}<time class="notification-time">${age(n.created_at)}</time></span>${n.read_at?'':'<span aria-label="'+t('خوانده‌نشده','Unread')+'">●</span>'}</button>`).join('') || empty(t('هنوز اعلانی ندارید.','You have no notifications yet.'))}</section>`;
   }
-  function messageRow(m) {
-    const parts=String(m.body || '').split(/(\/community\/(?:posts|stories)\/[1-9]\d*)/g);
-    const content=parts.map(p=>/^\/community\/(posts|stories)\/[1-9]\d*$/.test(p)?`<a class="shared-post" data-route href="${p}">${icon('image')}<span>${p.includes('/stories/')?t('مشاهده استوری','View story'):t('مشاهده پست','View post')}</span></a>`:esc(p)).join('');
-    return `<div class="message ${m.mine?'mine':''}" data-message="${Number(m.id)}">${content}${m.file?`<p>${esc(m.file.name)}</p>`:''}<time>${esc(m.createdAt || '')}</time></div>`;
-  }
-  let conversationCursor=0;
-  async function direct(id, version) {
+  function direct(id) {
     if(!boot.userId){main().innerHTML=join();return;}
-    const [rows,data]=await Promise.all([api('/conversations'),id?api('/conversations/'+id+'/messages'):Promise.resolve(null)]);if(version!==epoch)return;
-    const messages=data?.messages || [];conversationCursor=messages.length?Number(messages.at(-1).id):0;
-    const c=rows.find(x=>Number(x.id)===id);
-    main().innerHTML=`<section class="direct-layout ${id?'has-conversation':''}"><aside class="conversation-list"><header class="page-head"><h1 class="grow">${t('پیام‌ها','Messages')}</h1>${button('plus',t('پیام جدید','New message'),'new-direct')}${button('refresh',t('تازه‌سازی','Refresh'),'refresh')}</header>${rows.map(c=>`<a class="person-row" data-route href="/community/direct/${Number(c.id)}">${avatar({avatar:c.image})}<span class="grow"><strong>${esc(c.title || c.name)}</strong><p class="muted">${esc(c.lastMessage?.body || c.lastMessage || '')}</p></span>${Number(c.unread)>0?`<strong>${Number(c.unread)}</strong>`:''}</a>`).join('') || empty(t('هنوز گفت‌وگویی ندارید.','No conversations yet.'))}</aside><div class="conversation-pane">${id?`<header class="page-head"><a class="icon-button" data-route href="/community/direct" aria-label="${t('برگشت','Back')}">${icon('back')}</a>${avatar({avatar:c?.image})}<strong class="grow">${esc(c?.title || c?.name || t('گفت‌وگو','Conversation'))}</strong>${button('refresh',t('تازه‌سازی','Refresh'),'refresh')}</header><div class="message-list" id="messages">${messages.map(messageRow).join('')}</div><button class="text-button" data-action="more-messages" data-id="${id}">${t('دریافت پیام‌های بعدی','Check next messages')}</button><form class="composer" data-form="message" data-id="${id}"><textarea required name="body" maxlength="10000" aria-label="${t('پیام','Message')}" placeholder="${t('پیام بنویسید…','Message…')}"></textarea><button type="submit">${icon('send')}</button></form>`:`<div class="direct-intro">${icon('send')}<h2>${t('پیام‌های شما','Your messages')}</h2><p class="muted">${t('برای اعضای جامعه پیام بفرستید.','Send private messages to the community.')}</p><button class="primary" data-action="new-direct">${t('ارسال پیام','Send message')}</button></div>`}</div></section>`;
-    const list=document.getElementById('messages');if(list)list.scrollTop=list.scrollHeight;
+    main().innerHTML='<iframe class="community-chat-frame" title="'+esc(t('???????','Conversations'))+'" src="/community/chat-frame'+(id?'?id='+Number(id):'')+'" allow="microphone"></iframe>';
   }
+  window.addEventListener('message', event => {
+    const frame = document.querySelector('.community-chat-frame');
+    if (!frame || event.source !== frame.contentWindow || event.origin !== location.origin || event.data?.type !== 'community-chat-selected') return;
+    const id = Number(event.data.id);
+    if (!Number.isSafeInteger(id) || id < 0) return;
+    currentRoute = '/community/direct' + (id ? '/' + id : '');
+    history.replaceState({}, '', currentRoute);
+  });
   async function profile(id, version) {
     if(!id){main().innerHTML=join();return;}
     const [u,posts]=await Promise.all([api('/users/'+id),api('/posts?owner='+id)]);if(version!==epoch)return;remember(posts);
@@ -223,7 +221,7 @@
     closeStory();const ordered=[...items].sort((a,b)=>Number(a.id)-Number(b.id));if(!ordered.length)return;
     observer?.disconnect();document.querySelectorAll('.feed-video').forEach(v=>v.pause());
     storyState={items:ordered,index:0,part:0,durations:new Map(),elapsed:0,last:performance.now(),paused:false,reply:false,opener:document.activeElement};
-    const el=document.createElement('div');el.className='story-viewer';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label',t('استوری','Story'));document.body.append(el);document.body.style.overflow='hidden';showStory();
+    const el=document.createElement('div');el.className='story-viewer';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label',t('استوری','Story'));document.querySelector('.community-app').append(el);document.body.style.overflow='hidden';showStory();
     let touch;
     el.addEventListener('touchstart',e=>{touch={x:e.touches[0].clientX,y:e.touches[0].clientY};},{passive:true});
     el.addEventListener('touchend',e=>{if(!touch || !storyState)return;const dx=e.changedTouches[0].clientX-touch.x,dy=e.changedTouches[0].clientY-touch.y;if(dy < -55 && Math.abs(dy)>Math.abs(dx))replyPanel(true);else if(dy>70 && storyState.reply)replyPanel(false);touch=null;},{passive:true});
@@ -314,7 +312,6 @@
       if(a==='notification'){await api('/notifications/'+id+'/read',{});const path=el.dataset.kind==='message'?'/community/direct/':el.dataset.kind==='follow'?'/community/users/':'/community/posts/';navigate(path+(el.dataset.kind==='follow'?el.dataset.actor:el.dataset.target));}
       if(a==='direct-person'){if(!signedIn())return;const c=await api('/conversations',{user_id:id});navigate('/community/direct/'+Number(c.id));}
       if(a==='follow'){if(!signedIn())return;await api('/users/'+id+'/follow',{active:el.dataset.active});await render();}
-      if(a==='more-messages'){const data=await api('/conversations/'+id+'/messages?after='+conversationCursor,undefined,true);const rows=data.messages||[];document.getElementById('messages').insertAdjacentHTML('beforeend',rows.filter(m=>!document.querySelector('[data-message="'+Number(m.id)+'"]')).map(messageRow).join(''));if(rows.length)conversationCursor=Number(rows.at(-1).id);else toast(t('پیام تازه‌ای نیست.','No new messages.'));}
     });
   });
   document.addEventListener('submit',e=>{
@@ -323,7 +320,6 @@
     once('submit:'+type,submit,async()=>{
       const body=form.elements.body?.value.trim() || '';
       if(type==='comment'){const c=await api('/posts/'+id+'/comments',{body});if(form.isConnected){document.getElementById('comment-rows').insertAdjacentHTML('afterbegin',commentRow(c));form.reset();}}
-      if(type==='message'){const sent=await api('/conversations/'+id+'/messages',{body});if(!form.isConnected)return;form.reset();const data=await api('/conversations/'+id+'/messages?after='+(Number(sent.id)-1));if(!form.isConnected)return;const list=document.getElementById('messages');list.insertAdjacentHTML('beforeend',(data.messages||[]).filter(m=>!list.querySelector('[data-message="'+Number(m.id)+'"]')).map(messageRow).join(''));list.scrollTop=list.scrollHeight;}
       if(type==='story-reply')await storyReply(body);
       if(type==='publish'){
         const file=form.elements.file.files[0],kind=form.elements.kind.value;

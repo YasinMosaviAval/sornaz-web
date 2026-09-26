@@ -14,9 +14,22 @@ async function setup(browser,lang,width,guest=false,fail=false,video=false){
   HTMLMediaElement.prototype.pause=function(){};
  });
  const errors=[],requests=[];page.on('pageerror',e=>errors.push(e.message));
- const html=cp.execFileSync('php',['scripts/social_web_fixture.php',lang,guest?'0':'1'],{encoding:'utf8'});
+ const html=cp.execFileSync('php',['-d','short_open_tag=1','scripts/social_web_fixture.php',lang,guest?'0':'1'],{encoding:'utf8'});
+ const chatHtml=cp.execFileSync('php',['-d','short_open_tag=1','scripts/public_apps_fixture.php',lang,'chat'],{encoding:'utf8'});
+ let sentChat=false;
  await page.route('**/*',async route=>{
   const req=route.request(),url=new URL(req.url());
+  if(url.pathname==='/community/chat-frame')return route.fulfill({contentType:'text/html; charset=utf-8',body:chatHtml});
+  if(url.pathname.startsWith('/analytics/chat')){
+   requests.push({path:url.pathname,method:req.method(),body:req.postData()||''});
+   let data={};
+   if(url.pathname==='/analytics/chat')data=req.method()==='POST'?{id:7}:{conversations:[{id:7,type:'direct',title:'Musician',lastMessage:'Hello',members:2},{id:8,type:'group',title:'Music group',lastMessage:'Welcome',members:3}],users:[{id:2,name:'Musician',username:'musician'}]};
+   if(url.pathname==='/analytics/chat/7/messages'){
+    if(req.method()==='POST'){sentChat=true;data={id:101};}
+    else data={messages:(url.searchParams.has('after')?(sentChat?[{id:101,body:'Hello',mine:true}]:[]):[{id:100,body:'/community/posts/9',mine:false}]).map(m=>({...m,createdAt:'2026-09-14T09:00:00',likes:0})),lastId:sentChat?101:100};
+   }
+   return route.fulfill({json:{success:true,data}});
+  }
   if(url.pathname.startsWith('/community/api')){
    requests.push({path:url.pathname,query:url.search,method:req.method(),body:req.postData()||''});
    if(fail)return route.fulfill({status:429,headers:{'Retry-After':'120'},contentType:'application/json',body:'{}'});
@@ -34,8 +47,9 @@ async function setup(browser,lang,width,guest=false,fail=false,video=false){
    if(p.endsWith('/react'))data={...post,liked:true,likes:8};
    return route.fulfill({contentType:'application/json',body:JSON.stringify({status:200,data:{success:true,data}})});
   }
+  if(url.pathname==='/analytics/site-settings')return route.fulfill({contentType:'application/json',body:JSON.stringify({data:{colorTheme:'indigo',themeMode:'light'}})});
   if(req.resourceType()==='document')return route.fulfill({contentType:'text/html; charset=utf-8',body:html});
-  if(url.pathname==='/assets/social/community.js'||url.pathname==='/assets/social/community.css'||url.pathname.startsWith('/assets/vendor/vazirmatn/'))return route.fulfill({path:'.'+url.pathname});
+  if(url.pathname.startsWith('/assets/')&&fs.existsSync('.'+url.pathname))return route.fulfill({path:'.'+url.pathname});
   if(req.resourceType()==='image')return route.fulfill({contentType:'image/svg+xml',body:svg});
   return route.abort();
  });
@@ -71,9 +85,26 @@ async function setup(browser,lang,width,guest=false,fail=false,video=false){
    await page.locator('.emoji-row button').first().click();await page.locator('.story-bottom.open').waitFor({state:'detached'});
    assert.ok(requests.some(r=>r.path==='/community/api/stories/11/reply'&&r.body.includes('❤️')));
    await page.locator('[data-action=close-story]').click();
-   await page.goto('http://community.test/community/direct/7');await page.locator('.shared-post').waitFor();
-   await page.locator('[data-form=message] textarea').fill('سلام');await page.locator('[data-form=message] [type=submit]').click();
-   await page.waitForFunction(()=>document.querySelector('[data-form=message] textarea').value==='');
+   await page.goto('http://community.test/community/direct/7');
+   const chat=page.frameLocator('.community-chat-frame');
+   await chat.locator('#chatMessage-100').waitFor();
+   assert.equal(await chat.locator('#chatSidebar h1').innerText(),lang==='en'?'Conversations':'گفتگوها');
+   assert.equal(await chat.locator('#chatVoiceButton').count(),1,'reuse panel voice controls');
+   assert.equal(await chat.locator('#chatFile').count(),1,'reuse panel attachment controls');
+   assert.equal(await chat.locator('.sidebar,.context-help-button,body > header').count(),0,'no panel shell or guide');
+   assert.equal(await page.locator('body > header').count(),1,'keep the main site header');
+   await page.evaluate(()=>{setSiteTheme('rose');toggleSiteThemeMode();});
+   await chat.locator('html[data-theme="rose"][data-mode="dark"]').waitFor();
+   await chat.locator('#chatBody').fill('Hello');await chat.locator('#chatSendButton').click();
+   await chat.locator('#chatMessage-101').waitFor();
+   assert.ok(requests.some(r=>r.path==='/analytics/chat/7/messages'&&r.method==='POST'&&r.body.includes('fixture-csrf')),'send through the panel API with CSRF');
+   await chat.locator('#chatRoom > header button[onclick="closeMobileChat()"]').evaluate(el=>el.click());
+   await page.waitForURL('**/community/direct');
+   await chat.locator('[onclick="openNewChatModal()"]') .click();
+   await chat.locator('#chatGroupTitle').waitFor();
+   await chat.locator('#modalContainer button[onclick="closeModal()"]') .click();
+   const frameBox=await page.locator('.community-chat-frame').boundingBox();
+   assert.ok(frameBox.y+frameBox.height<=900-(width<700?59:0),'composer fits above community mobile navigation');
    await page.goto('http://community.test/community/notifications');await page.locator('[data-action=notification]').click();await page.locator('#comment-rows').waitFor();
    assert.ok(requests.some(r=>r.path.endsWith('/50/read')));
    assert.deepEqual(errors,[]);await page.close();

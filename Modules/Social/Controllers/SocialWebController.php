@@ -25,6 +25,15 @@ class SocialWebController extends SocialController
         return ResponseFactory::view('Social::community', ['boot' => [
             'api' => '/community/api', 'userId' => (int)auth()->id(),
             'csrf' => csrf_token(), 'locale' => locale() === 'en' ? 'en' : 'fa',
-        ]]);
+        ]])->layout('public-app');
+    }
+
+    public function chatFrame()
+    {
+        header('Cache-Control: private, no-store');
+        header('X-Frame-Options: SAMEORIGIN');
+        return ResponseFactory::view('Social::chat-frame', [
+            'adminUiMap' => (new \Modules\Analytics\Services\AdminTestDataService())->adminUiMap(locale()),
+        ]);
     }
 }

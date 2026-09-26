@@ -3,6 +3,7 @@ use Core\router\Router;
 use Modules\Social\Controllers\SocialWebController as C;
 
 Router::get('/community', [C::class, 'page']);
+Router::get('/community/chat-frame', [C::class, 'chatFrame'])->middleware('auth');
 foreach (['direct','notifications','create','saved'] as $page) Router::get('/community/'.$page, [C::class,'page']);
 foreach (['posts','stories','users','direct'] as $page) Router::get('/community/'.$page.'/{id}', [C::class,'page']);
 Router::group(['prefix'=>'/community/api'], function () {

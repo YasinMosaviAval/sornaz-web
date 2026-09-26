@@ -11,7 +11,7 @@
             <nav class="hidden lg:flex items-center gap-1 text-sm">
                 <a href="/analytics/articles" data-page="articles" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">مقاله‌های آموزشی</a>
                 <a href="/academy/academies" data-page="academies" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">آموزشگاه‌ها</a>
-                <a href="/users" data-page="users" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">کاربران</a>
+                <!-- <a href="/users" data-page="users" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">کاربران</a> -->
                 <?php $headerUser = auth()->user(); $isSiteAdmin = \Modules\System\Services\SiteAdminAccess::allows($headerUser); ?>
                 <?php if ($headerUser): ?>
                     <a href="/analytics/admin-panel" data-page="contact" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">پنل کاربری</a>
@@ -44,7 +44,7 @@
         <div id="mobileMenu" class="hidden lg:hidden pb-4 border-t border-gray-100 pt-3 space-y-1">
             <a href="/analytics/articles" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">مقاله‌های آموزشی</a>
             <a href="/academy/academies" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">آموزشگاه‌ها</a>
-            <a href="/users" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">کاربران</a>
+            <!-- <a href="/users" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">کاربران</a> -->
             <?php if ($headerUser): ?>
                 <a href="/analytics/admin-panel" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">پنل کاربری</a>
             <?php endif; ?>

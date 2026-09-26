@@ -19,7 +19,7 @@ class CourseController
     private function actor(): int { return (int)auth()->id(); }
     private function page(string $mode, array $data = [])
     {
-        return ResponseFactory::view('CourseMarket::index', ['mode'=>$mode] + $data);
+        return ResponseFactory::view('CourseMarket::index', ['mode'=>$mode] + $data)->layout('public-app');
     }
     public function index() { return $this->page('catalog', ['items'=>$this->courses->listing($this->actor(), 'catalog')]); }
     public function manage() { return $this->page('manage', ['items'=>$this->courses->listing($this->actor(), 'manage'), 'sales'=>$this->courses->sales($this->actor())]); }
@@ -50,9 +50,9 @@ class CourseController
     private function status(\Throwable $e): int { return in_array($e->getCode(), [401,403,404,409,422,500,502,503], true) ? $e->getCode() : 500; }
     private function message(\Throwable $e): string
     {
-        if ($e instanceof \RuntimeException && !($e instanceof \PDOException)) return $e->getMessage();
+        if ($e instanceof \RuntimeException && !($e instanceof \PDOException)) return \Modules\CourseMarket\Services\CourseTranslations::text($e->getMessage());
         error_log('CourseMarket: '.$e->getMessage());
-        return 'خطایی رخ داد. لطفاً دوباره تلاش کنید.';
+        return \Modules\CourseMarket\Services\CourseTranslations::text('خطایی رخ داد. لطفاً دوباره تلاش کنید.');
     }
     private function jsonAction(callable $action)
     {
