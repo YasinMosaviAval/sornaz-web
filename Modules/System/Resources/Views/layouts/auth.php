@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html lang="<?= e(locale()) ?>" dir="<?= e(direction()) ?>">
+<html data-help-enabled="<?= (int)auth()->id() === 1 ? '1' : '0' ?>" data-inline-can-edit="<?= \Modules\System\Services\SiteAdminAccess::allows(auth()->user()) ? '1' : '0' ?>" lang="<?= e(locale()) ?>" dir="<?= e(direction()) ?>">
 <head>
+    <script>window.siteCsrfToken=<?= json_encode(csrf_token()) ?>;</script>
+    <script src="/assets/theme/csrf.js?v=1"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>(function(){const r=document.documentElement;r.dataset.theme=localStorage.getItem('sornaz.theme')||'indigo';r.dataset.mode=localStorage.getItem('sornaz.mode')||'light';})();</script>
@@ -59,6 +61,8 @@
     <?= scripts() ?>
     <script src="/assets/Page/js/page-content-editor.js?v=<?= filemtime(base_path('assets/Page/js/page-content-editor.js')) ?: 1 ?>"></script>
     <script src="/assets/theme/theme.js?v=<?= filemtime(base_path('assets/theme/theme.js')) ?: 1 ?>"></script>
+    <?php if ((int)auth()->id() === 1): ?>
     <script src="/assets/theme/help-center.js?v=<?= filemtime(base_path('assets/theme/help-center.js')) ?: 1 ?>"></script>
+    <?php endif; ?>
 </body>
 </html>

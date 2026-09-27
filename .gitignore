@@ -1,5 +1,20 @@
 /.vscode
 /old
+/.env
+/.env.*
+!/.env.example
+/php-error.log
+/docs/database/*.sql
+!/docs/database/add-*.sql
+!/docs/database/backfill-*.sql
+!/docs/database/expand-*.sql
+!/docs/database/extend-*.sql
+!/docs/database/normalize-*.sql
+!/docs/database/remove-*.sql
+/storage/account-media/
+/storage/backups/
+/storage/logs/
+/assets/media/library/
 /storage/sessions/sess_*
 
 # Local database sources and safety backups

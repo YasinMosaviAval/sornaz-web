@@ -1,5 +1,6 @@
 (function(){
 'use strict';
+if (document.documentElement.dataset.helpEnabled !== '1') return;
 const H=(title,intro,features,tips='')=>({title,intro,features,tips});
 const profileGroups={
 read:['dashboard','reports','chart-gallery','notifications','schedules','articles','article-details','home'],

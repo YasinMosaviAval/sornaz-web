@@ -94,7 +94,7 @@ class UserService {
     public function attempt(string $identifier, string $password): array|false {
         $user = $this->repository->findForLogin($identifier);
 
-        if (!$user) {
+        if (!$user || !in_array($user['status'] ?? '', ['active','approved'], true)) {
             return false;
         }
 
@@ -110,6 +110,7 @@ class UserService {
             ->select('user_id', 'username', 'type', 'gender', 'status', 'visibility', 'email', 'phone', 'birthday', 'register_time', 'register_method', 'last_login_at','avatar_file_id')
             ->where('type', 'human')
             ->where('visibility', 'public')
+            ->whereIn('status', ['active', 'approved'])
             ->whereIn('register_method', ['email', 'phone'])
             ->whereNull('deleted_at')
             ->latest('user_id')
@@ -148,18 +149,20 @@ class UserService {
             $directoryRoles = $this->directoryRoles($roleNames, (string)$user['type'], (string)$user['username']);
             $directoryRole = $directoryRoles[0] ?? 'user';
             $roleLabels = $this->roleLabels($roleNames, $translations, $locale);
-            $media = DB::table('media_files')->where('user_id', $id)->whereNull('deleted_at')->orderBy('sort_order')->get();
+            $media = DB::table('media_files')->where('user_id', $id)->where('disk', 'public')->where('visibility', 'public')->whereIn('collection', ['avatar','logo','cover','teacher_gallery','intro_video'])->whereNull('deleted_at')->orderBy('sort_order')->get();
             $byCollection = [];
             foreach ($media as $file) $byCollection[$file['collection']][] = '/' . ltrim((string)$file['path'], '/');
             $instruments = $this->userMusicRows('user_instruments', 'user_instrument_id', 'instrument_id', 'instruments', $id, $translations, $locale);
             $lessons = $this->userMusicRows('user_lessons', 'user_lesson_id', 'lesson_id', 'lessons', $id, $translations, $locale);
+            $contactPrivacy = DB::table('z_user_settings')->where('user_id', $id)->where('`key`', 'privacy_show_contact')->whereNull('deleted_at')->first();
+            $showContact = ($contactPrivacy['value'] ?? '0') === '1';
             $addresses = $this->translatedRows('user_addresses', 'address_id', $id, ['address', 'note'], $translations, $locale);
             $contacts = $this->translatedRows('user_contacts', 'user_contact_id', $id, ['value', 'note'], $translations, $locale);
-            $availabilityRows = $this->translatedRows('user_availabilities', 'user_availability_id', $id, ['summary', 'description'], $translations, $locale);
-            $availabilityExceptions = array_values(array_filter($availabilityRows, fn(array $row): bool => !empty($row['unavailable_type'])));
-            $availabilities = array_values(array_filter($availabilityRows, fn(array $row): bool => empty($row['unavailable_type'])));
+            $addresses = $showContact ? array_map(fn(array $r): array => array_intersect_key($r, array_flip(['type','address'])), $addresses) : [];
+            $contacts = $showContact ? array_map(fn(array $r): array => array_intersect_key($r, array_flip(['type','value'])), $contacts) : [];
+            $availabilities = $availabilityExceptions = [];
             $firstAddress = $addresses[0]['address'] ?? '';
-            $avatarFile=!empty($user['avatar_file_id'])?DB::table('media_files')->where('media_file_id',(int)$user['avatar_file_id'])->whereNull('deleted_at')->first():null;
+            $avatarFile=!empty($user['avatar_file_id'])?DB::table('media_files')->where('media_file_id',(int)$user['avatar_file_id'])->where('user_id',$id)->where('disk','public')->where('visibility','public')->whereNull('deleted_at')->first():null;
             $starts=array_values(array_filter(array_merge(array_column($instruments,'start_date'),array_column($lessons,'start_date'))));sort($starts);$startYear=$starts?(int)substr((string)$starts[0],0,4):0;$currentYear=$startYear&&$startYear<1700?(int)date('Y')-621:(int)date('Y');$years=$startYear?max(0,$currentYear-$startYear):null;
             return [
                 'id' => $id,
@@ -173,9 +176,7 @@ class UserService {
                     : (implode($locale==='en'?', ':'، ', $roleLabels) ?: $labels['user']),
                 'bio' => $translations->get('users', $id, 'bio', $locale) ?: '',
                 'username' => $user['username'], 'gender' => $user['gender'], 'status' => $user['status'],
-                'visibility' => $user['visibility'], 'email' => $user['email'], 'phone' => $user['phone'],
-                'birthday' => $user['birthday'], 'register_time' => $user['register_time'],
-                'register_method' => $user['register_method'], 'last_login_at' => $user['last_login_at'],
+                'visibility' => $user['visibility'], 'email' => $showContact ? $user['email'] : '', 'phone' => $showContact ? $user['phone'] : '',
                 'avatar' => $avatarFile?'/'.ltrim((string)$avatarFile['path'],'/'):($byCollection['avatar'][0]??$byCollection['logo'][0]??null),
                 'cover' => $byCollection['cover'][0] ?? null,
                 'gallery' => $byCollection['teacher_gallery'] ?? [],

@@ -18,13 +18,13 @@ Router::get('/users', [UserController::class, 'directory']);
 Router::get('/system/my-invite', [UserReferralController::class, 'show'])->middleware('auth');
 Router::post('/system/tracking/ingest', [UserTrackingController::class, 'ingest']);
 
-Router::post('/register', [UserController::class, 'store']);
-Router::post('/register/send-otp', [UserController::class, 'sendRegistrationOtp']);
-Router::post('/forgot-password/send-otp', [UserController::class, 'sendPasswordResetOtp']);
-Router::post('/forgot-password/verify-otp', [UserController::class, 'verifyPasswordResetOtp']);
-Router::post('/forgot-password/reset', [UserController::class, 'resetPassword']);
-Router::post('/login', [UserController::class, 'login']);
-Router::post('/logout', [UserController::class, 'logout']);
+Router::post('/register', [UserController::class, 'store'])->middleware(['csrf','auth-rate-limit']);
+Router::post('/register/send-otp', [UserController::class, 'sendRegistrationOtp'])->middleware(['csrf','auth-rate-limit']);
+Router::post('/forgot-password/send-otp', [UserController::class, 'sendPasswordResetOtp'])->middleware(['csrf','auth-rate-limit']);
+Router::post('/forgot-password/verify-otp', [UserController::class, 'verifyPasswordResetOtp'])->middleware(['csrf','auth-rate-limit']);
+Router::post('/forgot-password/reset', [UserController::class, 'resetPassword'])->middleware(['csrf','auth-rate-limit']);
+Router::post('/login', [UserController::class, 'login'])->middleware(['csrf','auth-rate-limit']);
+Router::post('/logout', [UserController::class, 'logout'])->middleware('csrf');
 
 
 

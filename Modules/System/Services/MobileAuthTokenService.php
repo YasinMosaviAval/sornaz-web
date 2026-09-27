@@ -15,6 +15,7 @@ class MobileAuthTokenService
     public function issue(array $user): string
     {
         $payload = $this->encode(json_encode([
+            'jti' => (new AccountSecurityStore())->issue((int)$user['user_id'], time()+self::TTL),
             'sub' => (int)$user['user_id'],
             'exp' => time() + self::TTL,
             'pwd' => $this->fingerprint((string)$user['password']),
@@ -32,10 +33,20 @@ class MobileAuthTokenService
         [$payload, $signature] = $parts;
         if (!hash_equals($this->encode(hash_hmac('sha256', $payload, $this->key(), true)), $signature)) return null;
         $data = json_decode((string)$this->decode($payload), true);
-        if (!is_array($data) || (int)($data['exp'] ?? 0) < time() || empty($data['sub'])) return null;
+        if (!is_array($data) || (int)($data['exp'] ?? 0) <= time() || empty($data['sub'])) return null;
         $user = $this->users->find((int)$data['sub']);
-        if (!$user || !hash_equals((string)($data['pwd'] ?? ''), $this->fingerprint((string)$user['password']))) return null;
+        if (!$user || !empty($user['deleted_at']) || !in_array($user['status'] ?? '', ['active','approved'], true) || !hash_equals((string)($data['pwd'] ?? ''), $this->fingerprint((string)$user['password']))) return null;
+        if (empty($data['jti']) || !(new AccountSecurityStore())->valid((string)$data['jti'], (int)$user['user_id'])) return null;
         return $user;
+    }
+
+    public function revokeFromRequest(): void
+    {
+        if (!$this->userFromRequest()) return;
+        $header = trim((string)($_SERVER['HTTP_AUTHORIZATION'] ?? ''));
+        $token = preg_replace('/^Bearer\s+/i', '', $header);
+        $data = json_decode((string)$this->decode(explode('.', $token)[0]), true);
+        (new AccountSecurityStore())->revoke((string)$data['jti']);
     }
 
     private function key(): string

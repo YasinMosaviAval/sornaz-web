@@ -1,6 +1,6 @@
 <?php
 
-use Core\application\application;
+use Core\application\Application;
 use Core\csrf\Csrf;
 use Core\database\Connection;
 use Core\events\EventDispatcher;

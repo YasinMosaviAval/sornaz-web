@@ -79,6 +79,7 @@ class UserController {
     }
 
     public function logout() {
+        $this->tokens->revokeFromRequest();
         return ResponseFactory::json(['success'=>true, 'message'=>'خروج با موفقیت انجام شد.']);
     }
 

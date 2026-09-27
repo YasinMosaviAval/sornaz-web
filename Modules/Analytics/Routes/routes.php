@@ -1,6 +1,10 @@
 <?php
 
 use Core\router\Router;
+Router::get('/storage/account-media/{user}/{year}/{month}/{filename}', [\Modules\Analytics\Controllers\Web\PublicAccountMediaController::class, 'show']);
+Router::get('/assets/media/library/{year}/{month}/{filename}', [\Modules\Analytics\Controllers\Web\PublicAccountMediaController::class, 'library']);
+Router::head('/storage/account-media/{user}/{year}/{month}/{filename}', [\Modules\Analytics\Controllers\Web\PublicAccountMediaController::class, 'show']);
+Router::head('/assets/media/library/{year}/{month}/{filename}', [\Modules\Analytics\Controllers\Web\PublicAccountMediaController::class, 'library']);
 use Modules\Analytics\Controllers\Web\AnalyticsController;
 use Modules\Analytics\Controllers\Web\AdminTestController;
 use Modules\Analytics\Controllers\Web\AdminNotificationController;
@@ -141,6 +145,7 @@ Router::post('/analytics/member-schedules/{id}/delete', [AdminTestController::cl
 Router::post('/analytics/availability-exceptions/{id}/delete', [AdminTestController::class, 'deleteAvailabilityException'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-inline-translations/save', [AdminTestController::class, 'saveInlineTranslation'])->middleware(['site-admin', 'csrf']);
 Router::get('/analytics/admin-inline-translations', [AdminTestController::class, 'inlineTranslations'])->middleware('site-admin');
+Router::get('/analytics/inline-translations', [AdminTestController::class, 'publicInlineTranslations']);
 
 
 

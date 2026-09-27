@@ -1,10 +1,14 @@
 <?php
 namespace Modules\System\Repositories {
     class UserRepository {
-        public function find(int $id): ?array { return in_array($id,[1,7],true) ? ['user_id'=>$id,'password'=>'stored-test-hash'] : null; }
+        public function find(int $id): ?array { return in_array($id,[1,7],true) ? ['user_id'=>$id,'password'=>'stored-test-hash','status'=>'approved'] : null; }
     }
 }
 namespace {
+require __DIR__.'/../Modules/System/Services/AccountSecurityStore.php';
+$testDb = new \PDO('sqlite::memory:');
+$testDb->exec('CREATE TABLE auth_remember_tokens (token_hash TEXT PRIMARY KEY,user_id INTEGER,expires_at INTEGER)');
+function db(){return $GLOBALS['testDb'];}
 require __DIR__.'/../Modules/System/Services/MobileAuthTokenService.php';
 require __DIR__.'/../Modules/System/Services/RegistrationOtpPolicy.php';
 function config($key,$default=null){return 'local-test-signing-key';}

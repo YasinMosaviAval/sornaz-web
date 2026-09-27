@@ -2,7 +2,7 @@
 
 namespace Modules\Home\Repositories;
 
-use Core\Database\Repository;
+use Core\database\Repository;
 
 class HomeRepository extends Repository {
     

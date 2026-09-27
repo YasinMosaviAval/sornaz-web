@@ -40,7 +40,7 @@
                     <?php if (auth()->check()): ?>
                         <li>
                             <form method="POST" action="/logout" class="inline">
-                                <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\Csrf\Csrf::class)->token() ?>">
+                                <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\csrf\Csrf::class)->token() ?>">
                                 <button type="submit" class="hover:text-white transition text-red-600"><?= e(trans('public.action.logout', 'خروج')) ?></button>
                             </form>
                         </li>

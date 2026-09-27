@@ -7,6 +7,12 @@ class Session {
 
     public function start(): void {
         if (session_status() === PHP_SESSION_NONE) {
+            ini_set('session.use_strict_mode', '1');
+            ini_set('session.use_only_cookies', '1');
+            ini_set('session.use_trans_sid', '0');
+            $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                || parse_url((string)env('APP_URL', ''), PHP_URL_SCHEME) === 'https';
+            session_set_cookie_params(['lifetime'=>0,'path'=>'/','secure'=>$secure,'httponly'=>true,'samesite'=>'Lax']);
             $sessionPath = storage_path('sessions');
             if (!is_dir($sessionPath)) {
                 mkdir($sessionPath, 0775, true);
@@ -36,6 +42,14 @@ class Session {
 
     public function forget(string $key): void {
         unset($_SESSION[$key]);
+    }
+
+    public static function safeInput(array $input): array {
+        foreach ($input as $key => $value) {
+            if (preg_match('/password|passwd|token|secret|otp|^code$|^csrf$/i', (string)$key)) unset($input[$key]);
+            elseif (is_array($value)) $input[$key] = self::safeInput($value);
+        }
+        return $input;
     }
 
 

@@ -1,6 +1,8 @@
 <!doctype html>
-<html lang="fa" dir="rtl">
+<html data-help-enabled="<?= (int)auth()->id() === 1 ? '1' : '0' ?>" data-inline-can-edit="<?= \Modules\System\Services\SiteAdminAccess::allows(auth()->user()) ? '1' : '0' ?>" lang="fa" dir="rtl">
 <head>
+    <script>window.siteCsrfToken=<?= json_encode(csrf_token()) ?>;</script>
+    <script src="/assets/theme/csrf.js?v=1"></script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title><?=e($title)?></title>
@@ -32,6 +34,8 @@
     <script src="/assets/theme/dialog.js?v=<?= filemtime(base_path('assets/theme/dialog.js')) ?: 1 ?>"></script>
     <script src="/assets/Analytics/js/admin-inline-editor.js?v=<?= filemtime(base_path('assets/Analytics/js/admin-inline-editor.js')) ?: 1 ?>"></script>
     <?=scripts()?>
+    <?php if ((int)auth()->id() === 1): ?>
     <script src="/assets/theme/help-center.js?v=<?= filemtime(base_path('assets/theme/help-center.js')) ?: 1 ?>"></script>
+    <?php endif; ?>
 </body>
 </html>

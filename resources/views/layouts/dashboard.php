@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html data-help-enabled="<?= (int)auth()->id() === 1 ? '1' : '0' ?>" data-inline-can-edit="<?= \Modules\System\Services\SiteAdminAccess::allows(auth()->user()) ? '1' : '0' ?>" lang="fa" dir="rtl">
 <head>
+    <script>window.siteCsrfToken=<?= json_encode(csrf_token()) ?>;</script>
+    <script src="/assets/theme/csrf.js?v=1"></script>
     <meta charset="UTF-8">
     <title><?= $title ?? 'Sornaz' ?></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="stylesheet" href="<?= asset('assets/css/dashboard.css') ?>">
     <link rel="stylesheet" href="/assets/theme/theme.css?v=<?= filemtime(base_path('assets/theme/theme.css')) ?: 1 ?>">
-    <?php foreach(\Core\View\View::styles() as $style): ?>
+    <?php foreach(\Core\view\View::styles() as $style): ?>
     <link rel="stylesheet" href="<?= asset($style) ?>">
     <?php endforeach; ?>
 </head>
@@ -29,7 +31,7 @@
             </main>
         </div>
     </div>
-    <?php foreach(\Core\View\View::scripts() as $script): ?>
+    <?php foreach(\Core\view\View::scripts() as $script): ?>
         <script src="<?= asset($script) ?>"></script>
     <?php endforeach; ?>
     <div id="modalContainer"></div>

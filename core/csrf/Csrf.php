@@ -13,7 +13,8 @@ class Csrf {
 
 
     public function verify(?string $token): bool {
-        return hash_equals(session()->get('_csrf_token', ''), $token ?? '');
+        $stored = session()->get('_csrf_token', '');
+        return is_string($stored) && $stored !== '' && is_string($token) && $token !== '' && hash_equals($stored, $token);
     }
 
 

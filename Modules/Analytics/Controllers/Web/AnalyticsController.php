@@ -46,7 +46,7 @@ class AnalyticsController {
             ? $this->adminTests->statistics()
             : [];
         $scheduleFixtures = env('APP_ENV', 'production') === 'local' ? $this->adminTests->scheduleFixtures() : ['schedules'=>[],'exceptions'=>[]];
-        $guides = SiteAdminAccess::allows(auth()->user()) ? $this->guides->all(locale()) : [];
+        $guides = (int)auth()->id() === 1 ? $this->guides->all(locale()) : [];
         return ResponseFactory::view('Analytics::admin-panel', ['testStats' => $testStats, 'scheduleFixtures'=>$scheduleFixtures, 'guides'=>$guides, 'adminUiMap'=>$this->adminTests->adminUiMap(locale()),'inlineTranslationCatalog'=>$this->adminTests->inlineTranslationCatalog()])->layout('admin')->title('سُرناز | پنل کاربری');
     }
 

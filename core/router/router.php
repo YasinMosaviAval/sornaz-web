@@ -71,6 +71,7 @@ class Router {
 
 
     public static function get(string $uri, mixed $action) {return static::addRoute('GET', $uri, $action);}
+    public static function head(string $uri, mixed $action) {return static::addRoute('HEAD', $uri, $action);}
     public static function post(string $uri, mixed $action) {return static::addRoute('POST', $uri, $action);}
     public static function put(string $uri, mixed $action) {return static::addRoute('PUT', $uri, $action);}
     public static function patch(string $uri, mixed $action) {return static::addRoute('PATCH', $uri, $action);}

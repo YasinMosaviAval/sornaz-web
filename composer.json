@@ -5,6 +5,7 @@
         "php": ">=8.0"
     },
     "autoload": {
+        "classmap": ["core/", "Modules/"],
         "psr-4": {
             "Core\\": "core/",
             "Modules\\": "Modules/",

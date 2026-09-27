@@ -31,7 +31,7 @@ class RedirectResponse implements ResponseInterface {
 
 
     public function withInput(array $input): static {
-        session()->put('_old_input', $input);
+        session()->put('_old_input', \Core\session\Session::safeInput($input));
         return $this;
     }
 

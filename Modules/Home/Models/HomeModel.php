@@ -2,7 +2,7 @@
 
 namespace Modules\Home\Models;
 
-use Core\Database\Model;
+use Core\database\Model;
 
 class HomeModel extends Model {
 

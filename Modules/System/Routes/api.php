@@ -4,9 +4,9 @@ use Core\router\Router;
 use Modules\System\Controllers\Api\UserController;
 
 Router::group(['prefix' => '/api/sornaz/v1/auth'], function () {
-    Router::post('/login', [UserController::class, 'login']);
-    Router::post('/register/send-otp', [UserController::class, 'sendRegistrationOtp']);
-    Router::post('/register', [UserController::class, 'register']);
+    Router::post('/login', [UserController::class, 'login'])->middleware('auth-rate-limit');
+    Router::post('/register/send-otp', [UserController::class, 'sendRegistrationOtp'])->middleware('auth-rate-limit');
+    Router::post('/register', [UserController::class, 'register'])->middleware('auth-rate-limit');
     Router::get('/me', [UserController::class, 'me']);
     Router::post('/logout', [UserController::class, 'logout']);
 });

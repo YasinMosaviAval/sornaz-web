@@ -153,4 +153,9 @@ class AdminTestController {
     public function inlineTranslations() {
         return ResponseFactory::json(['success'=>true,'translations'=>$this->tests->inlineTranslationCatalog()]);
     }
+
+    public function publicInlineTranslations() {
+        header('Cache-Control: no-store');
+        return ResponseFactory::json(['success'=>true,'translations'=>$this->tests->inlineTranslationCatalog(true)]);
+    }
 }

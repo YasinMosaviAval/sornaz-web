@@ -1,9 +1,23 @@
-<IfModule mod_rewrite.c>
-    DirectoryIndex index.php
-    RewriteEngine On
+Options -Indexes -MultiViews
+DirectoryIndex index.php
 
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
+# These restrictions apply even when an existing file bypasses the router.
+<FilesMatch "(?i)(^\.|\.(sql|log|bak|backup|ini|env|lock|sqlite|sqlite3)(\..*)?$|^composer\.json$|^sornaz$)">
+    Require all denied
+</FilesMatch>
 
-    RewriteRule ^(.*)$ index.php [L,QSA]
-</IfModule>
+RewriteEngine On
+RewriteRule (^|/)\.(?!well-known(?:/|$)) - [F,END]
+RewriteRule ^(?:core|Modules|bootstrap|config|routes|resources|vendor|docs|scripts|tests|old)(?:/|$) - [F,END,NC]
+# No uploaded or auxiliary PHP file may execute through the web server.
+RewriteRule ^(?!index\.php$).*\.(?:php[0-9]*|phtml|phar)(?:/|$) - [F,END,NC]
+
+# Existing account-media URLs remain valid, but the application checks each file.
+RewriteRule ^storage/account-media/[^/]+/[^/]+/[^/]+/[^/]+$ index.php [END]
+RewriteRule ^assets/media/library/[^/]+/[^/]+/[^/]+$ index.php [END]
+RewriteRule ^assets/media/library(?:/|$) - [F,END,NC]
+RewriteRule ^storage(?:/|$) - [F,END,NC]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [END,QSA]

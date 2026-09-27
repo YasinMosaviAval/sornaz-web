@@ -1,9 +1,9 @@
 #!/usr/bin/env php
 <?php
 
-use Core\Console\Kernel;
+use Core\console\Kernel;
 
-require __DIR__.'/vendor/autoload.php';
+require __DIR__.'/bootstrap/autoload.php';
 $app=require __DIR__.'/bootstrap/app.php';
 $kernel=new Kernel($app);
 exit($kernel->handle($argv));

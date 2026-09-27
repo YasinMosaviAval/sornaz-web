@@ -1,8 +1,9 @@
 (function () {
+    const canEdit = document.documentElement.dataset.inlineCanEdit === '1';
     const catalog = Array.isArray(window.adminInlineTranslations) ? window.adminInlineTranslations : [];
     const byKey = new Map(catalog.map(row => [row.key, row]));
     const byText = new Map();
-    catalog.forEach(row => { if (row.fa) byText.set(normalize(row.fa), row); if (row.en) byText.set(normalize(row.en), row); });
+    catalog.forEach(row => { (row.aliases||[]).forEach(text=>byText.set(normalize(text),row)); if (row.fa) byText.set(normalize(row.fa), row); if (row.en) byText.set(normalize(row.en), row); });
     let editMode = false;
 
     function normalize(value) { return String(value || '').replace(/\s+/g, ' ').trim(); }
@@ -22,7 +23,7 @@
         document.querySelectorAll('input[placeholder],textarea[placeholder]').forEach(el=>{if(el.closest('[data-no-inline-edit],#modalContainer'))return;const current=normalize(el.placeholder);if(!current)return;const prefix=location.pathname.startsWith('/analytics/admin-panel')?'admin':'site';const generatedKey=`${prefix}.inline.${hash(current)}`;const row=byText.get(current)||byKey.get(generatedKey);el.dataset.inlineTranslationKey=row?.key||generatedKey;el.dataset.inlineOriginalText=current;el.dataset.inlineAttribute='placeholder';if(row){el.dataset.inlineKnown='1';el.placeholder=document.documentElement.lang==='en'?row.en:row.fa;}});
     }
     function setMode(enabled) {
-        editMode=Boolean(enabled);document.documentElement.classList.toggle('admin-inline-editing',editMode);
+        editMode=canEdit && Boolean(enabled);document.documentElement.classList.toggle('admin-inline-editing',editMode);
         document.querySelectorAll('[data-admin-edit-toggle]').forEach(input=>input.checked=editMode);
         const english=document.documentElement.lang==='en';
         document.querySelectorAll('[data-admin-edit-label]').forEach(el=>el.textContent=editMode?(english?'Edit':'ویرایش'):(english?'View':'نمایش'));
@@ -37,6 +38,7 @@
         host.dataset.inlineTargetKey=key;host.querySelector(currentLocale==='fa'?'[data-inline-fa]':'[data-inline-en]')?.focus();
     }
     async function save(key){
+        if (!canEdit) return;
         const host=document.getElementById('modalContainer'),fa=host.querySelector('[data-inline-fa]')?.value.trim(),en=host.querySelector('[data-inline-en]')?.value.trim();
         if(!fa||!en){close();AppDialog.alert('متن فارسی و انگلیسی هر دو الزامی هستند.',{type:'error'});return;}
         const body=new FormData();body.append('_token',window.adminCsrfToken||'');body.append('key',key);body.append('fa',fa);body.append('en',en);
@@ -46,7 +48,7 @@
     function escapeHtml(value){const d=document.createElement('div');d.textContent=String(value||'');return d.innerHTML;}
     function escapeJs(value){return String(value).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
     document.addEventListener('click',event=>{if(!editMode)return;const el=event.target.closest('[data-inline-translation-key]');if(!el||el.closest('[data-no-inline-edit],#modalContainer'))return;event.preventDefault();event.stopImmediatePropagation();openEditor(el);},true);
-    async function loadCatalog(){if(catalog.length)return;try{const response=await fetch('/analytics/admin-inline-translations',{headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}});if(!response.ok)return;const envelope=await response.json(),result=envelope.data||envelope;for(const row of result.translations||[]){byKey.set(row.key,row);if(row.fa)byText.set(normalize(row.fa),row);if(row.en)byText.set(normalize(row.en),row);}}catch(_){} }
+    async function loadCatalog(){if(catalog.length)return;try{const response=await fetch('/analytics/inline-translations',{cache:'no-store',headers:{Accept:'application/json'}});if(!response.ok)return;const envelope=await response.json(),result=envelope.data||envelope;for(const row of result.translations||[]){byKey.set(row.key,row);(row.aliases||[]).forEach(text=>byText.set(normalize(text),row));if(row.fa)byText.set(normalize(row.fa),row);if(row.en)byText.set(normalize(row.en),row);}}catch(_){} }
     document.addEventListener('DOMContentLoaded',async()=>{setMode(false);await loadCatalog();mark();new MutationObserver(records=>{records.forEach(record=>record.addedNodes.forEach(node=>{if(node.nodeType===1)mark(node);}));}).observe(document.getElementById('mainContent')||document.querySelector('main')||document.body,{childList:true,subtree:true});});
     window.SiteInlineEditor=window.AdminInlineEditor={setMode,save,close};
 })();

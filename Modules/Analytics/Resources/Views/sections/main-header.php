@@ -25,7 +25,7 @@
             <div class="hidden lg:flex items-center gap-2">
                 <?php if (auth()->check()): ?>
                     <form method="POST" action="/logout" class="inline">
-                        <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\Csrf\Csrf::class)->token() ?>">
+                        <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\csrf\Csrf::class)->token() ?>">
                         <button type="submit" class="text-sm px-4 py-2 rounded-xl text-red-600 hover:bg-red-50">خروج</button>
                     </form>
                 <?php else: ?>
@@ -53,7 +53,7 @@
             <div class="flex gap-2 pt-3 border-t border-gray-100 mt-2">
                 <?php if (auth()->check()): ?>
                     <form method="POST" action="/logout" class="flex-1">
-                        <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\Csrf\Csrf::class)->token() ?>">
+                        <input type="hidden" name="_token" value="<?= app()->container()->make(\Core\csrf\Csrf::class)->token() ?>">
                         <button type="submit" class="w-full text-center text-sm py-2.5 rounded-xl border border-red-200 text-red-600">خروج</button>
                     </form>
                     <a href="/system/login" onclick="closeMobileMenu();" class="flex-1 text-center text-sm py-2.5 rounded-xl border border-indigo-200 text-indigo-600">ورود</a>

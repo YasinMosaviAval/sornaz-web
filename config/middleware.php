@@ -8,6 +8,7 @@ use Modules\Academy\Middleware\AcademyPanelMiddleware;
 use Modules\System\Middleware\SiteAdminMiddleware;
 
 return [
+    'auth-rate-limit' => \Modules\System\Middleware\AuthRateLimitMiddleware::class,
     'auth' => AuthMiddleware::class,
     'guest' => GuestMiddleware::class,
     'csrf' => CsrfMiddleware::class,

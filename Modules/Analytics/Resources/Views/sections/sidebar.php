@@ -51,9 +51,11 @@ $canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager
     <!-- Menu -->
     <nav class="flex-1 overflow-y-auto overflow-x-hidden p-4">
         <ul class="space-y-2">
+                <?php if ((int)auth()->id() === 1): ?>
+                <li><a href="#" onclick="showSection('guides')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-book-reader w-5 text-center"></i> راهنمای عملکردها</a></li>
+                <?php endif; ?>
             <? if ($isSiteAdmin && env('APP_ENV', 'production') === 'local') { ?>
                 <li><a href="#tests" onclick="showSection('tests')" class="nav-link flex items-center gap-3 rounded-xl bg-indigo-950/40 px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-vials w-5 text-center"></i> مرکز تست‌ها</a></li>
-                <li><a href="#" onclick="showSection('guides')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-book-reader w-5 text-center"></i> راهنمای عملکردها</a></li>
                 <li>--------------------------------</li>
                 <li><a href="#" onclick="showSection('posts')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-file-alt w-5 text-center"></i> نوشته‌ها</a></li>
                 <li><a href="#" onclick="showSection('post-categories')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-folder-open w-5 text-center"></i> دسته‌بندی نوشته‌ها</a></li>

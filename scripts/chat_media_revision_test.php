@@ -1,6 +1,9 @@
 <?php
 // Isolated SQLite integration checks; never opens the application database.
-spl_autoload_register(function($class){$path=__DIR__.'/../'.str_replace('\\','/',$class).'.php';if(is_file($path))require_once $path;});
+require __DIR__.'/../vendor/composer/ClassLoader.php';
+$loader = new Composer\Autoload\ClassLoader();
+$loader->addClassMap(require __DIR__.'/../vendor/composer/autoload_classmap.php');
+$loader->register();
 $pdo=new PDO('sqlite::memory:');$pdo->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE,PDO::FETCH_ASSOC);
 $pdo->sqliteCreateFunction('UTC_TIMESTAMP',fn()=>gmdate('Y-m-d H:i:s'));
 function db(){global $pdo;return $pdo;}
@@ -11,7 +14,7 @@ function transaction($callback){global $pdo;$pdo->beginTransaction();try{$value=
 $checks=0;
 function check($value,$message){global $checks;if(!$value)throw new RuntimeException($message);$checks++;}
 function denied($callback){try{$callback();}catch(RuntimeException $e){check(true,'Denied');return;}throw new RuntimeException('Unauthorized operation succeeded');}
-$pdo->exec("CREATE TABLE users(user_id INTEGER PRIMARY KEY,username TEXT,type TEXT DEFAULT 'human',avatar_file_id INTEGER,timezone TEXT DEFAULT 'UTC',deleted_at TEXT);
+$pdo->exec("CREATE TABLE users(user_id INTEGER PRIMARY KEY,username TEXT,type TEXT DEFAULT 'human',register_method TEXT DEFAULT 'email',avatar_file_id INTEGER,timezone TEXT DEFAULT 'UTC',deleted_at TEXT);
 CREATE TABLE translations(translation_id INTEGER PRIMARY KEY,table_name TEXT,table_id INTEGER,field TEXT,locale TEXT,value TEXT,deleted_at TEXT);
 CREATE TABLE media_files(media_file_id INTEGER PRIMARY KEY,user_id INTEGER,collection TEXT,path TEXT,sort_order INTEGER,deleted_at TEXT);
 CREATE TABLE conversations(conversation_id INTEGER PRIMARY KEY,type TEXT,title TEXT,avatar_path TEXT,last_message_id INTEGER,created_at TEXT,created_by INTEGER,updated_at TEXT,updated_by INTEGER,deleted_at TEXT,deleted_by INTEGER);

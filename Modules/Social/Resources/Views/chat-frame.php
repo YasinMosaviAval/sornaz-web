@@ -22,6 +22,8 @@ $adminUiMap = array_replace($chatLabels, $adminUiMap ?? []);
 <!DOCTYPE html>
 <html lang="<?= e(locale()) ?>" dir="<?= e(direction()) ?>">
 <head>
+    <script>window.siteCsrfToken=<?= json_encode(csrf_token()) ?>;</script>
+    <script src="/assets/theme/csrf.js?v=1"></script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= locale() === 'en' ? 'Conversations' : 'گفتگوها' ?></title>

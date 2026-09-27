@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html lang="<?= e(locale()) ?>" dir="<?= e(direction()) ?>">
+<html data-help-enabled="<?= (int)auth()->id() === 1 ? '1' : '0' ?>" data-inline-can-edit="<?= \Modules\System\Services\SiteAdminAccess::allows(auth()->user()) ? '1' : '0' ?>" lang="<?= e(locale()) ?>" dir="<?= e(direction()) ?>">
 <head>
+    <script>window.siteCsrfToken=<?= json_encode(csrf_token()) ?>;</script>
+    <script src="/assets/theme/csrf.js?v=1"></script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="<?= e(csrf_token()) ?>">

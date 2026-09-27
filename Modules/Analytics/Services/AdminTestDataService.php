@@ -112,12 +112,28 @@ class AdminTestDataService {
         return $map;
     }
 
-    public function inlineTranslationCatalog(): array {
+    public function inlineTranslationCatalog(bool $publicOnly = false): array {
         $catalog=[];
-        foreach(DB::table('f_settings')->whereNull('deleted_at')->get() as $setting){
-            $id=(int)$setting['setting_id'];$values=[];
-            foreach(DB::table('f_translations')->where('table_name','f_settings')->where('table_id',$id)->where('field','value')->whereNull('deleted_at')->get() as $translation)$values[(string)$translation['locale']]=(string)$translation['value'];
-            $catalog[]=['key'=>(string)$setting['variable_name'],'fa'=>$values['fa']??'','en'=>$values['en']??''];
+        $aliases=[];
+        foreach ($this->adminUiDictionary() as $pair) {
+            $aliases['admin.ui.'.substr(sha1($pair[0]),0,16)]=$pair;
+            foreach ($pair as $original) {
+                $hash=2166136261;
+                $normalized=trim(preg_replace('/\s+/u',' ',$original));
+                foreach (unpack('n*',mb_convert_encoding($normalized,'UTF-16BE','UTF-8')) as $unit) $hash=(($hash^$unit)*16777619)&0xffffffff;
+                foreach (['admin','site'] as $scope) $aliases[$scope.'.inline.'.base_convert((string)$hash,10,36)]=$pair;
+            }
+        }
+        $query=DB::table('f_settings')->whereNull('deleted_at');
+        if ($publicOnly) $query->whereIn('table_name', ['admin_ui','site_ui']);
+        $settings=$query->get();
+        $bySetting=[];
+        if ($settings) foreach(DB::table('f_translations')->where('table_name','f_settings')->whereIn('table_id',array_column($settings,'setting_id'))->where('field','value')->whereIn('locale',['fa','en'])->whereNull('deleted_at')->get() as $translation) {
+            $bySetting[(int)$translation['table_id']][(string)$translation['locale']]=(string)$translation['value'];
+        }
+        foreach($settings as $setting){
+            $values=$bySetting[(int)$setting['setting_id']]??[];
+            $catalog[]=['key'=>(string)$setting['variable_name'],'fa'=>$values['fa']??'','en'=>$values['en']??'','aliases'=>$aliases[(string)$setting['variable_name']]??[]];
         }
         return $catalog;
     }

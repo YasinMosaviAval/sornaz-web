@@ -5,7 +5,7 @@ namespace Core\application;
 use Core\http\Request;
 use Core\http\Response;
 use Core\middleware\MiddlewarePipeline;
-use Core\router\router;
+use Core\router\Router;
 use Core\http\ResponseInterface;
 use Core\validation\ValidationException;
 use Exception;
@@ -63,7 +63,7 @@ class Kernel {
             $response->send((string)$result);
         } catch (ValidationException $e) {
             session()->flash('_errors', $e->errors());
-            session()->flash('_old', $_POST);
+            session()->flash('_old', \Core\session\Session::safeInput($_POST));
             back()->send();
         } catch (Throwable $e) {
             $expectsJson = str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json')

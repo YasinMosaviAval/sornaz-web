@@ -1,3 +1,4 @@
+<?php if ((int)auth()->id() !== 1) return; ?>
 <section id="guides" class="section hidden" dir="rtl">
     <div class="mb-6"><h1 class="text-3xl font-bold">راهنمای عملکردها</h1><p class="mt-2 text-gray-500">مستندات ثبت‌نام کاربر، آموزشگاه و شعبه اصلی</p></div>
     <div class="grid gap-6 xl:grid-cols-3">
