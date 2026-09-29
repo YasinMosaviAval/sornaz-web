@@ -1,11 +1,12 @@
 <?
 
-
-class AcademyServiceProvider {
-
-    public function register() {
+class AcademyServiceProvider
+{
+    public function register()
+    {
     }
 
-    public function boot() {
+    public function boot()
+    {
     }
 }

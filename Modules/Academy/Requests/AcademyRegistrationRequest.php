@@ -4,10 +4,15 @@ namespace Modules\Academy\Requests;
 
 use Core\validation\FormRequest;
 
-class AcademyRegistrationRequest extends FormRequest {
-    public function authorize(): bool { return true; }
+class AcademyRegistrationRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
 
-    public function rules(): array {
+    public function rules(): array
+    {
         return [
             'username' => 'required|min:3|max:100|unique:users,username',
             'register_method' => 'required|in:email,phone',
@@ -22,7 +27,8 @@ class AcademyRegistrationRequest extends FormRequest {
         ];
     }
 
-    public function messages(): array {
+    public function messages(): array
+    {
         return [
             'username.required' => trans('academy.error.username_required', 'نام کاربری الزامی است.'),
             'username.unique' => trans('academy.error.username_unique', 'این نام کاربری قبلاً ثبت شده است.'),

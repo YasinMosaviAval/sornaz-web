@@ -7,8 +7,10 @@ use Core\http\Request;
 use Core\http\ResponseFactory;
 use Modules\System\Services\SiteAdminAccess;
 
-class AcademyPanelMiddleware {
-    public function handle(Request $request, callable $next) {
+class AcademyPanelMiddleware
+{
+    public function handle(Request $request, callable $next)
+    {
         $user = auth()->user();
         if (!$user) {
             if ($this->expectsJson()) {
@@ -20,22 +22,28 @@ class AcademyPanelMiddleware {
             }
             return redirect('/system/login');
         }
-        $path = parse_url((string)($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '';
+        $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '';
         if ($path === '/analytics/admin-panel' || str_starts_with($path, '/analytics/admin-account') || str_starts_with($path, '/analytics/chat') || $path === '/analytics/admin-dashboard') {
             return $next($request);
         }
         if (str_starts_with($path, '/analytics/admin-messages')) {
-            $hasMembership = DB::table('academy_branch_members')->where('user_id', (int)$user['user_id'])->whereNull('deleted_at')->first();
-            if ($hasMembership) return $next($request);
+            $hasMembership = DB::table('academy_branch_members')->where('user_id', (int) $user['user_id'])->whereNull('deleted_at')->first();
+            if ($hasMembership) {
+                return $next($request);
+            }
         }
         if (str_starts_with($path, '/analytics/admin-notifications')) {
-            $method = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+            $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
             $readOnly = $method === 'GET' || str_ends_with($path, '/read');
-            $hasMembership = $readOnly ? DB::table('academy_branch_members')->where('user_id', (int)$user['user_id'])->whereNull('deleted_at')->first() : null;
-            if ($hasMembership) return $next($request);
+            $hasMembership = $readOnly ? DB::table('academy_branch_members')->where('user_id', (int) $user['user_id'])->whereNull('deleted_at')->first() : null;
+            if ($hasMembership) {
+                return $next($request);
+            }
         }
-        if (SiteAdminAccess::allows($user)) return $next($request);
-        $userId = (int)$user['user_id'];
+        if (SiteAdminAccess::allows($user)) {
+            return $next($request);
+        }
+        $userId = (int) $user['user_id'];
         $academy = DB::table('academies')->where('user_id', $userId)->whereNull('deleted_at')->first()
             ?: DB::table('academies')->where('created_by', $userId)->whereNull('deleted_at')->first();
         $branch = DB::table('academy_branches')->where('user_id', $userId)->whereNull('deleted_at')->first();
@@ -46,7 +54,9 @@ class AcademyPanelMiddleware {
             ->whereRaw("(access_system_roles.name LIKE 'academy_%owner%' OR access_system_roles.name LIKE 'academy_%manager%' OR access_system_roles.name LIKE 'academy_%receptionist%' OR access_system_roles.name LIKE '%branch%manager%' OR access_system_roles.name LIKE '%branch%receptionist%')")
             ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->first();
         if (!$academy && !$branch && !$manager) {
-            if ($this->expectsJson()) return ResponseFactory::json(['success'=>false,'message'=>'دسترسی لازم برای این بخش را ندارید.'], 403);
+            if ($this->expectsJson()) {
+                return ResponseFactory::json(['success' => false, 'message' => 'دسترسی لازم برای این بخش را ندارید.'], 403);
+            }
             abort(403, 'دسترسی لازم برای این بخش را ندارید.');
         }
         return $next($request);
@@ -54,7 +64,7 @@ class AcademyPanelMiddleware {
 
     private function expectsJson(): bool
     {
-        return str_contains(strtolower((string)($_SERVER['HTTP_ACCEPT'] ?? '')), 'application/json')
-            || strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+        return str_contains(strtolower((string) ($_SERVER['HTTP_ACCEPT'] ?? '')), 'application/json')
+            || strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
     }
 }

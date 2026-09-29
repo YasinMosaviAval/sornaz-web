@@ -2,13 +2,15 @@
 
 namespace Core\database\Relations;
 
-abstract class BelongsToRelation extends Relation {
+abstract class BelongsToRelation extends Relation
+{
+    public function ownerKey(): string
+    {
+        return $this->localKey;
+    }
 
-
-    public function ownerKey(): string {return $this->localKey;}
-
-
-    public function addEagerConstraints(array $models): void {
+    public function addEagerConstraints(array $models): void
+    {
         $keys = [];
         foreach ($models as $model) {
             $keys[] = $model->{$this->foreignKey};
@@ -16,20 +18,14 @@ abstract class BelongsToRelation extends Relation {
         $this->query->whereIn($this->localKey, array_unique($keys));
     }
 
-
-    public function getEager(): array {
+    public function getEager(): array
+    {
         return $this->query->get();
     }
-
-
 
     abstract public function match(
         array $models,
         array $results,
         string $relation
     ): void;
-
-
-
-
 }

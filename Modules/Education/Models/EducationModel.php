@@ -4,7 +4,8 @@ namespace Modules\Education\Models;
 
 use Core\database\Model;
 
-class EducationModel extends Model {
+class EducationModel extends Model
+{
 
     protected string $table = 'educations';
     protected string $primaryKey = 'education_id';
@@ -17,6 +18,5 @@ class EducationModel extends Model {
     ];
     protected bool $timestamps = true;
     protected bool $softDeletes = true;
-
 
 }

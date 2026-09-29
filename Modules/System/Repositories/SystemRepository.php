@@ -3,9 +3,11 @@
 namespace Modules\System\Repositories;
 
 use Core\database\Repository;
+
 // use Modules\System\Models\SystemModel;
 
-class SystemRepository extends Repository {
+class SystemRepository extends Repository
+{
 
     // protected ?string $model = SystemModel::class;
     // protected string $table = 'systems';
@@ -15,8 +17,8 @@ class SystemRepository extends Repository {
     protected string $primaryKey = 'setting_id';
     protected ?string $model = null;
 
-
-    public function findByPage(string $page): array {
+    public function findByPage(string $page): array
+    {
         $locale = 'fa';
         return $this->query()
             ->select(
@@ -48,7 +50,4 @@ class SystemRepository extends Repository {
             ->orderBy('settings.sort_order')
             ->get();
     }
-
-
-
 }

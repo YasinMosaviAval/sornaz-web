@@ -6,17 +6,17 @@ use RuntimeException;
 final class ChatAttachmentPolicy
 {
     private const TYPES = [
-        'image/jpeg'=>'jpg', 'image/png'=>'png', 'image/webp'=>'webp', 'image/gif'=>'gif',
-        'application/pdf'=>'pdf', 'text/plain'=>'txt',
-        'audio/mpeg'=>'mp3', 'audio/mp4'=>'m4a', 'audio/x-m4a'=>'m4a',
-        'audio/ogg'=>'ogg', 'application/ogg'=>'ogg', 'audio/webm'=>'webm',
-        'audio/wav'=>'wav', 'audio/x-wav'=>'wav', 'audio/flac'=>'flac',
-        'video/mp4'=>'mp4', 'video/webm'=>'webm', 'video/quicktime'=>'mov',
-        'application/zip'=>'zip', 'application/x-zip-compressed'=>'zip',
-        'application/x-7z-compressed'=>'7z',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'=>'docx',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'=>'xlsx',
-        'application/vnd.openxmlformats-officedocument.presentationml.presentation'=>'pptx',
+        'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/gif' => 'gif',
+        'application/pdf' => 'pdf', 'text/plain' => 'txt',
+        'audio/mpeg' => 'mp3', 'audio/mp4' => 'm4a', 'audio/x-m4a' => 'm4a',
+        'audio/ogg' => 'ogg', 'application/ogg' => 'ogg', 'audio/webm' => 'webm',
+        'audio/wav' => 'wav', 'audio/x-wav' => 'wav', 'audio/flac' => 'flac',
+        'video/mp4' => 'mp4', 'video/webm' => 'webm', 'video/quicktime' => 'mov',
+        'application/zip' => 'zip', 'application/x-zip-compressed' => 'zip',
+        'application/x-7z-compressed' => '7z',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'pptx',
     ];
 
     public static function inspect(string $path, string $originalName): array
@@ -32,7 +32,9 @@ final class ChatAttachmentPolicy
             throw new RuntimeException('این نوع فایل مجاز نیست.', 422);
         }
         $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($path);
-        if (!isset(self::TYPES[$mime])) throw new RuntimeException('این نوع فایل مجاز نیست.', 422);
-        return ['name'=>$name, 'mime'=>$mime, 'extension'=>self::TYPES[$mime], 'size'=>$size];
+        if (!isset(self::TYPES[$mime])) {
+            throw new RuntimeException('این نوع فایل مجاز نیست.', 422);
+        }
+        return ['name' => $name, 'mime' => $mime, 'extension' => self::TYPES[$mime], 'size' => $size];
     }
 }

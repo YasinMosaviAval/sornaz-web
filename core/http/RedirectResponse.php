@@ -2,24 +2,22 @@
 
 namespace Core\http;
 
-class RedirectResponse implements ResponseInterface {
-
+class RedirectResponse implements ResponseInterface
+{
 
     protected string $url;
     protected int $status;
     protected array $oldInput = [];
     protected array $errors = [];
 
-
-
-    public function __construct(string $url, int $status = 302) {
+    public function __construct(string $url, int $status = 302)
+    {
         $this->url = $url;
         $this->status = in_array($status, [301, 302, 303, 307, 308], true) ? $status : 302;
     }
 
-
-
-    public function send(): void {
+    public function send(): void
+    {
         register_shutdown_function(function () {
             session()->forget('_old_input');
             session()->forget('_errors');
@@ -28,24 +26,17 @@ class RedirectResponse implements ResponseInterface {
         exit;
     }
 
-
-
-    public function withInput(array $input): static {
+    public function withInput(array $input): static
+    {
         session()->flash('_old_input', \Core\session\Session::safeInput($input));
         session()->put('_old_input', \Core\session\Session::safeInput($input));
         return $this;
     }
 
-
-
-    public function withErrors(array $errors): static {
+    public function withErrors(array $errors): static
+    {
         session()->flash('_errors', $errors);
         session()->put('_errors', $errors);
         return $this;
     }
-
-
-
-
-
 }

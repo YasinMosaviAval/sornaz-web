@@ -8,118 +8,110 @@ use Modules\World\Repositories\WorldRepository;
 use Modules\World\Requests\WorldStoreRequest;
 use Modules\World\Requests\WorldUpdateRequest;
 
-class WorldController {
+class WorldController
+{
 
     protected WorldService $service;
 
-
-
-    public function __construct() {
+    public function __construct()
+    {
         $this->service = new WorldService(new WorldRepository());
     }
-
-
 
     /**
      * لیست
      */
-    public function index() {
+    public function index()
+    {
         $items = $this->service->all();
         return ResponseFactory::view(
-                'World::index',
-                [
-                    'items' => $items
-                ]
-            )
+            'World::index',
+            [
+                'items' => $items
+            ]
+        )
             ->layout('main')
             ->title('World');
     }
 
-
-
     /**
      * فرم ایجاد
      */
-    public function create() {
+    public function create()
+    {
         return ResponseFactory::view(
-                'World::create'
-            )
+            'World::create'
+        )
             ->layout('main')
             ->title('ایجاد World');
     }
 
-
-
     /**
      * ذخیره
      */
-    public function store() {
+    public function store()
+    {
         $request = new WorldStoreRequest($_POST);
         $data = $request->validated();
         $this->service->create($data);
         return redirect('/worlds');
     }
 
-
-
     /**
      * نمایش
      */
-    public function show(int $id) {
+    public function show(int $id)
+    {
         $item = $this->service->findById($id);
         if (!$item) {
             abort(404);
         }
         return ResponseFactory::view(
-                'World::show',
-                [
-                    'item' => $item
-                ]
-            )
+            'World::show',
+            [
+                'item' => $item
+            ]
+        )
             ->layout('main')
             ->title('نمایش World');
     }
 
-
-
     /**
      * فرم ویرایش
      */
-    public function edit(int $id) {
+    public function edit(int $id)
+    {
         $item = $this->service->findById($id);
         if (!$item) {
             abort(404);
         }
         return ResponseFactory::view(
-                'World::edit',
-                [
-                    'item' => $item
-                ]
-            )
+            'World::edit',
+            [
+                'item' => $item
+            ]
+        )
             ->layout('main')
             ->title('ویرایش World');
     }
 
-
-
     /**
      * بروزرسانی
      */
-    public function update(int $id) {
+    public function update(int $id)
+    {
         $request = new WorldUpdateRequest($_POST);
         $data = $request->validated();
         $this->service->update($id, $data);
         return redirect('/worlds');
     }
 
-
-
     /**
      * حذف
      */
-    public function destroy(int $id) {
+    public function destroy(int $id)
+    {
         $this->service->delete($id);
         return redirect('/worlds');
     }
-
 }

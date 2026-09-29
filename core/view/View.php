@@ -5,8 +5,8 @@ namespace Core\view;
 use Exception;
 use RuntimeException;
 
-class View {
-
+class View
+{
 
     protected string $view;
     protected array $data;
@@ -20,16 +20,14 @@ class View {
     protected static ?string $currentModule = null;
     protected static ?string $currentView = null;
 
-
-
-    public function __construct(string $view, array $data = []) {
+    public function __construct(string $view, array $data = [])
+    {
         $this->view = $view;
         $this->data = $data;
     }
 
-
-
-    protected function resolveViewPath(): string {
+    protected function resolveViewPath(): string
+    {
         if ($this->resolvedPath !== null) {
             return $this->resolvedPath;
         }
@@ -74,9 +72,8 @@ class View {
         throw new RuntimeException("View [{$this->view}] not found.");
     }
 
-
-
-    public function render(): string {
+    public function render(): string
+    {
         $path = $this->resolveViewPath();
         extract($this->data);
         ob_start();
@@ -138,28 +135,25 @@ class View {
         return $html . $trackingTag;
     }
 
-
-
-    public function layout(string $layout): static {
+    public function layout(string $layout): static
+    {
         $this->layout = $layout;
         return $this;
     }
 
-
-
-    public static function component(string $view, array $data = []): void {
+    public static function component(string $view, array $data = []): void
+    {
         $paths = [];
-    /*
-    |--------------------------------------------------------------------------
-    | Module::component
-    |--------------------------------------------------------------------------
-    */
+        /*
+        |--------------------------------------------------------------------------
+        | Module::component
+        |--------------------------------------------------------------------------
+        */
         if (str_contains($view, '::')) {
             [$module, $view] = explode('::', $view, 2);
             $view = str_replace('.', DIRECTORY_SEPARATOR, $view);
             $paths[] = base_path("Modules/{$module}/Resources/Views/{$view}.php");
-        }
-        else {
+        } else {
             $view = str_replace('.', DIRECTORY_SEPARATOR, $view);
             /*
             |--------------------------------------------------------------------------
@@ -189,34 +183,31 @@ class View {
         throw new Exception("Component [{$view}] not found.");
     }
 
-    public function title(string $title): static {
+    public function title(string $title): static
+    {
         $this->title = $title;
         return $this;
     }
 
-
-
-    public function breadcrumb(mixed $breadcrumb): static {
+    public function breadcrumb(mixed $breadcrumb): static
+    {
         $this->breadcrumb = $breadcrumb;
         return $this;
     }
 
-
-
-    public function toolbar(mixed $toolbar): static {
+    public function toolbar(mixed $toolbar): static
+    {
         $this->toolbar = $toolbar;
         return $this;
     }
 
-
-
-    public static function exists(string $view): bool {
+    public static function exists(string $view): bool
+    {
         return file_exists(base_path('views/' . str_replace('.', '/', $view) . '.php'));
     }
 
-
-
-    public static function componentExists(string $view): bool {
+    public static function componentExists(string $view): bool
+    {
         $view = str_replace('.', DIRECTORY_SEPARATOR, $view);
         $paths = [];
         if (self::$currentModule) {
@@ -234,46 +225,37 @@ class View {
         return false;
     }
 
-
-
-    public static function styles(): array {
+    public static function styles(): array
+    {
         return self::$styles;
     }
 
-
-
-    public static function scripts(): array {
+    public static function scripts(): array
+    {
         return self::$scripts;
     }
 
-
-
-    public static function currentModule(): ?string {
+    public static function currentModule(): ?string
+    {
         return self::$currentModule;
     }
 
-
-    public static function currentView(): ?string {
+    public static function currentView(): ?string
+    {
         return self::$currentView;
     }
 
-
-    public static function pushStyle(string $file): void {
-        self::$styles[] = ['module'=>self::$currentModule, 'file'=>$file];
+    public static function pushStyle(string $file): void
+    {
+        self::$styles[] = ['module' => self::$currentModule, 'file' => $file];
     }
 
-
-
-    public static function pushScript(string $file): void {
+    public static function pushScript(string $file): void
+    {
         $module = self::$currentModule;
         if (str_contains($file, '::')) {
             [$module, $file] = explode('::', $file, 2);
         }
-        self::$scripts[] = ['module'=>$module, 'file'=>$file];
+        self::$scripts[] = ['module' => $module, 'file' => $file];
     }
-
-
-
-
-
 }

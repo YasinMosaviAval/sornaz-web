@@ -2,6 +2,7 @@
 
 namespace Modules\Media\Listeners;
 
-class SendMediaListener {
+class SendMediaListener
+{
 
 }

@@ -1,61 +1,80 @@
 (function () {
-    'use strict';
-    const fieldClass = 'w-full border border-gray-300 rounded-2xl py-3.5 px-5';
+  'use strict';
+  const fieldClass = 'w-full border border-gray-300 rounded-2xl py-3.5 px-5';
 
-    function escapeHtml(value) {
-        return String(value ?? '')
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 
-    function renderOptions(options, selectedValue) {
-        return (options || []).map(function (option) {
-            const value = option.value ?? option.id ?? option;
-            const label = option.label ?? option.name ?? option;
-            const selected = String(value) === String(selectedValue) ? 'selected' : '';
-            return '<option value="' + escapeHtml(value) + '" ' + selected + '>' + escapeHtml(label) + '</option>';
-        }).join('');
-    }
+  function renderOptions(options, selectedValue) {
+    return (options || [])
+      .map(function (option) {
+        const value = option.value ?? option.id ?? option;
+        const label = option.label ?? option.name ?? option;
+        const selected = String(value) === String(selectedValue) ? 'selected' : '';
+        return (
+          '<option value="' +
+          escapeHtml(value) +
+          '" ' +
+          selected +
+          '>' +
+          escapeHtml(label) +
+          '</option>'
+        );
+      })
+      .join('');
+  }
 
-    function typeBadge(type) {
-        return {
-            specialized: 'bg-purple-100 text-purple-700',
-            custom: 'bg-amber-100 text-amber-700',
-            general: 'bg-blue-100 text-blue-700'
-        }[type] || 'bg-blue-100 text-blue-700';
-    }
+  function typeBadge(type) {
+    return (
+      {
+        specialized: 'bg-purple-100 text-purple-700',
+        custom: 'bg-amber-100 text-amber-700',
+        general: 'bg-blue-100 text-blue-700',
+      }[type] || 'bg-blue-100 text-blue-700'
+    );
+  }
 
-    function statusBadge(status) {
-        return status === 'فعال'
-            ? 'bg-green-100 text-green-700'
-            : 'bg-gray-100 text-gray-600';
-    }
+  function statusBadge(status) {
+    return status === 'فعال' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600';
+  }
 
-    function categoryLabel(cat) {
-        return (window.pointCategoryLabels && window.pointCategoryLabels[cat]) || cat || '—';
-    }
+  function categoryLabel(cat) {
+    return (window.pointCategoryLabels && window.pointCategoryLabels[cat]) || cat || '—';
+  }
 
-    function typeLabel(type) {
-        return (window.pointTypeLabels && window.pointTypeLabels[type]) || type || '—';
-    }
+  function typeLabel(type) {
+    return (window.pointTypeLabels && window.pointTypeLabels[type]) || type || '—';
+  }
 
-    function formFields(item, prefix) {
-        item = item || {};
-        const id = function (n) { return prefix + n; };
-        const branches = (typeof window.getPointBranches === 'function' ? window.getPointBranches() : []).map(function (b) {
-            return { value: b.id, label: b.name };
-        });
-        const categories = Object.keys(window.pointCategoryLabels || {}).map(function (k) {
-            return { value: k, label: window.pointCategoryLabels[k] };
-        });
-        const statuses = (window.pointStatusesList || []).map(function (s) { return { value: s, label: s }; });
-        const types = [
-            { value: 'general', label: 'عمومی' },
-            { value: 'specialized', label: 'تخصصی' },
-            { value: 'custom', label: 'اختصاصی' }
-        ];
+  function formFields(item, prefix) {
+    item = item || {};
+    const id = function (n) {
+      return prefix + n;
+    };
+    const branches = (
+      typeof window.getPointBranches === 'function' ? window.getPointBranches() : []
+    ).map(function (b) {
+      return { value: b.id, label: b.name };
+    });
+    const categories = Object.keys(window.pointCategoryLabels || {}).map(function (k) {
+      return { value: k, label: window.pointCategoryLabels[k] };
+    });
+    const statuses = (window.pointStatusesList || []).map(function (s) {
+      return { value: s, label: s };
+    });
+    const types = [
+      { value: 'general', label: 'عمومی' },
+      { value: 'specialized', label: 'تخصصی' },
+      { value: 'custom', label: 'اختصاصی' },
+    ];
 
-        return `
+    return `
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div>
                     <label class="block text-sm font-medium mb-2">عنوان *</label>
@@ -110,10 +129,10 @@
                     <textarea id="${id('Desc')}" rows="2" class="${fieldClass}">${escapeHtml(item.description || '')}</textarea>
                 </div>
             </div>`;
-    }
+  }
 
-    window.getPointRowHTML = function (item) {
-        return `
+  window.getPointRowHTML = function (item) {
+    return `
             <td class="py-4 px-5 font-medium">${escapeHtml(item.title)}</td>
             <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${typeBadge(item.type)}">${escapeHtml(typeLabel(item.type))}</span></td>
             <td class="py-4 px-5"><span class="px-2.5 py-1 rounded-full text-xs bg-slate-100 text-slate-600">${escapeHtml(categoryLabel(item.category))}</span></td>
@@ -128,28 +147,32 @@
                     <button onclick="deletePoint(${item.id})" class="text-red-500 hover:underline text-sm">حذف</button>
                 </div>
             </td>`;
-    };
+  };
 
-    window.getPointEmptyRowHTML = function () {
-        return '<tr><td colspan="8" class="py-12 text-center text-gray-400">قانون امتیازی یافت نشد</td></tr>';
-    };
+  window.getPointEmptyRowHTML = function () {
+    return '<tr><td colspan="8" class="py-12 text-center text-gray-400">قانون امتیازی یافت نشد</td></tr>';
+  };
 
-    window.getPointInlineExpandRowHTML = function (item) {
-        return '<td colspan="8" class="p-5 border-t">' + (window.getPointInlineEditRowHTML ? window.getPointInlineEditRowHTML(item) : '') + '</td>';
-    };
+  window.getPointInlineExpandRowHTML = function (item) {
+    return (
+      '<td colspan="8" class="p-5 border-t">' +
+      (window.getPointInlineEditRowHTML ? window.getPointInlineEditRowHTML(item) : '') +
+      '</td>'
+    );
+  };
 
-    window.getPointInlineEditRowHTML = function (item) {
-        return `<div class="space-y-6">
+  window.getPointInlineEditRowHTML = function (item) {
+    return `<div class="space-y-6">
             ${formFields(item, 'inlinePoint' + item.id)}
             <div class="flex flex-col sm:flex-row gap-4 pt-2">
                 <button onclick="saveInlinePoint(${item.id})" class="w-full sm:w-auto min-w-[140px] bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-4 rounded-2xl font-medium">ذخیره</button>
                 <button onclick="togglePointInlineEdit(${item.id})" class="w-full sm:w-auto min-w-[140px] border border-gray-300 px-5 py-4 rounded-2xl hover:bg-gray-50">انصراف</button>
             </div>
         </div>`;
-    };
+  };
 
-    window.getPointAddModalHTML = function () {
-        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
+  window.getPointAddModalHTML = function () {
+    return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-4xl my-8 shadow-2xl" onclick="event.stopPropagation()">
                 <div class="px-8 py-5 border-b flex justify-between items-center">
                     <h2 class="text-2xl font-bold">افزودن قانون امتیاز</h2>
@@ -164,10 +187,10 @@
                 </div>
             </div>
         </div>`;
-    };
+  };
 
-    window.getPointEditModalHTML = function (item) {
-        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
+  window.getPointEditModalHTML = function (item) {
+    return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-4xl my-8 shadow-2xl" onclick="event.stopPropagation()">
                 <div class="px-8 py-5 border-b flex justify-between items-center">
                     <h2 class="text-2xl font-bold">ویرایش قانون امتیاز</h2>
@@ -182,10 +205,10 @@
                 </div>
             </div>
         </div>`;
-    };
+  };
 
-    window.getPointDetailsModalHTML = function (item) {
-        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
+  window.getPointDetailsModalHTML = function (item) {
+    return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-start rounded-t-3xl gap-4">
                     <div class="min-w-0">
@@ -224,5 +247,5 @@
                 </div>
             </div>
         </div>`;
-    };
+  };
 })();

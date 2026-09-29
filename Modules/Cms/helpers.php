@@ -2,7 +2,8 @@
 
 if (!function_exists('cmss')) {
 
-    function cmss() {
+    function cmss()
+    {
     }
 
 }

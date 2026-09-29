@@ -4,7 +4,8 @@ namespace Modules\Academy\Models;
 
 use Core\database\Model;
 
-class AcademyModel extends Model {
+class AcademyModel extends Model
+{
 
     protected string $table = 'academys';
     protected string $primaryKey = 'academy_id';
@@ -17,6 +18,5 @@ class AcademyModel extends Model {
     ];
     protected bool $timestamps = true;
     protected bool $softDeletes = true;
-
 
 }

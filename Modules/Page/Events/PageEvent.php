@@ -2,6 +2,7 @@
 
 namespace Modules\Page\Events;
 
-class PageEvent {
+class PageEvent
+{
 
 }

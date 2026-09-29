@@ -1,7 +1,45 @@
-(function(){
-const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-window.renderCourseLevels=function(){const body=document.getElementById('courseLevelsBody');if(!body)return;body.innerHTML=(window.allCourseLevels||[]).map(x=>`<tr><td class="px-5 py-4 font-medium">${esc(x.name)}</td><td class="px-5 py-4">${esc(x.summary)}</td><td class="px-5 py-4 text-left whitespace-nowrap"><button onclick="viewCourseLevelDetails(${x.id})" class="rounded-xl bg-indigo-50 px-4 py-2 text-indigo-700 hover:bg-indigo-100"><i class="fas fa-eye ml-2"></i>جزئیات</button></td></tr>`).join('')||'<tr><td colspan="3" class="p-10 text-center text-gray-400">سطحی یافت نشد</td></tr>';};
-window.viewCourseLevelDetails=function(id){const x=(window.allCourseLevels||[]).find(v=>Number(v.id)===Number(id));if(!x)return;document.getElementById('modalContainer').innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onclick="if(event.target===this)closeModal()"><div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-7" onclick="event.stopPropagation()"><div class="mb-6 flex items-center justify-between"><h2 class="text-xl font-bold">جزئیات سطح درس</h2><button onclick="closeModal()" class="text-2xl text-gray-500 hover:text-gray-800">×</button></div><div class="space-y-5"><div><div class="mb-1 text-sm text-gray-500">عنوان</div><div class="font-bold text-gray-900">${esc(x.name)||'—'}</div></div><div><div class="mb-1 text-sm text-gray-500">خلاصه</div><div class="leading-7 text-gray-800">${esc(x.summary)||'—'}</div></div><div><div class="mb-1 text-sm text-gray-500">توضیحات</div><div class="whitespace-pre-line leading-8 text-gray-700">${esc(x.description)||'—'}</div></div></div><button onclick="closeModal()" class="mt-7 w-full rounded-2xl bg-gray-100 p-3 text-gray-700 hover:bg-gray-200">بستن</button></div></div>`;};
-window.openCourseLevelModal=function(){document.getElementById('modalContainer').innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onclick="if(event.target===this)closeModal()"><div class="w-full max-w-xl rounded-3xl bg-white p-7" onclick="event.stopPropagation()"><div class="mb-6 flex justify-between"><h2 class="text-xl font-bold">افزودن سطح درس</h2><button onclick="closeModal()" class="text-2xl">×</button></div><div class="space-y-4"><input id="clName" placeholder="عنوان سطح" class="w-full rounded-2xl border p-4"><input id="clSummary" placeholder="خلاصه" class="w-full rounded-2xl border p-4"><textarea id="clDescription" placeholder="توضیحات" class="w-full rounded-2xl border p-4" rows="6"></textarea><button onclick="saveCourseLevel()" class="w-full rounded-2xl bg-indigo-600 p-3 text-white">ذخیره</button></div></div></div>`;};
-window.saveCourseLevel=async function(){const d={name:document.getElementById('clName').value.trim(),summary:document.getElementById('clSummary').value.trim(),description:document.getElementById('clDescription').value.trim()};if(!d.name)return alert('عنوان سطح الزامی است');try{await courseApi('/academy/admin/course-levels',d);await loadCourses();closeModal();}catch(e){alert(e.message)}};
+(function () {
+  const esc = (v) =>
+    String(v ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  window.renderCourseLevels = function () {
+    const body = document.getElementById('courseLevelsBody');
+    if (!body) return;
+    body.innerHTML =
+      (window.allCourseLevels || [])
+        .map(
+          (x) =>
+            `<tr><td class="px-5 py-4 font-medium">${esc(x.name)}</td><td class="px-5 py-4">${esc(x.summary)}</td><td class="px-5 py-4 text-left whitespace-nowrap"><button onclick="viewCourseLevelDetails(${x.id})" class="rounded-xl bg-indigo-50 px-4 py-2 text-indigo-700 hover:bg-indigo-100"><i class="fas fa-eye ml-2"></i>جزئیات</button></td></tr>`
+        )
+        .join('') ||
+      '<tr><td colspan="3" class="p-10 text-center text-gray-400">سطحی یافت نشد</td></tr>';
+  };
+  window.viewCourseLevelDetails = function (id) {
+    const x = (window.allCourseLevels || []).find((v) => Number(v.id) === Number(id));
+    if (!x) return;
+    document.getElementById('modalContainer').innerHTML =
+      `<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onclick="if(event.target===this)closeModal()"><div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-7" onclick="event.stopPropagation()"><div class="mb-6 flex items-center justify-between"><h2 class="text-xl font-bold">جزئیات سطح درس</h2><button onclick="closeModal()" class="text-2xl text-gray-500 hover:text-gray-800">×</button></div><div class="space-y-5"><div><div class="mb-1 text-sm text-gray-500">عنوان</div><div class="font-bold text-gray-900">${esc(x.name) || '—'}</div></div><div><div class="mb-1 text-sm text-gray-500">خلاصه</div><div class="leading-7 text-gray-800">${esc(x.summary) || '—'}</div></div><div><div class="mb-1 text-sm text-gray-500">توضیحات</div><div class="whitespace-pre-line leading-8 text-gray-700">${esc(x.description) || '—'}</div></div></div><button onclick="closeModal()" class="mt-7 w-full rounded-2xl bg-gray-100 p-3 text-gray-700 hover:bg-gray-200">بستن</button></div></div>`;
+  };
+  window.openCourseLevelModal = function () {
+    document.getElementById('modalContainer').innerHTML =
+      `<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onclick="if(event.target===this)closeModal()"><div class="w-full max-w-xl rounded-3xl bg-white p-7" onclick="event.stopPropagation()"><div class="mb-6 flex justify-between"><h2 class="text-xl font-bold">افزودن سطح درس</h2><button onclick="closeModal()" class="text-2xl">×</button></div><div class="space-y-4"><input id="clName" placeholder="عنوان سطح" class="w-full rounded-2xl border p-4"><input id="clSummary" placeholder="خلاصه" class="w-full rounded-2xl border p-4"><textarea id="clDescription" placeholder="توضیحات" class="w-full rounded-2xl border p-4" rows="6"></textarea><button onclick="saveCourseLevel()" class="w-full rounded-2xl bg-indigo-600 p-3 text-white">ذخیره</button></div></div></div>`;
+  };
+  window.saveCourseLevel = async function () {
+    const d = {
+      name: document.getElementById('clName').value.trim(),
+      summary: document.getElementById('clSummary').value.trim(),
+      description: document.getElementById('clDescription').value.trim(),
+    };
+    if (!d.name) return alert('عنوان سطح الزامی است');
+    try {
+      await courseApi('/academy/admin/course-levels', d);
+      await loadCourses();
+      closeModal();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
 })();

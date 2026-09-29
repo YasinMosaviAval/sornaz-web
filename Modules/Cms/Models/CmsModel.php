@@ -4,7 +4,8 @@ namespace Modules\Cms\Models;
 
 use Core\database\Model;
 
-class CmsModel extends Model {
+class CmsModel extends Model
+{
 
     protected string $table = 'cmss';
     protected string $primaryKey = 'cms_id';
@@ -17,6 +18,5 @@ class CmsModel extends Model {
     ];
     protected bool $timestamps = true;
     protected bool $softDeletes = true;
-
 
 }

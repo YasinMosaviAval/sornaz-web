@@ -4,9 +4,10 @@ namespace Core\database\Scopes;
 
 use Core\database\Builder;
 
-class SoftDeletingScope implements Scope {
-
-    public function apply(Builder $builder): void {
+class SoftDeletingScope implements Scope
+{
+    public function apply(Builder $builder): void
+    {
         if ($builder->isWithTrashed()) {
             return;
         }
@@ -16,6 +17,4 @@ class SoftDeletingScope implements Scope {
         }
         $builder->whereNull('deleted_at');
     }
-
-
 }

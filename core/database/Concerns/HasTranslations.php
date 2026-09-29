@@ -4,14 +4,13 @@ namespace Core\database\Concerns;
 
 use Core\translation\TranslationService;
 
-trait HasTranslations {
-
+trait HasTranslations
+{
 
     protected array $translated = [];
 
-
-
-    public function translate(string $field, ?string $locale = null, int $version = 1): mixed {
+    public function translate(string $field, ?string $locale = null, int $version = 1): mixed
+    {
         return TranslationService::manager()->get(
             $this,
             $field,
@@ -20,9 +19,8 @@ trait HasTranslations {
         );
     }
 
-
-
-    public function setTranslation(string $field, mixed $value, ?string $locale = null, int $version = 1): bool {
+    public function setTranslation(string $field, mixed $value, ?string $locale = null, int $version = 1): bool
+    {
         return TranslationService::manager()->set(
             $this,
             $field,
@@ -32,9 +30,8 @@ trait HasTranslations {
         );
     }
 
-
-
-    public function hasTranslation(string $field, ?string $locale = null, int $version = 1): bool {
+    public function hasTranslation(string $field, ?string $locale = null, int $version = 1): bool
+    {
         return TranslationService::manager()->exists(
             $this,
             $field,
@@ -43,9 +40,8 @@ trait HasTranslations {
         );
     }
 
-
-
-    public function removeTranslation(string $field, ?string $locale = null, int $version = 1): bool {
+    public function removeTranslation(string $field, ?string $locale = null, int $version = 1): bool
+    {
         return TranslationService::manager()->delete(
             $this,
             $field,
@@ -53,8 +49,4 @@ trait HasTranslations {
             $version
         );
     }
-
-
-
-
 }

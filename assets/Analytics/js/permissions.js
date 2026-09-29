@@ -1,2 +1,93 @@
-(function(){'use strict';const e=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'),labels={platform:'پلتفرم',website:'سایت',academy:'آموزشگاه',branch:'شعبه',self:'شخصی'};window.renderAccessPermissions=()=>{const body=document.getElementById('accessPermissionsBody');if(!body)return;const q=(document.getElementById('accessPermissionSearch')?.value||'').toLowerCase(),s=document.getElementById('accessPermissionScope')?.value,r=document.getElementById('accessPermissionRisk')?.value,list=(window.accessPermissions||[]).filter(x=>(!q||(x.name+' '+(x.translations.fa?.title||'')+' '+(x.translations.en?.title||'')).toLowerCase().includes(q))&&(!s||x.scope===s)&&(!r||String(x.risk)===r));document.getElementById('accessPermissionCount').textContent=list.length+' مجوز';body.innerHTML=list.map(x=>`<tr><td class="p-4"><b>${e(x.translations.fa?.title||x.name)}</b><small class="block text-gray-400">${e(x.name)} · ${e(x.translations.en?.title||'')}</small></td><td class="p-4">${e(x.resource)}</td><td class="p-4">${e(x.action)}</td><td class="p-4">${labels[x.scope]||x.scope}</td><td class="p-4"><span class="rounded-full px-3 py-1 ${x.risk>=4?'bg-red-100 text-red-700':x.risk===3?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700'}">${x.risk}</span></td><td class="p-4 text-left"><button onclick="openAccessPermission(${x.id})" class="ml-3 text-indigo-600">ویرایش</button><button onclick="deleteAccessPermission(${x.id})" class="text-red-500">حذف</button></td></tr>`).join('')||'<tr><td colspan="6" class="p-12 text-center text-gray-400">مجوزی یافت نشد</td></tr>';};
-window.openAccessPermission=id=>{const x=(window.accessPermissions||[]).find(p=>p.id===id)||{scope:'website',type:'sidebar',group:'website',risk:1,approval:'confirm',translations:{fa:{},en:{}}};document.getElementById('modalContainer').innerHTML=`<div id="accessPermissionModal" class="fixed inset-0 z-50 overflow-auto bg-black/60 p-4"><div class="mx-auto max-w-4xl rounded-3xl bg-white p-6"><div class="mb-5 flex justify-between"><h2 class="text-2xl font-bold">${id?'ویرایش مجوز':'مجوز جدید'}</h2><button onclick="accessPermissionModal.remove()" class="text-3xl">×</button></div><form id="accessPermissionForm" class="space-y-5"><div class="grid gap-3 md:grid-cols-3"><input name="resource" value="${e(x.resource)}" placeholder="resource" class="rounded-xl border p-3"><input name="action" value="${e(x.action)}" placeholder="action" class="rounded-xl border p-3"><select name="scope" class="rounded-xl border p-3">${Object.entries(labels).map(([v,l])=>`<option value="${v}" ${x.scope===v?'selected':''}>${l}</option>`).join('')}</select><select name="risk" class="rounded-xl border p-3">${[1,2,3,4,5].map(v=>`<option ${x.risk===v?'selected':''}>${v}</option>`).join('')}</select><select name="type" class="rounded-xl border p-3">${['menu','sidebar','topbar','header'].map(v=>`<option ${x.type===v?'selected':''}>${v}</option>`).join('')}</select><select name="approval" class="rounded-xl border p-3">${['confirm','pending'].map(v=>`<option ${x.approval===v?'selected':''}>${v}</option>`).join('')}</select></div><div class="grid gap-3 md:grid-cols-3"><input name="title_fa" value="${e(x.translations.fa?.title)}" placeholder="عنوان فارسی" class="rounded-xl border p-3"><input name="summary_fa" value="${e(x.translations.fa?.summary)}" placeholder="خلاصه فارسی" class="rounded-xl border p-3"><textarea name="description_fa" placeholder="شرح فارسی" class="rounded-xl border p-3">${e(x.translations.fa?.description)}</textarea><input name="title_en" value="${e(x.translations.en?.title)}" placeholder="English title" class="rounded-xl border p-3"><input name="summary_en" value="${e(x.translations.en?.summary)}" placeholder="English summary" class="rounded-xl border p-3"><textarea name="description_en" placeholder="English description" class="rounded-xl border p-3">${e(x.translations.en?.description)}</textarea></div><button type="button" onclick="saveAccessPermission(${id||'null'})" class="rounded-xl bg-indigo-600 px-6 py-3 text-white">ذخیره در دیتابیس</button></form></div></div>`;};window.saveAccessPermission=async id=>{const d=Object.fromEntries(new FormData(document.getElementById('accessPermissionForm')));d.risk=Number(d.risk);d.group=['academy','branch'].includes(d.scope)?'academy':'website';d.translations={fa:{title:d.title_fa,summary:d.summary_fa,description:d.description_fa},en:{title:d.title_en,summary:d.summary_en,description:d.description_en}};try{await accessApi(id?`/analytics/admin-permissions/${id}`:'/analytics/admin-permissions',d);accessPermissionModal.remove();loadAccessCatalog();}catch(x){alert(x.message);}};window.deleteAccessPermission=async id=>{if(await AppDialog.confirm('مجوز به‌صورت نرم حذف شود؟'))try{await accessApi(`/analytics/admin-permissions/${id}/delete`,{});loadAccessCatalog();}catch(x){alert(x.message);}};})();
+(function () {
+  'use strict';
+  const e = (v) =>
+      String(v ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;'),
+    labels = {
+      platform: 'پلتفرم',
+      website: 'سایت',
+      academy: 'آموزشگاه',
+      branch: 'شعبه',
+      self: 'شخصی',
+    };
+  window.renderAccessPermissions = () => {
+    const body = document.getElementById('accessPermissionsBody');
+    if (!body) return;
+    const q = (document.getElementById('accessPermissionSearch')?.value || '').toLowerCase(),
+      s = document.getElementById('accessPermissionScope')?.value,
+      r = document.getElementById('accessPermissionRisk')?.value,
+      list = (window.accessPermissions || []).filter(
+        (x) =>
+          (!q ||
+            (
+              x.name +
+              ' ' +
+              (x.translations.fa?.title || '') +
+              ' ' +
+              (x.translations.en?.title || '')
+            )
+              .toLowerCase()
+              .includes(q)) &&
+          (!s || x.scope === s) &&
+          (!r || String(x.risk) === r)
+      );
+    document.getElementById('accessPermissionCount').textContent = list.length + ' مجوز';
+    body.innerHTML =
+      list
+        .map(
+          (x) =>
+            `<tr><td class="p-4"><b>${e(x.translations.fa?.title || x.name)}</b><small class="block text-gray-400">${e(x.name)} · ${e(x.translations.en?.title || '')}</small></td><td class="p-4">${e(x.resource)}</td><td class="p-4">${e(x.action)}</td><td class="p-4">${labels[x.scope] || x.scope}</td><td class="p-4"><span class="rounded-full px-3 py-1 ${x.risk >= 4 ? 'bg-red-100 text-red-700' : x.risk === 3 ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}">${x.risk}</span></td><td class="p-4 text-left"><button onclick="openAccessPermission(${x.id})" class="ml-3 text-indigo-600">ویرایش</button><button onclick="deleteAccessPermission(${x.id})" class="text-red-500">حذف</button></td></tr>`
+        )
+        .join('') ||
+      '<tr><td colspan="6" class="p-12 text-center text-gray-400">مجوزی یافت نشد</td></tr>';
+  };
+  window.openAccessPermission = (id) => {
+    const x = (window.accessPermissions || []).find((p) => p.id === id) || {
+      scope: 'website',
+      type: 'sidebar',
+      group: 'website',
+      risk: 1,
+      approval: 'confirm',
+      translations: { fa: {}, en: {} },
+    };
+    document.getElementById('modalContainer').innerHTML =
+      `<div id="accessPermissionModal" class="fixed inset-0 z-50 overflow-auto bg-black/60 p-4"><div class="mx-auto max-w-4xl rounded-3xl bg-white p-6"><div class="mb-5 flex justify-between"><h2 class="text-2xl font-bold">${id ? 'ویرایش مجوز' : 'مجوز جدید'}</h2><button onclick="accessPermissionModal.remove()" class="text-3xl">×</button></div><form id="accessPermissionForm" class="space-y-5"><div class="grid gap-3 md:grid-cols-3"><input name="resource" value="${e(x.resource)}" placeholder="resource" class="rounded-xl border p-3"><input name="action" value="${e(x.action)}" placeholder="action" class="rounded-xl border p-3"><select name="scope" class="rounded-xl border p-3">${Object.entries(
+        labels
+      )
+        .map(([v, l]) => `<option value="${v}" ${x.scope === v ? 'selected' : ''}>${l}</option>`)
+        .join(
+          ''
+        )}</select><select name="risk" class="rounded-xl border p-3">${[1, 2, 3, 4, 5].map((v) => `<option ${x.risk === v ? 'selected' : ''}>${v}</option>`).join('')}</select><select name="type" class="rounded-xl border p-3">${['menu', 'sidebar', 'topbar', 'header'].map((v) => `<option ${x.type === v ? 'selected' : ''}>${v}</option>`).join('')}</select><select name="approval" class="rounded-xl border p-3">${['confirm', 'pending'].map((v) => `<option ${x.approval === v ? 'selected' : ''}>${v}</option>`).join('')}</select></div><div class="grid gap-3 md:grid-cols-3"><input name="title_fa" value="${e(x.translations.fa?.title)}" placeholder="عنوان فارسی" class="rounded-xl border p-3"><input name="summary_fa" value="${e(x.translations.fa?.summary)}" placeholder="خلاصه فارسی" class="rounded-xl border p-3"><textarea name="description_fa" placeholder="شرح فارسی" class="rounded-xl border p-3">${e(x.translations.fa?.description)}</textarea><input name="title_en" value="${e(x.translations.en?.title)}" placeholder="English title" class="rounded-xl border p-3"><input name="summary_en" value="${e(x.translations.en?.summary)}" placeholder="English summary" class="rounded-xl border p-3"><textarea name="description_en" placeholder="English description" class="rounded-xl border p-3">${e(x.translations.en?.description)}</textarea></div><button type="button" onclick="saveAccessPermission(${id || 'null'})" class="rounded-xl bg-indigo-600 px-6 py-3 text-white">ذخیره در دیتابیس</button></form></div></div>`;
+  };
+  window.saveAccessPermission = async (id) => {
+    const d = Object.fromEntries(new FormData(document.getElementById('accessPermissionForm')));
+    d.risk = Number(d.risk);
+    d.group = ['academy', 'branch'].includes(d.scope) ? 'academy' : 'website';
+    d.translations = {
+      fa: { title: d.title_fa, summary: d.summary_fa, description: d.description_fa },
+      en: { title: d.title_en, summary: d.summary_en, description: d.description_en },
+    };
+    try {
+      await accessApi(
+        id ? `/analytics/admin-permissions/${id}` : '/analytics/admin-permissions',
+        d
+      );
+      accessPermissionModal.remove();
+      loadAccessCatalog();
+    } catch (x) {
+      alert(x.message);
+    }
+  };
+  window.deleteAccessPermission = async (id) => {
+    if (await AppDialog.confirm('مجوز به‌صورت نرم حذف شود؟'))
+      try {
+        await accessApi(`/analytics/admin-permissions/${id}/delete`, {});
+        loadAccessCatalog();
+      } catch (x) {
+        alert(x.message);
+      }
+  };
+})();

@@ -5,16 +5,20 @@ namespace Modules\System\Services;
 use PHPMailer\PHPMailer\PHPMailer;
 use Throwable;
 
-class MailService {
-    public function sendRegistrationOtp(string $email, string $code, int $validMinutes): bool {
+class MailService
+{
+    public function sendRegistrationOtp(string $email, string $code, int $validMinutes): bool
+    {
         return $this->sendOtpTemplate($email, $code, $validMinutes, 'کد فعال‌سازی حساب', 'کد تأیید ثبت‌نام شما:');
     }
 
-    public function sendPasswordResetOtp(string $email, string $code, int $validMinutes): bool {
+    public function sendPasswordResetOtp(string $email, string $code, int $validMinutes): bool
+    {
         return $this->sendOtpTemplate($email, $code, $validMinutes, 'کد بازیابی رمز عبور', 'کد بازیابی رمز عبور شما:');
     }
 
-    private function sendOtpTemplate(string $email, string $code, int $validMinutes, string $title, string $description): bool {
+    private function sendOtpTemplate(string $email, string $code, int $validMinutes, string $title, string $description): bool
+    {
         $appName = 'برنامه آموزشی سرناز';
         $safeCode = e($code);
         $subject = "{$title} — {$appName}";
@@ -33,16 +37,17 @@ HTML;
         return $this->send($email, $subject, $body);
     }
 
-    private function send(string $recipient, string $subject, string $html): bool {
+    private function send(string $recipient, string $subject, string $html): bool
+    {
         try {
             $mail = new PHPMailer(true);
             $mail->isSMTP();
-            $mail->Host = (string)config('system.mail.host');
-            $mail->Port = (int)config('system.mail.port', 587);
+            $mail->Host = (string) config('system.mail.host');
+            $mail->Port = (int) config('system.mail.port', 587);
             $mail->SMTPAuth = config('system.mail.username', '') !== '';
-            $mail->Username = (string)config('system.mail.username', '');
-            $mail->Password = (string)config('system.mail.password', '');
-            $encryption = strtolower((string)config('system.mail.encryption', 'tls'));
+            $mail->Username = (string) config('system.mail.username', '');
+            $mail->Password = (string) config('system.mail.password', '');
+            $encryption = strtolower((string) config('system.mail.encryption', 'tls'));
             if ($encryption === 'ssl' || $encryption === 'smtps') {
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
             } elseif ($encryption === 'tls' || $encryption === 'starttls') {
@@ -51,14 +56,14 @@ HTML;
                 $mail->SMTPSecure = '';
                 $mail->SMTPAutoTLS = false;
             }
-            $verifyPeer = (bool)config('system.mail.verify_peer', true);
+            $verifyPeer = (bool) config('system.mail.verify_peer', true);
             $mail->SMTPOptions = ['ssl' => [
                 'verify_peer' => $verifyPeer,
                 'verify_peer_name' => $verifyPeer,
                 'allow_self_signed' => !$verifyPeer,
             ]];
             $mail->CharSet = PHPMailer::CHARSET_UTF8;
-            $mail->setFrom((string)config('system.mail.from'), (string)config('system.mail.from_name'));
+            $mail->setFrom((string) config('system.mail.from'), (string) config('system.mail.from_name'));
             $mail->addAddress($recipient);
             $mail->isHTML(true);
             $mail->Subject = $subject;

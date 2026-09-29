@@ -11,8 +11,8 @@ use Modules\System\Observers\UserObserver;
 use Core\providers\ServiceProvider;
 use Modules\System\Models\UserModel;
 
-class EventServiceProvider extends ServiceProvider {
-
+class EventServiceProvider extends ServiceProvider
+{
 
     protected array $listen = [
         UserCreated::class => [
@@ -22,24 +22,22 @@ class EventServiceProvider extends ServiceProvider {
         ],
     ];
 
-
     protected array $observers = [
         UserModel::class => UserObserver::class,
     ];
 
-
     protected array $subscribers = [
     ];
 
-
-    public function register(): void {
+    public function register(): void
+    {
         $this->registerListeners();
         $this->registerObservers();
         $this->registerSubscribers();
     }
 
-
-    protected function registerListeners(): void {
+    protected function registerListeners(): void
+    {
         foreach ($this->listen as $event => $listeners) {
             foreach ($listeners as $listener) {
                 events()->listen($event, $listener);
@@ -47,15 +45,15 @@ class EventServiceProvider extends ServiceProvider {
         }
     }
 
-
-    protected function registerObservers(): void {
+    protected function registerObservers(): void
+    {
         foreach ($this->observers as $model => $observer) {
             $model::observe($observer);
         }
     }
 
-
-    protected function registerSubscribers(): void {
+    protected function registerSubscribers(): void
+    {
         foreach ($this->subscribers as $subscriber) {
             if (method_exists($subscriber, 'subscribe')) {
                 (new $subscriber)->subscribe(events());
@@ -63,9 +61,8 @@ class EventServiceProvider extends ServiceProvider {
         }
     }
 
-
-    public function boot(): void {
+    public function boot(): void
+    {
         UserModel::observe(UserObserver::class);
     }
-
 }

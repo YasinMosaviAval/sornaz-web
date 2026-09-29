@@ -7,31 +7,39 @@ use Modules\Academy\Services\AcademyBranchOfferingService;
 use RuntimeException;
 use Throwable;
 
-class AcademyBranchOfferingController {
+class AcademyBranchOfferingController
+{
+    public function __construct(protected AcademyBranchOfferingService $service)
+    {
+    }
 
-
-    public function __construct(protected AcademyBranchOfferingService $service) {}
-
-
-    public function index() {
+    public function index()
+    {
         return ResponseFactory::json(['success' => true, 'data' => $this->service->all((int) auth()->id())]);
     }
 
-
-    public function storeSchedule() {
+    public function storeSchedule()
+    {
         return $this->saveSchedule();
     }
 
-
-    public function updateSchedule(int $id) {
+    public function updateSchedule(int $id)
+    {
         return $this->saveSchedule($id);
     }
 
-    public function storeLesson() { return $this->saveLesson(); }
+    public function storeLesson()
+    {
+        return $this->saveLesson();
+    }
 
-    public function updateLesson(int $id) { return $this->saveLesson($id); }
+    public function updateLesson(int $id)
+    {
+        return $this->saveLesson($id);
+    }
 
-    public function cycleLessonStatus(int $id) {
+    public function cycleLessonStatus(int $id)
+    {
         try {
             return ResponseFactory::json(['success' => true, 'data' => $this->service->cycleLessonStatus((int) auth()->id(), $id)]);
         } catch (Throwable $e) {
@@ -39,7 +47,8 @@ class AcademyBranchOfferingController {
         }
     }
 
-    public function lessonsRealtimeVersion() {
+    public function lessonsRealtimeVersion()
+    {
         try {
             return ResponseFactory::json(['success' => true, 'data' => $this->service->lessonsRealtimeVersion((int) auth()->id())]);
         } catch (Throwable $e) {
@@ -47,7 +56,8 @@ class AcademyBranchOfferingController {
         }
     }
 
-    public function schedulesRealtimeVersion() {
+    public function schedulesRealtimeVersion()
+    {
         try {
             return ResponseFactory::json(['success' => true, 'data' => $this->service->schedulesRealtimeVersion((int) auth()->id())]);
         } catch (\Throwable $e) {
@@ -55,7 +65,8 @@ class AcademyBranchOfferingController {
         }
     }
 
-    public function storeLessonCatalog() {
+    public function storeLessonCatalog()
+    {
         try {
             $data = $this->payload('اطلاعات درس جدید معتبر نیست.');
             return ResponseFactory::json(['success' => true, 'data' => $this->service->createLesson((int) auth()->id(), $data)]);
@@ -64,7 +75,8 @@ class AcademyBranchOfferingController {
         }
     }
 
-    private function saveLesson(int $id = 0) {
+    private function saveLesson(int $id = 0)
+    {
         try {
             $data = $this->payload('اطلاعات درس معتبر نیست.');
             return ResponseFactory::json(['success' => true, 'data' => $this->service->saveLesson((int) auth()->id(), $data, $id)]);
@@ -73,16 +85,19 @@ class AcademyBranchOfferingController {
         }
     }
 
-    private function payload(string $message): array {
+    private function payload(string $message): array
+    {
         $encoded = (string) request()->input('payload_b64', '');
         $decoded = base64_decode(strtr($encoded, '-_', '+/'), true);
         $data = $decoded === false ? null : json_decode($decoded, true);
-        if (!is_array($data)) throw new RuntimeException($message);
+        if (!is_array($data)) {
+            throw new RuntimeException($message);
+        }
         return $data;
     }
 
-
-    private function saveSchedule(int $id = 0) {
+    private function saveSchedule(int $id = 0)
+    {
         try {
             $data = $this->payload('اطلاعات برنامه زمانی معتبر نیست.');
             $saved = $this->service->saveSchedule((int) auth()->id(), $data, $id);
@@ -92,8 +107,8 @@ class AcademyBranchOfferingController {
         }
     }
 
-
-    public function delete(string $type, int $id) {
+    public function delete(string $type, int $id)
+    {
         try {
             $this->service->delete($type, $id, (int) auth()->id());
             return ResponseFactory::json(['success' => true]);
@@ -101,6 +116,4 @@ class AcademyBranchOfferingController {
             return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }
-
-
 }

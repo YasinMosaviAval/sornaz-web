@@ -2,10 +2,10 @@
 
 namespace Core\providers;
 
-abstract class ServiceProvider {
-
-
-    public function register(): void {
+abstract class ServiceProvider
+{
+    public function register(): void
+    {
         file_put_contents(
             storage_path('logs/provider.log'),
             "register\n",
@@ -13,8 +13,8 @@ abstract class ServiceProvider {
         );
     }
 
-
-    public function boot(): void {
+    public function boot(): void
+    {
         file_put_contents(
             storage_path('logs/provider.log'),
             "boot\n",

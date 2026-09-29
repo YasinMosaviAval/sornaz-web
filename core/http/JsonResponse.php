@@ -2,13 +2,16 @@
 
 namespace Core\http;
 
-class JsonResponse implements ResponseInterface {
+class JsonResponse implements ResponseInterface
+{
     public function __construct(
         protected mixed $data,
         protected int $status = 200
-    ) {}
+    ) {
+    }
 
-    public function send(): void {
+    public function send(): void
+    {
         http_response_code($this->status);
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(

@@ -5,15 +5,18 @@ namespace Core\database\Concerns;
 use Closure;
 use Core\database\Relations\HasMany;
 
-trait BuildsRelationAggregates {
-
-
-
-    protected function loadRelationAggregate(array $models, string $relationName, string $aggregate, ?string $column = null, ?Closure $constraint = null): void {
-        if (empty($models)) {return;}
+trait BuildsRelationAggregates
+{
+    protected function loadRelationAggregate(array $models, string $relationName, string $aggregate, ?string $column = null, ?Closure $constraint = null): void
+    {
+        if (empty($models)) {
+            return;
+        }
         $first = $models[0];
         $relation = $first->{$relationName}();
-        if (!$relation instanceof HasMany) {return;}
+        if (!$relation instanceof HasMany) {
+            return;
+        }
         $relatedClass = $relation->getRelated();
         $foreignKey = $relation->getForeignKey();
         $localKey = $relation->getLocalKey();
@@ -36,9 +39,4 @@ trait BuildsRelationAggregates {
             $model->$attribute = $value;
         }
     }
-
-
-
-
-
 }

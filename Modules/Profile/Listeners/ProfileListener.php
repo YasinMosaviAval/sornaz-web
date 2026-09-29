@@ -2,6 +2,7 @@
 
 namespace Modules\Profile\Listeners;
 
-class SendProfileListener {
+class SendProfileListener
+{
 
 }

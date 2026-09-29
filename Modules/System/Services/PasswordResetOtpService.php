@@ -4,7 +4,8 @@ namespace Modules\System\Services;
 
 use Modules\System\Repositories\UserRepository;
 
-class PasswordResetOtpService {
+class PasswordResetOtpService
+{
     private const KEY = 'password_reset_otp';
     private const TTL = 120;
     private const RESEND_DELAY = 60;
@@ -14,35 +15,49 @@ class PasswordResetOtpService {
         protected UserRepository $users,
         protected MailService $mail,
         protected SmsService $sms
-    ) {}
+    ) {
+    }
 
-    public function send(string $method, string $destination): array {
+    public function send(string $method, string $destination): array
+    {
         $current = session()->get(self::KEY, []);
         if (!empty($current['sent_at']) && time() - $current['sent_at'] < self::RESEND_DELAY) {
             return ['ok' => false, 'message' => 'برای ارسال مجدد کمی صبر کنید.', 'retry_after' => self::RESEND_DELAY - (time() - $current['sent_at'])];
         }
         $user = $this->users->findByContact($method, $destination);
         $this->clear();
-        $code = (string)random_int(100000, 999999);
+        $code = (string) random_int(100000, 999999);
         $sent = !$user ? true : ($method === 'email'
             ? $this->mail->sendPasswordResetOtp($destination, $code, intdiv(self::TTL, 60))
             : $this->sms->sendPasswordResetOtp($destination, $code, intdiv(self::TTL, 60)));
-        if (!$sent) error_log('Password reset delivery failed; check the configured delivery provider.');
+        if (!$sent) {
+            error_log('Password reset delivery failed; check the configured delivery provider.');
+        }
         session()->put(self::KEY, [
-            'user_id' => $sent ? (int)($user['user_id'] ?? 0) : 0, 'method' => $method, 'destination' => $destination,
+            'user_id' => $sent ? (int) ($user['user_id'] ?? 0) : 0, 'method' => $method, 'destination' => $destination,
             'hash' => password_hash($code, PASSWORD_DEFAULT), 'expires_at' => time() + self::TTL,
             'sent_at' => time(), 'attempts' => 0, 'verified' => false,
         ]);
         return ['ok' => true, 'message' => 'اگر حسابی با این مشخصات وجود داشته باشد، کد بازیابی برای آن ارسال می‌شود.', 'expires_in' => self::TTL];
     }
 
-    public function verify(string $code): array {
+    public function verify(string $code): array
+    {
         $data = session()->get(self::KEY);
-        if (!$data) return ['ok' => false, 'message' => 'ابتدا کد بازیابی دریافت کنید.'];
-        if (($data['expires_at'] ?? 0) <= time()) { $this->clear(); return ['ok' => false, 'message' => 'کد بازیابی منقضی شده است.']; }
-        if (($data['attempts'] ?? 0) >= self::MAX_ATTEMPTS) { $this->clear(); return ['ok' => false, 'message' => 'تعداد تلاش‌ها بیش از حد مجاز است.']; }
+        if (!$data) {
+            return ['ok' => false, 'message' => 'ابتدا کد بازیابی دریافت کنید.'];
+        }
+        if (($data['expires_at'] ?? 0) <= time()) {
+            $this->clear();
+            return ['ok' => false, 'message' => 'کد بازیابی منقضی شده است.'];
+        }
+        if (($data['attempts'] ?? 0) >= self::MAX_ATTEMPTS) {
+            $this->clear();
+            return ['ok' => false, 'message' => 'تعداد تلاش‌ها بیش از حد مجاز است.'];
+        }
         if (!password_verify($code, $data['hash']) || empty($data['user_id'])) {
-            $data['attempts']++; session()->put(self::KEY, $data);
+            $data['attempts']++;
+            session()->put(self::KEY, $data);
             return ['ok' => false, 'message' => 'کد بازیابی نادرست است.'];
         }
         $data['verified'] = true;
@@ -51,19 +66,25 @@ class PasswordResetOtpService {
         return ['ok' => true, 'message' => 'کد تأیید شد.'];
     }
 
-    public function reset(string $password): array {
+    public function reset(string $password): array
+    {
         $data = session()->get(self::KEY);
-        if (!$data || empty($data['verified'])) return ['ok' => false, 'message' => 'کد بازیابی تأیید نشده است.'];
+        if (!$data || empty($data['verified'])) {
+            return ['ok' => false, 'message' => 'کد بازیابی تأیید نشده است.'];
+        }
         if (($data['expires_at'] ?? 0) <= time() || empty($data['verified_at'])) {
             $this->clear();
-            return ['ok'=>false,'message'=>'مهلت بازیابی رمز تمام شده است. کد جدید دریافت کنید.'];
+            return ['ok' => false, 'message' => 'مهلت بازیابی رمز تمام شده است. کد جدید دریافت کنید.'];
         }
-        if (!$this->users->updatePassword((int)$data['user_id'], password_hash($password, PASSWORD_DEFAULT))) {
+        if (!$this->users->updatePassword((int) $data['user_id'], password_hash($password, PASSWORD_DEFAULT))) {
             return ['ok' => false, 'message' => 'ذخیره رمز عبور انجام نشد.'];
         }
         $this->clear();
         return ['ok' => true, 'message' => 'رمز عبور با موفقیت تغییر کرد.'];
     }
 
-    public function clear(): void { session()->forget(self::KEY); }
+    public function clear(): void
+    {
+        session()->forget(self::KEY);
+    }
 }

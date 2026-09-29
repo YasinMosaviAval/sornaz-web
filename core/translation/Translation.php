@@ -4,7 +4,8 @@ namespace Core\translation;
 
 use Core\database\Model;
 
-class Translation extends Model {
+class Translation extends Model
+{
 
     protected static string $table = 'translations';
     protected static string $primaryKey = 'translation_id';
@@ -16,7 +17,5 @@ class Translation extends Model {
         'value',
         'version',
     ];
-
-
 
 }

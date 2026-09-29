@@ -5,19 +5,18 @@ namespace Core\container;
 use ReflectionClass;
 use ReflectionParameter;
 
-class Container {
+class Container
+{
     protected array $bindings = [];
     protected array $instances = [];
 
-
-
-    public function bind(string $abstract, string $concrete): void {
+    public function bind(string $abstract, string $concrete): void
+    {
         $this->bindings[$abstract] = $concrete;
     }
 
-
-
-    public function make(string $class): object {
+    public function make(string $class): object
+    {
         if (isset($this->instances[$class])) {
             return $this->instances[$class];
         }
@@ -36,9 +35,8 @@ class Container {
         return $reflection->newInstanceArgs($dependencies);
     }
 
-
-
-    protected function resolveParameter(ReflectionParameter $parameter) {
+    protected function resolveParameter(ReflectionParameter $parameter)
+    {
         $type = $parameter->getType();
         if (!$type) {
             return null;
@@ -46,13 +44,8 @@ class Container {
         return $this->make($type->getName());
     }
 
-
-
-    public function instance(string $abstract, object $instance): void {
+    public function instance(string $abstract, object $instance): void
+    {
         $this->instances[$abstract] = $instance;
     }
-
-
-
-
 }

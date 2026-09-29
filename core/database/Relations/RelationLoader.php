@@ -5,23 +5,23 @@ namespace Core\database\Relations;
 use Closure;
 use RuntimeException;
 
-class RelationLoader {
-
+class RelationLoader
+{
 
     protected array $tree = [];
     protected array $parsedTree = [];
 
-
-    public function parse(array $relations): static {
+    public function parse(array $relations): static
+    {
         $tree = [];
         foreach ($relations as $relation => $constraint) {
             $parts = explode('.', $relation);
-            $current =& $tree;
+            $current = &$tree;
             foreach ($parts as $part) {
                 if (!isset($current[$part])) {
                     $current[$part] = [];
                 }
-                $current =& $current[$part];
+                $current = &$current[$part];
             }
             $current['_constraint'] = $constraint;
         }
@@ -29,9 +29,11 @@ class RelationLoader {
         return $this;
     }
 
-
-    protected function processNode(array $models, array $tree): void {
-        if (empty($models)) {return;}
+    protected function processNode(array $models, array $tree): void
+    {
+        if (empty($models)) {
+            return;
+        }
         foreach ($tree as $relationName => $children) {
             $constraint = $children['_constraint'] ?? null;
             unset($children['_constraint']);
@@ -50,7 +52,9 @@ class RelationLoader {
                 $nestedModels = [];
                 foreach ($models as $model) {
                     $loaded = $model->getRelation($relationName);
-                    if ($loaded === null) {continue;}
+                    if ($loaded === null) {
+                        continue;
+                    }
                     if (is_array($loaded)) {
                         $nestedModels = array_merge($nestedModels, $loaded);
                     } else {
@@ -62,26 +66,33 @@ class RelationLoader {
         }
     }
 
-
-    public function load(array $models): void {
-        if (!$this->hasTree()) {return;}
+    public function load(array $models): void
+    {
+        if (!$this->hasTree()) {
+            return;
+        }
         $this->processNode($models, $this->parsedTree);
     }
 
+    public function getTree(): array
+    {
+        return $this->parsedTree;
+    }
 
-    public function getTree(): array {return $this->parsedTree;}
+    public function setTree(array $tree): static
+    {
+        $this->parsedTree = $tree;
+        return $this;
+    }
 
-
-    public function setTree(array $tree): static {$this->parsedTree = $tree; return $this;}
-
-
-    public function mapTree(callable $callback): static {
+    public function mapTree(callable $callback): static
+    {
         $this->parsedTree = $this->mapNode($this->parsedTree, $callback);
         return $this;
     }
 
-
-    protected function mapNode(array $tree, callable $callback): array {
+    protected function mapNode(array $tree, callable $callback): array
+    {
         $result = [];
         foreach ($tree as $name => $children) {
             if ($name === '_constraint') {
@@ -102,17 +113,19 @@ class RelationLoader {
         return $result;
     }
 
-
-    public function filterTree(callable $callback): static {
+    public function filterTree(callable $callback): static
+    {
         $this->parsedTree = $this->filterNode($this->parsedTree, $callback);
         return $this;
     }
 
-
-    protected function filterNode(array $tree, callable $callback): array {
+    protected function filterNode(array $tree, callable $callback): array
+    {
         $result = [];
         foreach ($tree as $relation => $children) {
-            if ($relation === '_constraint') {continue;}
+            if ($relation === '_constraint') {
+                continue;
+            }
             $constraint = $children['_constraint'] ?? null;
             unset($children['_constraint']);
             $children = $this->filterNode($children, $callback);
@@ -126,11 +139,14 @@ class RelationLoader {
         return $result;
     }
 
+    public function hasTree(): bool
+    {
+        return !empty($this->parsedTree);
+    }
 
-    public function hasTree(): bool {return !empty($this->parsedTree);}
-
-
-    public function clear(): static {$this->parsedTree = []; return $this;}
-
-
+    public function clear(): static
+    {
+        $this->parsedTree = [];
+        return $this;
+    }
 }

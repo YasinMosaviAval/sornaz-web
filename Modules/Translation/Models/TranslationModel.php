@@ -4,7 +4,8 @@ namespace Modules\Translation\Models;
 
 use Core\database\Model;
 
-class TranslationModel extends Model {
+class TranslationModel extends Model
+{
 
     protected string $table = 'translations';
     protected string $primaryKey = 'translation_id';
@@ -17,6 +18,5 @@ class TranslationModel extends Model {
     ];
     protected bool $timestamps = true;
     protected bool $softDeletes = true;
-
 
 }

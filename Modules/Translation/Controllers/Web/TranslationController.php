@@ -8,118 +8,110 @@ use Modules\Translation\Repositories\TranslationRepository;
 use Modules\Translation\Requests\TranslationStoreRequest;
 use Modules\Translation\Requests\TranslationUpdateRequest;
 
-class TranslationController {
+class TranslationController
+{
 
     protected TranslationService $service;
 
-
-
-    public function __construct() {
+    public function __construct()
+    {
         $this->service = new TranslationService(new TranslationRepository());
     }
-
-
 
     /**
      * لیست
      */
-    public function index() {
+    public function index()
+    {
         $items = $this->service->all();
         return ResponseFactory::view(
-                'Translation::index',
-                [
-                    'items' => $items
-                ]
-            )
+            'Translation::index',
+            [
+                'items' => $items
+            ]
+        )
             ->layout('main')
             ->title('Translation');
     }
 
-
-
     /**
      * فرم ایجاد
      */
-    public function create() {
+    public function create()
+    {
         return ResponseFactory::view(
-                'Translation::create'
-            )
+            'Translation::create'
+        )
             ->layout('main')
             ->title('ایجاد Translation');
     }
 
-
-
     /**
      * ذخیره
      */
-    public function store() {
+    public function store()
+    {
         $request = new TranslationStoreRequest($_POST);
         $data = $request->validated();
         $this->service->create($data);
         return redirect('/translations');
     }
 
-
-
     /**
      * نمایش
      */
-    public function show(int $id) {
+    public function show(int $id)
+    {
         $item = $this->service->findById($id);
         if (!$item) {
             abort(404);
         }
         return ResponseFactory::view(
-                'Translation::show',
-                [
-                    'item' => $item
-                ]
-            )
+            'Translation::show',
+            [
+                'item' => $item
+            ]
+        )
             ->layout('main')
             ->title('نمایش Translation');
     }
 
-
-
     /**
      * فرم ویرایش
      */
-    public function edit(int $id) {
+    public function edit(int $id)
+    {
         $item = $this->service->findById($id);
         if (!$item) {
             abort(404);
         }
         return ResponseFactory::view(
-                'Translation::edit',
-                [
-                    'item' => $item
-                ]
-            )
+            'Translation::edit',
+            [
+                'item' => $item
+            ]
+        )
             ->layout('main')
             ->title('ویرایش Translation');
     }
 
-
-
     /**
      * بروزرسانی
      */
-    public function update(int $id) {
+    public function update(int $id)
+    {
         $request = new TranslationUpdateRequest($_POST);
         $data = $request->validated();
         $this->service->update($id, $data);
         return redirect('/translations');
     }
 
-
-
     /**
      * حذف
      */
-    public function destroy(int $id) {
+    public function destroy(int $id)
+    {
         $this->service->delete($id);
         return redirect('/translations');
     }
-
 }

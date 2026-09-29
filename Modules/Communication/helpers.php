@@ -2,7 +2,8 @@
 
 if (!function_exists('communications')) {
 
-    function communications() {
+    function communications()
+    {
     }
 
 }

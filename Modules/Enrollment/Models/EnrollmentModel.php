@@ -4,7 +4,8 @@ namespace Modules\Enrollment\Models;
 
 use Core\database\Model;
 
-class EnrollmentModel extends Model {
+class EnrollmentModel extends Model
+{
 
     protected string $table = 'enrollments';
     protected string $primaryKey = 'enrollment_id';
@@ -17,6 +18,5 @@ class EnrollmentModel extends Model {
     ];
     protected bool $timestamps = true;
     protected bool $softDeletes = true;
-
 
 }

@@ -4,8 +4,7 @@ namespace Core\database\Scopes;
 
 use Core\database\Builder;
 
-interface Scope {
-
+interface Scope
+{
     public function apply(Builder $builder): void;
-
 }

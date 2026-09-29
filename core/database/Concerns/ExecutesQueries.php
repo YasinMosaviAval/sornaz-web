@@ -5,16 +5,18 @@ namespace Core\database\Concerns;
 use Core\database\Aggregates\AggregateLoader;
 use Core\translation\TranslationManager;
 
-trait ExecutesQueries {
-
-
-    public function get(): array {
+trait ExecutesQueries
+{
+    public function get(): array
+    {
         $this->applyScopes();
         $stmt = $this->pdo->prepare($this->buildSelect());
         $stmt->execute($this->bindings);
         $rows = $stmt->fetchAll();
-        if (!$this->modelClass) {return $rows;}
-        $models = array_map(fn($row) => new $this->modelClass($row), $rows);
+        if (!$this->modelClass) {
+            return $rows;
+        }
+        $models = array_map(fn ($row) => new $this->modelClass($row), $rows);
         $translator = new TranslationManager();
         $translator->warmup($this->modelClass::getTable(), $models);
         $this->eagerLoadRelations($models);
@@ -22,22 +24,19 @@ trait ExecutesQueries {
         return $models;
     }
 
-
-
-    public function first(): mixed {
+    public function first(): mixed
+    {
         $this->limit(1);
         return $this->get()[0] ?? null;
     }
 
-
-
-    public function find(mixed $id, string $primaryKey = 'user_id'): mixed {
+    public function find(mixed $id, string $primaryKey = 'user_id'): mixed
+    {
         return $this->where($primaryKey, $id)->first();
     }
 
-
-
-    public function count(): int {
+    public function count(): int
+    {
         $sql = "SELECT COUNT(*) AS total FROM {$this->table}";
         if (!empty($this->joins)) {
             $sql .= ' ' . implode(' ', $this->joins);
@@ -50,9 +49,8 @@ trait ExecutesQueries {
         return (int) $stmt->fetch()['total'];
     }
 
-
-
-    public function paginate(int $page = 1, int $perPage = 20): array {
+    public function paginate(int $page = 1, int $perPage = 20): array
+    {
         $total = $this->count();
         $offset = ($page - 1) * $perPage;
         $data = $this->limit($perPage)->offset($offset)->get();
@@ -64,13 +62,4 @@ trait ExecutesQueries {
             'last_page' => ceil($total / $perPage),
         ];
     }
-
-
-
-
-
-
-
-
-
 }

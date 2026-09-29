@@ -2,6 +2,7 @@
 
 namespace Modules\Cms\Events;
 
-class CmsEvent {
+class CmsEvent
+{
 
 }

@@ -5,10 +5,10 @@ namespace Core\database\Concerns;
 use Core\database\DB;
 use Core\database\SoftDeletes;
 
-trait HasCRUD {
-
-
-    public function save(): bool {
+trait HasCRUD
+{
+    public function save(): bool
+    {
         /*
         |--------------------------------------------------------------------------
         | Insert
@@ -39,22 +39,22 @@ trait HasCRUD {
         return $result;
     }
 
-
-    public static function create(array $data): static {
+    public static function create(array $data): static
+    {
         $model = new static();
         $model->fill($data);
         $model->save();
         return $model;
     }
 
-
-    public function update(array $data): bool {
+    public function update(array $data): bool
+    {
         $this->fill($data);
         return $this->save();
     }
 
-
-    public function delete(): bool {
+    public function delete(): bool
+    {
         if (!static::fireEvent('deleting', $this)) {
             return false;
         }
@@ -78,8 +78,8 @@ trait HasCRUD {
         return $result;
     }
 
-
-    protected function persistTranslations(): void {
+    protected function persistTranslations(): void
+    {
         if (!$this->hasDirtyTranslations()) {
             return;
         }
@@ -88,10 +88,4 @@ trait HasCRUD {
         }
         $this->clearDirtyTranslations();
     }
-
-
-
-
-
-
 }

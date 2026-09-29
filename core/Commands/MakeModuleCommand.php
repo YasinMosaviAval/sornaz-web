@@ -6,19 +6,18 @@ use Core\console\Command;
 use Core\console\Filesystem;
 use Core\console\Stub;
 
-class MakeModuleCommand extends Command {
+class MakeModuleCommand extends Command
+{
     protected Filesystem $filesystem;
 
-
-
-    public function __construct() {
+    public function __construct()
+    {
         $this->filesystem = new Filesystem();
     }
 
-
-
-    public function handle(array $arguments): int {
-        if(empty($arguments[2])){
+    public function handle(array $arguments): int
+    {
+        if (empty($arguments[2])) {
             $this->error("Module name required.");
             return 1;
         }
@@ -31,19 +30,17 @@ class MakeModuleCommand extends Command {
         return 0;
     }
 
-
-
-    protected function buildVariables(string $module): array {
+    protected function buildVariables(string $module): array
+    {
         return [
-            'module'=>$module,
-            'table'=>strtolower($module).'s',
-            'primaryKey'=>strtolower($module).'_id',
+            'module' => $module,
+            'table' => strtolower($module) . 's',
+            'primaryKey' => strtolower($module) . '_id',
         ];
     }
 
-
-
-    protected function files(): array {
+    protected function files(): array
+    {
         return [
             /*
             |--------------------------------------------------------------------------
@@ -162,9 +159,8 @@ class MakeModuleCommand extends Command {
         ];
     }
 
-
-
-    protected function createDirectories(string $base): void {
+    protected function createDirectories(string $base): void
+    {
         $folders = [
             'Controllers',
             'Controllers/Web',
@@ -203,38 +199,31 @@ class MakeModuleCommand extends Command {
             'Services',
         ];
 
-        foreach($folders as $folder){
+        foreach ($folders as $folder) {
             $this->filesystem->ensureDirectory($base . '/' . $folder);
         }
     }
 
-
-
-    protected function createFiles(string $base, array $variables): void {
-        foreach($this->files() as $stub=>$destination){
-            $destination=$this->replaceFilenameVariables($destination, $variables);
-            $this->generate(base_path('core/stubs/module/'.$stub), $base.'/'.$destination, $variables);
+    protected function createFiles(string $base, array $variables): void
+    {
+        foreach ($this->files() as $stub => $destination) {
+            $destination = $this->replaceFilenameVariables($destination, $variables);
+            $this->generate(base_path('core/stubs/module/' . $stub), $base . '/' . $destination, $variables);
         }
     }
 
-
-
-    protected function generate(string $stub, string $destination, array $variables): void {
+    protected function generate(string $stub, string $destination, array $variables): void
+    {
         $stub = new Stub($stub);
         $content = $stub->replace($variables)->render();
         $this->filesystem->put($destination, $content);
     }
 
-
-
-    protected function replaceFilenameVariables(string $path, array $variables): string {
-        foreach($variables as $key=>$value){
-            $path=str_replace('{{'.$key.'}}', $value, $path);
+    protected function replaceFilenameVariables(string $path, array $variables): string
+    {
+        foreach ($variables as $key => $value) {
+            $path = str_replace('{{' . $key . '}}', $value, $path);
         }
         return $path;
     }
-
-
-
-
 }

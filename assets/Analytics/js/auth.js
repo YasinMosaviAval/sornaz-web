@@ -1,65 +1,71 @@
-window.togglePassword = function(inputId, btn) {
-    const input = document.getElementById(inputId);
-    if (!input) return;
-    const icon = btn.querySelector('i');
-    if (input.type === 'password') {
-        input.type = 'text';
-        if (icon) { icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); }
-    } else {
-        input.type = 'password';
-        if (icon) { icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
+window.togglePassword = function (inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const icon = btn.querySelector('i');
+  if (input.type === 'password') {
+    input.type = 'text';
+    if (icon) {
+      icon.classList.remove('fa-eye');
+      icon.classList.add('fa-eye-slash');
     }
-};
-
-window.handleLogin = function() {
-    const user = document.getElementById('loginUser')?.value.trim();
-    const pass = document.getElementById('loginPassword')?.value;
-    if (!user || !pass) return alert('ایمیل/نام کاربری و رمز عبور الزامی است');
-
-    // شبیه‌سازی ورود — در نسخه واقعی درخواست به سرور می‌رود
-    const remember = document.getElementById('loginRemember')?.checked;
-    try {
-        const session = { user, loggedIn: true, at: Date.now() };
-        if (remember) localStorage.setItem('academyAuth', JSON.stringify(session));
-        else sessionStorage.setItem('academyAuth', JSON.stringify(session));
-    } catch (e) {}
-
-    alert('✅ ورود موفق');
-    if (typeof showSection === 'function') showSection('dashboard');
-    else if (typeof showSection === 'function') showSection('home');
-};
-
-window.handleRegister = function() {
-    const email = document.getElementById('regEmail')?.value.trim();
-    const username = document.getElementById('regUsername')?.value.trim();
-    const pass = document.getElementById('regPassword')?.value;
-    const pass2 = document.getElementById('regPassword2')?.value;
-    const terms = document.getElementById('regTerms')?.checked;
-
-    if (!email || !username || !pass) return alert('فیلدهای ستاره‌دار الزامی است');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert('ایمیل معتبر نیست');
-    if (pass.length < 8) return alert('رمز عبور حداقل ۸ کاراکتر باشد');
-    if (pass !== pass2) return alert('رمز عبور و تکرار آن یکسان نیست');
-    if (!terms) return alert('پذیرش قوانین الزامی است');
-
-    // شبیه‌سازی ثبت‌نام
-    alert('✅ ثبت‌نام با موفقیت انجام شد. اکنون وارد شوید.');
-    // پاک کردن فرم
-    ['regEmail', 'regUsername', 'regDisplayName', 'regPassword', 'regPassword2'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-    });
-    const t = document.getElementById('regTerms');
-    if (t) t.checked = false;
-
-    if (typeof showSection === 'function') showSection('login');
-};
-
-window.showForgotPassword = function() {
-    if (!document.getElementById('modalContainer')) {
-        return alert('برای بازیابی رمز، ایمیل خود را به پشتیبانی ارسال کنید.');
+  } else {
+    input.type = 'password';
+    if (icon) {
+      icon.classList.remove('fa-eye-slash');
+      icon.classList.add('fa-eye');
     }
-    document.getElementById('modalContainer').innerHTML = `
+  }
+};
+
+window.handleLogin = function () {
+  const user = document.getElementById('loginUser')?.value.trim();
+  const pass = document.getElementById('loginPassword')?.value;
+  if (!user || !pass) return alert('ایمیل/نام کاربری و رمز عبور الزامی است');
+
+  // شبیه‌سازی ورود — در نسخه واقعی درخواست به سرور می‌رود
+  const remember = document.getElementById('loginRemember')?.checked;
+  try {
+    const session = { user, loggedIn: true, at: Date.now() };
+    if (remember) localStorage.setItem('academyAuth', JSON.stringify(session));
+    else sessionStorage.setItem('academyAuth', JSON.stringify(session));
+  } catch (e) {}
+
+  alert('✅ ورود موفق');
+  if (typeof showSection === 'function') showSection('dashboard');
+  else if (typeof showSection === 'function') showSection('home');
+};
+
+window.handleRegister = function () {
+  const email = document.getElementById('regEmail')?.value.trim();
+  const username = document.getElementById('regUsername')?.value.trim();
+  const pass = document.getElementById('regPassword')?.value;
+  const pass2 = document.getElementById('regPassword2')?.value;
+  const terms = document.getElementById('regTerms')?.checked;
+
+  if (!email || !username || !pass) return alert('فیلدهای ستاره‌دار الزامی است');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert('ایمیل معتبر نیست');
+  if (pass.length < 8) return alert('رمز عبور حداقل ۸ کاراکتر باشد');
+  if (pass !== pass2) return alert('رمز عبور و تکرار آن یکسان نیست');
+  if (!terms) return alert('پذیرش قوانین الزامی است');
+
+  // شبیه‌سازی ثبت‌نام
+  alert('✅ ثبت‌نام با موفقیت انجام شد. اکنون وارد شوید.');
+  // پاک کردن فرم
+  ['regEmail', 'regUsername', 'regDisplayName', 'regPassword', 'regPassword2'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const t = document.getElementById('regTerms');
+  if (t) t.checked = false;
+
+  if (typeof showSection === 'function') showSection('login');
+};
+
+window.showForgotPassword = function () {
+  if (!document.getElementById('modalContainer')) {
+    return alert('برای بازیابی رمز، ایمیل خود را به پشتیبانی ارسال کنید.');
+  }
+  document.getElementById('modalContainer').innerHTML = `
     <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onclick="if(event.target===this) closeModal()">
         <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl" onclick="event.stopPropagation()">
             <div class="px-8 py-5 border-b flex justify-between items-center">
@@ -78,11 +84,11 @@ window.showForgotPassword = function() {
     </div>`;
 };
 
-window.submitForgotPassword = function() {
-    const email = document.getElementById('forgotEmail')?.value.trim();
-    if (!email) return alert('ایمیل الزامی است');
-    closeModal();
-    alert('اگر این ایمیل ثبت شده باشد، لینک بازیابی ارسال می‌شود.');
+window.submitForgotPassword = function () {
+  const email = document.getElementById('forgotEmail')?.value.trim();
+  if (!email) return alert('ایمیل الزامی است');
+  closeModal();
+  alert('اگر این ایمیل ثبت شده باشد، لینک بازیابی ارسال می‌شود.');
 };
 
 const termsContent = `
@@ -108,9 +114,9 @@ const termsContent = `
 <p class="text-gray-600 leading-relaxed">آموزشگاه می‌تواند این قوانین را به‌روزرسانی کند. ادامه استفاده از خدمات پس از اعلام تغییرات به منزله پذیرش نسخه جدید است.</p>
 `;
 
-window.openTermsModal = function() {
-    if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد');
-    document.getElementById('modalContainer').innerHTML = `
+window.openTermsModal = function () {
+  if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد');
+  document.getElementById('modalContainer').innerHTML = `
     <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto"
          onclick="if(event.target===this) closeModal()">
         <div class="bg-white rounded-3xl w-full max-w-lg my-8 shadow-2xl" onclick="event.stopPropagation()">
@@ -135,152 +141,158 @@ window.openTermsModal = function() {
     </div>`;
 };
 
-window.acceptTerms = function() {
-    const cb = document.getElementById('regTerms');
-    if (cb) cb.checked = true;
-    closeModal();
+window.acceptTerms = function () {
+  const cb = document.getElementById('regTerms');
+  if (cb) cb.checked = true;
+  closeModal();
 };
-
 
 let fpMethod = 'email'; // 'email' | 'phone'
 let fpTimerInterval = null;
 let fpDemoOtp = '123456'; // فقط برای دمو — در سرور تولید می‌شود
 
-window.setFpMethod = function(method) {
-    fpMethod = method;
-    document.querySelectorAll('.fp-method').forEach(btn => {
-        btn.classList.remove('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
-        btn.classList.add('border-gray-200', 'text-gray-600');
-    });
-    const active = document.getElementById(method === 'email' ? 'fpMethodEmail' : 'fpMethodPhone');
-    if (active) {
-        active.classList.add('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
-        active.classList.remove('border-gray-200', 'text-gray-600');
-    }
-    document.getElementById('fpEmailBox')?.classList.toggle('hidden', method !== 'email');
-    document.getElementById('fpPhoneBox')?.classList.toggle('hidden', method !== 'phone');
+window.setFpMethod = function (method) {
+  fpMethod = method;
+  document.querySelectorAll('.fp-method').forEach((btn) => {
+    btn.classList.remove('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+    btn.classList.add('border-gray-200', 'text-gray-600');
+  });
+  const active = document.getElementById(method === 'email' ? 'fpMethodEmail' : 'fpMethodPhone');
+  if (active) {
+    active.classList.add('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+    active.classList.remove('border-gray-200', 'text-gray-600');
+  }
+  document.getElementById('fpEmailBox')?.classList.toggle('hidden', method !== 'email');
+  document.getElementById('fpPhoneBox')?.classList.toggle('hidden', method !== 'phone');
 };
 
-window.fpGoStep = function(step) {
-    [1, 2, 3].forEach(n => {
-        document.getElementById('fpStep' + n)?.classList.toggle('hidden', n !== step);
-    });
-    if (step === 1 && fpTimerInterval) {
-        clearInterval(fpTimerInterval);
-        fpTimerInterval = null;
-    }
+window.fpGoStep = function (step) {
+  [1, 2, 3].forEach((n) => {
+    document.getElementById('fpStep' + n)?.classList.toggle('hidden', n !== step);
+  });
+  if (step === 1 && fpTimerInterval) {
+    clearInterval(fpTimerInterval);
+    fpTimerInterval = null;
+  }
 };
 
-window.sendFpOtp = function() {
-    if (fpMethod === 'email') {
-        const email = document.getElementById('fpEmail')?.value.trim();
-        if (!email) return alert('ایمیل را وارد کنید');
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert('ایمیل معتبر نیست');
-        document.getElementById('fpSentTo').textContent = email;
-    } else {
-        const phone = document.getElementById('fpPhone')?.value.trim();
-        if (!phone) return alert('شماره موبایل را وارد کنید');
-        if (!/^09\d{9}$/.test(phone.replace(/\s/g, ''))) return alert('شماره موبایل معتبر نیست (مثال: 09123456789)');
-        document.getElementById('fpSentTo').textContent = phone;
-    }
+window.sendFpOtp = function () {
+  if (fpMethod === 'email') {
+    const email = document.getElementById('fpEmail')?.value.trim();
+    if (!email) return alert('ایمیل را وارد کنید');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert('ایمیل معتبر نیست');
+    document.getElementById('fpSentTo').textContent = email;
+  } else {
+    const phone = document.getElementById('fpPhone')?.value.trim();
+    if (!phone) return alert('شماره موبایل را وارد کنید');
+    if (!/^09\d{9}$/.test(phone.replace(/\s/g, '')))
+      return alert('شماره موبایل معتبر نیست (مثال: 09123456789)');
+    document.getElementById('fpSentTo').textContent = phone;
+  }
 
-    // در نسخه واقعی: fetch('/api/auth/send-otp', { method, email/phone })
-    fpDemoOtp = String(Math.floor(100000 + Math.random() * 900000));
-    console.log('OTP دمو:', fpDemoOtp); // فقط توسعه
+  // در نسخه واقعی: fetch('/api/auth/send-otp', { method, email/phone })
+  fpDemoOtp = String(Math.floor(100000 + Math.random() * 900000));
+  console.log('OTP دمو:', fpDemoOtp); // فقط توسعه
 
-    // پاک کردن اینپوت‌های OTP
-    document.querySelectorAll('.fp-otp').forEach(inp => { inp.value = ''; });
-    setupOtpInputs();
+  // پاک کردن اینپوت‌های OTP
+  document.querySelectorAll('.fp-otp').forEach((inp) => {
+    inp.value = '';
+  });
+  setupOtpInputs();
 
-    fpGoStep(2);
-    startFpTimer(120);
-    alert(fpMethod === 'email'
-        ? 'کد تأیید به ایمیل ارسال شد (در دمو در Console ببینید)'
-        : 'کد تأیید پیامک شد (در دمو در Console ببینید)');
+  fpGoStep(2);
+  startFpTimer(120);
+  alert(
+    fpMethod === 'email'
+      ? 'کد تأیید به ایمیل ارسال شد (در دمو در Console ببینید)'
+      : 'کد تأیید پیامک شد (در دمو در Console ببینید)'
+  );
 };
 
 function startFpTimer(seconds) {
-    if (fpTimerInterval) clearInterval(fpTimerInterval);
-    const timerEl = document.getElementById('fpTimer');
-    const resendBtn = document.getElementById('fpResendBtn');
-    if (resendBtn) resendBtn.disabled = true;
-    let left = seconds;
+  if (fpTimerInterval) clearInterval(fpTimerInterval);
+  const timerEl = document.getElementById('fpTimer');
+  const resendBtn = document.getElementById('fpResendBtn');
+  if (resendBtn) resendBtn.disabled = true;
+  let left = seconds;
 
-    const tick = () => {
-        const m = String(Math.floor(left / 60)).padStart(2, '0');
-        const s = String(left % 60).padStart(2, '0');
-        if (timerEl) timerEl.textContent = m + ':' + s;
-        if (left <= 0) {
-            clearInterval(fpTimerInterval);
-            fpTimerInterval = null;
-            if (resendBtn) resendBtn.disabled = false;
-            if (timerEl) timerEl.textContent = '۰۰:۰۰';
-            return;
-        }
-        left--;
-    };
-    tick();
-    fpTimerInterval = setInterval(tick, 1000);
+  const tick = () => {
+    const m = String(Math.floor(left / 60)).padStart(2, '0');
+    const s = String(left % 60).padStart(2, '0');
+    if (timerEl) timerEl.textContent = m + ':' + s;
+    if (left <= 0) {
+      clearInterval(fpTimerInterval);
+      fpTimerInterval = null;
+      if (resendBtn) resendBtn.disabled = false;
+      if (timerEl) timerEl.textContent = '۰۰:۰۰';
+      return;
+    }
+    left--;
+  };
+  tick();
+  fpTimerInterval = setInterval(tick, 1000);
 }
 
 function setupOtpInputs() {
-    const inputs = document.querySelectorAll('.fp-otp');
-    inputs.forEach((inp, i) => {
-        inp.oninput = () => {
-            inp.value = inp.value.replace(/\D/g, '').slice(0, 1);
-            if (inp.value && i < inputs.length - 1) inputs[i + 1].focus();
-        };
-        inp.onkeydown = (e) => {
-            if (e.key === 'Backspace' && !inp.value && i > 0) inputs[i - 1].focus();
-        };
-        inp.onpaste = (e) => {
-            e.preventDefault();
-            const text = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
-            text.split('').forEach((ch, j) => { if (inputs[j]) inputs[j].value = ch; });
-            if (text.length) inputs[Math.min(text.length, inputs.length) - 1].focus();
-        };
-    });
-    if (inputs[0]) inputs[0].focus();
+  const inputs = document.querySelectorAll('.fp-otp');
+  inputs.forEach((inp, i) => {
+    inp.oninput = () => {
+      inp.value = inp.value.replace(/\D/g, '').slice(0, 1);
+      if (inp.value && i < inputs.length - 1) inputs[i + 1].focus();
+    };
+    inp.onkeydown = (e) => {
+      if (e.key === 'Backspace' && !inp.value && i > 0) inputs[i - 1].focus();
+    };
+    inp.onpaste = (e) => {
+      e.preventDefault();
+      const text = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+      text.split('').forEach((ch, j) => {
+        if (inputs[j]) inputs[j].value = ch;
+      });
+      if (text.length) inputs[Math.min(text.length, inputs.length) - 1].focus();
+    };
+  });
+  if (inputs[0]) inputs[0].focus();
 }
 
-window.verifyFpOtp = function() {
-    const code = Array.from(document.querySelectorAll('.fp-otp')).map(i => i.value).join('');
-    if (code.length !== 6) return alert('کد ۶ رقمی را کامل وارد کنید');
+window.verifyFpOtp = function () {
+  const code = Array.from(document.querySelectorAll('.fp-otp'))
+    .map((i) => i.value)
+    .join('');
+  if (code.length !== 6) return alert('کد ۶ رقمی را کامل وارد کنید');
 
-    // در نسخه واقعی: verify با سرور
-    if (code !== fpDemoOtp) return alert('کد نادرست است');
+  // در نسخه واقعی: verify با سرور
+  if (code !== fpDemoOtp) return alert('کد نادرست است');
 
-    if (fpTimerInterval) clearInterval(fpTimerInterval);
-    fpGoStep(3);
+  if (fpTimerInterval) clearInterval(fpTimerInterval);
+  fpGoStep(3);
 };
 
-window.resetPassword = function() {
-    const p1 = document.getElementById('fpNewPass')?.value;
-    const p2 = document.getElementById('fpNewPass2')?.value;
-    if (!p1 || p1.length < 8) return alert('رمز عبور حداقل ۸ کاراکتر باشد');
-    if (p1 !== p2) return alert('رمز عبور و تکرار آن یکسان نیست');
+window.resetPassword = function () {
+  const p1 = document.getElementById('fpNewPass')?.value;
+  const p2 = document.getElementById('fpNewPass2')?.value;
+  if (!p1 || p1.length < 8) return alert('رمز عبور حداقل ۸ کاراکتر باشد');
+  if (p1 !== p2) return alert('رمز عبور و تکرار آن یکسان نیست');
 
-    // در نسخه واقعی: POST رمز جدید + توکن OTP
-    alert('✅ رمز عبور با موفقیت تغییر کرد. اکنون وارد شوید.');
-    document.getElementById('fpNewPass').value = '';
-    document.getElementById('fpNewPass2').value = '';
-    fpGoStep(1);
-    if (typeof showSection === 'function') showSection('login');
+  // در نسخه واقعی: POST رمز جدید + توکن OTP
+  alert('✅ رمز عبور با موفقیت تغییر کرد. اکنون وارد شوید.');
+  document.getElementById('fpNewPass').value = '';
+  document.getElementById('fpNewPass2').value = '';
+  fpGoStep(1);
+  if (typeof showSection === 'function') showSection('login');
 };
 
 // لینک فراموشی در صفحه ورود
-window.showForgotPassword = function() {
-    if (typeof showSection === 'function') showSection('forgot-password');
-    else openForgotModalFallback();
+window.showForgotPassword = function () {
+  if (typeof showSection === 'function') showSection('forgot-password');
+  else openForgotModalFallback();
 };
 
-
-
 // خروج
-window.handleLogout = function() {
-    try {
-        localStorage.removeItem('academyAuth');
-        sessionStorage.removeItem('academyAuth');
-    } catch (e) {}
-    if (typeof showSection === 'function') showSection('login');
+window.handleLogout = function () {
+  try {
+    localStorage.removeItem('academyAuth');
+    sessionStorage.removeItem('academyAuth');
+  } catch (e) {}
+  if (typeof showSection === 'function') showSection('login');
 };

@@ -4,26 +4,26 @@ namespace Core\support;
 
 use Exception;
 
-class AssetManager {
+class AssetManager
+{
 
     protected static array $published = [];
 
-    public static function publish(string $module, string $type, string $file): string {
+    public static function publish(string $module, string $type, string $file): string
+    {
         $source = base_path("assets/{$module}/{$type}/{$file}");
         if (!file_exists($source)) {
             throw new Exception("Asset not found : {$source}");
         }
         $targetDir = asset_path("/{$module}/{$type}");
         if (!is_dir($targetDir)) {
-            mkdir($targetDir,0777,true);
+            mkdir($targetDir, 0777, true);
         }
         $target = "{$targetDir}/{$file}";
-        if (!file_exists($target) || filemtime($target)!=filemtime($source)){
-            copy($source,$target);
-            touch($target,filemtime($source));
+        if (!file_exists($target) || filemtime($target) != filemtime($source)) {
+            copy($source, $target);
+            touch($target, filemtime($source));
         }
         return "/assets/{$module}/{$type}/{$file}";
     }
-
-
 }

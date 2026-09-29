@@ -1,38 +1,55 @@
 (function () {
-    'use strict';
-    function escapeHtml(value) {
-        return String(value ?? '')
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
-    function renderOptions(options, selectedValue) {
-        return (options || []).map(function (option) {
-            const value = option.value ?? option.id ?? option.name ?? option;
-            const label = option.label ?? option.name ?? option;
-            const selected = String(value) === String(selectedValue) ? 'selected' : '';
-            return `<option value="${escapeHtml(value)}" ${selected}>${escapeHtml(label)}</option>`;
-        }).join('');
-    }
-    function statusClass(status) {
-        return {
-            'فعال': 'bg-green-100 text-green-700',
-            'غیرفعال': 'bg-red-100 text-red-700',
-            'در انتظار تأیید': 'bg-yellow-100 text-yellow-700',
-            'حذف‌شده': 'bg-gray-100 text-gray-600'
-        }[status] || 'bg-gray-100 text-gray-600';
-    }
+  'use strict';
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+  function renderOptions(options, selectedValue) {
+    return (options || [])
+      .map(function (option) {
+        const value = option.value ?? option.id ?? option.name ?? option;
+        const label = option.label ?? option.name ?? option;
+        const selected = String(value) === String(selectedValue) ? 'selected' : '';
+        return `<option value="${escapeHtml(value)}" ${selected}>${escapeHtml(label)}</option>`;
+      })
+      .join('');
+  }
+  function statusClass(status) {
+    return (
+      {
+        فعال: 'bg-green-100 text-green-700',
+        غیرفعال: 'bg-red-100 text-red-700',
+        'در انتظار تأیید': 'bg-yellow-100 text-yellow-700',
+        حذف‌شده: 'bg-gray-100 text-gray-600',
+      }[status] || 'bg-gray-100 text-gray-600'
+    );
+  }
 
-    function formFields(item, prefix) {
-        const id = function (n) { return prefix ? prefix + n : 'rule' + n; };
-        const branches = (typeof window.getRuleBranches === 'function' ? window.getRuleBranches() : []).map(function (b) {
-            return { value: b.key, label: b.name };
-        });
-        const types = (window.ruleTypesList || []).map(function (t) { return { value: t, label: t }; });
-        const statuses = ['فعال','غیرفعال'].map(function (s) { return { value: s, label: s }; });
-        const units = (window.ruleValueUnitsList || []).map(function (u) { return { value: u, label: u }; });
-        const fixedOrganization = window.ruleOrganizationSelection === 'fixed';
-        const showStatus = window.ruleShowStatusField !== false;
-        return `
+  function formFields(item, prefix) {
+    const id = function (n) {
+      return prefix ? prefix + n : 'rule' + n;
+    };
+    const branches = (
+      typeof window.getRuleBranches === 'function' ? window.getRuleBranches() : []
+    ).map(function (b) {
+      return { value: b.key, label: b.name };
+    });
+    const types = (window.ruleTypesList || []).map(function (t) {
+      return { value: t, label: t };
+    });
+    const statuses = ['فعال', 'غیرفعال'].map(function (s) {
+      return { value: s, label: s };
+    });
+    const units = (window.ruleValueUnitsList || []).map(function (u) {
+      return { value: u, label: u };
+    });
+    const fixedOrganization = window.ruleOrganizationSelection === 'fixed';
+    const showStatus = window.ruleShowStatusField !== false;
+    return `
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div class="${fixedOrganization ? 'hidden' : ''}">
                     <label class="block text-sm font-medium mb-2">سازمان *</label>
@@ -72,10 +89,10 @@
                     <textarea id="${id('Description')}" rows="3" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${escapeHtml(item.description || '')}</textarea>
                 </div>
             </div>`;
-    }
+  }
 
-    window.getRuleRowHTML = function (item) {
-        return `
+  window.getRuleRowHTML = function (item) {
+    return `
             <td class="py-4 px-5 font-medium">${escapeHtml(item.title)}</td>
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
             <td class="py-4 px-5">${escapeHtml(item.type)}</td>
@@ -87,24 +104,24 @@
                     ${item.canEdit ? `<button data-rule-inline-toggle="${item.id}" onclick="toggleRuleInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button><button onclick="deleteRule(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>` : ''}
                 </div>
             </td>`;
-    };
-    window.getRuleEmptyRowHTML = function () {
-        return `<tr><td colspan="6" class="py-12 text-center text-gray-400">قانونی یافت نشد</td></tr>`;
-    };
-    window.getRuleInlineExpandRowHTML = function (item) {
-        return `<td colspan="6" class="p-5 border-t">${window.getRuleInlineEditRowHTML(item)}</td>`;
-    };
-    window.getRuleInlineEditRowHTML = function (item) {
-        return `<div class="rule-inline-editor space-y-6">
+  };
+  window.getRuleEmptyRowHTML = function () {
+    return `<tr><td colspan="6" class="py-12 text-center text-gray-400">قانونی یافت نشد</td></tr>`;
+  };
+  window.getRuleInlineExpandRowHTML = function (item) {
+    return `<td colspan="6" class="p-5 border-t">${window.getRuleInlineEditRowHTML(item)}</td>`;
+  };
+  window.getRuleInlineEditRowHTML = function (item) {
+    return `<div class="rule-inline-editor space-y-6">
             ${formFields(item, 'inlineRule' + item.id)}
             <div class="flex flex-col sm:flex-row gap-4 pt-2">
                 <button onclick="saveInlineRule(${item.id})" class="w-full sm:w-auto min-w-[140px] bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-4 rounded-2xl font-medium">ذخیره</button>
                 <button onclick="toggleRuleInlineEdit(${item.id})" class="w-full sm:w-auto min-w-[140px] border border-gray-300 px-5 py-4 rounded-2xl hover:bg-gray-50">انصراف</button>
             </div>
         </div>`;
-    };
-    window.getRuleAddModalHTML = function () {
-        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
+  };
+  window.getRuleAddModalHTML = function () {
+    return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                 <div class="px-8 py-5 border-b flex justify-between items-center">
                     <h2 class="text-2xl font-bold">افزودن قانون زمان‌بندی</h2>
@@ -119,9 +136,9 @@
                 </div>
             </div>
         </div>`;
-    };
-    window.getRuleEditModalHTML = function (item) {
-        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
+  };
+  window.getRuleEditModalHTML = function (item) {
+    return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                 <div class="px-8 py-5 border-b flex justify-between items-center">
                     <h2 class="text-2xl font-bold">ویرایش قانون زمان‌بندی</h2>
@@ -136,9 +153,9 @@
                 </div>
             </div>
         </div>`;
-    };
-    window.getRuleDetailsModalHTML = function (item) {
-        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
+  };
+  window.getRuleDetailsModalHTML = function (item) {
+    return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl">
                     <div>
@@ -162,9 +179,9 @@
                 </div>
             </div>
         </div>`;
-    };
-    window.getRulePDFModalHTML = function (cols) {
-        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
+  };
+  window.getRulePDFModalHTML = function (cols) {
+    return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl">
                     <h2 class="text-2xl font-bold">تنظیمات خروجی PDF قوانین زمان‌بندی</h2>
@@ -179,9 +196,11 @@
                     </div>
                     <input id="rulePdfFooter" type="text" value="تولید شده توسط سیستم مدیریت آموزشگاه" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                     <div class="grid grid-cols-2 gap-2">
-                        ${(cols || []).map(function (c) {
+                        ${(cols || [])
+                          .map(function (c) {
                             return `<label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" id="rulePdfCol-${c.field}" checked> ${c.label}</label>`;
-                        }).join('')}
+                          })
+                          .join('')}
                     </div>
                     <div class="grid grid-cols-3 gap-5">
                         <input id="rulePdfHeaderColor" type="color" value="#eff6ff" class="w-full h-12 border rounded-2xl p-2">
@@ -196,32 +215,45 @@
                 </div>
             </div>
         </div>`;
-    };
-    window.getRulePDFPageHTML = function (pageNumber, rows, isFirstPage, options) {
-        const o = options;
-        return `<div style="width:100%;padding:24px;background:#fff;direction:rtl;">
-            ${isFirstPage ? `<h1 style="margin:0 0 6px;font-size:28px;font-weight:700;">${escapeHtml(o.title)}</h1>
+  };
+  window.getRulePDFPageHTML = function (pageNumber, rows, isFirstPage, options) {
+    const o = options;
+    return `<div style="width:100%;padding:24px;background:#fff;direction:rtl;">
+            ${
+              isFirstPage
+                ? `<h1 style="margin:0 0 6px;font-size:28px;font-weight:700;">${escapeHtml(o.title)}</h1>
             <p style="margin:0 0 16px;color:#4b5563;font-size:14px;">${escapeHtml(o.subtitle)}</p>
-            ${o.includeDate ? `<p style="margin:0 0 16px;color:#6b7280;font-size:12px;">تاریخ استخراج: ${escapeHtml(o.date)}</p>` : ''}` : ''}
+            ${o.includeDate ? `<p style="margin:0 0 16px;color:#6b7280;font-size:12px;">تاریخ استخراج: ${escapeHtml(o.date)}</p>` : ''}`
+                : ''
+            }
             <table style="width:100%;border-collapse:collapse;">
                 <thead style="background:${o.headerColor};"><tr>
-                    ${o.selectedColumns.map(function (c) {
+                    ${o.selectedColumns
+                      .map(function (c) {
                         return `<th style="padding:12px 14px;text-align:right;font-weight:600;">${escapeHtml(c.label)}</th>`;
-                    }).join('')}
+                      })
+                      .join('')}
                 </tr></thead>
                 <tbody>
-                    ${rows.map(function (item, index) {
+                    ${rows
+                      .map(function (item, index) {
                         return `<tr style="background:${index % 2 === 0 ? o.evenRowColor : o.oddRowColor};">
-                            ${o.selectedColumns.map(function (c) {
-                                const v = c.field === 'index' ? (pageNumber - 1) * o.rowsPerPage + index + 1 : item[c.field];
+                            ${o.selectedColumns
+                              .map(function (c) {
+                                const v =
+                                  c.field === 'index'
+                                    ? (pageNumber - 1) * o.rowsPerPage + index + 1
+                                    : item[c.field];
                                 return `<td style="padding:12px 14px;text-align:right;">${escapeHtml(v)}</td>`;
-                            }).join('')}
+                              })
+                              .join('')}
                         </tr>`;
-                    }).join('')}
+                      })
+                      .join('')}
                 </tbody>
             </table>
             ${isFirstPage && o.footer ? `<p style="margin-top:16px;color:#6b7280;font-size:12px;">${escapeHtml(o.footer)}</p>` : ''}
             <div style="margin-top:16px;text-align:left;color:#6b7280;font-size:12px;">صفحه ${pageNumber} / ${o.totalPages}</div>
         </div>`;
-    };
+  };
 })();

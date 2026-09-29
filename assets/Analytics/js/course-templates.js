@@ -1,24 +1,26 @@
 (function () {
-    function escapeHtml(value) {
-        return String(value ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 
-    function renderOptions(options, selectedValue) {
-        return options.map(option => {
-            const value = option.value ?? option.id ?? option.name ?? option;
-            const label = option.label ?? option.name ?? option;
-            const isSelected = String(value) === String(selectedValue) ? 'selected' : '';
-            return `<option value="${escapeHtml(value)}" ${isSelected}>${escapeHtml(label)}</option>`;
-        }).join('');
-    }
+  function renderOptions(options, selectedValue) {
+    return options
+      .map((option) => {
+        const value = option.value ?? option.id ?? option.name ?? option;
+        const label = option.label ?? option.name ?? option;
+        const isSelected = String(value) === String(selectedValue) ? 'selected' : '';
+        return `<option value="${escapeHtml(value)}" ${isSelected}>${escapeHtml(label)}</option>`;
+      })
+      .join('');
+  }
 
-    window.getCourseRowHTML = function (item, statusClass) {
-        return `
+  window.getCourseRowHTML = function (item, statusClass) {
+    return `
             <td class="py-4 px-5 font-medium">${escapeHtml(item.name)}</td>
             <td class="py-4 px-5">${escapeHtml(item.level || '—')}</td>
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
@@ -26,48 +28,61 @@
             <td class="py-4 px-5">${item.teacher_capacity}</td>
             <td class="py-4 px-5">${item.student_capacity}</td>
             <td class="py-4 px-5">
-                ${window.coursePermissions?.isReceptionist||item.canChangeStatus===false?`<span class="px-3 py-1 rounded-full text-xs ${statusClass}">${escapeHtml(item.status)}</span>`:`<button type="button" onclick="cycleCourseStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${statusClass}">${escapeHtml(item.status)}</button>`}
+                ${window.coursePermissions?.isReceptionist || item.canChangeStatus === false ? `<span class="px-3 py-1 rounded-full text-xs ${statusClass}">${escapeHtml(item.status)}</span>` : `<button type="button" onclick="cycleCourseStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${statusClass}">${escapeHtml(item.status)}</button>`}
             </td>
             <td class="py-4 px-5 text-left">
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
                     <button onclick="viewCourse(${item.id})" class="text-indigo-600 hover:underline text-sm leading-6">جزئیات</button>
-                    ${item.canEdit===false?'':`<button type="button" data-course-action="inline-edit" data-course-id="${item.id}" data-no-inline-edit class="text-gray-500 hover:text-indigo-600 text-sm leading-6">ویرایش</button>`}
-                    ${item.canDelete===false?'':`<button onclick="deleteCourse(${item.id})" class="text-red-500 hover:text-red-700 text-sm leading-6">حذف</button>`}
+                    ${item.canEdit === false ? '' : `<button type="button" data-course-action="inline-edit" data-course-id="${item.id}" data-no-inline-edit class="text-gray-500 hover:text-indigo-600 text-sm leading-6">ویرایش</button>`}
+                    ${item.canDelete === false ? '' : `<button onclick="deleteCourse(${item.id})" class="text-red-500 hover:text-red-700 text-sm leading-6">حذف</button>`}
                 </div>
             </td>
         `;
-    };
+  };
 
-    window.getCourseEmptyRowHTML = function () {
-        return `<tr><td colspan="8" class="py-12 text-center text-gray-400">هیچ دوره‌ای یافت نشد</td></tr>`;
-    };
+  window.getCourseEmptyRowHTML = function () {
+    return `<tr><td colspan="8" class="py-12 text-center text-gray-400">هیچ دوره‌ای یافت نشد</td></tr>`;
+  };
 
-    window.getCourseInlineExpandRowHTML = function (item) {
-        return `<td colspan="8" class="p-5 border-t">${window.getCourseInlineEditRowHTML ? window.getCourseInlineEditRowHTML(item) : ''}</td>`;
-    };
+  window.getCourseInlineExpandRowHTML = function (item) {
+    return `<td colspan="8" class="p-5 border-t">${window.getCourseInlineEditRowHTML ? window.getCourseInlineEditRowHTML(item) : ''}</td>`;
+  };
 
-    function courseFormFields(item, prefix) {
-        const id = (name) => prefix ? `${prefix}${name}` : `course${name}`;
-        const organizations = (window.courseOrganizations || []).map(o => ({ value: o.user_id, label: o.name }));
-        const organizationUserId = item.organizationUserId || organizations[0]?.value || '';
-        const lessons = (window.courseLessons || []).filter(i => Number(i.organizationUserId) === Number(organizationUserId)).map(i => ({ value: i.id, label: i.name }));
-        const statuses = [{value:'open',label:'باز'},{value:'ongoing',label:'در حال برگزاری'},{value:'finished',label:'پایان یافته'}];
+  function courseFormFields(item, prefix) {
+    const id = (name) => (prefix ? `${prefix}${name}` : `course${name}`);
+    const organizations = (window.courseOrganizations || []).map((o) => ({
+      value: o.user_id,
+      label: o.name,
+    }));
+    const organizationUserId = item.organizationUserId || organizations[0]?.value || '';
+    const lessons = (window.courseLessons || [])
+      .filter((i) => Number(i.organizationUserId) === Number(organizationUserId))
+      .map((i) => ({ value: i.id, label: i.name }));
+    const statuses = [
+      { value: 'open', label: 'باز' },
+      { value: 'ongoing', label: 'در حال برگزاری' },
+      { value: 'finished', label: 'پایان یافته' },
+    ];
 
-        return `
+    return `
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div>
                     <label class="block text-sm font-medium mb-2">نام دوره *</label>
                     <input id="${id('Name')}" type="text" value="${escapeHtml(item.name || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                 </div>
-                ${window.coursePermissions?.isBranchContext?`<input id="${id('Organization')}" type="hidden" value="${escapeHtml(organizationUserId)}">`:`<div>
+                ${
+                  window.coursePermissions?.isBranchContext
+                    ? `<input id="${id('Organization')}" type="hidden" value="${escapeHtml(organizationUserId)}">`
+                    : `<div>
                     <label class="block text-sm font-medium mb-2">سازمان *</label>
                     <select id="${id('Organization')}" onchange="refreshCourseLessons('${prefix}')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                         <option value="">سازمان را انتخاب کنید</option>${renderOptions(organizations, organizationUserId)}
                     </select>
-                </div>`}
+                </div>`
+                }
                 <div>
                     <label class="block text-sm font-medium mb-2">درس</label>
-                    <select id="${id('Instrument')}" ${organizationUserId?'':'disabled'} class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 disabled:bg-gray-100">
+                    <select id="${id('Instrument')}" ${organizationUserId ? '' : 'disabled'} class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 disabled:bg-gray-100">
                         <option value="">درس را انتخاب کنید</option>${renderOptions(lessons, item.lesson_id)}
                     </select>
                 </div>
@@ -76,12 +91,16 @@
                     <input id="${id('TeacherCapacity')}" type="number" min="1" value="${escapeHtml(item.teacher_capacity ?? 1)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                 </div>
                 <div><label class="block text-sm font-medium mb-2">ظرفیت هنرجوها</label><input id="${id('StudentCapacity')}" type="number" min="1" value="${escapeHtml(item.student_capacity ?? 1)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"></div>
-                ${window.coursePermissions?.isReceptionist?'':`<div>
+                ${
+                  window.coursePermissions?.isReceptionist
+                    ? ''
+                    : `<div>
                     <label class="block text-sm font-medium mb-2">وضعیت</label>
                     <select id="${id('Status')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(statuses, item.status_code === 'pending' ? 'open' : (item.status_code || 'open'))}
+                        ${renderOptions(statuses, item.status_code === 'pending' ? 'open' : item.status_code || 'open')}
                     </select>
-                </div>`}
+                </div>`
+                }
                 <div class="sm:col-span-2 lg:col-span-3">
                     <label class="block text-sm font-medium mb-2">خلاصه دوره</label>
                     <input id="${id('Summary')}" value="${escapeHtml(item.summary || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
@@ -92,10 +111,10 @@
                 </div>
             </div>
         `;
-    }
+  }
 
-    window.getCourseInlineEditRowHTML = function (item) {
-        return `
+  window.getCourseInlineEditRowHTML = function (item) {
+    return `
             <div class="space-y-6">
                 ${courseFormFields(item, `inlineCourse${item.id}`)}
                 <div class="flex flex-col sm:flex-row gap-4 pt-2">
@@ -104,10 +123,10 @@
                 </div>
             </div>
         `;
-    };
+  };
 
-    window.getCourseAddModalHTML = function () {
-        return `
+  window.getCourseAddModalHTML = function () {
+    return `
             <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
                 <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                     <div class="bg-white px-8 py-5 border-b flex justify-between items-center">
@@ -123,10 +142,10 @@
                     </div>
                 </div>
             </div>`;
-    };
+  };
 
-    window.getCourseEditModalHTML = function (item) {
-        return `
+  window.getCourseEditModalHTML = function (item) {
+    return `
             <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
                 <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                     <div class="bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl">
@@ -142,10 +161,10 @@
                     </div>
                 </div>
             </div>`;
-    };
+  };
 
-    window.getCourseDetailsModalHTML = function (item) {
-        return `
+  window.getCourseDetailsModalHTML = function (item) {
+    return `
             <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
                 <div class="bg-white rounded-3xl w-full max-w-3xl my-8 shadow-2xl" onclick="event.stopPropagation()">
                     <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl">
@@ -154,7 +173,7 @@
                             <p class="text-sm text-gray-500 mt-1">کد دوره: #${item.id}</p>
                         </div>
                         <div class="flex items-center gap-3">
-                            ${item.canEdit===false?'':`<button type="button" onclick="editCourse(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm">ویرایش</button>`}
+                            ${item.canEdit === false ? '' : `<button type="button" onclick="editCourse(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm">ویرایش</button>`}
                             <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                         </div>
                     </div>
@@ -170,18 +189,22 @@
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">وضعیت</span><span class="font-medium">${escapeHtml(item.status)}</span></div>
                             </div>
                         </div>
-                        ${item.description ? `
+                        ${
+                          item.description
+                            ? `
                         <div>
                             <h3 class="font-semibold text-indigo-700 mb-3">توضیحات</h3>
                             <div class="border rounded-2xl p-5 bg-gray-50 text-sm text-gray-700 leading-relaxed">${escapeHtml(item.description)}</div>
-                        </div>` : ''}
+                        </div>`
+                            : ''
+                        }
                     </div>
                 </div>
             </div>`;
-    };
+  };
 
-    window.getCoursePDFModalHTML = function (pdfExportColumns) {
-        return `
+  window.getCoursePDFModalHTML = function (pdfExportColumns) {
+    return `
             <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
                 <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                     <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl">
@@ -222,12 +245,16 @@
                             <div>
                                 <label class="block text-sm font-medium mb-2">ستون‌های خروجی PDF</label>
                                 <div class="grid grid-cols-2 gap-2">
-                                    ${pdfExportColumns.map(col => `
+                                    ${pdfExportColumns
+                                      .map(
+                                        (col) => `
                                         <label class="inline-flex items-center gap-2 text-sm">
                                             <input type="checkbox" id="coursePdfCol-${col.field}" value="${col.field}" checked class="text-indigo-600 border-gray-300 rounded">
                                             ${col.label}
                                         </label>
-                                    `).join('')}
+                                    `
+                                      )
+                                      .join('')}
                                 </div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -256,47 +283,66 @@
                     </div>
                 </div>
             </div>`;
-    };
+  };
 
-    window.getCoursePDFPageHTML = function (pageNumber, rows, isFirstPage, options) {
-        const {
-            title, subtitle, footer, includeDate, date,
-            headerColor, evenRowColor, oddRowColor,
-            selectedColumns, rowsPerPage, totalPages
-        } = options;
+  window.getCoursePDFPageHTML = function (pageNumber, rows, isFirstPage, options) {
+    const {
+      title,
+      subtitle,
+      footer,
+      includeDate,
+      date,
+      headerColor,
+      evenRowColor,
+      oddRowColor,
+      selectedColumns,
+      rowsPerPage,
+      totalPages,
+    } = options;
 
-        return `
+    return `
             <div style="width:100%; padding: 24px; border-radius: 20px; box-shadow: 0 10px 30px rgba(15,23,42,.08); background: #fff;">
-                ${isFirstPage ? `
+                ${
+                  isFirstPage
+                    ? `
                 <div style="text-align: right; direction: rtl;">
                     <h1 style="margin: 0 0 6px; font-size: 28px; font-weight: 700;">${escapeHtml(title)}</h1>
                     <p style="margin: 0 0 16px; color: #4b5563; font-size: 14px;">${escapeHtml(subtitle)}</p>
                     ${includeDate ? `<p style="margin: 0 0 16px; color: #6b7280; font-size: 12px;">تاریخ استخراج: ${escapeHtml(date)}</p>` : ''}
                 </div>
-                ` : ''}
+                `
+                    : ''
+                }
                 <div style="width: 100%; overflow-x: auto;">
                     <table style="width:100%; border-collapse: collapse; direction: rtl;">
                         <thead style="background: ${headerColor}; color: #000000;">
                             <tr>
-                                ${selectedColumns.map(col => `<th style="padding: 12px 14px; text-align: right; font-weight: 600;">${escapeHtml(col.label)}</th>`).join('')}
+                                ${selectedColumns.map((col) => `<th style="padding: 12px 14px; text-align: right; font-weight: 600;">${escapeHtml(col.label)}</th>`).join('')}
                             </tr>
                         </thead>
                         <tbody>
-                            ${rows.map((item, index) => `
+                            ${rows
+                              .map(
+                                (item, index) => `
                                 <tr style="background: ${index % 2 === 0 ? evenRowColor : oddRowColor};">
-                                    ${selectedColumns.map(col => {
-                                        const value = col.field === 'index'
+                                    ${selectedColumns
+                                      .map((col) => {
+                                        const value =
+                                          col.field === 'index'
                                             ? (pageNumber - 1) * rowsPerPage + index + 1
                                             : item[col.field];
                                         return `<td style="padding: 12px 14px; text-align: right;">${escapeHtml(value)}</td>`;
-                                    }).join('')}
+                                      })
+                                      .join('')}
                                 </tr>
-                            `).join('')}
+                            `
+                              )
+                              .join('')}
                         </tbody>
                     </table>
                 </div>
                 ${isFirstPage && footer ? `<p style="margin-top: 16px; color: #6b7280; font-size: 12px;">${escapeHtml(footer)}</p>` : ''}
                 <div style="margin-top: 16px; display: flex; justify-content: flex-end; color: #6b7280; font-size: 12px;">صفحه ${pageNumber} / ${totalPages}</div>
             </div>`;
-    };
+  };
 })();

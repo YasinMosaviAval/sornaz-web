@@ -2,7 +2,8 @@
 
 if (!function_exists('profiles')) {
 
-    function profiles() {
+    function profiles()
+    {
     }
 
 }

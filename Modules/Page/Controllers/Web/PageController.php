@@ -7,14 +7,14 @@ use Modules\Page\Services\PageService;
 use Modules\Academy\Services\AcademyRegistrationService;
 use Modules\Analytics\Services\PublicPostService;
 
-
-class PageController {
-
-
-    public function __construct(protected PageService $service, protected AcademyRegistrationService $academies, protected PublicPostService $posts) {
+class PageController
+{
+    public function __construct(protected PageService $service, protected AcademyRegistrationService $academies, protected PublicPostService $posts)
+    {
     }
 
-    public function home() {
+    public function home()
+    {
         return ResponseFactory::view(
             'Page::home',
             [
@@ -33,23 +33,17 @@ class PageController {
         ->title(trans('public.meta.home', 'سُرناز | خانه'));
     }
 
-
-
-
-    public function aboutUs() {
+    public function aboutUs()
+    {
         return ResponseFactory::view('Page::about-us')
         ->layout('main')
         ->title(trans('public.meta.about', 'سُرناز | درباره ما'));
     }
 
-
-
-
-    public function contactUs() {
+    public function contactUs()
+    {
         return ResponseFactory::view('Page::contact-us')
         ->layout('main')
         ->title(trans('public.meta.contact', 'سُرناز | تماس با ما'));
     }
-
-
 }

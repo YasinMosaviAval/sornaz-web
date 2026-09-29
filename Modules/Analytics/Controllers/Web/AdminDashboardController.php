@@ -7,14 +7,16 @@ use Modules\Analytics\Services\AdminDashboardService;
 
 class AdminDashboardController
 {
-    public function __construct(private AdminDashboardService $service) {}
+    public function __construct(private AdminDashboardService $service)
+    {
+    }
 
     public function index()
     {
         try {
-            return ResponseFactory::json(['success'=>true,'data'=>$this->service->data((int)auth()->id(),$_GET)]);
+            return ResponseFactory::json(['success' => true, 'data' => $this->service->data((int) auth()->id(), $_GET)]);
         } catch (\Throwable $exception) {
-            return ResponseFactory::json(['success'=>false,'message'=>$exception->getMessage()],422);
+            return ResponseFactory::json(['success' => false, 'message' => $exception->getMessage()], 422);
         }
     }
 }

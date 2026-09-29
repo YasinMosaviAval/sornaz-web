@@ -2,6 +2,7 @@
 
 namespace Modules\Enrollment\Listeners;
 
-class SendEnrollmentListener {
+class SendEnrollmentListener
+{
 
 }

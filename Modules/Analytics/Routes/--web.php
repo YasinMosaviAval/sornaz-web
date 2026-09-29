@@ -17,7 +17,6 @@ use Modules\Analytics\Controllers\Web\AdminAccessCatalogController;
 use Modules\Analytics\Controllers\Web\SitePageContentController;
 use Modules\Analytics\Controllers\Web\AdminTestController;
 
-
 /*
 |--------------------------------------------------------------------------
 | Analytics
@@ -40,7 +39,6 @@ Router::group(
         Router::get('/site-settings', [AdminSettingController::class, 'show']);
         Router::get('/site-page-content', [SitePageContentController::class, 'content']);
 
-
         /*
         |--------------------------------------------------------------------------
         | Academy Panel
@@ -62,7 +60,6 @@ Router::group(
                 Router::get('/panel', [AnalyticsController::class, 'adminPanel']);
                 Router::get('/dashboard', [AdminDashboardController::class, 'index']);
 
-
                 /*
                 |--------------------------------------------------------------------------
                 | Admin Account
@@ -77,7 +74,6 @@ Router::group(
                         Router::post('/bio', [AdminAccountController::class, 'bio'])->middleware('csrf');
                         Router::post('/privacy', [AdminAccountController::class, 'privacy'])->middleware('csrf');
                         Router::post('/security', [AdminAccountController::class, 'security'])->middleware('csrf');
-
 
                         /*
                         |--------------------------------------------------------------------------
@@ -94,14 +90,12 @@ Router::group(
                             }
                         );
 
-
                         /*
                         |--------------------------------------------------------------------------
                         | Sessions
                         |--------------------------------------------------------------------------
                         */
                         Router::post('/sessions/{id}/end', [AdminAccountController::class, 'endSession'])->middleware('csrf');
-
 
                         /*
                         |--------------------------------------------------------------------------
@@ -118,7 +112,6 @@ Router::group(
                         );
                     }
                 );
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -137,7 +130,6 @@ Router::group(
                     }
                 );
 
-
                 /*
                 |--------------------------------------------------------------------------
                 | Scheduling Rules
@@ -153,7 +145,6 @@ Router::group(
                         Router::post('/{id}/delete', [AdminSchedulingRuleController::class, 'delete'])->middleware('csrf');
                     }
                 );
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -174,7 +165,6 @@ Router::group(
                     }
                 );
 
-
                 /*
                 |--------------------------------------------------------------------------
                 | Post Categories
@@ -190,7 +180,6 @@ Router::group(
                         Router::post('/{id}/delete', [AdminPostCategoryController::class, 'delete'])->middleware('csrf');
                     }
                 );
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -208,7 +197,6 @@ Router::group(
                     }
                 );
 
-
                 /*
                 |--------------------------------------------------------------------------
                 | Media
@@ -225,14 +213,12 @@ Router::group(
                     }
                 );
 
-
                 /*
                 |--------------------------------------------------------------------------
                 | Settings
                 |--------------------------------------------------------------------------
                 */
                 Router::post('/settings', [AdminSettingController::class, 'save'])->middleware('csrf');
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -243,7 +229,6 @@ Router::group(
                 Router::post('/site-page-content', [SitePageContentController::class, 'save'])->middleware('site-admin')->middleware('csrf');
             }
         );
-
 
         /*
         |--------------------------------------------------------------------------
@@ -272,7 +257,6 @@ Router::group(
                     }
                 );
 
-
                 /*
                 |--------------------------------------------------------------------------
                 | Access Catalog
@@ -283,7 +267,6 @@ Router::group(
                     ['prefix' => '/access-catalog'],
                     function () {
                         Router::get('/', [AdminAccessCatalogController::class, 'index']);
-
 
                         /*
                         |--------------------------------------------------------------------------
@@ -299,7 +282,6 @@ Router::group(
                                 Router::post('/{id}/delete', [AdminAccessCatalogController::class, 'deleteRole'])->middleware('csrf');
                             }
                         );
-
 
                         /*
                         |--------------------------------------------------------------------------
@@ -318,7 +300,6 @@ Router::group(
                     }
                 );
 
-
                 /*
                 |--------------------------------------------------------------------------
                 | Inline Translations
@@ -334,7 +315,6 @@ Router::group(
                 );
             }
         );
-
 
         /*
         |--------------------------------------------------------------------------
@@ -361,7 +341,6 @@ Router::group(
             }
         );
 
-
         /*
         |--------------------------------------------------------------------------
         | Test / Data Management
@@ -379,10 +358,6 @@ Router::group(
         );
     }
 );
-
-
-
-
 
 // Router::get('/analytics/admin-panel', [AnalyticsController::class, 'adminPanel'])->middleware('academy-panel');
 // Router::get('/analytics/admin-account', [AdminAccountController::class, 'show'])->middleware('academy-panel');

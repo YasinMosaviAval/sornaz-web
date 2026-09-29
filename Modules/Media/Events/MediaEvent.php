@@ -2,6 +2,7 @@
 
 namespace Modules\Media\Events;
 
-class MediaEvent {
+class MediaEvent
+{
 
 }

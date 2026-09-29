@@ -2,6 +2,7 @@
 
 namespace Modules\System\Events;
 
-class SystemEvent {
+class SystemEvent
+{
 
 }

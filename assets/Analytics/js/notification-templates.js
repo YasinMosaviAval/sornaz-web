@@ -1,46 +1,63 @@
 (function () {
-    'use strict';
-    const fieldClass = 'w-full border border-gray-300 rounded-2xl py-3.5 px-5';
+  'use strict';
+  const fieldClass = 'w-full border border-gray-300 rounded-2xl py-3.5 px-5';
 
-    function escapeHtml(value) {
-        return String(value ?? '')
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 
-    function renderOptions(options, selectedValue) {
-        return (options || []).map(function (option) {
-            const value = option.value ?? option.id ?? option;
-            const label = option.label ?? option.name ?? option;
-            const selected = String(value) === String(selectedValue) ? 'selected' : '';
-            return '<option value="' + escapeHtml(value) + '" ' + selected + '>' + escapeHtml(label) + '</option>';
-        }).join('');
-    }
+  function renderOptions(options, selectedValue) {
+    return (options || [])
+      .map(function (option) {
+        const value = option.value ?? option.id ?? option;
+        const label = option.label ?? option.name ?? option;
+        const selected = String(value) === String(selectedValue) ? 'selected' : '';
+        return (
+          '<option value="' +
+          escapeHtml(value) +
+          '" ' +
+          selected +
+          '>' +
+          escapeHtml(label) +
+          '</option>'
+        );
+      })
+      .join('');
+  }
 
-    function priorityClass(priority) {
-        return {
-            'بالا': 'bg-red-100 text-red-700',
-            'متوسط': 'bg-yellow-100 text-yellow-700',
-            'کم': 'bg-blue-100 text-blue-700'
-        }[priority] || 'bg-gray-100 text-gray-600';
-    }
+  function priorityClass(priority) {
+    return (
+      {
+        بالا: 'bg-red-100 text-red-700',
+        متوسط: 'bg-yellow-100 text-yellow-700',
+        کم: 'bg-blue-100 text-blue-700',
+      }[priority] || 'bg-gray-100 text-gray-600'
+    );
+  }
 
-    function statusClass(status) {
-        return {
-            'در انتظار': 'bg-yellow-100 text-yellow-700',
-            'منتشر شده': 'bg-green-100 text-green-700',
-            'پیش‌نویس': 'bg-gray-100 text-gray-600',
-            'خصوصی': 'bg-purple-100 text-purple-700',
-            'زباله‌دان': 'bg-slate-200 text-slate-600'
-        }[status] || 'bg-gray-100 text-gray-600';
-    }
+  function statusClass(status) {
+    return (
+      {
+        'در انتظار': 'bg-yellow-100 text-yellow-700',
+        'منتشر شده': 'bg-green-100 text-green-700',
+        پیش‌نویس: 'bg-gray-100 text-gray-600',
+        خصوصی: 'bg-purple-100 text-purple-700',
+        زباله‌دان: 'bg-slate-200 text-slate-600',
+      }[status] || 'bg-gray-100 text-gray-600'
+    );
+  }
 
-    function readStatusClass(status) {
-        return status === 'خوانده‌شده' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
-    }
+  function readStatusClass(status) {
+    return status === 'خوانده‌شده' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+  }
 
-    window.getNotificationRowHTML = function (item) {
-        return `
+  window.getNotificationRowHTML = function (item) {
+    return `
             <td class="py-4 px-5 font-medium">${escapeHtml(item.title)}</td>
             <td class="py-4 px-5" dir="ltr">@${escapeHtml(item.recipientUsername || '—')} <small class="text-gray-400">(${escapeHtml(item.recipientId || '—')})</small></td>
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
@@ -55,16 +72,18 @@
                     <button onclick="deleteNotification(${item.id})" class="text-red-500 hover:underline text-sm">حذف</button>
                 </div>
             </td>`;
-    };
+  };
 
-    window.getNotificationEmptyRowHTML = function () {
-        return '<tr><td colspan="9" class="py-12 text-center text-gray-400">اعلانی یافت نشد</td></tr>';
-    };
+  window.getNotificationEmptyRowHTML = function () {
+    return '<tr><td colspan="9" class="py-12 text-center text-gray-400">اعلانی یافت نشد</td></tr>';
+  };
 
-    window.getNotificationAddModalHTML = function () {
-        const audiences = (window.notificationAudiencesList || []).map(function (a) { return { value: a, label: a }; });
+  window.getNotificationAddModalHTML = function () {
+    const audiences = (window.notificationAudiencesList || []).map(function (a) {
+      return { value: a, label: a };
+    });
 
-        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
+    return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-xl my-8 shadow-2xl" onclick="event.stopPropagation()">
                 <div class="px-8 py-5 border-b flex justify-between items-center">
                     <h2 class="text-2xl font-bold">ثبت اعلان جدید</h2>
@@ -93,10 +112,10 @@
                 </div>
             </div>
         </div>`;
-    };
+  };
 
-    window.getNotificationDetailsModalHTML = function (item) {
-        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
+  window.getNotificationDetailsModalHTML = function (item) {
+    return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-start rounded-t-3xl gap-4">
                     <div class="min-w-0">
@@ -127,17 +146,25 @@
                         <div class="bg-gray-50 border border-gray-100 rounded-2xl p-5 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">${escapeHtml(item.body || 'بدون متن')}</div>
                     </div>
                     <div class="flex flex-wrap gap-3 pt-2">
-                        ${item.status === 'پیش‌نویس'
-                            ? '<button onclick="publishNotification(' + item.id + ')" class="bg-indigo-600 text-white px-5 py-3 rounded-2xl text-sm hover:bg-indigo-700">انتشار</button>'
-                            : ''}
-                        ${item.status === 'منتشر شده'
-                            ? '<button onclick="expireNotification(' + item.id + ')" class="border border-gray-300 px-5 py-3 rounded-2xl text-sm hover:bg-gray-50">منقضی کردن</button>'
-                            : ''}
+                        ${
+                          item.status === 'پیش‌نویس'
+                            ? '<button onclick="publishNotification(' +
+                              item.id +
+                              ')" class="bg-indigo-600 text-white px-5 py-3 rounded-2xl text-sm hover:bg-indigo-700">انتشار</button>'
+                            : ''
+                        }
+                        ${
+                          item.status === 'منتشر شده'
+                            ? '<button onclick="expireNotification(' +
+                              item.id +
+                              ')" class="border border-gray-300 px-5 py-3 rounded-2xl text-sm hover:bg-gray-50">منقضی کردن</button>'
+                            : ''
+                        }
                         <button onclick="deleteNotification(${item.id}); closeModal();" class="border border-red-200 text-red-600 px-5 py-3 rounded-2xl text-sm hover:bg-red-50">حذف</button>
                         <button onclick="closeModal()" class="border border-gray-300 px-5 py-3 rounded-2xl text-sm hover:bg-gray-50">بستن</button>
                     </div>
                 </div>
             </div>
         </div>`;
-    };
+  };
 })();

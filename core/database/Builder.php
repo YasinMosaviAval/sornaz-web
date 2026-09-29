@@ -13,8 +13,8 @@ use Core\database\Concerns\BuildsMutationQueries;
 use Core\database\Concerns\ExecutesQueries;
 use Core\database\Concerns\BuildsQueryClauses;
 
-class Builder {
-
+class Builder
+{
 
     use BuildsWhereQueries;
     use BuildsRelationQueries;
@@ -24,7 +24,6 @@ class Builder {
     use BuildsMutationQueries;
     use ExecutesQueries;
     use BuildsQueryClauses;
-
 
     /*
     |--------------------------------------------------------------------------
@@ -81,53 +80,52 @@ class Builder {
     protected array $withExists = [];
     protected ?RelationExistence $relationExistence = null;
 
+    public function __construct(PDO $pdo)
+    {
+        $this->pdo = $pdo;
+    }
 
-
-    public function __construct(PDO $pdo) {$this->pdo = $pdo;}
-
-
-
-    public function table(string $table): static {
+    public function table(string $table): static
+    {
         $this->table = $table;
         return $this;
     }
 
+    public function lastInsertId(): string
+    {
+        return $this->pdo->lastInsertId();
+    }
 
-
-    public function lastInsertId(): string {return $this->pdo->lastInsertId();}
-
-
-
-    public function withTrashed(): static {
+    public function withTrashed(): static
+    {
         $this->withTrashed = true;
         return $this;
     }
 
-
-
-    public function onlyTrashed(): static {
+    public function onlyTrashed(): static
+    {
         $this->onlyTrashed = true;
         return $this;
     }
 
-
-
-    public function addScope($scope): static {
+    public function addScope($scope): static
+    {
         $this->scopes[] = $scope;
         return $this;
     }
 
+    public function isWithTrashed(): bool
+    {
+        return $this->withTrashed;
+    }
 
+    public function isOnlyTrashed(): bool
+    {
+        return $this->onlyTrashed;
+    }
 
-    public function isWithTrashed(): bool {return $this->withTrashed;}
-
-
-
-    public function isOnlyTrashed(): bool {return $this->onlyTrashed;}
-
-
-
-    public function model(string $class): static {
+    public function model(string $class): static
+    {
         $this->modelClass = $class;
         $this->primaryKey = $class::getPrimaryKey();
         $this->fillable = $this->getFillable();
@@ -138,19 +136,19 @@ class Builder {
         return $this;
     }
 
-
-
-    protected function applyScopes(): void {
-        if($this->scopesApplied){return;}
-        $this->scopesApplied=true;
-        foreach($this->scopes as $scope){
+    protected function applyScopes(): void
+    {
+        if ($this->scopesApplied) {
+            return;
+        }
+        $this->scopesApplied = true;
+        foreach ($this->scopes as $scope) {
             $scope->apply($this);
         }
     }
 
-
-
-    public function __call(string $method, array $arguments) {
+    public function __call(string $method, array $arguments)
+    {
         if (!$this->modelClass) {
             throw new \BadMethodCallException("Method {$method} does not exist.");
         }
@@ -164,18 +162,38 @@ class Builder {
         return $result instanceof self ? $result : $this;
     }
 
+    public function getPrimaryKey(): string
+    {
+        return $this->primaryKey;
+    }
 
+    public function getFillable(): array
+    {
+        return $this->fillable;
+    }
 
-    public function getPrimaryKey(): string {return $this->primaryKey;}
-    public function getFillable(): array {return $this->fillable;}
-    public function getGuarded(): array {return $this->guarded;}
-    public function getCasts(): array {return $this->casts;}
-    public function usesTimestamps(): bool {return $this->timestamps;}
-    public static function usesSoftDeletes(): bool {return in_array(SoftDeletes::class, class_uses(static::class));}
+    public function getGuarded(): array
+    {
+        return $this->guarded;
+    }
 
+    public function getCasts(): array
+    {
+        return $this->casts;
+    }
 
+    public function usesTimestamps(): bool
+    {
+        return $this->timestamps;
+    }
 
-    protected function collectKeys(array $models, string $key): array {
+    public static function usesSoftDeletes(): bool
+    {
+        return in_array(SoftDeletes::class, class_uses(static::class));
+    }
+
+    protected function collectKeys(array $models, string $key): array
+    {
         $ids = [];
         foreach ($models as $model) {
             $value = $model->$key;
@@ -186,9 +204,8 @@ class Builder {
         return array_values(array_unique($ids));
     }
 
-
-
-    protected function groupModels(array $rows, string $foreignKey): array {
+    protected function groupModels(array $rows, string $foreignKey): array
+    {
         $grouped = [];
         foreach ($rows as $row) {
             $grouped[$row->$foreignKey][] = $row;
@@ -196,46 +213,42 @@ class Builder {
         return $grouped;
     }
 
+    public function getModelClass(): ?string
+    {
+        return $this->modelClass;
+    }
 
+    public function toSql(): string
+    {
+        return $this->buildSelect();
+    }
 
-    public function getModelClass(): ?string {return $this->modelClass;}
+    public function getBindings(): array
+    {
+        return $this->bindings;
+    }
 
-
-
-    public function toSql(): string {return $this->buildSelect();}
-
-
-
-    public function getBindings(): array {return $this->bindings;}
-
-
-
-    public function whereExists(Builder $query): static {
+    public function whereExists(Builder $query): static
+    {
         $this->wheres[] = 'EXISTS (' . $query->toSql() . ')';
         $this->bindings = array_merge($this->bindings, $query->getBindings());
         return $this;
     }
 
-
-
-    public function whereNotExists(Builder $query): static {
+    public function whereNotExists(Builder $query): static
+    {
         $this->wheres[] = 'NOT EXISTS (' . $query->toSql() . ')';
         $this->bindings = array_merge($this->bindings, $query->getBindings());
         return $this;
     }
 
-
-
-    public function orWhereExists(Builder $query): static {
-        return $this->orWhereRaw('EXISTS (' . $query->toSql() . ')',$query->getBindings());
+    public function orWhereExists(Builder $query): static
+    {
+        return $this->orWhereRaw('EXISTS (' . $query->toSql() . ')', $query->getBindings());
     }
 
-
-    public function exists(): bool {
+    public function exists(): bool
+    {
         return $this->first() !== null;
     }
-
-
-
-
 }

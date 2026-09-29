@@ -5,15 +5,21 @@ namespace Core\database\Aggregates;
 use Closure;
 use Core\database\Builder;
 
-class AggregateLoader {
+class AggregateLoader
+{
 
     protected Builder $builder;
 
-    public function __construct(Builder $builder){$this->builder = $builder;}
+    public function __construct(Builder $builder)
+    {
+        $this->builder = $builder;
+    }
 
-
-    public function load(array $models): void {
-        if (empty($models)) {return;}
+    public function load(array $models): void
+    {
+        if (empty($models)) {
+            return;
+        }
         foreach ($this->builder->getWithCounts() as $relation => $constraint) {
             $this->loadAggregate($models, $relation, 'count', null, $constraint);
         }
@@ -25,10 +31,8 @@ class AggregateLoader {
     /**
      * Generic Aggregate Loader
      */
-    protected function loadAggregate(array $models, string $relation, string $aggregate, ?string $column, ?Closure $constraint): void {
+    protected function loadAggregate(array $models, string $relation, string $aggregate, ?string $column, ?Closure $constraint): void
+    {
         $this->builder->loadRelationAggregate($models, $relation, $aggregate, $column, $constraint);
     }
-
-
-
 }

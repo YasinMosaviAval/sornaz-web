@@ -5,57 +5,64 @@ namespace Core\database\Relations;
 use Core\database\Builder;
 use Core\database\Model;
 
-abstract class Relation {
-
+abstract class Relation
+{
 
     protected Model $parent;
     protected string $related;
     protected string $foreignKey;
     protected string $localKey;
 
-
-    public function __construct(Model $parent, string $related, string $foreignKey, string $localKey) {
+    public function __construct(Model $parent, string $related, string $foreignKey, string $localKey)
+    {
         $this->parent = $parent;
         $this->related = $related;
         $this->foreignKey = $foreignKey;
         $this->localKey = $localKey;
     }
 
+    public function newQuery(): Builder
+    {
+        return $this->related::query();
+    }
 
-    public function newQuery(): Builder {return $this->related::query();}
+    public function getRelated(): string
+    {
+        return $this->related;
+    }
 
+    public function getParent(): Model
+    {
+        return $this->parent;
+    }
 
-    public function getRelated(): string {return $this->related;}
+    public function getParentTable(): string
+    {
+        return $this->parent::getTable();
+    }
 
+    public function getRelatedTable(): string
+    {
+        return $this->related::getTable();
+    }
 
-    public function getParent(): Model {return $this->parent;}
+    public function getForeignKey(): string
+    {
+        return $this->foreignKey;
+    }
 
-
-    public function getParentTable(): string {return $this->parent::getTable();}
-
-
-    public function getRelatedTable(): string {return $this->related::getTable();}
-
-
-    public function getForeignKey(): string {return $this->foreignKey;}
-
-
-    public function getLocalKey(): string {return $this->localKey;}
-
+    public function getLocalKey(): string
+    {
+        return $this->localKey;
+    }
 
     abstract public function getResults();
 
-
     abstract public function addEagerConstraints(array $models): void;
-
 
     abstract public function initRelation(array $models, string $relation): void;
 
-
     abstract public function match(array $models, array $results, string $relation): void;
 
-
     abstract public function getExistenceQuery(Builder $query): Builder;
-
-
 }

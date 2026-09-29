@@ -2,6 +2,7 @@
 
 namespace Modules\Finance\Events;
 
-class FinanceEvent {
+class FinanceEvent
+{
 
 }

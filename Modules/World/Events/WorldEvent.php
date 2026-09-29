@@ -2,6 +2,7 @@
 
 namespace Modules\World\Events;
 
-class WorldEvent {
+class WorldEvent
+{
 
 }

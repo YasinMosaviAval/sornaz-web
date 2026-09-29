@@ -2,6 +2,7 @@
 
 namespace Modules\Translation\Listeners;
 
-class SendTranslationListener {
+class SendTranslationListener
+{
 
 }

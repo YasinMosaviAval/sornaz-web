@@ -2,6 +2,7 @@
 
 namespace Modules\Home\Services;
 
-class HomeService {
+class HomeService
+{
 
 }

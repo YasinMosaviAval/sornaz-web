@@ -13,9 +13,10 @@ use Throwable;
 use ReflectionFunction;
 use ReflectionMethod;
 
-class Kernel {
-
-    public function handle() {
+class Kernel
+{
+    public function handle()
+    {
         $request = new Request();
         session()->start();
         $locale = session()->get('locale', 'fa');
@@ -24,8 +25,11 @@ class Kernel {
         $response = new Response();
         if (!$route) {
             $json = str_starts_with($request->uri(), '/api/') || str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json');
-            if ($json) \Core\http\ResponseFactory::json(['success'=>false,'message'=>'Not Found'],404)->send();
-            else (new Response($locale === 'en' ? '404 — Page not found' : '۴۰۴ — صفحه یافت نشد',404))->send();
+            if ($json) {
+                \Core\http\ResponseFactory::json(['success' => false, 'message' => 'Not Found'], 404)->send();
+            } else {
+                (new Response($locale === 'en' ? '404 — Page not found' : '۴۰۴ — صفحه یافت نشد', 404))->send();
+            }
             return;
         }
         $action = $route['action'];
@@ -62,7 +66,7 @@ class Kernel {
                 $response->json($result);
                 return;
             }
-            (new Response((string)$result))->send();
+            (new Response((string) $result))->send();
         } catch (ValidationException $e) {
             session()->flash('_errors', $e->errors());
             session()->flash('_old', \Core\session\Session::safeInput($_POST));
@@ -82,9 +86,8 @@ class Kernel {
         }
     }
 
-
-
-    protected function invokeControllerMethod(object $controller, string $method, array $routeParams) {
+    protected function invokeControllerMethod(object $controller, string $method, array $routeParams)
+    {
         $reflection = new ReflectionMethod($controller, $method);
         $arguments = [];
         foreach ($reflection->getParameters() as $parameter) {
@@ -98,7 +101,7 @@ class Kernel {
                 $arguments[] = app()->container()->make($type->getName());
                 continue;
             }
-            if ( $parameter->isDefaultValueAvailable()) {
+            if ($parameter->isDefaultValueAvailable()) {
                 $arguments[] = $parameter->getDefaultValue();
                 continue;
             }
@@ -107,9 +110,8 @@ class Kernel {
         return $reflection->invokeArgs($controller, $arguments);
     }
 
-
-
-    protected function invokeCallable(callable $callable, array $routeParams = []) {
+    protected function invokeCallable(callable $callable, array $routeParams = [])
+    {
         $reflection = new ReflectionFunction($callable);
         $arguments = [];
         foreach ($reflection->getParameters() as $parameter) {
@@ -131,8 +133,4 @@ class Kernel {
         }
         return $reflection->invokeArgs($arguments);
     }
-
-
-
 }
-

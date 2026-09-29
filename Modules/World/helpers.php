@@ -2,7 +2,8 @@
 
 if (!function_exists('worlds')) {
 
-    function worlds() {
+    function worlds()
+    {
     }
 
 }

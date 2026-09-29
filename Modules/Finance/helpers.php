@@ -2,7 +2,8 @@
 
 if (!function_exists('finances')) {
 
-    function finances() {
+    function finances()
+    {
     }
 
 }

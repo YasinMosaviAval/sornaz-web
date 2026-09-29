@@ -1,11 +1,15 @@
 <?php
 namespace Modules\Analytics\Controllers\Api;
+
 use Core\http\ResponseFactory;
-final class MobileLearningController {
-    public function index() {
-        $learningUserId = (int)auth()->id();
-$learningLocale = locale() === 'en' ? 'en' : 'fa';
-$learningSql = "SELECT e.type AS enrollment_type,e.status AS enrollment_status,
+
+final class MobileLearningController
+{
+    public function index()
+    {
+        $learningUserId = (int) auth()->id();
+        $learningLocale = locale() === 'en' ? 'en' : 'fa';
+        $learningSql = "SELECT e.type AS enrollment_type,e.status AS enrollment_status,
  t.term_id,t.status AS term_status,t.start_date,t.end_date,
  c.course_id,c.branch_id,
  s.term_session_id,b.requested_date,b.start_time,b.end_time,
@@ -23,15 +27,17 @@ $learningSql = "SELECT e.type AS enrollment_type,e.status AS enrollment_status,
  LEFT JOIN academy_branch_classrooms r ON r.classroom_id=s.classroom_id AND r.deleted_at IS NULL
  WHERE m.user_id=? AND m.deleted_at IS NULL
  ORDER BY COALESCE(b.requested_date,t.start_date) DESC,b.start_time";
-$learningStatement = db()->prepare($learningSql);
-$learningStatement->execute([$learningLocale,$learningLocale,$learningLocale,$learningLocale,$learningUserId]);
-$learningRows = $learningStatement->fetchAll(\PDO::FETCH_ASSOC);
-$learningCourses = $learningTerms = $learningClasses = [];
-foreach ($learningRows as $learningRow) {
-    $learningCourses[(int)$learningRow['course_id']] = $learningRow;
-    $learningTerms[(int)$learningRow['term_id']] = $learningRow;
-    if (!empty($learningRow['term_session_id'])) $learningClasses[(int)$learningRow['term_session_id']] = $learningRow;
-}
-return ResponseFactory::json(['courses'=>array_values($learningCourses),'terms'=>array_values($learningTerms),'classes'=>array_values($learningClasses)]);
+        $learningStatement = db()->prepare($learningSql);
+        $learningStatement->execute([$learningLocale, $learningLocale, $learningLocale, $learningLocale, $learningUserId]);
+        $learningRows = $learningStatement->fetchAll(\PDO::FETCH_ASSOC);
+        $learningCourses = $learningTerms = $learningClasses = [];
+        foreach ($learningRows as $learningRow) {
+            $learningCourses[(int) $learningRow['course_id']] = $learningRow;
+            $learningTerms[(int) $learningRow['term_id']] = $learningRow;
+            if (!empty($learningRow['term_session_id'])) {
+                $learningClasses[(int) $learningRow['term_session_id']] = $learningRow;
+            }
+        }
+        return ResponseFactory::json(['courses' => array_values($learningCourses), 'terms' => array_values($learningTerms), 'classes' => array_values($learningClasses)]);
     }
 }

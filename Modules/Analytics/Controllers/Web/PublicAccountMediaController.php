@@ -13,8 +13,10 @@ final class PublicAccountMediaController
             $file = (new PublicAccountMediaService())->library($year, $month, $filename, auth()->user());
             return new DownloadResponse($file['path'], $file['name'], $file['mime'], $file['inline']);
         } catch (\RuntimeException $e) {
-            if ($e->getCode() !== 404) throw $e;
-            return ResponseFactory::json(['success'=>false, 'message'=>'File not found'], 404);
+            if ($e->getCode() !== 404) {
+                throw $e;
+            }
+            return ResponseFactory::json(['success' => false, 'message' => 'File not found'], 404);
         }
     }
 
@@ -24,8 +26,10 @@ final class PublicAccountMediaController
             $file = (new PublicAccountMediaService())->find($user, $year, $month, $filename);
             return new DownloadResponse($file['path'], $file['name'], $file['mime'], true);
         } catch (\RuntimeException $e) {
-            if ($e->getCode() !== 404) throw $e;
-            return ResponseFactory::json(['success'=>false, 'message'=>'File not found'], 404);
+            if ($e->getCode() !== 404) {
+                throw $e;
+            }
+            return ResponseFactory::json(['success' => false, 'message' => 'File not found'], 404);
         }
     }
 }

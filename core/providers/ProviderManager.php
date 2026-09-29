@@ -2,33 +2,31 @@
 
 namespace Core\providers;
 
-class ProviderManager {
+class ProviderManager
+{
     /**
      * @var ServiceProvider[]
      */
     protected array $providers = [];
 
-
-    public function load(array $providers): void {
+    public function load(array $providers): void
+    {
         foreach ($providers as $provider) {
             $this->providers[] = new $provider();
         }
     }
 
-
-    public function register(): void {
+    public function register(): void
+    {
         foreach ($this->providers as $provider) {
             $provider->register();
         }
     }
 
-
-    public function boot(): void {
+    public function boot(): void
+    {
         foreach ($this->providers as $provider) {
             $provider->boot();
         }
     }
-
-
-
 }

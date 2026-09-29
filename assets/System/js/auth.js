@@ -1,322 +1,361 @@
 const authText = (key, fallback) => window.authTranslations?.[`auth.js.${key}`] || fallback;
 
-window.changeAuthLanguage = function(locale) {
-    document.body.classList.add('language-changing');
-    window.setTimeout(() => { window.location.href = `/language/${locale}`; }, 90);
+window.changeAuthLanguage = function (locale) {
+  document.body.classList.add('language-changing');
+  window.setTimeout(() => {
+    window.location.href = `/language/${locale}`;
+  }, 90);
 };
 
-window.showAuthToast = function(type, message) {
-    if (!message) return;
-    if (typeof Swal === 'undefined') {
-        console[type === 'error' ? 'error' : 'log'](message);
-        return;
-    }
-    Swal.fire({
-        toast: true, position: 'top', icon: type === 'success' ? 'success' : 'error',
-        title: message, showConfirmButton: false, showCloseButton: true,
-        timer: type === 'success' ? 4500 : 6000, timerProgressBar: true,
-        customClass: {popup: type === 'success' ? 'auth-toast-success' : 'auth-toast-error'}
-    });
+window.showAuthToast = function (type, message) {
+  if (!message) return;
+  if (typeof Swal === 'undefined') {
+    console[type === 'error' ? 'error' : 'log'](message);
+    return;
+  }
+  Swal.fire({
+    toast: true,
+    position: 'top',
+    icon: type === 'success' ? 'success' : 'error',
+    title: message,
+    showConfirmButton: false,
+    showCloseButton: true,
+    timer: type === 'success' ? 4500 : 6000,
+    timerProgressBar: true,
+    customClass: { popup: type === 'success' ? 'auth-toast-success' : 'auth-toast-error' },
+  });
 };
 
-window.alert = function(message) {
-    if (String(message) === authText('reset_success', 'رمز عبور با موفقیت تغییر کرد. اکنون وارد شوید.')) return;
-    showAuthToast('error', String(message));
+window.alert = function (message) {
+  if (
+    String(message) === authText('reset_success', 'رمز عبور با موفقیت تغییر کرد. اکنون وارد شوید.')
+  )
+    return;
+  showAuthToast('error', String(message));
 };
 
-window.togglePassword = function(inputId, btn) {
-    const input = document.getElementById(inputId);
-    if (!input) return;
-    const icon = btn.querySelector('i');
-    if (input.type === 'password') {
-        input.type = 'text';
-        if (icon) { icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); }
-    } else {
-        input.type = 'password';
-        if (icon) { icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
+window.togglePassword = function (inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const icon = btn.querySelector('i');
+  if (input.type === 'password') {
+    input.type = 'text';
+    if (icon) {
+      icon.classList.remove('fa-eye');
+      icon.classList.add('fa-eye-slash');
     }
+  } else {
+    input.type = 'password';
+    if (icon) {
+      icon.classList.remove('fa-eye-slash');
+      icon.classList.add('fa-eye');
+    }
+  }
 };
 
-
-
-window.validateLoginForm = function(form) {
-    const identifierInput = form.querySelector('[name="identifier"]');
-    const passwordInput = form.querySelector('[name="password"]');
-    if (!identifierInput?.value.trim()) {
-        showAuthToast('error', authText('identifier_required', 'نام کاربری، ایمیل یا شماره موبایل را وارد کنید.'));
-        identifierInput?.focus();
-        return false;
-    }
-    if (!passwordInput?.value) {
-        showAuthToast('error', authText('password_required', 'رمز عبور را وارد کنید.'));
-        passwordInput?.focus();
-        return false;
-    }
-    return true;
+window.validateLoginForm = function (form) {
+  const identifierInput = form.querySelector('[name="identifier"]');
+  const passwordInput = form.querySelector('[name="password"]');
+  if (!identifierInput?.value.trim()) {
+    showAuthToast(
+      'error',
+      authText('identifier_required', 'نام کاربری، ایمیل یا شماره موبایل را وارد کنید.')
+    );
+    identifierInput?.focus();
+    return false;
+  }
+  if (!passwordInput?.value) {
+    showAuthToast('error', authText('password_required', 'رمز عبور را وارد کنید.'));
+    passwordInput?.focus();
+    return false;
+  }
+  return true;
 };
 
 function passwordStrength(password) {
-    const criteria = {
-        upper: /[A-Z]/.test(password), lower: /[a-z]/.test(password),
-        number: /[0-9]/.test(password), special: /[!@#$%^&*()\-_+=\[\]{}|;:,.<>?\/~]/.test(password),
-        length: password.length > 8
-    };
-    return {criteria, score: Object.values(criteria).filter(Boolean).length};
+  const criteria = {
+    upper: /[A-Z]/.test(password),
+    lower: /[a-z]/.test(password),
+    number: /[0-9]/.test(password),
+    special: /[!@#$%^&*()\-_+=\[\]{}|;:,.<>?\/~]/.test(password),
+    length: password.length > 8,
+  };
+  return { criteria, score: Object.values(criteria).filter(Boolean).length };
 }
 
 function setupPasswordStrength(inputId) {
-    const input = document.getElementById(inputId);
-    const container = document.querySelector(`[data-password-strength="${inputId}"]`);
-    if (!input || !container) return;
-    const update = () => {
-        const result = passwordStrength(input.value);
-        const hue = result.score <= 1 ? 0 : (result.score - 1) * 30;
-        const labels = [
-            authText('strength_very_weak', 'بسیار ضعیف'),
-            authText('strength_very_weak', 'بسیار ضعیف'),
-            authText('strength_very_weak', 'بسیار ضعیف'),
-            authText('strength_medium', 'متوسط'),
-            authText('strength_strong', 'قوی'),
-            authText('strength_very_strong', 'بسیار قوی')
-        ];
-        const bar = container.querySelector('[data-strength-bar]');
-        const label = container.querySelector('[data-strength-label]');
-        bar.style.width = `${result.score * 20}%`;
-        bar.style.backgroundColor = `hsl(${hue} 75% 42%)`;
-        label.textContent = labels[result.score];
-        label.style.color = `hsl(${hue} 75% 35%)`;
-        Object.entries(result.criteria).forEach(([key, met]) => {
-            const item = container.querySelector(`[data-criterion="${key}"]`);
-            if (!item) return;
-            item.classList.toggle('text-green-600', met);
-            item.classList.toggle('text-gray-400', !met);
-            item.textContent = `${met ? '✓' : '○'} ${item.textContent.slice(2)}`;
-        });
-    };
-    input.addEventListener('input', update);
-    update();
+  const input = document.getElementById(inputId);
+  const container = document.querySelector(`[data-password-strength="${inputId}"]`);
+  if (!input || !container) return;
+  const update = () => {
+    const result = passwordStrength(input.value);
+    const hue = result.score <= 1 ? 0 : (result.score - 1) * 30;
+    const labels = [
+      authText('strength_very_weak', 'بسیار ضعیف'),
+      authText('strength_very_weak', 'بسیار ضعیف'),
+      authText('strength_very_weak', 'بسیار ضعیف'),
+      authText('strength_medium', 'متوسط'),
+      authText('strength_strong', 'قوی'),
+      authText('strength_very_strong', 'بسیار قوی'),
+    ];
+    const bar = container.querySelector('[data-strength-bar]');
+    const label = container.querySelector('[data-strength-label]');
+    bar.style.width = `${result.score * 20}%`;
+    bar.style.backgroundColor = `hsl(${hue} 75% 42%)`;
+    label.textContent = labels[result.score];
+    label.style.color = `hsl(${hue} 75% 35%)`;
+    Object.entries(result.criteria).forEach(([key, met]) => {
+      const item = container.querySelector(`[data-criterion="${key}"]`);
+      if (!item) return;
+      item.classList.toggle('text-green-600', met);
+      item.classList.toggle('text-gray-400', !met);
+      item.textContent = `${met ? '✓' : '○'} ${item.textContent.slice(2)}`;
+    });
+  };
+  input.addEventListener('input', update);
+  update();
 }
 
-window.validateRegisterForm = function(form) {
-    const method = form.querySelector('[name="register_method"]')?.value || 'email';
-    const identifierInput = form.querySelector(`[name="${method}"]`);
-    const identifier = identifierInput?.value.trim() || '';
-    const usernameInput = form.querySelector('[name="username"]');
-    const passwordInput = form.querySelector('[name="password"]');
-    const confirmationInput = form.querySelector('[name="password2"]');
-    const pass = passwordInput?.value || '';
-    const pass2 = confirmationInput?.value || '';
-    const terms = form.querySelector('[name="terms"]')?.checked;
+window.validateRegisterForm = function (form) {
+  const method = form.querySelector('[name="register_method"]')?.value || 'email';
+  const identifierInput = form.querySelector(`[name="${method}"]`);
+  const identifier = identifierInput?.value.trim() || '';
+  const usernameInput = form.querySelector('[name="username"]');
+  const passwordInput = form.querySelector('[name="password"]');
+  const confirmationInput = form.querySelector('[name="password2"]');
+  const pass = passwordInput?.value || '';
+  const pass2 = confirmationInput?.value || '';
+  const terms = form.querySelector('[name="terms"]')?.checked;
 
-    if (!identifier) {
-        showAuthToast('error', method === 'email' ? 'ایمیل را وارد کنید.' : 'شماره موبایل را وارد کنید.');
-        identifierInput?.focus();
-        return false;
-    }
-    if (method === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) {
-        showAuthToast('error', 'ایمیل واردشده معتبر نیست.');
-        identifierInput?.focus();
-        return false;
-    }
-    if (method === 'phone' && !/^09\d{9}$/.test(identifier.replace(/\s/g, ''))) {
-        showAuthToast('error', 'شماره موبایل معتبر نیست.');
-        identifierInput?.focus();
-        return false;
-    }
-    if (!usernameInput?.value.trim()) {
-        showAuthToast('error', 'نام کاربری را وارد کنید.');
-        usernameInput?.focus();
-        return false;
-    }
-    if (!pass) {
-        showAuthToast('error', 'رمز عبور را وارد کنید.');
-        passwordInput?.focus();
-        return false;
-    }
-    if (pass.length < 8) {
-        showAuthToast('error', 'رمز عبور حداقل ۸ کاراکتر باشد.');
-        passwordInput?.focus();
-        return false;
-    }
-    if (passwordStrength(pass).score < 3) {
-        showAuthToast('error', 'رمز عبور بسیار ضعیف است؛ حداقل ۳ مورد از معیارهای قدرت رمز را رعایت کنید.');
-        passwordInput?.focus();
-        return false;
-    }
-    if (!pass2) {
-        showAuthToast('error', 'تکرار رمز عبور را وارد کنید.');
-        confirmationInput?.focus();
-        return false;
-    }
-    if (pass !== pass2) {
-        showAuthToast('error', 'رمز عبور و تکرار آن یکسان نیست.');
-        confirmationInput?.focus();
-        return false;
-    }
-    if (!terms) {
-        showAuthToast('error', 'پذیرش قوانین الزامی است.');
-        return false;
-    }
-    return true;
+  if (!identifier) {
+    showAuthToast(
+      'error',
+      method === 'email' ? 'ایمیل را وارد کنید.' : 'شماره موبایل را وارد کنید.'
+    );
+    identifierInput?.focus();
+    return false;
+  }
+  if (method === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) {
+    showAuthToast('error', 'ایمیل واردشده معتبر نیست.');
+    identifierInput?.focus();
+    return false;
+  }
+  if (method === 'phone' && !/^09\d{9}$/.test(identifier.replace(/\s/g, ''))) {
+    showAuthToast('error', 'شماره موبایل معتبر نیست.');
+    identifierInput?.focus();
+    return false;
+  }
+  if (!usernameInput?.value.trim()) {
+    showAuthToast('error', 'نام کاربری را وارد کنید.');
+    usernameInput?.focus();
+    return false;
+  }
+  if (!pass) {
+    showAuthToast('error', 'رمز عبور را وارد کنید.');
+    passwordInput?.focus();
+    return false;
+  }
+  if (pass.length < 8) {
+    showAuthToast('error', 'رمز عبور حداقل ۸ کاراکتر باشد.');
+    passwordInput?.focus();
+    return false;
+  }
+  if (passwordStrength(pass).score < 3) {
+    showAuthToast(
+      'error',
+      'رمز عبور بسیار ضعیف است؛ حداقل ۳ مورد از معیارهای قدرت رمز را رعایت کنید.'
+    );
+    passwordInput?.focus();
+    return false;
+  }
+  if (!pass2) {
+    showAuthToast('error', 'تکرار رمز عبور را وارد کنید.');
+    confirmationInput?.focus();
+    return false;
+  }
+  if (pass !== pass2) {
+    showAuthToast('error', 'رمز عبور و تکرار آن یکسان نیست.');
+    confirmationInput?.focus();
+    return false;
+  }
+  if (!terms) {
+    showAuthToast('error', 'پذیرش قوانین الزامی است.');
+    return false;
+  }
+  return true;
 };
 
 let registerStep = 1;
 let registerTimerInterval = null;
 
-window.setRegisterMethod = function(method) {
-    document.getElementById('regMethod').value = method;
-    document.getElementById('regEmailBox')?.classList.toggle('hidden', method !== 'email');
-    document.getElementById('regPhoneBox')?.classList.toggle('hidden', method !== 'phone');
-    document.querySelectorAll('.reg-method').forEach(btn => {
-        btn.classList.remove('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
-        btn.classList.add('border-gray-200', 'text-gray-600');
+window.setRegisterMethod = function (method) {
+  document.getElementById('regMethod').value = method;
+  document.getElementById('regEmailBox')?.classList.toggle('hidden', method !== 'email');
+  document.getElementById('regPhoneBox')?.classList.toggle('hidden', method !== 'phone');
+  document.querySelectorAll('.reg-method').forEach((btn) => {
+    btn.classList.remove('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+    btn.classList.add('border-gray-200', 'text-gray-600');
+  });
+  const active = document.getElementById(method === 'email' ? 'regMethodEmail' : 'regMethodPhone');
+  active?.classList.add('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+  active?.classList.remove('border-gray-200', 'text-gray-600');
+};
+
+window.handleRegisterSubmit = function (form) {
+  if (form.dataset.otpRequired === '0') return validateRegisterForm(form);
+  if (registerStep === 1) {
+    if (!validateRegisterForm(form)) return false;
+    sendRegistrationOtp();
+    return false;
+  }
+  const code = Array.from(document.querySelectorAll('.reg-otp'))
+    .map((input) => input.value)
+    .join('');
+  if (!/^\d{6}$/.test(code)) {
+    showRegisterError('regOtpError', 'کد ۶ رقمی را کامل وارد کنید.');
+    return false;
+  }
+  document.getElementById('regOtp').value = code;
+  return true;
+};
+
+window.sendRegistrationOtp = async function () {
+  const form = document.getElementById('registerForm');
+  if (!form || !validateRegisterForm(form)) return;
+  const button = document.getElementById('regSendOtpBtn');
+  if (button) button.disabled = true;
+  showRegisterError('regFormError', '');
+  try {
+    const response = await fetch('/register/send-otp', {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
+      body: new FormData(form),
     });
-    const active = document.getElementById(method === 'email' ? 'regMethodEmail' : 'regMethodPhone');
-    active?.classList.add('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
-    active?.classList.remove('border-gray-200', 'text-gray-600');
-};
-
-window.handleRegisterSubmit = function(form) {
-    if (form.dataset.otpRequired === '0') return validateRegisterForm(form);
-    if (registerStep === 1) {
-        if (!validateRegisterForm(form)) return false;
-        sendRegistrationOtp();
-        return false;
-    }
-    const code = Array.from(document.querySelectorAll('.reg-otp')).map(input => input.value).join('');
-    if (!/^\d{6}$/.test(code)) {
-        showRegisterError('regOtpError', 'کد ۶ رقمی را کامل وارد کنید.');
-        return false;
-    }
-    document.getElementById('regOtp').value = code;
-    return true;
-};
-
-window.sendRegistrationOtp = async function() {
-    const form = document.getElementById('registerForm');
-    if (!form || !validateRegisterForm(form)) return;
-    const button = document.getElementById('regSendOtpBtn');
-    if (button) button.disabled = true;
-    showRegisterError('regFormError', '');
+    const rawResponse = await response.text();
+    let payload;
     try {
-        const response = await fetch('/register/send-otp', {
-            method: 'POST',
-            headers: {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json'},
-            body: new FormData(form)
-        });
-        const rawResponse = await response.text();
-        let payload;
-        try {
-            payload = JSON.parse(rawResponse);
-        } catch (parseError) {
-            console.error('Invalid registration OTP response:', rawResponse);
-            throw new Error('پاسخ نامعتبر از سرور دریافت شد. لطفاً گزارش خطای سرور را بررسی کنید.');
-        }
-        const data = payload.data || {};
-        if (!response.ok || !data.success) {
-            const firstError = data.errors ? Object.values(data.errors).flat()[0] : null;
-            throw new Error(firstError || data.message || 'ارسال کد انجام نشد.');
-        }
-        const method = document.getElementById('regMethod').value;
-        const destination = form.querySelector(`[name="${method}"]`).value.trim();
-        document.getElementById('regSentTo').textContent = destination;
-        document.getElementById('regDetailsStep').classList.add('hidden');
-        document.getElementById('regOtpStep').classList.remove('hidden');
-        document.querySelectorAll('.reg-otp').forEach(input => input.value = '');
-        registerStep = 2;
-        setupRegisterOtpInputs();
-        startRegisterTimer(data.expires_in || 120);
-    } catch (error) {
-        showRegisterError(registerStep === 1 ? 'regFormError' : 'regOtpError', error.message);
-    } finally {
-        if (button) button.disabled = false;
+      payload = JSON.parse(rawResponse);
+    } catch (parseError) {
+      console.error('Invalid registration OTP response:', rawResponse);
+      throw new Error('پاسخ نامعتبر از سرور دریافت شد. لطفاً گزارش خطای سرور را بررسی کنید.');
     }
+    const data = payload.data || {};
+    if (!response.ok || !data.success) {
+      const firstError = data.errors ? Object.values(data.errors).flat()[0] : null;
+      throw new Error(firstError || data.message || 'ارسال کد انجام نشد.');
+    }
+    const method = document.getElementById('regMethod').value;
+    const destination = form.querySelector(`[name="${method}"]`).value.trim();
+    document.getElementById('regSentTo').textContent = destination;
+    document.getElementById('regDetailsStep').classList.add('hidden');
+    document.getElementById('regOtpStep').classList.remove('hidden');
+    document.querySelectorAll('.reg-otp').forEach((input) => (input.value = ''));
+    registerStep = 2;
+    setupRegisterOtpInputs();
+    startRegisterTimer(data.expires_in || 120);
+  } catch (error) {
+    showRegisterError(registerStep === 1 ? 'regFormError' : 'regOtpError', error.message);
+  } finally {
+    if (button) button.disabled = false;
+  }
 };
 
-window.showRegisterDetails = function() {
-    registerStep = 1;
-    document.getElementById('regDetailsStep')?.classList.remove('hidden');
-    document.getElementById('regOtpStep')?.classList.add('hidden');
-    document.getElementById('regOtp').value = '';
-    if (registerTimerInterval) clearInterval(registerTimerInterval);
+window.showRegisterDetails = function () {
+  registerStep = 1;
+  document.getElementById('regDetailsStep')?.classList.remove('hidden');
+  document.getElementById('regOtpStep')?.classList.add('hidden');
+  document.getElementById('regOtp').value = '';
+  if (registerTimerInterval) clearInterval(registerTimerInterval);
 };
 
 function showRegisterError(id, message) {
-    const element = document.getElementById(id);
-    if (!element) return;
-    element.textContent = message;
-    element.classList.toggle('hidden', !message);
-    if (message) showAuthToast('error', message);
+  const element = document.getElementById(id);
+  if (!element) return;
+  element.textContent = message;
+  element.classList.toggle('hidden', !message);
+  if (message) showAuthToast('error', message);
 }
 
 function setupRegisterOtpInputs() {
-    const inputs = document.querySelectorAll('.reg-otp');
-    inputs.forEach((input, index) => {
-        input.oninput = () => {
-            input.value = input.value.replace(/\D/g, '').slice(0, 1);
-            if (input.value && index < inputs.length - 1) inputs[index + 1].focus();
-        };
-        input.onkeydown = event => {
-            if (event.key === 'Backspace' && !input.value && index > 0) inputs[index - 1].focus();
-        };
-        input.onpaste = event => {
-            event.preventDefault();
-            const code = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-            code.split('').forEach((digit, i) => { if (inputs[i]) inputs[i].value = digit; });
-        };
-    });
-    inputs[0]?.focus();
+  const inputs = document.querySelectorAll('.reg-otp');
+  inputs.forEach((input, index) => {
+    input.oninput = () => {
+      input.value = input.value.replace(/\D/g, '').slice(0, 1);
+      if (input.value && index < inputs.length - 1) inputs[index + 1].focus();
+    };
+    input.onkeydown = (event) => {
+      if (event.key === 'Backspace' && !input.value && index > 0) inputs[index - 1].focus();
+    };
+    input.onpaste = (event) => {
+      event.preventDefault();
+      const code = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+      code.split('').forEach((digit, i) => {
+        if (inputs[i]) inputs[i].value = digit;
+      });
+    };
+  });
+  inputs[0]?.focus();
 }
 
 function startRegisterTimer(seconds) {
-    if (registerTimerInterval) clearInterval(registerTimerInterval);
-    const timer = document.getElementById('regTimer');
-    const resend = document.getElementById('regResendBtn');
-    if (resend) resend.disabled = true;
-    let remaining = seconds;
-    const tick = () => {
-        const minutes = String(Math.floor(remaining / 60)).padStart(2, '0');
-        const secs = String(remaining % 60).padStart(2, '0');
-        if (timer) timer.textContent = minutes + ':' + secs;
-        if (remaining-- <= 0) {
-            clearInterval(registerTimerInterval);
-            registerTimerInterval = null;
-            if (resend) resend.disabled = false;
-        }
-    };
-    tick();
-    registerTimerInterval = setInterval(tick, 1000);
+  if (registerTimerInterval) clearInterval(registerTimerInterval);
+  const timer = document.getElementById('regTimer');
+  const resend = document.getElementById('regResendBtn');
+  if (resend) resend.disabled = true;
+  let remaining = seconds;
+  const tick = () => {
+    const minutes = String(Math.floor(remaining / 60)).padStart(2, '0');
+    const secs = String(remaining % 60).padStart(2, '0');
+    if (timer) timer.textContent = minutes + ':' + secs;
+    if (remaining-- <= 0) {
+      clearInterval(registerTimerInterval);
+      registerTimerInterval = null;
+      if (resend) resend.disabled = false;
+    }
+  };
+  tick();
+  registerTimerInterval = setInterval(tick, 1000);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const username = document.querySelector('#registrationForm input[name="username"], form[action="/system/register"] input[name="username"], input[name="username"]');
-    const hint = username?.parentElement.querySelector('[data-username-hint]');
-    if (username && hint) {
-        const updateUsernameHint = () => {
-            const value = username.value;
-            hint.classList.remove('text-gray-400', 'text-green-600', 'text-red-600');
-            if (!value) { hint.classList.add('text-gray-400'); hint.textContent = 'نام کاربری: حداقل ۳ و حداکثر ۱۰۰ کاراکتر، فقط حروف انگلیسی، عدد و _'; return; }
-            const valid = /^[A-Za-z0-9_]{3,100}$/.test(value);
-            hint.classList.add(valid ? 'text-green-600' : 'text-red-600');
-            hint.textContent = valid ? 'نام کاربری صحیح است.' : 'نام کاربری باید ۳ تا ۱۰۰ کاراکتر و فقط شامل حروف انگلیسی، عدد و _ باشد.';
-        };
-        username.addEventListener('input', updateUsernameHint); username.addEventListener('focus', updateUsernameHint); updateUsernameHint();
-    }
-    const method = document.getElementById('regMethod')?.value || 'email';
-    if (document.getElementById('registerForm')) {
-        setRegisterMethod(method);
-        setupPasswordStrength('regPassword');
-    }
-    const flash = document.getElementById('authFlashMessage');
-    if (flash?.dataset.success) showAuthToast('success', flash.dataset.success);
-    if (flash?.dataset.error) showAuthToast('error', flash.dataset.error);
+  const username = document.querySelector(
+    '#registrationForm input[name="username"], form[action="/system/register"] input[name="username"], input[name="username"]'
+  );
+  const hint = username?.parentElement.querySelector('[data-username-hint]');
+  if (username && hint) {
+    const updateUsernameHint = () => {
+      const value = username.value;
+      hint.classList.remove('text-gray-400', 'text-green-600', 'text-red-600');
+      if (!value) {
+        hint.classList.add('text-gray-400');
+        hint.textContent = 'نام کاربری: حداقل ۳ و حداکثر ۱۰۰ کاراکتر، فقط حروف انگلیسی، عدد و _';
+        return;
+      }
+      const valid = /^[A-Za-z0-9_]{3,100}$/.test(value);
+      hint.classList.add(valid ? 'text-green-600' : 'text-red-600');
+      hint.textContent = valid
+        ? 'نام کاربری صحیح است.'
+        : 'نام کاربری باید ۳ تا ۱۰۰ کاراکتر و فقط شامل حروف انگلیسی، عدد و _ باشد.';
+    };
+    username.addEventListener('input', updateUsernameHint);
+    username.addEventListener('focus', updateUsernameHint);
+    updateUsernameHint();
+  }
+  const method = document.getElementById('regMethod')?.value || 'email';
+  if (document.getElementById('registerForm')) {
+    setRegisterMethod(method);
+    setupPasswordStrength('regPassword');
+  }
+  const flash = document.getElementById('authFlashMessage');
+  if (flash?.dataset.success) showAuthToast('success', flash.dataset.success);
+  if (flash?.dataset.error) showAuthToast('error', flash.dataset.error);
 });
 
-window.showForgotPassword = function() {
-    if (!document.getElementById('modalContainer')) {
-        return alert('برای بازیابی رمز، ایمیل خود را به پشتیبانی ارسال کنید.');
-    }
-    document.getElementById('modalContainer').innerHTML = `
+window.showForgotPassword = function () {
+  if (!document.getElementById('modalContainer')) {
+    return alert('برای بازیابی رمز، ایمیل خود را به پشتیبانی ارسال کنید.');
+  }
+  document.getElementById('modalContainer').innerHTML = `
     <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onclick="if(event.target===this) closeModal()">
         <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl" onclick="event.stopPropagation()">
             <div class="px-8 py-5 border-b flex justify-between items-center">
@@ -335,11 +374,11 @@ window.showForgotPassword = function() {
     </div>`;
 };
 
-window.submitForgotPassword = function() {
-    const email = document.getElementById('forgotEmail')?.value.trim();
-    if (!email) return alert('ایمیل الزامی است');
-    closeModal();
-    alert('اگر این ایمیل ثبت شده باشد، لینک بازیابی ارسال می‌شود.');
+window.submitForgotPassword = function () {
+  const email = document.getElementById('forgotEmail')?.value.trim();
+  if (!email) return alert('ایمیل الزامی است');
+  closeModal();
+  alert('اگر این ایمیل ثبت شده باشد، لینک بازیابی ارسال می‌شود.');
 };
 
 const defaultTermsContent = `
@@ -365,10 +404,10 @@ const defaultTermsContent = `
 <p class="text-gray-600 leading-relaxed">آموزشگاه می‌تواند این قوانین را به‌روزرسانی کند. ادامه استفاده از خدمات پس از اعلام تغییرات به منزله پذیرش نسخه جدید است.</p>
 `;
 
-window.openTermsModal = function() {
-    if (!document.getElementById('modalContainer')) return;
-    const termsContent = authText('terms_content', defaultTermsContent);
-    document.getElementById('modalContainer').innerHTML = `
+window.openTermsModal = function () {
+  if (!document.getElementById('modalContainer')) return;
+  const termsContent = authText('terms_content', defaultTermsContent);
+  document.getElementById('modalContainer').innerHTML = `
     <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto"
          onclick="if(event.target===this) closeModal()">
         <div class="bg-white rounded-3xl w-full max-w-lg my-8 shadow-2xl" onclick="event.stopPropagation()">
@@ -393,170 +432,189 @@ window.openTermsModal = function() {
     </div>`;
 };
 
-window.acceptTerms = function() {
-    const cb = document.getElementById('regTerms');
-    if (cb) cb.checked = true;
-    closeModal();
+window.acceptTerms = function () {
+  const cb = document.getElementById('regTerms');
+  if (cb) cb.checked = true;
+  closeModal();
 };
-
 
 let fpMethod = 'email'; // 'email' | 'phone'
 let fpTimerInterval = null;
 
-window.setFpMethod = function(method) {
-    fpMethod = method;
-    document.querySelectorAll('.fp-method').forEach(btn => {
-        btn.classList.remove('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
-        btn.classList.add('border-gray-200', 'text-gray-600');
-    });
-    const active = document.getElementById(method === 'email' ? 'fpMethodEmail' : 'fpMethodPhone');
-    if (active) {
-        active.classList.add('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
-        active.classList.remove('border-gray-200', 'text-gray-600');
-    }
-    document.getElementById('fpEmailBox')?.classList.toggle('hidden', method !== 'email');
-    document.getElementById('fpPhoneBox')?.classList.toggle('hidden', method !== 'phone');
+window.setFpMethod = function (method) {
+  fpMethod = method;
+  document.querySelectorAll('.fp-method').forEach((btn) => {
+    btn.classList.remove('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+    btn.classList.add('border-gray-200', 'text-gray-600');
+  });
+  const active = document.getElementById(method === 'email' ? 'fpMethodEmail' : 'fpMethodPhone');
+  if (active) {
+    active.classList.add('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+    active.classList.remove('border-gray-200', 'text-gray-600');
+  }
+  document.getElementById('fpEmailBox')?.classList.toggle('hidden', method !== 'email');
+  document.getElementById('fpPhoneBox')?.classList.toggle('hidden', method !== 'phone');
 };
 
-window.fpGoStep = function(step) {
-    [1, 2, 3].forEach(n => {
-        document.getElementById('fpStep' + n)?.classList.toggle('hidden', n !== step);
-    });
-    if (step === 1 && fpTimerInterval) {
-        clearInterval(fpTimerInterval);
-        fpTimerInterval = null;
-    }
+window.fpGoStep = function (step) {
+  [1, 2, 3].forEach((n) => {
+    document.getElementById('fpStep' + n)?.classList.toggle('hidden', n !== step);
+  });
+  if (step === 1 && fpTimerInterval) {
+    clearInterval(fpTimerInterval);
+    fpTimerInterval = null;
+  }
 };
 
-window.sendFpOtp = async function() {
-    let destination;
-    if (fpMethod === 'email') {
-        const email = document.getElementById('fpEmail')?.value.trim();
-        if (!email) return alert(authText('email_required', 'ایمیل را وارد کنید'));
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert(authText('email_invalid', 'ایمیل معتبر نیست'));
-        document.getElementById('fpSentTo').textContent = email;
-        destination = email;
-    } else {
-        const phone = document.getElementById('fpPhone')?.value.trim();
-        if (!phone) return alert(authText('phone_required', 'شماره موبایل را وارد کنید'));
-        if (!/^09\d{9}$/.test(phone.replace(/\s/g, ''))) return alert(authText('phone_invalid', 'شماره موبایل معتبر نیست (مثال: 09123456789)'));
-        document.getElementById('fpSentTo').textContent = phone;
-        destination = phone.replace(/\s/g, '');
-    }
-    try {
-        const data = await fpRequest('/forgot-password/send-otp', {method: fpMethod, destination});
-        document.querySelectorAll('.fp-otp').forEach(inp => { inp.value = ''; });
-        setupOtpInputs();
-        fpGoStep(2);
-        startFpTimer(data.expires_in || 120);
-    } catch (error) { showFpError(error.message); }
+window.sendFpOtp = async function () {
+  let destination;
+  if (fpMethod === 'email') {
+    const email = document.getElementById('fpEmail')?.value.trim();
+    if (!email) return alert(authText('email_required', 'ایمیل را وارد کنید'));
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      return alert(authText('email_invalid', 'ایمیل معتبر نیست'));
+    document.getElementById('fpSentTo').textContent = email;
+    destination = email;
+  } else {
+    const phone = document.getElementById('fpPhone')?.value.trim();
+    if (!phone) return alert(authText('phone_required', 'شماره موبایل را وارد کنید'));
+    if (!/^09\d{9}$/.test(phone.replace(/\s/g, '')))
+      return alert(authText('phone_invalid', 'شماره موبایل معتبر نیست (مثال: 09123456789)'));
+    document.getElementById('fpSentTo').textContent = phone;
+    destination = phone.replace(/\s/g, '');
+  }
+  try {
+    const data = await fpRequest('/forgot-password/send-otp', { method: fpMethod, destination });
+    document.querySelectorAll('.fp-otp').forEach((inp) => {
+      inp.value = '';
+    });
+    setupOtpInputs();
+    fpGoStep(2);
+    startFpTimer(data.expires_in || 120);
+  } catch (error) {
+    showFpError(error.message);
+  }
 };
 
 function startFpTimer(seconds) {
-    if (fpTimerInterval) clearInterval(fpTimerInterval);
-    const timerEl = document.getElementById('fpTimer');
-    const resendBtn = document.getElementById('fpResendBtn');
-    if (resendBtn) resendBtn.disabled = true;
-    let left = seconds;
+  if (fpTimerInterval) clearInterval(fpTimerInterval);
+  const timerEl = document.getElementById('fpTimer');
+  const resendBtn = document.getElementById('fpResendBtn');
+  if (resendBtn) resendBtn.disabled = true;
+  let left = seconds;
 
-    const tick = () => {
-        const m = String(Math.floor(left / 60)).padStart(2, '0');
-        const s = String(left % 60).padStart(2, '0');
-        if (timerEl) timerEl.textContent = m + ':' + s;
-        if (left <= 0) {
-            clearInterval(fpTimerInterval);
-            fpTimerInterval = null;
-            if (resendBtn) resendBtn.disabled = false;
-            if (timerEl) timerEl.textContent = '۰۰:۰۰';
-            return;
-        }
-        left--;
-    };
-    tick();
-    fpTimerInterval = setInterval(tick, 1000);
+  const tick = () => {
+    const m = String(Math.floor(left / 60)).padStart(2, '0');
+    const s = String(left % 60).padStart(2, '0');
+    if (timerEl) timerEl.textContent = m + ':' + s;
+    if (left <= 0) {
+      clearInterval(fpTimerInterval);
+      fpTimerInterval = null;
+      if (resendBtn) resendBtn.disabled = false;
+      if (timerEl) timerEl.textContent = '۰۰:۰۰';
+      return;
+    }
+    left--;
+  };
+  tick();
+  fpTimerInterval = setInterval(tick, 1000);
 }
 
 function setupOtpInputs() {
-    const inputs = document.querySelectorAll('.fp-otp');
-    inputs.forEach((inp, i) => {
-        inp.oninput = () => {
-            inp.value = inp.value.replace(/\D/g, '').slice(0, 1);
-            if (inp.value && i < inputs.length - 1) inputs[i + 1].focus();
-        };
-        inp.onkeydown = (e) => {
-            if (e.key === 'Backspace' && !inp.value && i > 0) inputs[i - 1].focus();
-        };
-        inp.onpaste = (e) => {
-            e.preventDefault();
-            const text = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
-            text.split('').forEach((ch, j) => { if (inputs[j]) inputs[j].value = ch; });
-            if (text.length) inputs[Math.min(text.length, inputs.length) - 1].focus();
-        };
-    });
-    if (inputs[0]) inputs[0].focus();
+  const inputs = document.querySelectorAll('.fp-otp');
+  inputs.forEach((inp, i) => {
+    inp.oninput = () => {
+      inp.value = inp.value.replace(/\D/g, '').slice(0, 1);
+      if (inp.value && i < inputs.length - 1) inputs[i + 1].focus();
+    };
+    inp.onkeydown = (e) => {
+      if (e.key === 'Backspace' && !inp.value && i > 0) inputs[i - 1].focus();
+    };
+    inp.onpaste = (e) => {
+      e.preventDefault();
+      const text = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+      text.split('').forEach((ch, j) => {
+        if (inputs[j]) inputs[j].value = ch;
+      });
+      if (text.length) inputs[Math.min(text.length, inputs.length) - 1].focus();
+    };
+  });
+  if (inputs[0]) inputs[0].focus();
 }
 
-window.verifyFpOtp = async function() {
-    const code = Array.from(document.querySelectorAll('.fp-otp')).map(i => i.value).join('');
-    if (code.length !== 6) return alert(authText('otp_incomplete', 'کد ۶ رقمی را کامل وارد کنید'));
-    try {
-        await fpRequest('/forgot-password/verify-otp', {code});
-        if (fpTimerInterval) clearInterval(fpTimerInterval);
-        fpGoStep(3);
-    } catch (error) { showFpError(error.message); }
+window.verifyFpOtp = async function () {
+  const code = Array.from(document.querySelectorAll('.fp-otp'))
+    .map((i) => i.value)
+    .join('');
+  if (code.length !== 6) return alert(authText('otp_incomplete', 'کد ۶ رقمی را کامل وارد کنید'));
+  try {
+    await fpRequest('/forgot-password/verify-otp', { code });
+    if (fpTimerInterval) clearInterval(fpTimerInterval);
+    fpGoStep(3);
+  } catch (error) {
+    showFpError(error.message);
+  }
 };
 
-window.resetPassword = async function() {
-    const p1 = document.getElementById('fpNewPass')?.value;
-    const p2 = document.getElementById('fpNewPass2')?.value;
-    if (!p1 || p1.length < 8) return alert(authText('password_short', 'رمز عبور حداقل ۸ کاراکتر باشد'));
-    if (p1 !== p2) return alert(authText('password_mismatch', 'رمز عبور و تکرار آن یکسان نیست'));
+window.resetPassword = async function () {
+  const p1 = document.getElementById('fpNewPass')?.value;
+  const p2 = document.getElementById('fpNewPass2')?.value;
+  if (!p1 || p1.length < 8)
+    return alert(authText('password_short', 'رمز عبور حداقل ۸ کاراکتر باشد'));
+  if (p1 !== p2) return alert(authText('password_mismatch', 'رمز عبور و تکرار آن یکسان نیست'));
 
-    try {
-        await fpRequest('/forgot-password/reset', {password: p1, password_confirmation: p2});
-        alert(authText('reset_success', 'رمز عبور با موفقیت تغییر کرد. اکنون وارد شوید.'));
-        window.location.href = '/system/login';
-    } catch (error) { showFpError(error.message); }
+  try {
+    await fpRequest('/forgot-password/reset', { password: p1, password_confirmation: p2 });
+    alert(authText('reset_success', 'رمز عبور با موفقیت تغییر کرد. اکنون وارد شوید.'));
+    window.location.href = '/system/login';
+  } catch (error) {
+    showFpError(error.message);
+  }
 };
 
 async function fpRequest(url, fields) {
-    showFpError('');
-    const body = new FormData();
-    body.append('_token', document.getElementById('fpCsrf')?.value || '');
-    Object.entries(fields).forEach(([key, value]) => body.append(key, value));
-    const response = await fetch(url, {
-        method: 'POST', headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}, body
-    });
-    const raw = await response.text();
-    let payload;
-    try { payload = JSON.parse(raw); }
-    catch (error) { console.error('Invalid password reset response:', raw); throw new Error(authText('invalid_response', 'پاسخ نامعتبر از سرور دریافت شد.')); }
-    const data = payload.data || {};
-    if (!response.ok || !data.success) throw new Error(data.message || authText('request_failed', 'انجام درخواست ناموفق بود.'));
-    return data;
+  showFpError('');
+  const body = new FormData();
+  body.append('_token', document.getElementById('fpCsrf')?.value || '');
+  Object.entries(fields).forEach(([key, value]) => body.append(key, value));
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    body,
+  });
+  const raw = await response.text();
+  let payload;
+  try {
+    payload = JSON.parse(raw);
+  } catch (error) {
+    console.error('Invalid password reset response:', raw);
+    throw new Error(authText('invalid_response', 'پاسخ نامعتبر از سرور دریافت شد.'));
+  }
+  const data = payload.data || {};
+  if (!response.ok || !data.success)
+    throw new Error(data.message || authText('request_failed', 'انجام درخواست ناموفق بود.'));
+  return data;
 }
 
 function showFpError(message) {
-    const element = document.getElementById('fpError');
-    if (!element) return;
-    element.textContent = message;
-    element.classList.toggle('hidden', !message);
-    if (message) showAuthToast('error', message);
+  const element = document.getElementById('fpError');
+  if (!element) return;
+  element.textContent = message;
+  element.classList.toggle('hidden', !message);
+  if (message) showAuthToast('error', message);
 }
 
 // لینک فراموشی در صفحه ورود
-window.showForgotPassword = function() {
-    if (typeof showSection === 'function') showSection('forgot-password');
-    else openForgotModalFallback();
+window.showForgotPassword = function () {
+  if (typeof showSection === 'function') showSection('forgot-password');
+  else openForgotModalFallback();
 };
 
-
-
 // خروج
-window.handleLogout = function() {
-    try {
-        localStorage.removeItem('academyAuth');
-        sessionStorage.removeItem('academyAuth');
-    } catch (e) {}
-    if (typeof showSection === 'function') showSection('login');
+window.handleLogout = function () {
+  try {
+    localStorage.removeItem('academyAuth');
+    sessionStorage.removeItem('academyAuth');
+  } catch (e) {}
+  if (typeof showSection === 'function') showSection('login');
 };

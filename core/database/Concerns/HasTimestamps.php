@@ -2,19 +2,20 @@
 
 namespace Core\database\Concerns;
 
-trait HasTimestamps {
+trait HasTimestamps
+{
 
     protected bool $timestamps = true;
     protected string $createdAtColumn = 'created_at';
     protected string $updatedAtColumn = 'updated_at';
 
-
-    protected function freshTimestamp(): string {
+    protected function freshTimestamp(): string
+    {
         return date('Y-m-d H:i:s');
     }
 
-
-    protected function updateTimestampsOnCreate(array &$attributes): void {
+    protected function updateTimestampsOnCreate(array &$attributes): void
+    {
         if (!$this->timestamps) {
             return;
         }
@@ -27,13 +28,11 @@ trait HasTimestamps {
         }
     }
 
-
-    protected function updateTimestampOnUpdate(array &$attributes): void {
+    protected function updateTimestampOnUpdate(array &$attributes): void
+    {
         if (!$this->timestamps) {
             return;
         }
         $attributes[$this->updatedAtColumn] = $this->freshTimestamp();
     }
-
-
 }

@@ -2,17 +2,19 @@
 
 namespace Modules\Translation\DTO;
 
-class TranslationDTO {
-
-    public function __construct(public array $attributes=[]){
+class TranslationDTO
+{
+    public function __construct(public array $attributes = [])
+    {
     }
 
-    public static function fromArray(array $data): static {
+    public static function fromArray(array $data): static
+    {
         return new static($data);
     }
 
-    public function toArray(): array {
+    public function toArray(): array
+    {
         return $this->attributes;
     }
-
 }

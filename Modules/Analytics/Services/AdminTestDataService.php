@@ -5,29 +5,39 @@ namespace Modules\Analytics\Services;
 use Core\database\DB;
 use RuntimeException;
 
-class AdminTestDataService {
+class AdminTestDataService
+{
     private const USERNAME_PREFIX = 'test_academy_manager_';
     private const TOTAL = 10;
 
-    public function syncFixtureUsers(array $userIds,array $options=[],int $indexOffset=0): array {
-        $catalog=$this->syncMusicCatalog();$synced=0;
-        foreach(array_values(array_unique(array_map('intval',$userIds))) as $index=>$userId){
-            if($userId<1)continue;
-            $user=DB::table('users')->where('user_id',$userId)->whereNull('deleted_at')->first();
-            if(!$user)continue;
-            $fixtureIndex=$indexOffset+$index;$createdAt=(string)($user['created_at']??date('Y-m-d H:i:s'));
-            $this->syncAddresses($userId,$fixtureIndex,$createdAt,$this->fixtureCount($fixtureIndex,$options['addresses_min']??1,$options['addresses_max']??3));
-            $this->syncContacts($userId,$fixtureIndex,(string)$user['username'],$createdAt,$options);
-            $this->syncMusicExperience($userId,$fixtureIndex,$createdAt,$catalog,$options);
-            $this->syncDefaultUserMedia($userId,$fixtureIndex,$createdAt,$this->fixtureCount($fixtureIndex,$options['gallery_min']??3,$options['gallery_max']??3));
-            $this->syncUserAvailability($userId,$fixtureIndex,$createdAt,$options);$synced++;
+    public function syncFixtureUsers(array $userIds, array $options = [], int $indexOffset = 0): array
+    {
+        $catalog = $this->syncMusicCatalog();
+        $synced = 0;
+        foreach (array_values(array_unique(array_map('intval', $userIds))) as $index => $userId) {
+            if ($userId < 1) {
+                continue;
+            }
+            $user = DB::table('users')->where('user_id', $userId)->whereNull('deleted_at')->first();
+            if (!$user) {
+                continue;
+            }
+            $fixtureIndex = $indexOffset + $index;
+            $createdAt = (string) ($user['created_at'] ?? date('Y-m-d H:i:s'));
+            $this->syncAddresses($userId, $fixtureIndex, $createdAt, $this->fixtureCount($fixtureIndex, $options['addresses_min'] ?? 1, $options['addresses_max'] ?? 3));
+            $this->syncContacts($userId, $fixtureIndex, (string) $user['username'], $createdAt, $options);
+            $this->syncMusicExperience($userId, $fixtureIndex, $createdAt, $catalog, $options);
+            $this->syncDefaultUserMedia($userId, $fixtureIndex, $createdAt, $this->fixtureCount($fixtureIndex, $options['gallery_min'] ?? 3, $options['gallery_max'] ?? 3));
+            $this->syncUserAvailability($userId, $fixtureIndex, $createdAt, $options);
+            $synced++;
         }
-        return ['synced'=>$synced];
+        return ['synced' => $synced];
     }
 
-    public function seedAcademyManagers(int $total = self::TOTAL,array $options=[]): array {
+    public function seedAcademyManagers(int $total = self::TOTAL, array $options = []): array
+    {
         $total = max(1, min(50, $total));
-        return transaction(function () use($total,$options) {
+        return transaction(function () use ($total, $options) {
             $catalog = $this->syncMusicCatalog();
             $passwordHash = password_hash('123456789', PASSWORD_DEFAULT);
             $created = 0;
@@ -41,12 +51,14 @@ class AdminTestDataService {
                 $values = $this->userValues($person, $index, $createdAt, $passwordHash);
 
                 if ($existing) {
-                    $userId = (int)$existing['user_id'];
+                    $userId = (int) $existing['user_id'];
                     DB::table('users')->where('user_id', $userId)->update($values);
                     $updated++;
                 } else {
                     $userId = DB::table('users')->insertGetId(['username' => $username] + $values);
-                    if (!$userId) throw new RuntimeException('ایجاد کاربر آزمایشی شماره ' . $number . ' ناموفق بود.');
+                    if (!$userId) {
+                        throw new RuntimeException('ایجاد کاربر آزمایشی شماره ' . $number . ' ناموفق بود.');
+                    }
                     $created++;
                 }
 
@@ -55,11 +67,11 @@ class AdminTestDataService {
                     'updated_by' => $userId,
                 ]);
                 $this->setFullNameTranslation($userId, $person['name'], $createdAt);
-                $this->syncAddresses($userId,$index,$createdAt,$this->fixtureCount($index,$options['addresses_min']??1,$options['addresses_max']??3));
-                $this->syncContacts($userId,$index,$username,$createdAt,$options);
-                $this->syncMusicExperience($userId,$index,$createdAt,$catalog,$options);
-                $this->syncDefaultUserMedia($userId,$index,$createdAt,$this->fixtureCount($index,$options['gallery_min']??3,$options['gallery_max']??3));
-                $this->syncUserAvailability($userId,$index,$createdAt,$options);
+                $this->syncAddresses($userId, $index, $createdAt, $this->fixtureCount($index, $options['addresses_min'] ?? 1, $options['addresses_max'] ?? 3));
+                $this->syncContacts($userId, $index, $username, $createdAt, $options);
+                $this->syncMusicExperience($userId, $index, $createdAt, $catalog, $options);
+                $this->syncDefaultUserMedia($userId, $index, $createdAt, $this->fixtureCount($index, $options['gallery_min'] ?? 3, $options['gallery_max'] ?? 3));
+                $this->syncUserAvailability($userId, $index, $createdAt, $options);
             }
             $this->syncEnglishTestTranslations();
             $this->syncAdminFrameworkTranslations();
@@ -73,82 +85,215 @@ class AdminTestDataService {
         });
     }
 
-    private function syncEnglishTestTranslations(): void {
-        $users=DB::table('users')->whereRaw("username LIKE '".self::USERNAME_PREFIX."%'")->get();$userIds=array_map(fn(array $u)=>(int)$u['user_id'],$users);
-        if(!$userIds)return;
-        $targets=['users'=>$userIds];
-        foreach(['user_addresses'=>'address_id','user_contacts'=>'user_contact_id','user_instruments'=>'user_instrument_id','user_lessons'=>'user_lesson_id','user_availabilities'=>'user_availability_id'] as $table=>$key){$rows=DB::table($table)->whereIn('user_id',$userIds)->get();$targets[$table]=array_map(fn(array $r)=>(int)$r[$key],$rows);}
-        foreach($targets as $table=>$ids){if(!$ids)continue;$rows=DB::table('translations')->where('table_name',$table)->whereIn('table_id',$ids)->where('locale','fa')->whereNull('deleted_at')->get();foreach($rows as $row)$this->setTranslation($table,(int)$row['table_id'],(int)($row['created_by']?:1),(string)$row['field'],$this->englishTestValue($table,(string)$row['field'],(string)$row['value']),(string)$row['created_at'],(string)$row['updated_at'],'en');}
-        foreach(['instruments'=>'instrument_id','lessons'=>'lesson_id','levels'=>'level_id'] as $table=>$key){$rows=DB::table($table)->whereNull('deleted_at')->get();$ids=array_map(fn(array $r)=>(int)$r[$key],$rows);if(!$ids)continue;foreach(DB::table('translations')->where('table_name',$table)->whereIn('table_id',$ids)->where('locale','fa')->whereNull('deleted_at')->get() as $row)$this->setTranslation($table,(int)$row['table_id'],1,(string)$row['field'],$this->englishTestValue($table,(string)$row['field'],(string)$row['value']),(string)$row['created_at'],(string)$row['updated_at'],'en');}
+    private function syncEnglishTestTranslations(): void
+    {
+        $users = DB::table('users')->whereRaw("username LIKE '" . self::USERNAME_PREFIX . "%'")->get();
+        $userIds = array_map(fn (array $u) => (int) $u['user_id'], $users);
+        if (!$userIds) {
+            return;
+        }
+        $targets = ['users' => $userIds];
+        foreach (['user_addresses' => 'address_id', 'user_contacts' => 'user_contact_id', 'user_instruments' => 'user_instrument_id', 'user_lessons' => 'user_lesson_id', 'user_availabilities' => 'user_availability_id'] as $table => $key) {
+            $rows = DB::table($table)->whereIn('user_id', $userIds)->get();
+            $targets[$table] = array_map(fn (array $r) => (int) $r[$key], $rows);
+        }
+        foreach ($targets as $table => $ids) {
+            if (!$ids) {
+                continue;
+            }
+            $rows = DB::table('translations')->where('table_name', $table)->whereIn('table_id', $ids)->where('locale', 'fa')->whereNull('deleted_at')->get();
+            foreach ($rows as $row) {
+                $this->setTranslation($table, (int) $row['table_id'], (int) ($row['created_by'] ?: 1), (string) $row['field'], $this->englishTestValue($table, (string) $row['field'], (string) $row['value']), (string) $row['created_at'], (string) $row['updated_at'], 'en');
+            }
+        }
+        foreach (['instruments' => 'instrument_id', 'lessons' => 'lesson_id', 'levels' => 'level_id'] as $table => $key) {
+            $rows = DB::table($table)->whereNull('deleted_at')->get();
+            $ids = array_map(fn (array $r) => (int) $r[$key], $rows);
+            if (!$ids) {
+                continue;
+            }
+            foreach (DB::table('translations')->where('table_name', $table)->whereIn('table_id', $ids)->where('locale', 'fa')->whereNull('deleted_at')->get() as $row) {
+                $this->setTranslation($table, (int) $row['table_id'], 1, (string) $row['field'], $this->englishTestValue($table, (string) $row['field'], (string) $row['value']), (string) $row['created_at'], (string) $row['updated_at'], 'en');
+            }
+        }
     }
 
-    private function fixtureCount(int $seed,int $minimum,int $maximum): int {$minimum=max(0,min(100,$minimum));$maximum=max(0,min(100,$maximum));if($minimum>$maximum)[$minimum,$maximum]=[$maximum,$minimum];return $minimum+($seed%($maximum-$minimum+1));}
+    private function fixtureCount(int $seed, int $minimum, int $maximum): int
+    {
+        $minimum = max(0, min(100, $minimum));
+        $maximum = max(0, min(100, $maximum));
+        if ($minimum > $maximum) {
+            [$minimum,$maximum] = [$maximum, $minimum];
+        }
+        return $minimum + ($seed % ($maximum - $minimum + 1));
+    }
 
-    private function englishTestValue(string $table,string $field,string $value): string {
-        $names=['علی'=>'Ali','مریم'=>'Maryam','رضا'=>'Reza','سارا'=>'Sara','امیر'=>'Amir','نگار'=>'Negar','حسین'=>'Hossein','الهام'=>'Elham','مهدی'=>'Mehdi','نرگس'=>'Narges','محمد'=>'Mohammad','لیلا'=>'Leila','سعید'=>'Saeed','مهسا'=>'Mahsa','آرش'=>'Arash','نازنین'=>'Nazanin','محمدی'=>'Mohammadi','احمدی'=>'Ahmadi','رضایی'=>'Rezaei','کریمی'=>'Karimi','حسینی'=>'Hosseini','مرادی'=>'Moradi','قاسمی'=>'Ghasemi','اکبری'=>'Akbari','صادقی'=>'Sadeghi','نوری'=>'Nouri'];
-        if($table==='users'&&$field==='full_name'){foreach($names as $fa=>$en)$value=str_replace($fa,$en,$value);return $value;}
-        $titles=['تار'=>'Tar','سه‌تار'=>'Setar','سنتور'=>'Santur','پیانو'=>'Piano','ویولن'=>'Violin','نی'=>'Ney','دف'=>'Daf','تنبک'=>'Tombak','هارمونی'=>'Harmony','سلفژ'=>'Solfège','تئوری موسیقی'=>'Music Theory','خیلی تازه‌کار'=>'Absolute Beginner','تازه‌کار'=>'Beginner','مقدماتی'=>'Elementary','پایه'=>'Foundation','متوسط'=>'Intermediate','متوسط رو به بالا'=>'Upper Intermediate','نیمه‌پیشرفته'=>'Pre-advanced','پیشرفته'=>'Advanced','حرفه‌ای'=>'Professional'];
-        if($field==='title'&&isset($titles[$value]))return $titles[$value];
-        if($field==='title')return 'Music course or instrument: '.substr(hash('sha1',$value),0,8);
-        if($field==='summary')return match($table){'levels'=>'A concise description of this learning level.','user_availabilities'=>'Recurring availability, leave, holiday, or date-specific exception.','user_instruments'=>'A concise summary of the member’s experience with this instrument.','user_lessons'=>'A concise summary of the member’s experience in this lesson.',default=>'Concise English information for this record.'};
-        if($field==='description')return 'Detailed English description for this music education record, including its background, purpose, and relevant experience.';
-        if($field==='address')return 'Sample registered address for the academy manager in Iran.';
-        if($field==='note')return 'Additional sample notes for this record.';
+    private function englishTestValue(string $table, string $field, string $value): string
+    {
+        $names = ['علی' => 'Ali', 'مریم' => 'Maryam', 'رضا' => 'Reza', 'سارا' => 'Sara', 'امیر' => 'Amir', 'نگار' => 'Negar', 'حسین' => 'Hossein', 'الهام' => 'Elham', 'مهدی' => 'Mehdi', 'نرگس' => 'Narges', 'محمد' => 'Mohammad', 'لیلا' => 'Leila', 'سعید' => 'Saeed', 'مهسا' => 'Mahsa', 'آرش' => 'Arash', 'نازنین' => 'Nazanin', 'محمدی' => 'Mohammadi', 'احمدی' => 'Ahmadi', 'رضایی' => 'Rezaei', 'کریمی' => 'Karimi', 'حسینی' => 'Hosseini', 'مرادی' => 'Moradi', 'قاسمی' => 'Ghasemi', 'اکبری' => 'Akbari', 'صادقی' => 'Sadeghi', 'نوری' => 'Nouri'];
+        if ($table === 'users' && $field === 'full_name') {
+            foreach ($names as $fa => $en) {
+                $value = str_replace($fa, $en, $value);
+            }
+            return $value;
+        }
+        $titles = ['تار' => 'Tar', 'سه‌تار' => 'Setar', 'سنتور' => 'Santur', 'پیانو' => 'Piano', 'ویولن' => 'Violin', 'نی' => 'Ney', 'دف' => 'Daf', 'تنبک' => 'Tombak', 'هارمونی' => 'Harmony', 'سلفژ' => 'Solfège', 'تئوری موسیقی' => 'Music Theory', 'خیلی تازه‌کار' => 'Absolute Beginner', 'تازه‌کار' => 'Beginner', 'مقدماتی' => 'Elementary', 'پایه' => 'Foundation', 'متوسط' => 'Intermediate', 'متوسط رو به بالا' => 'Upper Intermediate', 'نیمه‌پیشرفته' => 'Pre-advanced', 'پیشرفته' => 'Advanced', 'حرفه‌ای' => 'Professional'];
+        if ($field === 'title' && isset($titles[$value])) {
+            return $titles[$value];
+        }
+        if ($field === 'title') {
+            return 'Music course or instrument: ' . substr(hash('sha1', $value), 0, 8);
+        }
+        if ($field === 'summary') {
+            return match ($table) {
+                'levels' => 'A concise description of this learning level.','user_availabilities' => 'Recurring availability, leave, holiday, or date-specific exception.','user_instruments' => 'A concise summary of the member’s experience with this instrument.','user_lessons' => 'A concise summary of the member’s experience in this lesson.',default => 'Concise English information for this record.'
+            };
+        }
+        if ($field === 'description') {
+            return 'Detailed English description for this music education record, including its background, purpose, and relevant experience.';
+        }
+        if ($field === 'address') {
+            return 'Sample registered address for the academy manager in Iran.';
+        }
+        if ($field === 'note') {
+            return 'Additional sample notes for this record.';
+        }
         return $value;
     }
 
-    private function syncAdminFrameworkTranslations(): void {
-        foreach($this->adminUiDictionary() as $index=>$pair){$key='admin.ui.'.substr(hash('sha1',$pair[0]),0,16);$setting=DB::table('f_settings')->where('variable_name',$key)->first();$values=['page'=>'admin','sort_order'=>($index%250),'table_name'=>'admin_ui','value'=>null,'status'=>'active','updated_at'=>date('Y-m-d H:i:s'),'updated_by'=>1,'deleted_at'=>null,'deleted_by'=>null];if($setting){$id=(int)$setting['setting_id'];DB::table('f_settings')->where('setting_id',$id)->update($values);}else{$id=DB::table('f_settings')->insertGetId(['variable_name'=>$key,'created_by'=>1]+$values);}foreach(['fa'=>$pair[0],'en'=>$pair[1]] as $locale=>$text){$tr=DB::table('f_translations')->where('table_name','f_settings')->where('table_id',$id)->where('locale',$locale)->where('field','value')->first();$tv=['value'=>$text,'version'=>1,'updated_at'=>date('Y-m-d H:i:s'),'updated_by'=>1,'deleted_at'=>null,'deleted_by'=>null];if($tr)DB::table('f_translations')->where('translation_id',(int)$tr['translation_id'])->update($tv);else DB::table('f_translations')->insert(['table_name'=>'f_settings','table_id'=>$id,'locale'=>$locale,'field'=>'value','created_by'=>1]+$tv);}}
+    private function syncAdminFrameworkTranslations(): void
+    {
+        foreach ($this->adminUiDictionary() as $index => $pair) {
+            $key = 'admin.ui.' . substr(hash('sha1', $pair[0]), 0, 16);
+            $setting = DB::table('f_settings')->where('variable_name', $key)->first();
+            $values = ['page' => 'admin', 'sort_order' => ($index % 250), 'table_name' => 'admin_ui', 'value' => null, 'status' => 'active', 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => 1, 'deleted_at' => null, 'deleted_by' => null];
+            if ($setting) {
+                $id = (int) $setting['setting_id'];
+                DB::table('f_settings')->where('setting_id', $id)->update($values);
+            } else {
+                $id = DB::table('f_settings')->insertGetId(['variable_name' => $key, 'created_by' => 1] + $values);
+            }foreach (['fa' => $pair[0], 'en' => $pair[1]] as $locale => $text) {
+                $tr = DB::table('f_translations')->where('table_name', 'f_settings')->where('table_id', $id)->where('locale', $locale)->where('field', 'value')->first();
+                $tv = ['value' => $text, 'version' => 1, 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => 1, 'deleted_at' => null, 'deleted_by' => null];
+                if ($tr) {
+                    DB::table('f_translations')->where('translation_id', (int) $tr['translation_id'])->update($tv);
+                } else {
+                    DB::table('f_translations')->insert(['table_name' => 'f_settings', 'table_id' => $id, 'locale' => $locale, 'field' => 'value', 'created_by' => 1] + $tv);
+                }
+            }
+        }
     }
 
-    private function adminUiDictionary(): array {return [
-        ['داشبورد','Dashboard'],['حساب کاربری','Account'],['شعبه‌ها','Branches'],['نقش‌ها و دسترسی‌ها','Roles & Access'],['کاربران','Users'],['نقش‌ها','Roles'],['دسترسی‌ها','Permissions'],['گالری','Gallery'],['کاور','Cover'],['لوگو','Logo'],['ویدیو معرفی','Introduction Video'],['مجموعه عکس‌ها و ویدیوها','Photo & Video Collection'],['پرسنل','Staff'],['هنرجویان','Students'],['کلاس‌ها','Classrooms'],['سازها','Instruments'],['درس‌ها','Lessons'],['دوره‌ها','Courses'],['ترم‌ها','Terms'],['برنامه زمانی','Scheduling'],['قوانین زمانبندی','Scheduling Rules'],['برنامه زمانی شعبه‌ها','Branch Schedules'],['برنامه زمانی اعضا','Member Schedules'],['تعطیلات و مرخصی‌ها','Holidays & Leaves'],['برنامه زمانی کلاس‌ها','Class Schedules'],['امور مالی','Finance'],['گزارش‌ها','Reports'],['مرکز تست‌ها','Test Center'],['خروج','Logout'],['افزودن','Add'],['ویرایش','Edit'],['حذف','Delete'],['ذخیره','Save'],['ذخیره تغییرات','Save Changes'],['انصراف','Cancel'],['بستن','Close'],['جستجو','Search'],['همه','All'],['فعال','Active'],['غیرفعال','Inactive'],['در انتظار تأیید','Pending Approval'],['جزئیات','Details'],['نام','Name'],['عنوان','Title'],['توضیحات','Description'],['خلاصه','Summary'],['وضعیت','Status'],['تاریخ','Date'],['ساعت','Time'],['روز','Day'],['شعبه','Branch'],['عضو','Member'],['نقش','Role'],['منطقه زمانی','Timezone'],['دوره تکرار','Repeat Period'],['قبلی','Previous'],['بعدی','Next'],['اول','First'],['آخر','Last'],['بله','Yes'],['خیر','No'],['افزودن زمان‌بندی عضو','Add Member Schedule'],['ویرایش زمان‌بندی عضو','Edit Member Schedule'],['افزودن تعطیل / مرخصی','Add Holiday / Leave'],['ویرایش تعطیل / مرخصی','Edit Holiday / Leave'],['برنامه سرناز','Sornaz Application'],['پنل مدیریت سایت','Site Admin Panel'],['پنل مدیریت آموزشگاه','Academy Admin Panel'],['مدیر ارشد','Senior Administrator'],['تم','Theme'],['زبان','Language'],['روشن','Light'],['تیره','Dark']
-    ];}
+    private function adminUiDictionary(): array
+    {
+        return [
+            ['داشبورد', 'Dashboard'], ['حساب کاربری', 'Account'], ['شعبه‌ها', 'Branches'], ['نقش‌ها و دسترسی‌ها', 'Roles & Access'], ['کاربران', 'Users'], ['نقش‌ها', 'Roles'], ['دسترسی‌ها', 'Permissions'], ['گالری', 'Gallery'], ['کاور', 'Cover'], ['لوگو', 'Logo'], ['ویدیو معرفی', 'Introduction Video'], ['مجموعه عکس‌ها و ویدیوها', 'Photo & Video Collection'], ['پرسنل', 'Staff'], ['هنرجویان', 'Students'], ['کلاس‌ها', 'Classrooms'], ['سازها', 'Instruments'], ['درس‌ها', 'Lessons'], ['دوره‌ها', 'Courses'], ['ترم‌ها', 'Terms'], ['برنامه زمانی', 'Scheduling'], ['قوانین زمانبندی', 'Scheduling Rules'], ['برنامه زمانی شعبه‌ها', 'Branch Schedules'], ['برنامه زمانی اعضا', 'Member Schedules'], ['تعطیلات و مرخصی‌ها', 'Holidays & Leaves'], ['برنامه زمانی کلاس‌ها', 'Class Schedules'], ['امور مالی', 'Finance'], ['گزارش‌ها', 'Reports'], ['مرکز تست‌ها', 'Test Center'], ['خروج', 'Logout'], ['افزودن', 'Add'], ['ویرایش', 'Edit'], ['حذف', 'Delete'], ['ذخیره', 'Save'], ['ذخیره تغییرات', 'Save Changes'], ['انصراف', 'Cancel'], ['بستن', 'Close'], ['جستجو', 'Search'], ['همه', 'All'], ['فعال', 'Active'], ['غیرفعال', 'Inactive'], ['در انتظار تأیید', 'Pending Approval'], ['جزئیات', 'Details'], ['نام', 'Name'], ['عنوان', 'Title'], ['توضیحات', 'Description'], ['خلاصه', 'Summary'], ['وضعیت', 'Status'], ['تاریخ', 'Date'], ['ساعت', 'Time'], ['روز', 'Day'], ['شعبه', 'Branch'], ['عضو', 'Member'], ['نقش', 'Role'], ['منطقه زمانی', 'Timezone'], ['دوره تکرار', 'Repeat Period'], ['قبلی', 'Previous'], ['بعدی', 'Next'], ['اول', 'First'], ['آخر', 'Last'], ['بله', 'Yes'], ['خیر', 'No'], ['افزودن زمان‌بندی عضو', 'Add Member Schedule'], ['ویرایش زمان‌بندی عضو', 'Edit Member Schedule'], ['افزودن تعطیل / مرخصی', 'Add Holiday / Leave'], ['ویرایش تعطیل / مرخصی', 'Edit Holiday / Leave'], ['برنامه سرناز', 'Sornaz Application'], ['پنل مدیریت سایت', 'Site Admin Panel'], ['پنل مدیریت آموزشگاه', 'Academy Admin Panel'], ['مدیر ارشد', 'Senior Administrator'], ['تم', 'Theme'], ['زبان', 'Language'], ['روشن', 'Light'], ['تیره', 'Dark']
+        ];
+    }
 
-    public function adminUiMap(string $locale): array {
-        $map=[];foreach($this->adminUiDictionary() as $pair)$map[$pair[0]]=$locale==='en'?$pair[1]:$pair[0];
-        $rows=DB::table('f_settings')->whereNull('deleted_at')->get();
-        foreach($rows as $row){$id=(int)$row['setting_id'];$fa=DB::table('f_translations')->where('table_name','f_settings')->where('table_id',$id)->where('field','value')->where('locale','fa')->whereNull('deleted_at')->first();$selected=DB::table('f_translations')->where('table_name','f_settings')->where('table_id',$id)->where('field','value')->where('locale',$locale)->whereNull('deleted_at')->first();if($fa&&$selected)$map[(string)$fa['value']]=(string)$selected['value'];}
+    public function adminUiMap(string $locale): array
+    {
+        $map = [];
+        foreach ($this->adminUiDictionary() as $pair) {
+            $map[$pair[0]] = $locale === 'en' ? $pair[1] : $pair[0];
+        }
+        $rows = DB::table('f_settings')->whereNull('deleted_at')->get();
+        foreach ($rows as $row) {
+            $id = (int) $row['setting_id'];
+            $fa = DB::table('f_translations')->where('table_name', 'f_settings')->where('table_id', $id)->where('field', 'value')->where('locale', 'fa')->whereNull('deleted_at')->first();
+            $selected = DB::table('f_translations')->where('table_name', 'f_settings')->where('table_id', $id)->where('field', 'value')->where('locale', $locale)->whereNull('deleted_at')->first();
+            if ($fa && $selected) {
+                $map[(string) $fa['value']] = (string) $selected['value'];
+            }
+        }
         return $map;
     }
 
-    public function inlineTranslationCatalog(bool $publicOnly = false): array {
-        $catalog=[];
-        $aliases=[];
+    public function inlineTranslationCatalog(bool $publicOnly = false): array
+    {
+        $catalog = [];
+        $aliases = [];
         foreach ($this->adminUiDictionary() as $pair) {
-            $aliases['admin.ui.'.substr(sha1($pair[0]),0,16)]=$pair;
+            $aliases['admin.ui.' . substr(sha1($pair[0]), 0, 16)] = $pair;
             foreach ($pair as $original) {
-                $hash=2166136261;
-                $normalized=trim(preg_replace('/\s+/u',' ',$original));
-                foreach (unpack('n*',mb_convert_encoding($normalized,'UTF-16BE','UTF-8')) as $unit) $hash=(($hash^$unit)*16777619)&0xffffffff;
-                foreach (['admin','site'] as $scope) $aliases[$scope.'.inline.'.base_convert((string)$hash,10,36)]=$pair;
+                $hash = 2166136261;
+                $normalized = trim(preg_replace('/\s+/u', ' ', $original));
+                foreach (unpack('n*', mb_convert_encoding($normalized, 'UTF-16BE', 'UTF-8')) as $unit) {
+                    $hash = (($hash ^ $unit) * 16777619) & 0xffffffff;
+                }
+                foreach (['admin', 'site'] as $scope) {
+                    $aliases[$scope . '.inline.' . base_convert((string) $hash, 10, 36)] = $pair;
+                }
             }
         }
-        $query=DB::table('f_settings')->whereNull('deleted_at');
-        if ($publicOnly) $query->whereIn('table_name', ['admin_ui','site_ui']);
-        $settings=$query->get();
-        $bySetting=[];
-        if ($settings) foreach(DB::table('f_translations')->where('table_name','f_settings')->whereIn('table_id',array_column($settings,'setting_id'))->where('field','value')->whereIn('locale',['fa','en'])->whereNull('deleted_at')->get() as $translation) {
-            $bySetting[(int)$translation['table_id']][(string)$translation['locale']]=(string)$translation['value'];
+        $query = DB::table('f_settings')->whereNull('deleted_at');
+        if ($publicOnly) {
+            $query->whereIn('table_name', ['admin_ui', 'site_ui']);
         }
-        foreach($settings as $setting){
-            $values=$bySetting[(int)$setting['setting_id']]??[];
-            $catalog[]=['key'=>(string)$setting['variable_name'],'fa'=>$values['fa']??'','en'=>$values['en']??'','aliases'=>$aliases[(string)$setting['variable_name']]??[]];
+        $settings = $query->get();
+        $bySetting = [];
+        if ($settings) {
+            foreach (DB::table('f_translations')->where('table_name', 'f_settings')->whereIn('table_id', array_column($settings, 'setting_id'))->where('field', 'value')->whereIn('locale', ['fa', 'en'])->whereNull('deleted_at')->get() as $translation) {
+                $bySetting[(int) $translation['table_id']][(string) $translation['locale']] = (string) $translation['value'];
+            }
+        }
+        foreach ($settings as $setting) {
+            $values = $bySetting[(int) $setting['setting_id']] ?? [];
+            $catalog[] = ['key' => (string) $setting['variable_name'], 'fa' => $values['fa'] ?? '', 'en' => $values['en'] ?? '', 'aliases' => $aliases[(string) $setting['variable_name']] ?? []];
         }
         return $catalog;
     }
 
-    public function saveInlineTranslation(string $key,string $fa,string $en,int $actorId): array {
-        $key=trim($key);$fa=trim($fa);$en=trim($en);
-        if(strlen($key)>100||!preg_match('/^[a-zA-Z][a-zA-Z0-9_-]*(?:\.[a-zA-Z0-9_-]+)+$/',$key))throw new RuntimeException('کلید ترجمه معتبر نیست.');
-        if($fa===''||$en==='')throw new RuntimeException('متن فارسی و انگلیسی هر دو الزامی هستند.');
-        if(mb_strlen($fa)>5000||mb_strlen($en)>5000)throw new RuntimeException('متن ترجمه بیش از حد طولانی است.');
-        return transaction(function()use($key,$fa,$en,$actorId){$now=date('Y-m-d H:i:s');$setting=DB::table('f_settings')->where('variable_name',$key)->whereNull('deleted_at')->first();$isAdmin=str_starts_with($key,'admin.');$base=['page'=>$isAdmin?'admin':'site','table_name'=>$isAdmin?'admin_ui':'site_ui','status'=>'active','updated_at'=>$now,'updated_by'=>$actorId,'deleted_at'=>null,'deleted_by'=>null];if($setting){$id=(int)$setting['setting_id'];DB::table('f_settings')->where('setting_id',$id)->update($base);}else{$id=DB::table('f_settings')->insertGetId(['variable_name'=>$key,'sort_order'=>999,'created_at'=>$now,'created_by'=>$actorId]+$base);}if(!$id)throw new RuntimeException('ایجاد کلید ترجمه در دیتابیس ناموفق بود.');foreach(['fa'=>$fa,'en'=>$en] as $locale=>$value){$translation=DB::table('f_translations')->where('table_name','f_settings')->where('table_id',$id)->where('field','value')->where('locale',$locale)->first();$values=['value'=>$value,'version'=>1,'updated_at'=>$now,'updated_by'=>$actorId,'deleted_at'=>null,'deleted_by'=>null];if($translation)DB::table('f_translations')->where('translation_id',(int)$translation['translation_id'])->update($values);else DB::table('f_translations')->insert(['table_name'=>'f_settings','table_id'=>$id,'field'=>'value','locale'=>$locale,'created_at'=>$now,'created_by'=>$actorId]+$values);} $stored=[];foreach(['fa','en'] as $locale){$row=DB::table('f_translations')->where('table_name','f_settings')->where('table_id',$id)->where('field','value')->where('locale',$locale)->whereNull('deleted_at')->first();$stored[$locale]=(string)($row['value']??'');}if($stored['fa']!==$fa||$stored['en']!==$en)throw new RuntimeException('تأیید ذخیره ترجمه در دیتابیس ناموفق بود.');return ['success'=>true,'key'=>$key,'fa'=>$stored['fa'],'en'=>$stored['en'],'message'=>'ترجمه با موفقیت ذخیره شد.'];});
+    public function saveInlineTranslation(string $key, string $fa, string $en, int $actorId): array
+    {
+        $key = trim($key);
+        $fa = trim($fa);
+        $en = trim($en);
+        if (strlen($key) > 100 || !preg_match('/^[a-zA-Z][a-zA-Z0-9_-]*(?:\.[a-zA-Z0-9_-]+)+$/', $key)) {
+            throw new RuntimeException('کلید ترجمه معتبر نیست.');
+        }
+        if ($fa === '' || $en === '') {
+            throw new RuntimeException('متن فارسی و انگلیسی هر دو الزامی هستند.');
+        }
+        if (mb_strlen($fa) > 5000 || mb_strlen($en) > 5000) {
+            throw new RuntimeException('متن ترجمه بیش از حد طولانی است.');
+        }
+        return transaction(function () use ($key, $fa, $en, $actorId) {
+            $now = date('Y-m-d H:i:s');
+            $setting = DB::table('f_settings')->where('variable_name', $key)->whereNull('deleted_at')->first();
+            $isAdmin = str_starts_with($key, 'admin.');
+            $base = ['page' => $isAdmin ? 'admin' : 'site', 'table_name' => $isAdmin ? 'admin_ui' : 'site_ui', 'status' => 'active', 'updated_at' => $now, 'updated_by' => $actorId, 'deleted_at' => null, 'deleted_by' => null];
+            if ($setting) {
+                $id = (int) $setting['setting_id'];
+                DB::table('f_settings')->where('setting_id', $id)->update($base);
+            } else {
+                $id = DB::table('f_settings')->insertGetId(['variable_name' => $key, 'sort_order' => 999, 'created_at' => $now, 'created_by' => $actorId] + $base);
+            }if (!$id) {
+                throw new RuntimeException('ایجاد کلید ترجمه در دیتابیس ناموفق بود.');
+            }
+            foreach (['fa' => $fa, 'en' => $en] as $locale => $value) {
+                $translation = DB::table('f_translations')->where('table_name', 'f_settings')->where('table_id', $id)->where('field', 'value')->where('locale', $locale)->first();
+                $values = ['value' => $value, 'version' => 1, 'updated_at' => $now, 'updated_by' => $actorId, 'deleted_at' => null, 'deleted_by' => null];
+                if ($translation) {
+                    DB::table('f_translations')->where('translation_id', (int) $translation['translation_id'])->update($values);
+                } else {
+                    DB::table('f_translations')->insert(['table_name' => 'f_settings', 'table_id' => $id, 'field' => 'value', 'locale' => $locale, 'created_at' => $now, 'created_by' => $actorId] + $values);
+                }
+            } $stored = [];
+            foreach (['fa', 'en'] as $locale) {
+                $row = DB::table('f_translations')->where('table_name', 'f_settings')->where('table_id', $id)->where('field', 'value')->where('locale', $locale)->whereNull('deleted_at')->first();
+                $stored[$locale] = (string) ($row['value'] ?? '');
+            }if ($stored['fa'] !== $fa || $stored['en'] !== $en) {
+                throw new RuntimeException('تأیید ذخیره ترجمه در دیتابیس ناموفق بود.');
+            }
+            return ['success' => true, 'key' => $key, 'fa' => $stored['fa'], 'en' => $stored['en'], 'message' => 'ترجمه با موفقیت ذخیره شد.'];
+        });
     }
 
-    public function statistics(): array {
+    public function statistics(): array
+    {
         $users = DB::table('users')->whereRaw("username LIKE '" . self::USERNAME_PREFIX . "%'")->get();
-        $userIds = array_map(fn(array $user) => (int)$user['user_id'], $users);
+        $userIds = array_map(fn (array $user) => (int) $user['user_id'], $users);
         $stats = [
             'total' => count($users),
             'addresses' => $userIds ? DB::table('user_addresses')->whereIn('user_id', $userIds)->count() : 0,
@@ -164,9 +309,9 @@ class AdminTestDataService {
             'pending' => 0, 'approved' => 0, 'other' => 0,
         ];
         $academyUsers = DB::table('users')->whereRaw("username LIKE 'test_academy_%' AND username NOT LIKE 'test_academy_manager_%'")->get();
-        $academyUserIds = array_map(fn(array $user) => (int)$user['user_id'], $academyUsers);
+        $academyUserIds = array_map(fn (array $user) => (int) $user['user_id'], $academyUsers);
         $sampleAcademies = $academyUserIds ? DB::table('academies')->whereIn('user_id', $academyUserIds)->get() : [];
-        $academyIds = array_map(fn(array $academy) => (int)$academy['academy_id'], $sampleAcademies);
+        $academyIds = array_map(fn (array $academy) => (int) $academy['academy_id'], $sampleAcademies);
         $stats['academies'] = count($sampleAcademies);
         $stats['branches'] = $academyIds ? DB::table('academy_branches')->whereIn('academy_id', $academyIds)->whereNull('deleted_at')->count() : 0;
         $stats['academy_managers'] = count($users);
@@ -174,103 +319,148 @@ class AdminTestDataService {
             ? DB::table('academy_branch_members')->whereIn('created_by', $userIds)->whereNull('deleted_at')->count()
             : 0;
         $extraBranchUsers = DB::table('users')->whereRaw("username LIKE 'test_extra_branch_%'")->get();
-        $extraBranchUserIds = array_map(fn(array $user)=>(int)$user['user_id'], $extraBranchUsers);
-        $extraBranches = $extraBranchUserIds ? DB::table('academy_branches')->whereIn('user_id',$extraBranchUserIds)->whereNull('deleted_at')->get() : [];
-        $extraBranchIds = array_map(fn(array $branch)=>(int)$branch['branch_id'], $extraBranches);
+        $extraBranchUserIds = array_map(fn (array $user) => (int) $user['user_id'], $extraBranchUsers);
+        $extraBranches = $extraBranchUserIds ? DB::table('academy_branches')->whereIn('user_id', $extraBranchUserIds)->whereNull('deleted_at')->get() : [];
+        $extraBranchIds = array_map(fn (array $branch) => (int) $branch['branch_id'], $extraBranches);
         $networkUsers = DB::table('users')->whereRaw("username LIKE 'test_branch_member_%'")->get();
-        $networkUserIds = array_map(fn(array $user)=>(int)$user['user_id'], $networkUsers);
-        $networkMembers = $networkUserIds ? DB::table('academy_branch_members')->whereIn('user_id',$networkUserIds)->whereNull('deleted_at')->get() : [];
-        $networkMemberIds = array_map(fn(array $member)=>(int)$member['member_id'], $networkMembers);
+        $networkUserIds = array_map(fn (array $user) => (int) $user['user_id'], $networkUsers);
+        $networkMembers = $networkUserIds ? DB::table('academy_branch_members')->whereIn('user_id', $networkUserIds)->whereNull('deleted_at')->get() : [];
+        $networkMemberIds = array_map(fn (array $member) => (int) $member['member_id'], $networkMembers);
         $stats['extra_branches'] = count($extraBranches);
-        $stats['network_teachers'] = 0; $stats['network_receptionists'] = 0; $stats['network_employees'] = 0; $stats['network_managers'] = 0; $stats['network_students'] = 0;
-        if ($networkMemberIds) foreach (DB::table('academy_branch_member_contracts')->whereIn('member_id',$networkMemberIds)->whereNull('deleted_at')->get() as $contract) {
-            $member = current(array_filter($networkMembers, fn(array $m)=>(int)$m['member_id']===(int)$contract['member_id']));
-            $user = $member ? current(array_filter($networkUsers, fn(array $u)=>(int)$u['user_id']===(int)$member['user_id'])) : null;
-            if ($user && str_contains((string)$user['username'],'_student_')) $stats['network_students']++;
-            elseif ($contract['type']==='teacher') $stats['network_teachers']++;
-            elseif ($contract['type']==='receptionist') $stats['network_receptionists']++;
-            elseif ($contract['type']==='manager') $stats['network_managers']++;
-            else $stats['network_employees']++;
+        $stats['network_teachers'] = 0;
+        $stats['network_receptionists'] = 0;
+        $stats['network_employees'] = 0;
+        $stats['network_managers'] = 0;
+        $stats['network_students'] = 0;
+        if ($networkMemberIds) {
+            foreach (DB::table('academy_branch_member_contracts')->whereIn('member_id', $networkMemberIds)->whereNull('deleted_at')->get() as $contract) {
+                $member = current(array_filter($networkMembers, fn (array $m) => (int) $m['member_id'] === (int) $contract['member_id']));
+                $user = $member ? current(array_filter($networkUsers, fn (array $u) => (int) $u['user_id'] === (int) $member['user_id'])) : null;
+                if ($user && str_contains((string) $user['username'], '_student_')) {
+                    $stats['network_students']++;
+                } elseif ($contract['type'] === 'teacher') {
+                    $stats['network_teachers']++;
+                } elseif ($contract['type'] === 'receptionist') {
+                    $stats['network_receptionists']++;
+                } elseif ($contract['type'] === 'manager') {
+                    $stats['network_managers']++;
+                } else {
+                    $stats['network_employees']++;
+                }
+            }
         }
         $stats['network_memberships'] = count($networkMembers);
-        $stats['network_contracts'] = $networkMemberIds ? DB::table('academy_branch_member_contracts')->whereIn('member_id',$networkMemberIds)->whereNull('deleted_at')->count() : 0;
+        $stats['network_contracts'] = $networkMemberIds ? DB::table('academy_branch_member_contracts')->whereIn('member_id', $networkMemberIds)->whereNull('deleted_at')->count() : 0;
         foreach ($users as $user) {
             $status = $user['status'] ?? '';
-            if ($status === 'pending') $stats['pending']++;
-            elseif ($status === 'approved') $stats['approved']++;
-            else $stats['other']++;
+            if ($status === 'pending') {
+                $stats['pending']++;
+            } elseif ($status === 'approved') {
+                $stats['approved']++;
+            } else {
+                $stats['other']++;
+            }
         }
         return $stats;
     }
 
-    public function scheduleFixtures(): array {
-        $users=DB::table('users')->whereRaw("username LIKE '" . self::USERNAME_PREFIX . "%'")->get(); $names=[];
-        foreach($users as $user)$names[(int)$user['user_id']]=$this->translatedValue('users',(int)$user['user_id'],'full_name')?:$user['username'];
-        $days=['saturday'=>'شنبه','sunday'=>'یکشنبه','monday'=>'دوشنبه','tuesday'=>'سه‌شنبه','wednesday'=>'چهارشنبه','thursday'=>'پنجشنبه','friday'=>'جمعه'];
-        $repeat=['week'=>'هفتگی','2-week'=>'دو هفته','3-week'=>'سه هفته','4-week'=>'چهار هفته','month'=>'ماهانه','year'=>'سالانه','none'=>'بی‌تکرار'];
-        $status=['available'=>'فعال','unavailable'=>'غیرفعال','reserved'=>'پر شده','pending'=>'در انتظار تأیید'];
-        $timezoneRows=DB::table('f_timezone')->whereNull('deleted_at')->get();$timezones=[];foreach($timezoneRows as $timezoneRow)$timezones[(int)$timezoneRow['timezone_id']]=$timezoneRow['timezone'];
-        $schedules=[];$exceptions=[];
-        foreach($users as $user){$uid=(int)$user['user_id'];
-            foreach(DB::table('user_availabilities')->where('user_id',$uid)->whereNull('unavailable_type')->whereNull('deleted_at')->get() as $row){$id=(int)$row['user_availability_id'];$schedules[]=['id'=>$id,'memberId'=>$uid,'name'=>$names[$uid],'role'=>'مدیر','day'=>$row['date']?:($days[$row['day_of_week']]??'—'),'timeLabel'=>substr((string)$row['start_time'],0,5).'-'.substr((string)$row['end_time'],0,5),'time'=>substr((string)$row['start_time'],0,5).'-'.substr((string)$row['end_time'],0,5),'branchId'=>0,'branchName'=>'محل ثبت‌شده کاربر','status'=>$status[$row['status']]??'فعال','repeatPeriod'=>$repeat[$row['repeat_period']]??'هفتگی','repeatDate'=>$row['date']?:'','timezone'=>$timezones[(int)($row['timezone_id']??0)]??'Asia/Tehran','summary'=>$this->translatedValue('user_availabilities',$id,'summary'),'description'=>$this->translatedValue('user_availabilities',$id,'description')];}
-            foreach(DB::table('user_availabilities')->where('user_id',$uid)->whereNotNull('unavailable_type')->whereNull('deleted_at')->get() as $row){$id=(int)$row['user_availability_id'];$typeLabels=['holiday'=>'تعطیل رسمی','closed'=>'تعطیل','unavailable'=>'مرخصی','busy'=>'ماموریت','vacation'=>'مرخصی','blocked'=>'عدم حضور'];$label=$row['start_time']?substr((string)$row['start_time'],0,5).'-'.substr((string)$row['end_time'],0,5):'تمام‌روز';$exceptions[]=['id'=>$id,'memberId'=>$uid,'name'=>$names[$uid],'date'=>$row['date'],'timeLabel'=>$label,'time'=>$label,'branchId'=>0,'branchName'=>'محل ثبت‌شده کاربر','status'=>$status[$row['status']]??'غیرفعال','type'=>$row['unavailable_type'],'typeLabel'=>$typeLabels[$row['unavailable_type']]??'عدم حضور','timezone'=>$timezones[(int)($row['timezone_id']??0)]??'Asia/Tehran','summary'=>$this->translatedValue('user_availabilities',$id,'summary'),'description'=>$this->translatedValue('user_availabilities',$id,'description')];}
+    public function scheduleFixtures(): array
+    {
+        $users = DB::table('users')->whereRaw("username LIKE '" . self::USERNAME_PREFIX . "%'")->get();
+        $names = [];
+        foreach ($users as $user) {
+            $names[(int) $user['user_id']] = $this->translatedValue('users', (int) $user['user_id'], 'full_name') ?: $user['username'];
         }
-        return ['schedules'=>$schedules,'exceptions'=>$exceptions];
+        $days = ['saturday' => 'شنبه', 'sunday' => 'یکشنبه', 'monday' => 'دوشنبه', 'tuesday' => 'سه‌شنبه', 'wednesday' => 'چهارشنبه', 'thursday' => 'پنجشنبه', 'friday' => 'جمعه'];
+        $repeat = ['week' => 'هفتگی', '2-week' => 'دو هفته', '3-week' => 'سه هفته', '4-week' => 'چهار هفته', 'month' => 'ماهانه', 'year' => 'سالانه', 'none' => 'بی‌تکرار'];
+        $status = ['available' => 'فعال', 'unavailable' => 'غیرفعال', 'reserved' => 'پر شده', 'pending' => 'در انتظار تأیید'];
+        $timezoneRows = DB::table('f_timezone')->whereNull('deleted_at')->get();
+        $timezones = [];
+        foreach ($timezoneRows as $timezoneRow) {
+            $timezones[(int) $timezoneRow['timezone_id']] = $timezoneRow['timezone'];
+        }
+        $schedules = [];
+        $exceptions = [];
+        foreach ($users as $user) {
+            $uid = (int) $user['user_id'];
+            foreach (DB::table('user_availabilities')->where('user_id', $uid)->whereNull('unavailable_type')->whereNull('deleted_at')->get() as $row) {
+                $id = (int) $row['user_availability_id'];
+                $schedules[] = ['id' => $id, 'memberId' => $uid, 'name' => $names[$uid], 'role' => 'مدیر', 'day' => $row['date'] ?: ($days[$row['day_of_week']] ?? '—'), 'timeLabel' => substr((string) $row['start_time'], 0, 5) . '-' . substr((string) $row['end_time'], 0, 5), 'time' => substr((string) $row['start_time'], 0, 5) . '-' . substr((string) $row['end_time'], 0, 5), 'branchId' => 0, 'branchName' => 'محل ثبت‌شده کاربر', 'status' => $status[$row['status']] ?? 'فعال', 'repeatPeriod' => $repeat[$row['repeat_period']] ?? 'هفتگی', 'repeatDate' => $row['date'] ?: '', 'timezone' => $timezones[(int) ($row['timezone_id'] ?? 0)] ?? 'Asia/Tehran', 'summary' => $this->translatedValue('user_availabilities', $id, 'summary'), 'description' => $this->translatedValue('user_availabilities', $id, 'description')];
+            }
+            foreach (DB::table('user_availabilities')->where('user_id', $uid)->whereNotNull('unavailable_type')->whereNull('deleted_at')->get() as $row) {
+                $id = (int) $row['user_availability_id'];
+                $typeLabels = ['holiday' => 'تعطیل رسمی', 'closed' => 'تعطیل', 'unavailable' => 'مرخصی', 'busy' => 'ماموریت', 'vacation' => 'مرخصی', 'blocked' => 'عدم حضور'];
+                $label = $row['start_time'] ? substr((string) $row['start_time'], 0, 5) . '-' . substr((string) $row['end_time'], 0, 5) : 'تمام‌روز';
+                $exceptions[] = ['id' => $id, 'memberId' => $uid, 'name' => $names[$uid], 'date' => $row['date'], 'timeLabel' => $label, 'time' => $label, 'branchId' => 0, 'branchName' => 'محل ثبت‌شده کاربر', 'status' => $status[$row['status']] ?? 'غیرفعال', 'type' => $row['unavailable_type'], 'typeLabel' => $typeLabels[$row['unavailable_type']] ?? 'عدم حضور', 'timezone' => $timezones[(int) ($row['timezone_id'] ?? 0)] ?? 'Asia/Tehran', 'summary' => $this->translatedValue('user_availabilities', $id, 'summary'), 'description' => $this->translatedValue('user_availabilities', $id, 'description')];
+            }
+        }
+        return ['schedules' => $schedules, 'exceptions' => $exceptions];
     }
 
-    public function deleteAvailability(int $id, int $actorId): array {
-        return transaction(function() use($id,$actorId){
-            $row=DB::table('user_availabilities')->where('user_availability_id',$id)->whereNull('deleted_at')->first();
-            if(!$row)throw new RuntimeException('برنامه زمانی موردنظر یافت نشد.');
-            $now=date('Y-m-d H:i:s');
-            DB::table('translations')->where('table_name','user_availabilities')->where('table_id',$id)->whereNull('deleted_at')->update(['deleted_at'=>$now,'deleted_by'=>$actorId,'updated_at'=>$now,'updated_by'=>$actorId]);
-            DB::table('user_availabilities')->where('user_availability_id',$id)->update(['deleted_at'=>$now,'deleted_by'=>$actorId,'updated_at'=>$now,'updated_by'=>$actorId]);
-            return ['success'=>true,'id'=>$id,'message'=>'برنامه زمانی حذف شد.'];
+    public function deleteAvailability(int $id, int $actorId): array
+    {
+        return transaction(function () use ($id, $actorId) {
+            $row = DB::table('user_availabilities')->where('user_availability_id', $id)->whereNull('deleted_at')->first();
+            if (!$row) {
+                throw new RuntimeException('برنامه زمانی موردنظر یافت نشد.');
+            }
+            $now = date('Y-m-d H:i:s');
+            DB::table('translations')->where('table_name', 'user_availabilities')->where('table_id', $id)->whereNull('deleted_at')->update(['deleted_at' => $now, 'deleted_by' => $actorId, 'updated_at' => $now, 'updated_by' => $actorId]);
+            DB::table('user_availabilities')->where('user_availability_id', $id)->update(['deleted_at' => $now, 'deleted_by' => $actorId, 'updated_at' => $now, 'updated_by' => $actorId]);
+            return ['success' => true, 'id' => $id, 'message' => 'برنامه زمانی حذف شد.'];
         });
     }
 
-    public function deleteAvailabilityException(int $id, int $actorId): array {
-        return transaction(function() use($id,$actorId){
-            $row=DB::table('user_availabilities')->where('user_availability_id',$id)->whereNotNull('unavailable_type')->whereNull('deleted_at')->first();
-            if(!$row)throw new RuntimeException('تعطیلی یا مرخصی موردنظر یافت نشد.');
-            $now=date('Y-m-d H:i:s');
-            DB::table('translations')->where('table_name','user_availabilities')->where('table_id',$id)->whereNull('deleted_at')->update(['deleted_at'=>$now,'deleted_by'=>$actorId,'updated_at'=>$now,'updated_by'=>$actorId]);
-            DB::table('user_availabilities')->where('user_availability_id',$id)->update(['deleted_at'=>$now,'deleted_by'=>$actorId,'updated_at'=>$now,'updated_by'=>$actorId]);
-            return ['success'=>true,'id'=>$id,'message'=>'تعطیلی یا مرخصی حذف شد.'];
+    public function deleteAvailabilityException(int $id, int $actorId): array
+    {
+        return transaction(function () use ($id, $actorId) {
+            $row = DB::table('user_availabilities')->where('user_availability_id', $id)->whereNotNull('unavailable_type')->whereNull('deleted_at')->first();
+            if (!$row) {
+                throw new RuntimeException('تعطیلی یا مرخصی موردنظر یافت نشد.');
+            }
+            $now = date('Y-m-d H:i:s');
+            DB::table('translations')->where('table_name', 'user_availabilities')->where('table_id', $id)->whereNull('deleted_at')->update(['deleted_at' => $now, 'deleted_by' => $actorId, 'updated_at' => $now, 'updated_by' => $actorId]);
+            DB::table('user_availabilities')->where('user_availability_id', $id)->update(['deleted_at' => $now, 'deleted_by' => $actorId, 'updated_at' => $now, 'updated_by' => $actorId]);
+            return ['success' => true, 'id' => $id, 'message' => 'تعطیلی یا مرخصی حذف شد.'];
         });
     }
 
-    public function deleteAcademyManagers(): array {
+    public function deleteAcademyManagers(): array
+    {
         return transaction(function () {
             $users = DB::table('users')->whereRaw("username LIKE '" . self::USERNAME_PREFIX . "%'")->get();
-            $userIds = array_map(fn(array $user) => (int)$user['user_id'], $users);
+            $userIds = array_map(fn (array $user) => (int) $user['user_id'], $users);
             if (!$userIds) {
                 return ['deleted' => 0, 'message' => 'هیچ مدیر آموزشگاه آزمایشی برای حذف وجود ندارد.'];
             }
 
             $addresses = DB::table('user_addresses')->whereIn('user_id', $userIds)->get();
-            $addressIds = array_map(fn(array $address) => (int)$address['address_id'], $addresses);
+            $addressIds = array_map(fn (array $address) => (int) $address['address_id'], $addresses);
             if ($addressIds) {
                 DB::table('translations')->where('table_name', 'user_addresses')->whereIn('table_id', $addressIds)->delete();
                 DB::table('user_addresses')->whereIn('address_id', $addressIds)->delete();
             }
             $contacts = DB::table('user_contacts')->whereIn('user_id', $userIds)->get();
-            $contactIds = array_map(fn(array $contact) => (int)$contact['user_contact_id'], $contacts);
+            $contactIds = array_map(fn (array $contact) => (int) $contact['user_contact_id'], $contacts);
             if ($contactIds) {
                 DB::table('translations')->where('table_name', 'user_contacts')->whereIn('table_id', $contactIds)->delete();
                 DB::table('user_contacts')->whereIn('user_contact_id', $contactIds)->delete();
             }
             foreach ([['user_instruments', 'user_instrument_id'], ['user_lessons', 'user_lesson_id']] as [$table, $key]) {
                 $rows = DB::table($table)->whereIn('user_id', $userIds)->get();
-                $ids = array_map(fn(array $row) => (int)$row[$key], $rows);
+                $ids = array_map(fn (array $row) => (int) $row[$key], $rows);
                 if ($ids) {
                     DB::table('translations')->where('table_name', $table)->whereIn('table_id', $ids)->delete();
                     DB::table($table)->whereIn($key, $ids)->delete();
                 }
             }
             foreach ([['user_availabilities', 'user_availability_id']] as [$table, $key]) {
-                $rows=DB::table($table)->whereIn('user_id',$userIds)->get(); $ids=array_map(fn(array $row)=>(int)$row[$key],$rows);
-                if($ids){DB::table('translations')->where('table_name',$table)->whereIn('table_id',$ids)->delete();DB::table($table)->whereIn($key,$ids)->delete();}
+                $rows = DB::table($table)->whereIn('user_id', $userIds)->get();
+                $ids = array_map(fn (array $row) => (int) $row[$key], $rows);
+                if ($ids) {
+                    DB::table('translations')->where('table_name', $table)->whereIn('table_id', $ids)->delete();
+                    DB::table($table)->whereIn($key, $ids)->delete();
+                }
             }
             DB::table('media_files')->whereIn('user_id', $userIds)->whereRaw("path LIKE 'assets/media/users/%'")->update([
                 'user_id' => null, 'fileable_id' => null, 'updated_by' => null,
@@ -285,7 +475,8 @@ class AdminTestDataService {
         });
     }
 
-    private function syncMusicCatalog(): array {
+    private function syncMusicCatalog(): array
+    {
         $now = date('Y-m-d H:i:s');
         $instrumentIds = [];
         foreach ($this->instrumentCatalog() as $item) {
@@ -300,7 +491,9 @@ class AdminTestDataService {
             $lessons[] = ['title' => $item['title'], 'summary' => 'آموزش نوازندگی ' . $item['title'] . ' از مبانی تا اجرای حرفه‌ای.',
                 'description' => 'این درس به آموزش اصولی نوازندگی ' . $item['title'] . ' می‌پردازد و مباحث شناخت ساز، وضعیت صحیح بدن، تکنیک، خواندن نت، تربیت گوش، اجرای رپرتوار و آمادگی صحنه را به‌صورت مرحله‌ای پوشش می‌دهد.'];
         }
-        foreach ($this->theoryLessons() as $item) $lessons[] = $item;
+        foreach ($this->theoryLessons() as $item) {
+            $lessons[] = $item;
+        }
         foreach ($lessons as $item) {
             $lessonIds[] = $this->syncCatalogRow('lessons', 'lesson_id', $item['title'], [
                 'summary' => $item['summary'], 'description' => $item['description'],
@@ -318,118 +511,184 @@ class AdminTestDataService {
         return ['instruments' => $instrumentIds, 'lessons' => $lessonIds, 'levels' => $levelIds];
     }
 
-    private function syncDefaultUserMedia(int $userId, int $userIndex, string $registeredAt,int $galleryCount=3): void {
+    private function syncDefaultUserMedia(int $userId, int $userIndex, string $registeredAt, int $galleryCount = 3): void
+    {
         $number = ($userIndex % 50) + 1;
         $avatarId = $this->syncMediaFile($userId, $registeredAt, 'profiles', sprintf('user-%02d.jpg', $number), 'teacher_avatar', 0, 720, 720);
         DB::table('users')->where('user_id', $userId)->update(['avatar_file_id' => $avatarId]);
         $this->syncMediaFile($userId, $registeredAt, 'covers', sprintf('user-%02d.jpg', $number), 'cover', 0, 1280, 720);
-        for ($i = 1; $i <= min(3,$galleryCount); $i++) $this->syncMediaFile($userId, $registeredAt, 'gallery', sprintf('user-%02d-%02d.jpg', $number, $i), 'teacher_gallery', $i, 1200, 900);
-        if ($number <= 20) $this->syncMediaFile($userId, $registeredAt, 'intro-videos', sprintf('user-%02d.mp4', $number), 'intro_video', 0, null, null, 'video');
+        for ($i = 1; $i <= min(3, $galleryCount); $i++) {
+            $this->syncMediaFile($userId, $registeredAt, 'gallery', sprintf('user-%02d-%02d.jpg', $number, $i), 'teacher_gallery', $i, 1200, 900);
+        }
+        if ($number <= 20) {
+            $this->syncMediaFile($userId, $registeredAt, 'intro-videos', sprintf('user-%02d.mp4', $number), 'intro_video', 0, null, null, 'video');
+        }
     }
 
-    private function syncUserAvailability(int $userId, int $userIndex, string $registeredAt,array $options=[]): void {
-        $days=['saturday','sunday','monday','tuesday','wednesday','thursday','friday'];
-        $dayLabels=['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه'];
-        $addresses=DB::table('user_addresses')->where('user_id',$userId)->get();
-        $locationIds=array_map(fn(array $row)=>(int)$row['address_id'],$addresses);
-        foreach($days as $dayIndex=>$day){
-            $parts=$this->fixtureCount($userIndex+$dayIndex,$options['daily_slots_min']??1,$options['daily_slots_max']??3); $ranges=$this->availabilityRanges($userIndex,$dayIndex,$parts);
-            foreach($ranges as $partIndex=>$range){
-                $locationId=$locationIds ? $locationIds[($dayIndex+$partIndex)%count($locationIds)] : 0;
-                $location=$locationId ? $this->translatedValue('user_addresses',$locationId,'address') : 'محل فعالیت کاربر';
-                $this->syncAvailabilityRow($userId,$registeredAt,['date'=>null,'day_of_week'=>$day,'start_time'=>$range[0].':00','end_time'=>$range[1].':00',
-                    'timezone_id'=>1,'status'=>'available','unavailable_type'=>null,'is_repeating'=>1,'repeat_period'=>'week','is_closed'=>0,'priority'=>$partIndex+1],
+    private function syncUserAvailability(int $userId, int $userIndex, string $registeredAt, array $options = []): void
+    {
+        $days = ['saturday', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+        $dayLabels = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه'];
+        $addresses = DB::table('user_addresses')->where('user_id', $userId)->get();
+        $locationIds = array_map(fn (array $row) => (int) $row['address_id'], $addresses);
+        foreach ($days as $dayIndex => $day) {
+            $parts = $this->fixtureCount($userIndex + $dayIndex, $options['daily_slots_min'] ?? 1, $options['daily_slots_max'] ?? 3);
+            $ranges = $this->availabilityRanges($userIndex, $dayIndex, $parts);
+            foreach ($ranges as $partIndex => $range) {
+                $locationId = $locationIds ? $locationIds[($dayIndex + $partIndex) % count($locationIds)] : 0;
+                $location = $locationId ? $this->translatedValue('user_addresses', $locationId, 'address') : 'محل فعالیت کاربر';
+                $this->syncAvailabilityRow(
+                    $userId,
+                    $registeredAt,
+                    ['date' => null, 'day_of_week' => $day, 'start_time' => $range[0] . ':00', 'end_time' => $range[1] . ':00',
+                        'timezone_id' => 1, 'status' => 'available', 'unavailable_type' => null, 'is_repeating' => 1, 'repeat_period' => 'week', 'is_closed' => 0, 'priority' => $partIndex + 1],
                     'حضور هفتگی در ' . $dayLabels[$dayIndex] . ' از ' . $range[0] . ' تا ' . $range[1],
-                    'بازه حضور دوره‌ای کاربر در ' . $location . '؛ فاصله میان این بازه و بازه بعدی زمان استراحت یا جابه‌جایی است.');
+                    'بازه حضور دوره‌ای کاربر در ' . $location . '؛ فاصله میان این بازه و بازه بعدی زمان استراحت یا جابه‌جایی است.'
+                );
             }
         }
-        $specificDate=sprintf('2026-%02d-%02d',9+($userIndex%3),1+(($userIndex*3)%27));
-        $this->syncAvailabilityRow($userId,$registeredAt,['date'=>$specificDate,'day_of_week'=>null,'start_time'=>'16:00:00','end_time'=>'19:00:00',
-            'timezone_id'=>1,'status'=>'available','unavailable_type'=>null,'is_repeating'=>0,'repeat_period'=>'none','is_closed'=>0,'priority'=>1],
-            'حضور ویژه در تاریخ ' . $specificDate,'حضور غیرتکراری کاربر برای جلسه، ارزیابی یا برنامه ویژه در تاریخ مشخص‌شده.');
+        $specificDate = sprintf('2026-%02d-%02d', 9 + ($userIndex % 3), 1 + (($userIndex * 3) % 27));
+        $this->syncAvailabilityRow(
+            $userId,
+            $registeredAt,
+            ['date' => $specificDate, 'day_of_week' => null, 'start_time' => '16:00:00', 'end_time' => '19:00:00',
+                'timezone_id' => 1, 'status' => 'available', 'unavailable_type' => null, 'is_repeating' => 0, 'repeat_period' => 'none', 'is_closed' => 0, 'priority' => 1],
+            'حضور ویژه در تاریخ ' . $specificDate,
+            'حضور غیرتکراری کاربر برای جلسه، ارزیابی یا برنامه ویژه در تاریخ مشخص‌شده.'
+        );
 
-        $exceptionCount=$this->fixtureCount($userIndex,$options['exceptions_min']??2,$options['exceptions_max']??4);for($i=0;$i<$exceptionCount;$i++){
-            $date=sprintf('2026-%02d-%02d',9+(($userIndex+$i)%3),1+(($userIndex*5+$i*7)%27));
-            $types=['vacation','unavailable','busy','holiday']; $type=$types[($userIndex+$i)%count($types)];
-            $allDay=$i===0; $values=['date'=>$date,'start_time'=>$allDay?null:sprintf('%02d:00:00',10+(($userIndex+$i)%6)),
-                'end_time'=>$allDay?null:sprintf('%02d:00:00',13+(($userIndex+$i)%6)),'unavailable_type'=>$type];
-            $this->syncAvailabilityExceptionRow($userId,$registeredAt,$values,
-                ($allDay?'عدم حضور تمام‌روز':'عدم حضور ساعتی') . ' در تاریخ ' . $date,
-                'این استثنا بر برنامه هفتگی مقدم است و برای مرخصی، تعطیلی یا مشغله کاربر در تاریخ مشخص ثبت شده است.');
+        $exceptionCount = $this->fixtureCount($userIndex, $options['exceptions_min'] ?? 2, $options['exceptions_max'] ?? 4);
+        for ($i = 0;$i < $exceptionCount;$i++) {
+            $date = sprintf('2026-%02d-%02d', 9 + (($userIndex + $i) % 3), 1 + (($userIndex * 5 + $i * 7) % 27));
+            $types = ['vacation', 'unavailable', 'busy', 'holiday'];
+            $type = $types[($userIndex + $i) % count($types)];
+            $allDay = $i === 0;
+            $values = ['date' => $date, 'start_time' => $allDay ? null : sprintf('%02d:00:00', 10 + (($userIndex + $i) % 6)),
+                'end_time' => $allDay ? null : sprintf('%02d:00:00', 13 + (($userIndex + $i) % 6)), 'unavailable_type' => $type];
+            $this->syncAvailabilityExceptionRow(
+                $userId,
+                $registeredAt,
+                $values,
+                ($allDay ? 'عدم حضور تمام‌روز' : 'عدم حضور ساعتی') . ' در تاریخ ' . $date,
+                'این استثنا بر برنامه هفتگی مقدم است و برای مرخصی، تعطیلی یا مشغله کاربر در تاریخ مشخص ثبت شده است.'
+            );
         }
     }
 
-    private function availabilityRanges(int $userIndex,int $dayIndex,int $parts): array {
-        $start=8+(($userIndex+$dayIndex)%2); $ranges=[];
-        for($i=0;$i<$parts;$i++){ $from=$start+$i*4; $ranges[]=[sprintf('%02d:00',$from),sprintf('%02d:00',$from+3)]; }
+    private function availabilityRanges(int $userIndex, int $dayIndex, int $parts): array
+    {
+        $start = 8 + (($userIndex + $dayIndex) % 2);
+        $ranges = [];
+        for ($i = 0;$i < $parts;$i++) {
+            $from = $start + $i * 4;
+            $ranges[] = [sprintf('%02d:00', $from), sprintf('%02d:00', $from + 3)];
+        }
         return $ranges;
     }
 
-    private function syncAvailabilityRow(int $userId,string $createdAt,array $values,string $summary,string $description): void {
-        $query=DB::table('user_availabilities')->where('user_id',$userId)->whereNull('unavailable_type')->where('start_time',$values['start_time'])->where('end_time',$values['end_time']);
-        $query=$values['date']===null?$query->whereNull('date')->where('day_of_week',$values['day_of_week']):$query->where('date',$values['date']);
-        $row=$query->first(); $base=$values+['created_at'=>$createdAt,'created_by'=>$userId,'updated_at'=>$createdAt,'updated_by'=>$userId,'deleted_at'=>null,'deleted_by'=>null];
-        if($row){$id=(int)$row['user_availability_id'];DB::table('user_availabilities')->where('user_availability_id',$id)->update($base);}else{$id=DB::table('user_availabilities')->insertGetId(['user_id'=>$userId]+$base);}
-        if(!$id)throw new RuntimeException('ثبت برنامه حضور آزمایشی ناموفق بود.');
-        $this->setTranslation('user_availabilities',$id,$userId,'summary',$summary,$createdAt,$createdAt);$this->setTranslation('user_availabilities',$id,$userId,'description',$description,$createdAt,$createdAt);
+    private function syncAvailabilityRow(int $userId, string $createdAt, array $values, string $summary, string $description): void
+    {
+        $query = DB::table('user_availabilities')->where('user_id', $userId)->whereNull('unavailable_type')->where('start_time', $values['start_time'])->where('end_time', $values['end_time']);
+        $query = $values['date'] === null ? $query->whereNull('date')->where('day_of_week', $values['day_of_week']) : $query->where('date', $values['date']);
+        $row = $query->first();
+        $base = $values + ['created_at' => $createdAt, 'created_by' => $userId, 'updated_at' => $createdAt, 'updated_by' => $userId, 'deleted_at' => null, 'deleted_by' => null];
+        if ($row) {
+            $id = (int) $row['user_availability_id'];
+            DB::table('user_availabilities')->where('user_availability_id', $id)->update($base);
+        } else {
+            $id = DB::table('user_availabilities')->insertGetId(['user_id' => $userId] + $base);
+        }
+        if (!$id) {
+            throw new RuntimeException('ثبت برنامه حضور آزمایشی ناموفق بود.');
+        }
+        $this->setTranslation('user_availabilities', $id, $userId, 'summary', $summary, $createdAt, $createdAt);
+        $this->setTranslation('user_availabilities', $id, $userId, 'description', $description, $createdAt, $createdAt);
     }
 
-    private function syncAvailabilityExceptionRow(int $userId,string $createdAt,array $values,string $summary,string $description): void {
-        $query=DB::table('user_availabilities')->where('user_id',$userId)->whereNotNull('unavailable_type')->where('date',$values['date']);
-        $query=$values['start_time']===null?$query->whereNull('start_time'):$query->where('start_time',$values['start_time']); $row=$query->first();
-        $base=$values+['day_of_week'=>null,'timezone_id'=>1,'status'=>'unavailable','is_repeating'=>0,'repeat_period'=>'none','is_closed'=>1,'priority'=>1,'created_at'=>$createdAt,'created_by'=>$userId,'updated_at'=>$createdAt,'updated_by'=>$userId,'deleted_at'=>null,'deleted_by'=>null];
-        if($row){$id=(int)$row['user_availability_id'];DB::table('user_availabilities')->where('user_availability_id',$id)->update($base);}else{$id=DB::table('user_availabilities')->insertGetId(['user_id'=>$userId]+$base);}
-        if(!$id)throw new RuntimeException('ثبت مرخصی آزمایشی ناموفق بود.');
-        $this->setTranslation('user_availabilities',$id,$userId,'summary',$summary,$createdAt,$createdAt);$this->setTranslation('user_availabilities',$id,$userId,'description',$description,$createdAt,$createdAt);
+    private function syncAvailabilityExceptionRow(int $userId, string $createdAt, array $values, string $summary, string $description): void
+    {
+        $query = DB::table('user_availabilities')->where('user_id', $userId)->whereNotNull('unavailable_type')->where('date', $values['date']);
+        $query = $values['start_time'] === null ? $query->whereNull('start_time') : $query->where('start_time', $values['start_time']);
+        $row = $query->first();
+        $base = $values + ['day_of_week' => null, 'timezone_id' => 1, 'status' => 'unavailable', 'is_repeating' => 0, 'repeat_period' => 'none', 'is_closed' => 1, 'priority' => 1, 'created_at' => $createdAt, 'created_by' => $userId, 'updated_at' => $createdAt, 'updated_by' => $userId, 'deleted_at' => null, 'deleted_by' => null];
+        if ($row) {
+            $id = (int) $row['user_availability_id'];
+            DB::table('user_availabilities')->where('user_availability_id', $id)->update($base);
+        } else {
+            $id = DB::table('user_availabilities')->insertGetId(['user_id' => $userId] + $base);
+        }
+        if (!$id) {
+            throw new RuntimeException('ثبت مرخصی آزمایشی ناموفق بود.');
+        }
+        $this->setTranslation('user_availabilities', $id, $userId, 'summary', $summary, $createdAt, $createdAt);
+        $this->setTranslation('user_availabilities', $id, $userId, 'description', $description, $createdAt, $createdAt);
     }
 
-    private function translatedValue(string $table,int $id,string $field): string {
-        $row=DB::table('translations')->where('table_name',$table)->where('table_id',$id)->where('locale','fa')->where('field',$field)->whereNull('deleted_at')->first(); return (string)($row['value']??'');
+    private function translatedValue(string $table, int $id, string $field): string
+    {
+        $row = DB::table('translations')->where('table_name', $table)->where('table_id', $id)->where('locale', 'fa')->where('field', $field)->whereNull('deleted_at')->first();
+        return (string) ($row['value'] ?? '');
     }
 
-    private function syncMediaFile(int $userId, string $createdAt, string $folder, string $filename, string $collection, int $sortOrder, ?int $width, ?int $height, string $type = 'image'): int {
+    private function syncMediaFile(int $userId, string $createdAt, string $folder, string $filename, string $collection, int $sortOrder, ?int $width, ?int $height, string $type = 'image'): int
+    {
         $relativePath = 'assets/media/users/' . $folder . '/' . $filename;
         $absolutePath = dirname(__DIR__, 3) . '/' . $relativePath;
-        if (!is_file($absolutePath)) throw new RuntimeException('فایل رسانه پیش‌فرض یافت نشد: ' . $relativePath);
+        if (!is_file($absolutePath)) {
+            throw new RuntimeException('فایل رسانه پیش‌فرض یافت نشد: ' . $relativePath);
+        }
         $existing = DB::table('media_files')->where('path', $relativePath)->first();
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        $values = ['user_id'=>$userId, 'disk'=>'public', 'directory'=>'assets/media/users/' . $folder, 'filename'=>$filename,
-            'extension'=>$extension, 'mime_type'=>$type === 'video' ? 'video/mp4' : 'image/jpeg', 'type'=>$type,
-            'collection'=>$collection, 'thumbnail_path'=>null, 'original_filename'=>$filename, 'fileable_type'=>'users',
-            'fileable_id'=>$userId, 'sort_order'=>$sortOrder, 'size'=>filesize($absolutePath), 'duration'=>null,
-            'width'=>$width, 'height'=>$height, 'checksum'=>hash_file('sha256', $absolutePath), 'visibility'=>'public',
-            'updated_at'=>date('Y-m-d H:i:s'), 'updated_by'=>$userId, 'deleted_at'=>null, 'deleted_by'=>null];
-        if ($existing) { $id=(int)$existing['media_file_id']; DB::table('media_files')->where('media_file_id',$id)->update($values); return $id; }
-        $id=DB::table('media_files')->insertGetId(['path'=>$relativePath, 'created_at'=>$createdAt, 'created_by'=>$userId] + $values);
-        if (!$id) throw new RuntimeException('ثبت رسانه پیش‌فرض کاربر ناموفق بود.');
+        $values = ['user_id' => $userId, 'disk' => 'public', 'directory' => 'assets/media/users/' . $folder, 'filename' => $filename,
+            'extension' => $extension, 'mime_type' => $type === 'video' ? 'video/mp4' : 'image/jpeg', 'type' => $type,
+            'collection' => $collection, 'thumbnail_path' => null, 'original_filename' => $filename, 'fileable_type' => 'users',
+            'fileable_id' => $userId, 'sort_order' => $sortOrder, 'size' => filesize($absolutePath), 'duration' => null,
+            'width' => $width, 'height' => $height, 'checksum' => hash_file('sha256', $absolutePath), 'visibility' => 'public',
+            'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => $userId, 'deleted_at' => null, 'deleted_by' => null];
+        if ($existing) {
+            $id = (int) $existing['media_file_id'];
+            DB::table('media_files')->where('media_file_id', $id)->update($values);
+            return $id;
+        }
+        $id = DB::table('media_files')->insertGetId(['path' => $relativePath, 'created_at' => $createdAt, 'created_by' => $userId] + $values);
+        if (!$id) {
+            throw new RuntimeException('ثبت رسانه پیش‌فرض کاربر ناموفق بود.');
+        }
         return $id;
     }
 
-    private function syncCatalogRow(string $table, string $key, string $title, array $fields, array $values, string $now): int {
+    private function syncCatalogRow(string $table, string $key, string $title, array $fields, array $values, string $now): int
+    {
         $titleTranslation = DB::table('translations')->where('table_name', $table)->where('locale', 'fa')
             ->where('field', 'title')->where('value', $title)->first();
-        $row = $titleTranslation ? DB::table($table)->where($key, (int)$titleTranslation['table_id'])->first() : null;
+        $row = $titleTranslation ? DB::table($table)->where($key, (int) $titleTranslation['table_id'])->first() : null;
         $base = $values + ['updated_at' => $now, 'updated_by' => 1, 'deleted_at' => null, 'deleted_by' => null];
         if ($row) {
-            $id = (int)$row[$key];
+            $id = (int) $row[$key];
             DB::table($table)->where($key, $id)->update($base);
         } else {
             $id = DB::table($table)->insertGetId($base + ['created_at' => $now, 'created_by' => 1]);
-            if (!$id) throw new RuntimeException('ایجاد داده مرجع موسیقی ناموفق بود: ' . $title);
+            if (!$id) {
+                throw new RuntimeException('ایجاد داده مرجع موسیقی ناموفق بود: ' . $title);
+            }
         }
         $this->setTranslation($table, $id, 1, 'title', $title, $now, $now);
-        foreach ($fields as $field => $value) $this->setTranslation($table, $id, 1, $field, $value, $now, $now);
+        foreach ($fields as $field => $value) {
+            $this->setTranslation($table, $id, 1, $field, $value, $now, $now);
+        }
         return $id;
     }
 
-    private function syncMusicExperience(int $userId, int $userIndex, string $registeredAt, array $catalog,array $options=[]): void {
-        $instrumentCount=$this->fixtureCount($userIndex,$options['instruments_min']??0,$options['instruments_max']??5);
-        $lessonCount=$this->fixtureCount($userIndex*5+2,$options['lessons_min']??0,$options['lessons_max']??5);
+    private function syncMusicExperience(int $userId, int $userIndex, string $registeredAt, array $catalog, array $options = []): void
+    {
+        $instrumentCount = $this->fixtureCount($userIndex, $options['instruments_min'] ?? 0, $options['instruments_max'] ?? 5);
+        $lessonCount = $this->fixtureCount($userIndex * 5 + 2, $options['lessons_min'] ?? 0, $options['lessons_max'] ?? 5);
         $this->syncExperienceGroup('user_instruments', 'user_instrument_id', 'instrument_id', $catalog['instruments'], $catalog['levels'], $userId, $userIndex, $registeredAt, $instrumentCount, true);
         $this->syncExperienceGroup('user_lessons', 'user_lesson_id', 'lesson_id', $catalog['lessons'], $catalog['levels'], $userId, $userIndex, $registeredAt, $lessonCount, $instrumentCount === 0);
     }
 
-    private function syncExperienceGroup(string $table, string $key, string $foreignKey, array $items, array $levels, int $userId, int $userIndex, string $registeredAt, int $count, bool $canBePrimary): void {
+    private function syncExperienceGroup(string $table, string $key, string $foreignKey, array $items, array $levels, int $userId, int $userIndex, string $registeredAt, int $count, bool $canBePrimary): void
+    {
         $wanted = [];
         for ($i = 0; $i < $count; $i++) {
             $itemId = $items[($userIndex * 7 + $i * 11) % count($items)];
@@ -440,81 +699,106 @@ class AdminTestDataService {
                 'is_primary' => $canBePrimary && $i === 0 ? 1 : 0, 'created_at' => $createdAt, 'created_by' => $userId,
                 'updated_at' => $createdAt, 'updated_by' => $userId, 'deleted_at' => null, 'deleted_by' => null];
             if ($existing) {
-                $id = (int)$existing[$key]; DB::table($table)->where($key, $id)->update($values);
+                $id = (int) $existing[$key];
+                DB::table($table)->where($key, $id)->update($values);
             } else {
                 $id = DB::table($table)->insertGetId(['user_id' => $userId, $foreignKey => $itemId] + $values);
-                if (!$id) throw new RuntimeException('ثبت سابقه آموزشی آزمایشی ناموفق بود.');
+                if (!$id) {
+                    throw new RuntimeException('ثبت سابقه آموزشی آزمایشی ناموفق بود.');
+                }
             }
             $kind = $table === 'user_instruments' ? 'نوازندگی این ساز' : 'این درس موسیقی';
             $this->setTranslation($table, $id, $userId, 'summary', 'سابقه آزمایشی پیوسته در ' . $kind . ' با تمرین منظم هفتگی.', $createdAt, $createdAt);
             $this->setTranslation($table, $id, $userId, 'description', 'این سابقه برای آزمون پروفایل مدیر آموزشگاه ساخته شده است. کاربر از تاریخ درج‌شده آموزش را آغاز کرده، تمرین‌های تکنیکی و عملی را دنبال می‌کند و تجربه شرکت در کلاس، تمرین گروهی و اجرای هنرجویی دارد.', $createdAt, $createdAt);
         }
         $rows = DB::table($table)->where('user_id', $userId)->get();
-        foreach ($rows as $row) if (!in_array((int)$row[$foreignKey], $wanted, true)) {
-            DB::table('translations')->where('table_name', $table)->where('table_id', (int)$row[$key])->delete();
-            DB::table($table)->where($key, (int)$row[$key])->delete();
+        foreach ($rows as $row) {
+            if (!in_array((int) $row[$foreignKey], $wanted, true)) {
+                DB::table('translations')->where('table_name', $table)->where('table_id', (int) $row[$key])->delete();
+                DB::table($table)->where($key, (int) $row[$key])->delete();
+            }
         }
     }
 
-    private function setTranslation(string $table, int $tableId, int $actorId, string $field, string $value, string $createdAt, string $updatedAt, string $locale = 'fa'): void {
+    private function setTranslation(string $table, int $tableId, int $actorId, string $field, string $value, string $createdAt, string $updatedAt, string $locale = 'fa'): void
+    {
         $translation = DB::table('translations')->where('table_name', $table)->where('table_id', $tableId)->where('locale', $locale)->where('field', $field)->first();
         $values = ['code' => null, 'value' => $value, 'version' => 1, 'updated_at' => $updatedAt, 'updated_by' => $actorId, 'deleted_at' => null, 'deleted_by' => null];
-        if ($translation) DB::table('translations')->where('translation_id', (int)$translation['translation_id'])->update($values);
-        else {
+        if ($translation) {
+            DB::table('translations')->where('translation_id', (int) $translation['translation_id'])->update($values);
+        } else {
             $id = DB::table('translations')->insertGetId(['table_name' => $table, 'table_id' => $tableId, 'locale' => $locale, 'field' => $field, 'created_at' => $createdAt, 'created_by' => $actorId] + $values);
-            if (!$id) throw new RuntimeException('ثبت ترجمه داده موسیقی ناموفق بود.');
+            if (!$id) {
+                throw new RuntimeException('ثبت ترجمه داده موسیقی ناموفق بود.');
+            }
         }
     }
 
-    private function jalaliStartDate(int $userIndex, int $itemIndex): string {
+    private function jalaliStartDate(int $userIndex, int $itemIndex): string
+    {
         $year = 1384 + (($userIndex * 3 + $itemIndex * 2) % 20);
         $month = 1 + (($userIndex + $itemIndex * 3) % 12);
         $day = 1 + (($userIndex * 5 + $itemIndex * 7) % ($month <= 6 ? 31 : 30));
         return sprintf('%04d-%02d-%02d', $year, $month, $day);
     }
 
-    private function instrumentCatalog(): array {
+    private function instrumentCatalog(): array
+    {
         $groups = [
-            'ایرانی زهی مضرابی' => ['تار','سه‌تار','سنتور','عود (بربت)','قانون','تنبور','دوتار','دیوان','شورانگیز','رباب ایرانی'],
-            'ایرانی زهی آرشه‌ای' => ['کمانچه','قیچک','قیچک باس'],
-            'ایرانی بادی' => ['نی','نی‌انبان','سرنا','کرنا','دوزله','بالابان'],
-            'ایرانی کوبه‌ای' => ['تنبک','دف','دایره','دهل','نقاره','دمام'],
-            'کلاسیک و جهانی' => ['پیانو','کیبورد','ویولن','ویولا','ویولنسل','کنترباس','گیتار کلاسیک','گیتار آکوستیک','گیتار الکتریک','گیتار باس','هارپ','ماندولین','یوکللی','آکاردئون','فلوت','پیکولو','کلارینت','ابوا','فاگوت','ساکسوفون','ترومپت','ترومبون','هورن','توبا','ریکوردر','سازدهنی','درامز','کاخن','زیلوفون','ماریمبا'],
+            'ایرانی زهی مضرابی' => ['تار', 'سه‌تار', 'سنتور', 'عود (بربت)', 'قانون', 'تنبور', 'دوتار', 'دیوان', 'شورانگیز', 'رباب ایرانی'],
+            'ایرانی زهی آرشه‌ای' => ['کمانچه', 'قیچک', 'قیچک باس'],
+            'ایرانی بادی' => ['نی', 'نی‌انبان', 'سرنا', 'کرنا', 'دوزله', 'بالابان'],
+            'ایرانی کوبه‌ای' => ['تنبک', 'دف', 'دایره', 'دهل', 'نقاره', 'دمام'],
+            'کلاسیک و جهانی' => ['پیانو', 'کیبورد', 'ویولن', 'ویولا', 'ویولنسل', 'کنترباس', 'گیتار کلاسیک', 'گیتار آکوستیک', 'گیتار الکتریک', 'گیتار باس', 'هارپ', 'ماندولین', 'یوکللی', 'آکاردئون', 'فلوت', 'پیکولو', 'کلارینت', 'ابوا', 'فاگوت', 'ساکسوفون', 'ترومپت', 'ترومبون', 'هورن', 'توبا', 'ریکوردر', 'سازدهنی', 'درامز', 'کاخن', 'زیلوفون', 'ماریمبا'],
         ];
         $items = [];
-        foreach ($groups as $family => $titles) foreach ($titles as $title) $items[] = [
-            'title'=>$title, 'summary'=>$title . ' سازی از خانواده «' . $family . '» است که در آموزش و اجرا کاربرد دارد.',
-            'description'=>$title . ' در خانواده «' . $family . '» قرار می‌گیرد. شکل امروزی آن حاصل تحول شیوه‌های سازسازی و اجرا در دوره‌های مختلف است و در تک‌نوازی، همنوازی یا ارکستر به کار می‌رود. آموزش آن از شناخت ساختمان ساز، تولید صدای صحیح و ریتم‌خوانی آغاز می‌شود و سپس تکنیک، بیان موسیقایی، رپرتوار و اجرای صحنه‌ای را پوشش می‌دهد.'
-        ];
+        foreach ($groups as $family => $titles) {
+            foreach ($titles as $title) {
+                $items[] = [
+                    'title' => $title, 'summary' => $title . ' سازی از خانواده «' . $family . '» است که در آموزش و اجرا کاربرد دارد.',
+                    'description' => $title . ' در خانواده «' . $family . '» قرار می‌گیرد. شکل امروزی آن حاصل تحول شیوه‌های سازسازی و اجرا در دوره‌های مختلف است و در تک‌نوازی، همنوازی یا ارکستر به کار می‌رود. آموزش آن از شناخت ساختمان ساز، تولید صدای صحیح و ریتم‌خوانی آغاز می‌شود و سپس تکنیک، بیان موسیقایی، رپرتوار و اجرای صحنه‌ای را پوشش می‌دهد.'
+                ];
+            }
+        }
         return $items;
     }
 
-    private function theoryLessons(): array {
-        $titles = ['سلفژ','تئوری موسیقی','هارمونی','کنترپوان','آهنگسازی','تنظیم موسیقی','ارکستراسیون','فرم و آنالیز موسیقی','تربیت شنوایی','ریتم‌خوانی','نت‌خوانی','بداهه‌نوازی','رهبری ارکستر','رهبری گروه کر','آواز کلاسیک','آواز ایرانی','صداسازی','موسیقی کودک','مبانی موسیقی ایرانی','ردیف موسیقی ایرانی','دستگاه‌شناسی موسیقی ایرانی','تصنیف‌سازی','موسیقی‌شناسی','تاریخ موسیقی ایران','تاریخ موسیقی جهان','نرم‌افزارهای موسیقی','ضبط و میکس صدا','مسترینگ','طراحی صدا','موسیقی فیلم','اجرای گروهی','گروه‌نوازی ایرانی','کر و همخوانی'];
-        return array_map(fn(string $title) => ['title'=>$title,
-            'summary'=>'درس ' . $title . ' برای پرورش دانش، گوش و مهارت عملی هنرجوی موسیقی.',
-            'description'=>'درس ' . $title . ' بخشی از آموزش نظام‌مند موسیقی است. محتوای آن از مفاهیم پایه و تمرین‌های شنیداری یا نوشتاری آغاز می‌شود و به تحلیل، خلاقیت، اجرا و کاربرد حرفه‌ای می‌رسد. روند تاریخی این حوزه با تحول نظام‌های آموزشی، شیوه‌های نت‌نویسی، موسیقی ایرانی و دستاوردهای موسیقی جهان پیوند دارد.'
+    private function theoryLessons(): array
+    {
+        $titles = ['سلفژ', 'تئوری موسیقی', 'هارمونی', 'کنترپوان', 'آهنگسازی', 'تنظیم موسیقی', 'ارکستراسیون', 'فرم و آنالیز موسیقی', 'تربیت شنوایی', 'ریتم‌خوانی', 'نت‌خوانی', 'بداهه‌نوازی', 'رهبری ارکستر', 'رهبری گروه کر', 'آواز کلاسیک', 'آواز ایرانی', 'صداسازی', 'موسیقی کودک', 'مبانی موسیقی ایرانی', 'ردیف موسیقی ایرانی', 'دستگاه‌شناسی موسیقی ایرانی', 'تصنیف‌سازی', 'موسیقی‌شناسی', 'تاریخ موسیقی ایران', 'تاریخ موسیقی جهان', 'نرم‌افزارهای موسیقی', 'ضبط و میکس صدا', 'مسترینگ', 'طراحی صدا', 'موسیقی فیلم', 'اجرای گروهی', 'گروه‌نوازی ایرانی', 'کر و همخوانی'];
+        return array_map(fn (string $title) => ['title' => $title,
+            'summary' => 'درس ' . $title . ' برای پرورش دانش، گوش و مهارت عملی هنرجوی موسیقی.',
+            'description' => 'درس ' . $title . ' بخشی از آموزش نظام‌مند موسیقی است. محتوای آن از مفاهیم پایه و تمرین‌های شنیداری یا نوشتاری آغاز می‌شود و به تحلیل، خلاقیت، اجرا و کاربرد حرفه‌ای می‌رسد. روند تاریخی این حوزه با تحول نظام‌های آموزشی، شیوه‌های نت‌نویسی، موسیقی ایرانی و دستاوردهای موسیقی جهان پیوند دارد.'
         ], $titles);
     }
 
-    private function learningLevels(): array {
+    private function learningLevels(): array
+    {
         return [
-            ['title'=>'خیلی تازه‌کار','summary'=>'بدون تجربه قبلی؛ آشنایی اولیه با موسیقی و ساز.','description'=>'این سطح برای هنرجویی است که تجربه قبلی در موسیقی یا ساز انتخابی ندارد. آموزش با شناخت ساز، شیوه صحیح نشستن یا در دست گرفتن آن، مفاهیم ابتدایی صدا و ریتم و تمرین‌های بسیار ساده آغاز می‌شود.\n\nهدف این مرحله ایجاد عادت تمرینی درست و آمادگی ذهنی و جسمی برای ورود به مباحث پایه است؛ بنابراین پیشرفت هنرجو بیشتر بر درک مفاهیم اولیه و اجرای صحیح تمرین‌های کوتاه سنجیده می‌شود.'],
-            ['title'=>'تازه‌کار','summary'=>'در حال یادگیری مبانی، نت‌خوانی و تمرین‌های ابتدایی.','description'=>'هنرجوی تازه‌کار با اصول اولیه ساز یا درس آشنا شده و در حال یادگیری نت‌خوانی، ریتم‌های ساده و تکنیک‌های ابتدایی است. تمرین‌ها در این سطح کوتاه، هدفمند و زیر نظر مستقیم مدرس انجام می‌شوند.\n\nدر پایان این مرحله انتظار می‌رود هنرجو بتواند الگوهای پایه را تشخیص دهد، تمرین‌های مقدماتی را با نظم اجرا کند و برای نواختن یا انجام فعالیت‌های ساده آموزشی آماده باشد.'],
-            ['title'=>'مقدماتی','summary'=>'توانایی اجرای تمرین‌ها و قطعات ساده با راهنمایی مدرس.','description'=>'در سطح مقدماتی، هنرجو مبانی ضروری را می‌شناسد و می‌تواند تمرین‌ها و قطعات ساده را با راهنمایی مدرس اجرا کند. توجه اصلی بر هماهنگی، ریتم صحیح، تولید صدای مناسب و تثبیت تکنیک‌های اولیه است.\n\nهنرجو به‌تدریج مسئولیت بیشتری در تمرین روزانه می‌پذیرد و می‌آموزد اشکال‌های ساده اجرای خود را تشخیص دهد و با تکرار هدفمند اصلاح کند.'],
-            ['title'=>'پایه','summary'=>'تسلط نسبی بر اصول و آمادگی ورود به رپرتوار متنوع‌تر.','description'=>'هنرجوی سطح پایه بر مهارت‌های اصلی تسلط نسبی دارد و می‌تواند قطعات آموزشی را با پیوستگی و دقت بیشتری اجرا کند. در این مرحله دامنه تمرین‌ها گسترش می‌یابد و مفاهیم نظری در کنار مهارت عملی تثبیت می‌شوند.\n\nهدف این سطح آماده‌کردن هنرجو برای مواجهه با رپرتوار متنوع‌تر، افزایش استقلال در تمرین و شکل‌گیری بیان موسیقایی اولیه است.'],
-            ['title'=>'متوسط','summary'=>'اجرای مستقل قطعات متوسط و شناخت مناسب تکنیک و تئوری.','description'=>'در سطح متوسط، هنرجو قادر است قطعات با دشواری متوسط را تا حد زیادی مستقل تمرین و اجرا کند. شناخت تکنیک، تئوری و ساختار قطعه به او کمک می‌کند انتخاب‌های دقیق‌تری در جمله‌بندی، ریتم و بیان داشته باشد.\n\nتمرکز آموزش بر افزایش کیفیت اجرا، رفع ضعف‌های فنی و توسعه رپرتوار است تا هنرجو برای فعالیت‌های گروهی یا اجراهای جدی‌تر آماده شود.'],
-            ['title'=>'متوسط رو به بالا','summary'=>'کنترل فنی بهتر و آمادگی برای تحلیل و اجرای جدی‌تر.','description'=>'هنرجوی متوسط رو به بالا کنترل فنی پایدارتری دارد و می‌تواند آثار پیچیده‌تر را با درک ساختاری مناسب تمرین کند. در این مرحله تحلیل قطعه، کیفیت صدا، دقت ریتمیک و انتخاب‌های تفسیری اهمیت بیشتری پیدا می‌کنند.\n\nبرنامه آموزشی به سمت استقلال کامل‌تر، مدیریت زمان تمرین و آمادگی برای اجرای صحنه‌ای یا ورود به مباحث نیمه‌پیشرفته حرکت می‌کند.'],
-            ['title'=>'نیمه‌پیشرفته','summary'=>'تجربه اجرایی قابل اتکا و کار روی ظرافت‌های بیانی.','description'=>'در سطح نیمه‌پیشرفته، هنرجو از تجربه اجرایی قابل اتکایی برخوردار است و تکنیک‌های اصلی را با ثبات اجرا می‌کند. تمرکز درس از انجام صحیح صرف فراتر می‌رود و به ظرافت‌های بیانی، سبک‌شناسی و تفسیر شخصی می‌رسد.\n\nهنرجو در این مرحله روی رپرتوار گسترده‌تر، اجرای گروهی یا انفرادی و اصلاح جزئیات فنی کار می‌کند تا برای سطح پیشرفته آماده شود.'],
-            ['title'=>'پیشرفته','summary'=>'تسلط بالا بر تکنیک، تفسیر و اجرای رپرتوار دشوار.','description'=>'هنرجوی پیشرفته بر تکنیک‌های تخصصی تسلط بالایی دارد و می‌تواند رپرتوار دشوار را با درک سبکی و تفسیر منسجم اجرا کند. برنامه تمرین او هدفمند است و توانایی تحلیل و حل مستقل مسائل اجرایی را دارد.\n\nدر این سطح، آماده‌سازی برای اجراهای رسمی، آزمون‌های تخصصی، تولید اثر یا ادامه مسیر حرفه‌ای بخش مهمی از فرایند آموزش را تشکیل می‌دهد.'],
-            ['title'=>'حرفه‌ای','summary'=>'توانایی اجرای حرفه‌ای، تدریس یا فعالیت تخصصی مستمر.','description'=>'سطح حرفه‌ای برای فردی است که مهارت فنی و هنری خود را در اجرا، تدریس یا یک حوزه تخصصی موسیقی به شکل پایدار به کار می‌گیرد. او قادر است آثار پیچیده را با هویت هنری مستقل آماده و ارائه کند و مسئولیت کامل فرایند تمرین و تولید را بر عهده بگیرد.\n\nفعالیت در این سطح می‌تواند شامل اجرای حرفه‌ای، آموزش هنرجویان، ضبط و تولید اثر، پژوهش یا همکاری مستمر با گروه‌ها و مجموعه‌های تخصصی باشد. هدف اصلی، حفظ کیفیت، توسعه نگاه شخصی و رشد مداوم در فضای حرفه‌ای است.'],
+            ['title' => 'خیلی تازه‌کار', 'summary' => 'بدون تجربه قبلی؛ آشنایی اولیه با موسیقی و ساز.', 'description' => 'این سطح برای هنرجویی است که تجربه قبلی در موسیقی یا ساز انتخابی ندارد. آموزش با شناخت ساز، شیوه صحیح نشستن یا در دست گرفتن آن، مفاهیم ابتدایی صدا و ریتم و تمرین‌های بسیار ساده آغاز می‌شود.\n\nهدف این مرحله ایجاد عادت تمرینی درست و آمادگی ذهنی و جسمی برای ورود به مباحث پایه است؛ بنابراین پیشرفت هنرجو بیشتر بر درک مفاهیم اولیه و اجرای صحیح تمرین‌های کوتاه سنجیده می‌شود.'],
+            ['title' => 'تازه‌کار', 'summary' => 'در حال یادگیری مبانی، نت‌خوانی و تمرین‌های ابتدایی.', 'description' => 'هنرجوی تازه‌کار با اصول اولیه ساز یا درس آشنا شده و در حال یادگیری نت‌خوانی، ریتم‌های ساده و تکنیک‌های ابتدایی است. تمرین‌ها در این سطح کوتاه، هدفمند و زیر نظر مستقیم مدرس انجام می‌شوند.\n\nدر پایان این مرحله انتظار می‌رود هنرجو بتواند الگوهای پایه را تشخیص دهد، تمرین‌های مقدماتی را با نظم اجرا کند و برای نواختن یا انجام فعالیت‌های ساده آموزشی آماده باشد.'],
+            ['title' => 'مقدماتی', 'summary' => 'توانایی اجرای تمرین‌ها و قطعات ساده با راهنمایی مدرس.', 'description' => 'در سطح مقدماتی، هنرجو مبانی ضروری را می‌شناسد و می‌تواند تمرین‌ها و قطعات ساده را با راهنمایی مدرس اجرا کند. توجه اصلی بر هماهنگی، ریتم صحیح، تولید صدای مناسب و تثبیت تکنیک‌های اولیه است.\n\nهنرجو به‌تدریج مسئولیت بیشتری در تمرین روزانه می‌پذیرد و می‌آموزد اشکال‌های ساده اجرای خود را تشخیص دهد و با تکرار هدفمند اصلاح کند.'],
+            ['title' => 'پایه', 'summary' => 'تسلط نسبی بر اصول و آمادگی ورود به رپرتوار متنوع‌تر.', 'description' => 'هنرجوی سطح پایه بر مهارت‌های اصلی تسلط نسبی دارد و می‌تواند قطعات آموزشی را با پیوستگی و دقت بیشتری اجرا کند. در این مرحله دامنه تمرین‌ها گسترش می‌یابد و مفاهیم نظری در کنار مهارت عملی تثبیت می‌شوند.\n\nهدف این سطح آماده‌کردن هنرجو برای مواجهه با رپرتوار متنوع‌تر، افزایش استقلال در تمرین و شکل‌گیری بیان موسیقایی اولیه است.'],
+            ['title' => 'متوسط', 'summary' => 'اجرای مستقل قطعات متوسط و شناخت مناسب تکنیک و تئوری.', 'description' => 'در سطح متوسط، هنرجو قادر است قطعات با دشواری متوسط را تا حد زیادی مستقل تمرین و اجرا کند. شناخت تکنیک، تئوری و ساختار قطعه به او کمک می‌کند انتخاب‌های دقیق‌تری در جمله‌بندی، ریتم و بیان داشته باشد.\n\nتمرکز آموزش بر افزایش کیفیت اجرا، رفع ضعف‌های فنی و توسعه رپرتوار است تا هنرجو برای فعالیت‌های گروهی یا اجراهای جدی‌تر آماده شود.'],
+            ['title' => 'متوسط رو به بالا', 'summary' => 'کنترل فنی بهتر و آمادگی برای تحلیل و اجرای جدی‌تر.', 'description' => 'هنرجوی متوسط رو به بالا کنترل فنی پایدارتری دارد و می‌تواند آثار پیچیده‌تر را با درک ساختاری مناسب تمرین کند. در این مرحله تحلیل قطعه، کیفیت صدا، دقت ریتمیک و انتخاب‌های تفسیری اهمیت بیشتری پیدا می‌کنند.\n\nبرنامه آموزشی به سمت استقلال کامل‌تر، مدیریت زمان تمرین و آمادگی برای اجرای صحنه‌ای یا ورود به مباحث نیمه‌پیشرفته حرکت می‌کند.'],
+            ['title' => 'نیمه‌پیشرفته', 'summary' => 'تجربه اجرایی قابل اتکا و کار روی ظرافت‌های بیانی.', 'description' => 'در سطح نیمه‌پیشرفته، هنرجو از تجربه اجرایی قابل اتکایی برخوردار است و تکنیک‌های اصلی را با ثبات اجرا می‌کند. تمرکز درس از انجام صحیح صرف فراتر می‌رود و به ظرافت‌های بیانی، سبک‌شناسی و تفسیر شخصی می‌رسد.\n\nهنرجو در این مرحله روی رپرتوار گسترده‌تر، اجرای گروهی یا انفرادی و اصلاح جزئیات فنی کار می‌کند تا برای سطح پیشرفته آماده شود.'],
+            ['title' => 'پیشرفته', 'summary' => 'تسلط بالا بر تکنیک، تفسیر و اجرای رپرتوار دشوار.', 'description' => 'هنرجوی پیشرفته بر تکنیک‌های تخصصی تسلط بالایی دارد و می‌تواند رپرتوار دشوار را با درک سبکی و تفسیر منسجم اجرا کند. برنامه تمرین او هدفمند است و توانایی تحلیل و حل مستقل مسائل اجرایی را دارد.\n\nدر این سطح، آماده‌سازی برای اجراهای رسمی، آزمون‌های تخصصی، تولید اثر یا ادامه مسیر حرفه‌ای بخش مهمی از فرایند آموزش را تشکیل می‌دهد.'],
+            ['title' => 'حرفه‌ای', 'summary' => 'توانایی اجرای حرفه‌ای، تدریس یا فعالیت تخصصی مستمر.', 'description' => 'سطح حرفه‌ای برای فردی است که مهارت فنی و هنری خود را در اجرا، تدریس یا یک حوزه تخصصی موسیقی به شکل پایدار به کار می‌گیرد. او قادر است آثار پیچیده را با هویت هنری مستقل آماده و ارائه کند و مسئولیت کامل فرایند تمرین و تولید را بر عهده بگیرد.\n\nفعالیت در این سطح می‌تواند شامل اجرای حرفه‌ای، آموزش هنرجویان، ضبط و تولید اثر، پژوهش یا همکاری مستمر با گروه‌ها و مجموعه‌های تخصصی باشد. هدف اصلی، حفظ کیفیت، توسعه نگاه شخصی و رشد مداوم در فضای حرفه‌ای است.'],
         ];
     }
 
-    private function syncContacts(int $userId, int $userIndex, string $username, string $registeredAt,array $options=[]): void {
-        $allTemplates=$this->contactTemplates($userIndex,$username);$templates=[];
-        foreach(['phone'=>[1,2],'email'=>[1,2],'social'=>[0,6]] as $mode=>[$defaultMin,$defaultMax]){$count=$this->fixtureCount($userIndex+count($templates),$options['contact_'.$mode.'_min']??$defaultMin,$options['contact_'.$mode.'_max']??$defaultMax);$typed=array_values(array_filter($allTemplates,fn($item)=>$item['mode']===$mode));for($i=0;$i<min($count,count($typed));$i++)$templates[]=$typed[$i];}
-        $contactCount=count($templates);
+    private function syncContacts(int $userId, int $userIndex, string $username, string $registeredAt, array $options = []): void
+    {
+        $allTemplates = $this->contactTemplates($userIndex, $username);
+        $templates = [];
+        foreach (['phone' => [1, 2], 'email' => [1, 2], 'social' => [0, 6]] as $mode => [$defaultMin,$defaultMax]) {
+            $count = $this->fixtureCount($userIndex + count($templates), $options['contact_' . $mode . '_min'] ?? $defaultMin, $options['contact_' . $mode . '_max'] ?? $defaultMax);
+            $typed = array_values(array_filter($allTemplates, fn ($item) => $item['mode'] === $mode));
+            for ($i = 0;$i < min($count, count($typed));$i++) {
+                $templates[] = $typed[$i];
+            }
+        }
+        $contactCount = count($templates);
         $seenModes = [];
         $registrationTimestamp = strtotime($registeredAt);
 
@@ -549,24 +833,30 @@ class AdminTestDataService {
                 DB::table('user_contacts')->where('user_contact_id', $contactId)->update($values);
             } else {
                 $contactId = DB::table('user_contacts')->insertGetId(['user_id' => $userId] + $values);
-                if (!$contactId) throw new RuntimeException('ایجاد راه ارتباطی آزمایشی کاربر ناموفق بود.');
+                if (!$contactId) {
+                    throw new RuntimeException('ایجاد راه ارتباطی آزمایشی کاربر ناموفق بود.');
+                }
             }
             $this->setContactTranslation($contactId, $userId, 'value', $contact['value'], $contactCreatedAt, $updatedAt, $approvedAt);
             $this->setContactTranslation($contactId, $userId, 'note', $contact['note'], $contactCreatedAt, $updatedAt, $approvedAt);
         }
     }
 
-    private function findContactByTranslatedValue(int $userId, string $value): int {
+    private function findContactByTranslatedValue(int $userId, string $value): int
+    {
         $translations = DB::table('translations')->where('table_name', 'user_contacts')->where('locale', 'fa')
             ->where('field', 'value')->where('value', $value)->get();
         foreach ($translations as $translation) {
-            $contact = DB::table('user_contacts')->where('user_contact_id', (int)$translation['table_id'])->where('user_id', $userId)->first();
-            if ($contact) return (int)$contact['user_contact_id'];
+            $contact = DB::table('user_contacts')->where('user_contact_id', (int) $translation['table_id'])->where('user_id', $userId)->first();
+            if ($contact) {
+                return (int) $contact['user_contact_id'];
+            }
         }
         return 0;
     }
 
-    private function setContactTranslation(int $contactId, int $userId, string $field, string $value, string $createdAt, string $updatedAt, string $approvedAt): void {
+    private function setContactTranslation(int $contactId, int $userId, string $field, string $value, string $createdAt, string $updatedAt, string $approvedAt): void
+    {
         $translation = DB::table('translations')->where('table_name', 'user_contacts')->where('table_id', $contactId)
             ->where('locale', 'fa')->where('field', $field)->first();
         $values = [
@@ -577,32 +867,36 @@ class AdminTestDataService {
             'deleted_at' => null, 'deleted_by' => null,
         ];
         if ($translation) {
-            DB::table('translations')->where('translation_id', (int)$translation['translation_id'])->update($values);
+            DB::table('translations')->where('translation_id', (int) $translation['translation_id'])->update($values);
             return;
         }
         $translationId = DB::table('translations')->insertGetId([
             'table_name' => 'user_contacts', 'table_id' => $contactId, 'locale' => 'fa', 'field' => $field,
         ] + $values);
-        if (!$translationId) throw new RuntimeException('ثبت ترجمه راه ارتباطی آزمایشی ناموفق بود.');
+        if (!$translationId) {
+            throw new RuntimeException('ثبت ترجمه راه ارتباطی آزمایشی ناموفق بود.');
+        }
     }
 
-    private function contactTemplates(int $userIndex, string $username): array {
+    private function contactTemplates(int $userIndex, string $username): array
+    {
         $number = $userIndex + 1;
         return [
-            ['mode'=>$userIndex % 2 === 0 ? 'phone' : 'email','platform'=>'other','value'=>$userIndex % 2 === 0 ? sprintf('0991%07d', 1000000 + $number) : sprintf('sornaz.academy.manager%02d@gmail.com', $number),'priority'=>'primary','status'=>'active','note'=>'راه ارتباطی اصلی کاربر؛ کد تأیید یک‌بارمصرف با موفقیت ثبت شده است.'],
-            ['mode'=>$userIndex % 2 === 0 ? 'email' : 'phone','platform'=>'other','value'=>$userIndex % 2 === 0 ? sprintf('sornaz.manager%02d@gmail.com', $number) : sprintf('0912%07d', 5000000 + $number),'priority'=>'support','status'=>'active','note'=>'راه ارتباطی پشتیبان برای زمان‌هایی که مورد اصلی در دسترس نیست.'],
-            ['mode'=>'social','platform'=>'instagram','value'=>'https://instagram.com/' . $username,'priority'=>'secondary','status'=>'active','note'=>'صفحه عمومی اینستاگرام؛ پیام‌های کاری در ساعات اداری بررسی می‌شوند.'],
-            ['mode'=>'social','platform'=>'telegram','value'=>'https://t.me/' . $username,'priority'=>'support','status'=>'active','note'=>'شناسه تلگرام برای پشتیبانی و ارسال فایل‌های آموزشی.'],
-            ['mode'=>'phone','platform'=>'other','value'=>sprintf('0935%07d', 6000000 + $number),'priority'=>'emergency','status'=>'active','note'=>'شماره تماس اضطراری؛ فقط برای موارد فوری استفاده شود.'],
-            ['mode'=>'social','platform'=>'website','value'=>'https://' . $username . '.sornaz.test','priority'=>'secondary','status'=>'active','note'=>'وب‌سایت آزمایشی معرفی مدیر و برنامه‌های آموزشگاه.'],
-            ['mode'=>'email','platform'=>'other','value'=>sprintf('%s.office@gmail.com', $username),'priority'=>'ledger','status'=>'active','note'=>'ایمیل امور اداری و دریافت اسناد و صورت‌حساب‌ها.'],
-            ['mode'=>'social','platform'=>'whats-app','value'=>'https://wa.me/98' . substr(sprintf('0919%07d', 7000000 + $number), 1),'priority'=>'support','status'=>'active','note'=>'واتساپ کاری؛ تماس صوتی فقط با هماهنگی قبلی انجام شود.'],
-            ['mode'=>'social','platform'=>'linkedin','value'=>'https://linkedin.com/in/' . $username,'priority'=>'other','status'=>'inactive','note'=>'پروفایل حرفه‌ای قدیمی است و ممکن است با تأخیر به‌روزرسانی شود.'],
-            ['mode'=>'social','platform'=>'google-meet','value'=>'https://meet.google.com/snz-' . sprintf('%04d', $number) . '-mgr','priority'=>'other','status'=>'deactive','note'=>'لینک جلسه آنلاین رزرو؛ در حال حاضر فقط با تعیین وقت قبلی فعال می‌شود.'],
+            ['mode' => $userIndex % 2 === 0 ? 'phone' : 'email', 'platform' => 'other', 'value' => $userIndex % 2 === 0 ? sprintf('0991%07d', 1000000 + $number) : sprintf('sornaz.academy.manager%02d@gmail.com', $number), 'priority' => 'primary', 'status' => 'active', 'note' => 'راه ارتباطی اصلی کاربر؛ کد تأیید یک‌بارمصرف با موفقیت ثبت شده است.'],
+            ['mode' => $userIndex % 2 === 0 ? 'email' : 'phone', 'platform' => 'other', 'value' => $userIndex % 2 === 0 ? sprintf('sornaz.manager%02d@gmail.com', $number) : sprintf('0912%07d', 5000000 + $number), 'priority' => 'support', 'status' => 'active', 'note' => 'راه ارتباطی پشتیبان برای زمان‌هایی که مورد اصلی در دسترس نیست.'],
+            ['mode' => 'social', 'platform' => 'instagram', 'value' => 'https://instagram.com/' . $username, 'priority' => 'secondary', 'status' => 'active', 'note' => 'صفحه عمومی اینستاگرام؛ پیام‌های کاری در ساعات اداری بررسی می‌شوند.'],
+            ['mode' => 'social', 'platform' => 'telegram', 'value' => 'https://t.me/' . $username, 'priority' => 'support', 'status' => 'active', 'note' => 'شناسه تلگرام برای پشتیبانی و ارسال فایل‌های آموزشی.'],
+            ['mode' => 'phone', 'platform' => 'other', 'value' => sprintf('0935%07d', 6000000 + $number), 'priority' => 'emergency', 'status' => 'active', 'note' => 'شماره تماس اضطراری؛ فقط برای موارد فوری استفاده شود.'],
+            ['mode' => 'social', 'platform' => 'website', 'value' => 'https://' . $username . '.sornaz.test', 'priority' => 'secondary', 'status' => 'active', 'note' => 'وب‌سایت آزمایشی معرفی مدیر و برنامه‌های آموزشگاه.'],
+            ['mode' => 'email', 'platform' => 'other', 'value' => sprintf('%s.office@gmail.com', $username), 'priority' => 'ledger', 'status' => 'active', 'note' => 'ایمیل امور اداری و دریافت اسناد و صورت‌حساب‌ها.'],
+            ['mode' => 'social', 'platform' => 'whats-app', 'value' => 'https://wa.me/98' . substr(sprintf('0919%07d', 7000000 + $number), 1), 'priority' => 'support', 'status' => 'active', 'note' => 'واتساپ کاری؛ تماس صوتی فقط با هماهنگی قبلی انجام شود.'],
+            ['mode' => 'social', 'platform' => 'linkedin', 'value' => 'https://linkedin.com/in/' . $username, 'priority' => 'other', 'status' => 'inactive', 'note' => 'پروفایل حرفه‌ای قدیمی است و ممکن است با تأخیر به‌روزرسانی شود.'],
+            ['mode' => 'social', 'platform' => 'google-meet', 'value' => 'https://meet.google.com/snz-' . sprintf('%04d', $number) . '-mgr', 'priority' => 'other', 'status' => 'deactive', 'note' => 'لینک جلسه آنلاین رزرو؛ در حال حاضر فقط با تعیین وقت قبلی فعال می‌شود.'],
         ];
     }
 
-    private function syncAddresses(int $userId, int $userIndex, string $registeredAt,?int $requestedCount=null): void {
+    private function syncAddresses(int $userId, int $userIndex, string $registeredAt, ?int $requestedCount = null): void
+    {
         $locations = $this->locations();
         $addressCount = $requestedCount ?? (($userIndex % 3) + 1);
         $registrationTimestamp = strtotime($registeredAt);
@@ -610,20 +904,24 @@ class AdminTestDataService {
         for ($addressIndex = 0; $addressIndex < $addressCount; $addressIndex++) {
             $location = $locations[($userIndex * 3 + $addressIndex) % count($locations)];
             $province = DB::table('world_iran_provinces')->where('province_name', $location['province'])->first();
-            if (!$province) throw new RuntimeException('استان آدرس آزمایشی یافت نشد: ' . $location['province']);
+            if (!$province) {
+                throw new RuntimeException('استان آدرس آزمایشی یافت نشد: ' . $location['province']);
+            }
             $county = DB::table('world_iran_counties')
                 ->where('county_name', $location['county'])
-                ->where('province_id', (int)$province['province_id'])
+                ->where('province_id', (int) $province['province_id'])
                 ->first();
-            if (!$county) throw new RuntimeException('شهرستان آدرس آزمایشی با استان انتخاب‌شده تطابق ندارد: ' . $location['county']);
+            if (!$county) {
+                throw new RuntimeException('شهرستان آدرس آزمایشی با استان انتخاب‌شده تطابق ندارد: ' . $location['county']);
+            }
 
             $addressCreatedAt = date('Y-m-d H:i:s', $registrationTimestamp + ($addressIndex + 1) * 86400 + ($userIndex % 12) * 3600);
             $addressUpdatedAt = date('Y-m-d H:i:s', strtotime($addressCreatedAt) + (($addressIndex + 1) * 5) * 3600);
             $existing = DB::table('user_addresses')->where('user_id', $userId)->where('postal_code', $location['postal_code'])->first();
             $values = [
                 'country_id' => 0,
-                'province_id' => (int)$province['province_id'],
-                'county_id' => (int)$county['county_id'],
+                'province_id' => (int) $province['province_id'],
+                'county_id' => (int) $county['county_id'],
                 'is_main' => $addressIndex === 0 ? 1 : 0,
                 'latitude' => $location['latitude'],
                 'longitude' => $location['longitude'],
@@ -637,11 +935,13 @@ class AdminTestDataService {
             ];
 
             if ($existing) {
-                $addressId = (int)$existing['address_id'];
+                $addressId = (int) $existing['address_id'];
                 DB::table('user_addresses')->where('address_id', $addressId)->update($values);
             } else {
                 $addressId = DB::table('user_addresses')->insertGetId(['user_id' => $userId] + $values);
-                if (!$addressId) throw new RuntimeException('ایجاد آدرس آزمایشی کاربر ناموفق بود.');
+                if (!$addressId) {
+                    throw new RuntimeException('ایجاد آدرس آزمایشی کاربر ناموفق بود.');
+                }
             }
 
             $this->setAddressTranslation($addressId, $userId, 'address', $location['address'], $addressCreatedAt, $addressUpdatedAt);
@@ -649,7 +949,8 @@ class AdminTestDataService {
         }
     }
 
-    private function setAddressTranslation(int $addressId, int $userId, string $field, string $value, string $createdAt, string $updatedAt): void {
+    private function setAddressTranslation(int $addressId, int $userId, string $field, string $value, string $createdAt, string $updatedAt): void
+    {
         $translation = DB::table('translations')->where('table_name', 'user_addresses')->where('table_id', $addressId)
             ->where('locale', 'fa')->where('field', $field)->first();
         $values = [
@@ -659,31 +960,35 @@ class AdminTestDataService {
             'deleted_at' => null, 'deleted_by' => null,
         ];
         if ($translation) {
-            DB::table('translations')->where('translation_id', (int)$translation['translation_id'])->update($values);
+            DB::table('translations')->where('translation_id', (int) $translation['translation_id'])->update($values);
             return;
         }
         $translationId = DB::table('translations')->insertGetId([
             'table_name' => 'user_addresses', 'table_id' => $addressId, 'locale' => 'fa', 'field' => $field,
         ] + $values);
-        if (!$translationId) throw new RuntimeException('ثبت ترجمه آدرس آزمایشی ناموفق بود.');
+        if (!$translationId) {
+            throw new RuntimeException('ثبت ترجمه آدرس آزمایشی ناموفق بود.');
+        }
     }
 
-    private function locations(): array {
+    private function locations(): array
+    {
         return [
-            ['province'=>'تهران','county'=>'تهران','address'=>'تهران، بزرگراه شیخ فضل‌الله نوری، ورودی بزرگراه شهید همت، برج میلاد','latitude'=>35.7448416,'longitude'=>51.3753212,'postal_code'=>'1449614531','note'=>'نشانی اصلی آزمایشی؛ مراجعه حضوری بهتر است پیش از ساعت ۱۸ هماهنگ شود.'],
-            ['province'=>'فارس','county'=>'شیراز','address'=>'شیراز، بلوار گلستان، حدفاصل چهارراه ادبیات و چهارراه حافظیه، آرامگاه حافظ','latitude'=>29.6259365,'longitude'=>52.5585667,'postal_code'=>'7136419151','note'=>'نشانی دوم آزمایشی در محدوده گردشگری؛ در روزهای تعطیل احتمال شلوغی وجود دارد.'],
-            ['province'=>'اصفهان','county'=>'اصفهان','address'=>'اصفهان، میدان امام حسین، خیابان سپه، میدان نقش جهان','latitude'=>32.6573073,'longitude'=>51.6775612,'postal_code'=>'8146414848','note'=>'محل در محدوده تاریخی است و دسترسی خودرو در بعضی ساعت‌ها محدود می‌شود.'],
-            ['province'=>'آذربایجان شرقی','county'=>'تبریز','address'=>'تبریز، محله ششگلان، خیابان ثقةالاسلام، جنب خیابان عارف، مقبره‌الشعرا','latitude'=>38.0820297,'longitude'=>46.2919108,'postal_code'=>'5138663411','note'=>'نشانی اجاره‌ای آزمایشی؛ ممکن است بین ساعت ۱۳ تا ۱۵ پاسخ‌گویی حضوری انجام نشود.'],
-            ['province'=>'خراسان رضوی','county'=>'مشهد','address'=>'مشهد، خیابان امام رضا، میدان بیت‌المقدس، ورودی باب‌الرضا حرم مطهر رضوی','latitude'=>36.2879029,'longitude'=>59.6157291,'postal_code'=>'9137913316','note'=>'به علت محدودیت ترافیکی مرکز شهر، استفاده از حمل‌ونقل عمومی پیشنهاد می‌شود.'],
-            ['province'=>'گیلان','county'=>'رشت','address'=>'رشت، میدان شهرداری، مجموعه تاریخی شهرداری رشت','latitude'=>37.2759338,'longitude'=>49.5883064,'postal_code'=>'4136934364','note'=>'این نشانی برای تحویل مرسوله در ساعات اداری مناسب‌تر است.'],
-            ['province'=>'یزد','county'=>'یزد','address'=>'یزد، خیابان امام خمینی، میدان امیرچخماق، مجموعه تاریخی امیرچخماق','latitude'=>31.8972362,'longitude'=>54.3686977,'postal_code'=>'8916736918','note'=>'نشانی در بافت تاریخی قرار دارد؛ پیش از مراجعه تلفنی هماهنگ شود.'],
-            ['province'=>'کرمان','county'=>'کرمان','address'=>'کرمان، میدان ارگ، بازار گنجعلی‌خان، مجموعه گنجعلی‌خان','latitude'=>30.2924087,'longitude'=>57.0671107,'postal_code'=>'7616914111','note'=>'دسترسی مستقیم خودرو تا ورودی بازار ممکن نیست و بخشی از مسیر پیاده است.'],
-            ['province'=>'همدان','county'=>'همدان','address'=>'همدان، میدان بوعلی سینا، آرامگاه بوعلی سینا','latitude'=>34.7988575,'longitude'=>48.5146239,'postal_code'=>'6516738695','note'=>'خانه آزمایشی نزدیک میدان است؛ ممکن است عصرها کسی در محل حضور نداشته باشد.'],
-            ['province'=>'خوزستان','county'=>'اهواز','address'=>'اهواز، بلوار ساحلی شرقی، حدفاصل خیابان سلمان فارسی و میدان شهدا، پل سفید','latitude'=>31.3282914,'longitude'=>48.6706183,'postal_code'=>'6135714387','note'=>'برای ملاقات حضوری، ساعات خنک‌تر روز انتخاب شود و هماهنگی قبلی انجام گیرد.'],
+            ['province' => 'تهران', 'county' => 'تهران', 'address' => 'تهران، بزرگراه شیخ فضل‌الله نوری، ورودی بزرگراه شهید همت، برج میلاد', 'latitude' => 35.7448416, 'longitude' => 51.3753212, 'postal_code' => '1449614531', 'note' => 'نشانی اصلی آزمایشی؛ مراجعه حضوری بهتر است پیش از ساعت ۱۸ هماهنگ شود.'],
+            ['province' => 'فارس', 'county' => 'شیراز', 'address' => 'شیراز، بلوار گلستان، حدفاصل چهارراه ادبیات و چهارراه حافظیه، آرامگاه حافظ', 'latitude' => 29.6259365, 'longitude' => 52.5585667, 'postal_code' => '7136419151', 'note' => 'نشانی دوم آزمایشی در محدوده گردشگری؛ در روزهای تعطیل احتمال شلوغی وجود دارد.'],
+            ['province' => 'اصفهان', 'county' => 'اصفهان', 'address' => 'اصفهان، میدان امام حسین، خیابان سپه، میدان نقش جهان', 'latitude' => 32.6573073, 'longitude' => 51.6775612, 'postal_code' => '8146414848', 'note' => 'محل در محدوده تاریخی است و دسترسی خودرو در بعضی ساعت‌ها محدود می‌شود.'],
+            ['province' => 'آذربایجان شرقی', 'county' => 'تبریز', 'address' => 'تبریز، محله ششگلان، خیابان ثقةالاسلام، جنب خیابان عارف، مقبره‌الشعرا', 'latitude' => 38.0820297, 'longitude' => 46.2919108, 'postal_code' => '5138663411', 'note' => 'نشانی اجاره‌ای آزمایشی؛ ممکن است بین ساعت ۱۳ تا ۱۵ پاسخ‌گویی حضوری انجام نشود.'],
+            ['province' => 'خراسان رضوی', 'county' => 'مشهد', 'address' => 'مشهد، خیابان امام رضا، میدان بیت‌المقدس، ورودی باب‌الرضا حرم مطهر رضوی', 'latitude' => 36.2879029, 'longitude' => 59.6157291, 'postal_code' => '9137913316', 'note' => 'به علت محدودیت ترافیکی مرکز شهر، استفاده از حمل‌ونقل عمومی پیشنهاد می‌شود.'],
+            ['province' => 'گیلان', 'county' => 'رشت', 'address' => 'رشت، میدان شهرداری، مجموعه تاریخی شهرداری رشت', 'latitude' => 37.2759338, 'longitude' => 49.5883064, 'postal_code' => '4136934364', 'note' => 'این نشانی برای تحویل مرسوله در ساعات اداری مناسب‌تر است.'],
+            ['province' => 'یزد', 'county' => 'یزد', 'address' => 'یزد، خیابان امام خمینی، میدان امیرچخماق، مجموعه تاریخی امیرچخماق', 'latitude' => 31.8972362, 'longitude' => 54.3686977, 'postal_code' => '8916736918', 'note' => 'نشانی در بافت تاریخی قرار دارد؛ پیش از مراجعه تلفنی هماهنگ شود.'],
+            ['province' => 'کرمان', 'county' => 'کرمان', 'address' => 'کرمان، میدان ارگ، بازار گنجعلی‌خان، مجموعه گنجعلی‌خان', 'latitude' => 30.2924087, 'longitude' => 57.0671107, 'postal_code' => '7616914111', 'note' => 'دسترسی مستقیم خودرو تا ورودی بازار ممکن نیست و بخشی از مسیر پیاده است.'],
+            ['province' => 'همدان', 'county' => 'همدان', 'address' => 'همدان، میدان بوعلی سینا، آرامگاه بوعلی سینا', 'latitude' => 34.7988575, 'longitude' => 48.5146239, 'postal_code' => '6516738695', 'note' => 'خانه آزمایشی نزدیک میدان است؛ ممکن است عصرها کسی در محل حضور نداشته باشد.'],
+            ['province' => 'خوزستان', 'county' => 'اهواز', 'address' => 'اهواز، بلوار ساحلی شرقی، حدفاصل خیابان سلمان فارسی و میدان شهدا، پل سفید', 'latitude' => 31.3282914, 'longitude' => 48.6706183, 'postal_code' => '6135714387', 'note' => 'برای ملاقات حضوری، ساعات خنک‌تر روز انتخاب شود و هماهنگی قبلی انجام گیرد.'],
         ];
     }
 
-    private function userValues(array $person, int $index, string $createdAt, string $passwordHash): array {
+    private function userValues(array $person, int $index, string $createdAt, string $passwordHash): array
+    {
         $createdTimestamp = strtotime($createdAt);
         $status = $this->statusFor($index);
         $approvedBySiteAdmin = $status === 'approved' && $index >= 20 && $index < 32;
@@ -723,7 +1028,8 @@ class AdminTestDataService {
         ];
     }
 
-    private function setFullNameTranslation(int $userId, string $fullName, string $createdAt): void {
+    private function setFullNameTranslation(int $userId, string $fullName, string $createdAt): void
+    {
         $translation = DB::table('translations')
             ->where('table_name', 'users')->where('table_id', $userId)
             ->where('locale', 'fa')->where('field', 'full_name')->first();
@@ -737,7 +1043,7 @@ class AdminTestDataService {
             'deleted_by' => null,
         ];
         if ($translation) {
-            DB::table('translations')->where('translation_id', (int)$translation['translation_id'])->update($values + [
+            DB::table('translations')->where('translation_id', (int) $translation['translation_id'])->update($values + [
                 'created_by' => $userId,
             ]);
             return;
@@ -746,33 +1052,49 @@ class AdminTestDataService {
             'table_name' => 'users', 'table_id' => $userId, 'locale' => 'fa', 'field' => 'full_name',
             'created_at' => $createdAt, 'created_by' => $userId,
         ] + $values);
-        if (!$translationId) throw new RuntimeException('ثبت ترجمه نام کاربر آزمایشی ناموفق بود.');
+        if (!$translationId) {
+            throw new RuntimeException('ثبت ترجمه نام کاربر آزمایشی ناموفق بود.');
+        }
     }
 
-    private function statusFor(int $index): string {
-        if ($index < 20) return 'pending';
-        if ($index < 40) return 'approved';
-        if ($index < 44) return 'rejected';
-        if ($index < 47) return 'inactive';
+    private function statusFor(int $index): string
+    {
+        if ($index < 20) {
+            return 'pending';
+        }
+        if ($index < 40) {
+            return 'approved';
+        }
+        if ($index < 44) {
+            return 'rejected';
+        }
+        if ($index < 47) {
+            return 'inactive';
+        }
         return 'banned';
     }
 
-    private function birthdayFor(int $index): string {
+    private function birthdayFor(int $index): string
+    {
         $ages = [25, 27, 29, 61, 65, 70, 75, 80, 63, 68];
         $age = $index < 40 ? 30 + (($index * 7) % 31) : $ages[$index - 40];
         return date('Y-m-d', strtotime('-' . $age . ' years -' . (($index * 17) % 330) . ' days'));
     }
 
-    private function nationalCode(int $base): string {
+    private function nationalCode(int $base): string
+    {
         $digits = str_split(sprintf('%09d', $base));
         $sum = 0;
-        foreach ($digits as $index => $digit) $sum += (int)$digit * (10 - $index);
+        foreach ($digits as $index => $digit) {
+            $sum += (int) $digit * (10 - $index);
+        }
         $remainder = $sum % 11;
         $checkDigit = $remainder < 2 ? $remainder : 11 - $remainder;
         return implode('', $digits) . $checkDigit;
     }
 
-    private function people(): array {
+    private function people(): array
+    {
         $maleFirstNames = ['علی', 'رضا', 'امیر', 'حسین', 'مهدی', 'محمد', 'سعید', 'آرش', 'پویان', 'کیوان', 'فرهاد', 'بهرام', 'نوید', 'بابک', 'کامران', 'کوروش', 'داریوش', 'سامان', 'رامین', 'شهاب', 'میلاد', 'محسن', 'مسعود', 'یاسر', 'جواد'];
         $femaleFirstNames = ['مریم', 'سارا', 'نگار', 'الهام', 'نرگس', 'لیلا', 'مهسا', 'نازنین', 'شبنم', 'پرستو', 'سپیده', 'ترانه', 'آزاده', 'سمیرا', 'بهاره', 'غزل', 'حدیث', 'رویا', 'مینا', 'شیوا', 'الهه', 'زهرا', 'فاطمه', 'ریحانه', 'هانیه'];
         $lastNames = ['محمدی', 'احمدی', 'رضایی', 'کریمی', 'حسینی', 'مرادی', 'قاسمی', 'اکبری', 'صادقی', 'نوری'];

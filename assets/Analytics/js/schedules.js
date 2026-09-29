@@ -1,45 +1,678 @@
-(function(){'use strict';
-let allSchedules=[],weeklySchedules=[],weeklyDates=[],weeklyTimeRanges=[],totalSchedules=0,currentPage=1,perPage=10,currentBranch='all',expanded=null,searchTimer=null,schedulesView='list',weekStart=null,firstScheduleWeek=null,lastScheduleWeek=null;const swappedWeeklyBranches=new Set(),showEmptyWeeklyBranches=new Set(),showEmptyWeeklyDays=new Set(),showEmptyWeeklyTimes=new Set(),weeklyLayoutByBranch=new Map();
-let branches=[],lessons=[];
-let scheduleCalendarDisplay='default';
-function scheduleUsesPersianCalendar(){return scheduleCalendarDisplay==='persian'||(scheduleCalendarDisplay==='default'&&String(document.documentElement.lang||'fa').toLowerCase().startsWith('fa'));}
-window.formatScheduleDate=function(value){const iso=String(value||'').slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(iso))return value||'';if(!scheduleUsesPersianCalendar())return iso.replace(/-/g,'/');return new Intl.DateTimeFormat('fa-IR-u-ca-persian',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(iso+'T12:00:00'));};
-window.changeScheduleCalendarDisplay=function(value){scheduleCalendarDisplay=['default','persian','gregorian'].includes(value)?value:'default';if(schedulesView==='weekly'&&weeklyDates.length){renderWeeklySchedules(weeklyDates);renderBranchWeekPaginations();}else render();};
-const enc=d=>btoa(unescape(encodeURIComponent(JSON.stringify(d)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-async function api(url,data=null){const token=window.adminCsrfToken||'',o={method:data===null?'GET':'POST',credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}};if(data!==null){o.headers['Content-Type']='application/x-www-form-urlencoded;charset=UTF-8';o.headers['X-CSRF-TOKEN']=token;o.body=new URLSearchParams({_token:token,payload_b64:enc(data)}).toString();}const r=await fetch(url,o),raw=await r.text();let p;try{p=JSON.parse(raw)}catch(_){throw new Error('پاسخ معتبر JSON دریافت نشد.')}const x=p.data??p;if(!r.ok||x.success===false)throw new Error(x.message||'عملیات جلسه ناموفق بود.');return x.data??x;}
-function params(page){const p=new URLSearchParams({page,perPage});if(currentBranch!=='all')p.set('branch',currentBranch);const map={scheduleSearch:'search',filterScheduleType:'mode',filterScheduleStatus:'status',filterScheduleInstrument:'lesson',filterScheduleClassroom:'classroom',filterScheduleTimeFrom:'timeFrom',filterScheduleTimeTo:'timeTo'};Object.entries(map).forEach(([id,key])=>{const v=document.getElementById(id)?.value;if(v)p.set(key,v);});const day=document.getElementById('filterScheduleDay')?.value;if(day!=='')p.set('day',day);return p;}
-async function load(page=1){try{const d=await api('/academy/admin/class-schedules?'+params(page));allSchedules=d.schedules||[];totalSchedules=Number(d.total||0);currentPage=Number(d.page||1);perPage=Number(d.perPage||perPage);branches=d.branches||branches;window.scheduleClassrooms=d.classrooms||window.scheduleClassrooms;lessons=d.lessons||lessons;weeklyTimeRanges=d.timeRanges||weeklyTimeRanges;renderTabs();renderFilters();renderTimeFilters(allSchedules);render();}catch(e){alert(e.message);}}
-function renderTabs(){const c=document.getElementById('schedulesBranchTabs');if(!c)return;c.innerHTML=`<button data-value="all" onclick="filterSchedulesByBranch('all')" class="schedule-branch-tab px-5 py-2.5 rounded-2xl text-sm ${currentBranch==='all'?'bg-indigo-600 text-white':'border'}">همه</button>`+branches.map(b=>`<button onclick="filterSchedulesByBranch(${b.id})" class="schedule-branch-tab px-5 py-2.5 rounded-2xl text-sm ${String(currentBranch)===String(b.id)?'bg-indigo-600 text-white':'border'}">${b.name}</button>`).join('');}
-function renderFilters(){const fill=(id,label,rows)=>{const s=document.getElementById(id);if(!s)return;const v=s.value;s.innerHTML=`<option value="">${label}</option>`+rows.map(x=>`<option value="${x.id}" ${String(v)===String(x.id)?'selected':''}>${x.name}</option>`).join('');};fill('filterScheduleInstrument','همه درس‌ها',lessons);fill('filterScheduleClassroom','همه کلاس‌ها',window.scheduleClassrooms);}
-function renderTimeFilters(schedules){const toMinutes=value=>{const match=String(value||'').match(/^(\d{2}):(\d{2})/);return match?Number(match[1])*60+Number(match[2]):null;},times=schedules.flatMap(item=>[toMinutes(item.startTime),toMinutes(item.endTime)]).filter(value=>value!==null);if(!times.length)return;const first=Math.floor(Math.min(...times)/5)*5,last=Math.ceil(Math.max(...times)/5)*5;['filterScheduleTimeFrom','filterScheduleTimeTo'].forEach(id=>{const select=document.getElementById(id);if(!select)return;const selected=select.value,values=[];for(let minute=first;minute<=last;minute+=5)values.push(String(Math.floor(minute/60)).padStart(2,'0')+':'+String(minute%60).padStart(2,'0'));if(selected&&!values.includes(selected))values.push(selected);values.sort();select.innerHTML='<option value="">همه ساعت‌ها</option>'+values.map(value=>`<option value="${value}" ${value===selected?'selected':''}>${value}</option>`).join('');});}
-function render(){const tb=document.querySelector('#schedulesTable tbody');if(!tb)return;tb.innerHTML='';if(!allSchedules.length)tb.innerHTML=window.getScheduleEmptyRowHTML();for(const item of allSchedules){const tr=document.createElement('tr');tr.className='hover:bg-gray-50';tr.innerHTML=window.getScheduleRowHTML(item);tb.appendChild(tr);if(expanded&&expanded.id===item.id){const x=document.createElement('tr');x.className='bg-gray-50';x.innerHTML=`<td colspan="10" class="p-5">${window.getScheduleAttendancePanelHTML(item,true)}</td>`;tb.appendChild(x);}}const start=(currentPage-1)*perPage,pages=Math.max(1,Math.ceil(totalSchedules/perPage));document.getElementById('schedulesPaginationInfo').textContent=`نمایش ${totalSchedules?start+1:0} تا ${Math.min(start+perPage,totalSchedules)} از ${totalSchedules} جلسه`;document.getElementById('schedulesPagination')?.classList.toggle('hidden',pages<=1);const select=document.getElementById('schedulesPerPage');if(select)select.value=String(perPage);let html=`<button onclick="changeSchedulesPage(1)" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ${currentPage===1?'disabled':''}>اول</button><button onclick="changeSchedulesPage(${currentPage-1})" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ${currentPage===1?'disabled':''}>قبلی</button>`;let from=Math.max(1,currentPage-2),to=Math.min(pages,from+4);if(to-from<4)from=Math.max(1,to-4);for(let i=from;i<=to;i++)html+=`<button onclick="changeSchedulesPage(${i})" class="px-3 py-1.5 rounded-lg ${i===currentPage?'bg-indigo-600 text-white':'border hover:bg-gray-50'}">${i}</button>`;html+=`<button onclick="changeSchedulesPage(${currentPage+1})" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ${currentPage===pages?'disabled':''}>بعدی</button><button onclick="changeSchedulesPage(${pages})" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ${currentPage===pages?'disabled':''}>آخر</button>`;document.getElementById('schedulesPaginationButtons').innerHTML=html;}
-window.filterSchedulesByBranch=id=>{currentBranch=id;expanded=null;schedulesView==='weekly'?loadWeeklySchedules():load(1);};window.filterSchedules=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{expanded=null;schedulesView==='weekly'?loadWeeklySchedules():load(1);},250);};window.changeSchedulesPage=p=>{const pages=Math.max(1,Math.ceil(totalSchedules/perPage));if(p>=1&&p<=pages)load(p);};window.changeSchedulesPerPage=value=>{const allowed=[10,20,30,50,100],next=Number(value);perPage=allowed.includes(next)?next:10;expanded=null;load(1);};window.sortSchedulesBy=f=>{allSchedules.sort((a,b)=>String(a[f]??'').localeCompare(String(b[f]??''),'fa'));render();};window.updateScheduleSortIcons=()=>{};
-window.viewSchedule=id=>{const x=allSchedules.find(s=>s.id===id)||weeklySchedules.find(s=>s.id===id);if(x)document.getElementById('modalContainer').innerHTML=window.getScheduleDetailsModalHTML(x);};
-window.openScheduleSessionCancellation=async function(termId,sessionId){try{if(typeof window.loadTerms==='function')await window.loadTerms();if(typeof window.openTermSessionCancellation!=='function')throw new Error('فرم لغو جلسه در دسترس نیست.');await window.openTermSessionCancellation(termId,sessionId);}catch(error){alert(error.message);}};
-window.restoreScheduleSession=async function(termId,sessionId){if(typeof window.restoreTermSession!=='function')return alert('امکان بازگردانی جلسه در دسترس نیست.');await window.restoreTermSession(termId,sessionId);await(schedulesView==='weekly'?loadWeeklySchedules():load(currentPage));};
+(function () {
+  'use strict';
+  let allSchedules = [],
+    weeklySchedules = [],
+    weeklyDates = [],
+    weeklyTimeRanges = [],
+    totalSchedules = 0,
+    currentPage = 1,
+    perPage = 10,
+    currentBranch = 'all',
+    expanded = null,
+    searchTimer = null,
+    schedulesView = 'list',
+    weekStart = null,
+    firstScheduleWeek = null,
+    lastScheduleWeek = null;
+  const swappedWeeklyBranches = new Set(),
+    showEmptyWeeklyBranches = new Set(),
+    showEmptyWeeklyDays = new Set(),
+    showEmptyWeeklyTimes = new Set(),
+    weeklyLayoutByBranch = new Map();
+  let branches = [],
+    lessons = [];
+  let scheduleCalendarDisplay = 'default';
+  function scheduleUsesPersianCalendar() {
+    return (
+      scheduleCalendarDisplay === 'persian' ||
+      (scheduleCalendarDisplay === 'default' &&
+        String(document.documentElement.lang || 'fa')
+          .toLowerCase()
+          .startsWith('fa'))
+    );
+  }
+  window.formatScheduleDate = function (value) {
+    const iso = String(value || '').slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return value || '';
+    if (!scheduleUsesPersianCalendar()) return iso.replace(/-/g, '/');
+    return new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date(iso + 'T12:00:00'));
+  };
+  window.changeScheduleCalendarDisplay = function (value) {
+    scheduleCalendarDisplay = ['default', 'persian', 'gregorian'].includes(value)
+      ? value
+      : 'default';
+    if (schedulesView === 'weekly' && weeklyDates.length) {
+      renderWeeklySchedules(weeklyDates);
+      renderBranchWeekPaginations();
+    } else render();
+  };
+  const enc = (d) =>
+    btoa(unescape(encodeURIComponent(JSON.stringify(d))))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  async function api(url, data = null) {
+    const token = window.adminCsrfToken || '',
+      o = {
+        method: data === null ? 'GET' : 'POST',
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      };
+    if (data !== null) {
+      o.headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+      o.headers['X-CSRF-TOKEN'] = token;
+      o.body = new URLSearchParams({ _token: token, payload_b64: enc(data) }).toString();
+    }
+    const r = await fetch(url, o),
+      raw = await r.text();
+    let p;
+    try {
+      p = JSON.parse(raw);
+    } catch (_) {
+      throw new Error('پاسخ معتبر JSON دریافت نشد.');
+    }
+    const x = p.data ?? p;
+    if (!r.ok || x.success === false) throw new Error(x.message || 'عملیات جلسه ناموفق بود.');
+    return x.data ?? x;
+  }
+  function params(page) {
+    const p = new URLSearchParams({ page, perPage });
+    if (currentBranch !== 'all') p.set('branch', currentBranch);
+    const map = {
+      scheduleSearch: 'search',
+      filterScheduleType: 'mode',
+      filterScheduleStatus: 'status',
+      filterScheduleInstrument: 'lesson',
+      filterScheduleClassroom: 'classroom',
+      filterScheduleTimeFrom: 'timeFrom',
+      filterScheduleTimeTo: 'timeTo',
+    };
+    Object.entries(map).forEach(([id, key]) => {
+      const v = document.getElementById(id)?.value;
+      if (v) p.set(key, v);
+    });
+    const day = document.getElementById('filterScheduleDay')?.value;
+    if (day !== '') p.set('day', day);
+    return p;
+  }
+  async function load(page = 1) {
+    try {
+      const d = await api('/academy/admin/class-schedules?' + params(page));
+      allSchedules = d.schedules || [];
+      totalSchedules = Number(d.total || 0);
+      currentPage = Number(d.page || 1);
+      perPage = Number(d.perPage || perPage);
+      branches = d.branches || branches;
+      window.scheduleClassrooms = d.classrooms || window.scheduleClassrooms;
+      lessons = d.lessons || lessons;
+      weeklyTimeRanges = d.timeRanges || weeklyTimeRanges;
+      renderTabs();
+      renderFilters();
+      renderTimeFilters(allSchedules);
+      render();
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+  function renderTabs() {
+    const c = document.getElementById('schedulesBranchTabs');
+    if (!c) return;
+    c.innerHTML =
+      `<button data-value="all" onclick="filterSchedulesByBranch('all')" class="schedule-branch-tab px-5 py-2.5 rounded-2xl text-sm ${currentBranch === 'all' ? 'bg-indigo-600 text-white' : 'border'}">همه</button>` +
+      branches
+        .map(
+          (b) =>
+            `<button onclick="filterSchedulesByBranch(${b.id})" class="schedule-branch-tab px-5 py-2.5 rounded-2xl text-sm ${String(currentBranch) === String(b.id) ? 'bg-indigo-600 text-white' : 'border'}">${b.name}</button>`
+        )
+        .join('');
+  }
+  function renderFilters() {
+    const fill = (id, label, rows) => {
+      const s = document.getElementById(id);
+      if (!s) return;
+      const v = s.value;
+      s.innerHTML =
+        `<option value="">${label}</option>` +
+        rows
+          .map(
+            (x) =>
+              `<option value="${x.id}" ${String(v) === String(x.id) ? 'selected' : ''}>${x.name}</option>`
+          )
+          .join('');
+    };
+    fill('filterScheduleInstrument', 'همه درس‌ها', lessons);
+    fill('filterScheduleClassroom', 'همه کلاس‌ها', window.scheduleClassrooms);
+  }
+  function renderTimeFilters(schedules) {
+    const toMinutes = (value) => {
+        const match = String(value || '').match(/^(\d{2}):(\d{2})/);
+        return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+      },
+      times = schedules
+        .flatMap((item) => [toMinutes(item.startTime), toMinutes(item.endTime)])
+        .filter((value) => value !== null);
+    if (!times.length) return;
+    const first = Math.floor(Math.min(...times) / 5) * 5,
+      last = Math.ceil(Math.max(...times) / 5) * 5;
+    ['filterScheduleTimeFrom', 'filterScheduleTimeTo'].forEach((id) => {
+      const select = document.getElementById(id);
+      if (!select) return;
+      const selected = select.value,
+        values = [];
+      for (let minute = first; minute <= last; minute += 5)
+        values.push(
+          String(Math.floor(minute / 60)).padStart(2, '0') +
+            ':' +
+            String(minute % 60).padStart(2, '0')
+        );
+      if (selected && !values.includes(selected)) values.push(selected);
+      values.sort();
+      select.innerHTML =
+        '<option value="">همه ساعت‌ها</option>' +
+        values
+          .map(
+            (value) =>
+              `<option value="${value}" ${value === selected ? 'selected' : ''}>${value}</option>`
+          )
+          .join('');
+    });
+  }
+  function render() {
+    const tb = document.querySelector('#schedulesTable tbody');
+    if (!tb) return;
+    tb.innerHTML = '';
+    if (!allSchedules.length) tb.innerHTML = window.getScheduleEmptyRowHTML();
+    for (const item of allSchedules) {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-gray-50';
+      tr.innerHTML = window.getScheduleRowHTML(item);
+      tb.appendChild(tr);
+      if (expanded && expanded.id === item.id) {
+        const x = document.createElement('tr');
+        x.className = 'bg-gray-50';
+        x.innerHTML = `<td colspan="10" class="p-5">${window.getScheduleAttendancePanelHTML(item, true)}</td>`;
+        tb.appendChild(x);
+      }
+    }
+    const start = (currentPage - 1) * perPage,
+      pages = Math.max(1, Math.ceil(totalSchedules / perPage));
+    document.getElementById('schedulesPaginationInfo').textContent =
+      `نمایش ${totalSchedules ? start + 1 : 0} تا ${Math.min(start + perPage, totalSchedules)} از ${totalSchedules} جلسه`;
+    document.getElementById('schedulesPagination')?.classList.toggle('hidden', pages <= 1);
+    const select = document.getElementById('schedulesPerPage');
+    if (select) select.value = String(perPage);
+    let html = `<button onclick="changeSchedulesPage(1)" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ${currentPage === 1 ? 'disabled' : ''}>اول</button><button onclick="changeSchedulesPage(${currentPage - 1})" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ${currentPage === 1 ? 'disabled' : ''}>قبلی</button>`;
+    let from = Math.max(1, currentPage - 2),
+      to = Math.min(pages, from + 4);
+    if (to - from < 4) from = Math.max(1, to - 4);
+    for (let i = from; i <= to; i++)
+      html += `<button onclick="changeSchedulesPage(${i})" class="px-3 py-1.5 rounded-lg ${i === currentPage ? 'bg-indigo-600 text-white' : 'border hover:bg-gray-50'}">${i}</button>`;
+    html += `<button onclick="changeSchedulesPage(${currentPage + 1})" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ${currentPage === pages ? 'disabled' : ''}>بعدی</button><button onclick="changeSchedulesPage(${pages})" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ${currentPage === pages ? 'disabled' : ''}>آخر</button>`;
+    document.getElementById('schedulesPaginationButtons').innerHTML = html;
+  }
+  window.filterSchedulesByBranch = (id) => {
+    currentBranch = id;
+    expanded = null;
+    schedulesView === 'weekly' ? loadWeeklySchedules() : load(1);
+  };
+  window.filterSchedules = () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      expanded = null;
+      schedulesView === 'weekly' ? loadWeeklySchedules() : load(1);
+    }, 250);
+  };
+  window.changeSchedulesPage = (p) => {
+    const pages = Math.max(1, Math.ceil(totalSchedules / perPage));
+    if (p >= 1 && p <= pages) load(p);
+  };
+  window.changeSchedulesPerPage = (value) => {
+    const allowed = [10, 20, 30, 50, 100],
+      next = Number(value);
+    perPage = allowed.includes(next) ? next : 10;
+    expanded = null;
+    load(1);
+  };
+  window.sortSchedulesBy = (f) => {
+    allSchedules.sort((a, b) => String(a[f] ?? '').localeCompare(String(b[f] ?? ''), 'fa'));
+    render();
+  };
+  window.updateScheduleSortIcons = () => {};
+  window.viewSchedule = (id) => {
+    const x = allSchedules.find((s) => s.id === id) || weeklySchedules.find((s) => s.id === id);
+    if (x)
+      document.getElementById('modalContainer').innerHTML = window.getScheduleDetailsModalHTML(x);
+  };
+  window.openScheduleSessionCancellation = async function (termId, sessionId) {
+    try {
+      if (typeof window.loadTerms === 'function') await window.loadTerms();
+      if (typeof window.openTermSessionCancellation !== 'function')
+        throw new Error('فرم لغو جلسه در دسترس نیست.');
+      await window.openTermSessionCancellation(termId, sessionId);
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+  window.restoreScheduleSession = async function (termId, sessionId) {
+    if (typeof window.restoreTermSession !== 'function')
+      return alert('امکان بازگردانی جلسه در دسترس نیست.');
+    await window.restoreTermSession(termId, sessionId);
+    await (schedulesView === 'weekly' ? loadWeeklySchedules() : load(currentPage));
+  };
 
-const scheduleEscape=value=>String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-function localISO(date){return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');}
-function currentSaturday(date=new Date()){const d=new Date(date.getFullYear(),date.getMonth(),date.getDate()),offset=(d.getDay()+1)%7;d.setDate(d.getDate()-offset);return d;}
-function weeklyParams(date,page){const p=params(page);p.set('date',date);p.set('perPage','100');p.delete('day');return p;}
-async function fetchScheduleDay(date){let page=1,rows=[];do{const data=await api('/academy/admin/class-schedules?'+weeklyParams(date,page));rows=rows.concat(data.schedules||[]);if(rows.length>=Number(data.total||0))break;page++;}while(page<100);return rows;}
-async function loadWeeklySchedules(){const host=document.getElementById('schedulesWeeklyTables');if(!host)return;host.innerHTML='<div class="rounded-3xl bg-white p-12 text-center text-gray-400">در حال دریافت برنامه هفتگی...</div>';try{const boundParams=new URLSearchParams();if(currentBranch!=='all')boundParams.set('branch',currentBranch);const bounds=await api('/academy/admin/class-schedule-week-bounds?'+boundParams);firstScheduleWeek=bounds.firstDate?currentSaturday(new Date(bounds.firstDate+'T12:00:00')):null;lastScheduleWeek=bounds.lastDate?currentSaturday(new Date(bounds.lastDate+'T12:00:00')):null;if(!weekStart)weekStart=currentSaturday();if(firstScheduleWeek&&weekStart<firstScheduleWeek)weekStart=new Date(firstScheduleWeek);if(lastScheduleWeek&&weekStart>lastScheduleWeek)weekStart=new Date(lastScheduleWeek);weeklyDates=Array.from({length:7},(_,i)=>{const d=new Date(weekStart);d.setDate(d.getDate()+i);return localISO(d);});weeklySchedules=(await Promise.all(weeklyDates.map(fetchScheduleDay))).flat();renderTimeFilters(weeklySchedules);renderWeeklySchedules(weeklyDates);renderBranchWeekPaginations();}catch(e){host.innerHTML=`<div class="rounded-3xl bg-white p-10 text-center text-red-500">${scheduleEscape(e.message)}</div>`;}}
-function weeklyRoomMatches(session,room){return room.online?session.mode==='online':session.mode!=='online'&&session.classroomId===room.id;}
-function weeklySessionCard(session,extra=''){return `<button onclick="viewSchedule(${session.id})" class="block w-full rounded-xl border-r-4 border-indigo-500 bg-indigo-50 p-2 text-right text-xs hover:bg-indigo-100"><span class="block font-bold text-indigo-700">${scheduleEscape(session.startTime)} تا ${scheduleEscape(session.endTime)}</span><span class="mt-1 block leading-5">${scheduleEscape(session.title)}</span><span class="mt-1 block text-gray-500">${scheduleEscape(session.lesson)}</span>${extra?`<span class="mt-1 block text-gray-400">${scheduleEscape(extra)}</span>`:''}</button>`;}
-function weeklyCompactCard(session,label){return `<button onclick="viewSchedule(${session.id})" class="block w-full rounded-xl border-r-4 border-indigo-500 bg-indigo-50 p-2 text-right text-xs hover:bg-indigo-100"><span class="block font-bold text-indigo-700">${scheduleEscape(label)}</span><span class="mt-1 block leading-5 text-gray-600">${scheduleEscape(session.title)}</span></button>`;}
-function weeklyAxisLabel(item){if(item.kind==='day')return `<span class="block font-bold">${scheduleEscape(item.name)}</span><span class="mt-1 block whitespace-nowrap text-xs text-gray-500">${scheduleEscape(window.formatScheduleDate(item.id))}</span>`;return `<span class="whitespace-nowrap">${scheduleEscape(item.name)}</span>`;}
-function weeklyMatrix(branch,dates){const dayNames=['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه'],sessions=weeklySchedules.filter(s=>s.branchId===branch.id),physical=(window.scheduleClassrooms||[]).filter(r=>r.branchId===branch.id),hasOnline=sessions.some(s=>s.mode==='online');let rooms=physical.map(r=>({id:r.id,name:r.name,online:false,kind:'class'})).concat(hasOnline?[{id:0,name:'کلاس آنلاین',online:true,kind:'class'}]:[]),days=dates.map((date,i)=>({id:date,name:dayNames[i],kind:'day'}));if(!showEmptyWeeklyBranches.has(branch.id))rooms=rooms.filter(room=>sessions.some(s=>weeklyRoomMatches(s,room)));if(!showEmptyWeeklyDays.has(branch.id))days=days.filter(day=>sessions.some(s=>s.date===day.id));const sourceTimes=showEmptyWeeklyTimes.has(branch.id)?weeklyTimeRanges:sessions.map(s=>({start:s.startTime,end:s.endTime})),times=[...new Map(sourceTimes.map(t=>[`${t.start}|${t.end}`,{id:`${t.start}|${t.end}`,name:`${t.start} تا ${t.end}`,start:t.start,end:t.end,kind:'time'}])).values()].sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end)),layout=weeklyLayoutByBranch.get(branch.id)||'class-day',swapped=swappedWeeklyBranches.has(branch.id);let rows,columns,corner,match,cellCard;if(layout==='class-time'){rows=rooms;columns=times;corner='کلاس / بازه زمانی';match=(s,room,time)=>weeklyRoomMatches(s,room)&&s.startTime===time.start&&s.endTime===time.end;cellCard=s=>weeklyCompactCard(s,days.find(day=>day.id===s.date)?.name||s.day);}else if(layout==='day-time'){rows=days;columns=times;corner='روز / بازه زمانی';match=(s,day,time)=>s.date===day.id&&s.startTime===time.start&&s.endTime===time.end;cellCard=s=>weeklyCompactCard(s,s.classroom);}else{rows=rooms;columns=days;corner='کلاس / روز';match=(s,room,day)=>weeklyRoomMatches(s,room)&&s.date===day.id;cellCard=s=>weeklySessionCard(s);}if(swapped){[rows,columns]=[columns,rows];const original=match;match=(s,row,column)=>original(s,column,row);corner=corner.split(' / ').reverse().join(' / ');}const body=rows.map(row=>`<tr><th class="sticky right-0 z-10 border bg-gray-50 p-3 text-right font-medium">${weeklyAxisLabel(row)}</th>${columns.map(column=>{const cell=sessions.filter(s=>match(s,row,column)).sort((a,b)=>a.date.localeCompare(b.date)||a.startTime.localeCompare(b.startTime));return `<td class="border p-2 align-top"><div class="space-y-2">${cell.map(cellCard).join('')||'<span class="block py-5 text-center text-xs text-gray-300">بدون جلسه</span>'}</div></td>`;}).join('')}</tr>`).join('');return `<table class="w-full border-collapse text-sm"><thead><tr><th class="sticky right-0 z-20 border bg-indigo-50 p-3">${corner}</th>${columns.map(item=>`<th class="border bg-indigo-50 p-3">${weeklyAxisLabel(item)}</th>`).join('')}</tr></thead><tbody>${body||`<tr><td colspan="${columns.length+1}" class="p-10 text-center text-gray-400">جلسه‌ای برای این چیدمان وجود ندارد.</td></tr>`}</tbody></table>`;}
-function renderBranchWeekPaginations(){const host=document.getElementById('schedulesWeeklyTables');if(!host||!weekStart)return;const visibleBranches=currentBranch==='all'?branches:branches.filter(b=>String(b.id)===String(currentBranch));let windowStart=new Date(weekStart);windowStart.setDate(windowStart.getDate()-14);if(firstScheduleWeek&&windowStart<firstScheduleWeek)windowStart=new Date(firstScheduleWeek);let windowEnd=new Date(windowStart);windowEnd.setDate(windowEnd.getDate()+28);if(lastScheduleWeek&&windowEnd>lastScheduleWeek){windowStart=new Date(lastScheduleWeek);windowStart.setDate(windowStart.getDate()-28);if(firstScheduleWeek&&windowStart<firstScheduleWeek)windowStart=new Date(firstScheduleWeek);}const weeks=Array.from({length:5},(_,i)=>{const date=new Date(windowStart);date.setDate(date.getDate()+i*7);return date;});host.querySelectorAll('section').forEach((section,index)=>{const branch=visibleBranches[index];if(!branch)return;section.dataset.branchId=branch.id;const atFirst=firstScheduleWeek&&weekStart<=firstScheduleWeek,atLast=lastScheduleWeek&&weekStart>=lastScheduleWeek,showClasses=showEmptyWeeklyBranches.has(branch.id),showDays=showEmptyWeeklyDays.has(branch.id),showTimes=showEmptyWeeklyTimes.has(branch.id),layout=weeklyLayoutByBranch.get(branch.id)||'class-day',activeClass='rounded-lg border border-green-600 bg-green-600 px-3 py-2 text-white hover:bg-green-700',idleClass='rounded-lg border border-emerald-200 px-3 py-2 text-emerald-700 hover:bg-emerald-50',layoutButton=mode=>`rounded-lg border px-3 py-2 ${layout===mode?'border-indigo-600 bg-indigo-600 text-white':'border-indigo-200 text-indigo-600 hover:bg-indigo-50'}`,classFilter=`<button onclick="toggleWeeklyEmptyClasses(${branch.id})" class="${showClasses?activeClass:idleClass}"><i class="fas fa-door-open ml-1"></i> ${showClasses?'پنهان‌کردن کلاس‌های خالی':'نمایش کلاس‌های خالی'}</button>`,dayFilter=`<button onclick="toggleWeeklyEmptyDays(${branch.id})" class="${showDays?activeClass:idleClass}"><i class="fas fa-calendar-day ml-1"></i> ${showDays?'پنهان‌کردن روزهای خالی':'نمایش روزهای خالی'}</button>`,timeFilter=`<button onclick="toggleWeeklyEmptyTimes(${branch.id})" class="${showTimes?activeClass:idleClass}"><i class="fas fa-clock ml-1"></i> ${showTimes?'پنهان‌کردن بازه‌های زمانی خالی':'نمایش بازه‌های زمانی خالی'}</button>`,axisFilters=layout==='class-time'?classFilter+timeFilter:layout==='day-time'?dayFilter+timeFilter:classFilter+dayFilter,html=`<div class="space-y-3"><div class="flex flex-wrap items-center gap-2 text-sm"><button onclick="goToFirstSchedulesWeek()" ${atFirst?'disabled':''} class="rounded-lg border px-3 py-2 disabled:opacity-40">اول</button><button onclick="changeSchedulesWeek(-1)" ${atFirst?'disabled':''} class="rounded-lg border px-3 py-2 disabled:opacity-40">قبلی</button>${weeks.map(date=>{const iso=localISO(date),active=iso===localISO(weekStart),outside=(firstScheduleWeek&&date<firstScheduleWeek)||(lastScheduleWeek&&date>lastScheduleWeek);return `<button onclick="selectSchedulesWeek('${iso}')" ${outside?'disabled':''} class="rounded-lg px-3 py-2 disabled:opacity-40 ${active?'bg-indigo-600 text-white':'border'}">${scheduleEscape(window.formatScheduleDate(iso))}</button>`;}).join('')}<button onclick="changeSchedulesWeek(1)" ${atLast?'disabled':''} class="rounded-lg border px-3 py-2 disabled:opacity-40">بعدی</button><button onclick="goToLastSchedulesWeek()" ${atLast?'disabled':''} class="rounded-lg border px-3 py-2 disabled:opacity-40">آخر</button></div><div class="flex flex-wrap items-center gap-2 text-sm"><span class="text-xs font-medium text-gray-500">نوع چیدمان:</span><button onclick="setWeeklyScheduleLayout(${branch.id},'class-day')" class="${layoutButton('class-day')}">کلاس × روز</button><button onclick="setWeeklyScheduleLayout(${branch.id},'class-time')" class="${layoutButton('class-time')}">کلاس × بازه زمانی</button><button onclick="setWeeklyScheduleLayout(${branch.id},'day-time')" class="${layoutButton('day-time')}">روز هفته × بازه زمانی</button>${axisFilters}<button onclick="toggleWeeklyScheduleAxes(${branch.id})" class="rounded-lg border border-indigo-200 px-3 py-2 text-indigo-600 hover:bg-indigo-50"><i class="fas fa-exchange-alt ml-1"></i> جابه‌جایی سطر و ستون</button></div></div>`;const header=section.querySelector(':scope > div:first-child');header.classList.add('flex','flex-col','gap-3','xl:flex-row','xl:items-start','xl:justify-between');header.insertAdjacentHTML('beforeend',html);});}
-function renderWeeklySchedules(dates){const host=document.getElementById('schedulesWeeklyTables'),visibleBranches=currentBranch==='all'?branches:branches.filter(b=>String(b.id)===String(currentBranch));document.getElementById('schedulesWeekRange').textContent=`${window.formatScheduleDate(dates[0])} تا ${window.formatScheduleDate(dates[6])}`;host.innerHTML=visibleBranches.map(branch=>`<section class="overflow-hidden rounded-3xl bg-white shadow"><div class="border-b p-5"><h3 class="text-lg font-bold">${scheduleEscape(branch.name)}</h3></div><div class="overflow-x-auto">${weeklyMatrix(branch,dates)}</div></section>`).join('')||'<div class="rounded-3xl bg-white p-12 text-center text-gray-400">شعبه‌ای یافت نشد.</div>';}
-window.setSchedulesView=view=>{schedulesView=view==='weekly'?'weekly':'list';document.getElementById('schedulesListView')?.classList.toggle('hidden',schedulesView!=='list');document.getElementById('schedulesWeeklyView')?.classList.toggle('hidden',schedulesView!=='weekly');document.getElementById('schedulesListViewButton')?.classList.toggle('bg-indigo-600',schedulesView==='list');document.getElementById('schedulesListViewButton')?.classList.toggle('text-white',schedulesView==='list');document.getElementById('schedulesWeeklyViewButton')?.classList.toggle('bg-indigo-600',schedulesView==='weekly');document.getElementById('schedulesWeeklyViewButton')?.classList.toggle('text-white',schedulesView==='weekly');if(schedulesView==='weekly')loadWeeklySchedules();};
-window.changeSchedulesWeek=offset=>{if(!weekStart)weekStart=currentSaturday();weekStart.setDate(weekStart.getDate()+offset*7);loadWeeklySchedules();};window.selectSchedulesWeek=date=>{weekStart=currentSaturday(new Date(date+'T12:00:00'));loadWeeklySchedules();};window.goToFirstSchedulesWeek=()=>{if(firstScheduleWeek){weekStart=new Date(firstScheduleWeek);loadWeeklySchedules();}};window.goToLastSchedulesWeek=()=>{if(lastScheduleWeek){weekStart=new Date(lastScheduleWeek);loadWeeklySchedules();}};window.goToCurrentSchedulesWeek=()=>{weekStart=currentSaturday();loadWeeklySchedules();};window.setWeeklyScheduleLayout=(branchId,layout)=>{weeklyLayoutByBranch.set(branchId,['class-day','class-time','day-time'].includes(layout)?layout:'class-day');renderWeeklySchedules(weeklyDates);renderBranchWeekPaginations();};window.toggleWeeklyEmptyClasses=branchId=>{showEmptyWeeklyBranches.has(branchId)?showEmptyWeeklyBranches.delete(branchId):showEmptyWeeklyBranches.add(branchId);renderWeeklySchedules(weeklyDates);renderBranchWeekPaginations();};window.toggleWeeklyEmptyDays=branchId=>{showEmptyWeeklyDays.has(branchId)?showEmptyWeeklyDays.delete(branchId):showEmptyWeeklyDays.add(branchId);renderWeeklySchedules(weeklyDates);renderBranchWeekPaginations();};window.toggleWeeklyEmptyTimes=branchId=>{showEmptyWeeklyTimes.has(branchId)?showEmptyWeeklyTimes.delete(branchId):showEmptyWeeklyTimes.add(branchId);renderWeeklySchedules(weeklyDates);renderBranchWeekPaginations();};window.toggleWeeklyScheduleAxes=branchId=>{swappedWeeklyBranches.has(branchId)?swappedWeeklyBranches.delete(branchId):swappedWeeklyBranches.add(branchId);renderWeeklySchedules(weeklyDates);renderBranchWeekPaginations();};
-window.toggleScheduleInlineAttendance=id=>{expanded=expanded&&expanded.id===id&&expanded.mode==='attendance'?null:{id,mode:'attendance'};render();};window.openScheduleAttendanceModal=id=>{const x=allSchedules.find(s=>s.id===id);if(x)document.getElementById('modalContainer').innerHTML=window.getScheduleAttendanceModalHTML(x);};
-window.saveScheduleAttendance=async(id,inline)=>{const root=inline?document.getElementById('scheduleAttendancePanel-'+id):document.querySelector('#modalContainer #scheduleAttendancePanel-'+id),attendance=[];root?.querySelectorAll('.schedule-att-status').forEach(s=>{attendance.push({memberId:Number(s.dataset.member),status:s.value,description:root.querySelector(`.schedule-att-description[data-member="${s.dataset.member}"]`)?.value||''});});try{await api(`/academy/admin/class-schedules/${id}/attendance`,{attendance});if(!inline)closeModal();else expanded=null;await(schedulesView==='weekly'?loadWeeklySchedules():load(currentPage));}catch(e){alert(e.message);}};
-window.exportSchedulesToExcel=()=>{let csv='\uFEFFعنوان,تاریخ,ساعت,هنرجو,استاد,درس,کلاس,نوع,وضعیت\n';allSchedules.forEach(x=>csv+=`"${x.title}","${x.date}","${x.time}","${x.student}","${x.teacher}","${x.lesson}","${x.classroom}","${x.type}","${x.status}"\n`);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='جلسات.csv';a.click();};window.exportSchedulesToPDF=()=>window.print();
-const scheduleCancellationAllowed=item=>item.canCancel||(item.sessionType==='makeup'&&['none','rejected'].includes(item.cancellationStatus||'none')&&!['canceled','rejected','completed','held'].includes(item.bookingStatus||''));
-const scheduleRestoreAllowed=item=>(item.cancellationStatus==='pending')||((item.cancellationStatus==='approved'||item.bookingStatus==='canceled')&&window.termPermissions?.canApproveSessionCancellations===true);
-const scheduleRowTemplate=window.getScheduleRowHTML,scheduleDetailsTemplate=window.getScheduleDetailsModalHTML;
-window.getScheduleRowHTML=item=>scheduleRowTemplate({...item,canCancel:scheduleCancellationAllowed(item),canRestore:scheduleRestoreAllowed(item)});
-window.getScheduleDetailsModalHTML=item=>scheduleDetailsTemplate({...item,canCancel:scheduleCancellationAllowed(item),canRestore:scheduleRestoreAllowed(item)});
-setTimeout(()=>{if(document.getElementById('schedulesTable'))load(1);},200);
+  const scheduleEscape = (value) =>
+    String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  function localISO(date) {
+    return (
+      date.getFullYear() +
+      '-' +
+      String(date.getMonth() + 1).padStart(2, '0') +
+      '-' +
+      String(date.getDate()).padStart(2, '0')
+    );
+  }
+  function currentSaturday(date = new Date()) {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate()),
+      offset = (d.getDay() + 1) % 7;
+    d.setDate(d.getDate() - offset);
+    return d;
+  }
+  function weeklyParams(date, page) {
+    const p = params(page);
+    p.set('date', date);
+    p.set('perPage', '100');
+    p.delete('day');
+    return p;
+  }
+  async function fetchScheduleDay(date) {
+    let page = 1,
+      rows = [];
+    do {
+      const data = await api('/academy/admin/class-schedules?' + weeklyParams(date, page));
+      rows = rows.concat(data.schedules || []);
+      if (rows.length >= Number(data.total || 0)) break;
+      page++;
+    } while (page < 100);
+    return rows;
+  }
+  async function loadWeeklySchedules() {
+    const host = document.getElementById('schedulesWeeklyTables');
+    if (!host) return;
+    host.innerHTML =
+      '<div class="rounded-3xl bg-white p-12 text-center text-gray-400">در حال دریافت برنامه هفتگی...</div>';
+    try {
+      const boundParams = new URLSearchParams();
+      if (currentBranch !== 'all') boundParams.set('branch', currentBranch);
+      const bounds = await api('/academy/admin/class-schedule-week-bounds?' + boundParams);
+      firstScheduleWeek = bounds.firstDate
+        ? currentSaturday(new Date(bounds.firstDate + 'T12:00:00'))
+        : null;
+      lastScheduleWeek = bounds.lastDate
+        ? currentSaturday(new Date(bounds.lastDate + 'T12:00:00'))
+        : null;
+      if (!weekStart) weekStart = currentSaturday();
+      if (firstScheduleWeek && weekStart < firstScheduleWeek)
+        weekStart = new Date(firstScheduleWeek);
+      if (lastScheduleWeek && weekStart > lastScheduleWeek) weekStart = new Date(lastScheduleWeek);
+      weeklyDates = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(weekStart);
+        d.setDate(d.getDate() + i);
+        return localISO(d);
+      });
+      weeklySchedules = (await Promise.all(weeklyDates.map(fetchScheduleDay))).flat();
+      renderTimeFilters(weeklySchedules);
+      renderWeeklySchedules(weeklyDates);
+      renderBranchWeekPaginations();
+    } catch (e) {
+      host.innerHTML = `<div class="rounded-3xl bg-white p-10 text-center text-red-500">${scheduleEscape(e.message)}</div>`;
+    }
+  }
+  function weeklyRoomMatches(session, room) {
+    return room.online
+      ? session.mode === 'online'
+      : session.mode !== 'online' && session.classroomId === room.id;
+  }
+  function weeklySessionCard(session, extra = '') {
+    return `<button onclick="viewSchedule(${session.id})" class="block w-full rounded-xl border-r-4 border-indigo-500 bg-indigo-50 p-2 text-right text-xs hover:bg-indigo-100"><span class="block font-bold text-indigo-700">${scheduleEscape(session.startTime)} تا ${scheduleEscape(session.endTime)}</span><span class="mt-1 block leading-5">${scheduleEscape(session.title)}</span><span class="mt-1 block text-gray-500">${scheduleEscape(session.lesson)}</span>${extra ? `<span class="mt-1 block text-gray-400">${scheduleEscape(extra)}</span>` : ''}</button>`;
+  }
+  function weeklyCompactCard(session, label) {
+    return `<button onclick="viewSchedule(${session.id})" class="block w-full rounded-xl border-r-4 border-indigo-500 bg-indigo-50 p-2 text-right text-xs hover:bg-indigo-100"><span class="block font-bold text-indigo-700">${scheduleEscape(label)}</span><span class="mt-1 block leading-5 text-gray-600">${scheduleEscape(session.title)}</span></button>`;
+  }
+  function weeklyAxisLabel(item) {
+    if (item.kind === 'day')
+      return `<span class="block font-bold">${scheduleEscape(item.name)}</span><span class="mt-1 block whitespace-nowrap text-xs text-gray-500">${scheduleEscape(window.formatScheduleDate(item.id))}</span>`;
+    return `<span class="whitespace-nowrap">${scheduleEscape(item.name)}</span>`;
+  }
+  function weeklyMatrix(branch, dates) {
+    const dayNames = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه'],
+      sessions = weeklySchedules.filter((s) => s.branchId === branch.id),
+      physical = (window.scheduleClassrooms || []).filter((r) => r.branchId === branch.id),
+      hasOnline = sessions.some((s) => s.mode === 'online');
+    let rooms = physical
+        .map((r) => ({ id: r.id, name: r.name, online: false, kind: 'class' }))
+        .concat(hasOnline ? [{ id: 0, name: 'کلاس آنلاین', online: true, kind: 'class' }] : []),
+      days = dates.map((date, i) => ({ id: date, name: dayNames[i], kind: 'day' }));
+    if (!showEmptyWeeklyBranches.has(branch.id))
+      rooms = rooms.filter((room) => sessions.some((s) => weeklyRoomMatches(s, room)));
+    if (!showEmptyWeeklyDays.has(branch.id))
+      days = days.filter((day) => sessions.some((s) => s.date === day.id));
+    const sourceTimes = showEmptyWeeklyTimes.has(branch.id)
+        ? weeklyTimeRanges
+        : sessions.map((s) => ({ start: s.startTime, end: s.endTime })),
+      times = [
+        ...new Map(
+          sourceTimes.map((t) => [
+            `${t.start}|${t.end}`,
+            {
+              id: `${t.start}|${t.end}`,
+              name: `${t.start} تا ${t.end}`,
+              start: t.start,
+              end: t.end,
+              kind: 'time',
+            },
+          ])
+        ).values(),
+      ].sort((a, b) => a.start.localeCompare(b.start) || a.end.localeCompare(b.end)),
+      layout = weeklyLayoutByBranch.get(branch.id) || 'class-day',
+      swapped = swappedWeeklyBranches.has(branch.id);
+    let rows, columns, corner, match, cellCard;
+    if (layout === 'class-time') {
+      rows = rooms;
+      columns = times;
+      corner = 'کلاس / بازه زمانی';
+      match = (s, room, time) =>
+        weeklyRoomMatches(s, room) && s.startTime === time.start && s.endTime === time.end;
+      cellCard = (s) => weeklyCompactCard(s, days.find((day) => day.id === s.date)?.name || s.day);
+    } else if (layout === 'day-time') {
+      rows = days;
+      columns = times;
+      corner = 'روز / بازه زمانی';
+      match = (s, day, time) =>
+        s.date === day.id && s.startTime === time.start && s.endTime === time.end;
+      cellCard = (s) => weeklyCompactCard(s, s.classroom);
+    } else {
+      rows = rooms;
+      columns = days;
+      corner = 'کلاس / روز';
+      match = (s, room, day) => weeklyRoomMatches(s, room) && s.date === day.id;
+      cellCard = (s) => weeklySessionCard(s);
+    }
+    if (swapped) {
+      [rows, columns] = [columns, rows];
+      const original = match;
+      match = (s, row, column) => original(s, column, row);
+      corner = corner.split(' / ').reverse().join(' / ');
+    }
+    const body = rows
+      .map(
+        (row) =>
+          `<tr><th class="sticky right-0 z-10 border bg-gray-50 p-3 text-right font-medium">${weeklyAxisLabel(row)}</th>${columns
+            .map((column) => {
+              const cell = sessions
+                .filter((s) => match(s, row, column))
+                .sort(
+                  (a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)
+                );
+              return `<td class="border p-2 align-top"><div class="space-y-2">${cell.map(cellCard).join('') || '<span class="block py-5 text-center text-xs text-gray-300">بدون جلسه</span>'}</div></td>`;
+            })
+            .join('')}</tr>`
+      )
+      .join('');
+    return `<table class="w-full border-collapse text-sm"><thead><tr><th class="sticky right-0 z-20 border bg-indigo-50 p-3">${corner}</th>${columns.map((item) => `<th class="border bg-indigo-50 p-3">${weeklyAxisLabel(item)}</th>`).join('')}</tr></thead><tbody>${body || `<tr><td colspan="${columns.length + 1}" class="p-10 text-center text-gray-400">جلسه‌ای برای این چیدمان وجود ندارد.</td></tr>`}</tbody></table>`;
+  }
+  function renderBranchWeekPaginations() {
+    const host = document.getElementById('schedulesWeeklyTables');
+    if (!host || !weekStart) return;
+    const visibleBranches =
+      currentBranch === 'all'
+        ? branches
+        : branches.filter((b) => String(b.id) === String(currentBranch));
+    let windowStart = new Date(weekStart);
+    windowStart.setDate(windowStart.getDate() - 14);
+    if (firstScheduleWeek && windowStart < firstScheduleWeek)
+      windowStart = new Date(firstScheduleWeek);
+    let windowEnd = new Date(windowStart);
+    windowEnd.setDate(windowEnd.getDate() + 28);
+    if (lastScheduleWeek && windowEnd > lastScheduleWeek) {
+      windowStart = new Date(lastScheduleWeek);
+      windowStart.setDate(windowStart.getDate() - 28);
+      if (firstScheduleWeek && windowStart < firstScheduleWeek)
+        windowStart = new Date(firstScheduleWeek);
+    }
+    const weeks = Array.from({ length: 5 }, (_, i) => {
+      const date = new Date(windowStart);
+      date.setDate(date.getDate() + i * 7);
+      return date;
+    });
+    host.querySelectorAll('section').forEach((section, index) => {
+      const branch = visibleBranches[index];
+      if (!branch) return;
+      section.dataset.branchId = branch.id;
+      const atFirst = firstScheduleWeek && weekStart <= firstScheduleWeek,
+        atLast = lastScheduleWeek && weekStart >= lastScheduleWeek,
+        showClasses = showEmptyWeeklyBranches.has(branch.id),
+        showDays = showEmptyWeeklyDays.has(branch.id),
+        showTimes = showEmptyWeeklyTimes.has(branch.id),
+        layout = weeklyLayoutByBranch.get(branch.id) || 'class-day',
+        activeClass =
+          'rounded-lg border border-green-600 bg-green-600 px-3 py-2 text-white hover:bg-green-700',
+        idleClass =
+          'rounded-lg border border-emerald-200 px-3 py-2 text-emerald-700 hover:bg-emerald-50',
+        layoutButton = (mode) =>
+          `rounded-lg border px-3 py-2 ${layout === mode ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50'}`,
+        classFilter = `<button onclick="toggleWeeklyEmptyClasses(${branch.id})" class="${showClasses ? activeClass : idleClass}"><i class="fas fa-door-open ml-1"></i> ${showClasses ? 'پنهان‌کردن کلاس‌های خالی' : 'نمایش کلاس‌های خالی'}</button>`,
+        dayFilter = `<button onclick="toggleWeeklyEmptyDays(${branch.id})" class="${showDays ? activeClass : idleClass}"><i class="fas fa-calendar-day ml-1"></i> ${showDays ? 'پنهان‌کردن روزهای خالی' : 'نمایش روزهای خالی'}</button>`,
+        timeFilter = `<button onclick="toggleWeeklyEmptyTimes(${branch.id})" class="${showTimes ? activeClass : idleClass}"><i class="fas fa-clock ml-1"></i> ${showTimes ? 'پنهان‌کردن بازه‌های زمانی خالی' : 'نمایش بازه‌های زمانی خالی'}</button>`,
+        axisFilters =
+          layout === 'class-time'
+            ? classFilter + timeFilter
+            : layout === 'day-time'
+              ? dayFilter + timeFilter
+              : classFilter + dayFilter,
+        html = `<div class="space-y-3"><div class="flex flex-wrap items-center gap-2 text-sm"><button onclick="goToFirstSchedulesWeek()" ${atFirst ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">اول</button><button onclick="changeSchedulesWeek(-1)" ${atFirst ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">قبلی</button>${weeks
+          .map((date) => {
+            const iso = localISO(date),
+              active = iso === localISO(weekStart),
+              outside =
+                (firstScheduleWeek && date < firstScheduleWeek) ||
+                (lastScheduleWeek && date > lastScheduleWeek);
+            return `<button onclick="selectSchedulesWeek('${iso}')" ${outside ? 'disabled' : ''} class="rounded-lg px-3 py-2 disabled:opacity-40 ${active ? 'bg-indigo-600 text-white' : 'border'}">${scheduleEscape(window.formatScheduleDate(iso))}</button>`;
+          })
+          .join(
+            ''
+          )}<button onclick="changeSchedulesWeek(1)" ${atLast ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">بعدی</button><button onclick="goToLastSchedulesWeek()" ${atLast ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">آخر</button></div><div class="flex flex-wrap items-center gap-2 text-sm"><span class="text-xs font-medium text-gray-500">نوع چیدمان:</span><button onclick="setWeeklyScheduleLayout(${branch.id},'class-day')" class="${layoutButton('class-day')}">کلاس × روز</button><button onclick="setWeeklyScheduleLayout(${branch.id},'class-time')" class="${layoutButton('class-time')}">کلاس × بازه زمانی</button><button onclick="setWeeklyScheduleLayout(${branch.id},'day-time')" class="${layoutButton('day-time')}">روز هفته × بازه زمانی</button>${axisFilters}<button onclick="toggleWeeklyScheduleAxes(${branch.id})" class="rounded-lg border border-indigo-200 px-3 py-2 text-indigo-600 hover:bg-indigo-50"><i class="fas fa-exchange-alt ml-1"></i> جابه‌جایی سطر و ستون</button></div></div>`;
+      const header = section.querySelector(':scope > div:first-child');
+      header.classList.add(
+        'flex',
+        'flex-col',
+        'gap-3',
+        'xl:flex-row',
+        'xl:items-start',
+        'xl:justify-between'
+      );
+      header.insertAdjacentHTML('beforeend', html);
+    });
+  }
+  function renderWeeklySchedules(dates) {
+    const host = document.getElementById('schedulesWeeklyTables'),
+      visibleBranches =
+        currentBranch === 'all'
+          ? branches
+          : branches.filter((b) => String(b.id) === String(currentBranch));
+    document.getElementById('schedulesWeekRange').textContent =
+      `${window.formatScheduleDate(dates[0])} تا ${window.formatScheduleDate(dates[6])}`;
+    host.innerHTML =
+      visibleBranches
+        .map(
+          (branch) =>
+            `<section class="overflow-hidden rounded-3xl bg-white shadow"><div class="border-b p-5"><h3 class="text-lg font-bold">${scheduleEscape(branch.name)}</h3></div><div class="overflow-x-auto">${weeklyMatrix(branch, dates)}</div></section>`
+        )
+        .join('') ||
+      '<div class="rounded-3xl bg-white p-12 text-center text-gray-400">شعبه‌ای یافت نشد.</div>';
+  }
+  window.setSchedulesView = (view) => {
+    schedulesView = view === 'weekly' ? 'weekly' : 'list';
+    document
+      .getElementById('schedulesListView')
+      ?.classList.toggle('hidden', schedulesView !== 'list');
+    document
+      .getElementById('schedulesWeeklyView')
+      ?.classList.toggle('hidden', schedulesView !== 'weekly');
+    document
+      .getElementById('schedulesListViewButton')
+      ?.classList.toggle('bg-indigo-600', schedulesView === 'list');
+    document
+      .getElementById('schedulesListViewButton')
+      ?.classList.toggle('text-white', schedulesView === 'list');
+    document
+      .getElementById('schedulesWeeklyViewButton')
+      ?.classList.toggle('bg-indigo-600', schedulesView === 'weekly');
+    document
+      .getElementById('schedulesWeeklyViewButton')
+      ?.classList.toggle('text-white', schedulesView === 'weekly');
+    if (schedulesView === 'weekly') loadWeeklySchedules();
+  };
+  window.changeSchedulesWeek = (offset) => {
+    if (!weekStart) weekStart = currentSaturday();
+    weekStart.setDate(weekStart.getDate() + offset * 7);
+    loadWeeklySchedules();
+  };
+  window.selectSchedulesWeek = (date) => {
+    weekStart = currentSaturday(new Date(date + 'T12:00:00'));
+    loadWeeklySchedules();
+  };
+  window.goToFirstSchedulesWeek = () => {
+    if (firstScheduleWeek) {
+      weekStart = new Date(firstScheduleWeek);
+      loadWeeklySchedules();
+    }
+  };
+  window.goToLastSchedulesWeek = () => {
+    if (lastScheduleWeek) {
+      weekStart = new Date(lastScheduleWeek);
+      loadWeeklySchedules();
+    }
+  };
+  window.goToCurrentSchedulesWeek = () => {
+    weekStart = currentSaturday();
+    loadWeeklySchedules();
+  };
+  window.setWeeklyScheduleLayout = (branchId, layout) => {
+    weeklyLayoutByBranch.set(
+      branchId,
+      ['class-day', 'class-time', 'day-time'].includes(layout) ? layout : 'class-day'
+    );
+    renderWeeklySchedules(weeklyDates);
+    renderBranchWeekPaginations();
+  };
+  window.toggleWeeklyEmptyClasses = (branchId) => {
+    showEmptyWeeklyBranches.has(branchId)
+      ? showEmptyWeeklyBranches.delete(branchId)
+      : showEmptyWeeklyBranches.add(branchId);
+    renderWeeklySchedules(weeklyDates);
+    renderBranchWeekPaginations();
+  };
+  window.toggleWeeklyEmptyDays = (branchId) => {
+    showEmptyWeeklyDays.has(branchId)
+      ? showEmptyWeeklyDays.delete(branchId)
+      : showEmptyWeeklyDays.add(branchId);
+    renderWeeklySchedules(weeklyDates);
+    renderBranchWeekPaginations();
+  };
+  window.toggleWeeklyEmptyTimes = (branchId) => {
+    showEmptyWeeklyTimes.has(branchId)
+      ? showEmptyWeeklyTimes.delete(branchId)
+      : showEmptyWeeklyTimes.add(branchId);
+    renderWeeklySchedules(weeklyDates);
+    renderBranchWeekPaginations();
+  };
+  window.toggleWeeklyScheduleAxes = (branchId) => {
+    swappedWeeklyBranches.has(branchId)
+      ? swappedWeeklyBranches.delete(branchId)
+      : swappedWeeklyBranches.add(branchId);
+    renderWeeklySchedules(weeklyDates);
+    renderBranchWeekPaginations();
+  };
+  window.toggleScheduleInlineAttendance = (id) => {
+    expanded =
+      expanded && expanded.id === id && expanded.mode === 'attendance'
+        ? null
+        : { id, mode: 'attendance' };
+    render();
+  };
+  window.openScheduleAttendanceModal = (id) => {
+    const x = allSchedules.find((s) => s.id === id);
+    if (x)
+      document.getElementById('modalContainer').innerHTML =
+        window.getScheduleAttendanceModalHTML(x);
+  };
+  window.saveScheduleAttendance = async (id, inline) => {
+    const root = inline
+        ? document.getElementById('scheduleAttendancePanel-' + id)
+        : document.querySelector('#modalContainer #scheduleAttendancePanel-' + id),
+      attendance = [];
+    root?.querySelectorAll('.schedule-att-status').forEach((s) => {
+      attendance.push({
+        memberId: Number(s.dataset.member),
+        status: s.value,
+        description:
+          root.querySelector(`.schedule-att-description[data-member="${s.dataset.member}"]`)
+            ?.value || '',
+      });
+    });
+    try {
+      await api(`/academy/admin/class-schedules/${id}/attendance`, { attendance });
+      if (!inline) closeModal();
+      else expanded = null;
+      await (schedulesView === 'weekly' ? loadWeeklySchedules() : load(currentPage));
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+  window.exportSchedulesToExcel = () => {
+    let csv = '\uFEFFعنوان,تاریخ,ساعت,هنرجو,استاد,درس,کلاس,نوع,وضعیت\n';
+    allSchedules.forEach(
+      (x) =>
+        (csv += `"${x.title}","${x.date}","${x.time}","${x.student}","${x.teacher}","${x.lesson}","${x.classroom}","${x.type}","${x.status}"\n`)
+    );
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'جلسات.csv';
+    a.click();
+  };
+  window.exportSchedulesToPDF = () => window.print();
+  const scheduleCancellationAllowed = (item) =>
+    item.canCancel ||
+    (item.sessionType === 'makeup' &&
+      ['none', 'rejected'].includes(item.cancellationStatus || 'none') &&
+      !['canceled', 'rejected', 'completed', 'held'].includes(item.bookingStatus || ''));
+  const scheduleRestoreAllowed = (item) =>
+    item.cancellationStatus === 'pending' ||
+    ((item.cancellationStatus === 'approved' || item.bookingStatus === 'canceled') &&
+      window.termPermissions?.canApproveSessionCancellations === true);
+  const scheduleRowTemplate = window.getScheduleRowHTML,
+    scheduleDetailsTemplate = window.getScheduleDetailsModalHTML;
+  window.getScheduleRowHTML = (item) =>
+    scheduleRowTemplate({
+      ...item,
+      canCancel: scheduleCancellationAllowed(item),
+      canRestore: scheduleRestoreAllowed(item),
+    });
+  window.getScheduleDetailsModalHTML = (item) =>
+    scheduleDetailsTemplate({
+      ...item,
+      canCancel: scheduleCancellationAllowed(item),
+      canRestore: scheduleRestoreAllowed(item),
+    });
+  setTimeout(() => {
+    if (document.getElementById('schedulesTable')) load(1);
+  }, 200);
 })();

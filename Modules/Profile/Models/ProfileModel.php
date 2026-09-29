@@ -4,7 +4,8 @@ namespace Modules\Profile\Models;
 
 use Core\database\Model;
 
-class ProfileModel extends Model {
+class ProfileModel extends Model
+{
 
     protected string $table = 'profiles';
     protected string $primaryKey = 'profile_id';
@@ -17,6 +18,5 @@ class ProfileModel extends Model {
     ];
     protected bool $timestamps = true;
     protected bool $softDeletes = true;
-
 
 }

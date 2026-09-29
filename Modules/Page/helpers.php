@@ -2,7 +2,8 @@
 
 if (!function_exists('pages')) {
 
-    function pages() {
+    function pages()
+    {
     }
 
 }

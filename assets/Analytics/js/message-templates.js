@@ -1,7 +1,176 @@
-(function(){'use strict';const field='w-full border border-gray-300 rounded-2xl py-3.5 px-5';function e(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}function sc(s){return s==='خوانده‌شده'?'bg-green-100 text-green-700':'bg-red-100 text-red-700';}function lc(s){return{'در انتظار':'bg-yellow-100 text-yellow-700','پیش‌نویس':'bg-gray-100 text-gray-700','منتشر شده':'bg-green-100 text-green-700','خصوصی':'bg-purple-100 text-purple-700','زباله‌دان':'bg-slate-200 text-slate-600'}[s]||'bg-gray-100 text-gray-600';}
-window.getMessageRowHTML=m=>'<td class="py-4 px-5 font-medium">'+(m.readStatus==='خوانده‌نشده'?'<i class="ml-2 inline-block h-2 w-2 rounded-full bg-indigo-500"></i>':'')+e(m.title)+'</td><td class="py-4 px-5">'+e(m.sender)+'</td><td class="py-4 px-5">'+e(m.receiver)+'</td><td class="py-4 px-5">'+e(m.type)+'</td><td class="py-4 px-5">'+e(m.date)+'</td><td class="py-4 px-5"><span class="rounded-full px-3 py-1 text-xs '+lc(m.status)+'">'+e(m.status)+'</span></td><td class="py-4 px-5"><span class="rounded-full px-3 py-1 text-xs '+sc(m.readStatus)+'">'+e(m.readStatus)+'</span></td><td class="py-4 px-5 text-left"><button onclick="viewMessage('+m.id+')" class="ml-3 text-indigo-600">مشاهده</button><button onclick="deleteMessage('+m.id+')" class="text-red-500">حذف</button></td>';
-window.getMessageEmptyRowHTML=()=>'<tr><td colspan="8" class="py-12 text-center text-gray-400">پیامی یافت نشد</td></tr>';
-window.getMessageAddModalHTML=function(){const options=(getMessageRecipients?.()||[]).map(x=>'<option value="'+x.id+'">'+e(x.name)+'</option>').join('');return'<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onclick="if(event.target===this)closeModal()"><div class="w-full max-w-xl rounded-3xl bg-white shadow-2xl" onclick="event.stopPropagation()"><div class="flex justify-between border-b px-8 py-5"><h2 class="text-2xl font-bold">ارسال پیام جدید</h2><button onclick="closeModal()" class="text-3xl text-gray-300">×</button></div><div class="space-y-5 p-8"><label class="block text-sm">گیرنده *<select id="msgReceiver" class="mt-2 '+field+'"><option value="">انتخاب گیرنده</option>'+options+'</select></label><label class="block text-sm">عنوان پیام *<input id="msgTitle" class="mt-2 '+field+'"></label><label class="block text-sm">متن پیام *<textarea id="msgBody" rows="6" class="mt-2 '+field+'"></textarea></label><div class="flex gap-4"><button onclick="saveMessage()" class="flex-1 rounded-2xl bg-indigo-600 py-3.5 text-white">ارسال</button><button onclick="closeModal()" class="flex-1 rounded-2xl border">انصراف</button></div></div></div></div>';};
-window.getMessageDetailsModalHTML=m=>'<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onclick="if(event.target===this)closeModal()"><div class="w-full max-w-2xl rounded-3xl bg-white" onclick="event.stopPropagation()"><div class="flex justify-between border-b px-8 py-5"><div class="flex flex-wrap items-center gap-2"><span class="rounded-full px-3 py-1 text-xs '+lc(m.status)+'">'+e(m.status)+'</span><span class="rounded-full px-3 py-1 text-xs '+sc(m.readStatus)+'">'+e(m.readStatus)+'</span><h2 class="w-full mt-2 text-2xl font-bold">'+e(m.title)+'</h2></div><button onclick="closeModal()" class="text-3xl">×</button></div><div class="space-y-5 p-8"><div class="grid gap-3 text-sm md:grid-cols-2"><div>فرستنده: <b>'+e(m.sender)+'</b></div><div>گیرنده: <b>'+e(m.receiver)+'</b></div><div>نوع: <b>'+e(m.type)+'</b></div><div>تاریخ: <b>'+e(m.date)+'</b></div></div><div class="whitespace-pre-wrap rounded-2xl border bg-gray-50 p-5">'+e(m.body)+'</div>'+(m.readStatus==='خوانده‌شده'&&m.incoming?'<button onclick="markMessageUnread('+m.id+');closeModal()" class="rounded-2xl border px-5 py-3">علامت به‌عنوان نخوانده</button>':'')+'</div></div></div>';
-window.getMessagePDFModalHTML=cols=>'<div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4" onclick="if(event.target===this)closeModal()"><div class="my-8 w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl" onclick="event.stopPropagation()"><div class="sticky top-0 flex items-center justify-between border-b bg-white px-8 py-5"><h2 class="text-2xl font-bold">تنظیمات خروجی PDF پیام‌ها</h2><button onclick="closeModal()" class="text-3xl text-gray-300">×</button></div><div class="space-y-6 overflow-y-auto p-8" style="max-height:calc(100vh - 10rem)"><label class="block text-sm">عنوان گزارش<input id="messagePdfTitle" value="گزارش پیام‌های آموزشگاه" class="mt-2 '+field+'"></label><label class="block text-sm">زیرعنوان<input id="messagePdfSubtitle" value="فهرست پیام‌های ارسال‌شده و دریافت‌شده" class="mt-2 '+field+'"></label><div class="grid gap-5 sm:grid-cols-2"><label class="text-sm">فرمت صفحه<select id="messagePdfFormat" class="mt-2 '+field+'"><option value="a4">A4</option><option value="letter">Letter</option><option value="legal">Legal</option></select></label><label class="text-sm">جهت صفحه<select id="messagePdfOrientation" class="mt-2 '+field+'"><option value="landscape">افقی</option><option value="portrait">عمودی</option></select></label></div><label class="block text-sm">متن یادداشت پایین صفحه<input id="messagePdfFooter" value="تولید شده توسط سیستم مدیریت آموزشگاه" class="mt-2 '+field+'"></label><div><div class="mb-2 text-sm font-medium">ستون‌های خروجی PDF</div><div class="grid grid-cols-2 gap-2">'+cols.map(c=>'<label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" id="messagePdfCol-'+c.field+'" checked class="rounded border-gray-300 text-indigo-600">'+e(c.label)+'</label>').join('')+'</div></div><div class="grid gap-5 md:grid-cols-3"><label class="text-sm">رنگ سطر عنوان<input id="messagePdfHeaderColor" type="color" value="#eff6ff" class="mt-2 h-12 w-full rounded-2xl border p-2"></label><label class="text-sm">رنگ سطرهای زوج<input id="messagePdfEvenRowColor" type="color" value="#ffffff" class="mt-2 h-12 w-full rounded-2xl border p-2"></label><label class="text-sm">رنگ سطرهای فرد<input id="messagePdfOddRowColor" type="color" value="#f8fafc" class="mt-2 h-12 w-full rounded-2xl border p-2"></label></div><label class="flex items-center gap-3 text-sm"><input id="messagePdfIncludeDate" type="checkbox" checked class="rounded border-gray-300 text-indigo-600">نمایش تاریخ استخراج در بالای گزارش</label><div class="flex gap-4 pt-4"><button onclick="generateMessagesPDF()" class="flex-1 rounded-2xl bg-indigo-600 py-4 text-white">ایجاد PDF</button><button onclick="closeModal()" class="flex-1 rounded-2xl border">انصراف</button></div></div></div></div>';
-window.getMessagePDFPageHTML=function(pageNumber,rows,isFirst,o){return'<div style="width:100%;padding:24px;border-radius:20px;background:#fff;box-shadow:0 10px 30px rgba(15,23,42,.08)">'+(isFirst?'<div style="direction:rtl;text-align:right"><h1 style="margin:0 0 6px;font-size:28px;font-weight:700">'+e(o.title)+'</h1><p style="margin:0 0 16px;color:#4b5563;font-size:14px">'+e(o.subtitle)+'</p>'+(o.includeDate?'<p style="margin:0 0 16px;color:#6b7280;font-size:12px">تاریخ استخراج: '+e(o.date)+'</p>':'')+'</div>':'')+'<table style="width:100%;border-collapse:collapse;direction:rtl"><thead style="background:'+o.headerColor+'"><tr>'+o.selectedColumns.map(c=>'<th style="padding:12px 14px;text-align:right;font-weight:600">'+e(c.label)+'</th>').join('')+'</tr></thead><tbody>'+rows.map((m,i)=>'<tr style="background:'+(i%2===0?o.evenRowColor:o.oddRowColor)+'">'+o.selectedColumns.map(c=>'<td style="padding:12px 14px;text-align:right">'+e(c.field==='index'?(pageNumber-1)*o.rowsPerPage+i+1:m[c.field])+'</td>').join('')+'</tr>').join('')+'</tbody></table>'+(isFirst&&o.footer?'<p style="margin-top:16px;color:#6b7280;font-size:12px">'+e(o.footer)+'</p>':'')+'<div style="margin-top:16px;text-align:left;color:#6b7280;font-size:12px">صفحه '+pageNumber+' / '+o.totalPages+'</div></div>';};})();
+(function () {
+  'use strict';
+  const field = 'w-full border border-gray-300 rounded-2xl py-3.5 px-5';
+  function e(v) {
+    return String(v ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+  function sc(s) {
+    return s === 'خوانده‌شده' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+  }
+  function lc(s) {
+    return (
+      {
+        'در انتظار': 'bg-yellow-100 text-yellow-700',
+        پیش‌نویس: 'bg-gray-100 text-gray-700',
+        'منتشر شده': 'bg-green-100 text-green-700',
+        خصوصی: 'bg-purple-100 text-purple-700',
+        زباله‌دان: 'bg-slate-200 text-slate-600',
+      }[s] || 'bg-gray-100 text-gray-600'
+    );
+  }
+  window.getMessageRowHTML = (m) =>
+    '<td class="py-4 px-5 font-medium">' +
+    (m.readStatus === 'خوانده‌نشده'
+      ? '<i class="ml-2 inline-block h-2 w-2 rounded-full bg-indigo-500"></i>'
+      : '') +
+    e(m.title) +
+    '</td><td class="py-4 px-5">' +
+    e(m.sender) +
+    '</td><td class="py-4 px-5">' +
+    e(m.receiver) +
+    '</td><td class="py-4 px-5">' +
+    e(m.type) +
+    '</td><td class="py-4 px-5">' +
+    e(m.date) +
+    '</td><td class="py-4 px-5"><span class="rounded-full px-3 py-1 text-xs ' +
+    lc(m.status) +
+    '">' +
+    e(m.status) +
+    '</span></td><td class="py-4 px-5"><span class="rounded-full px-3 py-1 text-xs ' +
+    sc(m.readStatus) +
+    '">' +
+    e(m.readStatus) +
+    '</span></td><td class="py-4 px-5 text-left"><button onclick="viewMessage(' +
+    m.id +
+    ')" class="ml-3 text-indigo-600">مشاهده</button><button onclick="deleteMessage(' +
+    m.id +
+    ')" class="text-red-500">حذف</button></td>';
+  window.getMessageEmptyRowHTML = () =>
+    '<tr><td colspan="8" class="py-12 text-center text-gray-400">پیامی یافت نشد</td></tr>';
+  window.getMessageAddModalHTML = function () {
+    const options = (getMessageRecipients?.() || [])
+      .map((x) => '<option value="' + x.id + '">' + e(x.name) + '</option>')
+      .join('');
+    return (
+      '<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onclick="if(event.target===this)closeModal()"><div class="w-full max-w-xl rounded-3xl bg-white shadow-2xl" onclick="event.stopPropagation()"><div class="flex justify-between border-b px-8 py-5"><h2 class="text-2xl font-bold">ارسال پیام جدید</h2><button onclick="closeModal()" class="text-3xl text-gray-300">×</button></div><div class="space-y-5 p-8"><label class="block text-sm">گیرنده *<select id="msgReceiver" class="mt-2 ' +
+      field +
+      '"><option value="">انتخاب گیرنده</option>' +
+      options +
+      '</select></label><label class="block text-sm">عنوان پیام *<input id="msgTitle" class="mt-2 ' +
+      field +
+      '"></label><label class="block text-sm">متن پیام *<textarea id="msgBody" rows="6" class="mt-2 ' +
+      field +
+      '"></textarea></label><div class="flex gap-4"><button onclick="saveMessage()" class="flex-1 rounded-2xl bg-indigo-600 py-3.5 text-white">ارسال</button><button onclick="closeModal()" class="flex-1 rounded-2xl border">انصراف</button></div></div></div></div>'
+    );
+  };
+  window.getMessageDetailsModalHTML = (m) =>
+    '<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onclick="if(event.target===this)closeModal()"><div class="w-full max-w-2xl rounded-3xl bg-white" onclick="event.stopPropagation()"><div class="flex justify-between border-b px-8 py-5"><div class="flex flex-wrap items-center gap-2"><span class="rounded-full px-3 py-1 text-xs ' +
+    lc(m.status) +
+    '">' +
+    e(m.status) +
+    '</span><span class="rounded-full px-3 py-1 text-xs ' +
+    sc(m.readStatus) +
+    '">' +
+    e(m.readStatus) +
+    '</span><h2 class="w-full mt-2 text-2xl font-bold">' +
+    e(m.title) +
+    '</h2></div><button onclick="closeModal()" class="text-3xl">×</button></div><div class="space-y-5 p-8"><div class="grid gap-3 text-sm md:grid-cols-2"><div>فرستنده: <b>' +
+    e(m.sender) +
+    '</b></div><div>گیرنده: <b>' +
+    e(m.receiver) +
+    '</b></div><div>نوع: <b>' +
+    e(m.type) +
+    '</b></div><div>تاریخ: <b>' +
+    e(m.date) +
+    '</b></div></div><div class="whitespace-pre-wrap rounded-2xl border bg-gray-50 p-5">' +
+    e(m.body) +
+    '</div>' +
+    (m.readStatus === 'خوانده‌شده' && m.incoming
+      ? '<button onclick="markMessageUnread(' +
+        m.id +
+        ');closeModal()" class="rounded-2xl border px-5 py-3">علامت به‌عنوان نخوانده</button>'
+      : '') +
+    '</div></div></div>';
+  window.getMessagePDFModalHTML = (cols) =>
+    '<div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4" onclick="if(event.target===this)closeModal()"><div class="my-8 w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl" onclick="event.stopPropagation()"><div class="sticky top-0 flex items-center justify-between border-b bg-white px-8 py-5"><h2 class="text-2xl font-bold">تنظیمات خروجی PDF پیام‌ها</h2><button onclick="closeModal()" class="text-3xl text-gray-300">×</button></div><div class="space-y-6 overflow-y-auto p-8" style="max-height:calc(100vh - 10rem)"><label class="block text-sm">عنوان گزارش<input id="messagePdfTitle" value="گزارش پیام‌های آموزشگاه" class="mt-2 ' +
+    field +
+    '"></label><label class="block text-sm">زیرعنوان<input id="messagePdfSubtitle" value="فهرست پیام‌های ارسال‌شده و دریافت‌شده" class="mt-2 ' +
+    field +
+    '"></label><div class="grid gap-5 sm:grid-cols-2"><label class="text-sm">فرمت صفحه<select id="messagePdfFormat" class="mt-2 ' +
+    field +
+    '"><option value="a4">A4</option><option value="letter">Letter</option><option value="legal">Legal</option></select></label><label class="text-sm">جهت صفحه<select id="messagePdfOrientation" class="mt-2 ' +
+    field +
+    '"><option value="landscape">افقی</option><option value="portrait">عمودی</option></select></label></div><label class="block text-sm">متن یادداشت پایین صفحه<input id="messagePdfFooter" value="تولید شده توسط سیستم مدیریت آموزشگاه" class="mt-2 ' +
+    field +
+    '"></label><div><div class="mb-2 text-sm font-medium">ستون‌های خروجی PDF</div><div class="grid grid-cols-2 gap-2">' +
+    cols
+      .map(
+        (c) =>
+          '<label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" id="messagePdfCol-' +
+          c.field +
+          '" checked class="rounded border-gray-300 text-indigo-600">' +
+          e(c.label) +
+          '</label>'
+      )
+      .join('') +
+    '</div></div><div class="grid gap-5 md:grid-cols-3"><label class="text-sm">رنگ سطر عنوان<input id="messagePdfHeaderColor" type="color" value="#eff6ff" class="mt-2 h-12 w-full rounded-2xl border p-2"></label><label class="text-sm">رنگ سطرهای زوج<input id="messagePdfEvenRowColor" type="color" value="#ffffff" class="mt-2 h-12 w-full rounded-2xl border p-2"></label><label class="text-sm">رنگ سطرهای فرد<input id="messagePdfOddRowColor" type="color" value="#f8fafc" class="mt-2 h-12 w-full rounded-2xl border p-2"></label></div><label class="flex items-center gap-3 text-sm"><input id="messagePdfIncludeDate" type="checkbox" checked class="rounded border-gray-300 text-indigo-600">نمایش تاریخ استخراج در بالای گزارش</label><div class="flex gap-4 pt-4"><button onclick="generateMessagesPDF()" class="flex-1 rounded-2xl bg-indigo-600 py-4 text-white">ایجاد PDF</button><button onclick="closeModal()" class="flex-1 rounded-2xl border">انصراف</button></div></div></div></div>';
+  window.getMessagePDFPageHTML = function (pageNumber, rows, isFirst, o) {
+    return (
+      '<div style="width:100%;padding:24px;border-radius:20px;background:#fff;box-shadow:0 10px 30px rgba(15,23,42,.08)">' +
+      (isFirst
+        ? '<div style="direction:rtl;text-align:right"><h1 style="margin:0 0 6px;font-size:28px;font-weight:700">' +
+          e(o.title) +
+          '</h1><p style="margin:0 0 16px;color:#4b5563;font-size:14px">' +
+          e(o.subtitle) +
+          '</p>' +
+          (o.includeDate
+            ? '<p style="margin:0 0 16px;color:#6b7280;font-size:12px">تاریخ استخراج: ' +
+              e(o.date) +
+              '</p>'
+            : '') +
+          '</div>'
+        : '') +
+      '<table style="width:100%;border-collapse:collapse;direction:rtl"><thead style="background:' +
+      o.headerColor +
+      '"><tr>' +
+      o.selectedColumns
+        .map(
+          (c) =>
+            '<th style="padding:12px 14px;text-align:right;font-weight:600">' + e(c.label) + '</th>'
+        )
+        .join('') +
+      '</tr></thead><tbody>' +
+      rows
+        .map(
+          (m, i) =>
+            '<tr style="background:' +
+            (i % 2 === 0 ? o.evenRowColor : o.oddRowColor) +
+            '">' +
+            o.selectedColumns
+              .map(
+                (c) =>
+                  '<td style="padding:12px 14px;text-align:right">' +
+                  e(c.field === 'index' ? (pageNumber - 1) * o.rowsPerPage + i + 1 : m[c.field]) +
+                  '</td>'
+              )
+              .join('') +
+            '</tr>'
+        )
+        .join('') +
+      '</tbody></table>' +
+      (isFirst && o.footer
+        ? '<p style="margin-top:16px;color:#6b7280;font-size:12px">' + e(o.footer) + '</p>'
+        : '') +
+      '<div style="margin-top:16px;text-align:left;color:#6b7280;font-size:12px">صفحه ' +
+      pageNumber +
+      ' / ' +
+      o.totalPages +
+      '</div></div>'
+    );
+  };
+})();

@@ -2,7 +2,8 @@
 
 namespace Core\localization\DTO;
 
-class TranslationDTO {
+class TranslationDTO
+{
     public ?int $translation_id = null;
     public string $table_name;
     public int|string $table_id;
@@ -11,9 +12,8 @@ class TranslationDTO {
     public string $value;
     public int $version = 1;
 
-
-
-    public static function fromArray(array $row): self {
+    public static function fromArray(array $row): self
+    {
         $dto = new self();
         foreach ($row as $key => $value) {
             if (property_exists($dto, $key)) {
@@ -23,12 +23,8 @@ class TranslationDTO {
         return $dto;
     }
 
-
-
-    public function toArray(): array {
+    public function toArray(): array
+    {
         return get_object_vars($this);
     }
-
-
-
 }

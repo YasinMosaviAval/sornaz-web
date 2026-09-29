@@ -4,41 +4,32 @@ namespace Core\validation;
 
 use Exception;
 
-abstract class FormRequest {
-
-
+abstract class FormRequest
+{
 
     protected array $data;
 
-
-
-    public function __construct(?array $data = null) {
+    public function __construct(?array $data = null)
+    {
         $this->data = $data ?? $_POST;
     }
 
-
-
     abstract public function authorize(): bool;
-
-
 
     abstract public function rules(): array;
 
-
-
-    public function messages(): array {
+    public function messages(): array
+    {
         return [];
     }
 
-
-
-    public function validated(): array {
+    public function validated(): array
+    {
         return $this->validate();
     }
 
-
-
-    public function validate(): array {
+    public function validate(): array
+    {
         if (!$this->authorize()) {
             throw new Exception('Unauthorized.');
         }
@@ -55,6 +46,4 @@ abstract class FormRequest {
         unset($this->data['_token']);
         return $this->data;
     }
-
-
 }

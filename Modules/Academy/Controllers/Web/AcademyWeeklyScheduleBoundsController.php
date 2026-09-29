@@ -5,13 +5,14 @@ use Core\http\ResponseFactory;
 use Modules\Academy\Services\AcademyClassScheduleService;
 use Throwable;
 
-class AcademyWeeklyScheduleBoundsController {
+class AcademyWeeklyScheduleBoundsController
+{
+    public function __construct(private AcademyClassScheduleService $service)
+    {
+    }
 
-
-    public function __construct(private AcademyClassScheduleService $service) {}
-
-
-    public function index() {
+    public function index()
+    {
         try {
             $data = $this->service->weeklyBounds((int) auth()->id(), (int) ($_GET['branch'] ?? 0));
             return ResponseFactory::json(['success' => true, 'data' => $data]);
@@ -19,6 +20,4 @@ class AcademyWeeklyScheduleBoundsController {
             return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }
-
-
 }

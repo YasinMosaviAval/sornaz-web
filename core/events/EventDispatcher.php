@@ -2,18 +2,18 @@
 
 namespace Core\events;
 
-class EventDispatcher {
-
+class EventDispatcher
+{
 
     protected array $listeners = [];
 
-
-    public function listen(string $event, callable|string $listener): void {
+    public function listen(string $event, callable|string $listener): void
+    {
         $this->listeners[$event][] = $listener;
     }
 
-
-    public function dispatch(object $event): void {
+    public function dispatch(object $event): void
+    {
         $eventClass = get_class($event);
         foreach ($this->listeners[$eventClass] ?? [] as $listener) {
             if (is_string($listener)) {
@@ -28,7 +28,4 @@ class EventDispatcher {
             $listener($event);
         }
     }
-
-
-
 }

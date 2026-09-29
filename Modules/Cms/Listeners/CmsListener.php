@@ -2,6 +2,7 @@
 
 namespace Modules\Cms\Listeners;
 
-class SendCmsListener {
+class SendCmsListener
+{
 
 }

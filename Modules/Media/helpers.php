@@ -2,7 +2,8 @@
 
 if (!function_exists('medias')) {
 
-    function medias() {
+    function medias()
+    {
     }
 
 }

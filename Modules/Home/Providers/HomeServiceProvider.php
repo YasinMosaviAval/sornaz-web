@@ -2,6 +2,7 @@
 
 namespace Modules\Home\Providers;
 
-class HomeServiceProvider {
+class HomeServiceProvider
+{
 
 }

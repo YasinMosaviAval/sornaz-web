@@ -2,6 +2,7 @@
 
 namespace Modules\Translation\Events;
 
-class TranslationEvent {
+class TranslationEvent
+{
 
 }

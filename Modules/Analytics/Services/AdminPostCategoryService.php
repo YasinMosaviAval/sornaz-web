@@ -23,7 +23,7 @@ class AdminPostCategoryService
             FROM categories c WHERE " . implode(' AND ', $where) . ' ORDER BY c.category_id DESC';
         $statement = db()->prepare($sql);
         $statement->execute($bindings);
-        return array_map(fn(array $row) => $this->map($row), $statement->fetchAll());
+        return array_map(fn (array $row) => $this->map($row), $statement->fetchAll());
     }
 
     public function create(int $actor, array $data): int
@@ -49,55 +49,74 @@ class AdminPostCategoryService
     public function delete(int $actor, int $id): void
     {
         $category = $this->find($id);
-        if ((int) $category['posts_count'] > 0) throw new RuntimeException('این دسته‌بندی به نوشته‌ها متصل است و قابل حذف نیست.');
+        if ((int) $category['posts_count'] > 0) {
+            throw new RuntimeException('این دسته‌بندی به نوشته‌ها متصل است و قابل حذف نیست.');
+        }
         $deletedAt = date('Y-m-d H:i:s');
         transaction(function () use ($actor, $id, $deletedAt) {
-            DB::table('translations')->where('table_name', 'categories')->where('table_id', $id)->whereNull('deleted_at')->update(['deleted_at'=>$deletedAt,'deleted_by'=>$actor,'updated_by'=>$actor]);
-            DB::table('categories')->where('category_id', $id)->whereNull('deleted_at')->update(['deleted_at'=>$deletedAt,'deleted_by'=>$actor,'updated_by'=>$actor]);
+            DB::table('translations')->where('table_name', 'categories')->where('table_id', $id)->whereNull('deleted_at')->update(['deleted_at' => $deletedAt, 'deleted_by' => $actor, 'updated_by' => $actor]);
+            DB::table('categories')->where('category_id', $id)->whereNull('deleted_at')->update(['deleted_at' => $deletedAt, 'deleted_by' => $actor, 'updated_by' => $actor]);
         });
     }
 
     private function find(int $id): array
     {
-        $items = array_values(array_filter($this->index(), fn(array $item) => $item['id'] === $id));
-        if (!$items) throw new RuntimeException('دسته‌بندی موردنظر یافت نشد.');
+        $items = array_values(array_filter($this->index(), fn (array $item) => $item['id'] === $id));
+        if (!$items) {
+            throw new RuntimeException('دسته‌بندی موردنظر یافت نشد.');
+        }
         return $items[0];
     }
 
     private function validated(array $data, int $id): array
     {
-        $faTitle = trim((string)($data['title_fa'] ?? ''));
-        $enTitle = trim((string)($data['title_en'] ?? ''));
-        if ($faTitle === '') throw new RuntimeException('عنوان فارسی دسته‌بندی الزامی است.');
-        $slug = trim((string)($data['slug'] ?? '')) ?: trim(preg_replace('/[^\pL\pN]+/u', '-', mb_strtolower($enTitle ?: $faTitle)), '-');
-        if ($slug === '') $slug = 'category-' . time();
+        $faTitle = trim((string) ($data['title_fa'] ?? ''));
+        $enTitle = trim((string) ($data['title_en'] ?? ''));
+        if ($faTitle === '') {
+            throw new RuntimeException('عنوان فارسی دسته‌بندی الزامی است.');
+        }
+        $slug = trim((string) ($data['slug'] ?? '')) ?: trim(preg_replace('/[^\pL\pN]+/u', '-', mb_strtolower($enTitle ?: $faTitle)), '-');
+        if ($slug === '') {
+            $slug = 'category-' . time();
+        }
         $duplicate = DB::table('categories')->where('slug', $slug)->whereNull('deleted_at')->first();
-        if ($duplicate && (int)$duplicate['category_id'] !== $id) throw new RuntimeException('این نامک قبلاً برای دسته‌بندی دیگری ثبت شده است.');
+        if ($duplicate && (int) $duplicate['category_id'] !== $id) {
+            throw new RuntimeException('این نامک قبلاً برای دسته‌بندی دیگری ثبت شده است.');
+        }
         $texts = [];
-        foreach (['fa','en'] as $locale) foreach (self::TEXT_FIELDS as $field) $texts[$locale][$field] = trim((string)($data[$field.'_'.$locale] ?? ''));
+        foreach (['fa', 'en'] as $locale) {
+            foreach (self::TEXT_FIELDS as $field) {
+                $texts[$locale][$field] = trim((string) ($data[$field . '_' . $locale] ?? ''));
+            }
+        }
         return [[
-            'name'=>$faTitle, 'slug'=>$slug, 'group'=>trim((string)($data['group'] ?? 'posts')) ?: 'posts',
-            'approved_at'=>date('Y-m-d H:i:s'),
+            'name' => $faTitle, 'slug' => $slug, 'group' => trim((string) ($data['group'] ?? 'posts')) ?: 'posts',
+            'approved_at' => date('Y-m-d H:i:s'),
         ], $texts];
     }
 
     private function map(array $row): array
     {
-        $id = (int)$row['category_id'];
-        $texts = ['fa'=>[], 'en'=>[]];
-        foreach (DB::table('translations')->where('table_name','categories')->where('table_id',$id)->whereIn('field',self::TEXT_FIELDS)->whereNull('deleted_at')->get() as $translation) {
+        $id = (int) $row['category_id'];
+        $texts = ['fa' => [], 'en' => []];
+        foreach (DB::table('translations')->where('table_name', 'categories')->where('table_id', $id)->whereIn('field', self::TEXT_FIELDS)->whereNull('deleted_at')->get() as $translation) {
             $texts[$translation['locale']][$translation['field']] = $translation['value'];
         }
-        return ['id'=>$id,'title_fa'=>$texts['fa']['title']??$row['name']??'','title_en'=>$texts['en']['title']??'','summary_fa'=>$texts['fa']['summary']??'','summary_en'=>$texts['en']['summary']??'','description_fa'=>$texts['fa']['description']??'','description_en'=>$texts['en']['description']??'','slug'=>$row['slug']??'','group'=>$row['group']??'posts','posts_count'=>(int)($row['posts_count']??0),'created_at'=>$row['created_at']??null];
+        return ['id' => $id, 'title_fa' => $texts['fa']['title'] ?? $row['name'] ?? '', 'title_en' => $texts['en']['title'] ?? '', 'summary_fa' => $texts['fa']['summary'] ?? '', 'summary_en' => $texts['en']['summary'] ?? '', 'description_fa' => $texts['fa']['description'] ?? '', 'description_en' => $texts['en']['description'] ?? '', 'slug' => $row['slug'] ?? '', 'group' => $row['group'] ?? 'posts', 'posts_count' => (int) ($row['posts_count'] ?? 0), 'created_at' => $row['created_at'] ?? null];
     }
 
     private function setTexts(int $id, array $texts, int $actor): void
     {
-        foreach ($texts as $locale => $fields) foreach ($fields as $field => $value) {
-            $row = DB::table('translations')->where('table_name','categories')->where('table_id',$id)->where('locale',$locale)->where('field',$field)->first();
-            $values = ['value'=>$value,'version'=>(int)($row['version']??0)+1,'updated_by'=>$actor,'deleted_at'=>null,'deleted_by'=>null];
-            if ($row) DB::table('translations')->where('translation_id',(int)$row['translation_id'])->update($values);
-            else DB::table('translations')->insert(['table_name'=>'categories','table_id'=>$id,'locale'=>$locale,'field'=>$field,'created_by'=>$actor]+$values);
+        foreach ($texts as $locale => $fields) {
+            foreach ($fields as $field => $value) {
+                $row = DB::table('translations')->where('table_name', 'categories')->where('table_id', $id)->where('locale', $locale)->where('field', $field)->first();
+                $values = ['value' => $value, 'version' => (int) ($row['version'] ?? 0) + 1, 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
+                if ($row) {
+                    DB::table('translations')->where('translation_id', (int) $row['translation_id'])->update($values);
+                } else {
+                    DB::table('translations')->insert(['table_name' => 'categories', 'table_id' => $id, 'locale' => $locale, 'field' => $field, 'created_by' => $actor] + $values);
+                }
+            }
         }
     }
 

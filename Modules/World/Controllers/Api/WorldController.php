@@ -7,25 +7,29 @@ use Modules\World\Requests\WorldStoreRequest;
 use Modules\World\Requests\WorldUpdateRequest;
 use Modules\World\Services\WorldService;
 
-class WorldController {
+class WorldController
+{
 
     protected WorldService $service;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->service = new WorldService();
     }
 
     /**
      * GET /api/worlds
      */
-    public function index() {
+    public function index()
+    {
         return ResponseFactory::json($this->service->all());
     }
 
     /**
      * GET /api/worlds/{id}
      */
-    public function show(int $id) {
+    public function show(int $id)
+    {
         $item = $this->service->findById($id);
         if (!$item) {
             return ResponseFactory::json(['message' => 'World not found.'], 404);
@@ -36,7 +40,8 @@ class WorldController {
     /**
      * POST /api/worlds
      */
-    public function store() {
+    public function store()
+    {
         $request = new WorldStoreRequest($_POST);
         $id = $this->service->create($request->validated());
         return ResponseFactory::json([
@@ -48,19 +53,19 @@ class WorldController {
     /**
      * PUT /api/worlds/{id}
      */
-    public function update(int $id) {
+    public function update(int $id)
+    {
         $request = new WorldUpdateRequest($_POST);
         $result = $this->service->update($id, $request->validated());
-        return ResponseFactory::json(['success'=>$result]);
+        return ResponseFactory::json(['success' => $result]);
     }
 
     /**
      * DELETE /api/worlds/{id}
      */
-    public function destroy(int $id) {
+    public function destroy(int $id)
+    {
         $result = $this->service->delete($id);
-        return ResponseFactory::json(['success'=>$result]);
+        return ResponseFactory::json(['success' => $result]);
     }
-
-
 }

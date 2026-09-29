@@ -1,52 +1,86 @@
 (function () {
-    'use strict';
-    function escapeHtml(value) {
-        return String(value ?? '')
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
-    function renderOptions(options, selectedValue) {
-        return (options || []).map(function (option) {
-            const value = option.value ?? option.id ?? option.name ?? option;
-            const label = option.label ?? option.name ?? option;
-            const selected = String(value) === String(selectedValue) ? 'selected' : '';
-            return `<option value="${escapeHtml(value)}" ${selected}>${escapeHtml(label)}</option>`;
-        }).join('');
-    }
-    function statusClass(status) {
-        return {
-            'فعال': 'bg-green-100 text-green-700 hover:bg-green-200',
-            'غیرفعال': 'bg-red-100 text-red-700 hover:bg-red-200',
-            'پر شده': 'bg-gray-200 text-gray-700 hover:bg-gray-300',
-            'در انتظار تأیید': 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200',
-            'در انتظار تایید': 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-        }[status] || 'bg-gray-100 text-gray-600';
-    }
+  'use strict';
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+  function renderOptions(options, selectedValue) {
+    return (options || [])
+      .map(function (option) {
+        const value = option.value ?? option.id ?? option.name ?? option;
+        const label = option.label ?? option.name ?? option;
+        const selected = String(value) === String(selectedValue) ? 'selected' : '';
+        return `<option value="${escapeHtml(value)}" ${selected}>${escapeHtml(label)}</option>`;
+      })
+      .join('');
+  }
+  function statusClass(status) {
+    return (
+      {
+        فعال: 'bg-green-100 text-green-700 hover:bg-green-200',
+        غیرفعال: 'bg-red-100 text-red-700 hover:bg-red-200',
+        'پر شده': 'bg-gray-200 text-gray-700 hover:bg-gray-300',
+        'در انتظار تأیید': 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200',
+        'در انتظار تایید': 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200',
+      }[status] || 'bg-gray-100 text-gray-600'
+    );
+  }
 
-    function formFields(item, prefix) {
-        const id = function (n) { return prefix ? prefix + n : 'ms' + n; };
-        const selectedMembership = (typeof window.getMemberScheduleMemberOptions === 'function' ? window.getMemberScheduleMemberOptions() : []).find(function(m){return String(m.value)===String(item.membershipId||'');});
-        const selectedOrganization = item.organizationUserId || selectedMembership?.organizationUserId;
-        const branches = (typeof window.getMemberScheduleBranches === 'function' ? window.getMemberScheduleBranches() : []).map(function (b) {
-            return { value: b.id, label: b.name };
-        });
-        const members = (typeof window.getMemberScheduleMemberOptions === 'function' ? window.getMemberScheduleMemberOptions() : []).filter(function(m){return String(m.organizationUserId)===String(selectedOrganization || branches[0]?.value);});
-        const roles = (window.memberScheduleRolesList || []).map(function (r) { return { value: r, label: r }; });
-        const days = (window.memberScheduleDaysList || []).map(function (d) { return { value: d, label: d }; });
-        const statuses = (window.memberScheduleStatusesList || []).map(function (s) { return { value: s, label: s }; });
-        const repeats = (window.memberScheduleRepeatList || []).map(function (r) { return { value: r, label: r }; });
-        const timezones = (window.memberScheduleTimezoneList || []).map(function (tz) {
-            return { value: tz.value, label: tz.label };
-        });
-        const branchId = item.branchId || (branches[0] && branches[0].value) || 1;
-        const repeatVal = item.repeatPeriod || 'هفتگی';
-        const showDate = (repeatVal === 'ماهانه' || repeatVal === 'سالانه');
-        const fixedOrganization = window.staffCatalog?.organization_selection === 'fixed';
-        const slotsHtml = typeof window.buildMemberScheduleTimeSlotsHTML === 'function'
-            ? window.buildMemberScheduleTimeSlotsHTML(id('TimeSlots'), branchId, item.slots || [])
-            : '';
+  function formFields(item, prefix) {
+    const id = function (n) {
+      return prefix ? prefix + n : 'ms' + n;
+    };
+    const selectedMembership = (
+      typeof window.getMemberScheduleMemberOptions === 'function'
+        ? window.getMemberScheduleMemberOptions()
+        : []
+    ).find(function (m) {
+      return String(m.value) === String(item.membershipId || '');
+    });
+    const selectedOrganization = item.organizationUserId || selectedMembership?.organizationUserId;
+    const branches = (
+      typeof window.getMemberScheduleBranches === 'function'
+        ? window.getMemberScheduleBranches()
+        : []
+    ).map(function (b) {
+      return { value: b.id, label: b.name };
+    });
+    const members = (
+      typeof window.getMemberScheduleMemberOptions === 'function'
+        ? window.getMemberScheduleMemberOptions()
+        : []
+    ).filter(function (m) {
+      return String(m.organizationUserId) === String(selectedOrganization || branches[0]?.value);
+    });
+    const roles = (window.memberScheduleRolesList || []).map(function (r) {
+      return { value: r, label: r };
+    });
+    const days = (window.memberScheduleDaysList || []).map(function (d) {
+      return { value: d, label: d };
+    });
+    const statuses = (window.memberScheduleStatusesList || []).map(function (s) {
+      return { value: s, label: s };
+    });
+    const repeats = (window.memberScheduleRepeatList || []).map(function (r) {
+      return { value: r, label: r };
+    });
+    const timezones = (window.memberScheduleTimezoneList || []).map(function (tz) {
+      return { value: tz.value, label: tz.label };
+    });
+    const branchId = item.branchId || (branches[0] && branches[0].value) || 1;
+    const repeatVal = item.repeatPeriod || 'هفتگی';
+    const showDate = repeatVal === 'ماهانه' || repeatVal === 'سالانه';
+    const fixedOrganization = window.staffCatalog?.organization_selection === 'fixed';
+    const slotsHtml =
+      typeof window.buildMemberScheduleTimeSlotsHTML === 'function'
+        ? window.buildMemberScheduleTimeSlotsHTML(id('TimeSlots'), branchId, item.slots || [])
+        : '';
 
-        return `
+    return `
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <input id="${id('RecordId')}" type="hidden" value="${escapeHtml(item.id || '')}">
                 <div class="${fixedOrganization ? 'hidden' : ''}">
@@ -71,7 +105,7 @@
                         ${renderOptions(repeats, repeatVal)}
                     </select>
                 </div>
-                <div id="${id('DayWrap')}" class="${['ماهانه','سالانه','بی‌تکرار'].includes(repeatVal) ? 'hidden' : ''}">
+                <div id="${id('DayWrap')}" class="${['ماهانه', 'سالانه', 'بی‌تکرار'].includes(repeatVal) ? 'hidden' : ''}">
                     <label class="block text-sm font-medium mb-2">روز *</label>
                     <select id="${id('Day')}" onchange="window.refreshMemberScheduleRepeatFields('${prefix}');window.refreshMemberScheduleConflicts('${prefix}')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                         ${renderOptions(days, item.day || 'شنبه')}
@@ -99,10 +133,10 @@
                     <div><label class="block text-sm font-medium mb-2">توضیحات</label><textarea id="${id('Description')}" rows="3" class="w-full border rounded-2xl py-3.5 px-5 bg-white">${escapeHtml(item.description || '')}</textarea></div>
                 </div>
             </div>`;
-    }
+  }
 
-    window.getMemberScheduleRowHTML = function (item) {
-        return `
+  window.getMemberScheduleRowHTML = function (item) {
+    return `
             <td class="py-4 px-5 font-medium">${escapeHtml(item.name)}</td>
             <td class="py-4 px-5">${escapeHtml(item.role)}</td>
             <td class="py-4 px-5">${escapeHtml(item.day)}</td>
@@ -117,24 +151,24 @@
                     ${item.readOnly ? '' : `<button onclick="toggleMemberScheduleInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button><button onclick="deleteMemberSchedule(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>`}
                 </div>
             </td>`;
-    };
-    window.getMemberScheduleEmptyRowHTML = function () {
-        return `<tr><td colspan="9" class="py-12 text-center text-gray-400">زمان‌بندی‌ای یافت نشد</td></tr>`;
-    };
-    window.getMemberScheduleInlineExpandRowHTML = function (item) {
-        return `<td colspan="9" class="p-5 border-t">${window.getMemberScheduleInlineEditRowHTML(item)}</td>`;
-    };
-    window.getMemberScheduleInlineEditRowHTML = function (item) {
-        return `<div class="space-y-6">
+  };
+  window.getMemberScheduleEmptyRowHTML = function () {
+    return `<tr><td colspan="9" class="py-12 text-center text-gray-400">زمان‌بندی‌ای یافت نشد</td></tr>`;
+  };
+  window.getMemberScheduleInlineExpandRowHTML = function (item) {
+    return `<td colspan="9" class="p-5 border-t">${window.getMemberScheduleInlineEditRowHTML(item)}</td>`;
+  };
+  window.getMemberScheduleInlineEditRowHTML = function (item) {
+    return `<div class="space-y-6">
             ${formFields(item, 'inlineMs' + item.id)}
             <div class="flex flex-col sm:flex-row gap-4 pt-2">
                 <button onclick="saveInlineMemberSchedule(${item.id})" class="w-full sm:w-auto min-w-[140px] bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-4 rounded-2xl font-medium">ذخیره</button>
                 <button onclick="toggleMemberScheduleInlineEdit(${item.id})" class="w-full sm:w-auto min-w-[140px] border border-gray-300 px-5 py-4 rounded-2xl hover:bg-gray-50">انصراف</button>
             </div>
         </div>`;
-    };
-    window.getMemberScheduleAddModalHTML = function () {
-        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
+  };
+  window.getMemberScheduleAddModalHTML = function () {
+    return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-3xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                 <div class="px-8 py-5 border-b flex justify-between items-center">
                     <h2 class="text-2xl font-bold">افزودن زمان‌بندی عضو</h2>
@@ -149,9 +183,9 @@
                 </div>
             </div>
         </div>`;
-    };
-    window.getMemberScheduleEditModalHTML = function (item) {
-        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
+  };
+  window.getMemberScheduleEditModalHTML = function (item) {
+    return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-3xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                 <div class="px-8 py-5 border-b flex justify-between items-center">
                     <h2 class="text-2xl font-bold">ویرایش زمان‌بندی عضو</h2>
@@ -166,9 +200,9 @@
                 </div>
             </div>
         </div>`;
-    };
-    window.getMemberScheduleDetailsModalHTML = function (item) {
-        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
+  };
+  window.getMemberScheduleDetailsModalHTML = function (item) {
+    return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl">
                     <div>
@@ -189,17 +223,21 @@
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">روز</span><span class="font-medium">${escapeHtml(item.day)}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ساعت</span><span class="font-medium">${escapeHtml(item.timeLabel || item.time || '—')}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">دوره تکرار</span><span class="font-medium">${escapeHtml(item.repeatPeriod || 'هفتگی')}</span></div>
-                        ${(item.repeatPeriod === 'ماهانه' || item.repeatPeriod === 'سالانه') && item.repeatDate
-                            ? `<div class="flex justify-between border-b pb-2"><span class="text-gray-500">تاریخ مرجع</span><span class="font-medium">${escapeHtml(item.repeatDate)}</span></div>` : ''}
+                        ${
+                          (item.repeatPeriod === 'ماهانه' || item.repeatPeriod === 'سالانه') &&
+                          item.repeatDate
+                            ? `<div class="flex justify-between border-b pb-2"><span class="text-gray-500">تاریخ مرجع</span><span class="font-medium">${escapeHtml(item.repeatDate)}</span></div>`
+                            : ''
+                        }
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">منطقه زمانی</span><span class="font-medium">${escapeHtml(item.timezone || 'Asia/Tehran')}</span></div>
                         <div class="flex justify-between border-b pb-2"><span class="text-gray-500">وضعیت</span><span class="font-medium">${escapeHtml(item.status)}</span></div>
                     </div>
                 </div>
             </div>
         </div>`;
-    };
-    window.getMemberSchedulePDFModalHTML = function (cols) {
-        return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
+  };
+  window.getMemberSchedulePDFModalHTML = function (cols) {
+    return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl">
                     <h2 class="text-2xl font-bold">تنظیمات خروجی PDF زمان‌بندی اعضا</h2>
@@ -214,9 +252,11 @@
                     </div>
                     <input id="msPdfFooter" type="text" value="تولید شده توسط سیستم مدیریت آموزشگاه" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                     <div class="grid grid-cols-2 gap-2">
-                        ${(cols || []).map(function (c) {
+                        ${(cols || [])
+                          .map(function (c) {
                             return `<label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" id="msPdfCol-${c.field}" checked> ${c.label}</label>`;
-                        }).join('')}
+                          })
+                          .join('')}
                     </div>
                     <div class="grid grid-cols-3 gap-5">
                         <input id="msPdfHeaderColor" type="color" value="#eff6ff" class="w-full h-12 border rounded-2xl p-2">
@@ -231,32 +271,45 @@
                 </div>
             </div>
         </div>`;
-    };
-    window.getMemberSchedulePDFPageHTML = function (pageNumber, rows, isFirstPage, options) {
-        const o = options;
-        return `<div style="width:100%;padding:24px;background:#fff;direction:rtl;">
-            ${isFirstPage ? `<h1 style="margin:0 0 6px;font-size:28px;font-weight:700;">${escapeHtml(o.title)}</h1>
+  };
+  window.getMemberSchedulePDFPageHTML = function (pageNumber, rows, isFirstPage, options) {
+    const o = options;
+    return `<div style="width:100%;padding:24px;background:#fff;direction:rtl;">
+            ${
+              isFirstPage
+                ? `<h1 style="margin:0 0 6px;font-size:28px;font-weight:700;">${escapeHtml(o.title)}</h1>
             <p style="margin:0 0 16px;color:#4b5563;font-size:14px;">${escapeHtml(o.subtitle)}</p>
-            ${o.includeDate ? `<p style="margin:0 0 16px;color:#6b7280;font-size:12px;">تاریخ استخراج: ${escapeHtml(o.date)}</p>` : ''}` : ''}
+            ${o.includeDate ? `<p style="margin:0 0 16px;color:#6b7280;font-size:12px;">تاریخ استخراج: ${escapeHtml(o.date)}</p>` : ''}`
+                : ''
+            }
             <table style="width:100%;border-collapse:collapse;">
                 <thead style="background:${o.headerColor};"><tr>
-                    ${o.selectedColumns.map(function (c) {
+                    ${o.selectedColumns
+                      .map(function (c) {
                         return `<th style="padding:12px 14px;text-align:right;font-weight:600;">${escapeHtml(c.label)}</th>`;
-                    }).join('')}
+                      })
+                      .join('')}
                 </tr></thead>
                 <tbody>
-                    ${rows.map(function (item, index) {
+                    ${rows
+                      .map(function (item, index) {
                         return `<tr style="background:${index % 2 === 0 ? o.evenRowColor : o.oddRowColor};">
-                            ${o.selectedColumns.map(function (c) {
-                                const v = c.field === 'index' ? (pageNumber - 1) * o.rowsPerPage + index + 1 : item[c.field];
+                            ${o.selectedColumns
+                              .map(function (c) {
+                                const v =
+                                  c.field === 'index'
+                                    ? (pageNumber - 1) * o.rowsPerPage + index + 1
+                                    : item[c.field];
                                 return `<td style="padding:12px 14px;text-align:right;">${escapeHtml(v)}</td>`;
-                            }).join('')}
+                              })
+                              .join('')}
                         </tr>`;
-                    }).join('')}
+                      })
+                      .join('')}
                 </tbody>
             </table>
             ${isFirstPage && o.footer ? `<p style="margin-top:16px;color:#6b7280;font-size:12px;">${escapeHtml(o.footer)}</p>` : ''}
             <div style="margin-top:16px;text-align:left;color:#6b7280;font-size:12px;">صفحه ${pageNumber} / ${o.totalPages}</div>
         </div>`;
-    };
+  };
 })();

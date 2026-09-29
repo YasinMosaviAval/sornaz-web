@@ -2,29 +2,31 @@
 
 namespace Core\database\Concerns;
 
-trait HasBooting {
-
+trait HasBooting
+{
 
     protected static array $booted = [];
 
-
-    protected static function bootIfNotBooted(): void {
+    protected static function bootIfNotBooted(): void
+    {
         $class = static::class;
-        if (isset(static::$booted[$class])) {return;}
+        if (isset(static::$booted[$class])) {
+            return;
+        }
         static::$booted[$class] = true;
         static::boot();
     }
 
-
-    protected static function boot(): void {
+    protected static function boot(): void
+    {
         static::bootTraits();
         if (method_exists(static::class, 'bootModel')) {
             forward_static_call([static::class, 'bootModel']);
         }
     }
 
-
-    protected static function bootTraits(): void {
+    protected static function bootTraits(): void
+    {
         $traits = class_uses(static::class);
         foreach ($traits as $trait) {
             $parts = explode('\\', $trait);
@@ -35,7 +37,4 @@ trait HasBooting {
             }
         }
     }
-
-
-
 }

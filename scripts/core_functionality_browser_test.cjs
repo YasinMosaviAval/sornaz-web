@@ -44,7 +44,9 @@ const {chromium} = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/notat
   addMessage=true;await page.evaluate(()=>window.poll());await page.waitForSelector('#chatMessage-23');
   assert.equal(await page.evaluate(()=>window.preservedMessage===document.getElementById('chatMessage-21')),true);
   const source=fs.readFileSync('assets/Page/js/main.js','utf8');
-  const contact=source.match(/window.submitPublicContact = async function\(e\) \{[\s\S]*?\n\};/)[0];
+  const match=source.match(/window\.submitPublicContact\s*=\s*async\s+function\s*\(e\)\s*\{[\s\S]*?^\};/m);
+  assert.ok(match,'Contact handler was not found in the public page script');
+  const contact=match[0];
   await page.addScriptTag({content:contact});
   await page.evaluate(()=>window.submitPublicContact({preventDefault(){}}));
   assert.equal(await page.locator('#cMessage').inputValue(),'Keep this message');

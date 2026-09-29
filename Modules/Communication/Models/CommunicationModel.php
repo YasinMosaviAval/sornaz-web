@@ -4,7 +4,8 @@ namespace Modules\Communication\Models;
 
 use Core\database\Model;
 
-class CommunicationModel extends Model {
+class CommunicationModel extends Model
+{
 
     protected string $table = 'communications';
     protected string $primaryKey = 'communication_id';
@@ -17,6 +18,5 @@ class CommunicationModel extends Model {
     ];
     protected bool $timestamps = true;
     protected bool $softDeletes = true;
-
 
 }

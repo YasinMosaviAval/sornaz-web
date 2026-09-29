@@ -2,6 +2,7 @@
 
 namespace Modules\Academy\Listeners;
 
-class SendAcademyListener {
+class SendAcademyListener
+{
 
 }

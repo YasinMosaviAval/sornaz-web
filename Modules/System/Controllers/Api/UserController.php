@@ -11,8 +11,8 @@ use Modules\System\Services\RegistrationOtpService;
 use Modules\System\Services\UserNotificationService;
 use Modules\System\Services\UserService;
 
-class UserController {
-
+class UserController
+{
     public function __construct(
         protected UserService $service,
         protected RegistrationOtpService $registrationOtp,
@@ -21,31 +21,40 @@ class UserController {
     ) {
     }
 
-    public function login() {
-        $identifier = trim((string)($_POST['identifier'] ?? ''));
-        $password = (string)($_POST['password'] ?? '');
-        if ($identifier === '' || $password === '') return $this->error('نام کاربری، ایمیل یا شماره موبایل و رمز عبور الزامی است.', 422);
+    public function login()
+    {
+        $identifier = trim((string) ($_POST['identifier'] ?? ''));
+        $password = (string) ($_POST['password'] ?? '');
+        if ($identifier === '' || $password === '') {
+            return $this->error('نام کاربری، ایمیل یا شماره موبایل و رمز عبور الزامی است.', 422);
+        }
         $user = $this->service->attempt($identifier, $password);
-        if (!$user) return $this->error('نام کاربری، ایمیل، شماره موبایل یا رمز عبور اشتباه است.', 401);
-        $this->recordLogin((int)$user['user_id']);
+        if (!$user) {
+            return $this->error('نام کاربری، ایمیل، شماره موبایل یا رمز عبور اشتباه است.', 401);
+        }
+        $this->recordLogin((int) $user['user_id']);
         return $this->authenticated($user, 'ورود با موفقیت انجام شد.');
     }
 
-    public function sendRegistrationOtp() {
+    public function sendRegistrationOtp()
+    {
         try {
             $data = $this->registrationData();
-            $result = \Modules\System\Services\RegistrationOtpPolicy::api() ? ['ok'=>true,'otp_required'=>false,'expires_in'=>0] : $this->registrationOtp->send($data['register_method'], (string)$data[$data['register_method']], $this->otpData($data));
+            $result = \Modules\System\Services\RegistrationOtpPolicy::api() ? ['ok' => true, 'otp_required' => false, 'expires_in' => 0] : $this->registrationOtp->send($data['register_method'], (string) $data[$data['register_method']], $this->otpData($data));
             return ResponseFactory::json(['success' => $result['ok']] + $result, $result['ok'] ? 200 : (isset($result['retry_after']) ? 429 : 503));
         } catch (ValidationException $e) {
-            return ResponseFactory::json(['success'=>false, 'message'=>'اطلاعات فرم را بررسی کنید.', 'errors'=>$e->getErrors()], 422);
+            return ResponseFactory::json(['success' => false, 'message' => 'اطلاعات فرم را بررسی کنید.', 'errors' => $e->getErrors()], 422);
         }
     }
 
-    public function register() {
+    public function register()
+    {
         try {
             $data = $this->registrationData();
-            $verification = \Modules\System\Services\RegistrationOtpPolicy::api() ? ['ok'=>true] : $this->registrationOtp->verify(trim((string)($_POST['otp'] ?? '')), $this->otpData($data));
-            if (!$verification['ok']) return $this->error($verification['message'], 422);
+            $verification = \Modules\System\Services\RegistrationOtpPolicy::api() ? ['ok' => true] : $this->registrationOtp->verify(trim((string) ($_POST['otp'] ?? '')), $this->otpData($data));
+            if (!$verification['ok']) {
+                return $this->error($verification['message'], 422);
+            }
             session()->put('suppress_database_notifications', true);
             $userId = $this->service->register($data);
             if (!$userId) {
@@ -54,114 +63,141 @@ class UserController {
             }
             $this->registrationOtp->clear();
             $now = date('Y-m-d H:i:s');
-            $verified = ['status'=>'approved','type'=>'human','approved_at'=>$now,'approved_by'=>$userId,'updated_by'=>$userId];
-            if ($data['register_method'] === 'phone') $verified['phone_verified_at'] = $now;
+            $verified = ['status' => 'approved', 'type' => 'human', 'approved_at' => $now, 'approved_by' => $userId, 'updated_by' => $userId];
+            if ($data['register_method'] === 'phone') {
+                $verified['phone_verified_at'] = $now;
+            }
             DB::table('users')->where('user_id', $userId)->update($verified);
             $this->recordLogin($userId);
-            $contact = (string)$data[$data['register_method']];
+            $contact = (string) $data[$data['register_method']];
             $this->sendRegistrationNotifications($userId, $data['username'], $data['register_method'], $contact);
             session()->forget('suppress_database_notifications');
             $user = DB::table('users')->where('user_id', $userId)->first();
             return $this->authenticated($user, 'ثبت‌نام با موفقیت انجام شد.', 201);
         } catch (ValidationException $e) {
             session()->forget('suppress_database_notifications');
-            return ResponseFactory::json(['success'=>false, 'message'=>'اطلاعات فرم را بررسی کنید.', 'errors'=>$e->getErrors()], 422);
+            return ResponseFactory::json(['success' => false, 'message' => 'اطلاعات فرم را بررسی کنید.', 'errors' => $e->getErrors()], 422);
         } catch (\Throwable $e) {
             session()->forget('suppress_database_notifications');
             return $this->error('ثبت‌نام ناموفق بود. لطفاً دوباره تلاش کنید.', 500);
         }
     }
 
-    public function me() {
+    public function me()
+    {
         $user = $this->tokens->userFromRequest();
-        if (!$user) return $this->error('نشست شما معتبر نیست. دوباره وارد شوید.', 401);
-        return ResponseFactory::json(['success'=>true, 'user'=>$this->profile($user)]);
+        if (!$user) {
+            return $this->error('نشست شما معتبر نیست. دوباره وارد شوید.', 401);
+        }
+        return ResponseFactory::json(['success' => true, 'user' => $this->profile($user)]);
     }
 
-    public function logout() {
+    public function logout()
+    {
         $this->tokens->revokeFromRequest();
-        return ResponseFactory::json(['success'=>true, 'message'=>'خروج با موفقیت انجام شد.']);
+        return ResponseFactory::json(['success' => true, 'message' => 'خروج با موفقیت انجام شد.']);
     }
 
-    public function contact() {
-        return $this->saveContact($this->tokens->userFromRequest(),false);
+    public function contact()
+    {
+        return $this->saveContact($this->tokens->userFromRequest(), false);
     }
 
-    public function contactWeb() { return $this->saveContact(auth()->user()); }
+    public function contactWeb()
+    {
+        return $this->saveContact(auth()->user());
+    }
 
-    private function saveContact(?array $user, bool $requireContact = true) {
+    private function saveContact(?array $user, bool $requireContact = true)
+    {
         try {
-            $id = (new \Modules\System\Services\ContactMessageService())->submit($_POST,$user,$requireContact);
-            return ResponseFactory::json(['success'=>true,'id'=>$id,'message'=>'پیام شما ثبت شد.'],201);
+            $id = (new \Modules\System\Services\ContactMessageService())->submit($_POST, $user, $requireContact);
+            return ResponseFactory::json(['success' => true, 'id' => $id, 'message' => 'پیام شما ثبت شد.'], 201);
         } catch (\InvalidArgumentException $e) {
-            return $this->error($e->getMessage(),422);
+            return $this->error($e->getMessage(), 422);
         } catch (\Throwable $e) {
-            error_log('Contact submission failed: '.$e->getMessage());
-            return $this->error('ثبت پیام انجام نشد. دوباره تلاش کنید.',503);
+            error_log('Contact submission failed: ' . $e->getMessage());
+            return $this->error('ثبت پیام انجام نشد. دوباره تلاش کنید.', 503);
         }
     }
 
-    private function registrationData(): array {
+    private function registrationData(): array
+    {
         $data = (new UserStoreRequest($_POST))->validated();
-        $data['invite_code'] = trim((string)($_POST['invite_code'] ?? ''));
-        $data['full_name'] = trim((string)($_POST['full_name'] ?? ''));
-        $data['locale'] = in_array($_POST['locale'] ?? '', ['fa','en'], true) ? $_POST['locale'] : 'fa';
-        $method = (string)($data['register_method'] ?? '');
+        $data['invite_code'] = trim((string) ($_POST['invite_code'] ?? ''));
+        $data['full_name'] = trim((string) ($_POST['full_name'] ?? ''));
+        $data['locale'] = in_array($_POST['locale'] ?? '', ['fa', 'en'], true) ? $_POST['locale'] : 'fa';
+        $method = (string) ($data['register_method'] ?? '');
         if ($method === 'email') {
-            $data['email'] = strtolower(trim((string)($data['email'] ?? '')));
+            $data['email'] = strtolower(trim((string) ($data['email'] ?? '')));
             $data['phone'] = null;
-            if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) throw new ValidationException(['email'=>'ایمیل معتبر وارد کنید.']);
+            if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+                throw new ValidationException(['email' => 'ایمیل معتبر وارد کنید.']);
+            }
         } else {
-            $data['phone'] = preg_replace('/\D+/', '', (string)($data['phone'] ?? ''));
+            $data['phone'] = preg_replace('/\D+/', '', (string) ($data['phone'] ?? ''));
             $data['email'] = null;
-            if (!preg_match('/^09\d{9}$/', $data['phone'])) throw new ValidationException(['phone'=>'شماره موبایل معتبر وارد کنید.']);
+            if (!preg_match('/^09\d{9}$/', $data['phone'])) {
+                throw new ValidationException(['phone' => 'شماره موبایل معتبر وارد کنید.']);
+            }
         }
-        if (empty($_POST['terms'])) throw new ValidationException(['terms'=>'پذیرش قوانین الزامی است.']);
+        if (empty($_POST['terms'])) {
+            throw new ValidationException(['terms' => 'پذیرش قوانین الزامی است.']);
+        }
         return $data;
     }
 
-    private function otpData(array $data): array {
+    private function otpData(array $data): array
+    {
         unset($data['otp'], $data['password2'], $data['terms']);
         ksort($data);
         return $data;
     }
 
-    private function authenticated(array $user, string $message, int $status = 200) {
-        return ResponseFactory::json(['success'=>true, 'message'=>$message, 'token'=>$this->tokens->issue($user), 'user'=>$this->profile($user)], $status);
+    private function authenticated(array $user, string $message, int $status = 200)
+    {
+        return ResponseFactory::json(['success' => true, 'message' => $message, 'token' => $this->tokens->issue($user), 'user' => $this->profile($user)], $status);
     }
 
-    private function profile(array $user): array {
-        $id = (int)$user['user_id'];
-        $locale = in_array($user['locale'] ?? '', ['fa','en'], true) ? $user['locale'] : 'fa';
+    private function profile(array $user): array
+    {
+        $id = (int) $user['user_id'];
+        $locale = in_array($user['locale'] ?? '', ['fa', 'en'], true) ? $user['locale'] : 'fa';
         $name = TranslationService::manager()->get('users', $id, 'full_name', $locale)
             ?: TranslationService::manager()->get('users', $id, 'full_name', 'fa')
-            ?: (string)$user['username'];
+            ?: (string) $user['username'];
         $avatar = !empty($user['avatar_file_id'])
-            ? DB::table('media_files')->where('media_file_id', (int)$user['avatar_file_id'])->whereNull('deleted_at')->first()
+            ? DB::table('media_files')->where('media_file_id', (int) $user['avatar_file_id'])->whereNull('deleted_at')->first()
             : null;
-        $avatarUrl=$avatar ? '/'.ltrim((string)$avatar['path'], '/') : null;
+        $avatarUrl = $avatar ? '/' . ltrim((string) $avatar['path'], '/') : null;
         try {
-            $social=DB::table('social_profiles')->where('user_id',$id)->first();
-            if(!empty($social['avatar_id']))$avatarUrl='/api/sornaz/v1/social/media/'.(int)$social['avatar_id'];
-        } catch (\Throwable $e) { /* Preserve legacy avatars when the social module is not installed. */ }
-        return ['id'=>$id,'type'=>$user['type']??'human','username'=>$user['username'],'full_name'=>$name,'email'=>$user['email'] ?: null,'phone'=>$user['phone'] ?: null,'avatar'=>$avatarUrl];
+            $social = DB::table('social_profiles')->where('user_id', $id)->first();
+            if (!empty($social['avatar_id'])) {
+                $avatarUrl = '/api/sornaz/v1/social/media/' . (int) $social['avatar_id'];
+            }
+        } catch (\Throwable $e) { /* Preserve legacy avatars when the social module is not installed. */
+        }
+        return ['id' => $id, 'type' => $user['type'] ?? 'human', 'username' => $user['username'], 'full_name' => $name, 'email' => $user['email'] ?: null, 'phone' => $user['phone'] ?: null, 'avatar' => $avatarUrl];
     }
 
-    private function recordLogin(int $userId): void {
-        DB::table('users')->where('user_id', $userId)->update(['last_login_at'=>date('Y-m-d H:i:s'),'last_login_ip'=>substr((string)($_SERVER['REMOTE_ADDR'] ?? ''),0,45)]);
+    private function recordLogin(int $userId): void
+    {
+        DB::table('users')->where('user_id', $userId)->update(['last_login_at' => date('Y-m-d H:i:s'), 'last_login_ip' => substr((string) ($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45)]);
     }
 
-    private function sendRegistrationNotifications(int $userId, string $username, string $method, string $contact): void {
+    private function sendRegistrationNotifications(int $userId, string $username, string $method, string $contact): void
+    {
         $at = date('Y-m-d H:i:s');
         $label = $method === 'phone' ? 'شماره تلفن' : 'ایمیل';
         $this->notifications->send($userId, 'ثبت‌نام موفق', "ثبت نام شما در تاریخ {$at} با موفقیت صورت گرفت.", 'users', $userId, $userId, 'Registration successful', "Your registration was completed successfully on {$at}.");
         $this->notifications->send(1, 'ثبت‌نام کاربر جدید', "کاربری با آی‌دی {$userId} با نام کاربری {$username} و {$label} {$contact} در سایت ثبت‌نام کرد.", 'users', $userId, $userId, 'New user registration', "User ID {$userId} registered through the mobile app with {$method} {$contact}.");
-        foreach ([['ایجاد اکانت مالی کاربر جدید','financial_system_accounts'],['ایجاد کد دعوت کاربر جدید','user_referrals'],['ایجاد نقش کاربر جدید','user_roles']] as [$title,$entity]) {
+        foreach ([['ایجاد اکانت مالی کاربر جدید', 'financial_system_accounts'], ['ایجاد کد دعوت کاربر جدید', 'user_referrals'], ['ایجاد نقش کاربر جدید', 'user_roles']] as [$title,$entity]) {
             $this->notifications->send(1, $title, "برای کاربر جدید با آی‌دی {$userId} ایجاد شد.", $entity, $userId, $userId);
         }
     }
 
-    private function error(string $message, int $status) {
-        return ResponseFactory::json(['success'=>false, 'message'=>$message], $status);
+    private function error(string $message, int $status)
+    {
+        return ResponseFactory::json(['success' => false, 'message' => $message], $status);
     }
 }

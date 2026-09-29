@@ -1,139 +1,1322 @@
 /* Sornaz notation UI: identical editor for the website and bundled mobile view. */
-(function(){
-'use strict';
-const M=NotationModel,VF=Vex.Flow;
-const fa={ 'Music Sheets':'نت‌نویسی',Notation:'نت‌نویسی',All:'همه',Mine:'نت‌های من',Saved:'ذخیره‌شده‌ها',Title:'عنوان',Subtitle:'توضیحات',Description:'توضیحات',Composer:'آهنگساز',Arranger:'تنظیم‌کننده',Lyricist:'ترانه‌سرا',Copyright:'حقوق اثر',Instrument:'ساز','Key Signature':'سرکلید','Time Signature':'میزان نما','Tempo Text':'نام تمپو','Note type':'واحد ضرب','Metronome Mark':'سرعت مترونوم',Clef:'کلید','Start Writing':'شروع نت‌نویسی',Save:'ذخیره',Back:'بازگشت',Delete:'حذف',Cancel:'انصراف',Continue:'ادامه',Publish:'نمایش عمومی',Private:'خصوصی','No sheets yet.':'هنوز نتی در این بخش وجود ندارد.','Sign in to continue.':'برای ادامه وارد حساب شوید.',Retry:'تلاش دوباره','Load more':'نمایش بیشتر','Saved successfully.':'با موفقیت ذخیره شد.','Discard unsaved changes?':'تغییرات ذخیره‌نشده کنار گذاشته شوند؟','Delete this sheet?':'این نت حذف شود؟','Enter a title.':'عنوان را وارد کنید.','This measure is full.':'ظرفیت این میزان تکمیل شده است.','This sheet is read-only.':'این نت فقط قابل مطالعه است.','Only the owner can edit this sheet.':'فقط سازنده می‌تواند این نت را ویرایش کند.','Sheet not found.':'نت پیدا نشد.','Notation service unavailable.':'سرویس نت‌نویسی در دسترس نیست.','This sheet changed elsewhere. Reload before saving.':'نت در جای دیگری تغییر کرده است. پیش از ذخیره نسخهٔ تازه را باز کنید.','Refresh the page and try again.':'صفحه را تازه کنید و دوباره تلاش کنید.',Undo:'واگرد',Redo:'ازنو',Play:'پخش',Stop:'توقف',Rest:'سکوت',Measure:'میزان','Add measure':'افزودن میزان','Remove measure':'حذف میزان',Duration:'کشش',Accidental:'علامت تغییر',Bowing:'آرشه',Finger:'انگشت',Dynamics:'دینامیک',Dots:'نقطه',Articulation:'تلفظ',Ornament:'زینت',Metadata:'مشخصات',Export:'خروجی','Make a copy':'ساخت نسخهٔ شخصی','Select a measure, then use the piano.':'یک میزان را انتخاب کنید؛ سپس روی کلاویه بزنید.','Saving…':'در حال ذخیره…',Unsaved:'ذخیره نشده',Synced:'ذخیره شده',Bookmark:'ذخیره در فهرست','Remove bookmark':'حذف از ذخیره‌شده‌ها',Theme:'تغییر تم',Home:'خانه',Octave:'اکتاو',Tar:'تار',Setar:'سه‌تار',Guitar:'گیتار',Piano:'پیانو',Violin:'ویولن',Flute:'فلوت',Voice:'آواز',treble:'سل',bass:'فا','Connection failed. Your changes are still here.':'ارتباط برقرار نشد؛ تغییرات شما همچنان در این صفحه محفوظ است.','At most 64 measures.':'حداکثر ۶۴ میزان مجاز است.','Remove all notes in this measure?':'تمام نت‌های این میزان حذف شوند؟','Tempo must be between 20 and 300.':'تمپو باید بین ۲۰ تا ۳۰۰ باشد.'};
-let config={locale:'en',userId:0,embedded:false,api:'/music-sheets/api',csrf:'',dark:false};
-const state={route:'list',mode:'all',items:[],page:1,more:false,loading:false,error:'',sheet:null,dirty:false,busy:false,bar:0,note:-1,history:[],future:[],octave:3,playing:false,playOffset:null,playStarted:0,playBar:-1,playNote:-1,lastPitch:'C4',lastDuration:'q',lastDots:0,pianoScroll:null,paletteOpen:false,choice:{duration:'q',accidental:'',dots:0,rest:false,dynamic:'',articulation:'',bow:'',finger:'',ornament:''}};
-const root=document.getElementById('app');let sequence=0,requestId=0,audio,voices=[],timers=[],resizeTimer;
-Object.assign(fa,{'Close tools':'بستن ابزارها','Notation tools':'ابزارهای نت‌نویسی','Make private':'خصوصی شود','Make public':'عمومی شود','Enter at least one note before saving.':'پیش از ذخیره حداقل یک نت بنویسید.','PDF export opened.':'پنجرهٔ خروجی باز شد؛ گزینهٔ ذخیره به‌صورت PDF را انتخاب کنید.',PDF:'خروجی PDF (A4)','Storage permission is required to download this sheet.':'برای دانلود نت، اجازهٔ ذخیره‌سازی لازم است.','Could not save the music sheet.':'ذخیرهٔ فایل نت انجام نشد.',Yes:'بلی',No:'خیر',Download:'دانلود',Downloaded:'دانلود شد','Have you decided not to write a new sheet?':'آیا از نوشتن نت جدید منصرف شده‌اید','Save these changes?':'این تغییرات ذخیره شوند؟',soprano:'کلید دو خط اول','mezzo-soprano':'کلید دو خط دوم',alto:'کلید دو خط سوم',tenor:'کلید دو خط چهارم','baritone-f':'کلید فا خط سوم',bass:'کلید فا خط چهارم'});
-const noteSymbols={w:'𝅝',h:'𝅗𝅥',q:'𝅘𝅥','8':'𝅘𝅥𝅮','16':'𝅘𝅥𝅯','32':'𝅘𝅥𝅰','64':'𝅘𝅥𝅱','128':'𝅘𝅥𝅲','256':'𝅥'};
-const selectableNotes=['w','h','q','8','16','32','64'].map(k=>[k,noteSymbols[k]]);
+(function () {
+  'use strict';
+  const M = NotationModel,
+    VF = Vex.Flow;
+  const fa = {
+    'Music Sheets': 'نت‌نویسی',
+    Notation: 'نت‌نویسی',
+    All: 'همه',
+    Mine: 'نت‌های من',
+    Saved: 'ذخیره‌شده‌ها',
+    Title: 'عنوان',
+    Subtitle: 'توضیحات',
+    Description: 'توضیحات',
+    Composer: 'آهنگساز',
+    Arranger: 'تنظیم‌کننده',
+    Lyricist: 'ترانه‌سرا',
+    Copyright: 'حقوق اثر',
+    Instrument: 'ساز',
+    'Key Signature': 'سرکلید',
+    'Time Signature': 'میزان نما',
+    'Tempo Text': 'نام تمپو',
+    'Note type': 'واحد ضرب',
+    'Metronome Mark': 'سرعت مترونوم',
+    Clef: 'کلید',
+    'Start Writing': 'شروع نت‌نویسی',
+    Save: 'ذخیره',
+    Back: 'بازگشت',
+    Delete: 'حذف',
+    Cancel: 'انصراف',
+    Continue: 'ادامه',
+    Publish: 'نمایش عمومی',
+    Private: 'خصوصی',
+    'No sheets yet.': 'هنوز نتی در این بخش وجود ندارد.',
+    'Sign in to continue.': 'برای ادامه وارد حساب شوید.',
+    Retry: 'تلاش دوباره',
+    'Load more': 'نمایش بیشتر',
+    'Saved successfully.': 'با موفقیت ذخیره شد.',
+    'Discard unsaved changes?': 'تغییرات ذخیره‌نشده کنار گذاشته شوند؟',
+    'Delete this sheet?': 'این نت حذف شود؟',
+    'Enter a title.': 'عنوان را وارد کنید.',
+    'This measure is full.': 'ظرفیت این میزان تکمیل شده است.',
+    'This sheet is read-only.': 'این نت فقط قابل مطالعه است.',
+    'Only the owner can edit this sheet.': 'فقط سازنده می‌تواند این نت را ویرایش کند.',
+    'Sheet not found.': 'نت پیدا نشد.',
+    'Notation service unavailable.': 'سرویس نت‌نویسی در دسترس نیست.',
+    'This sheet changed elsewhere. Reload before saving.':
+      'نت در جای دیگری تغییر کرده است. پیش از ذخیره نسخهٔ تازه را باز کنید.',
+    'Refresh the page and try again.': 'صفحه را تازه کنید و دوباره تلاش کنید.',
+    Undo: 'واگرد',
+    Redo: 'ازنو',
+    Play: 'پخش',
+    Stop: 'توقف',
+    Rest: 'سکوت',
+    Measure: 'میزان',
+    'Add measure': 'افزودن میزان',
+    'Remove measure': 'حذف میزان',
+    Duration: 'کشش',
+    Accidental: 'علامت تغییر',
+    Bowing: 'آرشه',
+    Finger: 'انگشت',
+    Dynamics: 'دینامیک',
+    Dots: 'نقطه',
+    Articulation: 'تلفظ',
+    Ornament: 'زینت',
+    Metadata: 'مشخصات',
+    Export: 'خروجی',
+    'Make a copy': 'ساخت نسخهٔ شخصی',
+    'Select a measure, then use the piano.': 'یک میزان را انتخاب کنید؛ سپس روی کلاویه بزنید.',
+    'Saving…': 'در حال ذخیره…',
+    Unsaved: 'ذخیره نشده',
+    Synced: 'ذخیره شده',
+    Bookmark: 'ذخیره در فهرست',
+    'Remove bookmark': 'حذف از ذخیره‌شده‌ها',
+    Theme: 'تغییر تم',
+    Home: 'خانه',
+    Octave: 'اکتاو',
+    Tar: 'تار',
+    Setar: 'سه‌تار',
+    Guitar: 'گیتار',
+    Piano: 'پیانو',
+    Violin: 'ویولن',
+    Flute: 'فلوت',
+    Voice: 'آواز',
+    treble: 'سل',
+    bass: 'فا',
+    'Connection failed. Your changes are still here.':
+      'ارتباط برقرار نشد؛ تغییرات شما همچنان در این صفحه محفوظ است.',
+    'At most 64 measures.': 'حداکثر ۶۴ میزان مجاز است.',
+    'Remove all notes in this measure?': 'تمام نت‌های این میزان حذف شوند؟',
+    'Tempo must be between 20 and 300.': 'تمپو باید بین ۲۰ تا ۳۰۰ باشد.',
+  };
+  let config = {
+    locale: 'en',
+    userId: 0,
+    embedded: false,
+    api: '/music-sheets/api',
+    csrf: '',
+    dark: false,
+  };
+  const state = {
+    route: 'list',
+    mode: 'all',
+    items: [],
+    page: 1,
+    more: false,
+    loading: false,
+    error: '',
+    sheet: null,
+    dirty: false,
+    busy: false,
+    bar: 0,
+    note: -1,
+    history: [],
+    future: [],
+    octave: 3,
+    playing: false,
+    playOffset: null,
+    playStarted: 0,
+    playBar: -1,
+    playNote: -1,
+    lastPitch: 'C4',
+    lastDuration: 'q',
+    lastDots: 0,
+    pianoScroll: null,
+    paletteOpen: false,
+    choice: {
+      duration: 'q',
+      accidental: '',
+      dots: 0,
+      rest: false,
+      dynamic: '',
+      articulation: '',
+      bow: '',
+      finger: '',
+      ornament: '',
+    },
+  };
+  const root = document.getElementById('app');
+  let sequence = 0,
+    requestId = 0,
+    audio,
+    voices = [],
+    timers = [],
+    resizeTimer;
+  Object.assign(fa, {
+    'Close tools': 'بستن ابزارها',
+    'Notation tools': 'ابزارهای نت‌نویسی',
+    'Make private': 'خصوصی شود',
+    'Make public': 'عمومی شود',
+    'Enter at least one note before saving.': 'پیش از ذخیره حداقل یک نت بنویسید.',
+    'PDF export opened.': 'پنجرهٔ خروجی باز شد؛ گزینهٔ ذخیره به‌صورت PDF را انتخاب کنید.',
+    PDF: 'خروجی PDF (A4)',
+    'Storage permission is required to download this sheet.':
+      'برای دانلود نت، اجازهٔ ذخیره‌سازی لازم است.',
+    'Could not save the music sheet.': 'ذخیرهٔ فایل نت انجام نشد.',
+    Yes: 'بلی',
+    No: 'خیر',
+    Download: 'دانلود',
+    Downloaded: 'دانلود شد',
+    'Have you decided not to write a new sheet?': 'آیا از نوشتن نت جدید منصرف شده‌اید',
+    'Save these changes?': 'این تغییرات ذخیره شوند؟',
+    soprano: 'کلید دو خط اول',
+    'mezzo-soprano': 'کلید دو خط دوم',
+    alto: 'کلید دو خط سوم',
+    tenor: 'کلید دو خط چهارم',
+    'baritone-f': 'کلید فا خط سوم',
+    bass: 'کلید فا خط چهارم',
+  });
+  const noteSymbols = {
+    w: '𝅝',
+    h: '𝅗𝅥',
+    q: '𝅘𝅥',
+    8: '𝅘𝅥𝅮',
+    16: '𝅘𝅥𝅯',
+    32: '𝅘𝅥𝅰',
+    64: '𝅘𝅥𝅱',
+    128: '𝅘𝅥𝅲',
+    256: '𝅥',
+  };
+  const selectableNotes = ['w', 'h', 'q', '8', '16', '32', '64'].map((k) => [k, noteSymbols[k]]);
 
-let instruments=[],instrumentRequest;
-function loadInstruments(){return instrumentRequest??=api('instruments').then(items=>{if(!Array.isArray(items))throw Error('Notation service unavailable.');instruments=items;}).catch(e=>{instrumentRequest=null;throw e;});}
-function iconButton(action,kind,extra=''){return '<button type="button" data-action="'+action+'" '+extra+'>'+NotationSymbols.icon(kind)+'</button>';}
-function musicButton(action,value,extra){return '<button type="button" data-action="'+action+'" '+extra+'>'+NotationSymbols.note(value)+'</button>';}
-function updateTempoOptions(){
- const form=document.getElementById('metadata');if(!form)return;
- const unit=form.elements.tempo_note.value,bpm=form.elements.bpm.value,control=form.elements.tempo_text,previous=control.value,options=NotationSymbols.tempos(unit,bpm);
- control.disabled=!options.length;control.innerHTML='<option value=""></option>'+options.map(([value,label])=>'<option value="'+h(value)+'" '+(value===previous?'selected':'')+'>'+h(label)+'</option>').join('');
- form.querySelector('.beat-preview').innerHTML=unit?NotationSymbols.note(unit):'';NotationSymbols.center(form);
-}
-const pending=new Map();const t=s=>config.locale==='fa'?(fa[s]||s):s;
-const h=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function toast(message){const e=document.getElementById('toast');e.textContent=t(message);e.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.style.display='none',5000);}
-function bridge(action,data={}){return new Promise((resolve,reject)=>{const id=++requestId;const timeout=setTimeout(()=>{pending.delete(id);reject(Error('Connection failed. Your changes are still here.'));},['pdf','download','export'].includes(action)?300000:35000);pending.set(id,{resolve,reject,timeout});SornazNotation.postMessage(JSON.stringify({id,action,...data}));});}
-async function api(action,data={}){
- if(config.embedded)return bridge(action,data);
- let path='',method='GET',body;
- if(action==='list')path='?mode='+encodeURIComponent(data.mode)+'&page='+data.page;
- if(action==='instruments')path='/instruments';
- if(action==='get')path='/'+data.sheetId;
- if(action==='save'){path=data.sheetId?'/'+data.sheetId:'';method='POST';body=data.payload;}
- if(action==='delete'||action==='bookmark'){path='/'+data.sheetId+'/'+action;method='POST';body=data.payload;}
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),25000);
- try{const response=await fetch(config.api+path,{method,credentials:'same-origin',signal:controller.signal,headers:{'Accept':'application/json','Content-Type':'application/json','X-CSRF-Token':config.csrf},body:body?JSON.stringify(body):undefined});let result=await response.json();if(result.status!==undefined&&result.data)result=result.data;if(!response.ok||result.success!==true)throw Error(result.message||'Notation service unavailable.');return result.data;}catch(e){if(e instanceof TypeError||e.name==='AbortError')throw Error('Connection failed. Your changes are still here.');throw e;}finally{clearTimeout(timer);}
-}
-function notifyRoute(){if(config.embedded)SornazNotation.postMessage(JSON.stringify({id:0,action:'route',route:state.route,dirty:state.dirty,toolbar:{editable:!!state.sheet?.editable&&!!config.userId,playing:state.playing,undo:!!state.history.length,redo:!!state.future.length,title:state.sheet?.metadata.title||''},guest:state.route==='list'&&!config.userId&&state.mode!=='all',guestTop:document.querySelector('.tabs')?.getBoundingClientRect().bottom||0}));}
-function theme(){document.documentElement.style.setProperty('--font-scale',config.fontScale||1);document.body.classList.toggle('dark',!!config.dark);document.body.classList.toggle('writing',state.route==='editor');document.body.classList.toggle('native-toolbar',!!config.nativeToolbar);document.body.style.setProperty('--accent',config.accent||'#0065ff');document.body.dir=config.locale==='fa'?'rtl':'ltr';document.documentElement.lang=config.locale;}
-function button(action,label,extra=''){return `<button type="button" data-action="${action}" ${extra}>${h(t(label))}</button>`;}
-function head(title){return `<header class="header">${button('back',config.locale==='fa'?'→':'←',`class="icon" aria-label="${h(t('Back'))}"`)}<h1>${h(t(title))}</h1>${!config.embedded?`<div class="web-tools">${button('language',config.locale==='fa'?'EN':'فارسی')}${button('theme','◐',`aria-label="${h(t('Theme'))}"`)}</div>`:''}</header>`;}
-function login(){if(config.embedded)SornazNotation.postMessage(JSON.stringify({id:0,action:'login'}));else location.href='/login';}
-async function confirmAction(text){const dialog=document.createElement('dialog');dialog.innerHTML=`<p>${h(t(text))}</p><div class="links">${button('no','No')}${button('yes','Yes','class="primary"')}</div>`;document.body.append(dialog);return new Promise(resolve=>{let done=false;const close=v=>{if(done)return;done=true;dialog.close();dialog.remove();resolve(v);};dialog.addEventListener('click',e=>{const a=e.target.closest('[data-action]')?.dataset.action;if(a==='yes')close(true);if(a==='no')close(false);});dialog.addEventListener('cancel',e=>{e.preventDefault();close(false);});dialog.showModal();});}
-async function back(){if(state.busy)return;if(state.route==='list'){if(config.embedded)SornazNotation.postMessage(JSON.stringify({id:0,action:'exit'}));else location.href='/';return;}if((!state.sheet.id||state.dirty)&&!await confirmAction(!state.sheet.id?'Have you decided not to write a new sheet?':'Discard unsaved changes?'))return;stop();state.dirty=false;state.route='list';state.sheet=null;notifyRoute();await load();}
-async function load(more=false){const seq=++sequence;state.route='list';state.loading=true;state.error='';if(!more){state.page=1;state.items=[];}render();try{const result=await api('list',{mode:state.mode,page:state.page});if(seq!==sequence)return;state.items=more?[...state.items,...result.items]:result.items;state.more=result.has_more;}catch(e){if(seq!==sequence)return;state.error=e.message;}finally{if(seq===sequence){state.loading=false;render();}}}
-async function open(id){if(state.busy)return;state.busy=true;render();try{state.sheet=M.prepare(await api('get',{sheetId:id}));state.route='editor';state.dirty=false;state.bar=0;state.note=-1;state.history=[];state.future=[];notifyRoute();}catch(e){toast(e.message);}finally{state.busy=false;render();}}
-async function newSheet(){if(!config.userId){toast('Sign in to continue.');login();return;}try{await loadInstruments();}catch(e){toast(e.message);return;}state.sheet=M.fresh();Object.assign(state.sheet.metadata,{instrument:'',tempo_note:'',tempo_text:'',bpm:''});state.choice={duration:'q',accidental:'',dots:0,rest:false,dynamic:'',articulation:'',bow:'',finger:'',ornament:''};state.paletteOpen=false;state.route='form';state.dirty=false;notifyRoute();render();}
-function field(key,label,type='text',attrs=''){return `<label class="field"><span>${h(t(label))}</span><input name="${key}" type="${type}" ${attrs} value="${h(state.sheet.metadata[key])}"></label>`;}
-function select(key,label,options){return `<label class="field"><span>${h(t(label))}</span><select name="${key}" ${key==='tempo_note'?'class="beat-native" tabindex="-1" aria-hidden="true"':''}>${options.map(o=>{const[value,title]=Array.isArray(o)?o:[o,t(o)];return `<option value="${h(value)}" ${state.sheet.metadata[key]===value?'selected':''}>${h(title)}</option>`;}).join('')}</select></label>`;}
-function renderForm(){
- const m=state.sheet.metadata,text=(key,label)=>field(key,label,'text','maxlength="180" '+(key==='title'?'required':''));
- const catalog=instruments.map(i=>[String(i.id),i[config.locale]||i.fa||i.en]);
- if(m.instrument&&!catalog.some(([id])=>id===m.instrument))catalog.push([m.instrument,t(m.instrument)]);
- const row=(count,content)=>'<div class="form-row columns-'+count+'">'+content+'</div>';
- return '<section class="shell form">'+head('Notation')+'<form id="metadata">'+
- row(2,text('title','Title')+text('subtitle','Description'))+
- row(2,text('composer','Composer')+text('arranger','Arranger'))+
- row(2,text('lyricist','Lyricist')+select('instrument','Instrument',[['',''],...catalog]))+
- row(3,select('clef','Clef',['treble','baritone-f','bass','soprano','mezzo-soprano','alto','tenor'])+select('key','Key Signature',M.keys)+select('time','Time Signature',['2/4','3/4','4/4','6/8','9/8','12/8','2/2','6/4']))+
- row(3,'<div class="beat-field">'+select('tempo_note','Note type',[['',''],...selectableNotes])+'<details class="beat-picker"><summary aria-label="'+h(t('Note type'))+'"><span class="beat-preview">'+(m.tempo_note?NotationSymbols.note(m.tempo_note):'')+'</span><span>⌄</span></summary><div class="beat-options">'+selectableNotes.map(([v])=>musicButton('beat-unit',v,'data-value="'+v+'" aria-label="'+h(t('Note type'))+' '+v+'"')).join('')+'</div></details></div>'+field('bpm','Metronome Mark','text','inputmode="numeric" pattern="[0-9]+" maxlength="3" required')+select('tempo_text','Tempo Text',[['',''],...NotationSymbols.tempos(m.tempo_note,m.bpm)]))+
- '<button class="primary full" type="submit">'+h(t('Start Writing'))+'</button></form></section>';
-}
-function renderList(){return `<section class="shell">${head('Notation')}<nav class="tabs" aria-label="${h(t('Notation'))}">${[['all','All'],['mine','Mine'],['saved','Saved']].map(([mode,label])=>button('filter',label,`class="${state.mode===mode?'active':''}" data-mode="${mode}" aria-pressed="${state.mode===mode}"`)).join('')}</nav>${state.items.map(s=>`<article class="sheet"><button class="open" data-action="open" data-id="${s.id}"><strong>${h(s.title)}</strong><small>${h([s.metadata.composer,s.metadata.arranger||s.author].filter(Boolean).join(' – '))}${s.visibility==='private'?' · '+h(t('Private')):''}</small></button>${!s.local?button('download','⇩',`class="icon" data-id="${s.id}" aria-label="${h(t('Download'))}"`):''}${iconButton('pdf-item','pdf',`class="icon" data-id="${s.id}" aria-label="${h(t('PDF'))}"`)}${s.editable?iconButton('visibility',s.visibility==='public'?'eye':'eye-off',`class="icon" data-id="${s.id}" aria-label="${h(t(s.visibility==='public'?'Make private':'Make public'))}"`):''}${s.editable?iconButton('delete','trash',`class="icon danger" data-id="${s.id}" aria-label="${h(t('Delete'))}"`):button('bookmark',s.saved?'★':'☆',`class="icon" data-id="${s.id}" aria-label="${h(t(s.saved?'Remove bookmark':'Bookmark'))}"`)}</article>`).join('')}${state.error?`<div class="empty">${h(t(state.error))}<p>${button('retry','Retry')}${!config.userId?button('login','Sign in to continue.'):''}</p></div>`:!state.items.length&&!state.loading?`<p class="empty">${h(t('No sheets yet.'))}</p>`:''}${state.loading?'<p class="empty">…</p>':''}${state.more&&!state.loading?button('more','Load more','class="full"'):''}${button('new','✎',`class="fab" aria-label="${h(t('Start Writing'))}"`)}</section>`;}
-function choice(key,label,options){const values=options.map(o=>Array.isArray(o)?o:[o,o||'']);return `<label><select data-choice="${key}" aria-label="${h(t(label))}" ${!state.sheet.editable?'disabled':''}>${values.map(([v,title])=>`<option value="${h(v)}" ${String(state.choice[key])===String(v)?'selected':''}>${h(title)}</option>`).join('')}</select><span>${h(t(label))}</span></label>`;}
-function deleteNoteButton(){return '<button type="button" data-action="delete-note" class="icon score-delete" aria-label="'+h(t('Delete'))+'"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg></button>';}
-function durationButtons(){return selectableNotes.map(([value,symbol])=>musicButton('duration',value,`class="duration-btn ${state.choice.duration===value?'is-active':''}" data-value="${value}" aria-label="${h(t('Duration'))} ${value}" aria-pressed="${state.choice.duration===value}"`)).join('')+[1,2].map(value=>button('dots','·'.repeat(value),`class="dot-btn ${state.choice.dots===value?'is-active':''}" data-value="${value}" aria-label="${h(t('Dots'))} ${value}" aria-pressed="${state.choice.dots===value}"`)).join('');}
-function setPaletteOpen(value){state.paletteOpen=value;root.querySelector('.editor-footer')?.classList.toggle('tools-open',value);const panel=root.querySelector('.palette');if(!panel)return;panel.classList.toggle('is-open',value);panel.setAttribute('aria-hidden',String(!value));root.querySelector('.palette-backdrop').hidden=!value;root.querySelector('.palette-key').setAttribute('aria-expanded',String(value));}
-function changeChoice(key,value){state.choice[key]=value;if(state.note>=0)mutate(()=>{const bar=state.sheet.score.measures[state.bar];if(key==='duration'||key==='dots'){state.bar=M.insert(state.sheet,state.bar,{...bar.notes[state.note],[key]:value},state.note);state.note=-1;}else bar.notes[state.note][key]=value;});else render();}
-function piano(){let keys='';for(let midi=21;midi<=108;midi++){const letter=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][midi%12];if(letter.includes('#'))continue;const p=letter+(Math.floor(midi/12)-1);keys+=`<div class="white" role="button" tabindex="0" data-pitch="${p}" aria-label="${p}">${p}${!['B','E'].includes(letter)&&midi<108?`<button class="black" data-pitch="${p}" data-accidental="#" aria-label="${p} sharp"></button>`:''}</div>`;}return `<div class="keyboard-wrap">${iconButton('palette','chevron',`class="palette-key" aria-label="${h(t('Notation tools'))}" aria-expanded="${state.paletteOpen}"`)}${iconButton('rest','rest',`class="rest-key" aria-label="${h(t('Rest'))}"`)}<div class="piano-scroll"><div class="piano" aria-label="Piano">${keys}</div></div></div>`;}
-function renderEditor(){const s=state.sheet,m=s.metadata,guest=!config.userId,editable=s.editable&&!guest;return `<section class="shell ${guest?'guest-score':''}"><header class="header editor-header">${button('back','←',`class="icon" aria-label="${h(t('Back'))}"`)}<div class="editor-heading"><h1>${h(t('Notation'))}</h1></div><div class="editor-actions">${editable?button('save','▣',`class="icon" aria-label="${h(t('Save'))}"`):''}${button('play',state.playing?'❚❚':'▶',`class="icon" aria-label="${h(t(state.playing?'Stop':'Play'))}"`)}${editable?button('metadata','✎',`class="icon" aria-label="${h(t('Metadata'))}"`):''}</div></header><div class="score-title">${editable?`<div class="score-history">${button('undo','↶',`class="icon" aria-label="${h(t('Undo'))}" ${state.history.length?'':'disabled'}`)}${button('redo','↷',`class="icon" aria-label="${h(t('Redo'))}" ${state.future.length?'':'disabled'}`)}</div>${state.note>=0?deleteNoteButton():''}`:''}<h2>${h(m.title)} ${editable?`<span class="state ${state.dirty?'unsaved':'synced'}">${h(t(state.dirty?'Unsaved':'Synced'))}</span>`:''}</h2>${m.subtitle?`<p>${h(m.subtitle)}</p>`:''}<div class="score-meta"><div class="credits">${m.lyricist?`<p>${h(t('Lyricist'))}: ${h(m.lyricist)}</p>`:''}${m.composer?`<p>${h(t('Composer'))}: ${h(m.composer)}</p>`:''}${m.arranger?`<p>${h(t('Arranger'))}: ${h(m.arranger)}</p>`:''}</div><div class="tempo"><span>${h(m.tempo_text)}</span><span class="metronome-mark">${NotationSymbols.note(m.tempo_note)}<span class="tempo-number">= ${m.bpm}</span></span></div></div></div><div id="score"></div>${editable?`<footer class="editor-footer ${state.paletteOpen?"tools-open":""}"><div class="duration-choice">${durationButtons()}</div><button type="button" data-action="palette" class="palette-backdrop" aria-label="${h(t('Close tools'))}" ${state.paletteOpen?'':'hidden'}></button><div class="palette ${state.paletteOpen?'is-open':''}" aria-hidden="${!state.paletteOpen}" role="region" aria-label="${h(t('Notation tools'))}"><div class="palette-heading"><span>${h(t('Notation tools'))}</span>${button('palette','⌄',`class="icon" aria-label="${h(t('Close tools'))}"`)}</div>${choice('accidental','Accidental',[['',''],['b','♭'],['bb','♭♭'],['n','♮'],['#','♯'],['##','𝄪'],['d','¼♭'],['+','¼♯']])}${choice('bow','Bowing',[['',''],['up','∨'],['down','⊓']])}${choice('finger','Finger',['','0','1','2','3','4','5'])}${choice('dynamic','Dynamics',['','ppp','pp','p','mp','mf','f','ff','fff','sf','sff','sfff','sfz','sffz','sfffz','fz','ffz','fffz'])}${choice('articulation','Articulation',[['',''],['staccato','·'],['tenuto','–'],['accent','>'],['marcato','^'],['staccatissimo','▾']])}${choice('ornament','Ornament',[['',''],['trill','tr'],['mordent','~']])}</div>${piano()}</footer>`:''}</section>`;}
-function captureForm(){const form=document.getElementById('metadata');if(state.route==='form'&&form){const values=Object.fromEntries(new FormData(form));delete values.public;values.bpm=values.bpm===''?'':Number(values.bpm);Object.assign(state.sheet.metadata,values);}}
-function render(){const scroll=document.querySelector('.piano-scroll');if(scroll)state.pianoScroll=scroll.scrollLeft;theme();root.innerHTML=state.route==='list'?renderList():state.route==='form'?renderForm():renderEditor();if(state.busy)root.insertAdjacentHTML('beforeend',`<div class="veil">${h(t('Saving…'))}</div>`);if(state.route==='form'){updateTempoOptions();root.querySelector('[name=instrument]').required=true;}if(state.route==='editor'){draw();const piano=document.querySelector('.piano-scroll');if(piano)piano.scrollLeft=state.pianoScroll??(23*38-piano.clientWidth/2);}NotationSymbols.center(root);requestAnimationFrame(notifyRoute);}
-function draw(){const element=document.getElementById('score');if(!element)return;
- let ghostBar=state.bar;if(state.sheet.score.measures[ghostBar]?.notes.reduce((v,n)=>v+M.ticks(n),0)>=M.capacity(state.sheet.metadata))ghostBar++;
- const written=M.trimmedMeasures(state.sheet);
- NotationRenderer.draw(element,state.sheet,{lastWritten:written.length-1,accent:config.accent||'#0065ff',activeBar:state.playing?state.playBar:state.bar,activeNote:state.playing?state.playNote:state.note,ghostBar,ghost:state.sheet.editable&&config.userId?{...state.choice,pitch:state.lastPitch,duration:state.lastDuration,dots:state.lastDots}:null});
-}
+  let instruments = [],
+    instrumentRequest;
+  function loadInstruments() {
+    return (instrumentRequest ??= api('instruments')
+      .then((items) => {
+        if (!Array.isArray(items)) throw Error('Notation service unavailable.');
+        instruments = items;
+      })
+      .catch((e) => {
+        instrumentRequest = null;
+        throw e;
+      }));
+  }
+  function iconButton(action, kind, extra = '') {
+    return (
+      '<button type="button" data-action="' +
+      action +
+      '" ' +
+      extra +
+      '>' +
+      NotationSymbols.icon(kind) +
+      '</button>'
+    );
+  }
+  function musicButton(action, value, extra) {
+    return (
+      '<button type="button" data-action="' +
+      action +
+      '" ' +
+      extra +
+      '>' +
+      NotationSymbols.note(value) +
+      '</button>'
+    );
+  }
+  function updateTempoOptions() {
+    const form = document.getElementById('metadata');
+    if (!form) return;
+    const unit = form.elements.tempo_note.value,
+      bpm = form.elements.bpm.value,
+      control = form.elements.tempo_text,
+      previous = control.value,
+      options = NotationSymbols.tempos(unit, bpm);
+    control.disabled = !options.length;
+    control.innerHTML =
+      '<option value=""></option>' +
+      options
+        .map(
+          ([value, label]) =>
+            '<option value="' +
+            h(value) +
+            '" ' +
+            (value === previous ? 'selected' : '') +
+            '>' +
+            h(label) +
+            '</option>'
+        )
+        .join('');
+    form.querySelector('.beat-preview').innerHTML = unit ? NotationSymbols.note(unit) : '';
+    NotationSymbols.center(form);
+  }
+  const pending = new Map();
+  const t = (s) => (config.locale === 'fa' ? fa[s] || s : s);
+  const h = (s) =>
+    String(s ?? '').replace(
+      /[&<>"']/g,
+      (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
+    );
+  function toast(message) {
+    const e = document.getElementById('toast');
+    e.textContent = t(message);
+    e.style.display = 'block';
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => (e.style.display = 'none'), 5000);
+  }
+  function bridge(action, data = {}) {
+    return new Promise((resolve, reject) => {
+      const id = ++requestId;
+      const timeout = setTimeout(
+        () => {
+          pending.delete(id);
+          reject(Error('Connection failed. Your changes are still here.'));
+        },
+        ['pdf', 'download', 'export'].includes(action) ? 300000 : 35000
+      );
+      pending.set(id, { resolve, reject, timeout });
+      SornazNotation.postMessage(JSON.stringify({ id, action, ...data }));
+    });
+  }
+  async function api(action, data = {}) {
+    if (config.embedded) return bridge(action, data);
+    let path = '',
+      method = 'GET',
+      body;
+    if (action === 'list') path = '?mode=' + encodeURIComponent(data.mode) + '&page=' + data.page;
+    if (action === 'instruments') path = '/instruments';
+    if (action === 'get') path = '/' + data.sheetId;
+    if (action === 'save') {
+      path = data.sheetId ? '/' + data.sheetId : '';
+      method = 'POST';
+      body = data.payload;
+    }
+    if (action === 'delete' || action === 'bookmark') {
+      path = '/' + data.sheetId + '/' + action;
+      method = 'POST';
+      body = data.payload;
+    }
+    const controller = new AbortController(),
+      timer = setTimeout(() => controller.abort(), 25000);
+    try {
+      const response = await fetch(config.api + path, {
+        method,
+        credentials: 'same-origin',
+        signal: controller.signal,
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': config.csrf,
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      let result = await response.json();
+      if (result.status !== undefined && result.data) result = result.data;
+      if (!response.ok || result.success !== true)
+        throw Error(result.message || 'Notation service unavailable.');
+      return result.data;
+    } catch (e) {
+      if (e instanceof TypeError || e.name === 'AbortError')
+        throw Error('Connection failed. Your changes are still here.');
+      throw e;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  function notifyRoute() {
+    if (config.embedded)
+      SornazNotation.postMessage(
+        JSON.stringify({
+          id: 0,
+          action: 'route',
+          route: state.route,
+          dirty: state.dirty,
+          toolbar: {
+            editable: !!state.sheet?.editable && !!config.userId,
+            playing: state.playing,
+            undo: !!state.history.length,
+            redo: !!state.future.length,
+            title: state.sheet?.metadata.title || '',
+          },
+          guest: state.route === 'list' && !config.userId && state.mode !== 'all',
+          guestTop: document.querySelector('.tabs')?.getBoundingClientRect().bottom || 0,
+        })
+      );
+  }
+  function theme() {
+    document.documentElement.style.setProperty('--font-scale', config.fontScale || 1);
+    document.body.classList.toggle('dark', !!config.dark);
+    document.body.classList.toggle('writing', state.route === 'editor');
+    document.body.classList.toggle('native-toolbar', !!config.nativeToolbar);
+    document.body.style.setProperty('--accent', config.accent || '#0065ff');
+    document.body.dir = config.locale === 'fa' ? 'rtl' : 'ltr';
+    document.documentElement.lang = config.locale;
+  }
+  function button(action, label, extra = '') {
+    return `<button type="button" data-action="${action}" ${extra}>${h(t(label))}</button>`;
+  }
+  function head(title) {
+    return `<header class="header">${button('back', config.locale === 'fa' ? '→' : '←', `class="icon" aria-label="${h(t('Back'))}"`)}<h1>${h(t(title))}</h1>${!config.embedded ? `<div class="web-tools">${button('language', config.locale === 'fa' ? 'EN' : 'فارسی')}${button('theme', '◐', `aria-label="${h(t('Theme'))}"`)}</div>` : ''}</header>`;
+  }
+  function login() {
+    if (config.embedded) SornazNotation.postMessage(JSON.stringify({ id: 0, action: 'login' }));
+    else location.href = '/login';
+  }
+  async function confirmAction(text) {
+    const dialog = document.createElement('dialog');
+    dialog.innerHTML = `<p>${h(t(text))}</p><div class="links">${button('no', 'No')}${button('yes', 'Yes', 'class="primary"')}</div>`;
+    document.body.append(dialog);
+    return new Promise((resolve) => {
+      let done = false;
+      const close = (v) => {
+        if (done) return;
+        done = true;
+        dialog.close();
+        dialog.remove();
+        resolve(v);
+      };
+      dialog.addEventListener('click', (e) => {
+        const a = e.target.closest('[data-action]')?.dataset.action;
+        if (a === 'yes') close(true);
+        if (a === 'no') close(false);
+      });
+      dialog.addEventListener('cancel', (e) => {
+        e.preventDefault();
+        close(false);
+      });
+      dialog.showModal();
+    });
+  }
+  async function back() {
+    if (state.busy) return;
+    if (state.route === 'list') {
+      if (config.embedded) SornazNotation.postMessage(JSON.stringify({ id: 0, action: 'exit' }));
+      else location.href = '/';
+      return;
+    }
+    if (
+      (!state.sheet.id || state.dirty) &&
+      !(await confirmAction(
+        !state.sheet.id ? 'Have you decided not to write a new sheet?' : 'Discard unsaved changes?'
+      ))
+    )
+      return;
+    stop();
+    state.dirty = false;
+    state.route = 'list';
+    state.sheet = null;
+    notifyRoute();
+    await load();
+  }
+  async function load(more = false) {
+    const seq = ++sequence;
+    state.route = 'list';
+    state.loading = true;
+    state.error = '';
+    if (!more) {
+      state.page = 1;
+      state.items = [];
+    }
+    render();
+    try {
+      const result = await api('list', { mode: state.mode, page: state.page });
+      if (seq !== sequence) return;
+      state.items = more ? [...state.items, ...result.items] : result.items;
+      state.more = result.has_more;
+    } catch (e) {
+      if (seq !== sequence) return;
+      state.error = e.message;
+    } finally {
+      if (seq === sequence) {
+        state.loading = false;
+        render();
+      }
+    }
+  }
+  async function open(id) {
+    if (state.busy) return;
+    state.busy = true;
+    render();
+    try {
+      state.sheet = M.prepare(await api('get', { sheetId: id }));
+      state.route = 'editor';
+      state.dirty = false;
+      state.bar = 0;
+      state.note = -1;
+      state.history = [];
+      state.future = [];
+      notifyRoute();
+    } catch (e) {
+      toast(e.message);
+    } finally {
+      state.busy = false;
+      render();
+    }
+  }
+  async function newSheet() {
+    if (!config.userId) {
+      toast('Sign in to continue.');
+      login();
+      return;
+    }
+    try {
+      await loadInstruments();
+    } catch (e) {
+      toast(e.message);
+      return;
+    }
+    state.sheet = M.fresh();
+    Object.assign(state.sheet.metadata, {
+      instrument: '',
+      tempo_note: '',
+      tempo_text: '',
+      bpm: '',
+    });
+    state.choice = {
+      duration: 'q',
+      accidental: '',
+      dots: 0,
+      rest: false,
+      dynamic: '',
+      articulation: '',
+      bow: '',
+      finger: '',
+      ornament: '',
+    };
+    state.paletteOpen = false;
+    state.route = 'form';
+    state.dirty = false;
+    notifyRoute();
+    render();
+  }
+  function field(key, label, type = 'text', attrs = '') {
+    return `<label class="field"><span>${h(t(label))}</span><input name="${key}" type="${type}" ${attrs} value="${h(state.sheet.metadata[key])}"></label>`;
+  }
+  function select(key, label, options) {
+    return `<label class="field"><span>${h(t(label))}</span><select name="${key}" ${key === 'tempo_note' ? 'class="beat-native" tabindex="-1" aria-hidden="true"' : ''}>${options
+      .map((o) => {
+        const [value, title] = Array.isArray(o) ? o : [o, t(o)];
+        return `<option value="${h(value)}" ${state.sheet.metadata[key] === value ? 'selected' : ''}>${h(title)}</option>`;
+      })
+      .join('')}</select></label>`;
+  }
+  function renderForm() {
+    const m = state.sheet.metadata,
+      text = (key, label) =>
+        field(key, label, 'text', 'maxlength="180" ' + (key === 'title' ? 'required' : ''));
+    const catalog = instruments.map((i) => [String(i.id), i[config.locale] || i.fa || i.en]);
+    if (m.instrument && !catalog.some(([id]) => id === m.instrument))
+      catalog.push([m.instrument, t(m.instrument)]);
+    const row = (count, content) =>
+      '<div class="form-row columns-' + count + '">' + content + '</div>';
+    return (
+      '<section class="shell form">' +
+      head('Notation') +
+      '<form id="metadata">' +
+      row(2, text('title', 'Title') + text('subtitle', 'Description')) +
+      row(2, text('composer', 'Composer') + text('arranger', 'Arranger')) +
+      row(
+        2,
+        text('lyricist', 'Lyricist') + select('instrument', 'Instrument', [['', ''], ...catalog])
+      ) +
+      row(
+        3,
+        select('clef', 'Clef', [
+          'treble',
+          'baritone-f',
+          'bass',
+          'soprano',
+          'mezzo-soprano',
+          'alto',
+          'tenor',
+        ]) +
+          select('key', 'Key Signature', M.keys) +
+          select('time', 'Time Signature', [
+            '2/4',
+            '3/4',
+            '4/4',
+            '6/8',
+            '9/8',
+            '12/8',
+            '2/2',
+            '6/4',
+          ])
+      ) +
+      row(
+        3,
+        '<div class="beat-field">' +
+          select('tempo_note', 'Note type', [['', ''], ...selectableNotes]) +
+          '<details class="beat-picker"><summary aria-label="' +
+          h(t('Note type')) +
+          '"><span class="beat-preview">' +
+          (m.tempo_note ? NotationSymbols.note(m.tempo_note) : '') +
+          '</span><span>⌄</span></summary><div class="beat-options">' +
+          selectableNotes
+            .map(([v]) =>
+              musicButton(
+                'beat-unit',
+                v,
+                'data-value="' + v + '" aria-label="' + h(t('Note type')) + ' ' + v + '"'
+              )
+            )
+            .join('') +
+          '</div></details></div>' +
+          field(
+            'bpm',
+            'Metronome Mark',
+            'text',
+            'inputmode="numeric" pattern="[0-9]+" maxlength="3" required'
+          ) +
+          select('tempo_text', 'Tempo Text', [
+            ['', ''],
+            ...NotationSymbols.tempos(m.tempo_note, m.bpm),
+          ])
+      ) +
+      '<button class="primary full" type="submit">' +
+      h(t('Start Writing')) +
+      '</button></form></section>'
+    );
+  }
+  function renderList() {
+    return `<section class="shell">${head('Notation')}<nav class="tabs" aria-label="${h(t('Notation'))}">${[
+      ['all', 'All'],
+      ['mine', 'Mine'],
+      ['saved', 'Saved'],
+    ]
+      .map(([mode, label]) =>
+        button(
+          'filter',
+          label,
+          `class="${state.mode === mode ? 'active' : ''}" data-mode="${mode}" aria-pressed="${state.mode === mode}"`
+        )
+      )
+      .join(
+        ''
+      )}</nav>${state.items.map((s) => `<article class="sheet"><button class="open" data-action="open" data-id="${s.id}"><strong>${h(s.title)}</strong><small>${h([s.metadata.composer, s.metadata.arranger || s.author].filter(Boolean).join(' – '))}${s.visibility === 'private' ? ' · ' + h(t('Private')) : ''}</small></button>${!s.local ? button('download', '⇩', `class="icon" data-id="${s.id}" aria-label="${h(t('Download'))}"`) : ''}${iconButton('pdf-item', 'pdf', `class="icon" data-id="${s.id}" aria-label="${h(t('PDF'))}"`)}${s.editable ? iconButton('visibility', s.visibility === 'public' ? 'eye' : 'eye-off', `class="icon" data-id="${s.id}" aria-label="${h(t(s.visibility === 'public' ? 'Make private' : 'Make public'))}"`) : ''}${s.editable ? iconButton('delete', 'trash', `class="icon danger" data-id="${s.id}" aria-label="${h(t('Delete'))}"`) : button('bookmark', s.saved ? '★' : '☆', `class="icon" data-id="${s.id}" aria-label="${h(t(s.saved ? 'Remove bookmark' : 'Bookmark'))}"`)}</article>`).join('')}${state.error ? `<div class="empty">${h(t(state.error))}<p>${button('retry', 'Retry')}${!config.userId ? button('login', 'Sign in to continue.') : ''}</p></div>` : !state.items.length && !state.loading ? `<p class="empty">${h(t('No sheets yet.'))}</p>` : ''}${state.loading ? '<p class="empty">…</p>' : ''}${state.more && !state.loading ? button('more', 'Load more', 'class="full"') : ''}${button('new', '✎', `class="fab" aria-label="${h(t('Start Writing'))}"`)}</section>`;
+  }
+  function choice(key, label, options) {
+    const values = options.map((o) => (Array.isArray(o) ? o : [o, o || '']));
+    return `<label><select data-choice="${key}" aria-label="${h(t(label))}" ${!state.sheet.editable ? 'disabled' : ''}>${values.map(([v, title]) => `<option value="${h(v)}" ${String(state.choice[key]) === String(v) ? 'selected' : ''}>${h(title)}</option>`).join('')}</select><span>${h(t(label))}</span></label>`;
+  }
+  function deleteNoteButton() {
+    return (
+      '<button type="button" data-action="delete-note" class="icon score-delete" aria-label="' +
+      h(t('Delete')) +
+      '"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg></button>'
+    );
+  }
+  function durationButtons() {
+    return (
+      selectableNotes
+        .map(([value, symbol]) =>
+          musicButton(
+            'duration',
+            value,
+            `class="duration-btn ${state.choice.duration === value ? 'is-active' : ''}" data-value="${value}" aria-label="${h(t('Duration'))} ${value}" aria-pressed="${state.choice.duration === value}"`
+          )
+        )
+        .join('') +
+      [1, 2]
+        .map((value) =>
+          button(
+            'dots',
+            '·'.repeat(value),
+            `class="dot-btn ${state.choice.dots === value ? 'is-active' : ''}" data-value="${value}" aria-label="${h(t('Dots'))} ${value}" aria-pressed="${state.choice.dots === value}"`
+          )
+        )
+        .join('')
+    );
+  }
+  function setPaletteOpen(value) {
+    state.paletteOpen = value;
+    root.querySelector('.editor-footer')?.classList.toggle('tools-open', value);
+    const panel = root.querySelector('.palette');
+    if (!panel) return;
+    panel.classList.toggle('is-open', value);
+    panel.setAttribute('aria-hidden', String(!value));
+    root.querySelector('.palette-backdrop').hidden = !value;
+    root.querySelector('.palette-key').setAttribute('aria-expanded', String(value));
+  }
+  function changeChoice(key, value) {
+    state.choice[key] = value;
+    if (state.note >= 0)
+      mutate(() => {
+        const bar = state.sheet.score.measures[state.bar];
+        if (key === 'duration' || key === 'dots') {
+          state.bar = M.insert(
+            state.sheet,
+            state.bar,
+            { ...bar.notes[state.note], [key]: value },
+            state.note
+          );
+          state.note = -1;
+        } else bar.notes[state.note][key] = value;
+      });
+    else render();
+  }
+  function piano() {
+    let keys = '';
+    for (let midi = 21; midi <= 108; midi++) {
+      const letter = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'][midi % 12];
+      if (letter.includes('#')) continue;
+      const p = letter + (Math.floor(midi / 12) - 1);
+      keys += `<div class="white" role="button" tabindex="0" data-pitch="${p}" aria-label="${p}">${p}${!['B', 'E'].includes(letter) && midi < 108 ? `<button class="black" data-pitch="${p}" data-accidental="#" aria-label="${p} sharp"></button>` : ''}</div>`;
+    }
+    return `<div class="keyboard-wrap">${iconButton('palette', 'chevron', `class="palette-key" aria-label="${h(t('Notation tools'))}" aria-expanded="${state.paletteOpen}"`)}${iconButton('rest', 'rest', `class="rest-key" aria-label="${h(t('Rest'))}"`)}<div class="piano-scroll"><div class="piano" aria-label="Piano">${keys}</div></div></div>`;
+  }
+  function renderEditor() {
+    const s = state.sheet,
+      m = s.metadata,
+      guest = !config.userId,
+      editable = s.editable && !guest;
+    return `<section class="shell ${guest ? 'guest-score' : ''}"><header class="header editor-header">${button('back', '←', `class="icon" aria-label="${h(t('Back'))}"`)}<div class="editor-heading"><h1>${h(t('Notation'))}</h1></div><div class="editor-actions">${editable ? button('save', '▣', `class="icon" aria-label="${h(t('Save'))}"`) : ''}${button('play', state.playing ? '❚❚' : '▶', `class="icon" aria-label="${h(t(state.playing ? 'Stop' : 'Play'))}"`)}${editable ? button('metadata', '✎', `class="icon" aria-label="${h(t('Metadata'))}"`) : ''}</div></header><div class="score-title">${editable ? `<div class="score-history">${button('undo', '↶', `class="icon" aria-label="${h(t('Undo'))}" ${state.history.length ? '' : 'disabled'}`)}${button('redo', '↷', `class="icon" aria-label="${h(t('Redo'))}" ${state.future.length ? '' : 'disabled'}`)}</div>${state.note >= 0 ? deleteNoteButton() : ''}` : ''}<h2>${h(m.title)} ${editable ? `<span class="state ${state.dirty ? 'unsaved' : 'synced'}">${h(t(state.dirty ? 'Unsaved' : 'Synced'))}</span>` : ''}</h2>${m.subtitle ? `<p>${h(m.subtitle)}</p>` : ''}<div class="score-meta"><div class="credits">${m.lyricist ? `<p>${h(t('Lyricist'))}: ${h(m.lyricist)}</p>` : ''}${m.composer ? `<p>${h(t('Composer'))}: ${h(m.composer)}</p>` : ''}${m.arranger ? `<p>${h(t('Arranger'))}: ${h(m.arranger)}</p>` : ''}</div><div class="tempo"><span>${h(m.tempo_text)}</span><span class="metronome-mark">${NotationSymbols.note(m.tempo_note)}<span class="tempo-number">= ${m.bpm}</span></span></div></div></div><div id="score"></div>${
+      editable
+        ? `<footer class="editor-footer ${state.paletteOpen ? 'tools-open' : ''}"><div class="duration-choice">${durationButtons()}</div><button type="button" data-action="palette" class="palette-backdrop" aria-label="${h(t('Close tools'))}" ${state.paletteOpen ? '' : 'hidden'}></button><div class="palette ${state.paletteOpen ? 'is-open' : ''}" aria-hidden="${!state.paletteOpen}" role="region" aria-label="${h(t('Notation tools'))}"><div class="palette-heading"><span>${h(t('Notation tools'))}</span>${button('palette', '⌄', `class="icon" aria-label="${h(t('Close tools'))}"`)}</div>${choice(
+            'accidental',
+            'Accidental',
+            [
+              ['', ''],
+              ['b', '♭'],
+              ['bb', '♭♭'],
+              ['n', '♮'],
+              ['#', '♯'],
+              ['##', '𝄪'],
+              ['d', '¼♭'],
+              ['+', '¼♯'],
+            ]
+          )}${choice('bow', 'Bowing', [
+            ['', ''],
+            ['up', '∨'],
+            ['down', '⊓'],
+          ])}${choice('finger', 'Finger', ['', '0', '1', '2', '3', '4', '5'])}${choice('dynamic', 'Dynamics', ['', 'ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff', 'sf', 'sff', 'sfff', 'sfz', 'sffz', 'sfffz', 'fz', 'ffz', 'fffz'])}${choice(
+            'articulation',
+            'Articulation',
+            [
+              ['', ''],
+              ['staccato', '·'],
+              ['tenuto', '–'],
+              ['accent', '>'],
+              ['marcato', '^'],
+              ['staccatissimo', '▾'],
+            ]
+          )}${choice('ornament', 'Ornament', [
+            ['', ''],
+            ['trill', 'tr'],
+            ['mordent', '~'],
+          ])}</div>${piano()}</footer>`
+        : ''
+    }</section>`;
+  }
+  function captureForm() {
+    const form = document.getElementById('metadata');
+    if (state.route === 'form' && form) {
+      const values = Object.fromEntries(new FormData(form));
+      delete values.public;
+      values.bpm = values.bpm === '' ? '' : Number(values.bpm);
+      Object.assign(state.sheet.metadata, values);
+    }
+  }
+  function render() {
+    const scroll = document.querySelector('.piano-scroll');
+    if (scroll) state.pianoScroll = scroll.scrollLeft;
+    theme();
+    root.innerHTML =
+      state.route === 'list'
+        ? renderList()
+        : state.route === 'form'
+          ? renderForm()
+          : renderEditor();
+    if (state.busy)
+      root.insertAdjacentHTML('beforeend', `<div class="veil">${h(t('Saving…'))}</div>`);
+    if (state.route === 'form') {
+      updateTempoOptions();
+      root.querySelector('[name=instrument]').required = true;
+    }
+    if (state.route === 'editor') {
+      draw();
+      const piano = document.querySelector('.piano-scroll');
+      if (piano) piano.scrollLeft = state.pianoScroll ?? 23 * 38 - piano.clientWidth / 2;
+    }
+    NotationSymbols.center(root);
+    requestAnimationFrame(notifyRoute);
+  }
+  function draw() {
+    const element = document.getElementById('score');
+    if (!element) return;
+    let ghostBar = state.bar;
+    if (
+      state.sheet.score.measures[ghostBar]?.notes.reduce((v, n) => v + M.ticks(n), 0) >=
+      M.capacity(state.sheet.metadata)
+    )
+      ghostBar++;
+    const written = M.trimmedMeasures(state.sheet);
+    NotationRenderer.draw(element, state.sheet, {
+      lastWritten: written.length - 1,
+      accent: config.accent || '#0065ff',
+      activeBar: state.playing ? state.playBar : state.bar,
+      activeNote: state.playing ? state.playNote : state.note,
+      ghostBar,
+      ghost:
+        state.sheet.editable && config.userId
+          ? {
+              ...state.choice,
+              pitch: state.lastPitch,
+              duration: state.lastDuration,
+              dots: state.lastDots,
+            }
+          : null,
+    });
+  }
 
-function snapshot(){return M.clone({metadata:state.sheet.metadata,score:state.sheet.score,visibility:state.sheet.visibility});}
-function mutate(fn){if(!state.sheet?.editable||state.busy)return;const before=snapshot(),beforeBar=state.bar,beforeNote=state.note;try{fn();M.prepare(state.sheet);state.bar=Math.min(state.bar,state.sheet.score.measures.length-1);stop();state.history.push(before);if(state.history.length>80)state.history.shift();state.future=[];state.dirty=true;notifyRoute();render();}catch(e){Object.assign(state.sheet,before);state.bar=beforeBar;state.note=beforeNote;toast(e.message);}}
-function insert(pitch,accidental,rest=false){if(state.route!=='editor'||!state.sheet.editable||state.busy)return;const n={...state.choice,pitch,rest,accidental:accidental??state.choice.accidental};mutate(()=>{state.bar=M.insert(state.sheet,state.bar,n);M.prepare(state.sheet);if(state.sheet.score.measures[state.bar].notes.reduce((v,n)=>v+M.ticks(n),0)>=M.capacity(state.sheet.metadata)&&state.bar+1<state.sheet.score.measures.length)state.bar++;state.note=-1;state.lastPitch=pitch;state.lastDuration=n.duration;state.lastDots=n.dots;});if(!rest)sound(M.frequency(pitch,n.accidental,state.sheet.metadata.key),.18);}
-function sound(hz,duration,when=0){try{audio??=new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const oscillator=audio.createOscillator(),gain=audio.createGain(),start=audio.currentTime+when;oscillator.type='triangle';oscillator.frequency.value=hz;gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(.17,start+.008);gain.gain.exponentialRampToValueAtTime(.001,start+duration);oscillator.connect(gain);gain.connect(audio.destination);oscillator.start(start);oscillator.stop(start+duration+.02);voices.push(oscillator);oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();voices=voices.filter(v=>v!==oscillator);};}catch(e){console.warn('Audio unavailable',e);}}
-function stop(reset=true){voices.forEach(v=>{try{v.stop();}catch(_){}});voices=[];timers.forEach(clearTimeout);timers=[];state.playing=false;if(reset){state.playOffset=null;state.playBar=-1;state.playNote=-1;}}
-function play(){
- if(state.playing){state.playOffset=(state.playOffset||0)+(performance.now()-state.playStarted)/1000;stop(false);render();return;}
- const timeline=M.timeline(state.sheet);if(!timeline.events.length)return;
- let offset=state.playOffset;
- if(offset===null){const selected=timeline.events.find(e=>e.bar===state.bar&&e.note===Math.max(0,state.note));offset=selected?.start??0;}
- if(offset>=timeline.duration)offset=0;
- state.playing=true;state.playOffset=offset;state.playStarted=performance.now();
- for(const event of timeline.events){
-  if(event.hz&&event.start+event.soundLength>offset)sound(event.hz,Math.max(.03,(event.start+event.soundLength-Math.max(event.start,offset))*.98),Math.max(0,event.start-offset));
-  if(event.start+event.length<=offset)continue;
-  timers.push(setTimeout(()=>{if(!state.playing)return;state.playBar=event.bar;state.playNote=event.note;draw();const rect=document.querySelector(`[data-bar="${event.bar}"]`);if(rect){const bounds=rect.getBoundingClientRect();if(bounds.bottom>innerHeight-190||bounds.top<0)rect.scrollIntoView({block:'center',behavior:'smooth'});}},Math.max(0,event.start-offset)*1000));
- }
- timers.push(setTimeout(()=>{stop();if(state.route==='editor')render();},(timeline.duration-offset)*1000+30));render();
-}
-async function save(){if(state.busy)return;if(!M.trimmedMeasures(state.sheet).length)return toast('Enter at least one note before saving.');state.busy=true;render();try{state.sheet=await api('save',{sheetId:state.sheet.id,payload:{...snapshot(),score:{measures:M.trimmedMeasures(state.sheet)},version:state.sheet.version}});M.prepare(state.sheet);state.bar=Math.min(state.bar,state.sheet.score.measures.length-1);state.dirty=false;notifyRoute();toast('Saved successfully.');}catch(e){toast(e.message);}finally{state.busy=false;render();}}
-async function download(id){try{const sheet=await api('get',{sheetId:id});const content=JSON.stringify({format:'sornaz-notation',version:1,metadata:sheet.metadata,score:sheet.score,visibility:sheet.visibility});const name=(sheet.metadata.title.replace(/[^\p{L}\p{N} _-]/gu,'').slice(0,80)||'score')+'.json';if(config.embedded)await bridge('download',{sheetId:id,content,name});else{const url=URL.createObjectURL(new Blob([content],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}toast('Downloaded');if(config.embedded)await load();}catch(e){toast(e.message);}}
-async function exportPdf(sheet=state.sheet){try{const html=NotationRenderer.printDocument(sheet,config.locale,noteSymbols),name=(sheet.metadata.title.replace(/[^\p{L}\p{N} _-]/gu,'').slice(0,80)||'score')+'.pdf';if(config.embedded&&!config.browser){await bridge('pdf',{html,name});toast('PDF export opened.');}else{const frame=document.createElement('iframe');frame.style.cssText='position:fixed;width:1px;height:1px;left:-9999px';document.body.append(frame);frame.onload=async()=>{await frame.contentDocument.fonts.ready;frame.contentWindow.focus();frame.contentWindow.print();setTimeout(()=>frame.remove(),60000);};frame.srcdoc=html;}}catch(e){toast(e.message);}}
-async function exportScore(){const content=JSON.stringify({format:'sornaz-notation',version:1,...snapshot(),score:{measures:M.trimmedMeasures(state.sheet)}},null,2),name=(state.sheet.metadata.title.replace(/[^\p{L}\p{N} _-]/gu,'').slice(0,80)||'score')+'.json';if(config.embedded){try{await bridge('export',{content,name});}catch(e){toast(e.message);}}else{const url=URL.createObjectURL(new Blob([content],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}}
-root.addEventListener('submit',e=>{if(e.target.id!=='metadata')return;e.preventDefault();const f=Object.fromEntries(new FormData(e.target));f.bpm=Number(f.bpm);const visibility=state.sheet.visibility;f.tempo_text=f.tempo_text||'';f.title=f.title.trim();if(!f.title)return toast('Enter a title.');if(!f.tempo_note){document.querySelector('.beat-picker').open=true;document.querySelector('.beat-picker summary').focus();return;}if(f.bpm<20||f.bpm>300)return toast('Tempo must be between 20 and 300.');if(state.sheet.score.measures.some(b=>b.notes.reduce((s,n)=>s+M.ticks(n),0)>M.capacity(f)))return toast('This measure is full.');state.sheet.metadata=f;state.sheet.visibility=visibility;state.dirty=true;state.route='editor';notifyRoute();render();});
-root.addEventListener('input',e=>{if(e.target.name==='bpm'){e.target.value=e.target.value.replace(/[۰-۹]/g,c=>String(c.charCodeAt(0)-1776)).replace(/[٠-٩]/g,c=>String(c.charCodeAt(0)-1632)).replace(/[^0-9]/g,'');}if(e.target.name==='bpm')updateTempoOptions();if(e.target.closest('#metadata')){state.dirty=true;notifyRoute();}});
-root.addEventListener('change',e=>{if(e.target.name==='tempo_note')updateTempoOptions();const key=e.target.dataset.choice;if(key)changeChoice(key,key==='dots'?Number(e.target.value):e.target.value);});
-root.addEventListener('click',async e=>{
- if(state.busy)return;const pitch=e.target.closest('[data-pitch]');if(pitch){insert(pitch.dataset.pitch,pitch.dataset.accidental);return;}
- const hit=e.target.closest('[data-bar]');if(hit){stop();state.bar=Number(hit.dataset.bar);state.note=hit.dataset.note===undefined?-1:Number(hit.dataset.note);if(state.note>=0)Object.assign(state.choice,state.sheet.score.measures[state.bar].notes[state.note]);render();return;}
- const b=e.target.closest('[data-action]');if(!b)return;const action=b.dataset.action,id=Number(b.dataset.id);
- if(action==='back')return back();if(action==='login')return login();if(action==='new')return newSheet();if(action==='open')return open(id);
- if(action==='filter'){state.mode=b.dataset.mode;return load();}if(action==='retry')return load();if(action==='more'){state.page++;return load(true);}
- if(action==='language'){captureForm();config.locale=config.locale==='fa'?'en':'fa';render();return;}
- if(action==='theme'){captureForm();config.dark=!config.dark;render();return;}
- if(action==='delete'){const sheet=state.items.find(s=>s.id===id);if(await confirmAction(config.locale==='fa'?sheet.title+' حذف شود':'Delete '+sheet.title+'?')){try{await api('delete',{sheetId:id,payload:{version:sheet.version}});load();}catch(e){toast(e.message);}}return;}
- if(action==='bookmark'){if(!config.userId)return login();const sheet=state.items.find(s=>s.id===id);try{await api('bookmark',{sheetId:id,payload:{active:!sheet.saved}});load();}catch(e){toast(e.message);}return;}
- if(action==='copy'){if(!config.userId)return login();state.sheet={...M.fresh(),...snapshot(),visibility:'private'};state.dirty=true;notifyRoute();render();return;}
- if(action==='pdf-item'){try{return await exportPdf(await api('get',{sheetId:id}));}catch(e){toast(e.message);}return;}
- if(action==='visibility'){try{const sheet=await api('get',{sheetId:id});await api('save',{sheetId:id,payload:{metadata:sheet.metadata,score:sheet.score,visibility:sheet.visibility==='public'?'private':'public',version:sheet.version}});await load();}catch(e){toast(e.message);}return;}
- if(action==='download')return download(id);if(action==='save'){if(await confirmAction('Save these changes?'))return save();return;}if(action==='metadata'){stop();try{await loadInstruments();}catch(e){toast(e.message);}state.route='form';notifyRoute();render();return;}
- if(action==='play')return play();if(action==='pdf')return exportPdf();if(action==='export')return exportScore();if(action==='print')return window.print();
- if(action==='undo'||action==='redo'){const source=action==='undo'?state.history:state.future,target=action==='undo'?state.future:state.history;if(source.length){target.push(snapshot());Object.assign(state.sheet,source.pop());state.bar=Math.min(state.bar,state.sheet.score.measures.length-1);state.note=-1;state.dirty=true;stop();notifyRoute();render();}return;}
- if(action==='palette'){setPaletteOpen(!state.paletteOpen);return;}
- if(action==='beat-unit'){const form=document.getElementById('metadata');form.elements.tempo_note.value=b.dataset.value;form.querySelector('.beat-picker').open=false;updateTempoOptions();state.dirty=true;notifyRoute();return;}
- if(action==='duration')return changeChoice('duration',b.dataset.value);
- if(action==='dots'){const value=Number(b.dataset.value);return changeChoice('dots',state.choice.dots===value?0:value);}
- if(action==='rest')return insert('B4','',true);
- if(action==='delete-note')return mutate(()=>{const notes=state.sheet.score.measures[state.bar].notes;if(notes.length)notes.splice(state.note<0?notes.length-1:state.note,1);state.note=-1;});
- if(action==='add-bar')return mutate(()=>{if(state.sheet.score.measures.length>=64)throw Error('At most 64 measures.');state.sheet.score.measures.splice(state.bar+1,0,{notes:[]});state.bar++;state.note=-1;});
- if(action==='remove-bar'){if(state.sheet.score.measures[state.bar].notes.length&&!await confirmAction('Remove all notes in this measure?'))return;mutate(()=>{if(state.sheet.score.measures.length===1)state.sheet.score.measures[0].notes=[];else state.sheet.score.measures.splice(state.bar,1);state.bar=Math.min(state.bar,state.sheet.score.measures.length-1);state.note=-1;});return;}
- if(action==='octave-down'||action==='octave-up'){state.octave=Math.max(1,Math.min(5,state.octave+(action==='octave-up'?1:-1)));render();}
-});
-root.addEventListener('toggle',e=>{if(e.target.matches('.beat-picker'))NotationSymbols.center(e.target);},true);
-root.addEventListener('keydown',e=>{const key=e.target.closest('[data-pitch]');if(key&&(e.key==='Enter'||e.key===' ')){e.preventDefault();insert(key.dataset.pitch,key.dataset.accidental);}});
-window.addEventListener('beforeunload',e=>{if(state.dirty){e.preventDefault();e.returnValue='';}});
-window.addEventListener('pagehide',stop);document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});
-window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(state.route==='editor')draw();},120);});
-window.Notation={command(action){if(!['back','save','undo','redo','play','metadata','export','pdf'].includes(action))return;const b=document.createElement('button');b.dataset.action=action;b.hidden=true;root.append(b);b.click();b.remove();},dispose:stop,configure(next){captureForm();const initial=!window.Notation.ready;Object.assign(config,next);window.Notation.ready=true;if(initial)load();else{theme();render();}notifyRoute();},receive(id,data,error){const p=pending.get(id);if(!p)return;pending.delete(id);clearTimeout(p.timeout);error?p.reject(Error(error)):p.resolve(data);},back};
-if(window.NOTATION_BOOT)window.Notation.configure(window.NOTATION_BOOT);
-else if(!window.SornazNotation)window.Notation.configure({});
+  function snapshot() {
+    return M.clone({
+      metadata: state.sheet.metadata,
+      score: state.sheet.score,
+      visibility: state.sheet.visibility,
+    });
+  }
+  function mutate(fn) {
+    if (!state.sheet?.editable || state.busy) return;
+    const before = snapshot(),
+      beforeBar = state.bar,
+      beforeNote = state.note;
+    try {
+      fn();
+      M.prepare(state.sheet);
+      state.bar = Math.min(state.bar, state.sheet.score.measures.length - 1);
+      stop();
+      state.history.push(before);
+      if (state.history.length > 80) state.history.shift();
+      state.future = [];
+      state.dirty = true;
+      notifyRoute();
+      render();
+    } catch (e) {
+      Object.assign(state.sheet, before);
+      state.bar = beforeBar;
+      state.note = beforeNote;
+      toast(e.message);
+    }
+  }
+  function insert(pitch, accidental, rest = false) {
+    if (state.route !== 'editor' || !state.sheet.editable || state.busy) return;
+    const n = { ...state.choice, pitch, rest, accidental: accidental ?? state.choice.accidental };
+    mutate(() => {
+      state.bar = M.insert(state.sheet, state.bar, n);
+      M.prepare(state.sheet);
+      if (
+        state.sheet.score.measures[state.bar].notes.reduce((v, n) => v + M.ticks(n), 0) >=
+          M.capacity(state.sheet.metadata) &&
+        state.bar + 1 < state.sheet.score.measures.length
+      )
+        state.bar++;
+      state.note = -1;
+      state.lastPitch = pitch;
+      state.lastDuration = n.duration;
+      state.lastDots = n.dots;
+    });
+    if (!rest) sound(M.frequency(pitch, n.accidental, state.sheet.metadata.key), 0.18);
+  }
+  function sound(hz, duration, when = 0) {
+    try {
+      audio ??= new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === 'suspended') audio.resume();
+      const oscillator = audio.createOscillator(),
+        gain = audio.createGain(),
+        start = audio.currentTime + when;
+      oscillator.type = 'triangle';
+      oscillator.frequency.value = hz;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.17, start + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+      oscillator.connect(gain);
+      gain.connect(audio.destination);
+      oscillator.start(start);
+      oscillator.stop(start + duration + 0.02);
+      voices.push(oscillator);
+      oscillator.onended = () => {
+        oscillator.disconnect();
+        gain.disconnect();
+        voices = voices.filter((v) => v !== oscillator);
+      };
+    } catch (e) {
+      console.warn('Audio unavailable', e);
+    }
+  }
+  function stop(reset = true) {
+    voices.forEach((v) => {
+      try {
+        v.stop();
+      } catch (_) {}
+    });
+    voices = [];
+    timers.forEach(clearTimeout);
+    timers = [];
+    state.playing = false;
+    if (reset) {
+      state.playOffset = null;
+      state.playBar = -1;
+      state.playNote = -1;
+    }
+  }
+  function play() {
+    if (state.playing) {
+      state.playOffset = (state.playOffset || 0) + (performance.now() - state.playStarted) / 1000;
+      stop(false);
+      render();
+      return;
+    }
+    const timeline = M.timeline(state.sheet);
+    if (!timeline.events.length) return;
+    let offset = state.playOffset;
+    if (offset === null) {
+      const selected = timeline.events.find(
+        (e) => e.bar === state.bar && e.note === Math.max(0, state.note)
+      );
+      offset = selected?.start ?? 0;
+    }
+    if (offset >= timeline.duration) offset = 0;
+    state.playing = true;
+    state.playOffset = offset;
+    state.playStarted = performance.now();
+    for (const event of timeline.events) {
+      if (event.hz && event.start + event.soundLength > offset)
+        sound(
+          event.hz,
+          Math.max(0.03, (event.start + event.soundLength - Math.max(event.start, offset)) * 0.98),
+          Math.max(0, event.start - offset)
+        );
+      if (event.start + event.length <= offset) continue;
+      timers.push(
+        setTimeout(
+          () => {
+            if (!state.playing) return;
+            state.playBar = event.bar;
+            state.playNote = event.note;
+            draw();
+            const rect = document.querySelector(`[data-bar="${event.bar}"]`);
+            if (rect) {
+              const bounds = rect.getBoundingClientRect();
+              if (bounds.bottom > innerHeight - 190 || bounds.top < 0)
+                rect.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            }
+          },
+          Math.max(0, event.start - offset) * 1000
+        )
+      );
+    }
+    timers.push(
+      setTimeout(
+        () => {
+          stop();
+          if (state.route === 'editor') render();
+        },
+        (timeline.duration - offset) * 1000 + 30
+      )
+    );
+    render();
+  }
+  async function save() {
+    if (state.busy) return;
+    if (!M.trimmedMeasures(state.sheet).length)
+      return toast('Enter at least one note before saving.');
+    state.busy = true;
+    render();
+    try {
+      state.sheet = await api('save', {
+        sheetId: state.sheet.id,
+        payload: {
+          ...snapshot(),
+          score: { measures: M.trimmedMeasures(state.sheet) },
+          version: state.sheet.version,
+        },
+      });
+      M.prepare(state.sheet);
+      state.bar = Math.min(state.bar, state.sheet.score.measures.length - 1);
+      state.dirty = false;
+      notifyRoute();
+      toast('Saved successfully.');
+    } catch (e) {
+      toast(e.message);
+    } finally {
+      state.busy = false;
+      render();
+    }
+  }
+  async function download(id) {
+    try {
+      const sheet = await api('get', { sheetId: id });
+      const content = JSON.stringify({
+        format: 'sornaz-notation',
+        version: 1,
+        metadata: sheet.metadata,
+        score: sheet.score,
+        visibility: sheet.visibility,
+      });
+      const name =
+        (sheet.metadata.title.replace(/[^\p{L}\p{N} _-]/gu, '').slice(0, 80) || 'score') + '.json';
+      if (config.embedded) await bridge('download', { sheetId: id, content, name });
+      else {
+        const url = URL.createObjectURL(new Blob([content], { type: 'application/json' })),
+          a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+      toast('Downloaded');
+      if (config.embedded) await load();
+    } catch (e) {
+      toast(e.message);
+    }
+  }
+  async function exportPdf(sheet = state.sheet) {
+    try {
+      const html = NotationRenderer.printDocument(sheet, config.locale, noteSymbols),
+        name =
+          (sheet.metadata.title.replace(/[^\p{L}\p{N} _-]/gu, '').slice(0, 80) || 'score') + '.pdf';
+      if (config.embedded && !config.browser) {
+        await bridge('pdf', { html, name });
+        toast('PDF export opened.');
+      } else {
+        const frame = document.createElement('iframe');
+        frame.style.cssText = 'position:fixed;width:1px;height:1px;left:-9999px';
+        document.body.append(frame);
+        frame.onload = async () => {
+          await frame.contentDocument.fonts.ready;
+          frame.contentWindow.focus();
+          frame.contentWindow.print();
+          setTimeout(() => frame.remove(), 60000);
+        };
+        frame.srcdoc = html;
+      }
+    } catch (e) {
+      toast(e.message);
+    }
+  }
+  async function exportScore() {
+    const content = JSON.stringify(
+        {
+          format: 'sornaz-notation',
+          version: 1,
+          ...snapshot(),
+          score: { measures: M.trimmedMeasures(state.sheet) },
+        },
+        null,
+        2
+      ),
+      name =
+        (state.sheet.metadata.title.replace(/[^\p{L}\p{N} _-]/gu, '').slice(0, 80) || 'score') +
+        '.json';
+    if (config.embedded) {
+      try {
+        await bridge('export', { content, name });
+      } catch (e) {
+        toast(e.message);
+      }
+    } else {
+      const url = URL.createObjectURL(new Blob([content], { type: 'application/json' })),
+        a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+  }
+  root.addEventListener('submit', (e) => {
+    if (e.target.id !== 'metadata') return;
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(e.target));
+    f.bpm = Number(f.bpm);
+    const visibility = state.sheet.visibility;
+    f.tempo_text = f.tempo_text || '';
+    f.title = f.title.trim();
+    if (!f.title) return toast('Enter a title.');
+    if (!f.tempo_note) {
+      document.querySelector('.beat-picker').open = true;
+      document.querySelector('.beat-picker summary').focus();
+      return;
+    }
+    if (f.bpm < 20 || f.bpm > 300) return toast('Tempo must be between 20 and 300.');
+    if (
+      state.sheet.score.measures.some(
+        (b) => b.notes.reduce((s, n) => s + M.ticks(n), 0) > M.capacity(f)
+      )
+    )
+      return toast('This measure is full.');
+    state.sheet.metadata = f;
+    state.sheet.visibility = visibility;
+    state.dirty = true;
+    state.route = 'editor';
+    notifyRoute();
+    render();
+  });
+  root.addEventListener('input', (e) => {
+    if (e.target.name === 'bpm') {
+      e.target.value = e.target.value
+        .replace(/[۰-۹]/g, (c) => String(c.charCodeAt(0) - 1776))
+        .replace(/[٠-٩]/g, (c) => String(c.charCodeAt(0) - 1632))
+        .replace(/[^0-9]/g, '');
+    }
+    if (e.target.name === 'bpm') updateTempoOptions();
+    if (e.target.closest('#metadata')) {
+      state.dirty = true;
+      notifyRoute();
+    }
+  });
+  root.addEventListener('change', (e) => {
+    if (e.target.name === 'tempo_note') updateTempoOptions();
+    const key = e.target.dataset.choice;
+    if (key) changeChoice(key, key === 'dots' ? Number(e.target.value) : e.target.value);
+  });
+  root.addEventListener('click', async (e) => {
+    if (state.busy) return;
+    const pitch = e.target.closest('[data-pitch]');
+    if (pitch) {
+      insert(pitch.dataset.pitch, pitch.dataset.accidental);
+      return;
+    }
+    const hit = e.target.closest('[data-bar]');
+    if (hit) {
+      stop();
+      state.bar = Number(hit.dataset.bar);
+      state.note = hit.dataset.note === undefined ? -1 : Number(hit.dataset.note);
+      if (state.note >= 0)
+        Object.assign(state.choice, state.sheet.score.measures[state.bar].notes[state.note]);
+      render();
+      return;
+    }
+    const b = e.target.closest('[data-action]');
+    if (!b) return;
+    const action = b.dataset.action,
+      id = Number(b.dataset.id);
+    if (action === 'back') return back();
+    if (action === 'login') return login();
+    if (action === 'new') return newSheet();
+    if (action === 'open') return open(id);
+    if (action === 'filter') {
+      state.mode = b.dataset.mode;
+      return load();
+    }
+    if (action === 'retry') return load();
+    if (action === 'more') {
+      state.page++;
+      return load(true);
+    }
+    if (action === 'language') {
+      captureForm();
+      config.locale = config.locale === 'fa' ? 'en' : 'fa';
+      render();
+      return;
+    }
+    if (action === 'theme') {
+      captureForm();
+      config.dark = !config.dark;
+      render();
+      return;
+    }
+    if (action === 'delete') {
+      const sheet = state.items.find((s) => s.id === id);
+      if (
+        await confirmAction(
+          config.locale === 'fa' ? sheet.title + ' حذف شود' : 'Delete ' + sheet.title + '?'
+        )
+      ) {
+        try {
+          await api('delete', { sheetId: id, payload: { version: sheet.version } });
+          load();
+        } catch (e) {
+          toast(e.message);
+        }
+      }
+      return;
+    }
+    if (action === 'bookmark') {
+      if (!config.userId) return login();
+      const sheet = state.items.find((s) => s.id === id);
+      try {
+        await api('bookmark', { sheetId: id, payload: { active: !sheet.saved } });
+        load();
+      } catch (e) {
+        toast(e.message);
+      }
+      return;
+    }
+    if (action === 'copy') {
+      if (!config.userId) return login();
+      state.sheet = { ...M.fresh(), ...snapshot(), visibility: 'private' };
+      state.dirty = true;
+      notifyRoute();
+      render();
+      return;
+    }
+    if (action === 'pdf-item') {
+      try {
+        return await exportPdf(await api('get', { sheetId: id }));
+      } catch (e) {
+        toast(e.message);
+      }
+      return;
+    }
+    if (action === 'visibility') {
+      try {
+        const sheet = await api('get', { sheetId: id });
+        await api('save', {
+          sheetId: id,
+          payload: {
+            metadata: sheet.metadata,
+            score: sheet.score,
+            visibility: sheet.visibility === 'public' ? 'private' : 'public',
+            version: sheet.version,
+          },
+        });
+        await load();
+      } catch (e) {
+        toast(e.message);
+      }
+      return;
+    }
+    if (action === 'download') return download(id);
+    if (action === 'save') {
+      if (await confirmAction('Save these changes?')) return save();
+      return;
+    }
+    if (action === 'metadata') {
+      stop();
+      try {
+        await loadInstruments();
+      } catch (e) {
+        toast(e.message);
+      }
+      state.route = 'form';
+      notifyRoute();
+      render();
+      return;
+    }
+    if (action === 'play') return play();
+    if (action === 'pdf') return exportPdf();
+    if (action === 'export') return exportScore();
+    if (action === 'print') return window.print();
+    if (action === 'undo' || action === 'redo') {
+      const source = action === 'undo' ? state.history : state.future,
+        target = action === 'undo' ? state.future : state.history;
+      if (source.length) {
+        target.push(snapshot());
+        Object.assign(state.sheet, source.pop());
+        state.bar = Math.min(state.bar, state.sheet.score.measures.length - 1);
+        state.note = -1;
+        state.dirty = true;
+        stop();
+        notifyRoute();
+        render();
+      }
+      return;
+    }
+    if (action === 'palette') {
+      setPaletteOpen(!state.paletteOpen);
+      return;
+    }
+    if (action === 'beat-unit') {
+      const form = document.getElementById('metadata');
+      form.elements.tempo_note.value = b.dataset.value;
+      form.querySelector('.beat-picker').open = false;
+      updateTempoOptions();
+      state.dirty = true;
+      notifyRoute();
+      return;
+    }
+    if (action === 'duration') return changeChoice('duration', b.dataset.value);
+    if (action === 'dots') {
+      const value = Number(b.dataset.value);
+      return changeChoice('dots', state.choice.dots === value ? 0 : value);
+    }
+    if (action === 'rest') return insert('B4', '', true);
+    if (action === 'delete-note')
+      return mutate(() => {
+        const notes = state.sheet.score.measures[state.bar].notes;
+        if (notes.length) notes.splice(state.note < 0 ? notes.length - 1 : state.note, 1);
+        state.note = -1;
+      });
+    if (action === 'add-bar')
+      return mutate(() => {
+        if (state.sheet.score.measures.length >= 64) throw Error('At most 64 measures.');
+        state.sheet.score.measures.splice(state.bar + 1, 0, { notes: [] });
+        state.bar++;
+        state.note = -1;
+      });
+    if (action === 'remove-bar') {
+      if (
+        state.sheet.score.measures[state.bar].notes.length &&
+        !(await confirmAction('Remove all notes in this measure?'))
+      )
+        return;
+      mutate(() => {
+        if (state.sheet.score.measures.length === 1) state.sheet.score.measures[0].notes = [];
+        else state.sheet.score.measures.splice(state.bar, 1);
+        state.bar = Math.min(state.bar, state.sheet.score.measures.length - 1);
+        state.note = -1;
+      });
+      return;
+    }
+    if (action === 'octave-down' || action === 'octave-up') {
+      state.octave = Math.max(1, Math.min(5, state.octave + (action === 'octave-up' ? 1 : -1)));
+      render();
+    }
+  });
+  root.addEventListener(
+    'toggle',
+    (e) => {
+      if (e.target.matches('.beat-picker')) NotationSymbols.center(e.target);
+    },
+    true
+  );
+  root.addEventListener('keydown', (e) => {
+    const key = e.target.closest('[data-pitch]');
+    if (key && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      insert(key.dataset.pitch, key.dataset.accidental);
+    }
+  });
+  window.addEventListener('beforeunload', (e) => {
+    if (state.dirty) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+  window.addEventListener('pagehide', stop);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stop();
+  });
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (state.route === 'editor') draw();
+    }, 120);
+  });
+  window.Notation = {
+    command(action) {
+      if (!['back', 'save', 'undo', 'redo', 'play', 'metadata', 'export', 'pdf'].includes(action))
+        return;
+      const b = document.createElement('button');
+      b.dataset.action = action;
+      b.hidden = true;
+      root.append(b);
+      b.click();
+      b.remove();
+    },
+    dispose: stop,
+    configure(next) {
+      captureForm();
+      const initial = !window.Notation.ready;
+      Object.assign(config, next);
+      window.Notation.ready = true;
+      if (initial) load();
+      else {
+        theme();
+        render();
+      }
+      notifyRoute();
+    },
+    receive(id, data, error) {
+      const p = pending.get(id);
+      if (!p) return;
+      pending.delete(id);
+      clearTimeout(p.timeout);
+      error ? p.reject(Error(error)) : p.resolve(data);
+    },
+    back,
+  };
+  if (window.NOTATION_BOOT) window.Notation.configure(window.NOTATION_BOOT);
+  else if (!window.SornazNotation) window.Notation.configure({});
 })();

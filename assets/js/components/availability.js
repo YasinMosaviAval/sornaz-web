@@ -1,18 +1,15 @@
-document.addEventListener("click",function(e){
+document.addEventListener('click', function (e) {
+  if (e.target.classList.contains('availability-add')) {
+    let day = e.target.dataset.day;
 
-if(e.target.classList.contains("availability-add")){
+    let box = e.target.previousElementSibling;
 
-let day=e.target.dataset.day;
+    let index = box.querySelectorAll('.availability-row').length;
 
-let box=e.target.previousElementSibling;
+    box.insertAdjacentHTML(
+      'beforeend',
 
-let index = box.querySelectorAll(".availability-row").length;
-
-box.insertAdjacentHTML(
-
-"beforeend",
-
-`
+      `
 <div class="availability-row">
 
 <input
@@ -45,15 +42,10 @@ class="availability-remove">
 </div>
 
 `
+    );
+  }
 
-);
-
-}
-
-if(e.target.classList.contains("availability-remove")){
-
-e.target.closest(".availability-row").remove();
-
-}
-
+  if (e.target.classList.contains('availability-remove')) {
+    e.target.closest('.availability-row').remove();
+  }
 });

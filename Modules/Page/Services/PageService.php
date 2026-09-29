@@ -4,18 +4,19 @@ namespace Modules\Page\Services;
 
 use Modules\Page\Repositories\PageRepository;
 
-class PageService {
-
-
-    public function __construct(protected PageRepository $repository) {
+class PageService
+{
+    public function __construct(protected PageRepository $repository)
+    {
     }
 
-
-    public function getByPage(string $page): array {
+    public function getByPage(string $page): array
+    {
         return $this->repository->findByPage($page);
     }
 
-    public function homeStatistics(): array {
+    public function homeStatistics(): array
+    {
         $pdo = db();
 
         return [
@@ -55,7 +56,8 @@ class PageService {
         ];
     }
 
-    public function activityOverviewHtml(string $locale): string {
+    public function activityOverviewHtml(string $locale): string
+    {
         $locale = $locale === 'en' ? 'en' : 'fa';
         $statement = db()->prepare("SELECT translations.value
             FROM f_settings settings
@@ -73,7 +75,8 @@ class PageService {
         return (string) ($statement->fetchColumn() ?: '');
     }
 
-    public function homeSearchSelectLabels(string $locale): array {
+    public function homeSearchSelectLabels(string $locale): array
+    {
         $locale = $locale === 'en' ? 'en' : 'fa';
         $statement = db()->prepare("SELECT settings.variable_name, translations.value
             FROM settings
@@ -87,7 +90,9 @@ class PageService {
               AND settings.deleted_at IS NULL");
         $statement->execute([$locale]);
         $values = [];
-        foreach ($statement->fetchAll() as $row) $values[(string)$row['variable_name']] = (string)$row['value'];
+        foreach ($statement->fetchAll() as $row) {
+            $values[(string) $row['variable_name']] = (string) $row['value'];
+        }
 
         return [
             'instrument' => $values['home_search_instrument_label'] ?? ($locale === 'en' ? 'Instrument' : 'ساز'),
@@ -95,14 +100,15 @@ class PageService {
         ];
     }
 
-    public function homeLearningPath(string $locale): array {
+    public function homeLearningPath(string $locale): array
+    {
         $locale = $locale === 'en' ? 'en' : 'fa';
         $keys = [
-            'heading'=>'home_learning_path_heading',
-            'basic_title'=>'home_learning_basic_title','basic_description'=>'home_learning_basic_description',
-            'iranian_title'=>'home_learning_iranian_title','iranian_description'=>'home_learning_iranian_description',
-            'forms_title'=>'home_learning_forms_title','forms_description'=>'home_learning_forms_description',
-            'instruments_title'=>'home_learning_instruments_title','instruments_description'=>'home_learning_instruments_description',
+            'heading' => 'home_learning_path_heading',
+            'basic_title' => 'home_learning_basic_title', 'basic_description' => 'home_learning_basic_description',
+            'iranian_title' => 'home_learning_iranian_title', 'iranian_description' => 'home_learning_iranian_description',
+            'forms_title' => 'home_learning_forms_title', 'forms_description' => 'home_learning_forms_description',
+            'instruments_title' => 'home_learning_instruments_title', 'instruments_description' => 'home_learning_instruments_description',
         ];
         $placeholders = implode(',', array_fill(0, count($keys), '?'));
         $statement = db()->prepare("SELECT settings.variable_name, translations.value FROM settings
@@ -110,20 +116,25 @@ class PageService {
                 AND translations.field='value' AND translations.locale=? AND translations.deleted_at IS NULL
             WHERE settings.variable_name IN ($placeholders) AND settings.deleted_at IS NULL");
         $statement->execute(array_merge([$locale], array_values($keys)));
-        $stored=[];foreach($statement->fetchAll() as$row)$stored[(string)$row['variable_name']]=(string)$row['value'];
+        $stored = [];
+        foreach ($statement->fetchAll() as $row) {
+            $stored[(string) $row['variable_name']] = (string) $row['value'];
+        }
         $fallbacks = $locale === 'en' ? [
-            'heading'=>'Learning Path','basic_title'=>'Basic Theory','basic_description'=>'Rhythm, melody, harmony, intervals, and scales',
-            'iranian_title'=>'Iranian Music','iranian_description'=>'Dangs, dastgahs, avazes, and radif',
-            'forms_title'=>'Forms and Styles','forms_description'=>'Iranian and international forms and stylistics',
-            'instruments_title'=>'Instruments and Performance','instruments_description'=>'Choosing an instrument, practicing, and entering the professional world',
+            'heading' => 'Learning Path', 'basic_title' => 'Basic Theory', 'basic_description' => 'Rhythm, melody, harmony, intervals, and scales',
+            'iranian_title' => 'Iranian Music', 'iranian_description' => 'Dangs, dastgahs, avazes, and radif',
+            'forms_title' => 'Forms and Styles', 'forms_description' => 'Iranian and international forms and stylistics',
+            'instruments_title' => 'Instruments and Performance', 'instruments_description' => 'Choosing an instrument, practicing, and entering the professional world',
         ] : [
-            'heading'=>'مسیر یادگیری','basic_title'=>'تئوری پایه','basic_description'=>'ریتم، ملودی، هارمونی، فاصله و گام',
-            'iranian_title'=>'موسیقی ایرانی','iranian_description'=>'دانگ‌ها، دستگاه‌ها، آوازها و ردیف',
-            'forms_title'=>'فرم و سبک','forms_description'=>'فرم‌های ایرانی و جهانی، سبک‌شناسی',
-            'instruments_title'=>'ساز و نوازندگی','instruments_description'=>'انتخاب ساز، تمرین و ورود حرفه‌ای',
+            'heading' => 'مسیر یادگیری', 'basic_title' => 'تئوری پایه', 'basic_description' => 'ریتم، ملودی، هارمونی، فاصله و گام',
+            'iranian_title' => 'موسیقی ایرانی', 'iranian_description' => 'دانگ‌ها، دستگاه‌ها، آوازها و ردیف',
+            'forms_title' => 'فرم و سبک', 'forms_description' => 'فرم‌های ایرانی و جهانی، سبک‌شناسی',
+            'instruments_title' => 'ساز و نوازندگی', 'instruments_description' => 'انتخاب ساز، تمرین و ورود حرفه‌ای',
         ];
-        $result=[];foreach($keys as$name=>$key)$result[$name]=$stored[$key]??$fallbacks[$name];return$result;
+        $result = [];
+        foreach ($keys as $name => $key) {
+            $result[$name] = $stored[$key] ?? $fallbacks[$name];
+        }
+        return $result;
     }
-
-
 }

@@ -8,150 +8,649 @@ use RuntimeException;
 
 class AcademyCourseService
 {
-    private function now(): string { return (new \DateTimeImmutable('now',new \DateTimeZone('Asia/Tehran')))->format('Y-m-d H:i:s'); }
+    private function now(): string
+    {
+        return (new \DateTimeImmutable('now', new \DateTimeZone('Asia/Tehran')))->format('Y-m-d H:i:s');
+    }
 
     public function bootstrap(int $actor): array
     {
         $this->ensureLessonLevelTexts($actor);
-        $organizations=$this->organizations($actor);$displayOrganizations=$this->organizationsForDisplay($organizations);$academyIds=[];$branchIds=[];$organizationUsers=[];$organizationMap=[];
-        foreach($displayOrganizations as$o){$organizationUsers[]=(int)$o['user_id'];$organizationMap[(int)$o['user_id']]=$o;}
-        $organizationByKey=[];foreach($displayOrganizations as$o){$organizationByKey[$o['kind'].':'.$o['id']]=$o;if($o['kind']==='academy')$academyIds[]=(int)$o['id'];else$branchIds[]=(int)$o['id'];}
-        $courses=array_values(array_filter(DB::table('academy_branch_courses')->whereNull('deleted_at')->get(),function($c)use($academyIds,$branchIds,$organizationByKey){$kind=$c['branch_id']!==null?'branch':'academy';$id=(int)$c[$kind.'_id'];$o=$organizationByKey[$kind.':'.$id]??null;if(!$o)return false;return empty($o['read_only'])||in_array((string)($c['status']??'pending'),['open','ongoing'],true);}));
-        $lessonRows=$organizationUsers?DB::table('user_lessons')->whereIn('user_id',$organizationUsers)->where('status','active')->whereNull('deleted_at')->get():[];
-        $levels=DB::table('levels')->whereNull('deleted_at')->get();$levelIds=array_map(fn($r)=>(int)$r['level_id'],$levels);$levelTexts=$this->translations('levels',$levelIds,['title','summary','description']);
-        $lessonIds = array_values(array_unique(array_map(fn($r)=>(int)$r['lesson_id'], $lessonRows)));
+        $organizations = $this->organizations($actor);
+        $displayOrganizations = $this->organizationsForDisplay($organizations);
+        $academyIds = [];
+        $branchIds = [];
+        $organizationUsers = [];
+        $organizationMap = [];
+        foreach ($displayOrganizations as $o) {
+            $organizationUsers[] = (int) $o['user_id'];
+            $organizationMap[(int) $o['user_id']] = $o;
+        }
+        $organizationByKey = [];
+        foreach ($displayOrganizations as $o) {
+            $organizationByKey[$o['kind'] . ':' . $o['id']] = $o;
+            if ($o['kind'] === 'academy') {
+                $academyIds[] = (int) $o['id'];
+            } else {
+                $branchIds[] = (int) $o['id'];
+            }
+        }
+        $courses = array_values(array_filter(DB::table('academy_branch_courses')->whereNull('deleted_at')->get(), function ($c) use ($academyIds, $branchIds, $organizationByKey) {
+            $kind = $c['branch_id'] !== null ? 'branch' : 'academy';
+            $id = (int) $c[$kind . '_id'];
+            $o = $organizationByKey[$kind . ':' . $id] ?? null;
+            if (!$o) {
+                return false;
+            }
+            return empty($o['read_only']) || in_array((string) ($c['status'] ?? 'pending'), ['open', 'ongoing'], true);
+        }));
+        $lessonRows = $organizationUsers ? DB::table('user_lessons')->whereIn('user_id', $organizationUsers)->where('status', 'active')->whereNull('deleted_at')->get() : [];
+        $levels = DB::table('levels')->whereNull('deleted_at')->get();
+        $levelIds = array_map(fn ($r) => (int) $r['level_id'], $levels);
+        $levelTexts = $this->translations('levels', $levelIds, ['title', 'summary', 'description']);
+        $lessonIds = array_values(array_unique(array_map(fn ($r) => (int) $r['lesson_id'], $lessonRows)));
         $lessonTexts = $this->translations('lessons', $lessonIds, ['title']);
-        $courseIds = array_map(fn($r)=>(int)$r['course_id'], $courses);
-        $courseTexts = $this->translations('academy_branch_courses', $courseIds, ['title','summary','description']);
-        $levelMap=[];$levelItems=[];foreach($levels as$level){$levelId=(int)$level['level_id'];$levelMap[$levelId]=$levelTexts[$levelId]['title']??('سطح '.$levelId);$levelItems[]=['id'=>$levelId,'name'=>$levelMap[$levelId],'summary'=>$levelTexts[$levelId]['summary']??'','description'=>$levelTexts[$levelId]['description']??''];}
-        $lessonItems=[];$lessonByOrganization=[];foreach($lessonRows as$l){$o=$organizationMap[(int)$l['user_id']]??null;if(!$o)continue;$lessonId=(int)$l['lesson_id'];$levelId=(int)($l['level_id']??0);$title=$lessonTexts[$lessonId]['title']??('درس '.$lessonId);$level=$levelMap[$levelId]??'—';$item=['id'=>$lessonId,'organizationUserId'=>(int)$l['user_id'],'organizationKind'=>$o['kind'],'organizationId'=>$o['id'],'name'=>$title.' – '.$level,'title'=>$title,'levelId'=>$levelId,'level'=>$level];$lessonItems[]=$item;$lessonByOrganization[$o['kind'].':'.$o['id'].':'.$lessonId]=$item;}
-        $status=['pending'=>'در انتظار تأیید','open'=>'باز','ongoing'=>'در حال برگزاری','finished'=>'پایان یافته'];$branchContext=$this->isBranchContext($organizations);
+        $courseIds = array_map(fn ($r) => (int) $r['course_id'], $courses);
+        $courseTexts = $this->translations('academy_branch_courses', $courseIds, ['title', 'summary', 'description']);
+        $levelMap = [];
+        $levelItems = [];
+        foreach ($levels as $level) {
+            $levelId = (int) $level['level_id'];
+            $levelMap[$levelId] = $levelTexts[$levelId]['title'] ?? ('سطح ' . $levelId);
+            $levelItems[] = ['id' => $levelId, 'name' => $levelMap[$levelId], 'summary' => $levelTexts[$levelId]['summary'] ?? '', 'description' => $levelTexts[$levelId]['description'] ?? ''];
+        }
+        $lessonItems = [];
+        $lessonByOrganization = [];
+        foreach ($lessonRows as $l) {
+            $o = $organizationMap[(int) $l['user_id']] ?? null;
+            if (!$o) {
+                continue;
+            }
+            $lessonId = (int) $l['lesson_id'];
+            $levelId = (int) ($l['level_id'] ?? 0);
+            $title = $lessonTexts[$lessonId]['title'] ?? ('درس ' . $lessonId);
+            $level = $levelMap[$levelId] ?? '—';
+            $item = ['id' => $lessonId, 'organizationUserId' => (int) $l['user_id'], 'organizationKind' => $o['kind'], 'organizationId' => $o['id'], 'name' => $title . ' – ' . $level, 'title' => $title, 'levelId' => $levelId, 'level' => $level];
+            $lessonItems[] = $item;
+            $lessonByOrganization[$o['kind'] . ':' . $o['id'] . ':' . $lessonId] = $item;
+        }
+        $status = ['pending' => 'در انتظار تأیید', 'open' => 'باز', 'ongoing' => 'در حال برگزاری', 'finished' => 'پایان یافته'];
+        $branchContext = $this->isBranchContext($organizations);
         return [
-            'branches'=>array_values(array_map(fn($o)=>['id'=>$o['id'],'name'=>$o['name']],array_filter($organizations,fn($o)=>$o['kind']==='branch'))),
-            'organizations'=>$organizations,
-            'levels'=>$levelItems,
-            'lessons'=>$lessonItems,
-            'permissions'=>['isReceptionist'=>$this->isReceptionist($actor),'isBranchContext'=>$this->isBranchContext($organizations)],
-            'courses'=>array_map(function($c)use($organizationByKey,$lessonByOrganization,$lessonTexts,$courseTexts,$status,$branchContext){$id=(int)$c['course_id'];$lessonId=(int)($c['lesson_id']??0);$kind=$c['branch_id']!==null?'branch':'academy';$organizationId=(int)($c[$kind.'_id']??0);$o=$organizationByKey[$kind.':'.$organizationId]??['name'=>'—','user_id'=>0];$lesson=$lessonByOrganization[$kind.':'.$organizationId.':'.$lessonId]??null;$inheritedAcademyCourse=$branchContext&&$kind==='academy';$canManage=!$inheritedAcademyCourse&&empty($o['read_only']);return ['id'=>$id,'name'=>$courseTexts[$id]['title']??('دوره '.$id),'summary'=>$courseTexts[$id]['summary']??'','description'=>$courseTexts[$id]['description']??'','level'=>$lesson['level']??'—','level_id'=>$lesson['levelId']??0,'organizationKind'=>$kind,'organizationId'=>$organizationId,'organizationUserId'=>(int)$o['user_id'],'branchId'=>$kind==='branch'?$organizationId:null,'branchName'=>$o['name'],'organizationName'=>$o['name'],'lesson_id'=>$lessonId,'instrument'=>$lesson['title']??($lessonTexts[$lessonId]['title']??'—'),'lessonLabel'=>$lesson['name']??($lessonTexts[$lessonId]['title']??'—'),'teacher_capacity'=>(int)($c['teacher_capacity']??1),'student_capacity'=>(int)($c['student_capacity']??1),'status'=>$status[$c['status']]??'در انتظار تأیید','status_code'=>$c['status'],'canManage'=>$canManage,'canEdit'=>$canManage,'canDelete'=>$canManage,'canChangeStatus'=>$canManage];},$courses),
+            'branches' => array_values(array_map(fn ($o) => ['id' => $o['id'], 'name' => $o['name']], array_filter($organizations, fn ($o) => $o['kind'] === 'branch'))),
+            'organizations' => $organizations,
+            'levels' => $levelItems,
+            'lessons' => $lessonItems,
+            'permissions' => ['isReceptionist' => $this->isReceptionist($actor), 'isBranchContext' => $this->isBranchContext($organizations)],
+            'courses' => array_map(function ($c) use ($organizationByKey, $lessonByOrganization, $lessonTexts, $courseTexts, $status, $branchContext) {
+                $id = (int) $c['course_id'];
+                $lessonId = (int) ($c['lesson_id'] ?? 0);
+                $kind = $c['branch_id'] !== null ? 'branch' : 'academy';
+                $organizationId = (int) ($c[$kind . '_id'] ?? 0);
+                $o = $organizationByKey[$kind . ':' . $organizationId] ?? ['name' => '—', 'user_id' => 0];
+                $lesson = $lessonByOrganization[$kind . ':' . $organizationId . ':' . $lessonId] ?? null;
+                $inheritedAcademyCourse = $branchContext && $kind === 'academy';
+                $canManage = !$inheritedAcademyCourse && empty($o['read_only']);
+                return ['id' => $id, 'name' => $courseTexts[$id]['title'] ?? ('دوره ' . $id), 'summary' => $courseTexts[$id]['summary'] ?? '', 'description' => $courseTexts[$id]['description'] ?? '', 'level' => $lesson['level'] ?? '—', 'level_id' => $lesson['levelId'] ?? 0, 'organizationKind' => $kind, 'organizationId' => $organizationId, 'organizationUserId' => (int) $o['user_id'], 'branchId' => $kind === 'branch' ? $organizationId : null, 'branchName' => $o['name'], 'organizationName' => $o['name'], 'lesson_id' => $lessonId, 'instrument' => $lesson['title'] ?? ($lessonTexts[$lessonId]['title'] ?? '—'), 'lessonLabel' => $lesson['name'] ?? ($lessonTexts[$lessonId]['title'] ?? '—'), 'teacher_capacity' => (int) ($c['teacher_capacity'] ?? 1), 'student_capacity' => (int) ($c['student_capacity'] ?? 1), 'status' => $status[$c['status']] ?? 'در انتظار تأیید', 'status_code' => $c['status'], 'canManage' => $canManage, 'canEdit' => $canManage, 'canDelete' => $canManage, 'canChangeStatus' => $canManage];
+            }, $courses),
         ];
     }
 
-    public function saveCourse(int $actor,array $data,int $id=0): array
+    public function saveCourse(int $actor, array $data, int $id = 0): array
     {
-        $organization=$this->allowedOrganization($actor,(int)($data['organizationUserId']??0));
-        $lessonId=(int)($data['lesson_id']??0);$lesson=DB::table('user_lessons')->where('user_id',(int)$organization['user_id'])->where('lesson_id',$lessonId)->where('status','active')->whereNull('deleted_at')->first();
-        if(!$lesson)throw new RuntimeException('درس فعال انتخاب‌شده متعلق به سازمان نیست.');
-        $title=trim((string)($data['name']??''));if($title==='')throw new RuntimeException('نام دوره الزامی است.');
-        $statuses=['در انتظار'=>'pending','باز'=>'open','در حال برگزاری'=>'ongoing','پایان‌یافته'=>'finished','pending'=>'pending','open'=>'open','ongoing'=>'ongoing','finished'=>'finished'];
-        $teacherCapacity=max(1,(int)($data['teacher_capacity']??1));$studentCapacity=max(1,(int)($data['student_capacity']??1));if($teacherCapacity>$studentCapacity)throw new RuntimeException('ظرفیت اساتید نمی‌تواند بیشتر از ظرفیت هنرجوها باشد.');
-        $status=$this->isReceptionist($actor)?'pending':($statuses[$data['status']??'open']??'open');$now=$this->now();$approved=$status!=='pending';
-        $academyId=(int)$organization['id'];if($organization['kind']==='branch'){$branch=DB::table('academy_branches')->where('branch_id',(int)$organization['id'])->whereNull('deleted_at')->first();if(!$branch)throw new RuntimeException('شعبه انتخاب‌شده معتبر نیست.');$academyId=(int)$branch['academy_id'];}
-        $values=['academy_id'=>$academyId,'branch_id'=>$organization['kind']==='branch'?$organization['id']:null,'lesson_id'=>$lessonId,'teacher_capacity'=>$teacherCapacity,'student_capacity'=>$studentCapacity,'status'=>$status,'approved_at'=>$approved?$now:null,'approved_by'=>$approved?$actor:null,'updated_at'=>$now,'updated_by'=>$actor,'deleted_at'=>null,'deleted_by'=>null];
-        return transaction(function()use($actor,$data,$id,$values,$title,$now){if($id){$row=DB::table('academy_branch_courses')->where('course_id',$id)->whereNull('deleted_at')->first();if(!$row)throw new RuntimeException('دوره یافت نشد.');$this->assertCourseAccess($actor,$row);DB::table('academy_branch_courses')->where('course_id',$id)->update($values);}else$id=DB::table('academy_branch_courses')->insertGetId(['created_at'=>$now,'created_by'=>$actor]+$values);$this->setTranslations('academy_branch_courses',$id,['title'=>$title,'summary'=>trim((string)($data['summary']??'')),'description'=>trim((string)($data['description']??''))],$actor);return ['id'=>$id];});
-    }
-
-    public function saveLevel(int $actor,array $data,int $id=0): array
-    {
-        if($id)throw new RuntimeException('ویرایش سطح درس مجاز نیست.');
-        $title=trim((string)($data['name']??$data['title']??''));if($title==='')throw new RuntimeException('عنوان سطح الزامی است.');$now=$this->now();
-        return transaction(function()use($actor,$data,$id,$title,$now){$values=['type'=>'learning','sort_order'=>max(1,(int)($data['sort_order']??999)),'updated_at'=>$now,'updated_by'=>$actor,'deleted_at'=>null,'deleted_by'=>null];$id=DB::table('levels')->insertGetId(['created_at'=>$now,'created_by'=>$actor]+$values);$this->setTranslations('levels',$id,['title'=>$title,'summary'=>trim((string)($data['summary']??'')),'description'=>trim((string)($data['description']??''))],$actor);return ['id'=>$id];});
-    }
-
-    public function deleteCourse(int $actor,int $id): void {$row=DB::table('academy_branch_courses')->where('course_id',$id)->whereNull('deleted_at')->first();if(!$row)throw new RuntimeException('دوره یافت نشد.');$this->assertCourseAccess($actor,$row);$this->softDelete('academy_branch_courses','course_id',$id,$actor);}
-    public function cycleStatus(int$actor,int$id):array{$row=DB::table('academy_branch_courses')->where('course_id',$id)->whereNull('deleted_at')->first();if(!$row)throw new RuntimeException('دوره یافت نشد.');$this->assertCourseAccess($actor,$row);if($this->isReceptionist($actor))throw new RuntimeException('کاربر پذیرش مجوز تغییر وضعیت دوره را ندارد.');$next=match((string)$row['status']){'pending'=>'open','open'=>'ongoing','ongoing'=>'finished',default=>'pending'};$now=$this->now();DB::table('academy_branch_courses')->where('course_id',$id)->update(['status'=>$next,'approved_at'=>$next==='pending'?null:($row['approved_at']??$now),'approved_by'=>$next==='pending'?null:($row['approved_by']??$actor),'updated_at'=>$now,'updated_by'=>$actor]);return['id'=>$id,'status'=>$next];}
-    public function realtimeVersion(int$actor):array{$data=$this->bootstrap($actor);$payload=['courses'=>array_map(fn($r)=>[$r['id'],$r['organizationKind'],$r['organizationId'],$r['lesson_id'],$r['teacher_capacity'],$r['student_capacity'],$r['status_code'],$r['name'],$r['summary'],$r['description']],$data['courses']),'lessons'=>array_map(fn($r)=>[$r['organizationKind'],$r['organizationId'],$r['id'],$r['levelId'],$r['name']],$data['lessons'])];return['resource'=>'courses','version'=>sha1(json_encode($payload,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES))];}
-    public function studentOptions(int$actor):array{$data=$this->bootstrap($actor);$courses=$data['courses'];$ids=array_map(fn($x)=>(int)$x['id'],$courses);$courseMap=[];foreach($courses as$c)$courseMap[(int)$c['id']]=$c;$terms=$ids?DB::table('academy_branch_course_terms')->whereIn('course_id',$ids)->whereIn('status',['open','ongoing'])->whereNull('deleted_at')->get():[];$termIds=array_map(fn($x)=>(int)$x['term_id'],$terms);$texts=$this->translations('academy_branch_course_terms',$termIds,['title']);$provinces=DB::table('world_iran_provinces')->get();$counties=DB::table('world_iran_counties')->get();$timezones=DB::table('f_timezone')->whereNull('deleted_at')->get();return['organizations'=>$data['organizations'],'permissions'=>$data['permissions'],'provinces'=>$provinces,'counties'=>$counties,'timezones'=>$timezones,'terms'=>array_values(array_map(function($t)use($courseMap,$texts){$course=$courseMap[(int)$t['course_id']];return['id'=>(int)$t['term_id'],'name'=>$texts[(int)$t['term_id']]['title']??('ترم '.$t['term_id']),'organizationUserId'=>(int)$course['organizationUserId'],'lessonId'=>(int)($course['lesson_id']??0),'levelId'=>(int)($course['level_id']??0),'level'=>$course['level']?:'تعریف نشده','status'=>$t['status']];},$terms))];}
-
-    public function storeStudent(int $actor,array $d):array
-    {
-        return transaction(function()use($actor,$d){
-            $name=trim((string)($d['name']??''));$phone=$this->digits((string)($d['phone']??''));$national=$this->digits((string)($d['nationalId']??''));$birthday=(string)($d['birthDate']??'');
-            if($name===''||$phone===''||$national===''||!preg_match('/^\d{4}-\d{2}-\d{2}$/',$birthday))throw new RuntimeException('نام، شماره تماس، کد ملی و تاریخ تولد معتبر الزامی است.');
-            if(DB::table('users')->where('phone',$phone)->whereNull('deleted_at')->first())throw new RuntimeException('FIELD:stuPhone:این شماره تماس هنرجو قبلاً ثبت شده است.');
-            if(DB::table('users')->where('national_code',$national)->whereNull('deleted_at')->first())throw new RuntimeException('FIELD:stuNationalId:این کد ملی هنرجو قبلاً ثبت شده است.');
-            $organization=$this->allowedOrganization($actor,(int)($d['organizationUserId']??0));$termId=(int)($d['termId']??0);
-            if($organization['kind']==='academy')$academyId=(int)$organization['id'];else{$organizationBranch=DB::table('academy_branches')->where('branch_id',(int)$organization['id'])->whereNull('deleted_at')->first();if(!$organizationBranch)throw new RuntimeException('سازمان انتخاب‌شده معتبر نیست.');$academyId=(int)$organizationBranch['academy_id'];}
-            $term=DB::table('academy_branch_course_terms')->join('academy_branch_courses','academy_branch_courses.course_id','=','academy_branch_course_terms.course_id')->where('academy_branch_course_terms.term_id',$termId)->whereIn('academy_branch_course_terms.status',['open','ongoing'])->whereNull('academy_branch_course_terms.deleted_at')->whereNull('academy_branch_courses.deleted_at')->first();
-            if(!$term)throw new RuntimeException('ترم آموزشی معتبر نیست.');$termRecord=DB::table('academy_branch_course_terms')->where('term_id',$termId)->whereNull('deleted_at')->first();if(!$termRecord)throw new RuntimeException('ترم آموزشی معتبر نیست.');$term['status']=$termRecord['status'];$term['price']=$termRecord['price'];$term['currency_id']=$termRecord['currency_id'];$term['start_date']=$termRecord['start_date'];$belongs=$organization['kind']==='academy'?(int)$term['academy_id']===(int)$organization['id']:(int)$term['branch_id']===(int)$organization['id'];if(!$belongs)throw new RuntimeException('ترم متعلق به سازمان انتخاب‌شده نیست.');
-            $approved=!$this->isReceptionist($actor);$now=$this->now();$approval=['approved_at'=>$approved?$now:null,'approved_by'=>$approved?$actor:null];
-            $parentId=null;if($this->age($birthday)<18){$parent=$d['parent']??[];$parentId=$this->createStudentUser($actor,$parent,$approved,'parent');$this->saveStudentContactsAndAddresses($actor,$parentId,['addresses'=>$d['addresses']??[]],$approved);}
-            $userId=$this->createStudentUser($actor,$d,$approved,'student');$this->saveStudentContactsAndAddresses($actor,$userId,$d,$approved);
-            $memberStatus=$approved?($term['status']==='open'?'active':'inactive'):'pending';$memberId=DB::table('academy_branch_members')->insertGetId(['academy_id'=>$academyId,'branch_id'=>$organization['kind']==='branch'?(int)$organization['id']:null,'user_id'=>$userId,'parent_user_id'=>$parentId,'status'=>$memberStatus,'joined_at'=>($d['registrationDate']??date('Y-m-d')),'created_at'=>$now,'created_by'=>$actor,'updated_at'=>$now,'updated_by'=>$actor]+$approval);
-            $studentRole=DB::table('access_system_roles')->where('type','academy')->whereRaw("name LIKE '%student%'")->whereNull('deleted_at')->orderBy('role_id')->first();if($studentRole)DB::table('academy_branch_member_roles')->insert(['member_id'=>$memberId,'role_id'=>(int)$studentRole['role_id'],'is_main'=>1,'created_at'=>$now,'created_by'=>$actor,'updated_at'=>$now,'updated_by'=>$actor]+$approval);
-            $organizationLesson=DB::table('user_lessons')->where('user_id',(int)$organization['user_id'])->where('lesson_id',(int)$term['lesson_id'])->whereNull('deleted_at')->first();DB::table('user_lessons')->insert(['user_id'=>$userId,'lesson_id'=>(int)$term['lesson_id'],'level_id'=>$organizationLesson['level_id']??null,'status'=>$approved?'active':'pending','is_primary'=>1,'created_at'=>$now,'created_by'=>$actor,'updated_at'=>$now,'updated_by'=>$actor]+$approval);
-            if($term['status']==='open')DB::table('academy_branch_course_term_enrollments')->insert(['term_id'=>$termId,'member_id'=>$memberId,'type'=>'student','status'=>$approved?'active':'pending','joined_at'=>$now,'created_at'=>$now,'created_by'=>$actor,'updated_at'=>$now,'updated_by'=>$actor]+$approval);
-            else{
-                $availabilities=array_values($d['availabilities']??[]);
-                if(!$availabilities)throw new RuntimeException('حداقل یک بازه زمانی برای هنرجوی فهرست انتظار الزامی است.');
-                DB::table('academy_branch_course_term_waiting_list')->insert(['term_id'=>$termId,'member_id'=>$memberId,'created_at'=>$now,'created_by'=>$actor,'updated_at'=>$now,'updated_by'=>$actor]+$approval);
-                foreach($availabilities as$i=>$a){
-                    $day=(string)($a['day']??'');$start=(string)($a['startTime']??'');$end=(string)($a['endTime']??'');$timezoneId=(int)($a['timezoneId']??0);
-                    if(!in_array($day,['saturday','sunday','monday','tuesday','wednesday','thursday','friday'],true))throw new RuntimeException('روز بازه زمانی هنرجو معتبر نیست.');
-                    if(!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/',$start)||!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/',$end)||$end<=$start)throw new RuntimeException('ساعت شروع و پایان بازه زمانی هنرجو معتبر نیست.');
-                    if(!$timezoneId||!DB::table('f_timezone')->where('timezone_id',$timezoneId)->whereNull('deleted_at')->first())throw new RuntimeException('منطقه زمانی بازه هنرجو معتبر نیست.');
-                    $availabilityId=DB::table('user_availabilities')->insertGetId(['user_id'=>$userId,'day_of_week'=>$day,'start_time'=>$start,'end_time'=>$end,'timezone_id'=>$timezoneId,'status'=>'available','unavailable_type'=>null,'is_repeating'=>1,'repeat_period'=>'week','is_closed'=>0,'priority'=>$i+1,'created_at'=>$now,'created_by'=>$actor,'updated_at'=>$now,'updated_by'=>$actor]+$approval);
-                    $this->setTranslations('user_availabilities',$availabilityId,['summary'=>trim((string)($d['availabilitySummary']??'')),'description'=>trim((string)($d['availabilityDescription']??''))],$actor);
-                }
-                $savedAvailabilityCount=DB::table('user_availabilities')->where('user_id',$userId)->whereNull('deleted_at')->count();
-                if($savedAvailabilityCount<count($availabilities))throw new RuntimeException('ثبت بازه‌های زمانی هنرجو در دیتابیس کامل نشد.');
+        $organization = $this->allowedOrganization($actor, (int) ($data['organizationUserId'] ?? 0));
+        $lessonId = (int) ($data['lesson_id'] ?? 0);
+        $lesson = DB::table('user_lessons')->where('user_id', (int) $organization['user_id'])->where('lesson_id', $lessonId)->where('status', 'active')->whereNull('deleted_at')->first();
+        if (!$lesson) {
+            throw new RuntimeException('درس فعال انتخاب‌شده متعلق به سازمان نیست.');
+        }
+        $title = trim((string) ($data['name'] ?? ''));
+        if ($title === '') {
+            throw new RuntimeException('نام دوره الزامی است.');
+        }
+        $statuses = ['در انتظار' => 'pending', 'باز' => 'open', 'در حال برگزاری' => 'ongoing', 'پایان‌یافته' => 'finished', 'pending' => 'pending', 'open' => 'open', 'ongoing' => 'ongoing', 'finished' => 'finished'];
+        $teacherCapacity = max(1, (int) ($data['teacher_capacity'] ?? 1));
+        $studentCapacity = max(1, (int) ($data['student_capacity'] ?? 1));
+        if ($teacherCapacity > $studentCapacity) {
+            throw new RuntimeException('ظرفیت اساتید نمی‌تواند بیشتر از ظرفیت هنرجوها باشد.');
+        }
+        $status = $this->isReceptionist($actor) ? 'pending' : ($statuses[$data['status'] ?? 'open'] ?? 'open');
+        $now = $this->now();
+        $approved = $status !== 'pending';
+        $academyId = (int) $organization['id'];
+        if ($organization['kind'] === 'branch') {
+            $branch = DB::table('academy_branches')->where('branch_id', (int) $organization['id'])->whereNull('deleted_at')->first();
+            if (!$branch) {
+                throw new RuntimeException('شعبه انتخاب‌شده معتبر نیست.');
             }
-            $template=DB::table('academy_branch_course_term_invoices')->where('term_id',$termId)->whereNull('member_id')->whereNull('deleted_at')->orderBy('term_invoice_id','DESC')->first();$total=(float)($template['payable_amount']??$term['price']??0);$invoiceId=DB::table('academy_branch_course_term_invoices')->insertGetId(['term_id'=>$termId,'member_id'=>$memberId,'discount_id'=>$template['discount_id']??null,'payable_amount'=>$total,'currency_id'=>$template['currency_id']??$term['currency_id'],'status'=>$approved?'issued':'draft','due_date'=>$term['start_date']??date('Y-m-d'),'issued_at'=>$now,'created_at'=>$now,'created_by'=>$actor,'updated_at'=>$now,'updated_by'=>$actor]+$approval);
-            $parts=$template?DB::table('academy_branch_course_term_invoice_installments')->where('invoice_id',(int)$template['term_invoice_id'])->whereNull('deleted_at')->orderBy('installment_number')->get():[];if(!$parts)$parts=[['installment_number'=>1,'amount'=>$total,'due_date'=>$term['start_date']??date('Y-m-d')]];foreach($parts as$p)DB::table('academy_branch_course_term_invoice_installments')->insert(['invoice_id'=>$invoiceId,'installment_number'=>(int)$p['installment_number'],'amount'=>$p['amount'],'due_date'=>$p['due_date'],'status'=>$approved?'approved':'pending','created_at'=>$now,'created_by'=>$actor,'updated_at'=>$now,'updated_by'=>$actor]+$approval);
-            return['id'=>$memberId,'member_id'=>$memberId,'user_id'=>$userId,'status'=>$memberStatus];
+            $academyId = (int) $branch['academy_id'];
+        }
+        $values = ['academy_id' => $academyId, 'branch_id' => $organization['kind'] === 'branch' ? $organization['id'] : null, 'lesson_id' => $lessonId, 'teacher_capacity' => $teacherCapacity, 'student_capacity' => $studentCapacity, 'status' => $status, 'approved_at' => $approved ? $now : null, 'approved_by' => $approved ? $actor : null, 'updated_at' => $now, 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
+        return transaction(function () use ($actor, $data, $id, $values, $title, $now) {
+            if ($id) {
+                $row = DB::table('academy_branch_courses')->where('course_id', $id)->whereNull('deleted_at')->first();
+                if (!$row) {
+                    throw new RuntimeException('دوره یافت نشد.');
+                }
+                $this->assertCourseAccess($actor, $row);
+                DB::table('academy_branch_courses')->where('course_id', $id)->update($values);
+            } else {
+                $id = DB::table('academy_branch_courses')->insertGetId(['created_at' => $now, 'created_by' => $actor] + $values);
+            }
+            $this->setTranslations('academy_branch_courses', $id, ['title' => $title, 'summary' => trim((string) ($data['summary'] ?? '')), 'description' => trim((string) ($data['description'] ?? ''))], $actor);
+            return ['id' => $id];
         });
     }
 
-    private function createStudentUser(int$actor,array$d,bool$approved,string$kind):int{$name=trim((string)($d['name']??($d['parentName']??'')));$phone=$this->digits((string)($d['phone']??($d['parentPhone']??'')));$national=$this->digits((string)($d['nationalId']??($d['parentNationalId']??'')));$birthday=(string)($d['birthDate']??($d['parentBirthDate']??''));if($name===''||$phone===''||$national===''||!preg_match('/^\d{4}-\d{2}-\d{2}$/',$birthday))throw new RuntimeException($kind==='parent'?'اطلاعات شناسایی والد کامل نیست.':'اطلاعات شناسایی هنرجو کامل نیست.');$prefix=$kind==='parent'?'stuParent':'stu';if(DB::table('users')->where('phone',$phone)->whereNull('deleted_at')->first())throw new RuntimeException('FIELD:'.$prefix.'Phone:این شماره تماس '.($kind==='parent'?'والد':'هنرجو').' قبلاً ثبت شده است.');if(DB::table('users')->where('national_code',$national)->whereNull('deleted_at')->first())throw new RuntimeException('FIELD:'.$prefix.'NationalId:این کد ملی '.($kind==='parent'?'والد':'هنرجو').' قبلاً ثبت شده است.');$now=$this->now();$ap=['approved_at'=>$approved?$now:null,'approved_by'=>$approved?$actor:null];$id=DB::table('users')->insertGetId(['username'=>'academy_'.$kind.'_'.$phone.'_'.bin2hex(random_bytes(3)),'phone'=>$phone,'national_code'=>$national,'gender'=>'other','type'=>'human','status'=>$approved?'approved':'pending','locale'=>'fa','timezone'=>'Asia/Tehran','visibility'=>'private','birthday'=>$birthday,'register_time'=>$now,'register_method'=>'academy','created_at'=>$now,'created_by'=>$actor,'updated_at'=>$now,'updated_by'=>$actor]+$ap);$this->setTranslations('users',$id,['full_name'=>$name,'father_name'=>trim((string)($d['fatherName']??($d['parentFatherName']??'')))],$actor);DB::table('user_roles')->insert(['user_id'=>$id,'role_id'=>14,'is_main'=>1,'created_at'=>$now,'created_by'=>$actor,'updated_at'=>$now,'updated_by'=>$actor]+$ap);$contact=DB::table('user_contacts')->insertGetId(['user_id'=>$id,'mode'=>'phone','platform'=>'other','priority'=>'primary','is_main'=>1,'status'=>$approved?'active':'pending','created_at'=>$now,'created_by'=>$actor,'updated_at'=>$now,'updated_by'=>$actor]+$ap);$this->setTranslations('user_contacts',$contact,['value'=>$phone],$actor);return$id;}
-    private function saveStudentContactsAndAddresses(int$actor,int$userId,array$d,bool$approved):void{$a=($d['addresses']??[])[0]??null;if(!$a||trim((string)($a['address']??''))==='')return;$now=$this->now();$ap=['approved_at'=>$approved?$now:null,'approved_by'=>$approved?$actor:null];$province=DB::table('world_iran_provinces')->where('province_name',(string)($a['province']??''))->first();$county=DB::table('world_iran_counties')->where('county_name',(string)($a['city']??''))->first();$id=DB::table('user_addresses')->insertGetId(['user_id'=>$userId,'country_id'=>1,'province_id'=>$province['province_id']??null,'county_id'=>$county['county_id']??null,'is_main'=>1,'latitude'=>($a['lat']??'')!==''?$a['lat']:null,'longitude'=>($a['lng']??'')!==''?$a['lng']:null,'postal_code'=>trim((string)($a['postal_code']??''))?:null,'created_at'=>$now,'created_by'=>$actor,'updated_at'=>$now,'updated_by'=>$actor]+$ap);$this->setTranslations('user_addresses',$id,['address'=>trim((string)$a['address'])],$actor);}
-    private function digits(string$v):string{return preg_replace('/\D+/','',strtr($v,['۰'=>'0','۱'=>'1','۲'=>'2','۳'=>'3','۴'=>'4','۵'=>'5','۶'=>'6','۷'=>'7','۸'=>'8','۹'=>'9','٠'=>'0','١'=>'1','٢'=>'2','٣'=>'3','٤'=>'4','٥'=>'5','٦'=>'6','٧'=>'7','٨'=>'8','٩'=>'9']));}
-    private function age(string$date):int{$born=new \DateTimeImmutable($date);return$born->diff(new \DateTimeImmutable('today'))->y;}
-    public function deleteLevel(int $actor,int $id): void {throw new RuntimeException('حذف سطح درس مجاز نیست.');}
+    public function saveLevel(int $actor, array $data, int $id = 0): array
+    {
+        if ($id) {
+            throw new RuntimeException('ویرایش سطح درس مجاز نیست.');
+        }
+        $title = trim((string) ($data['name'] ?? $data['title'] ?? ''));
+        if ($title === '') {
+            throw new RuntimeException('عنوان سطح الزامی است.');
+        }
+        $now = $this->now();
+        return transaction(function () use ($actor, $data, $id, $title, $now) {
+            $values = ['type' => 'learning', 'sort_order' => max(1, (int) ($data['sort_order'] ?? 999)), 'updated_at' => $now, 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
+            $id = DB::table('levels')->insertGetId(['created_at' => $now, 'created_by' => $actor] + $values);
+            $this->setTranslations('levels', $id, ['title' => $title, 'summary' => trim((string) ($data['summary'] ?? '')), 'description' => trim((string) ($data['description'] ?? ''))], $actor);
+            return ['id' => $id];
+        });
+    }
+
+    public function deleteCourse(int $actor, int $id): void
+    {
+        $row = DB::table('academy_branch_courses')->where('course_id', $id)->whereNull('deleted_at')->first();
+        if (!$row) {
+            throw new RuntimeException('دوره یافت نشد.');
+        }
+        $this->assertCourseAccess($actor, $row);
+        $this->softDelete('academy_branch_courses', 'course_id', $id, $actor);
+    }
+
+    public function cycleStatus(int $actor, int $id): array
+    {
+        $row = DB::table('academy_branch_courses')->where('course_id', $id)->whereNull('deleted_at')->first();
+        if (!$row) {
+            throw new RuntimeException('دوره یافت نشد.');
+        }
+        $this->assertCourseAccess($actor, $row);
+        if ($this->isReceptionist($actor)) {
+            throw new RuntimeException('کاربر پذیرش مجوز تغییر وضعیت دوره را ندارد.');
+        }
+        $next = match ((string) $row['status']) {
+            'pending' => 'open','open' => 'ongoing','ongoing' => 'finished',default => 'pending'
+        };
+        $now = $this->now();
+        DB::table('academy_branch_courses')->where('course_id', $id)->update(['status' => $next, 'approved_at' => $next === 'pending' ? null : ($row['approved_at'] ?? $now), 'approved_by' => $next === 'pending' ? null : ($row['approved_by'] ?? $actor), 'updated_at' => $now, 'updated_by' => $actor]);
+        return ['id' => $id, 'status' => $next];
+    }
+
+    public function realtimeVersion(int $actor): array
+    {
+        $data = $this->bootstrap($actor);
+        $payload = ['courses' => array_map(fn ($r) => [$r['id'], $r['organizationKind'], $r['organizationId'], $r['lesson_id'], $r['teacher_capacity'], $r['student_capacity'], $r['status_code'], $r['name'], $r['summary'], $r['description']], $data['courses']), 'lessons' => array_map(fn ($r) => [$r['organizationKind'], $r['organizationId'], $r['id'], $r['levelId'], $r['name']], $data['lessons'])];
+        return ['resource' => 'courses', 'version' => sha1(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))];
+    }
+
+    public function studentOptions(int $actor): array
+    {
+        $data = $this->bootstrap($actor);
+        $courses = $data['courses'];
+        $ids = array_map(fn ($x) => (int) $x['id'], $courses);
+        $courseMap = [];
+        foreach ($courses as $c) {
+            $courseMap[(int) $c['id']] = $c;
+        }
+        $terms = $ids ? DB::table('academy_branch_course_terms')->whereIn('course_id', $ids)->whereIn('status', ['open', 'ongoing'])->whereNull('deleted_at')->get() : [];
+        $termIds = array_map(fn ($x) => (int) $x['term_id'], $terms);
+        $texts = $this->translations('academy_branch_course_terms', $termIds, ['title']);
+        $provinces = DB::table('world_iran_provinces')->get();
+        $counties = DB::table('world_iran_counties')->get();
+        $timezones = DB::table('f_timezone')->whereNull('deleted_at')->get();
+        return ['organizations' => $data['organizations'], 'permissions' => $data['permissions'], 'provinces' => $provinces, 'counties' => $counties, 'timezones' => $timezones, 'terms' => array_values(array_map(function ($t) use ($courseMap, $texts) {
+            $course = $courseMap[(int) $t['course_id']];
+            return ['id' => (int) $t['term_id'], 'name' => $texts[(int) $t['term_id']]['title'] ?? ('ترم ' . $t['term_id']), 'organizationUserId' => (int) $course['organizationUserId'], 'lessonId' => (int) ($course['lesson_id'] ?? 0), 'levelId' => (int) ($course['level_id'] ?? 0), 'level' => $course['level'] ?: 'تعریف نشده', 'status' => $t['status']];
+        }, $terms))];
+    }
+
+    public function storeStudent(int $actor, array $d): array
+    {
+        return transaction(function () use ($actor, $d) {
+            $name = trim((string) ($d['name'] ?? ''));
+            $phone = $this->digits((string) ($d['phone'] ?? ''));
+            $national = $this->digits((string) ($d['nationalId'] ?? ''));
+            $birthday = (string) ($d['birthDate'] ?? '');
+            if ($name === '' || $phone === '' || $national === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $birthday)) {
+                throw new RuntimeException('نام، شماره تماس، کد ملی و تاریخ تولد معتبر الزامی است.');
+            }
+            if (DB::table('users')->where('phone', $phone)->whereNull('deleted_at')->first()) {
+                throw new RuntimeException('FIELD:stuPhone:این شماره تماس هنرجو قبلاً ثبت شده است.');
+            }
+            if (DB::table('users')->where('national_code', $national)->whereNull('deleted_at')->first()) {
+                throw new RuntimeException('FIELD:stuNationalId:این کد ملی هنرجو قبلاً ثبت شده است.');
+            }
+            $organization = $this->allowedOrganization($actor, (int) ($d['organizationUserId'] ?? 0));
+            $termId = (int) ($d['termId'] ?? 0);
+            if ($organization['kind'] === 'academy') {
+                $academyId = (int) $organization['id'];
+            } else {
+                $organizationBranch = DB::table('academy_branches')->where('branch_id', (int) $organization['id'])->whereNull('deleted_at')->first();
+                if (!$organizationBranch) {
+                    throw new RuntimeException('سازمان انتخاب‌شده معتبر نیست.');
+                }
+                $academyId = (int) $organizationBranch['academy_id'];
+            }
+            $term = DB::table('academy_branch_course_terms')->join('academy_branch_courses', 'academy_branch_courses.course_id', '=', 'academy_branch_course_terms.course_id')->where('academy_branch_course_terms.term_id', $termId)->whereIn('academy_branch_course_terms.status', ['open', 'ongoing'])->whereNull('academy_branch_course_terms.deleted_at')->whereNull('academy_branch_courses.deleted_at')->first();
+            if (!$term) {
+                throw new RuntimeException('ترم آموزشی معتبر نیست.');
+            }
+            $termRecord = DB::table('academy_branch_course_terms')->where('term_id', $termId)->whereNull('deleted_at')->first();
+            if (!$termRecord) {
+                throw new RuntimeException('ترم آموزشی معتبر نیست.');
+            }
+            $term['status'] = $termRecord['status'];
+            $term['price'] = $termRecord['price'];
+            $term['currency_id'] = $termRecord['currency_id'];
+            $term['start_date'] = $termRecord['start_date'];
+            $belongs = $organization['kind'] === 'academy' ? (int) $term['academy_id'] === (int) $organization['id'] : (int) $term['branch_id'] === (int) $organization['id'];
+            if (!$belongs) {
+                throw new RuntimeException('ترم متعلق به سازمان انتخاب‌شده نیست.');
+            }
+            $approved = !$this->isReceptionist($actor);
+            $now = $this->now();
+            $approval = ['approved_at' => $approved ? $now : null, 'approved_by' => $approved ? $actor : null];
+            $parentId = null;
+            if ($this->age($birthday) < 18) {
+                $parent = $d['parent'] ?? [];
+                $parentId = $this->createStudentUser($actor, $parent, $approved, 'parent');
+                $this->saveStudentContactsAndAddresses($actor, $parentId, ['addresses' => $d['addresses'] ?? []], $approved);
+            }
+            $userId = $this->createStudentUser($actor, $d, $approved, 'student');
+            $this->saveStudentContactsAndAddresses($actor, $userId, $d, $approved);
+            $memberStatus = $approved ? ($term['status'] === 'open' ? 'active' : 'inactive') : 'pending';
+            $memberId = DB::table('academy_branch_members')->insertGetId(['academy_id' => $academyId, 'branch_id' => $organization['kind'] === 'branch' ? (int) $organization['id'] : null, 'user_id' => $userId, 'parent_user_id' => $parentId, 'status' => $memberStatus, 'joined_at' => ($d['registrationDate'] ?? date('Y-m-d')), 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
+            $studentRole = DB::table('access_system_roles')->where('type', 'academy')->whereRaw("name LIKE '%student%'")->whereNull('deleted_at')->orderBy('role_id')->first();
+            if ($studentRole) {
+                DB::table('academy_branch_member_roles')->insert(['member_id' => $memberId, 'role_id' => (int) $studentRole['role_id'], 'is_main' => 1, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
+            }
+            $organizationLesson = DB::table('user_lessons')->where('user_id', (int) $organization['user_id'])->where('lesson_id', (int) $term['lesson_id'])->whereNull('deleted_at')->first();
+            DB::table('user_lessons')->insert(['user_id' => $userId, 'lesson_id' => (int) $term['lesson_id'], 'level_id' => $organizationLesson['level_id'] ?? null, 'status' => $approved ? 'active' : 'pending', 'is_primary' => 1, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
+            if ($term['status'] === 'open') {
+                DB::table('academy_branch_course_term_enrollments')->insert(['term_id' => $termId, 'member_id' => $memberId, 'type' => 'student', 'status' => $approved ? 'active' : 'pending', 'joined_at' => $now, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
+            } else {
+                $availabilities = array_values($d['availabilities'] ?? []);
+                if (!$availabilities) {
+                    throw new RuntimeException('حداقل یک بازه زمانی برای هنرجوی فهرست انتظار الزامی است.');
+                }
+                DB::table('academy_branch_course_term_waiting_list')->insert(['term_id' => $termId, 'member_id' => $memberId, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
+                foreach ($availabilities as $i => $a) {
+                    $day = (string) ($a['day'] ?? '');
+                    $start = (string) ($a['startTime'] ?? '');
+                    $end = (string) ($a['endTime'] ?? '');
+                    $timezoneId = (int) ($a['timezoneId'] ?? 0);
+                    if (!in_array($day, ['saturday', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'], true)) {
+                        throw new RuntimeException('روز بازه زمانی هنرجو معتبر نیست.');
+                    }
+                    if (!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $start) || !preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $end) || $end <= $start) {
+                        throw new RuntimeException('ساعت شروع و پایان بازه زمانی هنرجو معتبر نیست.');
+                    }
+                    if (!$timezoneId || !DB::table('f_timezone')->where('timezone_id', $timezoneId)->whereNull('deleted_at')->first()) {
+                        throw new RuntimeException('منطقه زمانی بازه هنرجو معتبر نیست.');
+                    }
+                    $availabilityId = DB::table('user_availabilities')->insertGetId(['user_id' => $userId, 'day_of_week' => $day, 'start_time' => $start, 'end_time' => $end, 'timezone_id' => $timezoneId, 'status' => 'available', 'unavailable_type' => null, 'is_repeating' => 1, 'repeat_period' => 'week', 'is_closed' => 0, 'priority' => $i + 1, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
+                    $this->setTranslations('user_availabilities', $availabilityId, ['summary' => trim((string) ($d['availabilitySummary'] ?? '')), 'description' => trim((string) ($d['availabilityDescription'] ?? ''))], $actor);
+                }
+                $savedAvailabilityCount = DB::table('user_availabilities')->where('user_id', $userId)->whereNull('deleted_at')->count();
+                if ($savedAvailabilityCount < count($availabilities)) {
+                    throw new RuntimeException('ثبت بازه‌های زمانی هنرجو در دیتابیس کامل نشد.');
+                }
+            }
+            $template = DB::table('academy_branch_course_term_invoices')->where('term_id', $termId)->whereNull('member_id')->whereNull('deleted_at')->orderBy('term_invoice_id', 'DESC')->first();
+            $total = (float) ($template['payable_amount'] ?? $term['price'] ?? 0);
+            $invoiceId = DB::table('academy_branch_course_term_invoices')->insertGetId(['term_id' => $termId, 'member_id' => $memberId, 'discount_id' => $template['discount_id'] ?? null, 'payable_amount' => $total, 'currency_id' => $template['currency_id'] ?? $term['currency_id'], 'status' => $approved ? 'issued' : 'draft', 'due_date' => $term['start_date'] ?? date('Y-m-d'), 'issued_at' => $now, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
+            $parts = $template ? DB::table('academy_branch_course_term_invoice_installments')->where('invoice_id', (int) $template['term_invoice_id'])->whereNull('deleted_at')->orderBy('installment_number')->get() : [];
+            if (!$parts) {
+                $parts = [['installment_number' => 1, 'amount' => $total, 'due_date' => $term['start_date'] ?? date('Y-m-d')]];
+            }
+            foreach ($parts as $p) {
+                DB::table('academy_branch_course_term_invoice_installments')->insert(['invoice_id' => $invoiceId, 'installment_number' => (int) $p['installment_number'], 'amount' => $p['amount'], 'due_date' => $p['due_date'], 'status' => $approved ? 'approved' : 'pending', 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
+            }
+            return ['id' => $memberId, 'member_id' => $memberId, 'user_id' => $userId, 'status' => $memberStatus];
+        });
+    }
+
+    private function createStudentUser(int $actor, array $d, bool $approved, string $kind): int
+    {
+        $name = trim((string) ($d['name'] ?? ($d['parentName'] ?? '')));
+        $phone = $this->digits((string) ($d['phone'] ?? ($d['parentPhone'] ?? '')));
+        $national = $this->digits((string) ($d['nationalId'] ?? ($d['parentNationalId'] ?? '')));
+        $birthday = (string) ($d['birthDate'] ?? ($d['parentBirthDate'] ?? ''));
+        if ($name === '' || $phone === '' || $national === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $birthday)) {
+            throw new RuntimeException($kind === 'parent' ? 'اطلاعات شناسایی والد کامل نیست.' : 'اطلاعات شناسایی هنرجو کامل نیست.');
+        }
+        $prefix = $kind === 'parent' ? 'stuParent' : 'stu';
+        if (DB::table('users')->where('phone', $phone)->whereNull('deleted_at')->first()) {
+            throw new RuntimeException('FIELD:' . $prefix . 'Phone:این شماره تماس ' . ($kind === 'parent' ? 'والد' : 'هنرجو') . ' قبلاً ثبت شده است.');
+        }
+        if (DB::table('users')->where('national_code', $national)->whereNull('deleted_at')->first()) {
+            throw new RuntimeException('FIELD:' . $prefix . 'NationalId:این کد ملی ' . ($kind === 'parent' ? 'والد' : 'هنرجو') . ' قبلاً ثبت شده است.');
+        }
+        $now = $this->now();
+        $ap = ['approved_at' => $approved ? $now : null, 'approved_by' => $approved ? $actor : null];
+        $id = DB::table('users')->insertGetId(['username' => 'academy_' . $kind . '_' . $phone . '_' . bin2hex(random_bytes(3)), 'phone' => $phone, 'national_code' => $national, 'gender' => 'other', 'type' => 'human', 'status' => $approved ? 'approved' : 'pending', 'locale' => 'fa', 'timezone' => 'Asia/Tehran', 'visibility' => 'private', 'birthday' => $birthday, 'register_time' => $now, 'register_method' => 'academy', 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $ap);
+        $this->setTranslations('users', $id, ['full_name' => $name, 'father_name' => trim((string) ($d['fatherName'] ?? ($d['parentFatherName'] ?? '')))], $actor);
+        DB::table('user_roles')->insert(['user_id' => $id, 'role_id' => 14, 'is_main' => 1, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $ap);
+        $contact = DB::table('user_contacts')->insertGetId(['user_id' => $id, 'mode' => 'phone', 'platform' => 'other', 'priority' => 'primary', 'is_main' => 1, 'status' => $approved ? 'active' : 'pending', 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $ap);
+        $this->setTranslations('user_contacts', $contact, ['value' => $phone], $actor);
+        return $id;
+    }
+
+    private function saveStudentContactsAndAddresses(int $actor, int $userId, array $d, bool $approved): void
+    {
+        $a = ($d['addresses'] ?? [])[0] ?? null;
+        if (!$a || trim((string) ($a['address'] ?? '')) === '') {
+            return;
+        }
+        $now = $this->now();
+        $ap = ['approved_at' => $approved ? $now : null, 'approved_by' => $approved ? $actor : null];
+        $province = DB::table('world_iran_provinces')->where('province_name', (string) ($a['province'] ?? ''))->first();
+        $county = DB::table('world_iran_counties')->where('county_name', (string) ($a['city'] ?? ''))->first();
+        $id = DB::table('user_addresses')->insertGetId(['user_id' => $userId, 'country_id' => 1, 'province_id' => $province['province_id'] ?? null, 'county_id' => $county['county_id'] ?? null, 'is_main' => 1, 'latitude' => ($a['lat'] ?? '') !== '' ? $a['lat'] : null, 'longitude' => ($a['lng'] ?? '') !== '' ? $a['lng'] : null, 'postal_code' => trim((string) ($a['postal_code'] ?? '')) ?: null, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $ap);
+        $this->setTranslations('user_addresses', $id, ['address' => trim((string) $a['address'])], $actor);
+    }
+
+    private function digits(string $v): string
+    {
+        return preg_replace('/\D+/', '', strtr($v, ['۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3', '۴' => '4', '۵' => '5', '۶' => '6', '۷' => '7', '۸' => '8', '۹' => '9', '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4', '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9']));
+    }
+
+    private function age(string $date): int
+    {
+        $born = new \DateTimeImmutable($date);
+        return $born->diff(new \DateTimeImmutable('today'))->y;
+    }
+
+    public function deleteLevel(int $actor, int $id): void
+    {
+        throw new RuntimeException('حذف سطح درس مجاز نیست.');
+    }
 
     public function seedCourses(int $actor, int $minimum = 10, int $maximum = 50): array
     {
-        $result=$this->seedCoursesRows($actor, $minimum, $maximum);
-        $ids=array_values(array_unique(array_map(fn($r)=>(int)$r['table_id'],DB::table('translations')->where('table_name','academy_branch_courses')->where('field','code')->where('locale','fa')->whereRaw("value LIKE 'test-course-b%'")->whereNull('deleted_at')->get())));
-        $byBranch=[];if($ids)foreach(DB::table('academy_branch_courses')->whereIn('course_id',$ids)->whereNull('deleted_at')->get() as $course)$byBranch[(int)$course['branch_id']][]=(int)$course['course_id'];
-        foreach($byBranch as $branchId=>$courseIds){sort($courseIds);$multiCount=min(count($courseIds),1+($branchId%3));foreach($courseIds as $index=>$id){if($index<$multiCount){$teacher=2+(($branchId+$index)%3);$student=10+(($branchId+$index*3)%21);}else{$private=(($index-$multiCount+1)%10)!==0;$teacher=1;$student=$private?1:6+(($branchId+$index)%15);}DB::table('academy_branch_courses')->where('course_id',$id)->update(['teacher_capacity'=>$teacher,'student_capacity'=>$student,'updated_by'=>$actor]);}}
+        $result = $this->seedCoursesRows($actor, $minimum, $maximum);
+        $ids = array_values(array_unique(array_map(fn ($r) => (int) $r['table_id'], DB::table('translations')->where('table_name', 'academy_branch_courses')->where('field', 'code')->where('locale', 'fa')->whereRaw("value LIKE 'test-course-b%'")->whereNull('deleted_at')->get())));
+        $byBranch = [];
+        if ($ids) {
+            foreach (DB::table('academy_branch_courses')->whereIn('course_id', $ids)->whereNull('deleted_at')->get() as $course) {
+                $byBranch[(int) $course['branch_id']][] = (int) $course['course_id'];
+            }
+        }
+        foreach ($byBranch as $branchId => $courseIds) {
+            sort($courseIds);
+            $multiCount = min(count($courseIds), 1 + ($branchId % 3));
+            foreach ($courseIds as $index => $id) {
+                if ($index < $multiCount) {
+                    $teacher = 2 + (($branchId + $index) % 3);
+                    $student = 10 + (($branchId + $index * 3) % 21);
+                } else {
+                    $private = (($index - $multiCount + 1) % 10) !== 0;
+                    $teacher = 1;
+                    $student = $private ? 1 : 6 + (($branchId + $index) % 15);
+                }DB::table('academy_branch_courses')->where('course_id', $id)->update(['teacher_capacity' => $teacher, 'student_capacity' => $student, 'updated_by' => $actor]);
+            }
+        }
         return $result;
     }
 
     private function seedCoursesRows(int $actor, int $minimum, int $maximum): array
     {
-            $this->ensureSchema();$created=0;$updated=0;foreach(DB::table('academy_branches')->whereNull('deleted_at')->get() as $bi=>$branch){$lessons=DB::table('user_lessons')->where('user_id',(int)$branch['user_id'])->where('status','active')->whereNull('deleted_at')->get();$levels=DB::table('levels')->whereNull('deleted_at')->get();if(!$levels)continue;if(!$lessons){$catalog=DB::table('lessons')->whereNull('deleted_at')->first();if(!$catalog)throw new RuntimeException('برای ساخت دوره، حداقل یک درس عمومی لازم است.');$uid=(int)$branch['user_id'];$lessonRowId=DB::table('user_lessons')->insertGetId(['user_id'=>$uid,'lesson_id'=>(int)$catalog['lesson_id'],'level_id'=>(int)$levels[0]['level_id'],'start_date'=>'1400-01-01','status'=>'active','is_primary'=>1,'created_by'=>$actor,'updated_by'=>$actor]);$this->setTranslations('user_lessons',$lessonRowId,['code'=>'test-course-prerequisite','summary'=>'درس پایه تست دوره‌ها','description'=>'این درس فقط برای تکمیل پیش‌نیاز تست دوره‌های شعب ایجاد شده است.'],$actor);$this->setTranslations('user_lessons',$lessonRowId,['code'=>'test-course-prerequisite','summary'=>'Course test prerequisite lesson','description'=>'This lesson exists only as a prerequisite for the branch course fixture test.'],$actor,'en');$lessons=DB::table('user_lessons')->where('user_lesson_id',$lessonRowId)->get();}$count=10+(($bi*17)%41);for($i=1;$i<=$count;$i++){$lesson=$lessons[($i+$bi)%count($lessons)];$marker='test-course-b'.(int)$branch['branch_id'].'-'.$i;$tr=DB::table('translations')->where('table_name','academy_branch_courses')->where('field','code')->where('locale','fa')->where('value',$marker)->first();$values=['academy_id'=>null,'branch_id'=>(int)$branch['branch_id'],'lesson_id'=>(int)$lesson['lesson_id'],'teacher_capacity'=>1+(($i+$bi)%3),'student_capacity'=>8+(($i+$bi)%23),'status'=>['pending','open','ongoing','finished'][($i+$bi)%4],'updated_by'=>$actor,'deleted_at'=>null,'deleted_by'=>null];if($tr){$id=(int)$tr['table_id'];DB::table('academy_branch_courses')->where('course_id',$id)->update($values);$updated++;}else{$id=DB::table('academy_branch_courses')->insertGetId(['created_by'=>$actor]+$values);$created++;}$lessonTitle=$this->translation('lessons',(int)$lesson['lesson_id'],'title')?:'موسیقی';$this->setTranslations('academy_branch_courses',$id,['code'=>$marker,'title'=>'دوره '.$lessonTitle.' '.($i),'summary'=>'دوره آموزشی '.$lessonTitle.' در سطح درس فعال.','description'=>'این دوره آزمایشی مطابق امکانات شعبه و درس‌های ارائه‌شده آن ایجاد شده است.'],$actor);$this->setTranslations('academy_branch_courses',$id,['code'=>$marker,'title'=>'Music course '.$i,'summary'=>'A branch music course at the active lesson level.','description'=>'This fixture course is based on the lessons offered by its branch.'],$actor,'en');}}return ['created'=>$created,'updated'=>$updated,'total'=>DB::table('translations')->where('table_name','academy_branch_courses')->where('field','code')->whereRaw("value LIKE 'test-course-b%'")->whereNull('deleted_at')->count()];
+        $this->ensureSchema();
+        $created = 0;
+        $updated = 0;
+        foreach (DB::table('academy_branches')->whereNull('deleted_at')->get() as $bi => $branch) {
+            $lessons = DB::table('user_lessons')->where('user_id', (int) $branch['user_id'])->where('status', 'active')->whereNull('deleted_at')->get();
+            $levels = DB::table('levels')->whereNull('deleted_at')->get();
+            if (!$levels) {
+                continue;
+            }
+            if (!$lessons) {
+                $catalog = DB::table('lessons')->whereNull('deleted_at')->first();
+                if (!$catalog) {
+                    throw new RuntimeException('برای ساخت دوره، حداقل یک درس عمومی لازم است.');
+                }
+                $uid = (int) $branch['user_id'];
+                $lessonRowId = DB::table('user_lessons')->insertGetId(['user_id' => $uid, 'lesson_id' => (int) $catalog['lesson_id'], 'level_id' => (int) $levels[0]['level_id'], 'start_date' => '1400-01-01', 'status' => 'active', 'is_primary' => 1, 'created_by' => $actor, 'updated_by' => $actor]);
+                $this->setTranslations('user_lessons', $lessonRowId, ['code' => 'test-course-prerequisite', 'summary' => 'درس پایه تست دوره‌ها', 'description' => 'این درس فقط برای تکمیل پیش‌نیاز تست دوره‌های شعب ایجاد شده است.'], $actor);
+                $this->setTranslations('user_lessons', $lessonRowId, ['code' => 'test-course-prerequisite', 'summary' => 'Course test prerequisite lesson', 'description' => 'This lesson exists only as a prerequisite for the branch course fixture test.'], $actor, 'en');
+                $lessons = DB::table('user_lessons')->where('user_lesson_id', $lessonRowId)->get();
+            }$count = 10 + (($bi * 17) % 41);
+            for ($i = 1;$i <= $count;$i++) {
+                $lesson = $lessons[($i + $bi) % count($lessons)];
+                $marker = 'test-course-b' . (int) $branch['branch_id'] . '-' . $i;
+                $tr = DB::table('translations')->where('table_name', 'academy_branch_courses')->where('field', 'code')->where('locale', 'fa')->where('value', $marker)->first();
+                $values = ['academy_id' => null, 'branch_id' => (int) $branch['branch_id'], 'lesson_id' => (int) $lesson['lesson_id'], 'teacher_capacity' => 1 + (($i + $bi) % 3), 'student_capacity' => 8 + (($i + $bi) % 23), 'status' => ['pending', 'open', 'ongoing', 'finished'][($i + $bi) % 4], 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
+                if ($tr) {
+                    $id = (int) $tr['table_id'];
+                    DB::table('academy_branch_courses')->where('course_id', $id)->update($values);
+                    $updated++;
+                } else {
+                    $id = DB::table('academy_branch_courses')->insertGetId(['created_by' => $actor] + $values);
+                    $created++;
+                }$lessonTitle = $this->translation('lessons', (int) $lesson['lesson_id'], 'title') ?: 'موسیقی';
+                $this->setTranslations('academy_branch_courses', $id, ['code' => $marker, 'title' => 'دوره ' . $lessonTitle . ' ' . ($i), 'summary' => 'دوره آموزشی ' . $lessonTitle . ' در سطح درس فعال.', 'description' => 'این دوره آزمایشی مطابق امکانات شعبه و درس‌های ارائه‌شده آن ایجاد شده است.'], $actor);
+                $this->setTranslations('academy_branch_courses', $id, ['code' => $marker, 'title' => 'Music course ' . $i, 'summary' => 'A branch music course at the active lesson level.', 'description' => 'This fixture course is based on the lessons offered by its branch.'], $actor, 'en');
+            }
+        }return ['created' => $created, 'updated' => $updated, 'total' => DB::table('translations')->where('table_name', 'academy_branch_courses')->where('field', 'code')->whereRaw("value LIKE 'test-course-b%'")->whereNull('deleted_at')->count()];
     }
-    public function deleteSeedCourses(int $actor): array {$rows=DB::table('translations')->where('table_name','academy_branch_courses')->where('field','code')->whereRaw("value LIKE 'test-course-b%'")->get();$ids=array_values(array_unique(array_map(fn($r)=>(int)$r['table_id'],$rows)));if($ids){DB::table('translations')->where('table_name','academy_branch_courses')->whereIn('table_id',$ids)->delete();DB::table('academy_branch_courses')->whereIn('course_id',$ids)->delete();}$pr=DB::table('translations')->where('table_name','user_lessons')->where('field','code')->where('value','test-course-prerequisite')->get();$pids=array_values(array_unique(array_map(fn($r)=>(int)$r['table_id'],$pr)));if($pids){DB::table('translations')->where('table_name','user_lessons')->whereIn('table_id',$pids)->delete();DB::table('user_lessons')->whereIn('user_lesson_id',$pids)->delete();}return ['deleted'=>count($ids)];}
+
+    public function deleteSeedCourses(int $actor): array
+    {
+        $rows = DB::table('translations')->where('table_name', 'academy_branch_courses')->where('field', 'code')->whereRaw("value LIKE 'test-course-b%'")->get();
+        $ids = array_values(array_unique(array_map(fn ($r) => (int) $r['table_id'], $rows)));
+        if ($ids) {
+            DB::table('translations')->where('table_name', 'academy_branch_courses')->whereIn('table_id', $ids)->delete();
+            DB::table('academy_branch_courses')->whereIn('course_id', $ids)->delete();
+        }$pr = DB::table('translations')->where('table_name', 'user_lessons')->where('field', 'code')->where('value', 'test-course-prerequisite')->get();
+        $pids = array_values(array_unique(array_map(fn ($r) => (int) $r['table_id'], $pr)));
+        if ($pids) {
+            DB::table('translations')->where('table_name', 'user_lessons')->whereIn('table_id', $pids)->delete();
+            DB::table('user_lessons')->whereIn('user_lesson_id', $pids)->delete();
+        }return ['deleted' => count($ids)];
+    }
 
     private function ensureLessonLevelTexts(int $actor): void
     {
-        $texts=[
-            'خیلی تازه‌کار'=>['بدون تجربه قبلی؛ آشنایی اولیه با موسیقی و ساز.','این سطح برای هنرجویی است که تجربه قبلی در موسیقی یا ساز انتخابی ندارد. آموزش با شناخت ساز، شیوه صحیح استفاده، مفاهیم ابتدایی صدا و ریتم و تمرین‌های بسیار ساده آغاز می‌شود.\n\nهدف این مرحله ایجاد عادت تمرینی درست و آمادگی برای ورود به مباحث پایه است.'],
-            'تازه‌کار'=>['در حال یادگیری مبانی، نت‌خوانی و تمرین‌های ابتدایی.','هنرجوی تازه‌کار با اصول اولیه آشنا شده و در حال یادگیری نت‌خوانی، ریتم‌های ساده و تکنیک‌های ابتدایی است. تمرین‌ها در این سطح کوتاه، هدفمند و زیر نظر مدرس انجام می‌شوند.\n\nدر پایان این مرحله، هنرجو برای اجرای تمرین‌های ساده و ورود به سطح مقدماتی آماده است.'],
-            'مقدماتی'=>['توانایی اجرای تمرین‌ها و قطعات ساده با راهنمایی مدرس.','هنرجو مبانی ضروری را می‌شناسد و تمرین‌ها و قطعات ساده را با راهنمایی مدرس اجرا می‌کند. توجه اصلی بر هماهنگی، ریتم صحیح و تثبیت تکنیک‌های اولیه است.\n\nدر این مرحله استقلال در تمرین به‌تدریج افزایش می‌یابد.'],
-            'پایه'=>['تسلط نسبی بر اصول و آمادگی ورود به رپرتوار متنوع‌تر.','هنرجوی سطح پایه بر مهارت‌های اصلی تسلط نسبی دارد و قطعات آموزشی را با پیوستگی بیشتری اجرا می‌کند. مفاهیم نظری نیز در کنار مهارت عملی تثبیت می‌شوند.\n\nهدف، آمادگی برای رپرتوار متنوع‌تر و شکل‌گیری بیان موسیقایی اولیه است.'],
-            'متوسط'=>['اجرای مستقل قطعات متوسط و شناخت مناسب تکنیک و تئوری.','هنرجو می‌تواند قطعات با دشواری متوسط را تا حد زیادی مستقل تمرین و اجرا کند. شناخت تکنیک، تئوری و ساختار قطعه به انتخاب‌های دقیق‌تر او کمک می‌کند.\n\nتمرکز این سطح بر کیفیت اجرا، رفع ضعف‌های فنی و توسعه رپرتوار است.'],
-            'متوسط رو به بالا'=>['کنترل فنی بهتر و آمادگی برای تحلیل و اجرای جدی‌تر.','هنرجو کنترل فنی پایدارتری دارد و آثار پیچیده‌تر را با درک ساختاری مناسب تمرین می‌کند. تحلیل قطعه، کیفیت صدا و انتخاب‌های تفسیری در این مرحله اهمیت بیشتری دارند.\n\nبرنامه آموزشی به سمت استقلال و آمادگی برای اجرای جدی‌تر حرکت می‌کند.'],
-            'نیمه‌پیشرفته'=>['تجربه اجرایی قابل اتکا و کار روی ظرافت‌های بیانی.','هنرجو از تجربه اجرایی قابل اتکایی برخوردار است و تکنیک‌های اصلی را با ثبات اجرا می‌کند. تمرکز آموزش به ظرافت‌های بیانی، سبک‌شناسی و تفسیر شخصی گسترش می‌یابد.\n\nکار روی رپرتوار گسترده‌تر و اصلاح جزئیات فنی، او را برای سطح پیشرفته آماده می‌کند.'],
-            'پیشرفته'=>['تسلط بالا بر تکنیک، تفسیر و اجرای رپرتوار دشوار.','هنرجوی پیشرفته بر تکنیک‌های تخصصی تسلط بالایی دارد و رپرتوار دشوار را با درک سبکی و تفسیر منسجم اجرا می‌کند. او توانایی حل مستقل مسائل اجرایی را نیز دارد.\n\nآمادگی برای اجراهای رسمی، آزمون‌های تخصصی یا ادامه مسیر حرفه‌ای محور این سطح است.'],
-            'حرفه‌ای'=>['توانایی اجرای حرفه‌ای، تدریس یا فعالیت تخصصی مستمر.','سطح حرفه‌ای برای فردی است که مهارت فنی و هنری خود را در اجرا، تدریس یا یک حوزه تخصصی موسیقی به شکل پایدار به کار می‌گیرد. او می‌تواند آثار پیچیده را با هویت هنری مستقل آماده و ارائه کند.\n\nفعالیت در این سطح می‌تواند شامل اجرای حرفه‌ای، آموزش، ضبط و تولید اثر، پژوهش یا همکاری مستمر با مجموعه‌های تخصصی باشد.'],
-            'فوق حرفه‌ای'=>['تسلط ممتاز، هویت هنری تثبیت‌شده و سابقه فعالیت تخصصی در بالاترین سطح.','سطح فوق حرفه‌ای ویژه هنرمند یا مدرس باتجربه‌ای است که علاوه بر تسلط کامل بر تکنیک و رپرتوار تخصصی، از هویت هنری مستقل و توانایی تحلیل، تفسیر و ارائه آثار در بالاترین سطح برخوردار است. فعالیت او بر پایه تجربه مستمر، انتخاب‌های آگاهانه هنری و استانداردهای حرفه‌ای شکل گرفته است.\n\nفرد در این سطح می‌تواند مسئولیت پروژه‌های شاخص اجرایی یا آموزشی را بر عهده بگیرد، هنرجویان و هنرمندان حرفه‌ای را هدایت کند، آثار پیچیده تولید یا اجرا کند و در توسعه شیوه‌های تخصصی حوزه خود نقش مؤثر داشته باشد.'],
-            'فوق حرفه ای'=>['تسلط ممتاز، هویت هنری تثبیت‌شده و سابقه فعالیت تخصصی در بالاترین سطح.','سطح فوق حرفه‌ای ویژه هنرمند یا مدرس باتجربه‌ای است که علاوه بر تسلط کامل بر تکنیک و رپرتوار تخصصی، از هویت هنری مستقل و توانایی تحلیل، تفسیر و ارائه آثار در بالاترین سطح برخوردار است. فعالیت او بر پایه تجربه مستمر، انتخاب‌های آگاهانه هنری و استانداردهای حرفه‌ای شکل گرفته است.\n\nفرد در این سطح می‌تواند مسئولیت پروژه‌های شاخص اجرایی یا آموزشی را بر عهده بگیرد، هنرجویان و هنرمندان حرفه‌ای را هدایت کند، آثار پیچیده تولید یا اجرا کند و در توسعه شیوه‌های تخصصی حوزه خود نقش مؤثر داشته باشد.'],
+        $texts = [
+            'خیلی تازه‌کار' => ['بدون تجربه قبلی؛ آشنایی اولیه با موسیقی و ساز.', 'این سطح برای هنرجویی است که تجربه قبلی در موسیقی یا ساز انتخابی ندارد. آموزش با شناخت ساز، شیوه صحیح استفاده، مفاهیم ابتدایی صدا و ریتم و تمرین‌های بسیار ساده آغاز می‌شود.\n\nهدف این مرحله ایجاد عادت تمرینی درست و آمادگی برای ورود به مباحث پایه است.'],
+            'تازه‌کار' => ['در حال یادگیری مبانی، نت‌خوانی و تمرین‌های ابتدایی.', 'هنرجوی تازه‌کار با اصول اولیه آشنا شده و در حال یادگیری نت‌خوانی، ریتم‌های ساده و تکنیک‌های ابتدایی است. تمرین‌ها در این سطح کوتاه، هدفمند و زیر نظر مدرس انجام می‌شوند.\n\nدر پایان این مرحله، هنرجو برای اجرای تمرین‌های ساده و ورود به سطح مقدماتی آماده است.'],
+            'مقدماتی' => ['توانایی اجرای تمرین‌ها و قطعات ساده با راهنمایی مدرس.', 'هنرجو مبانی ضروری را می‌شناسد و تمرین‌ها و قطعات ساده را با راهنمایی مدرس اجرا می‌کند. توجه اصلی بر هماهنگی، ریتم صحیح و تثبیت تکنیک‌های اولیه است.\n\nدر این مرحله استقلال در تمرین به‌تدریج افزایش می‌یابد.'],
+            'پایه' => ['تسلط نسبی بر اصول و آمادگی ورود به رپرتوار متنوع‌تر.', 'هنرجوی سطح پایه بر مهارت‌های اصلی تسلط نسبی دارد و قطعات آموزشی را با پیوستگی بیشتری اجرا می‌کند. مفاهیم نظری نیز در کنار مهارت عملی تثبیت می‌شوند.\n\nهدف، آمادگی برای رپرتوار متنوع‌تر و شکل‌گیری بیان موسیقایی اولیه است.'],
+            'متوسط' => ['اجرای مستقل قطعات متوسط و شناخت مناسب تکنیک و تئوری.', 'هنرجو می‌تواند قطعات با دشواری متوسط را تا حد زیادی مستقل تمرین و اجرا کند. شناخت تکنیک، تئوری و ساختار قطعه به انتخاب‌های دقیق‌تر او کمک می‌کند.\n\nتمرکز این سطح بر کیفیت اجرا، رفع ضعف‌های فنی و توسعه رپرتوار است.'],
+            'متوسط رو به بالا' => ['کنترل فنی بهتر و آمادگی برای تحلیل و اجرای جدی‌تر.', 'هنرجو کنترل فنی پایدارتری دارد و آثار پیچیده‌تر را با درک ساختاری مناسب تمرین می‌کند. تحلیل قطعه، کیفیت صدا و انتخاب‌های تفسیری در این مرحله اهمیت بیشتری دارند.\n\nبرنامه آموزشی به سمت استقلال و آمادگی برای اجرای جدی‌تر حرکت می‌کند.'],
+            'نیمه‌پیشرفته' => ['تجربه اجرایی قابل اتکا و کار روی ظرافت‌های بیانی.', 'هنرجو از تجربه اجرایی قابل اتکایی برخوردار است و تکنیک‌های اصلی را با ثبات اجرا می‌کند. تمرکز آموزش به ظرافت‌های بیانی، سبک‌شناسی و تفسیر شخصی گسترش می‌یابد.\n\nکار روی رپرتوار گسترده‌تر و اصلاح جزئیات فنی، او را برای سطح پیشرفته آماده می‌کند.'],
+            'پیشرفته' => ['تسلط بالا بر تکنیک، تفسیر و اجرای رپرتوار دشوار.', 'هنرجوی پیشرفته بر تکنیک‌های تخصصی تسلط بالایی دارد و رپرتوار دشوار را با درک سبکی و تفسیر منسجم اجرا می‌کند. او توانایی حل مستقل مسائل اجرایی را نیز دارد.\n\nآمادگی برای اجراهای رسمی، آزمون‌های تخصصی یا ادامه مسیر حرفه‌ای محور این سطح است.'],
+            'حرفه‌ای' => ['توانایی اجرای حرفه‌ای، تدریس یا فعالیت تخصصی مستمر.', 'سطح حرفه‌ای برای فردی است که مهارت فنی و هنری خود را در اجرا، تدریس یا یک حوزه تخصصی موسیقی به شکل پایدار به کار می‌گیرد. او می‌تواند آثار پیچیده را با هویت هنری مستقل آماده و ارائه کند.\n\nفعالیت در این سطح می‌تواند شامل اجرای حرفه‌ای، آموزش، ضبط و تولید اثر، پژوهش یا همکاری مستمر با مجموعه‌های تخصصی باشد.'],
+            'فوق حرفه‌ای' => ['تسلط ممتاز، هویت هنری تثبیت‌شده و سابقه فعالیت تخصصی در بالاترین سطح.', 'سطح فوق حرفه‌ای ویژه هنرمند یا مدرس باتجربه‌ای است که علاوه بر تسلط کامل بر تکنیک و رپرتوار تخصصی، از هویت هنری مستقل و توانایی تحلیل، تفسیر و ارائه آثار در بالاترین سطح برخوردار است. فعالیت او بر پایه تجربه مستمر، انتخاب‌های آگاهانه هنری و استانداردهای حرفه‌ای شکل گرفته است.\n\nفرد در این سطح می‌تواند مسئولیت پروژه‌های شاخص اجرایی یا آموزشی را بر عهده بگیرد، هنرجویان و هنرمندان حرفه‌ای را هدایت کند، آثار پیچیده تولید یا اجرا کند و در توسعه شیوه‌های تخصصی حوزه خود نقش مؤثر داشته باشد.'],
+            'فوق حرفه ای' => ['تسلط ممتاز، هویت هنری تثبیت‌شده و سابقه فعالیت تخصصی در بالاترین سطح.', 'سطح فوق حرفه‌ای ویژه هنرمند یا مدرس باتجربه‌ای است که علاوه بر تسلط کامل بر تکنیک و رپرتوار تخصصی، از هویت هنری مستقل و توانایی تحلیل، تفسیر و ارائه آثار در بالاترین سطح برخوردار است. فعالیت او بر پایه تجربه مستمر، انتخاب‌های آگاهانه هنری و استانداردهای حرفه‌ای شکل گرفته است.\n\nفرد در این سطح می‌تواند مسئولیت پروژه‌های شاخص اجرایی یا آموزشی را بر عهده بگیرد، هنرجویان و هنرمندان حرفه‌ای را هدایت کند، آثار پیچیده تولید یا اجرا کند و در توسعه شیوه‌های تخصصی حوزه خود نقش مؤثر داشته باشد.'],
         ];
-        $titles=DB::table('translations')->where('table_name','levels')->where('locale','fa')->where('field','title')->whereNull('deleted_at')->get();
-        foreach($titles as$title){$values=$texts[(string)$title['value']]??null;if(!$values)continue;$values[1]=str_replace('\\n',"\n",$values[1]);$current=$this->translations('levels',[(int)$title['table_id']],['summary','description'])[(int)$title['table_id']]??[];if(($current['summary']??'')===$values[0]&&($current['description']??'')===$values[1])continue;$this->setTranslations('levels',(int)$title['table_id'],['summary'=>$values[0],'description'=>$values[1]],$actor);}
+        $titles = DB::table('translations')->where('table_name', 'levels')->where('locale', 'fa')->where('field', 'title')->whereNull('deleted_at')->get();
+        foreach ($titles as $title) {
+            $values = $texts[(string) $title['value']] ?? null;
+            if (!$values) {
+                continue;
+            }
+            $values[1] = str_replace('\\n', "\n", $values[1]);
+            $current = $this->translations('levels', [(int) $title['table_id']], ['summary', 'description'])[(int) $title['table_id']] ?? [];
+            if (($current['summary'] ?? '') === $values[0] && ($current['description'] ?? '') === $values[1]) {
+                continue;
+            }
+            $this->setTranslations('levels', (int) $title['table_id'], ['summary' => $values[0], 'description' => $values[1]], $actor);
+        }
     }
 
-    private function organizations(int$actor):array{$user=DB::table('users')->where('user_id',$actor)->whereNull('deleted_at')->first();if(!$user)throw new RuntimeException('کاربر معتبر نیست.');$academyIds=[];$branchIds=[];if(SiteAdminAccess::allows($user)){$academyIds=array_map(fn($r)=>(int)$r['academy_id'],DB::table('academies')->whereNull('deleted_at')->get());$branchIds=array_map(fn($r)=>(int)$r['branch_id'],DB::table('academy_branches')->whereNull('deleted_at')->get());}else{foreach(array_merge(DB::table('academies')->where('user_id',$actor)->whereNull('deleted_at')->get(),DB::table('academies')->where('created_by',$actor)->whereNull('deleted_at')->get())as$a)$academyIds[]=(int)$a['academy_id'];foreach(DB::table('academy_branches')->where('user_id',$actor)->whereNull('deleted_at')->get()as$b)$branchIds[]=(int)$b['branch_id'];foreach(DB::table('academy_branch_members')->where('user_id',$actor)->whereNull('deleted_at')->get()as$m){$roles=DB::table('academy_branch_member_roles')->join('access_system_roles','access_system_roles.role_id','=','academy_branch_member_roles.role_id')->where('academy_branch_member_roles.member_id',(int)$m['member_id'])->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->get();if(!$roles)continue;if($m['branch_id']!==null)$branchIds[]=(int)$m['branch_id'];else$academyIds[]=(int)$m['academy_id'];}}$academyIds=array_values(array_unique(array_filter($academyIds)));if($academyIds)foreach(DB::table('academy_branches')->whereIn('academy_id',$academyIds)->whereNull('deleted_at')->get()as$b)$branchIds[]=(int)$b['branch_id'];$branchIds=array_values(array_unique(array_filter($branchIds)));$academies=$academyIds?DB::table('academies')->whereIn('academy_id',$academyIds)->whereNull('deleted_at')->get():[];$branches=$branchIds?DB::table('academy_branches')->whereIn('branch_id',$branchIds)->whereNull('deleted_at')->get():[];$at=$this->translations('academies',$academyIds,['title','name']);$bt=$this->translations('academy_branches',$branchIds,['name']);$out=[];foreach($academies as$a){$id=(int)$a['academy_id'];$out[]=['id'=>$id,'user_id'=>(int)$a['user_id'],'kind'=>'academy','name'=>$at[$id]['title']??$at[$id]['name']??('آموزشگاه '.$id)];}foreach($branches as$b){$id=(int)$b['branch_id'];$out[]=['id'=>$id,'user_id'=>(int)$b['user_id'],'kind'=>'branch','name'=>$bt[$id]['name']??('شعبه '.$id)];}return$out;}
-    private function isBranchContext(array$organizations):bool{return(bool)$organizations&&!array_filter($organizations,fn($o)=>$o['kind']==='academy');}
-    private function organizationsForDisplay(array$manageable):array{$out=array_map(function($o){$o['read_only']=false;return$o;},$manageable);if(!$this->isBranchContext($manageable))return$out;$branchIds=array_map(fn($o)=>(int)$o['id'],$manageable);$branches=$branchIds?DB::table('academy_branches')->whereIn('branch_id',$branchIds)->whereNull('deleted_at')->get():[];$academyIds=array_values(array_unique(array_map(fn($b)=>(int)$b['academy_id'],$branches)));$academies=$academyIds?DB::table('academies')->whereIn('academy_id',$academyIds)->whereNull('deleted_at')->get():[];$texts=$this->translations('academies',$academyIds,['title','name']);foreach($academies as$a){$id=(int)$a['academy_id'];$out[]=['id'=>$id,'user_id'=>(int)$a['user_id'],'kind'=>'academy','name'=>$texts[$id]['title']??$texts[$id]['name']??('آموزشگاه '.$id),'read_only'=>true];}return$out;}
-    private function allowedOrganization(int$actor,int$userId):array{foreach($this->organizations($actor)as$o)if((int)$o['user_id']===$userId)return$o;throw new RuntimeException('شما به سازمان انتخاب‌شده دسترسی ندارید.');}
-    private function assertCourseAccess(int$actor,array$row):void{$kind=$row['branch_id']!==null?'branch':'academy';$id=(int)$row[$kind.'_id'];foreach($this->organizations($actor)as$o)if($o['kind']===$kind&&(int)$o['id']===$id)return;throw new RuntimeException('شما به این دوره دسترسی ندارید.');}
-    private function isReceptionist(int$actor):bool{$role=DB::table('academy_branch_members')->join('academy_branch_member_roles','academy_branch_member_roles.member_id','=','academy_branch_members.member_id')->join('access_system_roles','access_system_roles.role_id','=','academy_branch_member_roles.role_id')->where('academy_branch_members.user_id',$actor)->whereRaw("access_system_roles.name LIKE '%receptionist%'")->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->first();if($role)return true;return(bool)DB::table('academy_branch_members')->join('academy_branch_member_contracts','academy_branch_member_contracts.member_id','=','academy_branch_members.member_id')->where('academy_branch_members.user_id',$actor)->where('academy_branch_member_contracts.type','receptionist')->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_contracts.deleted_at')->first();}
-    private function branches(int $actor): array {return array_values(array_map(fn($o)=>['branch_id'=>$o['id'],'user_id'=>$o['user_id']],array_filter($this->organizations($actor),fn($o)=>$o['kind']==='branch')));}
-    private function allowedBranch(int $actor,int $id): array {foreach($this->branches($actor) as $b)if((int)$b['branch_id']===$id)return$b;throw new RuntimeException('شما به این شعبه دسترسی ندارید.');}
-    private function translations(string $table,array $ids,array $fields): array {if(!$ids)return[];$map=[];foreach(DB::table('translations')->where('table_name',$table)->whereIn('table_id',array_values(array_unique($ids)))->whereIn('field',$fields)->where('locale','fa')->whereNull('deleted_at')->get() as $r)$map[(int)$r['table_id']][$r['field']]=$r['value'];return$map;}
-    private function translation(string $table,int $id,string $field): string {$r=DB::table('translations')->where('table_name',$table)->where('table_id',$id)->where('field',$field)->where('locale','fa')->whereNull('deleted_at')->first();return(string)($r['value']??'');}
-    private function setTranslations(string $table,int $id,array $values,int $actor,string $locale='fa'): void {foreach($values as $field=>$value){$r=DB::table('translations')->where('table_name',$table)->where('table_id',$id)->where('field',$field)->where('locale',$locale)->first();$v=['value'=>$value,'version'=>1,'updated_at'=>$this->now(),'updated_by'=>$actor,'deleted_at'=>null,'deleted_by'=>null];if($r)DB::table('translations')->where('translation_id',(int)$r['translation_id'])->update($v);else DB::table('translations')->insert(['table_name'=>$table,'table_id'=>$id,'field'=>$field,'locale'=>$locale,'created_at'=>$this->now(),'created_by'=>$actor]+$v);}}
-    private function softDelete(string $table,string $key,int $id,int$actor):void{$now=$this->now();DB::table($table)->where($key,$id)->whereNull('deleted_at')->update(['deleted_at'=>$now,'deleted_by'=>$actor,'updated_at'=>$now,'updated_by'=>$actor]);DB::table('translations')->where('table_name',$table)->where('table_id',$id)->whereNull('deleted_at')->update(['deleted_at'=>$now,'deleted_by'=>$actor,'updated_at'=>$now,'updated_by'=>$actor]);}
-    private function ensureSchema(): void {}
+    private function organizations(int $actor): array
+    {
+        $user = DB::table('users')->where('user_id', $actor)->whereNull('deleted_at')->first();
+        if (!$user) {
+            throw new RuntimeException('کاربر معتبر نیست.');
+        }
+        $academyIds = [];
+        $branchIds = [];
+        if (SiteAdminAccess::allows($user)) {
+            $academyIds = array_map(fn ($r) => (int) $r['academy_id'], DB::table('academies')->whereNull('deleted_at')->get());
+            $branchIds = array_map(fn ($r) => (int) $r['branch_id'], DB::table('academy_branches')->whereNull('deleted_at')->get());
+        } else {
+            foreach (array_merge(DB::table('academies')->where('user_id', $actor)->whereNull('deleted_at')->get(), DB::table('academies')->where('created_by', $actor)->whereNull('deleted_at')->get()) as $a) {
+                $academyIds[] = (int) $a['academy_id'];
+            }
+            foreach (DB::table('academy_branches')->where('user_id', $actor)->whereNull('deleted_at')->get() as $b) {
+                $branchIds[] = (int) $b['branch_id'];
+            }
+            foreach (DB::table('academy_branch_members')->where('user_id', $actor)->whereNull('deleted_at')->get() as $m) {
+                $roles = DB::table('academy_branch_member_roles')->join('access_system_roles', 'access_system_roles.role_id', '=', 'academy_branch_member_roles.role_id')->where('academy_branch_member_roles.member_id', (int) $m['member_id'])->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->get();
+                if (!$roles) {
+                    continue;
+                }
+                if ($m['branch_id'] !== null) {
+                    $branchIds[] = (int) $m['branch_id'];
+                } else {
+                    $academyIds[] = (int) $m['academy_id'];
+                }
+            }
+        }$academyIds = array_values(array_unique(array_filter($academyIds)));
+        if ($academyIds) {
+            foreach (DB::table('academy_branches')->whereIn('academy_id', $academyIds)->whereNull('deleted_at')->get() as $b) {
+                $branchIds[] = (int) $b['branch_id'];
+            }
+        }
+        $branchIds = array_values(array_unique(array_filter($branchIds)));
+        $academies = $academyIds ? DB::table('academies')->whereIn('academy_id', $academyIds)->whereNull('deleted_at')->get() : [];
+        $branches = $branchIds ? DB::table('academy_branches')->whereIn('branch_id', $branchIds)->whereNull('deleted_at')->get() : [];
+        $at = $this->translations('academies', $academyIds, ['title', 'name']);
+        $bt = $this->translations('academy_branches', $branchIds, ['name']);
+        $out = [];
+        foreach ($academies as $a) {
+            $id = (int) $a['academy_id'];
+            $out[] = ['id' => $id, 'user_id' => (int) $a['user_id'], 'kind' => 'academy', 'name' => $at[$id]['title'] ?? $at[$id]['name'] ?? ('آموزشگاه ' . $id)];
+        }foreach ($branches as $b) {
+            $id = (int) $b['branch_id'];
+            $out[] = ['id' => $id, 'user_id' => (int) $b['user_id'], 'kind' => 'branch', 'name' => $bt[$id]['name'] ?? ('شعبه ' . $id)];
+        }return $out;
+    }
+
+    private function isBranchContext(array $organizations): bool
+    {
+        return (bool) $organizations && !array_filter($organizations, fn ($o) => $o['kind'] === 'academy');
+    }
+
+    private function organizationsForDisplay(array $manageable): array
+    {
+        $out = array_map(function ($o) {
+            $o['read_only'] = false;
+            return $o;
+        }, $manageable);
+        if (!$this->isBranchContext($manageable)) {
+            return $out;
+        }
+        $branchIds = array_map(fn ($o) => (int) $o['id'], $manageable);
+        $branches = $branchIds ? DB::table('academy_branches')->whereIn('branch_id', $branchIds)->whereNull('deleted_at')->get() : [];
+        $academyIds = array_values(array_unique(array_map(fn ($b) => (int) $b['academy_id'], $branches)));
+        $academies = $academyIds ? DB::table('academies')->whereIn('academy_id', $academyIds)->whereNull('deleted_at')->get() : [];
+        $texts = $this->translations('academies', $academyIds, ['title', 'name']);
+        foreach ($academies as $a) {
+            $id = (int) $a['academy_id'];
+            $out[] = ['id' => $id, 'user_id' => (int) $a['user_id'], 'kind' => 'academy', 'name' => $texts[$id]['title'] ?? $texts[$id]['name'] ?? ('آموزشگاه ' . $id), 'read_only' => true];
+        }return $out;
+    }
+
+    private function allowedOrganization(int $actor, int $userId): array
+    {
+        foreach ($this->organizations($actor) as $o) {
+            if ((int) $o['user_id'] === $userId) {
+                return $o;
+            }
+        }
+        throw new RuntimeException('شما به سازمان انتخاب‌شده دسترسی ندارید.');
+    }
+
+    private function assertCourseAccess(int $actor, array $row): void
+    {
+        $kind = $row['branch_id'] !== null ? 'branch' : 'academy';
+        $id = (int) $row[$kind . '_id'];
+        foreach ($this->organizations($actor) as $o) {
+            if ($o['kind'] === $kind && (int) $o['id'] === $id) {
+                return;
+            }
+        }
+        throw new RuntimeException('شما به این دوره دسترسی ندارید.');
+    }
+
+    private function isReceptionist(int $actor): bool
+    {
+        $role = DB::table('academy_branch_members')->join('academy_branch_member_roles', 'academy_branch_member_roles.member_id', '=', 'academy_branch_members.member_id')->join('access_system_roles', 'access_system_roles.role_id', '=', 'academy_branch_member_roles.role_id')->where('academy_branch_members.user_id', $actor)->whereRaw("access_system_roles.name LIKE '%receptionist%'")->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->first();
+        if ($role) {
+            return true;
+        }
+        return (bool) DB::table('academy_branch_members')->join('academy_branch_member_contracts', 'academy_branch_member_contracts.member_id', '=', 'academy_branch_members.member_id')->where('academy_branch_members.user_id', $actor)->where('academy_branch_member_contracts.type', 'receptionist')->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_contracts.deleted_at')->first();
+    }
+
+    private function branches(int $actor): array
+    {
+        return array_values(array_map(fn ($o) => ['branch_id' => $o['id'], 'user_id' => $o['user_id']], array_filter($this->organizations($actor), fn ($o) => $o['kind'] === 'branch')));
+    }
+
+    private function allowedBranch(int $actor, int $id): array
+    {
+        foreach ($this->branches($actor) as $b) {
+            if ((int) $b['branch_id'] === $id) {
+                return $b;
+            }
+        }
+        throw new RuntimeException('شما به این شعبه دسترسی ندارید.');
+    }
+
+    private function translations(string $table, array $ids, array $fields): array
+    {
+        if (!$ids) {
+            return [];
+        }
+        $map = [];
+        foreach (DB::table('translations')->where('table_name', $table)->whereIn('table_id', array_values(array_unique($ids)))->whereIn('field', $fields)->where('locale', 'fa')->whereNull('deleted_at')->get() as $r) {
+            $map[(int) $r['table_id']][$r['field']] = $r['value'];
+        }
+        return $map;
+    }
+
+    private function translation(string $table, int $id, string $field): string
+    {
+        $r = DB::table('translations')->where('table_name', $table)->where('table_id', $id)->where('field', $field)->where('locale', 'fa')->whereNull('deleted_at')->first();
+        return (string) ($r['value'] ?? '');
+    }
+
+    private function setTranslations(string $table, int $id, array $values, int $actor, string $locale = 'fa'): void
+    {
+        foreach ($values as $field => $value) {
+            $r = DB::table('translations')->where('table_name', $table)->where('table_id', $id)->where('field', $field)->where('locale', $locale)->first();
+            $v = ['value' => $value, 'version' => 1, 'updated_at' => $this->now(), 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
+            if ($r) {
+                DB::table('translations')->where('translation_id', (int) $r['translation_id'])->update($v);
+            } else {
+                DB::table('translations')->insert(['table_name' => $table, 'table_id' => $id, 'field' => $field, 'locale' => $locale, 'created_at' => $this->now(), 'created_by' => $actor] + $v);
+            }
+        }
+    }
+
+    private function softDelete(string $table, string $key, int $id, int $actor): void
+    {
+        $now = $this->now();
+        DB::table($table)->where($key, $id)->whereNull('deleted_at')->update(['deleted_at' => $now, 'deleted_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
+        DB::table('translations')->where('table_name', $table)->where('table_id', $id)->whereNull('deleted_at')->update(['deleted_at' => $now, 'deleted_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
+    }
+
+    private function ensureSchema(): void
+    {
+    }
 }

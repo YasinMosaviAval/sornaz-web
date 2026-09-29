@@ -1,42 +1,420 @@
-(function(){'use strict';
-const typeLabels={post:'نوشته',product:'محصول',music_theory:'تئوری موسیقی'},statusLabels={draft:'پیش‌نویس',published:'منتشرشده',private:'خصوصی',inherit:'ارثی',pending:'در انتظار بررسی',trash:'زباله‌دان','auto-draft':'پیش‌نویس خودکار',future:'زمان‌بندی‌شده','request-pending':'درخواست در انتظار','request-confirmed':'درخواست تأییدشده'},visibilityLabels={public:'عمومی',private:'خصوصی',followers:'دنبال‌کنندگان',premium:'ویژه'},statusColors={published:'bg-green-100 text-green-700',draft:'bg-gray-100 text-gray-600',pending:'bg-yellow-100 text-yellow-700',private:'bg-purple-100 text-purple-700',trash:'bg-red-100 text-red-700',future:'bg-blue-100 text-blue-700'};
-let posts=[],total=0,page=1,perPage=20,status='all',editingId=null,searchTimer=null,editorMode='visual';
-const enc=data=>btoa(unescape(encodeURIComponent(JSON.stringify(data)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-const esc=value=>String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
-async function api(url,data=null){const options={method:data===null?'GET':'POST',credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}};if(data!==null){options.headers['Content-Type']='application/x-www-form-urlencoded;charset=UTF-8';options.headers['X-CSRF-TOKEN']=window.adminCsrfToken||'';options.body=new URLSearchParams({_token:window.adminCsrfToken||'',payload_b64:enc(data)});}const response=await fetch(url,options),raw=await response.text();let payload;try{payload=JSON.parse(raw);}catch(_){throw new Error('پاسخ معتبر از سرور دریافت نشد.');}const body=payload.data??payload;if(!response.ok||body.success===false)throw new Error(body.message||'عملیات نوشته ناموفق بود.');return body.data??body;}
-function query(){const params=new URLSearchParams({page,perPage,excludeType:'page'});const search=document.getElementById('postSearch')?.value.trim(),type=document.getElementById('postTypeFilter')?.value,visibility=document.getElementById('postVisibilityFilter')?.value;if(search)params.set('search',search);if(type)params.set('type',type);if(visibility)params.set('visibility',visibility);if(status!=='all')params.set('status',status);return params;}
-async function load(nextPage=1){page=nextPage;try{const data=await api('/analytics/admin-posts?'+query());posts=data.posts||[];total=Number(data.total||0);page=Number(data.page||1);perPage=Number(data.perPage||20);render(data.statusCounts||{});}catch(error){alert(error.message);}}
-function render(counts){const tbody=document.querySelector('#postsTable tbody');if(!tbody)return;tbody.innerHTML=posts.length?posts.map(post=>`<tr class="hover:bg-gray-50"><td class="py-4 px-5"><div class="font-medium">${esc(post.title)}</div><div class="mt-0.5 text-xs text-gray-400">${esc(post.slug)}</div></td><td class="py-4 px-5">${esc(post.author_name||'#'+post.author_id)}</td><td class="py-4 px-5 text-xs text-gray-500">${esc(post.categories||'—')}</td><td class="py-4 px-5"><span class="rounded-lg bg-indigo-50 px-2 py-1 text-xs text-indigo-700">${esc(typeLabels[post.type]||post.type)}</span></td><td class="py-4 px-5"><span class="rounded-full px-3 py-1 text-xs ${statusColors[post.status]||'bg-gray-100 text-gray-600'}">${esc(statusLabels[post.status]||post.status)}</span></td><td class="py-4 px-5">${post.views_count||0}</td><td class="py-4 px-5 text-xs">${esc(post.published_at||post.created_at||'—')}</td><td class="py-4 px-5 text-left whitespace-nowrap"><button onclick="previewPost(${post.id})" class="ml-2 text-sm text-emerald-600">پیش‌نمایش</button><button onclick="viewPost(${post.id})" class="ml-2 text-sm text-indigo-600">جزئیات</button><button onclick="editPost(${post.id})" class="ml-2 text-sm text-indigo-600">ویرایش</button>${post.status==='trash'?`<button onclick="restorePost(${post.id})" class="ml-2 text-sm text-green-600">بازیابی</button>`:''}<button onclick="deletePost(${post.id})" class="text-sm text-red-500">${post.status==='trash'?'حذف دائمی':'زباله‌دان'}</button></td></tr>`).join(''):'<tr><td colspan="8" class="py-12 text-center text-gray-400">نوشته‌ای یافت نشد</td></tr>';
-document.querySelectorAll('[data-post-status-count]').forEach(element=>{const key=element.dataset.postStatusCount;element.textContent=key==='all'?Object.values(counts).reduce((sum,n)=>sum+Number(n),0):Number(counts[key]||0);});
-const pages=Math.max(1,Math.ceil(total/perPage)),start=(page-1)*perPage;document.getElementById('postsPaginationInfo').textContent=`نمایش ${total?start+1:0} تا ${Math.min(start+perPage,total)} از ${total} نوشته`;document.getElementById('postsPerPage').value=String(perPage);let buttons=`<button onclick="changePostsPage(${page-1})" ${page===1?'disabled':''} class="rounded-lg border px-3 py-2 disabled:opacity-40">قبلی</button>`;for(let i=Math.max(1,page-2),end=Math.min(pages,Math.max(1,page-2)+4);i<=end;i++)buttons+=`<button onclick="changePostsPage(${i})" class="rounded-lg px-3 py-2 ${i===page?'bg-indigo-600 text-white':'border'}">${i}</button>`;buttons+=`<button onclick="changePostsPage(${page+1})" ${page===pages?'disabled':''} class="rounded-lg border px-3 py-2 disabled:opacity-40">بعدی</button>`;document.getElementById('postsPaginationButtons').innerHTML=buttons;}
-window.filterPosts=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>load(1),250);};
-window.filterPostsByStatus=next=>{status=next;document.querySelectorAll('.post-status-tab').forEach(button=>{const active=button.dataset.status===next;button.classList.toggle('bg-gray-900',active);button.classList.toggle('text-white',active);button.classList.toggle('border',!active);});load(1);};
-window.changePostsPage=next=>{const pages=Math.max(1,Math.ceil(total/perPage));if(next>=1&&next<=pages)load(next);};
-window.changePostsPerPage=value=>{perPage=[10,20,30,50,100].includes(Number(value))?Number(value):20;load(1);};
-function setValue(id,value){const element=document.getElementById(id);if(element)element.value=value??'';}
-function editorData(){const title=document.getElementById('peTitle').value.trim();if(!title){alert('عنوان نوشته الزامی است.');return null;}peSyncToCode();return{title,slug:document.getElementById('peSlug').value.trim(),content:document.getElementById('peContent').value,summary:document.getElementById('peSummary').value.trim(),description:document.getElementById('peDescription').value.trim(),status:document.getElementById('peStatus').value,visibility:document.getElementById('peVisibility').value,published_at:document.getElementById('pePublishedAt').value||null,password:document.getElementById('pePassword').value,type:document.getElementById('peType').value,categories:document.getElementById('peCategories').value.trim(),cover:document.getElementById('peCover').value.trim(),cover_media_id:Number(document.getElementById('peCoverMediaId').value)||null,related_posts_id:document.getElementById('peRelated').value.trim(),guid:document.getElementById('peGuid').value.trim()};}
-function fillEditor(post={}){setValue('peTitle',post.title);setValue('peSlug',post.slug);setValue('peContent',post.content);document.getElementById('peVisualContent').innerHTML=post.content||'';setValue('peSummary',post.summary);setValue('peDescription',post.description);setValue('peStatus',post.status||'draft');setValue('peVisibility',post.visibility||'public');setValue('pePublishedAt',post.published_at?String(post.published_at).replace(' ','T').slice(0,16):'');setValue('pePassword',post.password);setValue('peType',post.type||'post');setValue('peCategories',post.categories);setValue('peCover',post.cover);setValue('peCoverMediaId',post.cover_media_id);setValue('peRelated',post.related_posts_id);setValue('peGuid',post.guid);document.getElementById('peViewsCount').textContent=post.views_count||0;document.getElementById('peCommentCount').textContent=post.comment_count||0;document.getElementById('pePostId').textContent=post.id||'—';document.getElementById('postEditorPageTitle').textContent=post.id?'ویرایش نوشته':'افزودن نوشته';document.getElementById('peTrashBtn').classList.toggle('hidden',!post.id);peSetEditorMode('visual');peUpdateWordCount();updateCoverPreview();}
-window.openPostEditor=()=>{editingId=null;showSection('post-editor');fillEditor();};window.openAddPostModal=window.openPostEditor;
-window.editPost=async id=>{try{const post=await api('/analytics/admin-posts/'+id);editingId=id;closeModal();showSection('post-editor');fillEditor(post);}catch(error){alert(error.message);}};
-window.savePostEditor=async action=>{const data=editorData();if(!data)return;if(action==='draft')data.status='draft';if(action==='publish')data.status='published';try{if(editingId)await api(`/analytics/admin-posts/${editingId}/update`,data);else{const result=await api('/analytics/admin-posts',data);editingId=result.id;}alert('نوشته با موفقیت ذخیره شد.');showSection('posts');await load(1);}catch(error){alert(error.message);}};
-window.movePostToTrash=async()=>{if(!editingId)return;if(await AppDialog.confirm('این نوشته به زباله‌دان منتقل شود؟')){await api(`/analytics/admin-posts/${editingId}/trash`,{});showSection('posts');load(1);}};
-window.deletePost=async id=>{const post=posts.find(item=>item.id===id);if(!post)return;if(post.status==='trash'){if(await AppDialog.confirmDelete(post,id,'نوشته',{message:`نوشته «${post.title}» برای همیشه حذف شود؟` })){try{await api(`/analytics/admin-posts/${id}/delete`,{});load(page);}catch(error){alert(error.message);}}}else if(await AppDialog.confirm(`نوشته «${post.title}» به زباله‌دان منتقل شود؟`)){try{await api(`/analytics/admin-posts/${id}/trash`,{});load(page);}catch(error){alert(error.message);}}};
-window.restorePost=async id=>{try{await api(`/analytics/admin-posts/${id}/restore`,{});load(page);}catch(error){alert(error.message);}};
-window.viewPost=async id=>{try{const post=await api('/analytics/admin-posts/'+id),color=statusColors[post.status]||'bg-gray-100 text-gray-600';document.getElementById('modalContainer').innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4" onclick="if(event.target===this)closeModal()"><div class="my-8 w-full max-w-4xl rounded-3xl bg-white shadow-2xl"><div class="flex items-center justify-between border-b px-8 py-5"><div><h2 class="text-2xl font-bold">${esc(post.title)}</h2><p class="mt-1 text-sm text-gray-500"><span class="rounded px-2 py-0.5 text-xs ${color}">${esc(statusLabels[post.status])}</span> · ${esc(typeLabels[post.type])} · ${esc(visibilityLabels[post.visibility])}</p></div><div class="flex gap-3"><button onclick="editPost(${post.id})" class="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm text-white">ویرایش</button><button onclick="closeModal()" class="text-3xl text-gray-300">×</button></div></div><div class="max-h-[75vh] space-y-5 overflow-y-auto p-8">${post.cover?`<img src="${esc(post.cover)}" class="max-h-80 w-full rounded-2xl object-cover" alt="">`:''}${post.summary?`<p class="text-lg font-medium text-indigo-600">${esc(post.summary)}</p>`:''}${post.description?`<p class="text-gray-600">${esc(post.description)}</p>`:''}<article class="prose max-w-none rounded-2xl border bg-gray-50 p-5">${post.content||'<span class="text-gray-400">بدون محتوا</span>'}</article><div class="grid grid-cols-1 gap-3 text-sm md:grid-cols-2"><div>نویسنده: ${esc(post.author_name)}</div><div>نامک: ${esc(post.slug)}</div><div>دسته‌ها: ${esc(post.categories||'—')}</div><div>تاریخ انتشار: ${esc(post.published_at||'—')}</div><div>بازدید: ${post.views_count}</div><div>دیدگاه‌ها: ${post.comment_count}</div></div></div></div></div>`;}catch(error){alert(error.message);}};
-window.previewPost=async id=>{try{const post=await api('/analytics/admin-posts/'+id),categories=String(post.categories||'').split(',').map(item=>item.trim()).filter(Boolean),documentHtml=`<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}body{margin:0;background:#fff;color:#374151;font-family:Tahoma,Arial,sans-serif;line-height:2}.page{max-width:850px;margin:auto;padding:48px 28px}h1{color:#111827;font-size:2.25rem;line-height:1.45;margin:0 0 20px}.meta{display:flex;flex-wrap:wrap;gap:12px 28px;border-bottom:1px solid #eee;padding-bottom:20px;margin-bottom:28px;color:#6b7280;font-size:14px}.cover{display:block;width:100%;max-height:430px;object-fit:cover;border-radius:20px;margin-bottom:28px}.tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}.tag{background:#eef2ff;color:#4338ca;border-radius:999px;padding:3px 12px;font-size:13px}.summary{background:#eef2ff;border:1px solid #e0e7ff;color:#312e81;padding:20px;border-radius:18px;margin-bottom:28px}.description{color:#6b7280;margin-bottom:28px}.content{font-size:16px;text-align:justify}.content img{max-width:100%;height:auto}.content h2{color:#111827;font-size:1.55rem;margin-top:38px}.content h3{color:#111827;font-size:1.25rem;margin-top:30px}.content a{color:#4f46e5}.content blockquote{border-right:4px solid #c7d2fe;background:#f8fafc;margin:24px 0;padding:14px 20px;border-radius:12px}.empty{color:#9ca3af;text-align:center;padding:40px}</style></head><body><main class="page"><h1>${esc(post.title)}</h1><div class="meta"><span>نویسنده: ${esc(post.author_name||'—')}</span><span>تاریخ انتشار: ${esc(post.published_at||'منتشر نشده')}</span><span>${post.views_count||0} بازدید</span></div>${post.cover?`<img class="cover" src="${esc(post.cover)}" alt="${esc(post.title)}">`:''}${categories.length?`<div class="tags">${categories.map(category=>`<span class="tag">${esc(category)}</span>`).join('')}</div>`:''}${post.summary?`<div class="summary">${esc(post.summary)}</div>`:''}${post.description?`<div class="description">${esc(post.description)}</div>`:''}<article class="content">${post.content||'<div class="empty">این نوشته هنوز محتوایی ندارد.</div>'}</article></main></body></html>`;document.getElementById('modalContainer').innerHTML=`<div class="fixed inset-0 z-50 flex flex-col bg-gray-900/80 p-3 md:p-6"><div class="mx-auto flex w-full max-w-6xl items-center justify-between rounded-t-2xl bg-gray-900 px-5 py-3 text-white"><div><span class="font-medium">پیش‌نمایش نوشته</span><span class="mr-3 text-xs text-gray-400">${esc(statusLabels[post.status]||post.status)}</span></div><div class="flex items-center gap-3"><button onclick="editPost(${post.id})" class="rounded-xl bg-indigo-600 px-4 py-2 text-sm">ویرایش</button><button onclick="closeModal()" class="text-3xl text-gray-300">×</button></div></div><iframe id="postPreviewFrame" sandbox="" class="mx-auto h-full w-full max-w-6xl rounded-b-2xl bg-white" title="پیش‌نمایش ${esc(post.title)}"></iframe></div>`;document.getElementById('postPreviewFrame').srcdoc=documentHtml;}catch(error){alert(error.message);}};
-window.updateCoverPreview=()=>{const url=document.getElementById('peCover')?.value.trim(),box=document.getElementById('peCoverPreview'),image=document.getElementById('peCoverImg');if(!box||!image)return;box.classList.toggle('hidden',!url);if(url)image.src=url;};
-function peSyncToCode(){const visual=document.getElementById('peVisualContent'),code=document.getElementById('peContent');if(editorMode==='visual'&&visual&&code)code.value=visual.innerHTML;}
-function peSyncToVisual(){const visual=document.getElementById('peVisualContent'),code=document.getElementById('peContent');if(visual&&code)visual.innerHTML=code.value;}
-function peUpdateWordCount(){const source=editorMode==='visual'?document.getElementById('peVisualContent')?.innerText:document.getElementById('peContent')?.value.replace(/<[^>]*>/g,' '),count=String(source||'').trim().split(/\s+/u).filter(Boolean).length,label=document.getElementById('peWordCount');if(label)label.textContent=`${count.toLocaleString('fa-IR')} واژه`;}
-window.peSetEditorMode=mode=>{if(mode==='code'&&editorMode==='visual')peSyncToCode();if(mode==='visual'&&editorMode==='code')peSyncToVisual();editorMode=mode==='code'?'code':'visual';document.getElementById('peVisualContent')?.classList.toggle('hidden',editorMode!=='visual');document.getElementById('peVisualToolbar')?.classList.toggle('hidden',editorMode!=='visual');document.getElementById('peContent')?.classList.toggle('hidden',editorMode!=='code');for(const [id,active] of [['peVisualTab',editorMode==='visual'],['peCodeTab',editorMode==='code']]){const tab=document.getElementById(id);tab?.classList.toggle('bg-white',active);tab?.classList.toggle('border',active);tab?.classList.toggle('border-b-white',active);tab?.classList.toggle('text-indigo-600',active);tab?.classList.toggle('text-gray-500',!active);}peUpdateWordCount();};
-window.peVisualChanged=()=>{peSyncToCode();peUpdateWordCount();};window.peCodeChanged=peUpdateWordCount;
-window.peExec=(command,value=null)=>{if(editorMode!=='visual')peSetEditorMode('visual');document.getElementById('peVisualContent')?.focus();document.execCommand(command,false,value);peVisualChanged();};
-window.peInsertLink=()=>{const url=prompt('آدرس لینک را وارد کنید:','https://');if(!url)return;const text=window.getSelection()?.toString();if(text)peExec('createLink',url);else peInsertHtml(`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a>`);};
-window.peInsertImage=()=>{const url=prompt('آدرس تصویر را وارد کنید:','https://');if(!url)return;const alt=prompt('متن جایگزین تصویر:','')||'';peInsertHtml(`<img src="${esc(url)}" alt="${esc(alt)}" style="max-width:100%;height:auto">`);};
-window.peInsertTable=()=>{const rows=Math.min(20,Math.max(1,Number(prompt('تعداد ردیف‌ها:','3'))||0)),columns=Math.min(10,Math.max(1,Number(prompt('تعداد ستون‌ها:','3'))||0));if(!rows||!columns)return;let html='<table><tbody>';for(let row=0;row<rows;row++){html+='<tr>';for(let column=0;column<columns;column++)html+=`<${row===0?'th':'td'}>${row===0?'عنوان':'متن'}</${row===0?'th':'td'}>`;html+='</tr>';}peInsertHtml(html+'</tbody></table><p><br></p>');};
-function peInsertHtml(html){if(editorMode!=='visual')peSetEditorMode('visual');document.getElementById('peVisualContent')?.focus();document.execCommand('insertHTML',false,html);peVisualChanged();}
-window.peToggleFullscreen=()=>document.getElementById('post-editor')?.classList.toggle('pe-editor-fullscreen');
-window.peFormat=window.peExec;window.peInsertHeading=()=>peExec('formatBlock','h2');window.peInsertList=()=>peExec('insertUnorderedList');
-window.renderPostsBranchTabs=()=>{};window.filterPostsByBranch=()=>load(1);
-setTimeout(()=>{if(document.querySelector('#postsTable tbody'))load(1);},200);
+(function () {
+  'use strict';
+  const typeLabels = { post: 'نوشته', product: 'محصول', music_theory: 'تئوری موسیقی' },
+    statusLabels = {
+      draft: 'پیش‌نویس',
+      published: 'منتشرشده',
+      private: 'خصوصی',
+      inherit: 'ارثی',
+      pending: 'در انتظار بررسی',
+      trash: 'زباله‌دان',
+      'auto-draft': 'پیش‌نویس خودکار',
+      future: 'زمان‌بندی‌شده',
+      'request-pending': 'درخواست در انتظار',
+      'request-confirmed': 'درخواست تأییدشده',
+    },
+    visibilityLabels = {
+      public: 'عمومی',
+      private: 'خصوصی',
+      followers: 'دنبال‌کنندگان',
+      premium: 'ویژه',
+    },
+    statusColors = {
+      published: 'bg-green-100 text-green-700',
+      draft: 'bg-gray-100 text-gray-600',
+      pending: 'bg-yellow-100 text-yellow-700',
+      private: 'bg-purple-100 text-purple-700',
+      trash: 'bg-red-100 text-red-700',
+      future: 'bg-blue-100 text-blue-700',
+    };
+  let posts = [],
+    total = 0,
+    page = 1,
+    perPage = 20,
+    status = 'all',
+    editingId = null,
+    searchTimer = null,
+    editorMode = 'visual';
+  const enc = (data) =>
+    btoa(unescape(encodeURIComponent(JSON.stringify(data))))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  const esc = (value) =>
+    String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  async function api(url, data = null) {
+    const options = {
+      method: data === null ? 'GET' : 'POST',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    };
+    if (data !== null) {
+      options.headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+      options.headers['X-CSRF-TOKEN'] = window.adminCsrfToken || '';
+      options.body = new URLSearchParams({
+        _token: window.adminCsrfToken || '',
+        payload_b64: enc(data),
+      });
+    }
+    const response = await fetch(url, options),
+      raw = await response.text();
+    let payload;
+    try {
+      payload = JSON.parse(raw);
+    } catch (_) {
+      throw new Error('پاسخ معتبر از سرور دریافت نشد.');
+    }
+    const body = payload.data ?? payload;
+    if (!response.ok || body.success === false)
+      throw new Error(body.message || 'عملیات نوشته ناموفق بود.');
+    return body.data ?? body;
+  }
+  function query() {
+    const params = new URLSearchParams({ page, perPage, excludeType: 'page' });
+    const search = document.getElementById('postSearch')?.value.trim(),
+      type = document.getElementById('postTypeFilter')?.value,
+      visibility = document.getElementById('postVisibilityFilter')?.value;
+    if (search) params.set('search', search);
+    if (type) params.set('type', type);
+    if (visibility) params.set('visibility', visibility);
+    if (status !== 'all') params.set('status', status);
+    return params;
+  }
+  async function load(nextPage = 1) {
+    page = nextPage;
+    try {
+      const data = await api('/analytics/admin-posts?' + query());
+      posts = data.posts || [];
+      total = Number(data.total || 0);
+      page = Number(data.page || 1);
+      perPage = Number(data.perPage || 20);
+      render(data.statusCounts || {});
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+  function render(counts) {
+    const tbody = document.querySelector('#postsTable tbody');
+    if (!tbody) return;
+    tbody.innerHTML = posts.length
+      ? posts
+          .map(
+            (post) =>
+              `<tr class="hover:bg-gray-50"><td class="py-4 px-5"><div class="font-medium">${esc(post.title)}</div><div class="mt-0.5 text-xs text-gray-400">${esc(post.slug)}</div></td><td class="py-4 px-5">${esc(post.author_name || '#' + post.author_id)}</td><td class="py-4 px-5 text-xs text-gray-500">${esc(post.categories || '—')}</td><td class="py-4 px-5"><span class="rounded-lg bg-indigo-50 px-2 py-1 text-xs text-indigo-700">${esc(typeLabels[post.type] || post.type)}</span></td><td class="py-4 px-5"><span class="rounded-full px-3 py-1 text-xs ${statusColors[post.status] || 'bg-gray-100 text-gray-600'}">${esc(statusLabels[post.status] || post.status)}</span></td><td class="py-4 px-5">${post.views_count || 0}</td><td class="py-4 px-5 text-xs">${esc(post.published_at || post.created_at || '—')}</td><td class="py-4 px-5 text-left whitespace-nowrap"><button onclick="previewPost(${post.id})" class="ml-2 text-sm text-emerald-600">پیش‌نمایش</button><button onclick="viewPost(${post.id})" class="ml-2 text-sm text-indigo-600">جزئیات</button><button onclick="editPost(${post.id})" class="ml-2 text-sm text-indigo-600">ویرایش</button>${post.status === 'trash' ? `<button onclick="restorePost(${post.id})" class="ml-2 text-sm text-green-600">بازیابی</button>` : ''}<button onclick="deletePost(${post.id})" class="text-sm text-red-500">${post.status === 'trash' ? 'حذف دائمی' : 'زباله‌دان'}</button></td></tr>`
+          )
+          .join('')
+      : '<tr><td colspan="8" class="py-12 text-center text-gray-400">نوشته‌ای یافت نشد</td></tr>';
+    document.querySelectorAll('[data-post-status-count]').forEach((element) => {
+      const key = element.dataset.postStatusCount;
+      element.textContent =
+        key === 'all'
+          ? Object.values(counts).reduce((sum, n) => sum + Number(n), 0)
+          : Number(counts[key] || 0);
+    });
+    const pages = Math.max(1, Math.ceil(total / perPage)),
+      start = (page - 1) * perPage;
+    document.getElementById('postsPaginationInfo').textContent =
+      `نمایش ${total ? start + 1 : 0} تا ${Math.min(start + perPage, total)} از ${total} نوشته`;
+    document.getElementById('postsPerPage').value = String(perPage);
+    let buttons = `<button onclick="changePostsPage(${page - 1})" ${page === 1 ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">قبلی</button>`;
+    for (
+      let i = Math.max(1, page - 2), end = Math.min(pages, Math.max(1, page - 2) + 4);
+      i <= end;
+      i++
+    )
+      buttons += `<button onclick="changePostsPage(${i})" class="rounded-lg px-3 py-2 ${i === page ? 'bg-indigo-600 text-white' : 'border'}">${i}</button>`;
+    buttons += `<button onclick="changePostsPage(${page + 1})" ${page === pages ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">بعدی</button>`;
+    document.getElementById('postsPaginationButtons').innerHTML = buttons;
+  }
+  window.filterPosts = () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => load(1), 250);
+  };
+  window.filterPostsByStatus = (next) => {
+    status = next;
+    document.querySelectorAll('.post-status-tab').forEach((button) => {
+      const active = button.dataset.status === next;
+      button.classList.toggle('bg-gray-900', active);
+      button.classList.toggle('text-white', active);
+      button.classList.toggle('border', !active);
+    });
+    load(1);
+  };
+  window.changePostsPage = (next) => {
+    const pages = Math.max(1, Math.ceil(total / perPage));
+    if (next >= 1 && next <= pages) load(next);
+  };
+  window.changePostsPerPage = (value) => {
+    perPage = [10, 20, 30, 50, 100].includes(Number(value)) ? Number(value) : 20;
+    load(1);
+  };
+  function setValue(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.value = value ?? '';
+  }
+  function editorData() {
+    const title = document.getElementById('peTitle').value.trim();
+    if (!title) {
+      alert('عنوان نوشته الزامی است.');
+      return null;
+    }
+    peSyncToCode();
+    return {
+      title,
+      slug: document.getElementById('peSlug').value.trim(),
+      content: document.getElementById('peContent').value,
+      summary: document.getElementById('peSummary').value.trim(),
+      description: document.getElementById('peDescription').value.trim(),
+      status: document.getElementById('peStatus').value,
+      visibility: document.getElementById('peVisibility').value,
+      published_at: document.getElementById('pePublishedAt').value || null,
+      password: document.getElementById('pePassword').value,
+      type: document.getElementById('peType').value,
+      categories: document.getElementById('peCategories').value.trim(),
+      cover: document.getElementById('peCover').value.trim(),
+      cover_media_id: Number(document.getElementById('peCoverMediaId').value) || null,
+      related_posts_id: document.getElementById('peRelated').value.trim(),
+      guid: document.getElementById('peGuid').value.trim(),
+    };
+  }
+  function fillEditor(post = {}) {
+    setValue('peTitle', post.title);
+    setValue('peSlug', post.slug);
+    setValue('peContent', post.content);
+    document.getElementById('peVisualContent').innerHTML = post.content || '';
+    setValue('peSummary', post.summary);
+    setValue('peDescription', post.description);
+    setValue('peStatus', post.status || 'draft');
+    setValue('peVisibility', post.visibility || 'public');
+    setValue(
+      'pePublishedAt',
+      post.published_at ? String(post.published_at).replace(' ', 'T').slice(0, 16) : ''
+    );
+    setValue('pePassword', post.password);
+    setValue('peType', post.type || 'post');
+    setValue('peCategories', post.categories);
+    setValue('peCover', post.cover);
+    setValue('peCoverMediaId', post.cover_media_id);
+    setValue('peRelated', post.related_posts_id);
+    setValue('peGuid', post.guid);
+    document.getElementById('peViewsCount').textContent = post.views_count || 0;
+    document.getElementById('peCommentCount').textContent = post.comment_count || 0;
+    document.getElementById('pePostId').textContent = post.id || '—';
+    document.getElementById('postEditorPageTitle').textContent = post.id
+      ? 'ویرایش نوشته'
+      : 'افزودن نوشته';
+    document.getElementById('peTrashBtn').classList.toggle('hidden', !post.id);
+    peSetEditorMode('visual');
+    peUpdateWordCount();
+    updateCoverPreview();
+  }
+  window.openPostEditor = () => {
+    editingId = null;
+    showSection('post-editor');
+    fillEditor();
+  };
+  window.openAddPostModal = window.openPostEditor;
+  window.editPost = async (id) => {
+    try {
+      const post = await api('/analytics/admin-posts/' + id);
+      editingId = id;
+      closeModal();
+      showSection('post-editor');
+      fillEditor(post);
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+  window.savePostEditor = async (action) => {
+    const data = editorData();
+    if (!data) return;
+    if (action === 'draft') data.status = 'draft';
+    if (action === 'publish') data.status = 'published';
+    try {
+      if (editingId) await api(`/analytics/admin-posts/${editingId}/update`, data);
+      else {
+        const result = await api('/analytics/admin-posts', data);
+        editingId = result.id;
+      }
+      alert('نوشته با موفقیت ذخیره شد.');
+      showSection('posts');
+      await load(1);
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+  window.movePostToTrash = async () => {
+    if (!editingId) return;
+    if (await AppDialog.confirm('این نوشته به زباله‌دان منتقل شود؟')) {
+      await api(`/analytics/admin-posts/${editingId}/trash`, {});
+      showSection('posts');
+      load(1);
+    }
+  };
+  window.deletePost = async (id) => {
+    const post = posts.find((item) => item.id === id);
+    if (!post) return;
+    if (post.status === 'trash') {
+      if (
+        await AppDialog.confirmDelete(post, id, 'نوشته', {
+          message: `نوشته «${post.title}» برای همیشه حذف شود؟`,
+        })
+      ) {
+        try {
+          await api(`/analytics/admin-posts/${id}/delete`, {});
+          load(page);
+        } catch (error) {
+          alert(error.message);
+        }
+      }
+    } else if (await AppDialog.confirm(`نوشته «${post.title}» به زباله‌دان منتقل شود؟`)) {
+      try {
+        await api(`/analytics/admin-posts/${id}/trash`, {});
+        load(page);
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+  };
+  window.restorePost = async (id) => {
+    try {
+      await api(`/analytics/admin-posts/${id}/restore`, {});
+      load(page);
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+  window.viewPost = async (id) => {
+    try {
+      const post = await api('/analytics/admin-posts/' + id),
+        color = statusColors[post.status] || 'bg-gray-100 text-gray-600';
+      document.getElementById('modalContainer').innerHTML =
+        `<div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4" onclick="if(event.target===this)closeModal()"><div class="my-8 w-full max-w-4xl rounded-3xl bg-white shadow-2xl"><div class="flex items-center justify-between border-b px-8 py-5"><div><h2 class="text-2xl font-bold">${esc(post.title)}</h2><p class="mt-1 text-sm text-gray-500"><span class="rounded px-2 py-0.5 text-xs ${color}">${esc(statusLabels[post.status])}</span> · ${esc(typeLabels[post.type])} · ${esc(visibilityLabels[post.visibility])}</p></div><div class="flex gap-3"><button onclick="editPost(${post.id})" class="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm text-white">ویرایش</button><button onclick="closeModal()" class="text-3xl text-gray-300">×</button></div></div><div class="max-h-[75vh] space-y-5 overflow-y-auto p-8">${post.cover ? `<img src="${esc(post.cover)}" class="max-h-80 w-full rounded-2xl object-cover" alt="">` : ''}${post.summary ? `<p class="text-lg font-medium text-indigo-600">${esc(post.summary)}</p>` : ''}${post.description ? `<p class="text-gray-600">${esc(post.description)}</p>` : ''}<article class="prose max-w-none rounded-2xl border bg-gray-50 p-5">${post.content || '<span class="text-gray-400">بدون محتوا</span>'}</article><div class="grid grid-cols-1 gap-3 text-sm md:grid-cols-2"><div>نویسنده: ${esc(post.author_name)}</div><div>نامک: ${esc(post.slug)}</div><div>دسته‌ها: ${esc(post.categories || '—')}</div><div>تاریخ انتشار: ${esc(post.published_at || '—')}</div><div>بازدید: ${post.views_count}</div><div>دیدگاه‌ها: ${post.comment_count}</div></div></div></div></div>`;
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+  window.previewPost = async (id) => {
+    try {
+      const post = await api('/analytics/admin-posts/' + id),
+        categories = String(post.categories || '')
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean),
+        documentHtml = `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}body{margin:0;background:#fff;color:#374151;font-family:Tahoma,Arial,sans-serif;line-height:2}.page{max-width:850px;margin:auto;padding:48px 28px}h1{color:#111827;font-size:2.25rem;line-height:1.45;margin:0 0 20px}.meta{display:flex;flex-wrap:wrap;gap:12px 28px;border-bottom:1px solid #eee;padding-bottom:20px;margin-bottom:28px;color:#6b7280;font-size:14px}.cover{display:block;width:100%;max-height:430px;object-fit:cover;border-radius:20px;margin-bottom:28px}.tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}.tag{background:#eef2ff;color:#4338ca;border-radius:999px;padding:3px 12px;font-size:13px}.summary{background:#eef2ff;border:1px solid #e0e7ff;color:#312e81;padding:20px;border-radius:18px;margin-bottom:28px}.description{color:#6b7280;margin-bottom:28px}.content{font-size:16px;text-align:justify}.content img{max-width:100%;height:auto}.content h2{color:#111827;font-size:1.55rem;margin-top:38px}.content h3{color:#111827;font-size:1.25rem;margin-top:30px}.content a{color:#4f46e5}.content blockquote{border-right:4px solid #c7d2fe;background:#f8fafc;margin:24px 0;padding:14px 20px;border-radius:12px}.empty{color:#9ca3af;text-align:center;padding:40px}</style></head><body><main class="page"><h1>${esc(post.title)}</h1><div class="meta"><span>نویسنده: ${esc(post.author_name || '—')}</span><span>تاریخ انتشار: ${esc(post.published_at || 'منتشر نشده')}</span><span>${post.views_count || 0} بازدید</span></div>${post.cover ? `<img class="cover" src="${esc(post.cover)}" alt="${esc(post.title)}">` : ''}${categories.length ? `<div class="tags">${categories.map((category) => `<span class="tag">${esc(category)}</span>`).join('')}</div>` : ''}${post.summary ? `<div class="summary">${esc(post.summary)}</div>` : ''}${post.description ? `<div class="description">${esc(post.description)}</div>` : ''}<article class="content">${post.content || '<div class="empty">این نوشته هنوز محتوایی ندارد.</div>'}</article></main></body></html>`;
+      document.getElementById('modalContainer').innerHTML =
+        `<div class="fixed inset-0 z-50 flex flex-col bg-gray-900/80 p-3 md:p-6"><div class="mx-auto flex w-full max-w-6xl items-center justify-between rounded-t-2xl bg-gray-900 px-5 py-3 text-white"><div><span class="font-medium">پیش‌نمایش نوشته</span><span class="mr-3 text-xs text-gray-400">${esc(statusLabels[post.status] || post.status)}</span></div><div class="flex items-center gap-3"><button onclick="editPost(${post.id})" class="rounded-xl bg-indigo-600 px-4 py-2 text-sm">ویرایش</button><button onclick="closeModal()" class="text-3xl text-gray-300">×</button></div></div><iframe id="postPreviewFrame" sandbox="" class="mx-auto h-full w-full max-w-6xl rounded-b-2xl bg-white" title="پیش‌نمایش ${esc(post.title)}"></iframe></div>`;
+      document.getElementById('postPreviewFrame').srcdoc = documentHtml;
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+  window.updateCoverPreview = () => {
+    const url = document.getElementById('peCover')?.value.trim(),
+      box = document.getElementById('peCoverPreview'),
+      image = document.getElementById('peCoverImg');
+    if (!box || !image) return;
+    box.classList.toggle('hidden', !url);
+    if (url) image.src = url;
+  };
+  function peSyncToCode() {
+    const visual = document.getElementById('peVisualContent'),
+      code = document.getElementById('peContent');
+    if (editorMode === 'visual' && visual && code) code.value = visual.innerHTML;
+  }
+  function peSyncToVisual() {
+    const visual = document.getElementById('peVisualContent'),
+      code = document.getElementById('peContent');
+    if (visual && code) visual.innerHTML = code.value;
+  }
+  function peUpdateWordCount() {
+    const source =
+        editorMode === 'visual'
+          ? document.getElementById('peVisualContent')?.innerText
+          : document.getElementById('peContent')?.value.replace(/<[^>]*>/g, ' '),
+      count = String(source || '')
+        .trim()
+        .split(/\s+/u)
+        .filter(Boolean).length,
+      label = document.getElementById('peWordCount');
+    if (label) label.textContent = `${count.toLocaleString('fa-IR')} واژه`;
+  }
+  window.peSetEditorMode = (mode) => {
+    if (mode === 'code' && editorMode === 'visual') peSyncToCode();
+    if (mode === 'visual' && editorMode === 'code') peSyncToVisual();
+    editorMode = mode === 'code' ? 'code' : 'visual';
+    document.getElementById('peVisualContent')?.classList.toggle('hidden', editorMode !== 'visual');
+    document.getElementById('peVisualToolbar')?.classList.toggle('hidden', editorMode !== 'visual');
+    document.getElementById('peContent')?.classList.toggle('hidden', editorMode !== 'code');
+    for (const [id, active] of [
+      ['peVisualTab', editorMode === 'visual'],
+      ['peCodeTab', editorMode === 'code'],
+    ]) {
+      const tab = document.getElementById(id);
+      tab?.classList.toggle('bg-white', active);
+      tab?.classList.toggle('border', active);
+      tab?.classList.toggle('border-b-white', active);
+      tab?.classList.toggle('text-indigo-600', active);
+      tab?.classList.toggle('text-gray-500', !active);
+    }
+    peUpdateWordCount();
+  };
+  window.peVisualChanged = () => {
+    peSyncToCode();
+    peUpdateWordCount();
+  };
+  window.peCodeChanged = peUpdateWordCount;
+  window.peExec = (command, value = null) => {
+    if (editorMode !== 'visual') peSetEditorMode('visual');
+    document.getElementById('peVisualContent')?.focus();
+    document.execCommand(command, false, value);
+    peVisualChanged();
+  };
+  window.peInsertLink = () => {
+    const url = prompt('آدرس لینک را وارد کنید:', 'https://');
+    if (!url) return;
+    const text = window.getSelection()?.toString();
+    if (text) peExec('createLink', url);
+    else peInsertHtml(`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a>`);
+  };
+  window.peInsertImage = () => {
+    const url = prompt('آدرس تصویر را وارد کنید:', 'https://');
+    if (!url) return;
+    const alt = prompt('متن جایگزین تصویر:', '') || '';
+    peInsertHtml(`<img src="${esc(url)}" alt="${esc(alt)}" style="max-width:100%;height:auto">`);
+  };
+  window.peInsertTable = () => {
+    const rows = Math.min(20, Math.max(1, Number(prompt('تعداد ردیف‌ها:', '3')) || 0)),
+      columns = Math.min(10, Math.max(1, Number(prompt('تعداد ستون‌ها:', '3')) || 0));
+    if (!rows || !columns) return;
+    let html = '<table><tbody>';
+    for (let row = 0; row < rows; row++) {
+      html += '<tr>';
+      for (let column = 0; column < columns; column++)
+        html += `<${row === 0 ? 'th' : 'td'}>${row === 0 ? 'عنوان' : 'متن'}</${row === 0 ? 'th' : 'td'}>`;
+      html += '</tr>';
+    }
+    peInsertHtml(html + '</tbody></table><p><br></p>');
+  };
+  function peInsertHtml(html) {
+    if (editorMode !== 'visual') peSetEditorMode('visual');
+    document.getElementById('peVisualContent')?.focus();
+    document.execCommand('insertHTML', false, html);
+    peVisualChanged();
+  }
+  window.peToggleFullscreen = () =>
+    document.getElementById('post-editor')?.classList.toggle('pe-editor-fullscreen');
+  window.peFormat = window.peExec;
+  window.peInsertHeading = () => peExec('formatBlock', 'h2');
+  window.peInsertList = () => peExec('insertUnorderedList');
+  window.renderPostsBranchTabs = () => {};
+  window.filterPostsByBranch = () => load(1);
+  setTimeout(() => {
+    if (document.querySelector('#postsTable tbody')) load(1);
+  }, 200);
 })();

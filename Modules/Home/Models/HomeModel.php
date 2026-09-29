@@ -4,9 +4,10 @@ namespace Modules\Home\Models;
 
 use Core\database\Model;
 
-class HomeModel extends Model {
+class HomeModel extends Model
+{
 
-    protected static string $table='homes';
-    protected static string $primaryKey='home_id';
+    protected static string $table = 'homes';
+    protected static string $primaryKey = 'home_id';
 
 }

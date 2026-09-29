@@ -2,22 +2,25 @@
 
 namespace Modules\Finance\Policies;
 
-class FinancePolicy {
-
-    public function view($user,$model): bool {
+class FinancePolicy
+{
+    public function view($user, $model): bool
+    {
         return true;
     }
 
-    public function create($user): bool {
+    public function create($user): bool
+    {
         return true;
     }
 
-    public function update($user,$model): bool {
+    public function update($user, $model): bool
+    {
         return true;
     }
 
-    public function delete($user,$model): bool {
+    public function delete($user, $model): bool
+    {
         return true;
     }
-
 }

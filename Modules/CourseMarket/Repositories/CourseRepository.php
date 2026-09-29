@@ -5,9 +5,14 @@ use PDO;
 
 class CourseRepository
 {
-    public function __construct(private PDO $db) {}
+    public function __construct(private PDO $db)
+    {
+    }
 
-    public function connection(): PDO { return $this->db; }
+    public function connection(): PDO
+    {
+        return $this->db;
+    }
 
     public function query(string $sql, array $params = []): array
     {
@@ -23,8 +28,8 @@ class CourseRepository
 
     public function insert(string $table, array $values): int
     {
-        $this->query('INSERT INTO '.$table.' (`'.implode('`,`', array_keys($values)).'`) VALUES ('.implode(',', array_fill(0, count($values), '?')).')', array_values($values));
-        return (int)$this->db->lastInsertId();
+        $this->query('INSERT INTO ' . $table . ' (`' . implode('`,`', array_keys($values)) . '`) VALUES (' . implode(',', array_fill(0, count($values), '?')) . ')', array_values($values));
+        return (int) $this->db->lastInsertId();
     }
 
     public function transaction(callable $callback): mixed

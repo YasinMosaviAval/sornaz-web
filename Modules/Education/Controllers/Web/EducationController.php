@@ -8,118 +8,110 @@ use Modules\Education\Repositories\EducationRepository;
 use Modules\Education\Requests\EducationStoreRequest;
 use Modules\Education\Requests\EducationUpdateRequest;
 
-class EducationController {
+class EducationController
+{
 
     protected EducationService $service;
 
-
-
-    public function __construct() {
+    public function __construct()
+    {
         $this->service = new EducationService(new EducationRepository());
     }
-
-
 
     /**
      * لیست
      */
-    public function index() {
+    public function index()
+    {
         $items = $this->service->all();
         return ResponseFactory::view(
-                'Education::index',
-                [
-                    'items' => $items
-                ]
-            )
+            'Education::index',
+            [
+                'items' => $items
+            ]
+        )
             ->layout('main')
             ->title('Education');
     }
 
-
-
     /**
      * فرم ایجاد
      */
-    public function create() {
+    public function create()
+    {
         return ResponseFactory::view(
-                'Education::create'
-            )
+            'Education::create'
+        )
             ->layout('main')
             ->title('ایجاد Education');
     }
 
-
-
     /**
      * ذخیره
      */
-    public function store() {
+    public function store()
+    {
         $request = new EducationStoreRequest($_POST);
         $data = $request->validated();
         $this->service->create($data);
         return redirect('/educations');
     }
 
-
-
     /**
      * نمایش
      */
-    public function show(int $id) {
+    public function show(int $id)
+    {
         $item = $this->service->findById($id);
         if (!$item) {
             abort(404);
         }
         return ResponseFactory::view(
-                'Education::show',
-                [
-                    'item' => $item
-                ]
-            )
+            'Education::show',
+            [
+                'item' => $item
+            ]
+        )
             ->layout('main')
             ->title('نمایش Education');
     }
 
-
-
     /**
      * فرم ویرایش
      */
-    public function edit(int $id) {
+    public function edit(int $id)
+    {
         $item = $this->service->findById($id);
         if (!$item) {
             abort(404);
         }
         return ResponseFactory::view(
-                'Education::edit',
-                [
-                    'item' => $item
-                ]
-            )
+            'Education::edit',
+            [
+                'item' => $item
+            ]
+        )
             ->layout('main')
             ->title('ویرایش Education');
     }
 
-
-
     /**
      * بروزرسانی
      */
-    public function update(int $id) {
+    public function update(int $id)
+    {
         $request = new EducationUpdateRequest($_POST);
         $data = $request->validated();
         $this->service->update($id, $data);
         return redirect('/educations');
     }
 
-
-
     /**
      * حذف
      */
-    public function destroy(int $id) {
+    public function destroy(int $id)
+    {
         $this->service->delete($id);
         return redirect('/educations');
     }
-
 }

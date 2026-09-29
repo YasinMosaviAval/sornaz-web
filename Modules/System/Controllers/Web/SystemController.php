@@ -5,27 +5,29 @@ namespace Modules\System\Controllers\Web;
 use Core\http\ResponseFactory;
 use Modules\System\Services\SystemService;
 
-
-class SystemController {
-
-
-
-    public function __construct(protected SystemService $service) {
+class SystemController
+{
+    public function __construct(protected SystemService $service)
+    {
     }
 
-    public function login() {
+    public function login()
+    {
         return ResponseFactory::view('System::login')->layout('auth')->title(trans('auth.meta.login', 'سُرناز | ورود'));
     }
 
-    public function register() {
+    public function register()
+    {
         return ResponseFactory::view('System::register')->layout('auth')->title(trans('auth.meta.register', 'سُرناز | ثبت نام'));
     }
 
-    public function forgotPassword() {
+    public function forgotPassword()
+    {
         return ResponseFactory::view('System::forgot-password')->layout('auth')->title(trans('auth.meta.forgot', 'سُرناز | فراموشی رمز عبور'));
     }
 
-    public function changeLanguage(string $locale) {
+    public function changeLanguage(string $locale)
+    {
         if (!in_array($locale, ['fa', 'en'], true)) {
             abort(404);
         }
@@ -35,7 +37,6 @@ class SystemController {
         $query = parse_url($returnTo, PHP_URL_QUERY);
         return redirect($path . ($query ? '?' . $query : ''));
     }
-
 }
 
 /*

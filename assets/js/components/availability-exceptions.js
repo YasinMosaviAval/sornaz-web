@@ -1,14 +1,10 @@
-let exceptionIndex = document.querySelectorAll(".availability-exception-row").length;
+let exceptionIndex = document.querySelectorAll('.availability-exception-row').length;
 
-document.addEventListener("click", function (e) {
-
-    if (e.target.id === "add-exception") {
-
-        document
-            .getElementById("availability-exception-list")
-            .insertAdjacentHTML(
-                "beforeend",
-                `
+document.addEventListener('click', function (e) {
+  if (e.target.id === 'add-exception') {
+    document.getElementById('availability-exception-list').insertAdjacentHTML(
+      'beforeend',
+      `
                 <div class="availability-exception-row">
 
                     <input
@@ -48,13 +44,12 @@ document.addEventListener("click", function (e) {
 
                 </div>
                 `
-            );
+    );
 
-        exceptionIndex++;
-    }
+    exceptionIndex++;
+  }
 
-    if (e.target.classList.contains("exception-remove")) {
-        e.target.closest(".availability-exception-row").remove();
-    }
-
+  if (e.target.classList.contains('exception-remove')) {
+    e.target.closest('.availability-exception-row').remove();
+  }
 });

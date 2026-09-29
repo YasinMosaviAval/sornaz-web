@@ -4,19 +4,21 @@ namespace Modules\Communication\Requests;
 
 use Core\validation\FormRequest;
 
-class CommunicationStoreRequest extends FormRequest {
-
+class CommunicationStoreRequest extends FormRequest
+{
     /**
      * آیا کاربر اجازه اجرای این درخواست را دارد؟
      */
-    public function authorize(): bool {
+    public function authorize(): bool
+    {
         return true;
     }
 
     /**
      * قوانین اعتبارسنجی
      */
-    public function rules(): array {
+    public function rules(): array
+    {
         return [
 
         ];
@@ -25,7 +27,8 @@ class CommunicationStoreRequest extends FormRequest {
     /**
      * پیام‌های اعتبارسنجی
      */
-    public function messages(): array {
+    public function messages(): array
+    {
         return [
 
         ];
@@ -34,11 +37,10 @@ class CommunicationStoreRequest extends FormRequest {
     /**
      * نام‌های فارسی فیلدها
      */
-    public function attributes(): array {
+    public function attributes(): array
+    {
         return [
 
         ];
     }
-
-
 }

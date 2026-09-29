@@ -2,6 +2,7 @@
 
 namespace Modules\Academy\Events;
 
-class AcademyEvent {
+class AcademyEvent
+{
 
 }

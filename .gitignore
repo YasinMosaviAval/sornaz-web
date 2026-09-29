@@ -40,3 +40,5 @@
 /storage/apply-audio-fixes.ps1
 /storage/audio-fix-baseline.json
 /storage/theme-fix-baseline.txt
+/storage/code-quality/
+/scripts/format-tools/node_modules/

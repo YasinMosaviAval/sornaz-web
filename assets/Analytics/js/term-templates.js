@@ -1,36 +1,54 @@
 (function () {
-    function escapeHtml(value) {
-        return String(value ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 
-    function renderOptions(options, selectedValue) {
-        return (options || []).map(option => {
-            const value = option.value ?? option.id ?? option.name ?? option;
-            const label = option.label ?? option.name ?? option;
-            const isSelected = String(value) === String(selectedValue) ? 'selected' : '';
-            return `<option value="${escapeHtml(value)}" ${isSelected}>${escapeHtml(label)}</option>`;
-        }).join('');
-    }
+  function renderOptions(options, selectedValue) {
+    return (options || [])
+      .map((option) => {
+        const value = option.value ?? option.id ?? option.name ?? option;
+        const label = option.label ?? option.name ?? option;
+        const isSelected = String(value) === String(selectedValue) ? 'selected' : '';
+        return `<option value="${escapeHtml(value)}" ${isSelected}>${escapeHtml(label)}</option>`;
+      })
+      .join('');
+  }
 
-    function statusBadgeClass(status) {
-        return {
-            'باز': 'bg-green-100 text-green-700',
-            'در حال برگزاری': 'bg-gray-100 text-gray-700',
-            'پایان یافته': 'bg-red-100 text-red-700',
-            'در انتظار تأیید': 'bg-yellow-100 text-yellow-700'
-        }[status] || 'bg-gray-100 text-gray-600';
-    }
+  function statusBadgeClass(status) {
+    return (
+      {
+        باز: 'bg-green-100 text-green-700',
+        'در حال برگزاری': 'bg-gray-100 text-gray-700',
+        'پایان یافته': 'bg-red-100 text-red-700',
+        'در انتظار تأیید': 'bg-yellow-100 text-yellow-700',
+      }[status] || 'bg-gray-100 text-gray-600'
+    );
+  }
 
-    window.getTermRowHTML = function (item, statusClass) {
-        const dayNames=['یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه','شنبه'];
-        const days=[...new Set((item.sessions||[]).filter(s=>s.date).map(s=>dayNames[new Date(s.date+'T12:00:00').getDay()]))].join('، ')||'—';
-        const times=[...new Set((item.sessions||[]).filter(s=>s.startTime).map(s=>s.startTime+(s.endTime?' تا '+s.endTime:'')))].join('، ')||'—';
-        return `
+  window.getTermRowHTML = function (item, statusClass) {
+    const dayNames = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'];
+    const days =
+      [
+        ...new Set(
+          (item.sessions || [])
+            .filter((s) => s.date)
+            .map((s) => dayNames[new Date(s.date + 'T12:00:00').getDay()])
+        ),
+      ].join('، ') || '—';
+    const times =
+      [
+        ...new Set(
+          (item.sessions || [])
+            .filter((s) => s.startTime)
+            .map((s) => s.startTime + (s.endTime ? ' تا ' + s.endTime : ''))
+        ),
+      ].join('، ') || '—';
+    return `
             <td class="py-4 px-5 font-medium">${escapeHtml(item.name)}</td>
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
             <td class="py-4 px-5">${escapeHtml(item.course || '—')}</td>
@@ -39,7 +57,7 @@
             <td class="py-4 px-5">${escapeHtml(days)}</td>
             <td class="py-4 px-5">${escapeHtml(times)}</td>
             <td class="py-4 px-5">
-                ${window.termPermissions?.isReceptionist?`<span class="px-3 py-1 rounded-full text-xs ${statusClass || statusBadgeClass(item.status)}">${escapeHtml(item.status)}</span>`:`<button type="button" onclick="cycleTermStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${statusClass || statusBadgeClass(item.status)}">${escapeHtml(item.status)}</button>`}
+                ${window.termPermissions?.isReceptionist ? `<span class="px-3 py-1 rounded-full text-xs ${statusClass || statusBadgeClass(item.status)}">${escapeHtml(item.status)}</span>` : `<button type="button" onclick="cycleTermStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${statusClass || statusBadgeClass(item.status)}">${escapeHtml(item.status)}</button>`}
             </td>
             <td class="py-4 px-5 text-left">
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
@@ -50,24 +68,24 @@
                 </div>
             </td>
         `;
-    };
+  };
 
-    window.getTermEmptyRowHTML = function () {
-        return `<tr><td colspan="9" class="py-12 text-center text-gray-400">هیچ ترمی یافت نشد</td></tr>`;
-    };
+  window.getTermEmptyRowHTML = function () {
+    return `<tr><td colspan="9" class="py-12 text-center text-gray-400">هیچ ترمی یافت نشد</td></tr>`;
+  };
 
-    window.getTermInlineExpandRowHTML = function (item) {
-        return `<td colspan="9" class="p-5 border-t">${window.getTermInlineEditRowHTML ? window.getTermInlineEditRowHTML(item) : ''}</td>`;
-    };
+  window.getTermInlineExpandRowHTML = function (item) {
+    return `<td colspan="9" class="p-5 border-t">${window.getTermInlineEditRowHTML ? window.getTermInlineEditRowHTML(item) : ''}</td>`;
+  };
 
-    window.getTermInlineAttendanceRowHTML = function (item) {
-        return `<td colspan="9" class="p-5 border-t">${window.getTermAttendancePanelHTML ? window.getTermAttendancePanelHTML(item, true) : ''}</td>`;
-    };
+  window.getTermInlineAttendanceRowHTML = function (item) {
+    return `<td colspan="9" class="p-5 border-t">${window.getTermAttendancePanelHTML ? window.getTermAttendancePanelHTML(item, true) : ''}</td>`;
+  };
 
-    window.getTermTeacherFieldHTML = function (item) {
-        item = item || {};
-        const teachers = (typeof getTermTeacherOptions === 'function') ? getTermTeacherOptions() : [];
-        return `
+  window.getTermTeacherFieldHTML = function (item) {
+    item = item || {};
+    const teachers = typeof getTermTeacherOptions === 'function' ? getTermTeacherOptions() : [];
+    return `
             <div class="border border-gray-200 rounded-2xl p-4 mb-3 term-teacher-item">
                 <div class="flex flex-col sm:flex-row gap-3 items-end">
                     <div class="flex-1 w-full">
@@ -80,12 +98,12 @@
                     <button type="button" onclick="if (document.querySelectorAll('.term-teacher-item').length > 1) this.closest('.term-teacher-item').remove(); else alert('حداقل یک استاد لازم است')" class="text-red-500 text-sm px-3 py-2 hover:underline">حذف</button>
                 </div>
             </div>`;
-    };
+  };
 
-    window.getTermStudentFieldHTML = function (item) {
-        item = item || {};
-        const students = (typeof getTermStudentOptions === 'function') ? getTermStudentOptions() : [];
-        return `
+  window.getTermStudentFieldHTML = function (item) {
+    item = item || {};
+    const students = typeof getTermStudentOptions === 'function' ? getTermStudentOptions() : [];
+    return `
             <div class="border border-gray-200 rounded-2xl p-4 mb-3 term-student-item">
                 <div class="flex flex-col sm:flex-row gap-3 items-end">
                     <div class="flex-1 w-full">
@@ -98,11 +116,11 @@
                     <button type="button" onclick="if (document.querySelectorAll('.term-student-item').length > 1) this.closest('.term-student-item').remove(); else alert('حداقل یک هنرجو لازم است')" class="text-red-500 text-sm px-3 py-2 hover:underline">حذف</button>
                 </div>
             </div>`;
-    };
+  };
 
-    window.getTermInstallmentFieldHTML = function (item) {
-        item = item || {};
-        return `
+  window.getTermInstallmentFieldHTML = function (item) {
+    item = item || {};
+    return `
             <div class="border border-gray-200 rounded-2xl p-4 mb-3 term-installment-item">
                 <div class="flex flex-col sm:flex-row gap-3 items-end">
                     <div class="flex-1 w-full">
@@ -112,51 +130,69 @@
                     <button type="button" onclick="if (document.querySelectorAll('.term-installment-item').length > 1) this.closest('.term-installment-item').remove(); else alert('حداقل یک قسط لازم است')" class="text-red-500 text-sm px-3 py-2 hover:underline">حذف</button>
                 </div>
             </div>`;
-    };
+  };
 
-    window.getTermSessionFieldsHTML = function (sessions) {
-        sessions = sessions || [];
-        const list = sessions.length ? sessions : [{ date: '' }];
-        return list.map(function (s, i) {
-            return `
+  window.getTermSessionFieldsHTML = function (sessions) {
+    sessions = sessions || [];
+    const list = sessions.length ? sessions : [{ date: '' }];
+    return list
+      .map(function (s, i) {
+        return `
             <div class="mb-3">
                 <label class="text-xs text-gray-500 mb-1 block">جلسه ${i + 1}</label>
                 <input type="date" class="term-session-date w-full border border-gray-300 rounded-2xl py-3 px-4"
                        data-session-index="${i}" value="${escapeHtml(s.date || '')}">
             </div>`;
-        }).join('');
+      })
+      .join('');
+  };
+
+  function termFormFields(item, prefix) {
+    const id = function (name) {
+      return prefix ? prefix + name : 'term' + name;
     };
+    const branches = (typeof allBranches !== 'undefined' ? allBranches : []).map(function (b) {
+      return { value: b.id, label: b.name };
+    });
+    const courses = typeof getTermCourseOptions === 'function' ? getTermCourseOptions() : [];
+    const currencies = (typeof allTermCurrencies !== 'undefined' ? allTermCurrencies : []).map(
+      function (c) {
+        return { value: c.name, label: c.name };
+      }
+    );
+    const discounts = (typeof allTermDiscounts !== 'undefined' ? allTermDiscounts : []).map(
+      function (d) {
+        return { value: d.name, label: d.name };
+      }
+    );
+    const classrooms =
+      typeof getTermClassroomOptions === 'function' ? getTermClassroomOptions() : [];
+    const statuses = (
+      typeof termStatuses !== 'undefined'
+        ? termStatuses
+        : ['در حال برگزاری', 'در انتظار', 'پایان‌یافته', 'تعلیق‌شده']
+    ).map(function (s) {
+      return { value: s, label: s };
+    });
 
-    function termFormFields(item, prefix) {
-        const id = function (name) { return prefix ? (prefix + name) : ('term' + name); };
-        const branches = (typeof allBranches !== 'undefined' ? allBranches : []).map(function (b) {
-            return { value: b.id, label: b.name };
+    const teachers = item.teachers && item.teachers.length ? item.teachers : [{}];
+    const students = item.students && item.students.length ? item.students : [{}];
+    const installmentCount =
+      item.installments && item.installments.length ? item.installments.length : 1;
+    const sessions = item.sessions || [];
+    const sessionCount = sessions.length || 8;
+
+    const tContainer = prefix ? prefix + 'TeachersContainer' : 'termTeachersContainer';
+    const sContainer = prefix ? prefix + 'StudentsContainer' : 'termStudentsContainer';
+    const sessContainer = prefix ? prefix + 'SessionsContainer' : 'termSessionsContainer';
+
+    const sessionList = sessions.length
+      ? sessions
+      : Array.from({ length: sessionCount }, function () {
+          return { date: '' };
         });
-        const courses = (typeof getTermCourseOptions === 'function') ? getTermCourseOptions() : [];
-        const currencies = (typeof allTermCurrencies !== 'undefined' ? allTermCurrencies : []).map(function (c) {
-            return { value: c.name, label: c.name };
-        });
-        const discounts = (typeof allTermDiscounts !== 'undefined' ? allTermDiscounts : []).map(function (d) {
-            return { value: d.name, label: d.name };
-        });
-        const classrooms = (typeof getTermClassroomOptions === 'function') ? getTermClassroomOptions() : [];
-        const statuses = (typeof termStatuses !== 'undefined' ? termStatuses : ['در حال برگزاری', 'در انتظار', 'پایان‌یافته', 'تعلیق‌شده']).map(function (s) {
-            return { value: s, label: s };
-        });
 
-        const teachers = (item.teachers && item.teachers.length) ? item.teachers : [{}];
-        const students = (item.students && item.students.length) ? item.students : [{}];
-        const installmentCount = (item.installments && item.installments.length) ? item.installments.length : 1;
-        const sessions = item.sessions || [];
-        const sessionCount = sessions.length || 8;
-
-        const tContainer = prefix ? (prefix + 'TeachersContainer') : 'termTeachersContainer';
-        const sContainer = prefix ? (prefix + 'StudentsContainer') : 'termStudentsContainer';
-        const sessContainer = prefix ? (prefix + 'SessionsContainer') : 'termSessionsContainer';
-
-        const sessionList = sessions.length ? sessions : Array.from({ length: sessionCount }, function () { return { date: '' }; });
-
-        return `
+    return `
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div>
                     <label class="block text-sm font-medium mb-2">نام ترم *</label>
@@ -242,14 +278,22 @@
 
             <div class="mt-6">
                 <label class="block text-sm font-medium mb-2">استادها</label>
-                <div id="${tContainer}">${teachers.map(function (t) { return window.getTermTeacherFieldHTML(t); }).join('')}</div>
+                <div id="${tContainer}">${teachers
+                  .map(function (t) {
+                    return window.getTermTeacherFieldHTML(t);
+                  })
+                  .join('')}</div>
                 <button type="button" onclick="addTermTeacherField('${tContainer}')" class="mt-2 text-sm text-indigo-600">+ افزودن استاد</button>
             </div>
 
             <div class="mt-6">
                 <label class="block text-sm font-medium mb-2">هنرجویان</label>
-                <div id="${sContainer}">${students.map(function (s) { return window.getTermStudentFieldHTML(s); }).join('')}</div>
-                <div id="${prefix ? (prefix + 'CourseCapacityHint') : 'termCourseCapacityHint'}" class="text-xs text-gray-500 mb-2">${item.course ? `ظرفیت هنرجویان این دوره ${window.getTermCourseCapacity(item.courseId || item.course)} نفر است` : 'ظرفیت دوره بعد از انتخاب دوره نمایش داده می‌شود'}</div>
+                <div id="${sContainer}">${students
+                  .map(function (s) {
+                    return window.getTermStudentFieldHTML(s);
+                  })
+                  .join('')}</div>
+                <div id="${prefix ? prefix + 'CourseCapacityHint' : 'termCourseCapacityHint'}" class="text-xs text-gray-500 mb-2">${item.course ? `ظرفیت هنرجویان این دوره ${window.getTermCourseCapacity(item.courseId || item.course)} نفر است` : 'ظرفیت دوره بعد از انتخاب دوره نمایش داده می‌شود'}</div>
                 <button type="button" onclick="addTermStudentField('${sContainer}')" class="mt-2 text-sm text-indigo-600">+ افزودن هنرجو</button>
             </div>
 
@@ -257,10 +301,10 @@
                 <div class="text-xs text-gray-500">تعداد اقساط را مشخص کنید و مبلغ کل ترم به‌صورت خودکار میان اقساط تقسیم می‌شود.</div>
             </div>
         `;
-    }
+  }
 
-    window.getTermInlineEditRowHTML = function (item) {
-        return `
+  window.getTermInlineEditRowHTML = function (item) {
+    return `
             <div class="space-y-6">
                 ${termFormFields(item, 'inlineTerm' + item.id)}
                 <div class="flex flex-col sm:flex-row gap-4 pt-2">
@@ -269,10 +313,10 @@
                 </div>
             </div>
         `;
-    };
+  };
 
-    window.getTermAddModalHTML = function () {
-        return `
+  window.getTermAddModalHTML = function () {
+    return `
             <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
                 <div class="bg-white rounded-3xl w-full max-w-3xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                     <div class="bg-white px-8 py-5 border-b flex justify-between items-center">
@@ -288,10 +332,10 @@
                     </div>
                 </div>
             </div>`;
-    };
+  };
 
-    window.getTermEditModalHTML = function (item) {
-        return `
+  window.getTermEditModalHTML = function (item) {
+    return `
             <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
                 <div class="bg-white rounded-3xl w-full max-w-3xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                     <div class="bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl">
@@ -307,43 +351,111 @@
                     </div>
                 </div>
             </div>`;
-    };
+  };
 
-    function attendanceStatsHTML(item) {
-        const stats = (typeof getTermAttendanceStats === 'function')
-            ? getTermAttendanceStats(item)
-            : { present: 0, absent: 0, total: 0, rate: 0 };
-        const faValue = value => value === undefined || value === null || value === '' ? 'تعریف نشده' : value;
-        return `
+  function attendanceStatsHTML(item) {
+    const stats =
+      typeof getTermAttendanceStats === 'function'
+        ? getTermAttendanceStats(item)
+        : { present: 0, absent: 0, total: 0, rate: 0 };
+    const faValue = (value) =>
+      value === undefined || value === null || value === '' ? 'تعریف نشده' : value;
+    return `
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                 <div class="bg-gray-50 rounded-2xl py-3"><div class="text-xs text-gray-400">کل رکورد</div><div class="font-bold mt-1">${faValue(stats.total)}</div></div>
                 <div class="bg-green-50 rounded-2xl py-3"><div class="text-xs text-gray-400">حاضر</div><div class="font-bold mt-1 text-green-700">${faValue(stats.present)}</div></div>
                 <div class="bg-red-50 rounded-2xl py-3"><div class="text-xs text-gray-400">غایب</div><div class="font-bold mt-1 text-red-600">${faValue(stats.absent)}</div></div>
                 <div class="bg-indigo-50 rounded-2xl py-3"><div class="text-xs text-gray-400">درصد حضور</div><div class="font-bold mt-1 text-indigo-700">${stats.rate === undefined || stats.rate === null || stats.rate === '' ? 'تعریف نشده' : stats.rate + '٪'}</div></div>
             </div>`;
-    }
+  }
 
-    window.getTermDetailsModalHTML = function (item) {
-        const hasSessionHistory=(item.sessions||[]).some(s=>s.type==='makeup'||(s.cancellationStatus&&s.cancellationStatus!=='none'));
-        const sessionOrdinals={1:'اول',2:'دوم',3:'سوم',4:'چهارم',5:'پنجم',6:'ششم',7:'هفتم',8:'هشتم',9:'نهم',10:'دهم',11:'یازدهم',12:'دوازدهم',13:'سیزدهم',14:'چهاردهم',15:'پانزدهم',16:'شانزدهم',17:'هفدهم',18:'هجدهم',19:'نوزدهم',20:'بیستم'};
-        const teachers = (item.teachers || []).map(function (t) { return escapeHtml(t.name || t); }).join('، ') || '—';
-        const students = (item.students || []).map(function (s) { return escapeHtml(s.name || s); }).join('، ') || '—';
-        const installments = (item.installments || []).map(function (x, i) {
-            return `<div class="flex justify-between border-b pb-2 text-sm"><span>قسط ${i + 1}</span><span class="font-medium">${Number(x.amount || 0).toLocaleString('fa-IR')}</span></div>`;
-        }).join('') || '<p class="text-sm text-gray-400">قسطی ثبت نشده</p>';
-        const sessions = (item.sessions || []).map(function (s, i) {
-            const number=s.number||i+1;
-            const title=s.type==='makeup'?`جلسه جبرانی برای جلسه ${sessionOrdinals[number]||number} برگزار نشده ترم ${escapeHtml(item.name)}`:`جلسه ${number}`;
-            const cancellation=s.cancellationStatus||'none',booking=s.bookingStatus||'';
-            const status=cancellation==='pending'?'در انتظار تأیید لغو':cancellation==='approved'||booking==='canceled'?'لغوشده':cancellation==='rejected'?'درخواست لغو رد شده':s.type==='makeup'&&booking==='pending'?'جبرانی در انتظار تأیید':s.type==='makeup'&&booking==='rejected'?'جلسه جبرانی رد شده':'';
-            const canCancel=['none','rejected'].includes(cancellation)&&!['canceled','rejected','completed','held'].includes(booking)&&window.termPermissions?.canCancelSessions;
-            const canDecide=cancellation==='pending'&&window.termPermissions?.canApproveSessionCancellations;
-            const canRestore=cancellation==='pending'||((cancellation==='approved'||booking==='canceled')&&window.termPermissions?.canApproveSessionCancellations);
-            return `<div class="rounded-xl border p-3 text-sm ${s.type==='makeup'?'border-amber-200 bg-amber-50/40':''}"><div class="flex flex-wrap items-center justify-between gap-3"><div><span class="font-medium">${title}</span><div class="mt-1 text-xs text-gray-500">${escapeHtml(window.localizedDateValue?.(s.date)||s.date||'—')}، ${escapeHtml(s.startTime||'—')} تا ${escapeHtml(s.endTime||'—')}</div>${status?`<div class="mt-1 text-xs font-medium text-${cancellation==='approved'||booking==='canceled'?'red':'amber'}-600">${status}</div>`:''}</div><div class="flex gap-2">${canCancel?`<button onclick="openTermSessionCancellation(${item.id},${s.id})" class="rounded-lg border border-red-200 px-3 py-2 text-xs text-red-600">لغو جلسه و تعیین جبرانی</button>`:''}${canRestore?`<button onclick="restoreTermSession(${item.id},${s.id})" class="rounded-lg border border-emerald-200 px-3 py-2 text-xs text-emerald-700">بازگردانی جلسه و حذف جبرانی</button>`:''}${canDecide?`<button onclick="decideTermSessionCancellation(${item.id},${s.id},true)" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs text-white">تأیید</button><button onclick="decideTermSessionCancellation(${item.id},${s.id},false)" class="rounded-lg border border-red-200 px-3 py-2 text-xs text-red-600">رد</button>`:''}</div></div>${s.cancellationReason?`<div class="mt-2 rounded-lg bg-red-50 p-2 text-xs text-red-700"><b>دلیل لغو تاریخ ${escapeHtml(window.localizedDateValue?.(s.date)||s.date)}:</b> ${escapeHtml(s.cancellationReason)}</div>`:''}</div>`;
-        }).join('') || '<p class="text-sm text-gray-400">جلسه‌ای ثبت نشده</p>';
-        const skippedHistory=(item.skippedDates||[]).map(function(skip){const official=skip.reasonType==='national_holiday';return `<div class="rounded-xl border p-3 text-sm ${official?'border-red-200 bg-red-50':'border-amber-200 bg-amber-50'}"><div class="font-medium ${official?'text-red-700':'text-amber-700'}">تاریخ برنامه‌ریزی‌شده جلسه ${skip.sessionNumber} حذف شد</div><div class="mt-1 text-xs text-gray-600">تاریخ حذف‌شده: <b>${escapeHtml(window.localizedDateValue?.(skip.skippedDate)||skip.skippedDate)}</b> · دلیل: ${escapeHtml(skip.reason)}</div><div class="mt-1 text-xs text-gray-500">تاریخ جایگزین: ${escapeHtml(window.localizedDateValue?.(skip.replacementDate)||skip.replacementDate)}</div></div>`;}).join('');
+  window.getTermDetailsModalHTML = function (item) {
+    const hasSessionHistory = (item.sessions || []).some(
+      (s) => s.type === 'makeup' || (s.cancellationStatus && s.cancellationStatus !== 'none')
+    );
+    const sessionOrdinals = {
+      1: 'اول',
+      2: 'دوم',
+      3: 'سوم',
+      4: 'چهارم',
+      5: 'پنجم',
+      6: 'ششم',
+      7: 'هفتم',
+      8: 'هشتم',
+      9: 'نهم',
+      10: 'دهم',
+      11: 'یازدهم',
+      12: 'دوازدهم',
+      13: 'سیزدهم',
+      14: 'چهاردهم',
+      15: 'پانزدهم',
+      16: 'شانزدهم',
+      17: 'هفدهم',
+      18: 'هجدهم',
+      19: 'نوزدهم',
+      20: 'بیستم',
+    };
+    const teachers =
+      (item.teachers || [])
+        .map(function (t) {
+          return escapeHtml(t.name || t);
+        })
+        .join('، ') || '—';
+    const students =
+      (item.students || [])
+        .map(function (s) {
+          return escapeHtml(s.name || s);
+        })
+        .join('، ') || '—';
+    const installments =
+      (item.installments || [])
+        .map(function (x, i) {
+          return `<div class="flex justify-between border-b pb-2 text-sm"><span>قسط ${i + 1}</span><span class="font-medium">${Number(x.amount || 0).toLocaleString('fa-IR')}</span></div>`;
+        })
+        .join('') || '<p class="text-sm text-gray-400">قسطی ثبت نشده</p>';
+    const sessions =
+      (item.sessions || [])
+        .map(function (s, i) {
+          const number = s.number || i + 1;
+          const title =
+            s.type === 'makeup'
+              ? `جلسه جبرانی برای جلسه ${sessionOrdinals[number] || number} برگزار نشده ترم ${escapeHtml(item.name)}`
+              : `جلسه ${number}`;
+          const cancellation = s.cancellationStatus || 'none',
+            booking = s.bookingStatus || '';
+          const status =
+            cancellation === 'pending'
+              ? 'در انتظار تأیید لغو'
+              : cancellation === 'approved' || booking === 'canceled'
+                ? 'لغوشده'
+                : cancellation === 'rejected'
+                  ? 'درخواست لغو رد شده'
+                  : s.type === 'makeup' && booking === 'pending'
+                    ? 'جبرانی در انتظار تأیید'
+                    : s.type === 'makeup' && booking === 'rejected'
+                      ? 'جلسه جبرانی رد شده'
+                      : '';
+          const canCancel =
+            ['none', 'rejected'].includes(cancellation) &&
+            !['canceled', 'rejected', 'completed', 'held'].includes(booking) &&
+            window.termPermissions?.canCancelSessions;
+          const canDecide =
+            cancellation === 'pending' && window.termPermissions?.canApproveSessionCancellations;
+          const canRestore =
+            cancellation === 'pending' ||
+            ((cancellation === 'approved' || booking === 'canceled') &&
+              window.termPermissions?.canApproveSessionCancellations);
+          return `<div class="rounded-xl border p-3 text-sm ${s.type === 'makeup' ? 'border-amber-200 bg-amber-50/40' : ''}"><div class="flex flex-wrap items-center justify-between gap-3"><div><span class="font-medium">${title}</span><div class="mt-1 text-xs text-gray-500">${escapeHtml(window.localizedDateValue?.(s.date) || s.date || '—')}، ${escapeHtml(s.startTime || '—')} تا ${escapeHtml(s.endTime || '—')}</div>${status ? `<div class="mt-1 text-xs font-medium text-${cancellation === 'approved' || booking === 'canceled' ? 'red' : 'amber'}-600">${status}</div>` : ''}</div><div class="flex gap-2">${canCancel ? `<button onclick="openTermSessionCancellation(${item.id},${s.id})" class="rounded-lg border border-red-200 px-3 py-2 text-xs text-red-600">لغو جلسه و تعیین جبرانی</button>` : ''}${canRestore ? `<button onclick="restoreTermSession(${item.id},${s.id})" class="rounded-lg border border-emerald-200 px-3 py-2 text-xs text-emerald-700">بازگردانی جلسه و حذف جبرانی</button>` : ''}${canDecide ? `<button onclick="decideTermSessionCancellation(${item.id},${s.id},true)" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs text-white">تأیید</button><button onclick="decideTermSessionCancellation(${item.id},${s.id},false)" class="rounded-lg border border-red-200 px-3 py-2 text-xs text-red-600">رد</button>` : ''}</div></div>${s.cancellationReason ? `<div class="mt-2 rounded-lg bg-red-50 p-2 text-xs text-red-700"><b>دلیل لغو تاریخ ${escapeHtml(window.localizedDateValue?.(s.date) || s.date)}:</b> ${escapeHtml(s.cancellationReason)}</div>` : ''}</div>`;
+        })
+        .join('') || '<p class="text-sm text-gray-400">جلسه‌ای ثبت نشده</p>';
+    const skippedHistory = (item.skippedDates || [])
+      .map(function (skip) {
+        const official = skip.reasonType === 'national_holiday';
+        return `<div class="rounded-xl border p-3 text-sm ${official ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'}"><div class="font-medium ${official ? 'text-red-700' : 'text-amber-700'}">تاریخ برنامه‌ریزی‌شده جلسه ${skip.sessionNumber} حذف شد</div><div class="mt-1 text-xs text-gray-600">تاریخ حذف‌شده: <b>${escapeHtml(window.localizedDateValue?.(skip.skippedDate) || skip.skippedDate)}</b> · دلیل: ${escapeHtml(skip.reason)}</div><div class="mt-1 text-xs text-gray-500">تاریخ جایگزین: ${escapeHtml(window.localizedDateValue?.(skip.replacementDate) || skip.replacementDate)}</div></div>`;
+      })
+      .join('');
 
-        return `
+    return `
             <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
                 <div class="bg-white rounded-3xl w-full max-w-6xl my-4 shadow-2xl" onclick="event.stopPropagation()">
                     <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl">
@@ -352,7 +464,7 @@
                             <p class="text-sm text-gray-500 mt-1">کد ترم: #${item.id}</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            ${hasSessionHistory?'':`<button onclick="editTerm(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm">ویرایش</button>`}
+                            ${hasSessionHistory ? '' : `<button onclick="editTerm(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm">ویرایش</button>`}
                             <button onclick="openTermAttendanceModal(${item.id})" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-sm">حضور و غیاب</button>
                             <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                         </div>
@@ -386,50 +498,57 @@
                             <div><h3 class="font-semibold text-indigo-700 mb-3">جلسات</h3><div class="space-y-2">${sessions}</div></div>
                             <div><h3 class="font-semibold text-indigo-700 mb-3">اقساط</h3><div class="space-y-2">${installments}</div></div>
                         </div>
-                        ${skippedHistory?`<div><h3 class="mb-3 font-semibold text-amber-700">تاریخ‌های حذف‌شده از برنامه خودکار</h3><div class="space-y-2">${skippedHistory}</div></div>`:''}
+                        ${skippedHistory ? `<div><h3 class="mb-3 font-semibold text-amber-700">تاریخ‌های حذف‌شده از برنامه خودکار</h3><div class="space-y-2">${skippedHistory}</div></div>` : ''}
                     </div>
                 </div>
             </div>`;
-    };
+  };
 
-    window.getTermAttendancePanelHTML = function (item, isInline) {
-        const sessions = item.sessions || [];
-        const teachers = item.teachers || [];
-        const students = item.students || [];
-        const att = item.attendance || {};
+  window.getTermAttendancePanelHTML = function (item, isInline) {
+    const sessions = item.sessions || [];
+    const teachers = item.teachers || [];
+    const students = item.students || [];
+    const att = item.attendance || {};
 
-        if (!sessions.length) {
-            return '<p class="text-center text-gray-400 py-8">جلسه‌ای برای این ترم تعریف نشده است.</p>';
-        }
+    if (!sessions.length) {
+      return '<p class="text-center text-gray-400 py-8">جلسه‌ای برای این ترم تعریف نشده است.</p>';
+    }
 
-        const sessionBlocks = sessions.map(function (s, si) {
-            const key = String(si);
-            const row = att[key] || { teachers: {}, students: {} };
-            const teacherRows = teachers.map(function (t) {
-                const tid = String(t.id || t.name);
-                const checked = row.teachers && row.teachers[tid] ? 'checked' : '';
-                return `<label class="flex items-center gap-2 text-sm py-1">
+    const sessionBlocks = sessions
+      .map(function (s, si) {
+        const key = String(si);
+        const row = att[key] || { teachers: {}, students: {} };
+        const teacherRows =
+          teachers
+            .map(function (t) {
+              const tid = String(t.id || t.name);
+              const checked = row.teachers && row.teachers[tid] ? 'checked' : '';
+              return `<label class="flex items-center gap-2 text-sm py-1">
                     <input type="checkbox" class="att-teacher" data-session="${si}" data-id="${escapeHtml(tid)}" ${checked}>
                     <span>${escapeHtml(t.name || t)}</span>
                     <span class="text-xs text-gray-400">(استاد)</span>
                 </label>`;
-            }).join('') || '<p class="text-xs text-gray-400">استادی ثبت نشده</p>';
+            })
+            .join('') || '<p class="text-xs text-gray-400">استادی ثبت نشده</p>';
 
-            const studentRows = students.map(function (st) {
-                const sid = String(st.id || st.name);
-                const checked = row.students && row.students[sid] ? 'checked' : '';
-                return `<label class="flex items-center gap-2 text-sm py-1">
+        const studentRows =
+          students
+            .map(function (st) {
+              const sid = String(st.id || st.name);
+              const checked = row.students && row.students[sid] ? 'checked' : '';
+              return `<label class="flex items-center gap-2 text-sm py-1">
                     <input type="checkbox" class="att-student" data-session="${si}" data-id="${escapeHtml(sid)}" ${checked}>
                     <span>${escapeHtml(st.name || st)}</span>
                     <span class="text-xs text-gray-400">(هنرجو)</span>
                 </label>`;
-            }).join('') || '<p class="text-xs text-gray-400">هنرجویی ثبت نشده</p>';
+            })
+            .join('') || '<p class="text-xs text-gray-400">هنرجویی ثبت نشده</p>';
 
-            return `
+        return `
                 <div class="border border-gray-200 rounded-2xl p-4 mb-4">
                     <div class="font-medium mb-3 flex justify-between">
                         <span>جلسه ${si + 1}</span>
-                        <span class="text-sm text-gray-500">${escapeHtml(s.date ? (window.formatLocalizedDate?.(s.date) || s.date) : 'بدون تاریخ')}</span>
+                        <span class="text-sm text-gray-500">${escapeHtml(s.date ? window.formatLocalizedDate?.(s.date) || s.date : 'بدون تاریخ')}</span>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -442,19 +561,20 @@
                         </div>
                     </div>
                 </div>`;
-        }).join('');
+      })
+      .join('');
 
-        const actions = isInline
-            ? `<div class="flex flex-col sm:flex-row gap-4 pt-2">
+    const actions = isInline
+      ? `<div class="flex flex-col sm:flex-row gap-4 pt-2">
                     <button onclick="saveTermAttendance(${item.id}, true)" class="w-full sm:w-auto min-w-[140px] bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-4 rounded-2xl font-medium">ذخیره حضور و غیاب</button>
                     <button onclick="toggleTermInlineAttendance(${item.id})" class="w-full sm:w-auto min-w-[140px] border border-gray-300 px-5 py-4 rounded-2xl hover:bg-gray-50">انصراف</button>
                </div>`
-            : `<div class="flex gap-4 pt-4">
+      : `<div class="flex gap-4 pt-4">
                     <button onclick="saveTermAttendance(${item.id}, false)" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-medium">ذخیره حضور و غیاب</button>
                     <button onclick="closeModal()" class="flex-1 border border-gray-300 py-4 rounded-2xl hover:bg-gray-50">بستن</button>
                </div>`;
 
-        return `
+    return `
             <div class="space-y-4" id="termAttendancePanel-${item.id}">
                 <div class="flex items-center justify-between">
                     <h3 class="font-bold text-lg">حضور و غیاب — ${escapeHtml(item.name)}</h3>
@@ -463,10 +583,10 @@
                 <div class="max-h-[50vh] overflow-y-auto pr-1">${sessionBlocks}</div>
                 ${actions}
             </div>`;
-    };
+  };
 
-    window.getTermAttendanceModalHTML = function (item) {
-        return `
+  window.getTermAttendanceModalHTML = function (item) {
+    return `
             <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
                 <div class="bg-white rounded-3xl w-full max-w-3xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                     <div class="bg-white px-8 py-5 border-b flex justify-between items-center">
@@ -478,10 +598,10 @@
                     </div>
                 </div>
             </div>`;
-    };
+  };
 
-    window.getTermPDFModalHTML = function (pdfExportColumns) {
-        return `
+  window.getTermPDFModalHTML = function (pdfExportColumns) {
+    return `
             <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
                 <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                     <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl">
@@ -522,12 +642,14 @@
                             <div>
                                 <label class="block text-sm font-medium mb-2">ستون‌های خروجی PDF</label>
                                 <div class="grid grid-cols-2 gap-2">
-                                    ${pdfExportColumns.map(function (col) {
+                                    ${pdfExportColumns
+                                      .map(function (col) {
                                         return `<label class="inline-flex items-center gap-2 text-sm">
                                             <input type="checkbox" id="termPdfCol-${col.field}" checked class="text-indigo-600 border-gray-300 rounded">
                                             ${col.label}
                                         </label>`;
-                                    }).join('')}
+                                      })
+                                      .join('')}
                                 </div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -556,81 +678,159 @@
                     </div>
                 </div>
             </div>`;
-    };
+  };
 
-    window.getTermPDFPageHTML = function (pageNumber, rows, isFirstPage, options) {
-        const title = options.title;
-        const subtitle = options.subtitle;
-        const footer = options.footer;
-        const includeDate = options.includeDate;
-        const date = options.date;
-        const headerColor = options.headerColor;
-        const evenRowColor = options.evenRowColor;
-        const oddRowColor = options.oddRowColor;
-        const selectedColumns = options.selectedColumns;
-        const rowsPerPage = options.rowsPerPage;
-        const totalPages = options.totalPages;
+  window.getTermPDFPageHTML = function (pageNumber, rows, isFirstPage, options) {
+    const title = options.title;
+    const subtitle = options.subtitle;
+    const footer = options.footer;
+    const includeDate = options.includeDate;
+    const date = options.date;
+    const headerColor = options.headerColor;
+    const evenRowColor = options.evenRowColor;
+    const oddRowColor = options.oddRowColor;
+    const selectedColumns = options.selectedColumns;
+    const rowsPerPage = options.rowsPerPage;
+    const totalPages = options.totalPages;
 
-        return `
+    return `
             <div style="width:100%; padding: 24px; border-radius: 20px; box-shadow: 0 10px 30px rgba(15,23,42,.08); background: #fff;">
-                ${isFirstPage ? `
+                ${
+                  isFirstPage
+                    ? `
                 <div style="text-align: right; direction: rtl;">
                     <h1 style="margin: 0 0 6px; font-size: 28px; font-weight: 700;">${escapeHtml(title)}</h1>
                     <p style="margin: 0 0 16px; color: #4b5563; font-size: 14px;">${escapeHtml(subtitle)}</p>
                     ${includeDate ? `<p style="margin: 0 0 16px; color: #6b7280; font-size: 12px;">تاریخ استخراج: ${escapeHtml(date)}</p>` : ''}
-                </div>` : ''}
+                </div>`
+                    : ''
+                }
                 <table style="width:100%; border-collapse: collapse; direction: rtl;">
                     <thead style="background: ${headerColor};">
                         <tr>
-                            ${selectedColumns.map(function (col) {
+                            ${selectedColumns
+                              .map(function (col) {
                                 return `<th style="padding: 12px 14px; text-align: right; font-weight: 600;">${escapeHtml(col.label)}</th>`;
-                            }).join('')}
+                              })
+                              .join('')}
                         </tr>
                     </thead>
                     <tbody>
-                        ${rows.map(function (item, index) {
+                        ${rows
+                          .map(function (item, index) {
                             return `<tr style="background: ${index % 2 === 0 ? evenRowColor : oddRowColor};">
-                                ${selectedColumns.map(function (col) {
-                                    const value = col.field === 'index'
+                                ${selectedColumns
+                                  .map(function (col) {
+                                    const value =
+                                      col.field === 'index'
                                         ? (pageNumber - 1) * rowsPerPage + index + 1
                                         : item[col.field];
                                     return `<td style="padding: 12px 14px; text-align: right;">${escapeHtml(value)}</td>`;
-                                }).join('')}
+                                  })
+                                  .join('')}
                             </tr>`;
-                        }).join('')}
+                          })
+                          .join('')}
                     </tbody>
                 </table>
                 ${isFirstPage && footer ? `<p style="margin-top: 16px; color: #6b7280; font-size: 12px;">${escapeHtml(footer)}</p>` : ''}
                 <div style="margin-top: 16px; text-align: left; color: #6b7280; font-size: 12px;">صفحه ${pageNumber} / ${totalPages}</div>
             </div>`;
-    };
+  };
 })();
 
 // فرم دیتابیس‌محور ترم
-(function(){
-const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const opts=(rows,value)=>rows.map(x=>`<option value="${x.id}" ${String(x.id)===String(value)?'selected':''}>${esc(x.name)}</option>`).join('');
-window.getTermTimeOptions=function(times,value){const rows=Array.isArray(times)?times:[];return '<option value="">انتخاب ساعت</option>'+rows.map(time=>`<option value="${time}" ${time===value?'selected':''}>${time}</option>`).join('');};
-function people(prefix,type,capacity,selected){const rows=[];for(let i=0;i<capacity;i++){const current=selected[i]||{};rows.push(`<div class="mb-3"><label class="mb-1 block text-xs text-gray-500">${type==='teacher'?'استاد':'هنرجو'} ${i+1}</label><select class="term-${type}-select w-full rounded-2xl border px-4 py-3" data-person-index="${i}" onchange="refreshTermPeople('${prefix}','${type}')" ${i&&!current.id?'disabled':''}><option value="">انتخاب کنید</option><option value="${current.id||''}" selected>${esc(current.name||'')}</option></select></div>`);}return rows.join('');}
-function termDateInput(prefix,index,value,disabled){const inputId=(prefix||'term')+'SessionDate'+index,display=window.localizedDateValue?window.localizedDateValue(value||''):'';return `<div class="localized-date-field"><input type="text" value="${esc(display)}" data-jdp data-jdp-target-value-input="#${inputId}" data-jdp-target-value-type="gregorian" onchange="termJalaliDateChanged('${prefix}',${index})" autocomplete="off" placeholder="۱۴۰۵/۰۱/۰۱" class="w-full rounded-xl border px-3 py-2.5 disabled:bg-gray-100" ${disabled?'disabled':''}><button type="button" class="localized-date-trigger" onclick="if(!this.previousElementSibling.disabled){this.previousElementSibling.focus();window.openLocalizedDatePicker?.(this.previousElementSibling)}" aria-label="باز کردن تقویم"><i class="far fa-calendar-alt"></i></button><input id="${inputId}" type="hidden" value="${esc(value||'')}" data-session-index="${index}" class="term-session-date"></div>`;}
-window.getTermDateInputHTML=termDateInput;
-function duration(s){if(!s.startTime||!s.endTime)return 90;const[a,b]=s.startTime.split(':').map(Number),[c,d]=s.endTime.split(':').map(Number);return Math.max(1,c*60+d-a*60-b);}function form(item={},prefix=''){const id=n=>prefix?prefix+n:'term'+n,course=item.courseId||'',selectedCourse=(window.termCourses||[]).find(x=>x.id==course),branch=selectedCourse?.organizationUserId||window.termBranches?.[0]?.id||'',classroom=item.classroomId||'',sessions=item.sessions?.length?item.sessions:Array.from({length:8},(_,i)=>({date:'',startTime:i?'':'10:00',endTime:i?'':'11:30'})),teacherCapacity=selectedCourse?.teacher_capacity||1,studentCapacity=selectedCourse?.student_capacity||1,isReceptionist=!!window.termPermissions?.isReceptionist,isBranchContext=!!window.termPermissions?.isBranchContext,status=item.status_code||(isReceptionist?'pending':'open'),cost=item.cost??15000000,repeatType=sessions.length===1?'no-period':(item.repeatType||'week');return `<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-<div><label class="mb-2 block text-sm font-medium">نام ترم *</label><input id="${id('Name')}" value="${esc(item.name||'')}" class="w-full rounded-2xl border px-5 py-3.5"></div>
-<div class="${isBranchContext?'hidden':''}"><label class="mb-2 block text-sm font-medium">سازمان *</label><select id="${id('Branch')}" onchange="refreshTermDependencies('${prefix}')" class="w-full rounded-2xl border px-5 py-3.5">${opts(window.termBranches||[],branch)}</select></div>
-<div><label class="mb-2 block text-sm font-medium">دوره مرتبط *</label><select id="${id('Course')}" onchange="refreshTermCourse('${prefix}')" ${branch?'':'disabled'} class="w-full rounded-2xl border px-5 py-3.5 disabled:bg-gray-100"><option value="">انتخاب دوره</option>${opts((window.termCourses||[]).filter(x=>x.organizationUserId==branch),course)}</select></div>
-<div><label class="mb-2 block text-sm font-medium">کلاس برگزاری *</label><select id="${id('Classroom')}" onchange="refreshTermPeople('${prefix}','teacher');refreshTermPeople('${prefix}','student');syncTermDateAvailability('${prefix}');refreshAllTermSessionAvailability('${prefix}')" ${branch?'':'disabled'} class="w-full rounded-2xl border px-5 py-3.5 disabled:bg-gray-100"><option value="">انتخاب کلاس</option>${opts(window.termClassrooms||[],classroom)}</select></div>
-<div><label class="mb-2 block text-sm font-medium">نوع پول *</label><select id="${id('Currency')}" class="w-full rounded-2xl border px-5 py-3.5">${opts(window.termCurrencies||[],item.currencyId||window.termCurrencies?.[0]?.id)}</select></div>
+(function () {
+  const esc = (v) =>
+    String(v ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  const opts = (rows, value) =>
+    rows
+      .map(
+        (x) =>
+          `<option value="${x.id}" ${String(x.id) === String(value) ? 'selected' : ''}>${esc(x.name)}</option>`
+      )
+      .join('');
+  window.getTermTimeOptions = function (times, value) {
+    const rows = Array.isArray(times) ? times : [];
+    return (
+      '<option value="">انتخاب ساعت</option>' +
+      rows
+        .map(
+          (time) => `<option value="${time}" ${time === value ? 'selected' : ''}>${time}</option>`
+        )
+        .join('')
+    );
+  };
+  function people(prefix, type, capacity, selected) {
+    const rows = [];
+    for (let i = 0; i < capacity; i++) {
+      const current = selected[i] || {};
+      rows.push(
+        `<div class="mb-3"><label class="mb-1 block text-xs text-gray-500">${type === 'teacher' ? 'استاد' : 'هنرجو'} ${i + 1}</label><select class="term-${type}-select w-full rounded-2xl border px-4 py-3" data-person-index="${i}" onchange="refreshTermPeople('${prefix}','${type}')" ${i && !current.id ? 'disabled' : ''}><option value="">انتخاب کنید</option><option value="${current.id || ''}" selected>${esc(current.name || '')}</option></select></div>`
+      );
+    }
+    return rows.join('');
+  }
+  function termDateInput(prefix, index, value, disabled) {
+    const inputId = (prefix || 'term') + 'SessionDate' + index,
+      display = window.localizedDateValue ? window.localizedDateValue(value || '') : '';
+    return `<div class="localized-date-field"><input type="text" value="${esc(display)}" data-jdp data-jdp-target-value-input="#${inputId}" data-jdp-target-value-type="gregorian" onchange="termJalaliDateChanged('${prefix}',${index})" autocomplete="off" placeholder="۱۴۰۵/۰۱/۰۱" class="w-full rounded-xl border px-3 py-2.5 disabled:bg-gray-100" ${disabled ? 'disabled' : ''}><button type="button" class="localized-date-trigger" onclick="if(!this.previousElementSibling.disabled){this.previousElementSibling.focus();window.openLocalizedDatePicker?.(this.previousElementSibling)}" aria-label="باز کردن تقویم"><i class="far fa-calendar-alt"></i></button><input id="${inputId}" type="hidden" value="${esc(value || '')}" data-session-index="${index}" class="term-session-date"></div>`;
+  }
+  window.getTermDateInputHTML = termDateInput;
+  function duration(s) {
+    if (!s.startTime || !s.endTime) return 90;
+    const [a, b] = s.startTime.split(':').map(Number),
+      [c, d] = s.endTime.split(':').map(Number);
+    return Math.max(1, c * 60 + d - a * 60 - b);
+  }
+  function form(item = {}, prefix = '') {
+    const id = (n) => (prefix ? prefix + n : 'term' + n),
+      course = item.courseId || '',
+      selectedCourse = (window.termCourses || []).find((x) => x.id == course),
+      branch = selectedCourse?.organizationUserId || window.termBranches?.[0]?.id || '',
+      classroom = item.classroomId || '',
+      sessions = item.sessions?.length
+        ? item.sessions
+        : Array.from({ length: 8 }, (_, i) => ({
+            date: '',
+            startTime: i ? '' : '10:00',
+            endTime: i ? '' : '11:30',
+          })),
+      teacherCapacity = selectedCourse?.teacher_capacity || 1,
+      studentCapacity = selectedCourse?.student_capacity || 1,
+      isReceptionist = !!window.termPermissions?.isReceptionist,
+      isBranchContext = !!window.termPermissions?.isBranchContext,
+      status = item.status_code || (isReceptionist ? 'pending' : 'open'),
+      cost = item.cost ?? 15000000,
+      repeatType = sessions.length === 1 ? 'no-period' : item.repeatType || 'week';
+    return `<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+<div><label class="mb-2 block text-sm font-medium">نام ترم *</label><input id="${id('Name')}" value="${esc(item.name || '')}" class="w-full rounded-2xl border px-5 py-3.5"></div>
+<div class="${isBranchContext ? 'hidden' : ''}"><label class="mb-2 block text-sm font-medium">سازمان *</label><select id="${id('Branch')}" onchange="refreshTermDependencies('${prefix}')" class="w-full rounded-2xl border px-5 py-3.5">${opts(window.termBranches || [], branch)}</select></div>
+<div><label class="mb-2 block text-sm font-medium">دوره مرتبط *</label><select id="${id('Course')}" onchange="refreshTermCourse('${prefix}')" ${branch ? '' : 'disabled'} class="w-full rounded-2xl border px-5 py-3.5 disabled:bg-gray-100"><option value="">انتخاب دوره</option>${opts(
+      (window.termCourses || []).filter((x) => x.organizationUserId == branch),
+      course
+    )}</select></div>
+<div><label class="mb-2 block text-sm font-medium">کلاس برگزاری *</label><select id="${id('Classroom')}" onchange="refreshTermPeople('${prefix}','teacher');refreshTermPeople('${prefix}','student');syncTermDateAvailability('${prefix}');refreshAllTermSessionAvailability('${prefix}')" ${branch ? '' : 'disabled'} class="w-full rounded-2xl border px-5 py-3.5 disabled:bg-gray-100"><option value="">انتخاب کلاس</option>${opts(window.termClassrooms || [], classroom)}</select></div>
+<div><label class="mb-2 block text-sm font-medium">نوع پول *</label><select id="${id('Currency')}" class="w-full rounded-2xl border px-5 py-3.5">${opts(window.termCurrencies || [], item.currencyId || window.termCurrencies?.[0]?.id)}</select></div>
 <div><label class="mb-2 block text-sm font-medium">هزینه ترم</label><input id="${id('Cost')}" type="number" min="0" value="${cost}" oninput="syncTermFinancialFields('${prefix}')" class="w-full rounded-2xl border px-5 py-3.5"></div>
-<div><label class="mb-2 block text-sm font-medium">تعداد اقساط</label><input id="${id('InstallmentCount')}" type="number" min="1" max="${Math.max(2,sessions.length)}" value="${Math.min(item.installmentCount||1,Math.max(2,sessions.length))}" class="w-full rounded-2xl border px-5 py-3.5 disabled:bg-gray-100"><p class="mt-1 text-xs text-gray-400">حداکثر ${Math.max(2,sessions.length)} قسط</p></div>
-<div><label class="mb-2 block text-sm font-medium">تخفیف</label><select id="${id('Discount')}" class="w-full rounded-2xl border px-5 py-3.5 disabled:bg-gray-100"><option value="">بدون تخفیف</option>${opts(window.termDiscounts||[],item.discountId)}</select><button id="${id('AddDiscount')}" type="button" onclick="openAddTermDiscountModal('${prefix}')" class="mt-2 text-sm text-indigo-600 disabled:text-gray-400" >+ افزودن تخفیف جدید</button></div>
-${isReceptionist?`<input id="${id('Status')}" type="hidden" value="pending">`:`<div><label class="mb-2 block text-sm font-medium">وضعیت</label><select id="${id('Status')}" onchange="syncTermPeopleVisibility('${prefix}')" class="w-full rounded-2xl border px-5 py-3.5"><option value="open" ${status==='open'?'selected':''}>باز</option><option value="ongoing" ${status==='ongoing'?'selected':''}>در حال برگزاری</option></select></div>`}
+<div><label class="mb-2 block text-sm font-medium">تعداد اقساط</label><input id="${id('InstallmentCount')}" type="number" min="1" max="${Math.max(2, sessions.length)}" value="${Math.min(item.installmentCount || 1, Math.max(2, sessions.length))}" class="w-full rounded-2xl border px-5 py-3.5 disabled:bg-gray-100"><p class="mt-1 text-xs text-gray-400">حداکثر ${Math.max(2, sessions.length)} قسط</p></div>
+<div><label class="mb-2 block text-sm font-medium">تخفیف</label><select id="${id('Discount')}" class="w-full rounded-2xl border px-5 py-3.5 disabled:bg-gray-100"><option value="">بدون تخفیف</option>${opts(window.termDiscounts || [], item.discountId)}</select><button id="${id('AddDiscount')}" type="button" onclick="openAddTermDiscountModal('${prefix}')" class="mt-2 text-sm text-indigo-600 disabled:text-gray-400" >+ افزودن تخفیف جدید</button></div>
+${isReceptionist ? `<input id="${id('Status')}" type="hidden" value="pending">` : `<div><label class="mb-2 block text-sm font-medium">وضعیت</label><select id="${id('Status')}" onchange="syncTermPeopleVisibility('${prefix}')" class="w-full rounded-2xl border px-5 py-3.5"><option value="open" ${status === 'open' ? 'selected' : ''}>باز</option><option value="ongoing" ${status === 'ongoing' ? 'selected' : ''}>در حال برگزاری</option></select></div>`}
 <div><label class="mb-2 block text-sm font-medium">تعداد جلسات</label><input id="${id('SessionCount')}" type="number" min="1" max="100" value="${sessions.length}" onchange="rebuildDbTermSessions('${prefix}')" class="w-full rounded-2xl border px-5 py-3.5"></div>
-<div id="${id('RepeatTypeField')}" class="${sessions.length===1?'hidden':''}"><label class="mb-2 block text-sm font-medium">دوره تکرار</label><select id="${id('RepeatType')}" onchange="refreshTermSessionDates('${prefix}')" class="w-full rounded-2xl border px-5 py-3.5"><option value="week" ${repeatType==='week'?'selected':''}>هفتگی</option><option value="2-week" ${repeatType==='2-week'?'selected':''}>دو هفته یک‌بار</option><option value="3-week" ${repeatType==='3-week'?'selected':''}>سه هفته یک‌بار</option><option value="4-week" ${repeatType==='4-week'?'selected':''}>چهار هفته یک‌بار</option><option value="month" ${repeatType==='month'?'selected':''}>ماهانه</option><option value="year" ${repeatType==='year'?'selected':''}>سالانه</option><option value="no-period" ${repeatType==='no-period'?'selected':''}>سایر</option></select></div></div>
-<div class="mt-6 w-full"><label class="mb-2 block text-sm font-medium">تاریخ، منطقه زمانی، ساعت شروع و مدت جلسه</label><div id="${id('SessionsContainer')}" data-term-id="${item.id||0}" class="grid w-full grid-cols-1 gap-3">${sessions.map((s,i)=>`<div class="w-full rounded-2xl border p-4"><label class="mb-2 block text-sm font-medium">جلسه ${i+1}</label><div class="grid grid-cols-1 gap-2 sm:grid-cols-4">${termDateInput(prefix,i,s.date||'',(!course||!classroom)||(i&&repeatType!=='no-period'))}<select class="term-session-timezone w-full rounded-xl border px-3 py-2.5" onchange="termTimezoneChanged('${prefix}',${i},this)" aria-label="منطقه زمانی">${opts(window.termTimezones||[],s.timezoneId||window.termTimezones?.find(x=>x.name==='Asia/Tehran')?.id||window.termTimezones?.[0]?.id)}</select><select disabled class="term-session-start w-full rounded-xl border px-3 py-2.5 disabled:bg-gray-100" ${i===0?`onchange="syncTermSessionTimes('${prefix}')"`:''} aria-label="ساعت شروع">${window.getTermTimeOptions(s.startTime?[s.startTime]:[],s.startTime||'')}</select><div class="relative"><input disabled type="number" min="5" max="1440" step="5" value="${duration(s)}" class="term-session-duration w-full rounded-xl border px-3 py-2.5 pl-14 disabled:bg-gray-100" oninput="termDurationChanged('${prefix}',${i})" onchange="termDurationChanged('${prefix}',${i})" aria-label="مدت جلسه"><span class="pointer-events-none absolute left-3 top-3 text-xs text-gray-400">دقیقه</span></div></div><p class="term-session-note mt-2 hidden text-xs text-amber-700"></p></div>`).join('')}</div></div>
-<div class="mt-6 grid gap-5"><input id="${id('Summary')}" value="${esc(item.summary||'')}" placeholder="خلاصه ترم" class="w-full rounded-2xl border px-5 py-3.5"><textarea id="${id('Description')}" rows="3" placeholder="شرح ترم" class="w-full rounded-2xl border px-5 py-3.5">${esc(item.description||'')}</textarea></div>
-<div id="${id('TeachersField')}" class="mt-6"><h3 class="mb-3 font-medium">استادها (ظرفیت ${teacherCapacity})</h3><div id="${id('TeachersContainer')}">${people(prefix,'teacher',teacherCapacity,item.teachers||[])}</div></div>
-<div id="${id('StudentsField')}" class="mt-6 ${status==='ongoing'||status==='pending'?'hidden':''}"><h3 class="mb-3 font-medium">هنرجویان (ظرفیت ${studentCapacity})</h3><div id="${id('StudentsContainer')}">${people(prefix,'student',studentCapacity,item.students||[])}</div></div>`;}
-window.getTermAddModalHTML=()=>`<div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"><div class="my-8 w-full max-w-4xl overflow-hidden rounded-3xl bg-white"><div class="flex justify-between border-b p-6"><h2 class="text-2xl font-bold">افزودن ترم جدید</h2><button onclick="closeModal()">×</button></div><div class="max-h-[78vh] space-y-6 overflow-y-auto p-7">${form()}<div class="flex gap-3"><button onclick="saveTerm()" class="flex-1 rounded-2xl bg-indigo-600 py-3 text-white">ذخیره ترم</button><button onclick="closeModal()" class="flex-1 rounded-2xl border py-3">انصراف</button></div></div></div></div>`;
-window.getTermEditModalHTML=item=>`<div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"><div class="my-8 w-full max-w-4xl overflow-hidden rounded-3xl bg-white"><div class="flex justify-between border-b p-6"><h2 class="text-2xl font-bold">ویرایش ترم</h2><button onclick="closeModal()">×</button></div><div class="max-h-[78vh] space-y-6 overflow-y-auto p-7">${form(item,'editTerm')}<div class="flex gap-3"><button onclick="saveEditedTerm(${item.id})" class="flex-1 rounded-2xl bg-indigo-600 py-3 text-white">ذخیره تغییرات</button><button onclick="closeModal()" class="flex-1 rounded-2xl border py-3">انصراف</button></div></div></div></div>`;
-window.getTermInlineEditRowHTML=item=>`<div class="space-y-6">${form(item,'inlineTerm'+item.id)}<button onclick="saveInlineTerm(${item.id})" class="rounded-2xl bg-indigo-600 px-6 py-3 text-white">ذخیره</button></div>`;
+<div id="${id('RepeatTypeField')}" class="${sessions.length === 1 ? 'hidden' : ''}"><label class="mb-2 block text-sm font-medium">دوره تکرار</label><select id="${id('RepeatType')}" onchange="refreshTermSessionDates('${prefix}')" class="w-full rounded-2xl border px-5 py-3.5"><option value="week" ${repeatType === 'week' ? 'selected' : ''}>هفتگی</option><option value="2-week" ${repeatType === '2-week' ? 'selected' : ''}>دو هفته یک‌بار</option><option value="3-week" ${repeatType === '3-week' ? 'selected' : ''}>سه هفته یک‌بار</option><option value="4-week" ${repeatType === '4-week' ? 'selected' : ''}>چهار هفته یک‌بار</option><option value="month" ${repeatType === 'month' ? 'selected' : ''}>ماهانه</option><option value="year" ${repeatType === 'year' ? 'selected' : ''}>سالانه</option><option value="no-period" ${repeatType === 'no-period' ? 'selected' : ''}>سایر</option></select></div></div>
+<div class="mt-6 w-full"><label class="mb-2 block text-sm font-medium">تاریخ، منطقه زمانی، ساعت شروع و مدت جلسه</label><div id="${id('SessionsContainer')}" data-term-id="${item.id || 0}" class="grid w-full grid-cols-1 gap-3">${sessions.map((s, i) => `<div class="w-full rounded-2xl border p-4"><label class="mb-2 block text-sm font-medium">جلسه ${i + 1}</label><div class="grid grid-cols-1 gap-2 sm:grid-cols-4">${termDateInput(prefix, i, s.date || '', !course || !classroom || (i && repeatType !== 'no-period'))}<select class="term-session-timezone w-full rounded-xl border px-3 py-2.5" onchange="termTimezoneChanged('${prefix}',${i},this)" aria-label="منطقه زمانی">${opts(window.termTimezones || [], s.timezoneId || window.termTimezones?.find((x) => x.name === 'Asia/Tehran')?.id || window.termTimezones?.[0]?.id)}</select><select disabled class="term-session-start w-full rounded-xl border px-3 py-2.5 disabled:bg-gray-100" ${i === 0 ? `onchange="syncTermSessionTimes('${prefix}')"` : ''} aria-label="ساعت شروع">${window.getTermTimeOptions(s.startTime ? [s.startTime] : [], s.startTime || '')}</select><div class="relative"><input disabled type="number" min="5" max="1440" step="5" value="${duration(s)}" class="term-session-duration w-full rounded-xl border px-3 py-2.5 pl-14 disabled:bg-gray-100" oninput="termDurationChanged('${prefix}',${i})" onchange="termDurationChanged('${prefix}',${i})" aria-label="مدت جلسه"><span class="pointer-events-none absolute left-3 top-3 text-xs text-gray-400">دقیقه</span></div></div><p class="term-session-note mt-2 hidden text-xs text-amber-700"></p></div>`).join('')}</div></div>
+<div class="mt-6 grid gap-5"><input id="${id('Summary')}" value="${esc(item.summary || '')}" placeholder="خلاصه ترم" class="w-full rounded-2xl border px-5 py-3.5"><textarea id="${id('Description')}" rows="3" placeholder="شرح ترم" class="w-full rounded-2xl border px-5 py-3.5">${esc(item.description || '')}</textarea></div>
+<div id="${id('TeachersField')}" class="mt-6"><h3 class="mb-3 font-medium">استادها (ظرفیت ${teacherCapacity})</h3><div id="${id('TeachersContainer')}">${people(prefix, 'teacher', teacherCapacity, item.teachers || [])}</div></div>
+<div id="${id('StudentsField')}" class="mt-6 ${status === 'ongoing' || status === 'pending' ? 'hidden' : ''}"><h3 class="mb-3 font-medium">هنرجویان (ظرفیت ${studentCapacity})</h3><div id="${id('StudentsContainer')}">${people(prefix, 'student', studentCapacity, item.students || [])}</div></div>`;
+  }
+  window.getTermAddModalHTML = () =>
+    `<div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"><div class="my-8 w-full max-w-4xl overflow-hidden rounded-3xl bg-white"><div class="flex justify-between border-b p-6"><h2 class="text-2xl font-bold">افزودن ترم جدید</h2><button onclick="closeModal()">×</button></div><div class="max-h-[78vh] space-y-6 overflow-y-auto p-7">${form()}<div class="flex gap-3"><button onclick="saveTerm()" class="flex-1 rounded-2xl bg-indigo-600 py-3 text-white">ذخیره ترم</button><button onclick="closeModal()" class="flex-1 rounded-2xl border py-3">انصراف</button></div></div></div></div>`;
+  window.getTermEditModalHTML = (item) =>
+    `<div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"><div class="my-8 w-full max-w-4xl overflow-hidden rounded-3xl bg-white"><div class="flex justify-between border-b p-6"><h2 class="text-2xl font-bold">ویرایش ترم</h2><button onclick="closeModal()">×</button></div><div class="max-h-[78vh] space-y-6 overflow-y-auto p-7">${form(item, 'editTerm')}<div class="flex gap-3"><button onclick="saveEditedTerm(${item.id})" class="flex-1 rounded-2xl bg-indigo-600 py-3 text-white">ذخیره تغییرات</button><button onclick="closeModal()" class="flex-1 rounded-2xl border py-3">انصراف</button></div></div></div></div>`;
+  window.getTermInlineEditRowHTML = (item) =>
+    `<div class="space-y-6">${form(item, 'inlineTerm' + item.id)}<button onclick="saveInlineTerm(${item.id})" class="rounded-2xl bg-indigo-600 px-6 py-3 text-white">ذخیره</button></div>`;
 })();

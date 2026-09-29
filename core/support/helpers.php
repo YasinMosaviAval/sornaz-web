@@ -16,70 +16,229 @@ use Core\support\AssetManager;
 use Core\view\View;
 use Core\localization\FrameworkTranslator;
 
-function query(): DB {return new DB();}
-function user_id(): ?int {return auth()->id();}
-function user(): ?array {return auth()->user();}
-function app() {return Application::getInstance();}
-function container(): Container {return app()->container();}
-function auth(): Auth {return container()->make(Auth::class);}
-function csrf(): Csrf {return container()->make(Csrf::class);}
-function pushStyle(string $file): void {View::pushStyle($file);}
-function pushScript(string $file): void {View::pushScript($file);}
-function events() {return container()->make(EventDispatcher::class);}
-function errors(): array {return session()->peekFlash('_errors', []);}
-function asset(string $path): string {return '/' . ltrim($path, '/');}
-function session(): Session {return container()->make(Session::class);}
-function request(): Request {return container()->make(Request::class);}
-function db(): PDO {return container()->make(Connection::class)->pdo();}
-function trans(string $key, ?string $fallback = null, array $replace = []): string {return container()->make(FrameworkTranslator::class)->get($key, $fallback, $replace);}
-function translations(string $prefix = ''): array {return container()->make(FrameworkTranslator::class)->all($prefix);}
-function locale(): string {return app()->getLocale();}
-function direction(): string {return locale() === 'fa' ? 'rtl' : 'ltr';}
-function url(string $path = ''): string {return '/' . ltrim($path, '/');}
-function response(): Response {return container()->make(Response::class);}
-function csrf_token(): string {return container()->make(Csrf::class)->token();}
-function view(string $view, array $data = []): View {return new View($view, $data);}
-function app_path(string $path = ''): string {return base_path('app/' . ltrim($path, '/'));}
-function lang_path(string $path = ''): string {return base_path('lang/' . ltrim($path, '/\\'));}
-function back(): RedirectResponse {return new RedirectResponse($_SERVER['HTTP_REFERER'] ?? '/');}
-function public_path(string $path = ''): string {return base_path('public/' . ltrim($path, '/'));}
-function asset_path(string $path = ''): string {return base_path('assets/' . ltrim($path, '/'));}
+function query(): DB
+{
+    return new DB();
+}
+function user_id(): ?int
+{
+    return auth()->id();
+}
+function user(): ?array
+{
+    return auth()->user();
+}
+function app()
+{
+    return Application::getInstance();
+}
+function container(): Container
+{
+    return app()->container();
+}
+function auth(): Auth
+{
+    return container()->make(Auth::class);
+}
+function csrf(): Csrf
+{
+    return container()->make(Csrf::class);
+}
+function pushStyle(string $file): void
+{
+    View::pushStyle($file);
+}
+function pushScript(string $file): void
+{
+    View::pushScript($file);
+}
+function events()
+{
+    return container()->make(EventDispatcher::class);
+}
+function errors(): array
+{
+    return session()->peekFlash('_errors', []);
+}
+function asset(string $path): string
+{
+    return '/' . ltrim($path, '/');
+}
+function session(): Session
+{
+    return container()->make(Session::class);
+}
+function request(): Request
+{
+    return container()->make(Request::class);
+}
+function db(): PDO
+{
+    return container()->make(Connection::class)->pdo();
+}
+function trans(string $key, ?string $fallback = null, array $replace = []): string
+{
+    return container()->make(FrameworkTranslator::class)->get($key, $fallback, $replace);
+}
+function translations(string $prefix = ''): array
+{
+    return container()->make(FrameworkTranslator::class)->all($prefix);
+}
+function locale(): string
+{
+    return app()->getLocale();
+}
+function direction(): string
+{
+    return locale() === 'fa' ? 'rtl' : 'ltr';
+}
+function url(string $path = ''): string
+{
+    return '/' . ltrim($path, '/');
+}
+function response(): Response
+{
+    return container()->make(Response::class);
+}
+function csrf_token(): string
+{
+    return container()->make(Csrf::class)->token();
+}
+function view(string $view, array $data = []): View
+{
+    return new View($view, $data);
+}
+function app_path(string $path = ''): string
+{
+    return base_path('app/' . ltrim($path, '/'));
+}
+function lang_path(string $path = ''): string
+{
+    return base_path('lang/' . ltrim($path, '/\\'));
+}
+function back(): RedirectResponse
+{
+    return new RedirectResponse($_SERVER['HTTP_REFERER'] ?? '/');
+}
+function public_path(string $path = ''): string
+{
+    return base_path('public/' . ltrim($path, '/'));
+}
+function asset_path(string $path = ''): string
+{
+    return base_path('assets/' . ltrim($path, '/'));
+}
 
-function config_path(string $path = ''): string {return base_path('config/' . ltrim($path, '/'));}
-function storage_path(string $path = ''): string {return base_path('storage/' . ltrim($path, '/'));}
-function module_path(string $path = ''): string {return base_path('Modules/' . ltrim($path, '/\\'));}
-function resource_path(string $path = ''): string {return base_path('resources/' . ltrim($path, '/'));}
-function database_path(string $path = ''): string {return base_path('database/' . ltrim($path, '/\\'));}
-function can(string $ability, mixed ...$arguments): bool {return Gate::allows($ability, ...$arguments);}
-function bootstrap_path(string $path = ''): string {return base_path('bootstrap/' . ltrim($path, '/\\'));}
-function cannot(string $ability, mixed ...$arguments): bool {return Gate::denies($ability, ...$arguments);}
-function csrf_field(): string {return sprintf('<input type="hidden" name="_token" value="%s">', csrf_token());}
-function redirect(string $url, int $status = 302): RedirectResponse {return new RedirectResponse($url, $status);}
-function base_path(string $path = ''): string {return dirname(__DIR__, 2) . ($path ? DIRECTORY_SEPARATOR . $path : '');}
-function env(string $key, mixed $default = null): mixed {return $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key) ?: $default;}
-function abort(int $code = 404, string $message = ''): never {http_response_code($code); exit($message ?: "HTTP {$code}");}
-function old(string $key, mixed $default = ''): mixed {$old = session()->peekFlash('_old', []); return $old[$key] ?? $default;}
-function error(string $field): string {$errors = errors(); if (!isset($errors[$field][0])) {return '';} return $errors[$field][0];}
+function config_path(string $path = ''): string
+{
+    return base_path('config/' . ltrim($path, '/'));
+}
+function storage_path(string $path = ''): string
+{
+    return base_path('storage/' . ltrim($path, '/'));
+}
+function module_path(string $path = ''): string
+{
+    return base_path('Modules/' . ltrim($path, '/\\'));
+}
+function resource_path(string $path = ''): string
+{
+    return base_path('resources/' . ltrim($path, '/'));
+}
+function database_path(string $path = ''): string
+{
+    return base_path('database/' . ltrim($path, '/\\'));
+}
+function can(string $ability, mixed ...$arguments): bool
+{
+    return Gate::allows($ability, ...$arguments);
+}
+function bootstrap_path(string $path = ''): string
+{
+    return base_path('bootstrap/' . ltrim($path, '/\\'));
+}
+function cannot(string $ability, mixed ...$arguments): bool
+{
+    return Gate::denies($ability, ...$arguments);
+}
+function csrf_field(): string
+{
+    return sprintf('<input type="hidden" name="_token" value="%s">', csrf_token());
+}
+function redirect(string $url, int $status = 302): RedirectResponse
+{
+    return new RedirectResponse($url, $status);
+}
+function base_path(string $path = ''): string
+{
+    return dirname(__DIR__, 2) . ($path ? DIRECTORY_SEPARATOR . $path : '');
+}
+function env(string $key, mixed $default = null): mixed
+{
+    return $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key) ?: $default;
+}
+function abort(int $code = 404, string $message = ''): never
+{
+    http_response_code($code);
+    exit($message ?: "HTTP {$code}");
+}
+function old(string $key, mixed $default = ''): mixed
+{
+    $old = session()->peekFlash('_old', []);
+    return $old[$key] ?? $default;
+}
+function error(string $field): string
+{
+    $errors = errors();
+    if (!isset($errors[$field][0])) {
+        return '';
+    } return $errors[$field][0];
+}
 
-function value($value) {return is_callable($value) ? $value() : $value;}
-function dump(...$vars): void {foreach ($vars as $var) {echo '<pre>'; var_dump($var); echo '</pre>';}}
-function dd(...$vars): never {foreach ($vars as $var) {echo '<pre>'; var_dump($var); echo '</pre>';} exit;}
+function value($value)
+{
+    return is_callable($value) ? $value() : $value;
+}
+function dump(...$vars): void
+{
+    foreach ($vars as $var) {
+        echo '<pre>';
+        var_dump($var);
+        echo '</pre>';
+    }
+}
+function dd(...$vars): never
+{
+    foreach ($vars as $var) {
+        echo '<pre>';
+        var_dump($var);
+        echo '</pre>';
+    } exit;
+}
 
-function transaction(callable $callback) {
+function transaction(callable $callback)
+{
     $connection = db();
     $ownsTransaction = !$connection->inTransaction();
-    if ($ownsTransaction) $connection->beginTransaction();
+    if ($ownsTransaction) {
+        $connection->beginTransaction();
+    }
     try {
         $result = $callback();
-        if ($ownsTransaction && $connection->inTransaction()) $connection->commit();
+        if ($ownsTransaction && $connection->inTransaction()) {
+            $connection->commit();
+        }
         return $result;
     } catch (\Throwable $e) {
-        if ($ownsTransaction && $connection->inTransaction()) $connection->rollBack();
+        if ($ownsTransaction && $connection->inTransaction()) {
+            $connection->rollBack();
+        }
         throw $e;
     }
 }
 
-function config(string $key, mixed $default = null) {
+function config(string $key, mixed $default = null)
+{
     static $configs = [];
     $parts = explode('.', $key);
     $module = ucfirst(array_shift($parts));
@@ -125,75 +284,71 @@ function config(string $key, mixed $default = null) {
     return $value;
 }
 
-
-
 if (!function_exists('component')) {
-    function component(string $view, array $data = []): void {
+    function component(string $view, array $data = []): void
+    {
         View::component($view, $data);
     }
 }
 
-
-
 if (!function_exists('componentExists')) {
-    function componentExists(string $view): bool {
+    function componentExists(string $view): bool
+    {
         return View::componentExists($view);
     }
 }
 
-
 if (!function_exists('e')) {
-    function e(mixed $value): string {
-        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+    function e(mixed $value): string
+    {
+        return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
     }
 }
 
-
 if (!function_exists('old')) {
-    function old(string $key, mixed $default = null): mixed {
+    function old(string $key, mixed $default = null): mixed
+    {
         $old = session()->get('_old_input', []);
         return $old[$key] ?? $default;
     }
 }
 
 if (!function_exists('errors')) {
-    function errors(): array {
+    function errors(): array
+    {
         return session()->get('_errors', []);
     }
 }
 
-
-
 if (!function_exists('styles')) {
-    function styles(): string {
-        $html='';
-        foreach(View::styles() as $style){
-            $url=AssetManager::publish($style['module'], 'css', $style['file']);
-            $version=filemtime(base_path(ltrim($url, '/'))) ?: 1;
-            $html.='<link rel="stylesheet" href="'.$url.'?v='.$version.'">'."\n";
+    function styles(): string
+    {
+        $html = '';
+        foreach (View::styles() as $style) {
+            $url = AssetManager::publish($style['module'], 'css', $style['file']);
+            $version = filemtime(base_path(ltrim($url, '/'))) ?: 1;
+            $html .= '<link rel="stylesheet" href="' . $url . '?v=' . $version . '">' . "\n";
         }
         return $html;
     }
 }
-
-
 
 if (!function_exists('scripts')) {
-    function scripts(): string {
-        $html='';
-        foreach(View::scripts() as $script){
-            $url=AssetManager::publish($script['module'], 'js', $script['file']);
-            $version=filemtime(base_path(ltrim($url, '/'))) ?: 1;
-            $html.='<script src="'.$url.'?v='.$version.'"></script>'."\n";
+    function scripts(): string
+    {
+        $html = '';
+        foreach (View::scripts() as $script) {
+            $url = AssetManager::publish($script['module'], 'js', $script['file']);
+            $version = filemtime(base_path(ltrim($url, '/'))) ?: 1;
+            $html .= '<script src="' . $url . '?v=' . $version . '"></script>' . "\n";
         }
         return $html;
     }
 }
 
-
-
 if (!function_exists('current_url')) {
-    function current_url(): string {
+    function current_url(): string
+    {
         $uri = $_SERVER['REQUEST_URI'] ?? '/';
         $uri = parse_url($uri, PHP_URL_PATH);
         if ($uri === '') {
@@ -203,23 +358,22 @@ if (!function_exists('current_url')) {
     }
 }
 
-
 if (!function_exists('is_active')) {
-    function is_active(string $url, string $class = 'active'): string {
+    function is_active(string $url, string $class = 'active'): string
+    {
         return current_url() === $url ? $class : '';
     }
 }
 
-
-
 // ── Data Helpers ──────────────────────────────────────────────────────────
 
-function setIndexforDataArray(array $array, string $index): array {
-  $data = [];
-  foreach ($array as $value) {
-    $data[$value[$index]] = $value;
-  }
-  return $data;
+function setIndexforDataArray(array $array, string $index): array
+{
+    $data = [];
+    foreach ($array as $value) {
+        $data[$value[$index]] = $value;
+    }
+    return $data;
 }
 
 // function setVariableNameforDataArray(array $array): array {
@@ -230,12 +384,13 @@ function setIndexforDataArray(array $array, string $index): array {
 //   return $data;
 // }
 
-function getFilteredList(array $listArray, string $filterString): array {
-  $result = [];
-  foreach ($listArray as $value) {
-    if (str_contains($value['variable_name'], $filterString)) {
-      $result[$value['variable_name']] = $value;
+function getFilteredList(array $listArray, string $filterString): array
+{
+    $result = [];
+    foreach ($listArray as $value) {
+        if (str_contains($value['variable_name'], $filterString)) {
+            $result[$value['variable_name']] = $value;
+        }
     }
-  }
-  return $result;
+    return $result;
 }

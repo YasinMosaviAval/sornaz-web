@@ -2,7 +2,8 @@
 
 if (!function_exists('academys')) {
 
-    function academys() {
+    function academys()
+    {
     }
 
 }

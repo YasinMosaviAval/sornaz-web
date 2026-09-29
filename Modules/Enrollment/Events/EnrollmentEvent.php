@@ -2,6 +2,7 @@
 
 namespace Modules\Enrollment\Events;
 
-class EnrollmentEvent {
+class EnrollmentEvent
+{
 
 }

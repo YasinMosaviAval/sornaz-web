@@ -4,7 +4,8 @@ namespace Modules\System\Models;
 
 use Core\database\Model;
 
-class SystemModel extends Model {
+class SystemModel extends Model
+{
 
     protected string $table = 'systems';
     protected string $primaryKey = 'system_id';
@@ -17,6 +18,5 @@ class SystemModel extends Model {
     ];
     protected bool $timestamps = true;
     protected bool $softDeletes = true;
-
 
 }

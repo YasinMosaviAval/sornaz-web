@@ -2,6 +2,7 @@
 
 namespace Modules\Home\Policies;
 
-class HomePolicy {
+class HomePolicy
+{
 
 }

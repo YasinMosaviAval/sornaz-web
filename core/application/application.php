@@ -6,8 +6,8 @@ use Core\providers\ProviderManager;
 use Core\module\ModuleLoader;
 use Core\module\ModuleManager;
 
-class Application {
-
+class Application
+{
 
     protected static ?Application $instance = null;
     protected Container $container;
@@ -15,10 +15,8 @@ class Application {
     protected string $locale = 'fa';
     protected ModuleManager $moduleManager;
 
-
-
-
-    public function __construct() {
+    public function __construct()
+    {
         self::$instance = $this;
         $this->container = new Container();
         $this->providers = new ProviderManager();
@@ -27,53 +25,48 @@ class Application {
         $this->moduleManager->boot();
     }
 
-
-    public function modules(): ModuleManager {
+    public function modules(): ModuleManager
+    {
         return $this->moduleManager;
     }
 
-
-    public static function getInstance(): Application {
+    public static function getInstance(): Application
+    {
         return self::$instance;
     }
 
-
-    public function container(): Container {
+    public function container(): Container
+    {
         return $this->container;
     }
 
-
-    public function run() {
+    public function run()
+    {
         $this->bootstrap();
         require base_path('routes/web.php');
         (new Kernel())->handle();
     }
 
-
-    public function providers(): ProviderManager {
+    public function providers(): ProviderManager
+    {
         return $this->providers;
     }
 
-
-    protected function bootstrap(): void {
+    protected function bootstrap(): void
+    {
         $providers = require base_path('config/providers.php');
         $this->providers->load($providers);
         $this->providers->register();
         $this->providers->boot();
     }
 
-
-
-    public function getLocale(): string {
+    public function getLocale(): string
+    {
         return $this->locale;
     }
 
-
-
-    public function setLocale(string $locale): void {
-        $this->locale=$locale;
+    public function setLocale(string $locale): void
+    {
+        $this->locale = $locale;
     }
-
-
-
 }

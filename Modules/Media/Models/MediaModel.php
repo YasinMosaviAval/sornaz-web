@@ -4,7 +4,8 @@ namespace Modules\Media\Models;
 
 use Core\database\Model;
 
-class MediaModel extends Model {
+class MediaModel extends Model
+{
 
     protected string $table = 'medias';
     protected string $primaryKey = 'media_id';
@@ -17,6 +18,5 @@ class MediaModel extends Model {
     ];
     protected bool $timestamps = true;
     protected bool $softDeletes = true;
-
 
 }

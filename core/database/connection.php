@@ -4,10 +4,12 @@ namespace Core\database;
 
 use PDO;
 
-class Connection {
+class Connection
+{
     protected PDO $pdo;
 
-    public function __construct(array $config) {
+    public function __construct(array $config)
+    {
         $dsn = sprintf(
             'mysql:host=%s;port=%s;dbname=%s;charset=%s',
             $config['host'],
@@ -27,25 +29,23 @@ class Connection {
         );
     }
 
-
-    public function pdo(): PDO {
+    public function pdo(): PDO
+    {
         return $this->pdo;
     }
 
-
-    public function beginTransaction(): bool {
+    public function beginTransaction(): bool
+    {
         return $this->pdo->beginTransaction();
     }
 
-
-    public function commit(): bool {
+    public function commit(): bool
+    {
         return $this->pdo->commit();
     }
 
-
-    public function rollback(): bool {
+    public function rollback(): bool
+    {
         return $this->pdo->rollBack();
     }
-
-
 }

@@ -7,10 +7,10 @@ use Core\database\Relations\HasOne;
 use Core\database\Relations\BelongsTo;
 use Core\database\Relations\BelongsToMany;
 
-trait HasRelationships {
-
-
-    protected function belongsTo(string $related, string $foreignKey, string $ownerKey = 'id'): BelongsTo {
+trait HasRelationships
+{
+    protected function belongsTo(string $related, string $foreignKey, string $ownerKey = 'id'): BelongsTo
+    {
         return new BelongsTo(
             $this,
             $related,
@@ -19,8 +19,8 @@ trait HasRelationships {
         );
     }
 
-
-    protected function hasOne(string $related, string $foreignKey, string $localKey = 'id'): HasOne {
+    protected function hasOne(string $related, string $foreignKey, string $localKey = 'id'): HasOne
+    {
         return new HasOne(
             $this,
             $related,
@@ -29,8 +29,8 @@ trait HasRelationships {
         );
     }
 
-
-    protected function hasMany(string $related, string $foreignKey, string $localKey = 'id'): HasMany {
+    protected function hasMany(string $related, string $foreignKey, string $localKey = 'id'): HasMany
+    {
         return new HasMany(
             $this,
             $related,
@@ -39,8 +39,8 @@ trait HasRelationships {
         );
     }
 
-
-    protected function belongsToMany(string $related, string $pivotTable, string $foreignPivotKey, string $relatedPivotKey, string $localKey, string $relatedKey): BelongsToMany {
+    protected function belongsToMany(string $related, string $pivotTable, string $foreignPivotKey, string $relatedPivotKey, string $localKey, string $relatedKey): BelongsToMany
+    {
         return new BelongsToMany(
             $this,
             $related,
@@ -51,7 +51,4 @@ trait HasRelationships {
             $relatedKey
         );
     }
-
-
-
 }

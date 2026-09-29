@@ -4,7 +4,8 @@ namespace Modules\World\Models;
 
 use Core\database\Model;
 
-class WorldModel extends Model {
+class WorldModel extends Model
+{
 
     protected string $table = 'worlds';
     protected string $primaryKey = 'world_id';
@@ -17,6 +18,5 @@ class WorldModel extends Model {
     ];
     protected bool $timestamps = true;
     protected bool $softDeletes = true;
-
 
 }

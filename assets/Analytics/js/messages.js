@@ -1,23 +1,356 @@
-(function(){'use strict';
-let allMessages=[],filteredMessages=[],recipients=[],page=1,lastIncoming=0,busy=false;const perPage=10,channel='BroadcastChannel'in window?new BroadcastChannel('sornaz-admin-messages'):null;let sortField='',sortDirection='asc';
-function esc(v){const d=document.createElement('div');d.textContent=String(v??'');return d.innerHTML;}
-function enc(data){const bytes=new TextEncoder().encode(JSON.stringify(data));let s='';bytes.forEach(b=>s+=String.fromCharCode(b));return btoa(s);}
-async function api(url,data){const o={credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'}};if(data){o.method='POST';o.headers['Content-Type']='application/x-www-form-urlencoded;charset=UTF-8';o.headers['X-CSRF-TOKEN']=window.adminCsrfToken||'';o.body=new URLSearchParams({_token:window.adminCsrfToken||'',payload_b64:enc(data)});}const r=await fetch(url,o),p=await r.json(),x=p.data??p;if(!r.ok||x.success===false)throw new Error(x.message||'عملیات پیام ناموفق بود.');return x.data??x;}
-function header(u){[['headerUnreadMessages','messages'],['headerUnreadNotifications','notifications']].forEach(([id,key])=>{const el=document.getElementById(id);if(el){el.textContent=u[key]||0;el.classList.toggle('hidden',!u[key]);}});}
-function toast(m){const el=document.createElement('button');el.className='fixed left-5 bottom-5 z-[2147483000] w-[min(380px,calc(100vw-2.5rem))] rounded-2xl border border-indigo-200 bg-white p-4 text-right shadow-2xl';el.innerHTML='<b>پیام جدید از '+esc(m.sender)+'</b><span class="mt-1 block truncate text-sm text-gray-600">'+esc(m.title)+'</span>';el.onclick=()=>{el.remove();showSection('messages');viewMessage(m.id);};document.body.appendChild(el);setTimeout(()=>el.remove(),9000);}
-window.loadAdminMessages=async function(notify){const d=await api('/analytics/admin-messages'),real=d.messages||[],fresh=real.find(x=>x.type==='پیام'&&x.incoming&&x.readStatus==='خوانده‌نشده'&&x.id>lastIncoming);recipients=d.recipients||[];allMessages=real;header(d.unread||{});window.filterMessages(false);if(notify&&fresh)toast(fresh);lastIncoming=Math.max(lastIncoming,...real.filter(x=>x.type==='پیام'&&x.incoming).map(x=>x.id),0);return d;};
-function sort(){if(!sortField)return;filteredMessages.sort((a,b)=>{const av=sortField==='date'?a.dateISO:String(a[sortField]||'').toLowerCase(),bv=sortField==='date'?b.dateISO:String(b[sortField]||'').toLowerCase();return(av<bv?-1:av>bv?1:0)*(sortDirection==='asc'?1:-1);});}
-window.sortMessagesBy=f=>{if(sortField===f)sortDirection=sortDirection==='asc'?'desc':'asc';else{sortField=f;sortDirection='asc';}sort();window.renderMessagesTable();};
-window.filterMessages=function(resetPage=true){const q=(document.getElementById('messageSearch')?.value||'').trim().toLowerCase(),s=document.getElementById('filterMessageStatus')?.value||'';filteredMessages=allMessages.filter(m=>(!q||[m.title,m.sender,m.receiver,m.body].some(v=>String(v||'').toLowerCase().includes(q)))&&(!s||m.readStatus===s));if(resetPage)page=1;sort();window.renderMessagesTable();};
-window.renderMessagesTable=function(){const body=document.querySelector('#messagesTable tbody');if(!body)return;const total=filteredMessages.length,pages=Math.max(1,Math.ceil(total/perPage));page=Math.min(Math.max(1,page),pages);const start=(page-1)*perPage;body.innerHTML=filteredMessages.slice(start,start+perPage).map(m=>'<tr class="hover:bg-gray-50">'+getMessageRowHTML(m)+'</tr>').join('')||getMessageEmptyRowHTML();const pager=document.getElementById('messagesPagination');if(pager){pager.classList.toggle('hidden',total<=10);pager.classList.toggle('flex',total>10);}document.getElementById('messagesPaginationInfo').textContent='نمایش '+(total?start+1:0)+' تا '+Math.min(start+perPage,total)+' از '+total+' پیام';let html='<button onclick="changeMessagesPage(1)" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" '+(page===1?'disabled':'')+'>اول</button><button onclick="changeMessagesPage('+(page-1)+')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" '+(page===1?'disabled':'')+'>قبلی</button>';let from=Math.max(1,page-2),to=Math.min(pages,from+4);if(to-from<4)from=Math.max(1,to-4);for(let i=from;i<=to;i++)html+='<button onclick="changeMessagesPage('+i+')" class="px-3 py-1.5 rounded-lg '+(i===page?'bg-indigo-600 text-white':'border hover:bg-gray-50')+'">'+i+'</button>';html+='<button onclick="changeMessagesPage('+(page+1)+')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" '+(page===pages?'disabled':'')+'>بعدی</button><button onclick="changeMessagesPage('+pages+')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" '+(page===pages?'disabled':'')+'>آخر</button>';document.getElementById('messagesPaginationButtons').innerHTML=html;};
-window.changeMessagesPage=p=>{const pages=Math.max(1,Math.ceil(filteredMessages.length/perPage));if(p>=1&&p<=pages){page=p;window.renderMessagesTable();}};window.getMessageRecipients=()=>recipients;window.openAddMessageModal=()=>document.getElementById('modalContainer').innerHTML=getMessageAddModalHTML();
-window.saveMessage=async function(){const receiverId=Number(document.getElementById('msgReceiver')?.value),title=(document.getElementById('msgTitle')?.value||'').trim(),body=(document.getElementById('msgBody')?.value||'').trim();if(!receiverId||!title||!body)return alert('گیرنده، عنوان و متن پیام الزامی است');try{await api('/analytics/admin-messages',{receiverId,title,body});channel?.postMessage(Date.now());await loadAdminMessages(false);closeModal();alert('✅ پیام ارسال شد');}catch(e){alert(e.message);}};
-window.viewMessage=async function(id){let m=allMessages.find(x=>x.id===id);if(!m)return;if(m.incoming&&m.readStatus==='خوانده‌نشده'){await api('/analytics/admin-messages/'+id+'/read',{});await loadAdminMessages(false);m=allMessages.find(x=>x.id===id);}document.getElementById('modalContainer').innerHTML=getMessageDetailsModalHTML(m);};
-window.markMessageUnread=async function(id){await api('/analytics/admin-messages/'+id+'/unread',{});await loadAdminMessages(false);closeModal();};
-window.deleteMessage=async function(id){if(!(await AppDialog.confirm('حذف پیام','آیا از حذف این پیام مطمئن هستید؟')))return;await api('/analytics/admin-messages/'+id+'/delete',{});channel?.postMessage(Date.now());await loadAdminMessages(false);};
-window.exportMessagesToExcel=function(){const rows=[['عنوان','فرستنده','گیرنده','نوع','وضعیت','وضعیت مطالعه','تاریخ'],...filteredMessages.map(m=>[m.title,m.sender,m.receiver,m.type,m.status,m.readStatus,m.date])],csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(',')).join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='messages.csv';a.click();URL.revokeObjectURL(a.href);};
-const messagePdfColumns=[{field:'index',label:'ردیف'},{field:'title',label:'عنوان'},{field:'sender',label:'فرستنده'},{field:'receiver',label:'گیرنده'},{field:'date',label:'تاریخ'},{field:'status',label:'وضعیت'},{field:'readStatus',label:'وضعیت مطالعه'}];
-window.exportMessagesToPDF=function(){document.getElementById('modalContainer').innerHTML=getMessagePDFModalHTML(messagePdfColumns);};
-window.generateMessagesPDF=async function(){if(!window.html2canvas||!window.jspdf?.jsPDF)return alert('ابزار تولید PDF بارگذاری نشده است. لطفاً صفحه را مجدداً بارگذاری کنید.');const title=document.getElementById('messagePdfTitle')?.value||'گزارش پیام‌های آموزشگاه',subtitle=document.getElementById('messagePdfSubtitle')?.value||'فهرست پیام‌های ارسال‌شده و دریافت‌شده',footer=document.getElementById('messagePdfFooter')?.value||'',format=document.getElementById('messagePdfFormat')?.value||'a4',orientation=document.getElementById('messagePdfOrientation')?.value||'landscape',includeDate=document.getElementById('messagePdfIncludeDate')?.checked,headerColor=document.getElementById('messagePdfHeaderColor')?.value||'#eff6ff',evenRowColor=document.getElementById('messagePdfEvenRowColor')?.value||'#ffffff',oddRowColor=document.getElementById('messagePdfOddRowColor')?.value||'#f8fafc',selectedColumns=messagePdfColumns.filter(c=>document.getElementById('messagePdfCol-'+c.field)?.checked),date=new Date().toLocaleDateString('fa-IR'),data=filteredMessages;if(!selectedColumns.length)return alert('لطفاً حداقل یک ستون برای خروجی PDF انتخاب کنید.');const rowsPerPage=orientation==='portrait'?18:15,totalPages=Math.max(1,Math.ceil(data.length/rowsPerPage)),canvases=[];for(let p=0;p<totalPages;p++){const wrapper=document.createElement('div');wrapper.style.cssText='direction:rtl;position:fixed;top:-9999px;left:-9999px;width:'+(orientation==='portrait'?'900px':'1400px')+';padding:'+(p===0?'20px 30px 30px':'30px')+';background:#fff;font-family:Vazirmatn,Tahoma,sans-serif';wrapper.innerHTML=getMessagePDFPageHTML(p+1,data.slice(p*rowsPerPage,(p+1)*rowsPerPage),p===0,{title,subtitle,footer,includeDate,date,headerColor,evenRowColor,oddRowColor,selectedColumns,rowsPerPage,totalPages});document.body.appendChild(wrapper);await document.fonts?.ready;const canvas=await html2canvas(wrapper,{scale:2,useCORS:true,backgroundColor:'#ffffff',scrollY:-window.scrollY});canvases.push(canvas);wrapper.remove();}const doc=new window.jspdf.jsPDF({orientation,unit:'pt',format}),pageWidth=doc.internal.pageSize.getWidth(),margin=20,imgWidth=pageWidth-margin*2;canvases.forEach((canvas,i)=>{if(i)doc.addPage();doc.addImage(canvas.toDataURL('image/png'),'PNG',margin,margin,imgWidth,canvas.height*imgWidth/canvas.width);});doc.save('پیام‌ها_'+date+'.pdf');closeModal();};
-async function poll(){if(busy||document.hidden||!document.getElementById('messagesTable'))return;busy=true;try{await loadAdminMessages(true);}catch(e){}finally{busy=false;}}channel&&(channel.onmessage=poll);setInterval(poll,4000);setTimeout(()=>{if(document.getElementById('messagesTable'))loadAdminMessages(false).catch(console.error);},200);
+(function () {
+  'use strict';
+  let allMessages = [],
+    filteredMessages = [],
+    recipients = [],
+    page = 1,
+    lastIncoming = 0,
+    busy = false;
+  const perPage = 10,
+    channel = 'BroadcastChannel' in window ? new BroadcastChannel('sornaz-admin-messages') : null;
+  let sortField = '',
+    sortDirection = 'asc';
+  function esc(v) {
+    const d = document.createElement('div');
+    d.textContent = String(v ?? '');
+    return d.innerHTML;
+  }
+  function enc(data) {
+    const bytes = new TextEncoder().encode(JSON.stringify(data));
+    let s = '';
+    bytes.forEach((b) => (s += String.fromCharCode(b)));
+    return btoa(s);
+  }
+  async function api(url, data) {
+    const o = {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    };
+    if (data) {
+      o.method = 'POST';
+      o.headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+      o.headers['X-CSRF-TOKEN'] = window.adminCsrfToken || '';
+      o.body = new URLSearchParams({ _token: window.adminCsrfToken || '', payload_b64: enc(data) });
+    }
+    const r = await fetch(url, o),
+      p = await r.json(),
+      x = p.data ?? p;
+    if (!r.ok || x.success === false) throw new Error(x.message || 'عملیات پیام ناموفق بود.');
+    return x.data ?? x;
+  }
+  function header(u) {
+    [
+      ['headerUnreadMessages', 'messages'],
+      ['headerUnreadNotifications', 'notifications'],
+    ].forEach(([id, key]) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.textContent = u[key] || 0;
+        el.classList.toggle('hidden', !u[key]);
+      }
+    });
+  }
+  function toast(m) {
+    const el = document.createElement('button');
+    el.className =
+      'fixed left-5 bottom-5 z-[2147483000] w-[min(380px,calc(100vw-2.5rem))] rounded-2xl border border-indigo-200 bg-white p-4 text-right shadow-2xl';
+    el.innerHTML =
+      '<b>پیام جدید از ' +
+      esc(m.sender) +
+      '</b><span class="mt-1 block truncate text-sm text-gray-600">' +
+      esc(m.title) +
+      '</span>';
+    el.onclick = () => {
+      el.remove();
+      showSection('messages');
+      viewMessage(m.id);
+    };
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 9000);
+  }
+  window.loadAdminMessages = async function (notify) {
+    const d = await api('/analytics/admin-messages'),
+      real = d.messages || [],
+      fresh = real.find(
+        (x) =>
+          x.type === 'پیام' && x.incoming && x.readStatus === 'خوانده‌نشده' && x.id > lastIncoming
+      );
+    recipients = d.recipients || [];
+    allMessages = real;
+    header(d.unread || {});
+    window.filterMessages(false);
+    if (notify && fresh) toast(fresh);
+    lastIncoming = Math.max(
+      lastIncoming,
+      ...real.filter((x) => x.type === 'پیام' && x.incoming).map((x) => x.id),
+      0
+    );
+    return d;
+  };
+  function sort() {
+    if (!sortField) return;
+    filteredMessages.sort((a, b) => {
+      const av = sortField === 'date' ? a.dateISO : String(a[sortField] || '').toLowerCase(),
+        bv = sortField === 'date' ? b.dateISO : String(b[sortField] || '').toLowerCase();
+      return (av < bv ? -1 : av > bv ? 1 : 0) * (sortDirection === 'asc' ? 1 : -1);
+    });
+  }
+  window.sortMessagesBy = (f) => {
+    if (sortField === f) sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    else {
+      sortField = f;
+      sortDirection = 'asc';
+    }
+    sort();
+    window.renderMessagesTable();
+  };
+  window.filterMessages = function (resetPage = true) {
+    const q = (document.getElementById('messageSearch')?.value || '').trim().toLowerCase(),
+      s = document.getElementById('filterMessageStatus')?.value || '';
+    filteredMessages = allMessages.filter(
+      (m) =>
+        (!q ||
+          [m.title, m.sender, m.receiver, m.body].some((v) =>
+            String(v || '')
+              .toLowerCase()
+              .includes(q)
+          )) &&
+        (!s || m.readStatus === s)
+    );
+    if (resetPage) page = 1;
+    sort();
+    window.renderMessagesTable();
+  };
+  window.renderMessagesTable = function () {
+    const body = document.querySelector('#messagesTable tbody');
+    if (!body) return;
+    const total = filteredMessages.length,
+      pages = Math.max(1, Math.ceil(total / perPage));
+    page = Math.min(Math.max(1, page), pages);
+    const start = (page - 1) * perPage;
+    body.innerHTML =
+      filteredMessages
+        .slice(start, start + perPage)
+        .map((m) => '<tr class="hover:bg-gray-50">' + getMessageRowHTML(m) + '</tr>')
+        .join('') || getMessageEmptyRowHTML();
+    const pager = document.getElementById('messagesPagination');
+    if (pager) {
+      pager.classList.toggle('hidden', total <= 10);
+      pager.classList.toggle('flex', total > 10);
+    }
+    document.getElementById('messagesPaginationInfo').textContent =
+      'نمایش ' +
+      (total ? start + 1 : 0) +
+      ' تا ' +
+      Math.min(start + perPage, total) +
+      ' از ' +
+      total +
+      ' پیام';
+    let html =
+      '<button onclick="changeMessagesPage(1)" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' +
+      (page === 1 ? 'disabled' : '') +
+      '>اول</button><button onclick="changeMessagesPage(' +
+      (page - 1) +
+      ')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' +
+      (page === 1 ? 'disabled' : '') +
+      '>قبلی</button>';
+    let from = Math.max(1, page - 2),
+      to = Math.min(pages, from + 4);
+    if (to - from < 4) from = Math.max(1, to - 4);
+    for (let i = from; i <= to; i++)
+      html +=
+        '<button onclick="changeMessagesPage(' +
+        i +
+        ')" class="px-3 py-1.5 rounded-lg ' +
+        (i === page ? 'bg-indigo-600 text-white' : 'border hover:bg-gray-50') +
+        '">' +
+        i +
+        '</button>';
+    html +=
+      '<button onclick="changeMessagesPage(' +
+      (page + 1) +
+      ')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' +
+      (page === pages ? 'disabled' : '') +
+      '>بعدی</button><button onclick="changeMessagesPage(' +
+      pages +
+      ')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' +
+      (page === pages ? 'disabled' : '') +
+      '>آخر</button>';
+    document.getElementById('messagesPaginationButtons').innerHTML = html;
+  };
+  window.changeMessagesPage = (p) => {
+    const pages = Math.max(1, Math.ceil(filteredMessages.length / perPage));
+    if (p >= 1 && p <= pages) {
+      page = p;
+      window.renderMessagesTable();
+    }
+  };
+  window.getMessageRecipients = () => recipients;
+  window.openAddMessageModal = () =>
+    (document.getElementById('modalContainer').innerHTML = getMessageAddModalHTML());
+  window.saveMessage = async function () {
+    const receiverId = Number(document.getElementById('msgReceiver')?.value),
+      title = (document.getElementById('msgTitle')?.value || '').trim(),
+      body = (document.getElementById('msgBody')?.value || '').trim();
+    if (!receiverId || !title || !body) return alert('گیرنده، عنوان و متن پیام الزامی است');
+    try {
+      await api('/analytics/admin-messages', { receiverId, title, body });
+      channel?.postMessage(Date.now());
+      await loadAdminMessages(false);
+      closeModal();
+      alert('✅ پیام ارسال شد');
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+  window.viewMessage = async function (id) {
+    let m = allMessages.find((x) => x.id === id);
+    if (!m) return;
+    if (m.incoming && m.readStatus === 'خوانده‌نشده') {
+      await api('/analytics/admin-messages/' + id + '/read', {});
+      await loadAdminMessages(false);
+      m = allMessages.find((x) => x.id === id);
+    }
+    document.getElementById('modalContainer').innerHTML = getMessageDetailsModalHTML(m);
+  };
+  window.markMessageUnread = async function (id) {
+    await api('/analytics/admin-messages/' + id + '/unread', {});
+    await loadAdminMessages(false);
+    closeModal();
+  };
+  window.deleteMessage = async function (id) {
+    if (!(await AppDialog.confirm('حذف پیام', 'آیا از حذف این پیام مطمئن هستید؟'))) return;
+    await api('/analytics/admin-messages/' + id + '/delete', {});
+    channel?.postMessage(Date.now());
+    await loadAdminMessages(false);
+  };
+  window.exportMessagesToExcel = function () {
+    const rows = [
+        ['عنوان', 'فرستنده', 'گیرنده', 'نوع', 'وضعیت', 'وضعیت مطالعه', 'تاریخ'],
+        ...filteredMessages.map((m) => [
+          m.title,
+          m.sender,
+          m.receiver,
+          m.type,
+          m.status,
+          m.readStatus,
+          m.date,
+        ]),
+      ],
+      csv =
+        '\ufeff' +
+        rows
+          .map((r) => r.map((v) => '"' + String(v || '').replace(/"/g, '""') + '"').join(','))
+          .join('\n'),
+      a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'messages.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+  const messagePdfColumns = [
+    { field: 'index', label: 'ردیف' },
+    { field: 'title', label: 'عنوان' },
+    { field: 'sender', label: 'فرستنده' },
+    { field: 'receiver', label: 'گیرنده' },
+    { field: 'date', label: 'تاریخ' },
+    { field: 'status', label: 'وضعیت' },
+    { field: 'readStatus', label: 'وضعیت مطالعه' },
+  ];
+  window.exportMessagesToPDF = function () {
+    document.getElementById('modalContainer').innerHTML = getMessagePDFModalHTML(messagePdfColumns);
+  };
+  window.generateMessagesPDF = async function () {
+    if (!window.html2canvas || !window.jspdf?.jsPDF)
+      return alert('ابزار تولید PDF بارگذاری نشده است. لطفاً صفحه را مجدداً بارگذاری کنید.');
+    const title = document.getElementById('messagePdfTitle')?.value || 'گزارش پیام‌های آموزشگاه',
+      subtitle =
+        document.getElementById('messagePdfSubtitle')?.value ||
+        'فهرست پیام‌های ارسال‌شده و دریافت‌شده',
+      footer = document.getElementById('messagePdfFooter')?.value || '',
+      format = document.getElementById('messagePdfFormat')?.value || 'a4',
+      orientation = document.getElementById('messagePdfOrientation')?.value || 'landscape',
+      includeDate = document.getElementById('messagePdfIncludeDate')?.checked,
+      headerColor = document.getElementById('messagePdfHeaderColor')?.value || '#eff6ff',
+      evenRowColor = document.getElementById('messagePdfEvenRowColor')?.value || '#ffffff',
+      oddRowColor = document.getElementById('messagePdfOddRowColor')?.value || '#f8fafc',
+      selectedColumns = messagePdfColumns.filter(
+        (c) => document.getElementById('messagePdfCol-' + c.field)?.checked
+      ),
+      date = new Date().toLocaleDateString('fa-IR'),
+      data = filteredMessages;
+    if (!selectedColumns.length) return alert('لطفاً حداقل یک ستون برای خروجی PDF انتخاب کنید.');
+    const rowsPerPage = orientation === 'portrait' ? 18 : 15,
+      totalPages = Math.max(1, Math.ceil(data.length / rowsPerPage)),
+      canvases = [];
+    for (let p = 0; p < totalPages; p++) {
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText =
+        'direction:rtl;position:fixed;top:-9999px;left:-9999px;width:' +
+        (orientation === 'portrait' ? '900px' : '1400px') +
+        ';padding:' +
+        (p === 0 ? '20px 30px 30px' : '30px') +
+        ';background:#fff;font-family:Vazirmatn,Tahoma,sans-serif';
+      wrapper.innerHTML = getMessagePDFPageHTML(
+        p + 1,
+        data.slice(p * rowsPerPage, (p + 1) * rowsPerPage),
+        p === 0,
+        {
+          title,
+          subtitle,
+          footer,
+          includeDate,
+          date,
+          headerColor,
+          evenRowColor,
+          oddRowColor,
+          selectedColumns,
+          rowsPerPage,
+          totalPages,
+        }
+      );
+      document.body.appendChild(wrapper);
+      await document.fonts?.ready;
+      const canvas = await html2canvas(wrapper, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        scrollY: -window.scrollY,
+      });
+      canvases.push(canvas);
+      wrapper.remove();
+    }
+    const doc = new window.jspdf.jsPDF({ orientation, unit: 'pt', format }),
+      pageWidth = doc.internal.pageSize.getWidth(),
+      margin = 20,
+      imgWidth = pageWidth - margin * 2;
+    canvases.forEach((canvas, i) => {
+      if (i) doc.addPage();
+      doc.addImage(
+        canvas.toDataURL('image/png'),
+        'PNG',
+        margin,
+        margin,
+        imgWidth,
+        (canvas.height * imgWidth) / canvas.width
+      );
+    });
+    doc.save('پیام‌ها_' + date + '.pdf');
+    closeModal();
+  };
+  async function poll() {
+    if (busy || document.hidden || !document.getElementById('messagesTable')) return;
+    busy = true;
+    try {
+      await loadAdminMessages(true);
+    } catch (e) {
+    } finally {
+      busy = false;
+    }
+  }
+  channel && (channel.onmessage = poll);
+  setInterval(poll, 4000);
+  setTimeout(() => {
+    if (document.getElementById('messagesTable')) loadAdminMessages(false).catch(console.error);
+  }, 200);
 })();

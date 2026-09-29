@@ -1,26 +1,23 @@
 <?php
 
-
 namespace Core\module;
 
-class ModuleManager {
+class ModuleManager
+{
     protected array $modules = [];
 
-
-
-    public function register(Module $module): void {
+    public function register(Module $module): void
+    {
         $this->modules[] = $module;
     }
 
-
-
-    public function modules(): array {
+    public function modules(): array
+    {
         return $this->modules;
     }
 
-
-
-    public function boot(): void {
+    public function boot(): void
+    {
         foreach ($this->modules as $module) {
             $module->register();
         }
@@ -28,10 +25,4 @@ class ModuleManager {
             $module->boot();
         }
     }
-
-
-
-
-
-
 }

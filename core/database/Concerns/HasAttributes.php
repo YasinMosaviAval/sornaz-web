@@ -4,16 +4,21 @@ namespace Core\database\Concerns;
 
 use DateTime;
 
-trait HasAttributes {
+trait HasAttributes
+{
 
     protected array $attributes = [];
     protected array $casts = [];
 
+    public function __construct(array $attributes = [])
+    {
+        if ($attributes) {
+            $this->forceFill($attributes);
+        }
+    }
 
-    public function __construct(array $attributes = []){if ($attributes) {$this->forceFill($attributes);}}
-
-
-    public function __get(string $key) {
+    public function __get(string $key)
+    {
         /*
         |--------------------------------------------------------------------------
         | Loaded Relation
@@ -58,9 +63,8 @@ trait HasAttributes {
         return null;
     }
 
-
-
-    public function __set(string $key, mixed $value): void {
+    public function __set(string $key, mixed $value): void
+    {
         /*
         |--------------------------------------------------------------------------
         | Translation Attribute
@@ -78,14 +82,20 @@ trait HasAttributes {
         $this->attributes[$key] = $value;
     }
 
+    public function toArray(): array
+    {
+        return $this->attributes;
+    }
 
-    public function toArray(): array {return $this->attributes;}
-
-
-    protected function castAttribute(string $key, mixed $value): mixed{
-        if ($value === null) {return null;}
+    protected function castAttribute(string $key, mixed $value): mixed
+    {
+        if ($value === null) {
+            return null;
+        }
         $cast = $this->casts[$key] ?? null;
-        if ($cast === null) {return $value;}
+        if ($cast === null) {
+            return $value;
+        }
         return match ($cast) {
             'int', 'integer' => (int) $value,
             'float', 'double' => (float) $value,
@@ -99,24 +109,21 @@ trait HasAttributes {
         };
     }
 
-
-    public function __isset(string $key): bool {
+    public function __isset(string $key): bool
+    {
         if (array_key_exists($key, $this->attributes)) {
             return true;
         }
         return $this->isTranslatedAttribute($key);
     }
 
-
-
-    protected function isTranslatedAttribute(string $key): bool {
+    protected function isTranslatedAttribute(string $key): bool
+    {
         return in_array($key, $this->getTranslatedAttributes(), true);
     }
 
-
-    protected function setTranslatedAttribute(string $key, mixed $value): void {
+    protected function setTranslatedAttribute(string $key, mixed $value): void
+    {
         $this->setTranslation($key, $value);
     }
-
-
 }

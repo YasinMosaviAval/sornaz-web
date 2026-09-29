@@ -4,11 +4,10 @@ namespace Core\validation\Rules;
 
 use Core\validation\Rule;
 
-class BooleanRule implements Rule {
-
-
-
-    public function validate(string $field, mixed $value): bool {
+class BooleanRule implements Rule
+{
+    public function validate(string $field, mixed $value): bool
+    {
         return in_array(
             $value,
             [true, false, 0, 1, '0', '1'],
@@ -16,14 +15,8 @@ class BooleanRule implements Rule {
         );
     }
 
-
-
-    public function message(string $field): string {
+    public function message(string $field): string
+    {
         return "{$field} باید مقدار منطقی باشد.";
     }
-
-
-
-
-
 }

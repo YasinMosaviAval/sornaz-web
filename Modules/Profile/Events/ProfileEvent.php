@@ -2,6 +2,7 @@
 
 namespace Modules\Profile\Events;
 
-class ProfileEvent {
+class ProfileEvent
+{
 
 }

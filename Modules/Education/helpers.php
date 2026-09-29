@@ -2,7 +2,8 @@
 
 if (!function_exists('educations')) {
 
-    function educations() {
+    function educations()
+    {
     }
 
 }

@@ -5,21 +5,20 @@ namespace Core\database\Relations;
 use Closure;
 use Core\database\Builder;
 
-class RelationExistence {
+class RelationExistence
+{
 
     protected Builder $builder;
     protected RelationSubQuery $subQuery;
 
-
-
-    public function __construct(Builder $builder) {
+    public function __construct(Builder $builder)
+    {
         $this->builder = $builder;
         $this->subQuery = new RelationSubQuery($builder);
     }
 
-
-
-    public function has(string $relation): Builder {
+    public function has(string $relation): Builder
+    {
         $model = new ($this->builder->getModelClass());
         $relationObject = $this->resolveRelation($model, $relation);
         $query = $this->subQuery->exists($relationObject);
@@ -27,9 +26,8 @@ class RelationExistence {
         return $this->builder;
     }
 
-
-
-    public function doesntHave(string $relation): Builder {
+    public function doesntHave(string $relation): Builder
+    {
         $model = new ($this->builder->getModelClass());
         $relationObject = $this->resolveRelation($model, $relation);
         $query = $this->subQuery->exists($relationObject);
@@ -37,9 +35,8 @@ class RelationExistence {
         return $this->builder;
     }
 
-
-
-    public function whereHas(string $relation, Closure $callback): Builder {
+    public function whereHas(string $relation, Closure $callback): Builder
+    {
         $model = new ($this->builder->getModelClass());
         $relationObject = $this->resolveRelation($model, $relation);
         $query = $this->subQuery->whereExists($relationObject, $callback);
@@ -47,10 +44,8 @@ class RelationExistence {
         return $this->builder;
     }
 
-
-
-
-    protected function resolveRelation(object $model, string $path): Relation {
+    protected function resolveRelation(object $model, string $path): Relation
+    {
         $parts = explode('.', $path);
         $relation = null;
         foreach ($parts as $part) {
@@ -61,9 +56,8 @@ class RelationExistence {
         return $relation;
     }
 
-
-
-    public function whereRelation(string $relation, string $column, mixed $value, string $operator = '='): Builder {
+    public function whereRelation(string $relation, string $column, mixed $value, string $operator = '='): Builder
+    {
         return $this->whereHas(
             $relation,
             function (Builder $query) use ($column, $value, $operator) {
@@ -72,9 +66,8 @@ class RelationExistence {
         );
     }
 
-
-
-    public function orWhereHas(string $relation, Closure $callback): Builder {
+    public function orWhereHas(string $relation, Closure $callback): Builder
+    {
         $model = new ($this->builder->getModelClass());
         /** @var Relation $relationObject */
         $relationObject = $this->resolveRelation($model, $relation);
@@ -82,9 +75,4 @@ class RelationExistence {
         $this->builder->orWhereExists($query);
         return $this->builder;
     }
-
-
-
-
-
 }

@@ -4,6 +4,13 @@
     "require": {
         "php": ">=8.0"
     },
+    "scripts": {
+        "style:check": "@php scripts/code-style.php check",
+        "style:fix": "@php scripts/code-style.php fix",
+        "quality:report": "@php scripts/php-maintainability.php report",
+        "quality:check": "@php scripts/php-maintainability.php check",
+        "test:release": "node scripts/run-release-tests.cjs --browser"
+    },
     "autoload": {
         "classmap": ["core/", "Modules/"],
         "psr-4": {

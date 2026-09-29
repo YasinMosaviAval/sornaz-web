@@ -2,6 +2,7 @@
 
 namespace Modules\System\Listeners;
 
-class SendSystemListener {
+class SendSystemListener
+{
 
 }

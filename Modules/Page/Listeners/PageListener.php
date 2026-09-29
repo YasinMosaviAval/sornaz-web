@@ -2,6 +2,7 @@
 
 namespace Modules\Page\Listeners;
 
-class SendPageListener {
+class SendPageListener
+{
 
 }

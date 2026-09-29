@@ -2,6 +2,7 @@
 
 namespace Modules\Communication\Listeners;
 
-class SendCommunicationListener {
+class SendCommunicationListener
+{
 
 }

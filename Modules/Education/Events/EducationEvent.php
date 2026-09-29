@@ -2,6 +2,7 @@
 
 namespace Modules\Education\Events;
 
-class EducationEvent {
+class EducationEvent
+{
 
 }

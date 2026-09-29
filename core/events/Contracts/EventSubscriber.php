@@ -4,8 +4,8 @@ namespace Core\events\Contracts;
 
 use Core\events\EventDispatcher;
 
-interface EventSubscriber {
-
+interface EventSubscriber
+{
     public function subscribe(
         EventDispatcher $events
     ): void;

@@ -5,7 +5,7 @@ return [
     'cache' => false,
     'mail' => [
         'host' => env('MAIL_HOST', 'localhost'),
-        'port' => (int)env('MAIL_PORT', 587),
+        'port' => (int) env('MAIL_PORT', 587),
         'encryption' => env('MAIL_ENCRYPTION', 'tls'),
         'username' => env('MAIL_USER', env('MAIL_USERNAME', '')),
         'password' => env('MAIL_PASS', env('MAIL_PASSWORD', '')),

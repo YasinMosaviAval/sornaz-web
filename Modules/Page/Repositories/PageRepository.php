@@ -3,9 +3,11 @@
 namespace Modules\Page\Repositories;
 
 use Core\database\Repository;
+
 // use Modules\Page\Models\PageModel;
 
-class PageRepository extends Repository {
+class PageRepository extends Repository
+{
 
     // protected ?string $model = PageModel::class;
     // protected string $table = 'pages';
@@ -15,8 +17,8 @@ class PageRepository extends Repository {
     protected string $primaryKey = 'setting_id';
     protected ?string $model = null;
 
-
-    public function findByPage(string $page): array {
+    public function findByPage(string $page): array
+    {
         $locale = 'fa';
         return $this->query()
             ->select(
@@ -48,6 +50,4 @@ class PageRepository extends Repository {
             ->orderBy('settings.sort_order')
             ->get();
     }
-
-
 }

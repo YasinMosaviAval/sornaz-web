@@ -2,6 +2,7 @@
 
 namespace Modules\Finance\Listeners;
 
-class SendFinanceListener {
+class SendFinanceListener
+{
 
 }

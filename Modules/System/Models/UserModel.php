@@ -8,7 +8,8 @@ use Core\database\SoftDeletes;
 use Modules\Content\Models\Post;
 use Modules\System\Models\Role;
 
-class UserModel extends Model {
+class UserModel extends Model
+{
     protected static string $table = 'users';
     protected static string $primaryKey = 'user_id';
     protected array $casts = [
@@ -32,7 +33,8 @@ class UserModel extends Model {
 
     use SoftDeletes;
 
-    public function posts() {
+    public function posts()
+    {
         return $this->hasMany(
             Post::class,
             'author_id',
@@ -40,9 +42,8 @@ class UserModel extends Model {
         );
     }
 
-
-
-    public function roles() {
+    public function roles()
+    {
         return $this->belongsToMany(
             Role::class,
             'user_roles',
@@ -53,7 +54,8 @@ class UserModel extends Model {
         );
     }
 
-    public function scopeActive(Builder $query) {
+    public function scopeActive(Builder $query)
+    {
         return $query->where(
             'status',
             'approved'
@@ -61,15 +63,16 @@ class UserModel extends Model {
         );
     }
 
-
-    public function scopePending(Builder $query) {
+    public function scopePending(Builder $query)
+    {
         return $query->where(
             'status',
             'pending'
         );
     }
 
-    public function scopeVisible(Builder $query) {
+    public function scopeVisible(Builder $query)
+    {
         return $query->where(
             'visibility',
             'public'

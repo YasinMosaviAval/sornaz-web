@@ -2,6 +2,7 @@
 
 namespace Modules\Communication\Events;
 
-class CommunicationEvent {
+class CommunicationEvent
+{
 
 }

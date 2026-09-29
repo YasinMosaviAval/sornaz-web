@@ -7,25 +7,29 @@ use Modules\Finance\Requests\FinanceStoreRequest;
 use Modules\Finance\Requests\FinanceUpdateRequest;
 use Modules\Finance\Services\FinanceService;
 
-class FinanceController {
+class FinanceController
+{
 
     protected FinanceService $service;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->service = new FinanceService();
     }
 
     /**
      * GET /api/finances
      */
-    public function index() {
+    public function index()
+    {
         return ResponseFactory::json($this->service->all());
     }
 
     /**
      * GET /api/finances/{id}
      */
-    public function show(int $id) {
+    public function show(int $id)
+    {
         $item = $this->service->findById($id);
         if (!$item) {
             return ResponseFactory::json(['message' => 'Finance not found.'], 404);
@@ -36,7 +40,8 @@ class FinanceController {
     /**
      * POST /api/finances
      */
-    public function store() {
+    public function store()
+    {
         $request = new FinanceStoreRequest($_POST);
         $id = $this->service->create($request->validated());
         return ResponseFactory::json([
@@ -48,19 +53,19 @@ class FinanceController {
     /**
      * PUT /api/finances/{id}
      */
-    public function update(int $id) {
+    public function update(int $id)
+    {
         $request = new FinanceUpdateRequest($_POST);
         $result = $this->service->update($id, $request->validated());
-        return ResponseFactory::json(['success'=>$result]);
+        return ResponseFactory::json(['success' => $result]);
     }
 
     /**
      * DELETE /api/finances/{id}
      */
-    public function destroy(int $id) {
+    public function destroy(int $id)
+    {
         $result = $this->service->delete($id);
-        return ResponseFactory::json(['success'=>$result]);
+        return ResponseFactory::json(['success' => $result]);
     }
-
-
 }

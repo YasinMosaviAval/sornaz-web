@@ -4,17 +4,29 @@ namespace Modules\System\Services;
 
 use Core\database\DB;
 
-class SiteAdminAccess {
-    public static function allows(?array $user): bool {
-        if (!$user) return false;
-        $userId = (int)($user['user_id'] ?? 0);
-        if (!$userId) return false;
+class SiteAdminAccess
+{
+    public static function allows(?array $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+        $userId = (int) ($user['user_id'] ?? 0);
+        if (!$userId) {
+            return false;
+        }
 
         // حساب بنیان‌گذار سایت مستقل از type و داده‌های نقش، همیشه مدیر سایت است.
-        if ($userId === 1) return true;
+        if ($userId === 1) {
+            return true;
+        }
 
-        if (in_array(($user['type'] ?? null), ['admin', 'superadmin', 'site_admin'], true)) return true;
-        if (($user['type'] ?? null) !== 'manager') return false;
+        if (in_array(($user['type'] ?? null), ['admin', 'superadmin', 'site_admin'], true)) {
+            return true;
+        }
+        if (($user['type'] ?? null) !== 'manager') {
+            return false;
+        }
 
         $role = DB::table('user_roles')
             ->join('access_system_roles', 'access_system_roles.role_id', '=', 'user_roles.role_id')
@@ -23,7 +35,9 @@ class SiteAdminAccess {
             ->whereNull('user_roles.deleted_at')
             ->whereNull('access_system_roles.deleted_at')
             ->first();
-        if ($role) return true;
+        if ($role) {
+            return true;
+        }
 
         return false;
     }
