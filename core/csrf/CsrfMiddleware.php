@@ -13,6 +13,13 @@ class CsrfMiddleware {
             $token = $_POST['_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null);
             $csrf = app()->container()->make(Csrf::class);
             if (!is_string($token) || !$csrf->verify($token)) {
+                if ($request->uri() === '/login' && str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'text/html')
+                    && !str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json')
+                    && strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'xmlhttprequest') {
+                    return (new \Core\http\RedirectResponse('/login', 303))
+                        ->withInput(['identifier' => is_string($_POST['identifier'] ?? null) ? $_POST['identifier'] : ''])
+                        ->withErrors(['identifier' => 'نشست فرم معتبر نیست. لطفاً رمز عبور را دوباره وارد کنید.']);
+                }
                 return \Core\http\ResponseFactory::json(['success'=>false,'message'=>'نشست فرم معتبر نیست. صفحه را تازه‌سازی و دوباره تلاش کنید.'], 419);
             }
         }

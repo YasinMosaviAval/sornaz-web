@@ -151,8 +151,7 @@ class Auth {
     }
 
     protected function isSecure(): bool {
-        return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-            || parse_url((string)env('APP_URL', ''), PHP_URL_SCHEME) === 'https';
+        return \Core\session\Session::secureCookies();
     }
 
 

@@ -4,14 +4,20 @@ namespace Core\session;
 
 class Session {
 
+    public static function secureCookies(): bool {
+        if (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off') return true;
+        // Local HTTP development must not inherit the production URL's cookie policy.
+        if (in_array((string)env('APP_ENV', 'production'), ['local', 'development', 'testing'], true)) return false;
+        return parse_url((string)env('APP_URL', ''), PHP_URL_SCHEME) === 'https';
+    }
+
 
     public function start(): void {
         if (session_status() === PHP_SESSION_NONE) {
             ini_set('session.use_strict_mode', '1');
             ini_set('session.use_only_cookies', '1');
             ini_set('session.use_trans_sid', '0');
-            $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-                || parse_url((string)env('APP_URL', ''), PHP_URL_SCHEME) === 'https';
+            $secure = self::secureCookies();
             session_set_cookie_params(['lifetime'=>0,'path'=>'/','secure'=>$secure,'httponly'=>true,'samesite'=>'Lax']);
             $sessionPath = storage_path('sessions');
             if (!is_dir($sessionPath)) {

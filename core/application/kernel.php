@@ -23,7 +23,9 @@ class Kernel {
         $route = Router::dispatch($request->method(), $request->uri());
         $response = new Response();
         if (!$route) {
-            $response->send('404 Not Found');
+            $json = str_starts_with($request->uri(), '/api/') || str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json');
+            if ($json) \Core\http\ResponseFactory::json(['success'=>false,'message'=>'Not Found'],404)->send();
+            else (new Response($locale === 'en' ? '404 — Page not found' : '۴۰۴ — صفحه یافت نشد',404))->send();
             return;
         }
         $action = $route['action'];
@@ -60,7 +62,7 @@ class Kernel {
                 $response->json($result);
                 return;
             }
-            $response->send((string)$result);
+            (new Response((string)$result))->send();
         } catch (ValidationException $e) {
             session()->flash('_errors', $e->errors());
             session()->flash('_old', \Core\session\Session::safeInput($_POST));

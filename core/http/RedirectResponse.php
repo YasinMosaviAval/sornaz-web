@@ -31,6 +31,7 @@ class RedirectResponse implements ResponseInterface {
 
 
     public function withInput(array $input): static {
+        session()->flash('_old_input', \Core\session\Session::safeInput($input));
         session()->put('_old_input', \Core\session\Session::safeInput($input));
         return $this;
     }
@@ -38,6 +39,7 @@ class RedirectResponse implements ResponseInterface {
 
 
     public function withErrors(array $errors): static {
+        session()->flash('_errors', $errors);
         session()->put('_errors', $errors);
         return $this;
     }

@@ -7,6 +7,8 @@ class CourseRepository
 {
     public function __construct(private PDO $db) {}
 
+    public function connection(): PDO { return $this->db; }
+
     public function query(string $sql, array $params = []): array
     {
         $statement = $this->db->prepare($sql);

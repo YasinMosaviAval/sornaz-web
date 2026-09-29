@@ -6,11 +6,12 @@ class Response implements ResponseInterface {
 
     protected string $content = '';
 
-    public function __construct(string $content = '') {
+    public function __construct(string $content = '', protected int $status = 200) {
         $this->content = $content;
     }
 
     public function send(): void {
+        http_response_code($this->status);
         echo $this->content;
     }
 

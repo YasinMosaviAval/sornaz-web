@@ -4,7 +4,11 @@ require __DIR__.'/../vendor/composer/ClassLoader.php';
 $loader = new Composer\Autoload\ClassLoader();
 $loader->addClassMap(require __DIR__.'/../vendor/composer/autoload_classmap.php');
 $loader->register();
-$pdo=new PDO('sqlite::memory:');$pdo->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE,PDO::FETCH_ASSOC);
+class ChatCountingPdo extends PDO {
+ public int $reactionQueries=0;
+ public function prepare(string $query,array $options=[]):PDOStatement|false{if(str_contains($query,'FROM conversation_message_reactions'))$this->reactionQueries++;return parent::prepare($query,$options);}
+}
+$pdo=new ChatCountingPdo('sqlite::memory:');$pdo->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE,PDO::FETCH_ASSOC);
 $pdo->sqliteCreateFunction('UTC_TIMESTAMP',fn()=>gmdate('Y-m-d H:i:s'));
 function db(){global $pdo;return $pdo;}
 function locale(){return 'en';}
@@ -80,4 +84,24 @@ denied(fn()=>$social->publish(1,['kind'=>'story','media_id'=>5,'link_url'=>'java
 $voice=$chat->send(1,1,'Voice')['id'];
 $pdo->exec("UPDATE conversation_messages SET attachment_path='voice.m4a',attachment_name='voice.m4a',attachment_mime='audio/mp4' WHERE conversation_message_id=$voice");
 denied(fn()=>$chat->editMessage(1,$voice,'Changed voice'));
+// Backlog pagination must not jump to the read receipt and skip pending pages.
+for($i=0;$i<250;$i++)$chat->send(4,2,'Backlog '.$i);
+$pdo->reactionQueries=0;$page=$chat->messages(1,2,0,false);
+check($pdo->reactionQueries===1,'Reaction queries grow with the number of messages');
+check(count($page['messages'])===200&&$page['hasMore'],'Initial backlog page was truncated without a cursor');
+$next=$chat->messages(1,2,$page['lastId'],false);
+check(count($next['messages'])===50&&!$next['hasMore'],'Backlog pagination skipped messages');
+$cursor=$next['lastId'];
+check($chat->messages(1,2,$cursor,false)['lastId']===$cursor,'Empty sync changed cursor');
+$chat->messages(1,2,$page['lastId'],true);
+$chat->messages(1,2,0,true);
+check((int)$pdo->query('SELECT last_read_message_id FROM conversation_members WHERE conversation_id=2 AND user_id=1')->fetchColumn()===$cursor,'An older page moved the read receipt backwards');
+$chat->messages(1,2,$cursor+10000,true);
+check((int)$pdo->query('SELECT last_read_message_id FROM conversation_members WHERE conversation_id=2 AND user_id=1')->fetchColumn()===$cursor,'An empty page marked nonexistent messages read');
+$edited=$page['messages'][0]['id'];$deleted=$page['messages'][1]['id'];
+$chat->editMessage(4,$edited,'Updated backlog');$chat->deleteMessage(4,$deleted);
+$sync=$chat->messages(1,2,$cursor,false,[$edited,$deleted,$parent]);
+check(count($sync['updated'])===1&&$sync['updated'][0]['body']==='Updated backlog','Existing message edits not synchronized');
+check(in_array($deleted,$sync['deletedIds'],true),'Message deletion not synchronized');
+check(!in_array($parent,array_column($sync['updated'],'id'),true),'Refresh leaked another conversation');
 echo "Chat, offline sync and story sharing: $checks integration checks passed.\n";

@@ -39,10 +39,8 @@ trait BuildsMutationQueries {
             $bindings[] = $value;
         }
         $sql = "UPDATE {$this->table} SET " . implode(',', $sets);
-        if ($this->wheres) {
-            $sql .= ' WHERE ' . implode(' AND ', $this->wheres);
-            $bindings = array_merge($bindings, $this->bindings);
-        }
+        $sql .= ' ' . $this->compileWhere();
+        $bindings = array_merge($bindings, $this->bindings);
         $stmt = $this->pdo->prepare($sql);
         $result = $stmt->execute($bindings);
         if ($result && $stmt->rowCount() > 0) DatabaseChangeNotifier::record($this->pdo, $this->table, 'update', $data, $this->mutationEntityId());
@@ -53,9 +51,7 @@ trait BuildsMutationQueries {
 
     public function delete(): bool {
         $sql = "DELETE FROM {$this->table}";
-        if ($this->wheres) {
-            $sql .= ' WHERE ' . implode(' AND ', $this->wheres);
-        }
+        $sql .= ' ' . $this->compileWhere();
         $stmt = $this->pdo->prepare($sql);
         $result = $stmt->execute($this->bindings);
         if ($result && $stmt->rowCount() > 0) DatabaseChangeNotifier::record($this->pdo, $this->table, 'delete', [], $this->mutationEntityId());

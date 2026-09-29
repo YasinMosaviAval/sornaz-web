@@ -32,18 +32,12 @@ trait BuildsWhereQueries {
             $operator = '=';
         }
         $condition = "{$column} {$operator} ?";
-        if (empty($this->wheres) && empty($this->rawWheres)) {
-            $this->wheres[] = $condition;
-        } else {
-            $this->rawWheres[] = 'OR ' . $condition;
-        }
-        $this->bindings[] = $value;
-        return $this;
+        return $this->orWhereRaw($condition,[$value]);
     }
 
 
     public function whereRaw(string $sql, array $bindings = []): static {
-        $this->rawWheres[] = $sql;
+        $this->wheres[] = '(' . $sql . ')';
         $this->bindings = array_merge($this->bindings, $bindings);
         return $this;
     }
@@ -51,7 +45,9 @@ trait BuildsWhereQueries {
 
 
     public function orWhereRaw(string $sql, array $bindings = []): static {
-        $this->rawWheres[] = 'OR ' . $sql;
+        $previous = array_merge($this->wheres,$this->rawWheres);
+        $this->wheres = [$previous ? '((' . implode(' AND ',$previous) . ') OR (' . $sql . '))' : '(' . $sql . ')'];
+        $this->rawWheres = [];
         $this->bindings = array_merge($this->bindings, $bindings);
         return $this;
     }

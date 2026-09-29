@@ -6,9 +6,15 @@ namespace Core\database {
  };}}
 }
 namespace {
- spl_autoload_register(function(string $class):void{$path=dirname(__DIR__).'/'.str_replace('\\','/',$class).'.php';if(is_file($path))require_once $path;});
+ $map=require __DIR__.'/../vendor/composer/autoload_classmap.php';
+ spl_autoload_register(static function(string $class)use($map):void{if(isset($map[$class]))require_once $map[$class];});
+ $testDb=new \PDO('sqlite::memory:');$testDb->exec('CREATE TABLE auth_remember_tokens(token_hash TEXT PRIMARY KEY,user_id INTEGER,expires_at INTEGER)');
+ function db(){return $GLOBALS['testDb'];}
+ function env($key,$default=null){return $default;}
  function base_path(string $path=''):string{return dirname(__DIR__).'/'.$path;}
- function storage_path(string $path):string{return sys_get_temp_dir().'/sornaz-panel-tests/'.$path;}
+ $testRoot=dirname(__DIR__).'/storage/mobile-panel-test-'.bin2hex(random_bytes(6));
+ function storage_path(string $path):string{return $GLOBALS['testRoot'].'/'.$path;}
+ register_shutdown_function(static function()use($testRoot){if(session_status()===PHP_SESSION_ACTIVE)session_destroy();foreach(glob($testRoot.'/sessions/sess_*')as$file)unlink($file);if(is_dir($testRoot.'/sessions'))rmdir($testRoot.'/sessions');if(is_dir($testRoot))rmdir($testRoot);});
  function config(string $key,mixed $default=null):mixed{return $key==='app.key'?'isolated-test-key':$default;}
  function session():\Core\session\Session{static $s;return $s??=new \Core\session\Session();}
  function auth():\Core\auth\Auth{return $GLOBALS['testAuth'];}
@@ -24,7 +30,7 @@ namespace {
  function check(bool $ok,string $message):void{if(!$ok)throw new \RuntimeException($message);}
  function field(object $object,string $name):mixed{return(new \ReflectionProperty($object,$name))->getValue($object);}
  $users=new class extends \Modules\System\Repositories\UserRepository{public array $rows=[];public function find(int $userId):?array{return $this->rows[$userId]??null;}};
- $users->rows=[7=>['user_id'=>7,'password'=>'hash','type'=>'human'],1=>['user_id'=>1,'password'=>'admin-hash','type'=>'admin']];
+ $users->rows=[7=>['user_id'=>7,'password'=>'hash','status'=>'approved','type'=>'human'],1=>['user_id'=>1,'password'=>'admin-hash','status'=>'approved','type'=>'admin']];
  $GLOBALS['testAuth']=new \Core\auth\Auth($users);
  $GLOBALS['courseService']=new class extends \Modules\Academy\Services\AcademyCourseService{public array $received=[];public function saveCourse(int $actor,array $data,int $id=0):array{$this->received=compact('actor','data','id');return['id'=>14];}};
  require base_path('Modules/Analytics/Routes/routes.php');require base_path('Modules/Academy/Routes/web.php');require base_path('Modules/Analytics/Routes/api.php');
@@ -33,11 +39,11 @@ namespace {
  $panel=new \Modules\Analytics\Controllers\Api\MobilePanelController($tokens,new \Modules\Analytics\Services\MobilePanelAccess(),$catalog);
  session()->start();$_SERVER['HTTP_AUTHORIZATION']='Bearer invalid';
  check(field($panel->index(),'status')===401,'Invalid bearer accepted');
- $_SERVER['HTTP_AUTHORIZATION']='Bearer '.$tokens->issue($users->rows[7]);$_SERVER['HTTP_ACCEPT_LANGUAGE']='en';$_SERVER['REQUEST_METHOD']='GET';$_SERVER['REQUEST_URI']='/api/sornaz/v1/panel/dashboard/list';$_SESSION=['_auth_user'=>1,'sentinel'=>'preserved'];
+ $_SERVER['HTTP_AUTHORIZATION']='Bearer '.$tokens->issue($users->rows[7]);$_SERVER['HTTP_ACCEPT_LANGUAGE']='en';$_SERVER['REQUEST_METHOD']='GET';$_SERVER['REQUEST_URI']='/api/sornaz/v1/panel/dashboard/list';$_SESSION=$originalSession=['_auth_user'=>1,'_auth_password_fingerprint'=>substr(hash('sha256','admin-hash'),0,24),'sentinel'=>'preserved'];
  $data=field($panel->index(),'data');$keys=array_column($data['sections'],'key');
  check(in_array('account',$keys,true)&&in_array('my-classrooms',$keys,true)&&in_array('chat',$keys,true),'Common destinations missing');
  check(!in_array('branches',$keys,true)&&!in_array('roles',$keys,true),'Ordinary user received management destinations');
- check($_SESSION===['_auth_user'=>1,'sentinel'=>'preserved'],'Bearer mutated browser session');
+ check($_SESSION===$originalSession,'Bearer mutated browser session');
  $result=field($panel->execute('dashboard','list'),'data');
  check($result['actor']===7&&$result['locale']==='en','Controller did not receive bearer identity and locale');
  check(auth()->id()===1,'Original identity not restored');
@@ -55,7 +61,7 @@ namespace {
  $_POST=['payload_b64'=>base64_encode(json_encode($input))];$_REQUEST=$_POST;$previous=$_POST;
  check(field($panel->execute('courses','create'),'status')===200,'Native create failed');
  check($GLOBALS['courseService']->received['actor']===1&&$GLOBALS['courseService']->received['data']===$input,'Payload or actor lost');
- check($_POST===$previous&&$_SESSION===['_auth_user'=>1,'sentinel'=>'preserved'],'Request state leaked');
+ check($_POST===$previous&&$_SESSION===$originalSession,'Request state leaked');
  $_GET=['id'=>'../1'];check(field($panel->execute('courses','update'),'status')===422,'Unsafe parameter accepted');
  $_GET=['value'=>'../outside'];check(field($panel->execute('classroom-categories','delete'),'status')===422,'Unsafe category parameter accepted');
  $definitions=$catalog->sections();

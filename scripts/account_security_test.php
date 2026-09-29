@@ -28,6 +28,7 @@ check(!$csrf->verify(''),'Empty CSRF accepted');
 check(!$csrf->verify(null),'Missing CSRF accepted');
 $token=$csrf->token();check($csrf->verify($token),'Valid CSRF denied');check(!$csrf->verify('wrong'),'Invalid CSRF accepted');
 $guard=new \Core\csrf\CsrfMiddleware;
+$_SERVER['REQUEST_URI']='/login';$_SERVER['SCRIPT_NAME']='/index.php';
 foreach(['POST','PUT','PATCH','DELETE'] as $method){
     $_SERVER['REQUEST_METHOD']=$method;$_POST=[];unset($_SERVER['HTTP_X_CSRF_TOKEN']);
     check($guard->handle(new \Core\http\Request,fn()=>true) instanceof \Core\http\JsonResponse,'Missing mutation CSRF accepted');
@@ -57,5 +58,17 @@ $reset->send('email','known@example.test');$reset->verify($mail->code);check($re
 check($mobile->userFromRequest()===null,'Password change kept bearer alive');check(!$reset->reset('second-password')['ok'],'OTP reused');
 $reset->clear();$unknown=$reset->send('email','unknown@example.test');check($known===$unknown,'Account existence exposed');
 check(!$reset->verify($mail->code)['ok'],'Unknown account OTP accepted');
+require __DIR__.'/../core/http/RedirectResponse.php';
+$_SERVER['REQUEST_METHOD']='POST';$_SERVER['HTTP_ACCEPT']='text/html';
+unset($_SERVER['HTTP_X_CSRF_TOKEN']);
+$_POST=['identifier'=>'fixture','password'=>'must-not-persist'];
+$result=$guard->handle(new \Core\http\Request,fn()=>throw new \RuntimeException('CSRF failure reached login'));
+check($result instanceof \Core\http\RedirectResponse,'HTML login CSRF did not return to login');
+check((new \ReflectionProperty($result,'url'))->getValue($result)==='/login','CSRF redirected to home');
+check(session()->getFlash('_old_input')===['identifier'=>'fixture'],'Login retry persisted password');
+check(!empty(session()->getFlash('_errors')['identifier']),'Login retry message missing');
+check(session()->getFlash('_errors')===null,'Login error was not consumed');
+$_SERVER['HTTP_ACCEPT']='application/json';
+check($guard->handle(new \Core\http\Request,fn()=>true) instanceof \Core\http\JsonResponse,'JSON CSRF contract changed');
 echo "Account security: $checks checks passed.\n";
 }

@@ -83,6 +83,8 @@ final class MobilePanelController {
         $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
         $previousLocale = app()->getLocale();
         $_SESSION['_auth_user'] = (int)$user['user_id'];
+        $_SESSION['_auth_password_fingerprint'] = substr(hash('sha256',(string)$user['password']),0,24);
+        unset($_SESSION['_auth_remember_token']);
         $_SERVER['HTTP_ACCEPT'] = 'application/json';
         app()->setLocale(str_starts_with(strtolower($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? ''), 'en') ? 'en' : 'fa');
         try { return $callback($user); }

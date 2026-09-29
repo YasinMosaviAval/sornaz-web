@@ -15,6 +15,7 @@ Router::get('/register', [SystemController::class, 'register']);
 Router::get('/forgot-password', [SystemController::class, 'forgotPassword']);
 Router::get('/language/{locale}', [SystemController::class, 'changeLanguage']);
 Router::get('/users', [UserController::class, 'directory']);
+Router::post('/contact', [\Modules\System\Controllers\Api\UserController::class, 'contactWeb'])->middleware(['csrf','auth-rate-limit']);
 Router::get('/system/my-invite', [UserReferralController::class, 'show'])->middleware('auth');
 Router::post('/system/tracking/ingest', [UserTrackingController::class, 'ingest']);
 

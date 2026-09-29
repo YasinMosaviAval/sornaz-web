@@ -211,7 +211,7 @@ class Builder {
 
 
     public function whereExists(Builder $query): static {
-        $this->rawWheres[] = 'EXISTS (' . $query->toSql() . ')';
+        $this->wheres[] = 'EXISTS (' . $query->toSql() . ')';
         $this->bindings = array_merge($this->bindings, $query->getBindings());
         return $this;
     }
@@ -219,7 +219,7 @@ class Builder {
 
 
     public function whereNotExists(Builder $query): static {
-        $this->rawWheres[] = 'NOT EXISTS (' . $query->toSql() . ')';
+        $this->wheres[] = 'NOT EXISTS (' . $query->toSql() . ')';
         $this->bindings = array_merge($this->bindings, $query->getBindings());
         return $this;
     }
@@ -227,10 +227,7 @@ class Builder {
 
 
     public function orWhereExists(Builder $query): static {
-        $sql = 'OR EXISTS (' . $query->toSql() . ')';
-        $this->rawWheres[] = $sql;
-        $this->bindings = array_merge($this->bindings, $query->getBindings());
-        return $this;
+        return $this->orWhereRaw('EXISTS (' . $query->toSql() . ')',$query->getBindings());
     }
 
 

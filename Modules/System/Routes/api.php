@@ -11,7 +11,7 @@ Router::group(['prefix' => '/api/sornaz/v1/auth'], function () {
     Router::post('/logout', [UserController::class, 'logout']);
 });
 
-Router::post('/api/sornaz/v1/contact', [UserController::class, 'contact']);
+Router::post('/api/sornaz/v1/contact', [UserController::class, 'contact'])->middleware('auth-rate-limit');
 
 
 // Router::group(

@@ -84,11 +84,21 @@ class UserController {
     }
 
     public function contact() {
-        $message = trim((string)($_POST['message'] ?? ''));
-        $email = trim((string)($_POST['email'] ?? ''));
-        if ($message === '') return $this->error('متن پیام الزامی است.', 422);
-        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) return $this->error('ایمیل معتبر وارد کنید.', 422);
-        return ResponseFactory::json(['success'=>true, 'message'=>'پیام شما ارسال شد. در اولین فرصت پاسخ می‌دهیم.']);
+        return $this->saveContact($this->tokens->userFromRequest(),false);
+    }
+
+    public function contactWeb() { return $this->saveContact(auth()->user()); }
+
+    private function saveContact(?array $user, bool $requireContact = true) {
+        try {
+            $id = (new \Modules\System\Services\ContactMessageService())->submit($_POST,$user,$requireContact);
+            return ResponseFactory::json(['success'=>true,'id'=>$id,'message'=>'پیام شما ثبت شد.'],201);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(),422);
+        } catch (\Throwable $e) {
+            error_log('Contact submission failed: '.$e->getMessage());
+            return $this->error('ثبت پیام انجام نشد. دوباره تلاش کنید.',503);
+        }
     }
 
     private function registrationData(): array {

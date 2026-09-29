@@ -53,16 +53,23 @@ window.toggleAccordion = function(btn) {
     }
 };
 
-window.submitPublicContact = function(e) {
+window.submitPublicContact = async function(e) {
     e.preventDefault();
-    const name = document.getElementById('cName')?.value.trim();
-    const email = document.getElementById('cEmail')?.value.trim();
-    const message = document.getElementById('cMessage')?.value.trim();
-    if (!name || !email || !message) return alert('لطفاً فیلدهای الزامی را پر کنید');
-
-    // در نسخه واقعی: ارسال به API
-    alert('✅ پیام شما ارسال شد. در اولین فرصت پاسخ می‌دهیم.');
-    document.getElementById('contactPublicForm')?.reset();
+    const form = document.getElementById('contactPublicForm');
+    if (!form || form.dataset.sending === '1') return;
+    const english = document.documentElement.lang === 'en';
+    const notify = (kind, text) => typeof showAuthToast === 'function' ? showAuthToast(kind,text) : alert(text);
+    const button = form.querySelector('[type="submit"]');
+    const body = new URLSearchParams({_token:window.siteCsrfToken || window.adminCsrfToken || ''});
+    for (const [field,id] of Object.entries({name:'cName',email:'cEmail',subject:'cSubject',message:'cMessage'})) body.set(field,document.getElementById(id)?.value.trim() || '');
+    form.dataset.sending = '1'; if (button) button.disabled = true;
+    try {
+        const response = await fetch('/contact',{method:'POST',credentials:'same-origin',headers:{Accept:'application/json'},body});
+        const payload = await response.json(), result = payload.data || payload;
+        if (!response.ok || !result.success) throw new Error(result.message || (english?'Message could not be saved.':'ثبت پیام انجام نشد.'));
+        form.reset(); notify('success',english?'Your message has been received.':'پیام شما ثبت شد.');
+    } catch(error) { notify('error',error.message || (english?'Please try again.':'دوباره تلاش کنید.')); }
+    finally { delete form.dataset.sending; if (button) button.disabled = false; }
 };
 
 // شروع از خانه

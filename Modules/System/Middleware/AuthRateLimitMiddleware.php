@@ -12,7 +12,7 @@ final class AuthRateLimitMiddleware
         $path = $request->uri();
         $login = str_ends_with($path, '/login');
         $send = str_ends_with($path, '/send-otp');
-        $group = $login ? 'login' : ($send ? 'otp-send' : 'auth-action');
+        $group = str_ends_with($path, '/contact') ? 'contact' : ($login ? 'login' : ($send ? 'otp-send' : 'auth-action'));
         // Only use the connection address; arbitrary forwarded headers are untrusted.
         $ip = (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown');
         $method = in_array($_POST['register_method'] ?? '', ['email','phone'], true) ? $_POST['register_method'] : 'email';
