@@ -89,9 +89,37 @@ class AcademyClassScheduleService
 
     public function save(int $actor, array $d, int $id = 0): array
     {
+        return \Modules\System\Services\PaymentMutex::run(db(), "session:$id", fn () => $this->saveLocked($actor, $d, $id));
+    }
+
+    private function saveLocked(int $actor, array $d, int $id = 0): array
+    {
         $session = $id ? $this->session($actor, $id) : null;
         $termId = (int) ($d['termId'] ?? ($session['term_id'] ?? 0));
+        if ($id) {
+            TermRecordGuard::assertSessionEditable($id);
+            if ($termId !== (int) $session['term_id']) {
+                throw new RuntimeException('انتقال جلسه ثبت‌شده به ترم دیگر مجاز نیست.', 409);
+            }
+        }
         $term = $this->term($actor, $termId);
+        [$date, $start, $end, $mode, $classroom, $status] = $this->validatedSessionInput($d, $term);
+        return transaction(function () use ($actor, $d, $id, $session, $termId, $date, $start, $end, $mode, $classroom, $status) {
+            $booking = ['requested_date' => $date, 'start_time' => $start, 'end_time' => $end, 'status' => $status, 'updated_by' => $actor];
+            if ($id) {
+                DB::table('academy_branch_bookings')->where('booking_id', (int) $session['booking_id'])->update($booking);
+                DB::table('academy_branch_course_term_sessions')->where('term_session_id', $id)->update(['term_id' => $termId, 'classroom_id' => $classroom, 'delivery_mode' => $mode, 'updated_by' => $actor]);
+            } else {
+                $students = DB::table('academy_branch_course_term_enrollments')->where('term_id', $termId)->where('type', 'student')->whereNull('deleted_at')->count();
+                $bid = DB::table('academy_branch_bookings')->insertGetId(['type' => $students > 1 ? 'group-class' : 'private-class', 'created_by' => $actor] + $booking);
+                $id = DB::table('academy_branch_course_term_sessions')->insertGetId(['term_id' => $termId, 'booking_id' => $bid, 'classroom_id' => $classroom, 'delivery_mode' => $mode, 'created_by' => $actor, 'updated_by' => $actor]);
+            }$this->setText('academy_branch_course_term_sessions', $id, 'description', trim((string) ($d['description'] ?? '')), $actor);
+            return ['id' => $id];
+        });
+    }
+
+    private function validatedSessionInput(array $d, array $term): array
+    {
         $date = (string) ($d['date'] ?? '');
         $start = (string) ($d['startTime'] ?? '');
         $end = (string) ($d['endTime'] ?? '');
@@ -107,23 +135,18 @@ class AcademyClassScheduleService
             }
         }$allowed = array_keys($this->statusLabels);
         $status = in_array($d['status'] ?? '', $allowed, true) ? $d['status'] : 'approved';
-        return transaction(function () use ($actor, $d, $id, $session, $termId, $date, $start, $end, $mode, $classroom, $status) {
-            $booking = ['requested_date' => $date, 'start_time' => $start, 'end_time' => $end, 'status' => $status, 'updated_by' => $actor];
-            if ($id) {
-                DB::table('academy_branch_bookings')->where('booking_id', (int) $session['booking_id'])->update($booking);
-                DB::table('academy_branch_course_term_sessions')->where('term_session_id', $id)->update(['term_id' => $termId, 'classroom_id' => $classroom, 'delivery_mode' => $mode, 'updated_by' => $actor]);
-            } else {
-                $students = DB::table('academy_branch_course_term_enrollments')->where('term_id', $termId)->where('type', 'student')->whereNull('deleted_at')->count();
-                $bid = DB::table('academy_branch_bookings')->insertGetId(['type' => $students > 1 ? 'group-class' : 'private-class', 'created_by' => $actor] + $booking);
-                $id = DB::table('academy_branch_course_term_sessions')->insertGetId(['term_id' => $termId, 'booking_id' => $bid, 'classroom_id' => $classroom, 'delivery_mode' => $mode, 'created_by' => $actor, 'updated_by' => $actor]);
-            }$this->setText('academy_branch_course_term_sessions', $id, 'description', trim((string) ($d['description'] ?? '')), $actor);
-            return ['id' => $id];
-        });
+        return [$date, $start, $end, $mode, $classroom, $status];
     }
 
     public function delete(int $actor, int $id): void
     {
+        \Modules\System\Services\PaymentMutex::run(db(), "session:$id", fn () => $this->deleteLocked($actor, $id));
+    }
+
+    private function deleteLocked(int $actor, int $id): void
+    {
         $s = $this->session($actor, $id);
+        TermRecordGuard::assertSessionEditable($id);
         $now = date('Y-m-d H:i:s');
         transaction(function () use ($actor, $id, $s, $now) {
             DB::table('academy_branch_course_term_sessions')->where('term_session_id', $id)->update(['deleted_at' => $now, 'deleted_by' => $actor]);
@@ -132,6 +155,11 @@ class AcademyClassScheduleService
     }
 
     public function attendance(int $actor, int $id, array $d): void
+    {
+        \Modules\System\Services\PaymentMutex::run(db(), "session:$id", fn () => $this->attendanceLocked($actor, $id, $d));
+    }
+
+    private function attendanceLocked(int $actor, int $id, array $d): void
     {
         $s = $this->session($actor, $id);
         $booking = DB::table('academy_branch_bookings')->where('booking_id', (int) $s['booking_id'])->whereNull('deleted_at')->first();

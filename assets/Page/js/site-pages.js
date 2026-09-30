@@ -1542,7 +1542,7 @@ function renderArticleComments(articleId) {
         <div class="border border-gray-100 rounded-2xl p-4">
             <div class="flex justify-between items-center mb-2">
                 <span class="font-medium text-sm">${escapeHtml(c.name)}</span>
-                <span class="text-xs text-gray-400">${c.date}</span>
+                <span class="text-xs text-gray-400">${escapeHtml(c.date)}</span>
             </div>
             <p class="text-sm text-gray-600 leading-relaxed">${escapeHtml(c.body)}</p>
             ${c.pending ? '<p class="text-xs text-amber-600 mt-2">در انتظار تأیید</p>' : ''}

@@ -3,6 +3,7 @@
 namespace Modules\Analytics\Services;
 
 use Core\database\DB;
+use Core\security\ContentSafety;
 
 class ArticleApiService
 {
@@ -131,7 +132,7 @@ class ArticleApiService
     public function storeComment(int $postId, array $payload, string $locale, ?int $viewerId = null): int
     {
         $this->posts->find($postId, $locale);
-        $content = $this->safeCommentHtml((string) ($payload['content'] ?? ''));
+        $content = ContentSafety::comment($payload['content'] ?? '');
         $plain = trim(html_entity_decode(strip_tags($content), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
         $author = trim(strip_tags((string) ($payload['author_name'] ?? $payload['author'] ?? '')));
         if ($plain === '' || mb_strlen($plain) > 3000 || strlen($content) > 20000) {
@@ -220,7 +221,7 @@ class ArticleApiService
             throw new \RuntimeException('مقاله یافت نشد.', 404);
         }
         foreach (['title' => 'title', 'summary' => 'brief', 'description' => 'description', 'content' => 'content'] as $key => $field) {
-            $post[$key] = $texts[$field] ?? '';
+            $post[$key] = $key === 'content' ? ContentSafety::rich($texts[$field] ?? '') : ($texts[$field] ?? '');
         }
         $post['categories'] = [];
         foreach ($post['category_ids'] as $categoryId) {
@@ -234,48 +235,6 @@ class ArticleApiService
         $name = DB::table('translations')->where('table_name', 'users')->where('table_id', (int) ($row['author_id'] ?? 0))->where('field', 'full_name')->where('locale', 'en')->whereNull('deleted_at')->first();
         $post['author_name'] = (string) ($name['value'] ?? $author['username'] ?? '');
         return $post;
-    }
-
-    private function safeCommentHtml(string $html): string
-    {
-        $doc = new \DOMDocument();
-        $previous = libxml_use_internal_errors(true);
-        $doc->loadHTML('<?xml encoding="UTF-8"><div>' . $html . '</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-        libxml_clear_errors();
-        libxml_use_internal_errors($previous);
-        $render = function ($node) use (&$render): string {
-            if ($node instanceof \DOMText) {
-                return htmlspecialchars($node->textContent, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            }
-            if (!($node instanceof \DOMElement)) {
-                return '';
-            }
-            if (in_array(strtolower($node->tagName), ['script', 'style', 'iframe', 'object'], true)) {
-                return '';
-            }
-            $children = '';
-            foreach ($node->childNodes as $child) {
-                $children .= $render($child);
-            }
-            if ($node->tagName === 'br') {
-                return '<br>';
-            }
-            if ($node->tagName === 'p') {
-                return '<p>' . $children . '</p>';
-            }
-            if ($node->tagName === 'a') {
-                $url = trim($node->getAttribute('href'));
-                if (preg_match('~^https?://~i', $url)) {
-                    return '<a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '" rel="nofollow noopener">' . $children . '</a>';
-                }
-            }
-            return $children;
-        };
-        $out = '';
-        foreach ($doc->childNodes as $node) {
-            $out .= $render($node);
-        }
-        return trim($out);
     }
 
     private function wordpressCompatiblePost(array $post): array

@@ -13,7 +13,9 @@ final class UserPointService
     public function index(int $actor): array
     {
         $pdo = db();
-        self::ensureSchema($pdo);
+        if (!self::ensureSchema($pdo)) {
+            throw new RuntimeException('بخش امتیازدهی هنوز آماده نیست؛ مدیر سایت باید به‌روزرسانی پایگاه داده را تکمیل کند.', 503);
+        }
         $this->processTracking($pdo, $actor);
         $rules = $pdo->query("SELECT r.*,IF(r.academy_id IS NULL,'سراسری',CONCAT('آموزشگاه ',r.academy_id)) academy_name,IF(r.branch_id IS NULL,NULL,CONCAT('شعبه ',r.branch_id)) branch_name FROM user_point_rules r WHERE r.deleted_at IS NULL ORDER BY r.user_point_rule_id DESC")->fetchAll(PDO::FETCH_ASSOC);
         $q = $pdo->prepare("SELECT type,COALESCE(SUM(points),0) total FROM user_points WHERE user_id=? AND deleted_at IS NULL AND approved_at IS NOT NULL GROUP BY type");
@@ -30,7 +32,9 @@ final class UserPointService
     public function store(int $actor, array $data): int
     {
         $pdo = db();
-        self::ensureSchema($pdo);
+        if (!self::ensureSchema($pdo)) {
+            throw new RuntimeException('بخش امتیازدهی هنوز آماده نیست؛ مدیر سایت باید به‌روزرسانی پایگاه داده را تکمیل کند.', 503);
+        }
         $clean = $this->validate($data);
         $clean['created_at'] = date('Y-m-d H:i:s');
         $clean['created_by'] = $actor;
@@ -45,7 +49,9 @@ final class UserPointService
     public function update(int $actor, int $id, array $data): void
     {
         $pdo = db();
-        self::ensureSchema($pdo);
+        if (!self::ensureSchema($pdo)) {
+            throw new RuntimeException('بخش امتیازدهی هنوز آماده نیست؛ مدیر سایت باید به‌روزرسانی پایگاه داده را تکمیل کند.', 503);
+        }
         $clean = $this->validate($data);
         $clean['updated_at'] = date('Y-m-d H:i:s');
         $clean['updated_by'] = $actor;
@@ -137,30 +143,18 @@ final class UserPointService
         if (self::$schemaReady) {
             return true;
         }
-        $exists = $pdo->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='user_point_rules'")->fetchColumn();
-        if (!$exists && $pdo->inTransaction()) {
+        // Never run DDL here: MySQL would implicitly commit the caller's work.
+        $tables = (int) $pdo->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('user_point_rules','user_points')")->fetchColumn();
+        $columns = (int) $pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='user_points' AND COLUMN_NAME IN ('rule_id','award_key','metadata')")->fetchColumn();
+        $index = (int) $pdo->query("SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='user_points' AND INDEX_NAME='uq_user_points_award_key' AND NON_UNIQUE=0")->fetchColumn();
+        if ($tables !== 2 || $columns !== 3 || !$index) {
             return false;
         }
-        $pdo->exec("CREATE TABLE IF NOT EXISTS user_point_rules (user_point_rule_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,title VARCHAR(190) NOT NULL,summary VARCHAR(255) NULL,description TEXT NULL,point_type ENUM('general','professional') NOT NULL DEFAULT 'general',category VARCHAR(50) NOT NULL DEFAULT 'engagement',points INT UNSIGNED NOT NULL,source ENUM('database','tracking','manual') NOT NULL DEFAULT 'database',action VARCHAR(190) NOT NULL,reference_type VARCHAR(50) NULL,repeat_mode ENUM('event','daily','once') NOT NULL DEFAULT 'event',daily_cap SMALLINT UNSIGNED NOT NULL DEFAULT 0,cooldown_minutes INT UNSIGNED NOT NULL DEFAULT 0,academy_id BIGINT UNSIGNED NULL,branch_id BIGINT UNSIGNED NULL,status ENUM('active','inactive') NOT NULL DEFAULT 'active',created_at DATETIME NULL,created_by BIGINT UNSIGNED NULL,updated_at DATETIME NULL,updated_by BIGINT UNSIGNED NULL,deleted_at DATETIME NULL,deleted_by BIGINT UNSIGNED NULL,INDEX idx_point_rule_match(source,action,status),INDEX idx_point_rule_scope(academy_id,branch_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-        self::addColumn($pdo, 'user_points', 'rule_id', 'BIGINT UNSIGNED NULL AFTER reference_id');
-        self::addColumn($pdo, 'user_points', 'award_key', 'CHAR(64) NULL AFTER rule_id');
-        self::addColumn($pdo, 'user_points', 'metadata', 'JSON NULL AFTER award_key');
-        $idx = $pdo->query("SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='user_points' AND INDEX_NAME='uq_user_points_award_key'")->fetchColumn();
-        if (!$idx) {
-            $pdo->exec('CREATE UNIQUE INDEX uq_user_points_award_key ON user_points (award_key)');
+        if (!$pdo->inTransaction()) {
+            self::seed($pdo);
         }
-        self::seed($pdo);
         self::$schemaReady = true;
         return true;
-    }
-
-    private static function addColumn(PDO $pdo, string $table, string $column, string $definition): void
-    {
-        $q = $pdo->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=?');
-        $q->execute([$table, $column]);
-        if (!(int) $q->fetchColumn()) {
-            $pdo->exec("ALTER TABLE `$table` ADD COLUMN `$column` $definition");
-        }
     }
 
     private static function seed(PDO $pdo): void

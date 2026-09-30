@@ -53,7 +53,7 @@ class AdminPostCategoryController
         try {
             return ResponseFactory::json($callback());
         } catch (\Throwable $e) {
-            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
+            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], $e->getCode() === 403 ? 403 : 422);
         }
     }
 }

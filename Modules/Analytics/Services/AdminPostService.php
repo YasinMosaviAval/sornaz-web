@@ -3,6 +3,8 @@
 namespace Modules\Analytics\Services;
 
 use Core\database\DB;
+use Core\security\ContentSafety;
+use Modules\System\Services\SiteAdminAccess;
 use RuntimeException;
 
 class AdminPostService
@@ -14,6 +16,7 @@ class AdminPostService
 
     public function index(array $filters): array
     {
+        SiteAdminAccess::requireCurrentUser();
         $this->ensurePageType();
         $page = max(1, (int) ($filters['page'] ?? 1));
         $perPage = in_array((int) ($filters['perPage'] ?? 20), [10, 20, 30, 50, 100], true) ? (int) $filters['perPage'] : 20;
@@ -42,6 +45,12 @@ class AdminPostService
             FROM posts p LEFT JOIN users u ON u.user_id=p.author_id
             WHERE $whereSql ORDER BY p.post_id DESC LIMIT $offset,$perPage", $bindings);
         $posts = array_map(fn (array $row) => $this->map($row), $rows);
+        $counts = $this->statusCounts($filters);
+        return ['posts' => $posts, 'total' => (int) $count, 'page' => $page, 'perPage' => $perPage, 'statusCounts' => $counts];
+    }
+
+    private function statusCounts(array $filters): array
+    {
         $countWhere = ['deleted_at IS NULL'];
         $countBindings = [];
         if (!empty($filters['type'])) {
@@ -56,11 +65,12 @@ class AdminPostService
         foreach ($this->query('SELECT status,COUNT(*) total FROM posts WHERE ' . implode(' AND ', $countWhere) . ' GROUP BY status', $countBindings) as $row) {
             $counts[$row['status']] = (int) $row['total'];
         }
-        return ['posts' => $posts, 'total' => (int) $count, 'page' => $page, 'perPage' => $perPage, 'statusCounts' => $counts];
+        return $counts;
     }
 
     public function find(int $id): array
     {
+        SiteAdminAccess::requireCurrentUser();
         $row = DB::table('posts')->where('post_id', $id)->whereNull('deleted_at')->first();
         if (!$row) {
             throw new RuntimeException('نوشته یافت نشد.');
@@ -70,6 +80,7 @@ class AdminPostService
 
     public function create(int $actor, array $data): int
     {
+        SiteAdminAccess::requireCurrentUser($actor);
         $this->ensurePageType();
         return transaction(function () use ($actor, $data) {
             [$values, $texts] = $this->validated($data, $actor);
@@ -81,6 +92,7 @@ class AdminPostService
 
     public function update(int $actor, int $id, array $data): void
     {
+        SiteAdminAccess::requireCurrentUser($actor);
         $this->ensurePageType();
         $this->find($id);
         transaction(function () use ($actor, $id, $data) {
@@ -92,18 +104,21 @@ class AdminPostService
 
     public function trash(int $actor, int $id): void
     {
+        SiteAdminAccess::requireCurrentUser($actor);
         $this->find($id);
         DB::table('posts')->where('post_id', $id)->update(['status' => 'trash', 'updated_by' => $actor]);
     }
 
     public function restore(int $actor, int $id): void
     {
+        SiteAdminAccess::requireCurrentUser($actor);
         $this->find($id);
         DB::table('posts')->where('post_id', $id)->update(['status' => 'draft', 'updated_by' => $actor]);
     }
 
     public function destroy(int $actor, int $id): void
     {
+        SiteAdminAccess::requireCurrentUser($actor);
         $post = $this->find($id);
         if ($post['status'] !== 'trash') {
             throw new RuntimeException('پیش از حذف دائمی، نوشته را به زباله‌دان منتقل کنید.');
@@ -155,7 +170,12 @@ class AdminPostService
             'related_posts_id' => trim((string) ($data['related_posts_id'] ?? '')) ?: null,
             'updated_by' => $actor,
         ];
-        return [$values, ['title' => $title, 'brief' => trim((string) ($data['summary'] ?? '')), 'description' => trim((string) ($data['description'] ?? '')), 'content' => (string) ($data['content'] ?? '')]];
+        return [$values, $this->validatedTexts($data, $title)];
+    }
+
+    private function validatedTexts(array $data, string $title): array
+    {
+        return ['title' => $title, 'brief' => ContentSafety::text($data['summary'] ?? '', 10000), 'description' => ContentSafety::text($data['description'] ?? '', 20000), 'content' => ContentSafety::rich(ContentSafety::text($data['content'] ?? '', 200000))];
     }
 
     private function map(array $row): array
@@ -167,7 +187,7 @@ class AdminPostService
         }
         return [
             'id' => $id, 'title' => $texts['title'] ?? 'بدون عنوان', 'summary' => $texts['brief'] ?? '',
-            'description' => $texts['description'] ?? '', 'content' => $texts['content'] ?? '',
+            'description' => $texts['description'] ?? '', 'content' => ContentSafety::rich($texts['content'] ?? ''),
             'author_id' => (int) ($row['author_id'] ?? 0), 'author_name' => $row['author_name'] ?? $row['username'] ?? ('کاربر ' . ($row['author_id'] ?? '')),
             'categories' => $row['categories'] ?? '', 'cover' => $row['cover'] ?? '', 'cover_media_id' => $row['cover_media_id'] ? (int) $row['cover_media_id'] : null,
             'slug' => $row['slug'] ?? '', 'views_count' => (int) ($row['views_count'] ?? 0), 'published_at' => $row['published_at'] ?? null,

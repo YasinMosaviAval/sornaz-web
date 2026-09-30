@@ -3,6 +3,7 @@
 namespace Modules\Analytics\Services;
 
 use Core\database\DB;
+use Core\security\ContentSafety;
 use RuntimeException;
 
 class PublicPostService
@@ -63,14 +64,19 @@ class PublicPostService
             'summary' => $texts['brief'] ?? '', 'description' => $texts['description'] ?? '',
             'category_ids' => array_map('intval', $categoryIds),
             'categories' => array_values(array_filter(array_map(fn ($id) => $categoryTitles[(int) $id] ?? null, $categoryIds))),
-            'cover' => $images['main'] ?: ($row['cover'] ?? ''), 'thumbnail' => $images['thumbnail'], 'content_images' => $images['content'], 'author_name' => $authorName,
+            'cover' => ContentSafety::url($images['main'] ?: ($row['cover'] ?? '')), 'thumbnail' => $images['thumbnail'], 'content_images' => $images['content'], 'author_name' => $authorName,
             'related_posts' => $related,
             'published_at' => $row['published_at'] ?? $row['created_at'] ?? null,
             'updated_at' => $row['updated_at'] ?? null, 'views' => (int) ($row['views_count'] ?? 0),
             'comment_count' => (int) ($row['comment_count'] ?? 0), 'type' => $row['type'] ?? 'post',
         ];
+        return $this->includeContent($result, $texts, $withContent);
+    }
+
+    private function includeContent(array $result, array $texts, bool $withContent): array
+    {
         if ($withContent) {
-            $result['content'] = $texts['content'] ?? '';
+            $result['content'] = ContentSafety::rich($texts['content'] ?? '');
         }
         return $result;
     }

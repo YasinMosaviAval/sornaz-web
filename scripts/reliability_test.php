@@ -68,6 +68,7 @@ $pdo->exec("CREATE TABLE users(user_id INTEGER,phone TEXT,email TEXT); INSERT IN
 CREATE TABLE academy_branch_course_term_invoices(term_invoice_id INTEGER PRIMARY KEY,status TEXT,updated_at TEXT,updated_by INTEGER,deleted_at TEXT);
 CREATE TABLE academy_branch_course_term_invoice_installments(term_invoice_installment_id INTEGER PRIMARY KEY,invoice_id INTEGER,installment_number INTEGER,amount INTEGER,status TEXT,paid_at TEXT,updated_at TEXT,updated_by INTEGER,deleted_at TEXT);
 INSERT INTO academy_branch_course_term_invoices VALUES(1,'issued',NULL,NULL,NULL);
+ALTER TABLE academy_branch_course_term_invoices ADD COLUMN payable_amount INTEGER DEFAULT 200;
 INSERT INTO academy_branch_course_term_invoice_installments VALUES(1,1,1,100,'pending',NULL,NULL,NULL,NULL),(2,1,2,100,'pending',NULL,NULL,NULL,NULL);
 CREATE TABLE academy_term_invoice_payments(payment_id INTEGER PRIMARY KEY,invoice_id INTEGER,installment_id INTEGER,user_id INTEGER,amount INTEGER,currency TEXT,callback_token TEXT,status TEXT,created_at TEXT,created_by INTEGER,updated_at TEXT,updated_by INTEGER,authority TEXT,gateway_code INTEGER,requested_at TEXT,gateway_message TEXT,reference_id TEXT,card_pan TEXT,card_hash TEXT,verified_at TEXT,deleted_at TEXT);");
 $invoiceGateway=new class extends Modules\Academy\Services\ZarinpalPaymentService {
@@ -125,4 +126,12 @@ $newPayment=DB::table('academy_subscription_payments')->orderBy('subscription_pa
 DB::table('academy_subscription_periods')->where('subscription_period_id',(int)$nextPeriod['subscription_period_id'])->update(['status'=>'canceled']);
 check($subscription->callback($newPayment['callback_token'],$newPayment['authority'],'OK')['requiresReview'],'Canceled subscription activated by a late payment');
 check(DB::table('academy_subscription_periods')->where('subscription_period_id',(int)$nextPeriod['subscription_period_id'])->first()['status']==='canceled','Late payment overwrote canceled subscription');
+$pdo->exec("INSERT INTO academy_branch_course_term_invoices(term_invoice_id,status,payable_amount) VALUES(3,'issued',100);
+INSERT INTO academy_branch_course_term_invoice_installments(term_invoice_installment_id,invoice_id,installment_number,amount,status) VALUES(5,3,1,100,'pending');");
+$invoiceGateway->start(7,3,5);
+$receipt=DB::table('academy_term_invoice_payments')->orderBy('payment_id','DESC')->first();
+$pdo->exec('UPDATE academy_branch_course_term_invoices SET payable_amount=200 WHERE term_invoice_id=3');
+check($invoiceGateway->callback($receipt['callback_token'],$receipt['authority'],'OK')['requiresReview'],'Inconsistent invoice was settled automatically');
+check(DB::table('academy_term_invoice_payments')->where('payment_id',(int)$receipt['payment_id'])->first()['status']==='paid','Verified receipt lost during reconciliation');
+check(DB::table('academy_branch_course_term_invoice_installments')->where('term_invoice_installment_id',5)->first()['status']==='pending','Inconsistent installment overwritten');
 echo "Reliability: $checks checks passed.\n";

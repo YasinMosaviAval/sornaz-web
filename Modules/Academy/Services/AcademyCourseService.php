@@ -167,6 +167,7 @@ class AcademyCourseService
             throw new RuntimeException('دوره یافت نشد.');
         }
         $this->assertCourseAccess($actor, $row);
+        TermRecordGuard::assertNoHistory('academy_branch_course_terms', 'course_id', $id);
         $this->softDelete('academy_branch_courses', 'course_id', $id, $actor);
     }
 

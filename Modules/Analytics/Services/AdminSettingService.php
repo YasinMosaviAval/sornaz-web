@@ -34,6 +34,7 @@ class AdminSettingService
 
     public function save(int $actor, array $data): array
     {
+        \Modules\System\Services\SiteAdminAccess::requireCurrentUser($actor);
         if (array_key_exists('primaryFont', $data)) {
             $this->put('site_primary_font', $this->fontKey($data['primaryFont']), 'string', $actor);
         }

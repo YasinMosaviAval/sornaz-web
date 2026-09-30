@@ -12,7 +12,7 @@
                         <i class="fas fa-plus text-indigo-500 accordion-icon text-sm"></i>
                     </button>
                     <div class="accordion-body px-6">
-                        <div class="pb-5 text-gray-600 leading-8 text-justify whitespace-pre-line"><?= trans('public.about.section_'.$item.'.description') ?></div>
+                        <div class="pb-5 text-gray-600 leading-8 text-justify whitespace-pre-line"><?= \Core\security\ContentSafety::rich(trans('public.about.section_'.$item.'.description')) ?></div>
                     </div>
                 </div>
             <?php endfor; ?>

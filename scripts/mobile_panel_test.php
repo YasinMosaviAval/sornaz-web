@@ -54,6 +54,10 @@ namespace {
  check(in_array('notifications',$keys,true)&&!in_array('roles',$keys,true)&&!in_array('branches',$keys,true),'Member boundaries lost');
  \Core\database\DB::$rows['management-role']=['role_id'=>7];$keys=array_column(field($panel->index(),'data')['sections'],'key');
  check(in_array('branches',$keys,true)&&!in_array('roles',$keys,true),'Manager boundaries lost');
+ foreach(['posts','post-categories','comments','media','pages','settings'] as $key){
+  check(!in_array($key,$keys,true),'Manager received site content section');
+  check(field($panel->execute($key,'list'),'status')===403,'Manager invoked global content through mobile API');
+ }
  \Core\database\DB::$rows=[];$_SERVER['HTTP_AUTHORIZATION']='Bearer '.$tokens->issue($users->rows[1]);$sections=field($panel->index(),'data')['sections'];
  check(in_array('roles',array_column($sections,'key'),true),'Admin role management missing');
  foreach($sections as$section)foreach($section['actions']as$action){check(!str_contains($action['path'],'admin-panel')&&!str_contains($action['path'],'_test'),'HTML or development action exposed');check(\Core\router\Router::dispatch($action['method'],preg_replace('/\{\w+\}/','1',$action['path']))!==null,'Unregistered action');}

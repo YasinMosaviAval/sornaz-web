@@ -35,6 +35,11 @@ class AcademyTermService
 
     public function updateInvoice(int $actor, int $id, array $d): void
     {
+        \Modules\System\Services\PaymentMutex::run(db(), "invoice:$id", fn () => $this->updateInvoiceLocked($actor, $id, $d));
+    }
+
+    private function updateInvoiceLocked(int $actor, int $id, array $d): void
+    {
         $invoice = DB::table('academy_branch_course_term_invoices')->where('term_invoice_id', $id)->whereNull('deleted_at')->first();
         if (!$invoice) {
             throw new RuntimeException('فاکتور یافت نشد.');
@@ -45,8 +50,6 @@ class AcademyTermService
             throw new RuntimeException('ترم فاکتور معتبر نیست.');
         }
         $this->allowedBranch($actor, (int) $course['branch_id']);
-        $statuses = ['draft', 'issued', 'partial', 'paid', 'canceled'];
-        $status = in_array($d['statusCode'] ?? '', $statuses, true) ? $d['statusCode'] : 'draft';
         $date = (string) ($d['dueDate'] ?? '');
         if ($date !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
             throw new RuntimeException('تاریخ سررسید معتبر نیست.');
@@ -55,37 +58,32 @@ class AcademyTermService
         if ($title === '') {
             throw new RuntimeException('شرح تراکنش الزامی است.');
         }
-        transaction(function () use ($actor, $id, $invoice, $d, $status, $date, $title) {
-            DB::table('academy_branch_course_term_invoices')->where('term_invoice_id', $id)->update(['payable_amount' => max(0, (float) ($d['amount'] ?? 0)), 'due_date' => $date ?: null, 'status' => $status, 'updated_by' => $actor]);
-            $this->setTexts((int) $invoice['term_id'], ['title' => $title, 'summary' => trim((string) ($d['summary'] ?? '')), 'description' => trim((string) ($d['description'] ?? ''))], $actor);
+        transaction(function () use ($actor, $id, $invoice, $d, $title) {
+            InvoiceLedger::revise($id, $actor, $d);
+            $this->setGenericTexts('academy_branch_course_term_invoices', $id, ['title' => $title, 'summary' => trim((string) ($d['summary'] ?? '')), 'description' => trim((string) ($d['description'] ?? ''))], $actor);
         });
     }
 
     public function payInstallment(int $actor, int $invoiceId, int $installmentId): void
     {
-        $invoice = DB::table('academy_branch_course_term_invoices')->where('term_invoice_id', $invoiceId)->whereNull('deleted_at')->first();
-        $installment = DB::table('academy_branch_course_term_invoice_installments')->where('term_invoice_installment_id', $installmentId)->where('invoice_id', $invoiceId)->whereNull('deleted_at')->first();
-        if (!$invoice || !$installment) {
-            throw new RuntimeException('قسط موردنظر یافت نشد.');
-        }
-        $term = DB::table('academy_branch_course_terms')->where('term_id', (int) $invoice['term_id'])->whereNull('deleted_at')->first();
-        $course = $term ? DB::table('academy_branch_courses')->where('course_id', (int) $term['course_id'])->whereNull('deleted_at')->first() : null;
-        if (!$course) {
-            throw new RuntimeException('ترم فاکتور معتبر نیست.');
-        }
-        $this->allowedBranch($actor, (int) $course['branch_id']);
-        if (($installment['status'] ?? '') === 'paid') {
-            return;
-        }
-        $firstUnpaid = DB::table('academy_branch_course_term_invoice_installments')->where('invoice_id', $invoiceId)->whereNull('deleted_at')->where('status', '<>', 'paid')->orderBy('installment_number')->orderBy('term_invoice_installment_id')->first();
-        if (!$firstUnpaid || (int) $firstUnpaid['term_invoice_installment_id'] !== $installmentId) {
-            throw new RuntimeException('اقساط باید به‌ترتیب پرداخت شوند. ابتدا قسط قبلی را پرداخت کنید.');
-        }
-        transaction(function () use ($actor, $invoiceId, $installmentId) {
-            DB::table('academy_branch_course_term_invoice_installments')->where('term_invoice_installment_id', $installmentId)->update(['status' => 'paid', 'paid_at' => date('Y-m-d H:i:s'), 'updated_by' => $actor]);
-            $remaining = DB::table('academy_branch_course_term_invoice_installments')->where('invoice_id', $invoiceId)->whereNull('deleted_at')->where('status', '<>', 'paid')->count();
-            $paid = DB::table('academy_branch_course_term_invoice_installments')->where('invoice_id', $invoiceId)->whereNull('deleted_at')->where('status', 'paid')->count();
-            DB::table('academy_branch_course_term_invoices')->where('term_invoice_id', $invoiceId)->update(['status' => $remaining === 0 ? 'paid' : ($paid > 0 ? 'partial' : 'issued'), 'updated_by' => $actor]);
+        throw new RuntimeException('ثبت پرداخت بدون رسید مجاز نیست؛ از ثبت پرداخت بانکی یا درگاه استفاده کنید.', 409);
+    }
+
+    private function updateRecordedTerm(int $actor, array $d, int $id): array
+    {
+        $term = $this->authorizeTerm($actor, $id);
+        return \Modules\System\Services\PaymentMutex::run(db(), "term:$id", function () use ($actor, $d, $id, $term) {
+            return transaction(function () use ($actor, $d, $id, $term) {
+                if (($d['metadataOnly'] ?? false) !== true) {
+                    TermRecordGuard::assertUnchanged($term, $d);
+                }
+                $name = trim((string) ($d['name'] ?? ''));
+                if ($name === '') {
+                    throw new RuntimeException('نام ترم الزامی است.', 422);
+                }
+                $this->setTexts($id, ['title' => $name, 'summary' => trim((string) ($d['summary'] ?? '')), 'description' => trim((string) ($d['description'] ?? ''))], $actor);
+                return ['id' => $id];
+            });
         });
     }
 
@@ -139,6 +137,9 @@ class AcademyTermService
 
     public function save(int $actor, array $d, int $id = 0): array
     {
+        if ($id !== 0) {
+            return $this->updateRecordedTerm($actor, $d, $id);
+        }
         $branch = $this->allowedBranch($actor, (int) ($d['branchId'] ?? 0));
         $course = DB::table('academy_branch_courses')->where('course_id', (int) ($d['courseId'] ?? 0))->where('branch_id', (int) $branch['branch_id'])->whereNull('deleted_at')->first();
         if (!$course) {
@@ -153,15 +154,7 @@ class AcademyTermService
         }
         $teachers = $this->validatePeople($d['teachers'] ?? [], 'teacher', (int) $branch['branch_id'], (int) $course['lesson_id'], (int) $course['teacher_capacity']);
         $students = $this->validatePeople($d['students'] ?? [], 'student', (int) $branch['branch_id'], 0, (int) $course['student_capacity']);
-        $sessions = array_values(array_filter($d['sessions'] ?? [], fn ($x) => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($x['date'] ?? ''))));
-        if (!$sessions) {
-            throw new RuntimeException('تاریخ جلسات الزامی است.');
-        }
-        foreach ($sessions as $s) {
-            if (!preg_match('/^\d{2}:\d{2}$/', (string) ($s['startTime'] ?? '')) || !preg_match('/^\d{2}:\d{2}$/', (string) ($s['endTime'] ?? '')) || $s['endTime'] <= $s['startTime']) {
-                throw new RuntimeException('ساعت شروع و پایان تمام جلسات باید معتبر باشد.');
-            }
-        }
+        $sessions = $this->validatedSessions($d);
         $name = trim((string) ($d['name'] ?? ''));
         if (!$name) {
             throw new RuntimeException('نام ترم الزامی است.');
@@ -170,29 +163,16 @@ class AcademyTermService
         $statuses = ['pending', 'open', 'ongoing', 'finished'];
         $values = ['course_id' => (int) $course['course_id'], 'start_date' => $sessions[0]['date'], 'end_date' => $sessions[count($sessions) - 1]['date'], 'session_count' => count($sessions), 'session_period' => in_array($d['repeatType'] ?? '', $periods, true) ? $d['repeatType'] : 'no-period', 'price' => 0, 'currency_id' => (int) ($d['currencyId'] ?? 1), 'status' => in_array($d['status'] ?? '', $statuses, true) ? $d['status'] : 'pending', 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
         return transaction(function () use ($actor, $d, $id, $values, $name, $sessions, $teachers, $students, $room) {
-            if ($id) {
-                if (!DB::table('academy_branch_course_terms')->where('term_id', $id)->whereNull('deleted_at')->first()) {
-                    throw new RuntimeException('ترم یافت نشد.');
-                }
-                DB::table('academy_branch_course_terms')->where('term_id', $id)->update($values);
-                $this->clear($id, $actor);
-            } else {
-                $id = DB::table('academy_branch_course_terms')->insertGetId(['created_by' => $actor] + $values);
-            }
+            $id = DB::table('academy_branch_course_terms')->insertGetId(['created_by' => $actor] + $values);
             $this->setTexts($id, ['title' => $name, 'summary' => trim((string) ($d['summary'] ?? '')), 'description' => trim((string) ($d['description'] ?? ''))], $actor);
             foreach ($sessions as $s) {
-                $booking = DB::table('academy_branch_bookings')->insertGetId(['type' => 'group-class', 'status' => 'approved', 'requested_date' => $s['date'], 'start_time' => $s['startTime'], 'end_time' => $s['endTime'], 'created_by' => $actor, 'updated_by' => $actor]);
+                $booking = DB::table('academy_branch_bookings')->insertGetId(['type' => 'group-class', 'status' => 'approved', 'requested_date' => $s['date'], 'start_time' => $s['startTime'], 'end_time' => $s['endTime'], 'timezone_id' => (int) ($s['timezoneId'] ?? 0) ?: null, 'created_by' => $actor, 'updated_by' => $actor]);
                 DB::table('academy_branch_course_term_sessions')->insert(['term_id' => $id, 'booking_id' => $booking, 'classroom_id' => (int) $room['classroom_id'], 'created_by' => $actor, 'updated_by' => $actor]);
             }$this->saveScheduleSkips($id, $d['skippedDates'] ?? [], $actor);
             foreach (array_merge(array_map(fn ($x) => [$x, 'teacher'], $teachers), array_map(fn ($x) => [$x, 'student'], $students)) as [$member,$type]) {
                 DB::table('academy_branch_course_term_enrollments')->insert(['term_id' => $id, 'member_id' => $member, 'type' => $type, 'status' => 'active', 'joined_at' => date('Y-m-d H:i:s'), 'created_by' => $actor, 'updated_by' => $actor]);
             }
-            $invoice = DB::table('academy_branch_course_term_invoices')->insertGetId(['term_id' => $id, 'discount_id' => (int) ($d['discountId'] ?? 0) ?: null, 'payable_amount' => max(0, (float) ($d['cost'] ?? 0)), 'currency_id' => $values['currency_id'], 'status' => 'draft', 'due_date' => $values['start_date'], 'created_by' => $actor, 'updated_by' => $actor]);
-            $count = max(1, (int) ($d['installmentCount'] ?? 1));
-            $total = max(0, (float) ($d['cost'] ?? 0));
-            for ($n = 1;$n <= $count;$n++) {
-                DB::table('academy_branch_course_term_invoice_installments')->insert(['invoice_id' => $invoice, 'installment_number' => $n, 'amount' => $n === $count ? $total - floor($total / $count) * ($count - 1) : floor($total / $count), 'due_date' => date('Y-m-d', strtotime($values['start_date'] . ' +' . ($n - 1) . ' month')), 'status' => 'pending', 'created_by' => $actor, 'updated_by' => $actor]);
-            }
+            InvoiceLedger::create($id, $actor, $d, $values['start_date'], $values['currency_id']);
             return ['id' => $id];
         });
     }
@@ -212,6 +192,9 @@ class AcademyTermService
 
     public function saveAcademyTerm(int $actor, array $d, int $id = 0): array
     {
+        if ($id !== 0) {
+            return $this->updateRecordedTerm($actor, $d, $id);
+        }
         $course = DB::table('academy_branch_courses')->where('course_id', (int) ($d['courseId'] ?? 0))->whereNull('deleted_at')->first();
         if (!$course || $course['academy_id'] === null) {
             throw new RuntimeException('دوره آموزشگاه معتبر نیست.');
@@ -229,15 +212,7 @@ class AcademyTermService
         }
         $teachers = $this->validatePeople($d['teachers'] ?? [], 'teacher', (int) $branch['branch_id'], (int) $course['lesson_id'], (int) $course['teacher_capacity']);
         $students = $this->validatePeople($d['students'] ?? [], 'student', (int) $branch['branch_id'], 0, (int) $course['student_capacity']);
-        $sessions = array_values(array_filter($d['sessions'] ?? [], fn ($x) => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($x['date'] ?? ''))));
-        if (!$sessions) {
-            throw new RuntimeException('تاریخ جلسات الزامی است.');
-        }
-        foreach ($sessions as $s) {
-            if (!preg_match('/^\d{2}:\d{2}$/', (string) ($s['startTime'] ?? '')) || !preg_match('/^\d{2}:\d{2}$/', (string) ($s['endTime'] ?? '')) || $s['endTime'] <= $s['startTime']) {
-                throw new RuntimeException('ساعت شروع و پایان تمام جلسات باید معتبر باشد.');
-            }
-        }
+        $sessions = $this->validatedSessions($d);
         $name = trim((string) ($d['name'] ?? ''));
         if (!$name) {
             throw new RuntimeException('نام ترم الزامی است.');
@@ -246,29 +221,16 @@ class AcademyTermService
         $statuses = ['pending', 'open', 'ongoing'];
         $values = ['course_id' => (int) $course['course_id'], 'start_date' => $sessions[0]['date'], 'end_date' => $sessions[count($sessions) - 1]['date'], 'session_count' => count($sessions), 'session_period' => in_array($d['repeatType'] ?? '', $periods, true) ? $d['repeatType'] : 'no-period', 'price' => 0, 'currency_id' => (int) ($d['currencyId'] ?? 1), 'status' => in_array($d['status'] ?? '', $statuses, true) ? $d['status'] : 'pending', 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
         return transaction(function () use ($actor, $d, $id, $values, $name, $sessions, $teachers, $students, $room) {
-            if ($id) {
-                if (!DB::table('academy_branch_course_terms')->where('term_id', $id)->whereNull('deleted_at')->first()) {
-                    throw new RuntimeException('ترم یافت نشد.');
-                }
-                DB::table('academy_branch_course_terms')->where('term_id', $id)->update($values);
-                $this->clear($id, $actor);
-            } else {
-                $id = DB::table('academy_branch_course_terms')->insertGetId(['created_by' => $actor] + $values);
-            }
+            $id = DB::table('academy_branch_course_terms')->insertGetId(['created_by' => $actor] + $values);
             $this->setTexts($id, ['title' => $name, 'summary' => trim((string) ($d['summary'] ?? '')), 'description' => trim((string) ($d['description'] ?? ''))], $actor);
             foreach ($sessions as $s) {
-                $booking = DB::table('academy_branch_bookings')->insertGetId(['type' => 'group-class', 'status' => 'approved', 'requested_date' => $s['date'], 'start_time' => $s['startTime'], 'end_time' => $s['endTime'], 'created_by' => $actor, 'updated_by' => $actor]);
+                $booking = DB::table('academy_branch_bookings')->insertGetId(['type' => 'group-class', 'status' => 'approved', 'requested_date' => $s['date'], 'start_time' => $s['startTime'], 'end_time' => $s['endTime'], 'timezone_id' => (int) ($s['timezoneId'] ?? 0) ?: null, 'created_by' => $actor, 'updated_by' => $actor]);
                 DB::table('academy_branch_course_term_sessions')->insert(['term_id' => $id, 'booking_id' => $booking, 'classroom_id' => (int) $room['classroom_id'], 'created_by' => $actor, 'updated_by' => $actor]);
             }$this->saveScheduleSkips($id, $d['skippedDates'] ?? [], $actor);
             foreach (array_merge(array_map(fn ($x) => [$x, 'teacher'], $teachers), array_map(fn ($x) => [$x, 'student'], $students)) as [$member,$type]) {
                 DB::table('academy_branch_course_term_enrollments')->insert(['term_id' => $id, 'member_id' => $member, 'type' => $type, 'status' => 'active', 'joined_at' => date('Y-m-d H:i:s'), 'created_by' => $actor, 'updated_by' => $actor]);
             }
-            $total = max(0, (float) ($d['cost'] ?? 0));
-            $invoice = DB::table('academy_branch_course_term_invoices')->insertGetId(['term_id' => $id, 'discount_id' => (int) ($d['discountId'] ?? 0) ?: null, 'payable_amount' => $total, 'currency_id' => $values['currency_id'], 'status' => 'draft', 'due_date' => $values['start_date'], 'created_by' => $actor, 'updated_by' => $actor]);
-            $count = max(1, (int) ($d['installmentCount'] ?? 1));
-            for ($n = 1;$n <= $count;$n++) {
-                DB::table('academy_branch_course_term_invoice_installments')->insert(['invoice_id' => $invoice, 'installment_number' => $n, 'amount' => $n === $count ? $total - floor($total / $count) * ($count - 1) : floor($total / $count), 'due_date' => date('Y-m-d', strtotime($values['start_date'] . ' +' . ($n - 1) . ' month')), 'status' => 'pending', 'created_by' => $actor, 'updated_by' => $actor]);
-            }
+            InvoiceLedger::create($id, $actor, $d, $values['start_date'], $values['currency_id']);
             return ['id' => $id];
         });
     }
@@ -470,19 +432,7 @@ class AcademyTermService
 
     public function cycleStatus(int $actor, int $id): array
     {
-        $row = DB::table('academy_branch_course_terms')->where('term_id', $id)->whereNull('deleted_at')->first();
-        if (!$row) {
-            throw new RuntimeException('ترم یافت نشد.');
-        }
-        $course = DB::table('academy_branch_courses')->where('course_id', (int) $row['course_id'])->whereNull('deleted_at')->first();
-        if (!$course) {
-            throw new RuntimeException('دوره ترم معتبر نیست.');
-        }
-        $branches = $this->branches($actor);
-        $allowed = $course['branch_id'] !== null ? (bool) array_filter($branches, fn ($b) => (int) $b['branch_id'] === (int) $course['branch_id']) : (bool) array_filter($branches, fn ($b) => (int) $b['academy_id'] === (int) $course['academy_id']);
-        if (!$allowed) {
-            throw new RuntimeException('دسترسی به تغییر وضعیت این ترم ندارید.');
-        }
+        $row = $this->authorizeTerm($actor, $id);
         $next = match ((string) $row['status']) {
             'pending' => 'open','open' => 'ongoing','ongoing' => 'finished',default => 'pending'
         };
@@ -493,18 +443,20 @@ class AcademyTermService
 
     public function delete(int $actor, int $id): void
     {
-        $row = DB::table('academy_branch_course_terms')->where('term_id', $id)->whereNull('deleted_at')->first();
-        if (!$row) {
-            throw new RuntimeException('ترم یافت نشد.');
-        }
-        $course = DB::table('academy_branch_courses')->where('course_id', (int) $row['course_id'])->first();
-        $this->allowedBranch($actor, (int) $course['branch_id']);
+        $this->authorizeTerm($actor, $id);
+        TermRecordGuard::assertDeletable($id);
         DB::table('academy_branch_course_terms')->where('term_id', $id)->update(['deleted_at' => date('Y-m-d H:i:s'), 'deleted_by' => $actor]);
     }
 
     public function cancelSession(int $actor, int $termId, int $sessionId, array $d, bool $pending): array
     {
+        return \Modules\System\Services\PaymentMutex::run(db(), "session:$sessionId", fn () => $this->cancelSessionLocked($actor, $termId, $sessionId, $d, $pending));
+    }
+
+    private function cancelSessionLocked(int $actor, int $termId, int $sessionId, array $d, bool $pending): array
+    {
         $context = $this->termSessionContext($actor, $termId, $sessionId);
+        TermRecordGuard::assertSessionEditable($sessionId);
         $session = $context['session'];
         $booking = $context['booking'];
         $term = $context['term'];
@@ -517,10 +469,7 @@ class AcademyTermService
         if (in_array((string) ($booking['status'] ?? ''), ['rejected', 'completed', 'held'], true)) {
             throw new RuntimeException('جلسه ردشده یا برگزارشده قابل لغو نیست.');
         }
-        $reason = trim((string) ($d['reason'] ?? ''));
-        if ($reason === '') {
-            throw new RuntimeException('دلیل لغو جلسه الزامی است.');
-        }
+        $reason = $this->cancellationReason($d);
         $date = trim((string) ($d['makeupDate'] ?? ''));
         $automaticDate = $date === '';
         if ($automaticDate) {
@@ -569,6 +518,11 @@ class AcademyTermService
 
     public function decideSessionCancellation(int $actor, int $termId, int $sessionId, bool $approve): array
     {
+        return \Modules\System\Services\PaymentMutex::run(db(), "session:$sessionId", fn () => $this->decideSessionCancellationLocked($actor, $termId, $sessionId, $approve));
+    }
+
+    private function decideSessionCancellationLocked(int $actor, int $termId, int $sessionId, bool $approve): array
+    {
         $context = $this->termSessionContext($actor, $termId, $sessionId);
         $session = $context['session'];
         if (($session['cancellation_status'] ?? 'none') !== 'pending') {
@@ -590,6 +544,11 @@ class AcademyTermService
     }
 
     public function restoreCanceledSession(int $actor, int $termId, int $sessionId, bool $isReceptionist = false): array
+    {
+        return \Modules\System\Services\PaymentMutex::run(db(), "session:$sessionId", fn () => $this->restoreCanceledSessionLocked($actor, $termId, $sessionId, $isReceptionist));
+    }
+
+    private function restoreCanceledSessionLocked(int $actor, int $termId, int $sessionId, bool $isReceptionist = false): array
     {
         $context = $this->termSessionContext($actor, $termId, $sessionId);
         $session = $context['session'];
@@ -796,6 +755,17 @@ class AcademyTermService
         }
     }
 
+    private function invoiceInstallmentRows(array $ids): array
+    {
+        $installments = [];
+        if ($ids) {
+            foreach (DB::table('academy_branch_course_term_invoice_installments')->whereIn('invoice_id', $ids)->whereNull('deleted_at')->orderBy('installment_number')->get() as $i) {
+                $installments[(int) $i['invoice_id']][] = ['id' => (int) $i['term_invoice_installment_id'], 'number' => (int) $i['installment_number'], 'amount' => (float) $i['amount'], 'dueDate' => $i['due_date'], 'statusCode' => $i['status'], 'status' => $this->installmentStatus((string) $i['status']), 'paidAt' => $i['paid_at']];
+            }
+        }
+        return $installments;
+    }
+
     private function invoiceRows(array $tids, array $terms, array $cmap, array $bmap, array $tr): array
     {
         if (!$tids) {
@@ -807,12 +777,8 @@ class AcademyTermService
         }
         $rows = DB::table('academy_branch_course_term_invoices')->whereIn('term_id', $tids)->whereNull('deleted_at')->orderBy('term_invoice_id', 'DESC')->get();
         $ids = array_column($rows, 'term_invoice_id');
-        $installments = [];
-        if ($ids) {
-            foreach (DB::table('academy_branch_course_term_invoice_installments')->whereIn('invoice_id', $ids)->whereNull('deleted_at')->orderBy('installment_number')->get() as $i) {
-                $installments[(int) $i['invoice_id']][] = ['id' => (int) $i['term_invoice_installment_id'], 'number' => (int) $i['installment_number'], 'amount' => (float) $i['amount'], 'dueDate' => $i['due_date'], 'statusCode' => $i['status'], 'status' => $this->installmentStatus((string) $i['status']), 'paidAt' => $i['paid_at']];
-            }
-        }
+        $invoiceTexts = $this->texts(['academy_branch_course_term_invoices' => $ids]);
+        $installments = $this->invoiceInstallmentRows($ids);
         $statuses = ['draft' => 'پیش‌نویس', 'issued' => 'صادرشده', 'partial' => 'پرداخت جزئی', 'paid' => 'پرداخت‌شده', 'canceled' => 'لغوشده'];
         $out = [];
         foreach ($rows as $i) {
@@ -825,7 +791,7 @@ class AcademyTermService
                 continue;
             }
             $id = (int) $i['term_invoice_id'];
-            $text = $tr['academy_branch_course_terms'][(int) $term['term_id']] ?? [];
+            $text = array_replace($tr['academy_branch_course_terms'][(int) $term['term_id']] ?? [], $invoiceTexts['academy_branch_course_term_invoices'][(int) $i['term_invoice_id']] ?? []);
             $out[] = ['id' => $id, 'termId' => (int) $term['term_id'], 'termName' => $text['title'] ?? ('ترم ' . $term['term_id']), 'summary' => $text['summary'] ?? '', 'description' => $text['description'] ?? '', 'course' => $tr['academy_branch_courses'][(int) $term['course_id']]['title'] ?? ('دوره ' . $term['course_id']), 'branchId' => (int) $course['branch_id'], 'branchName' => $bmap[(int) $course['branch_id']] ?? ('شعبه ' . $course['branch_id']), 'amount' => (float) $i['payable_amount'], 'currencyId' => (int) $i['currency_id'], 'statusCode' => $i['status'], 'status' => $statuses[$i['status']] ?? $i['status'], 'dueDate' => $i['due_date'], 'issuedAt' => $i['issued_at'], 'installments' => $installments[$id] ?? []];
         }return $out;
     }
@@ -852,20 +818,6 @@ class AcademyTermService
     private function installmentCount(int $id): int
     {
         return max(1, DB::table('academy_branch_course_term_invoice_installments')->where('invoice_id', $id)->whereNull('deleted_at')->count());
-    }
-
-    private function clear(int $id, int $actor): void
-    {
-        $now = date('Y-m-d H:i:s');
-        $ss = DB::table('academy_branch_course_term_sessions')->where('term_id', $id)->whereNull('deleted_at')->get();
-        foreach ($ss as $s) {
-            if ($s['booking_id']) {
-                DB::table('academy_branch_bookings')->where('booking_id', (int) $s['booking_id'])->update(['deleted_at' => $now, 'deleted_by' => $actor]);
-            }
-        }
-        foreach (['academy_branch_course_term_sessions', 'academy_branch_course_term_enrollments', 'academy_branch_course_term_invoices', 'academy_branch_course_term_schedule_skips'] as $t) {
-            DB::table($t)->where('term_id', $id)->whereNull('deleted_at')->update(['deleted_at' => $now, 'deleted_by' => $actor]);
-        }
     }
 
     private function texts(array $groups): array
@@ -914,23 +866,9 @@ class AcademyTermService
         $acs = array_merge(DB::table('academies')->where('user_id', $a)->whereNull('deleted_at')->get(), DB::table('academies')->where('created_by', $a)->whereNull('deleted_at')->get());
         $academyIds = array_values(array_unique(array_map(fn ($x) => (int) $x['academy_id'], $acs)));
         $branchIds = [];
-        $members = DB::table('academy_branch_members')->where('user_id', $a)->whereNull('deleted_at')->get();
+        $members = DB::table('academy_branch_members')->where('user_id', $a)->where('status', 'active')->whereNull('deleted_at')->get();
         foreach ($members as $m) {
-            $mid = (int) $m['member_id'];
-            $roles = DB::table('academy_branch_member_roles')->join('access_system_roles', 'access_system_roles.role_id', '=', 'academy_branch_member_roles.role_id')->where('academy_branch_member_roles.member_id', $mid)->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->get();
-            $contracts = DB::table('academy_branch_member_contracts')->where('member_id', $mid)->whereNull('deleted_at')->get();
-            $allowed = false;
-            foreach ($roles as $r) {
-                if (preg_match('/manager|owner|reception/i', (string) $r['name'])) {
-                    $allowed = true;
-                    break;
-                }
-            }foreach ($contracts as $c) {
-                if (in_array(strtolower((string) $c['type']), ['manager', 'owner', 'receptionist'], true)) {
-                    $allowed = true;
-                    break;
-                }
-            }if (!$allowed) {
+            if (!$this->managesMembership($m)) {
                 continue;
             }
             if ($m['branch_id']) {
@@ -954,6 +892,49 @@ class AcademyTermService
         return array_values($unique);
     }
 
+    private function validatedSessions(array $d): array
+    {
+        $sessions = array_values(array_filter($d['sessions'] ?? [], fn ($x) => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($x['date'] ?? ''))));
+        if (!$sessions) {
+            throw new RuntimeException('تاریخ جلسات الزامی است.');
+        }
+        foreach ($sessions as $s) {
+            if (!preg_match('/^\d{2}:\d{2}$/', (string) ($s['startTime'] ?? '')) || !preg_match('/^\d{2}:\d{2}$/', (string) ($s['endTime'] ?? '')) || $s['endTime'] <= $s['startTime']) {
+                throw new RuntimeException('ساعت شروع و پایان تمام جلسات باید معتبر باشد.');
+            }
+        }
+        return $sessions;
+    }
+
+    private function cancellationReason(array $data): string
+    {
+        $reason = trim((string) ($data['reason'] ?? ''));
+        if ($reason === '') {
+            throw new RuntimeException('دلیل لغو جلسه الزامی است.');
+        }
+        return $reason;
+    }
+
+    private function managesMembership(array $m): bool
+    {
+        $mid = (int) $m['member_id'];
+        $roles = DB::table('academy_branch_member_roles')->join('access_system_roles', 'access_system_roles.role_id', '=', 'academy_branch_member_roles.role_id')->where('academy_branch_member_roles.member_id', $mid)->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->get();
+        $contracts = DB::table('academy_branch_member_contracts')->where('member_id', $mid)->whereNull('deleted_at')->get();
+        $allowed = false;
+        foreach ($roles as $r) {
+            if (in_array((string) $r['name'], ['academy_owner', 'academy_manager', 'branch_manager', 'academy_receptionist', 'branch_receptionist'], true)) {
+                $allowed = true;
+                break;
+            }
+        }foreach ($contracts as $c) {
+            if (in_array(strtolower((string) $c['type']), ['manager', 'owner', 'receptionist'], true)) {
+                $allowed = true;
+                break;
+            }
+        }
+        return $allowed;
+    }
+
     private function allowedBranch(int $a, int $id): array
     {
         foreach ($this->branches($a) as $b) {
@@ -961,6 +942,28 @@ class AcademyTermService
                 return $b;
             }
         }
-        throw new RuntimeException('دسترسی به شعبه ندارید.');
+        throw new RuntimeException('دسترسی به شعبه ندارید.', 403);
+    }
+
+    private function authorizeTerm(int $actor, int $id): array
+    {
+        $term = DB::table('academy_branch_course_terms')->where('term_id', $id)->whereNull('deleted_at')->first();
+        $course = $term ? DB::table('academy_branch_courses')->where('course_id', (int) $term['course_id'])->whereNull('deleted_at')->first() : null;
+        if (!$course) {
+            throw new RuntimeException('ترم در دسترس نیست.', 403);
+        }
+        if (!empty($course['branch_id'])) {
+            $this->allowedBranch($actor, (int) $course['branch_id']);
+            return $term;
+        }
+        // An academy-wide term may affect several branches. Require access to
+        // every branch of its academy before changing the shared term.
+        $academyId = (int) ($course['academy_id'] ?? 0);
+        $branches = $academyId ? DB::table('academy_branches')->where('academy_id', $academyId)->whereNull('deleted_at')->get() : [];
+        $allowed = array_column($this->branches($actor), 'branch_id');
+        if (!$branches || array_diff(array_column($branches, 'branch_id'), $allowed)) {
+            throw new RuntimeException('دسترسی به ترم آموزشگاه ندارید.', 403);
+        }
+        return $term;
     }
 }

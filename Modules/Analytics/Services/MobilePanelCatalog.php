@@ -387,11 +387,18 @@ final class MobilePanelCatalog
                 $field['options'] = ['-2' => 'کوچک‌تر', '-1' => 'کوچک', '0' => 'عادی', '1' => 'بزرگ', '2' => 'بزرگ‌تر'];
             }
         }unset($field);
+        $sections = $this->authorizedActions($sections);
+        $sections['pages']['detail'] = $sections['page-content'];
+        return $sections;
+    }
+
+    private function authorizedActions(array $sections): array
+    {
         // Only registered operations are exposed; no synthetic CRUD or HTML routes.
         foreach ($sections as &$section) {
             $path = $section['actions']['create']['path'] ?? $section['actions']['list']['path'];
             if ($section['access'] === 'management' && isset($section['actions']['update']) && !isset($section['actions']['status'])) {
-                $section['actions']['status'] = $a($path . '/{id}/status', 'تغییر وضعیت');
+                $section['actions']['status'] = $this->a($path . '/{id}/status', 'تغییر وضعیت');
             }
             $section['actions'] = array_filter($section['actions'], fn ($action) => Router::dispatch($action['method'], preg_replace('/\{\w+\}/', '1', $action['path'])) !== null);
             foreach ($section['actions'] as &$action) {
@@ -401,7 +408,9 @@ final class MobilePanelCatalog
                 }
             }unset($action);
         } unset($section);
-        $sections['pages']['detail'] = $sections['page-content'];
+        foreach (['posts', 'post-categories', 'comments', 'media', 'pages', 'page-content', 'settings'] as $key) {
+            $sections[$key]['access'] = 'admin';
+        }
         return $sections;
     }
 

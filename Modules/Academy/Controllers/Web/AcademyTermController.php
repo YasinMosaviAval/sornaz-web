@@ -142,37 +142,28 @@ class AcademyTermController
     {
         return $this->run(function () use ($id) {
             $data = $this->payload();
-            $receptionist = $this->isReceptionist((int) auth()->id());
-            $data['status'] = $receptionist ? 'pending' : (in_array($data['status'] ?? '', ['open', 'ongoing'], true) ? $data['status'] : 'open');
-            if ($data['status'] === 'ongoing') {
-                $data['students'] = [];
-            }
-            if ((float) ($data['cost'] ?? 0) <= 0) {
-                $data['cost'] = 0;
-                $data['discountId'] = 0;
-                $data['installmentCount'] = 1;
-            }
-            if (count($data['sessions'] ?? []) === 1) {
-                $data['repeatType'] = 'no-period';
-            }
-            $sessionCount = count($data['sessions'] ?? []);
-            $installmentCount = max(1, (int) ($data['installmentCount'] ?? 1));
-            $maximum = max(2, $sessionCount);
-            if ($installmentCount > $maximum) {
-                throw new RuntimeException("تعداد اقساط نمی‌تواند بیشتر از {$maximum} باشد.");
+            if (!$id) {
+                $receptionist = $this->isReceptionist((int) auth()->id());
+                $data['status'] = $receptionist ? 'pending' : (in_array($data['status'] ?? '', ['open', 'ongoing'], true) ? $data['status'] : 'open');
+                if ((float) ($data['cost'] ?? 0) <= 0) {
+                    $data['cost'] = 0;
+                    $data['discountId'] = 0;
+                    $data['installmentCount'] = 1;
+                }
+                if (count($data['sessions'] ?? []) === 1) {
+                    $data['repeatType'] = 'no-period';
+                }
+                $sessionCount = count($data['sessions'] ?? []);
+                $installmentCount = max(1, (int) ($data['installmentCount'] ?? 1));
+                $maximum = max(2, $sessionCount);
+                if ($installmentCount > $maximum) {
+                    throw new RuntimeException("تعداد اقساط نمی‌تواند بیشتر از {$maximum} باشد.");
+                }
             }
             $course = \Core\database\DB::table('academy_branch_courses')->where('course_id', (int) ($data['courseId'] ?? 0))->whereNull('deleted_at')->first();
             $saved = $course && $course['branch_id'] === null && $course['academy_id'] !== null
                 ? $this->service->saveAcademyTerm((int) auth()->id(), $data, $id)
                 : $this->service->save((int) auth()->id(), $data, $id);
-            $termId = (int) ($saved['id'] ?? $id);
-            $savedSessions = \Core\database\DB::table('academy_branch_course_term_sessions')->where('term_id', $termId)->whereNull('deleted_at')->orderBy('term_session_id')->get();
-            foreach ($savedSessions as $index => $session) {
-                $timezoneId = (int) ($data['sessions'][$index]['timezoneId'] ?? 0);
-                if ($timezoneId) {
-                    \Core\database\DB::table('academy_branch_bookings')->where('booking_id', (int) $session['booking_id'])->update(['timezone_id' => $timezoneId, 'updated_by' => (int) auth()->id()]);
-                }
-            }
             return ['success' => true, 'data' => $saved];
         });
     }
@@ -221,7 +212,7 @@ class AcademyTermController
         try {
             return ResponseFactory::json($callback());
         } catch (Throwable $e) {
-            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
+            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], in_array($e->getCode(), [403, 404, 409], true) ? $e->getCode() : 422);
         }
     }
 }

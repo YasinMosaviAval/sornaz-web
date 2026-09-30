@@ -3,6 +3,7 @@
 namespace Modules\Analytics\Services;
 
 use Core\database\DB;
+use Modules\System\Services\SiteAdminAccess;
 use RuntimeException;
 
 class AdminMediaService
@@ -17,6 +18,7 @@ class AdminMediaService
 
     public function index(array $filters): array
     {
+        SiteAdminAccess::requireCurrentUser();
         $page = max(1, (int) ($filters['page'] ?? 1));
         $allowed = [10, 20, 30, 50, 100];
         $per = in_array((int) ($filters['perPage'] ?? 20), $allowed, true) ? (int) $filters['perPage'] : 20;
@@ -45,17 +47,9 @@ class AdminMediaService
 
     public function upload(int $actor, array $file, array $data): int
     {
-        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-            throw new RuntimeException('بارگذاری فایل کامل نشد.');
-        }
-        if ((int) ($file['size'] ?? 0) <= 0 || (int) $file['size'] > 50 * 1024 * 1024) {
-            throw new RuntimeException('حجم فایل باید کمتر از ۵۰ مگابایت باشد.');
-        }
+        SiteAdminAccess::requireCurrentUser($actor);
+        $mime = $this->validatedMime($file);
         $tmp = (string) $file['tmp_name'];
-        $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($tmp);
-        if (!isset(self::MIME[$mime])) {
-            throw new RuntimeException('نوع این فایل مجاز نیست.');
-        }
         [$ext,$type] = self::MIME[$mime];
         $directory = 'assets/media/library/' . date('Y/m');
         $absolute = base_path($directory);
@@ -88,8 +82,25 @@ class AdminMediaService
         }
     }
 
+    private function validatedMime(array $file): string
+    {
+        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            throw new RuntimeException('بارگذاری فایل کامل نشد.');
+        }
+        if ((int) ($file['size'] ?? 0) <= 0 || (int) $file['size'] > 50 * 1024 * 1024) {
+            throw new RuntimeException('حجم فایل باید کمتر از ۵۰ مگابایت باشد.');
+        }
+        $tmp = (string) $file['tmp_name'];
+        $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($tmp);
+        if (!isset(self::MIME[$mime])) {
+            throw new RuntimeException('نوع این فایل مجاز نیست.');
+        }
+        return $mime;
+    }
+
     public function update(int $actor, int $id, array $data): void
     {
+        SiteAdminAccess::requireCurrentUser($actor);
         $row = $this->find($id);
         $visibility = in_array($data['visibility'] ?? '', ['public', 'private', 'academy_only'], true) ? $data['visibility'] : $row['visibility'];
         DB::table('media_files')->where('media_file_id', $id)->update(['visibility' => $visibility, 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => $actor]);
@@ -98,6 +109,7 @@ class AdminMediaService
 
     public function delete(int $actor, int $id): void
     {
+        SiteAdminAccess::requireCurrentUser($actor);
         $this->find($id);
         $now = date('Y-m-d H:i:s');
         DB::table('media_files')->where('media_file_id', $id)->update(['deleted_at' => $now, 'deleted_by' => $actor]);

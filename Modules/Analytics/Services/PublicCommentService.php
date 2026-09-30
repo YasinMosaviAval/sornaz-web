@@ -2,6 +2,7 @@
 namespace Modules\Analytics\Services;
 
 use Core\database\DB;
+use Core\security\ContentSafety;
 use RuntimeException;
 
 class PublicCommentService
@@ -20,8 +21,7 @@ class PublicCommentService
             if (!$translation) {
                 continue;
             }
-            $content = (string) $translation['value'];
-            $content = preg_replace('/<\/?(?:b|strong)(?:\s[^>]*)?>/i', '', $content);
+            $content = ContentSafety::rich((string) $translation['value'], 'comment');
             $items[] = ['id' => (int) $row['comment_id'], 'author' => (string) ($row['author'] ?: ($locale === 'en' ? 'User' : 'کاربر')), 'content' => $content, 'locale' => $locale, 'created_at' => $row['created_at'], 'parent' => (int) ($row['parent'] ?? 0), 'status' => $approved ? 'approved' : 'pending'];
         }return $this->threaded($items);
     }
@@ -33,15 +33,12 @@ class PublicCommentService
             throw new RuntimeException('مقاله موردنظر یافت نشد.');
         }
         $locale = in_array($locale, ['fa', 'en'], true) ? $locale : 'fa';
-        $content = trim((string) ($data['content'] ?? ''));
-        if ($content === '') {
-            throw new RuntimeException('متن نظر الزامی است.');
-        }
+        $content = ContentSafety::comment($data['content'] ?? '');
         $locale = $this->detectContentLocale($content, $locale);
         $user = $userId ? DB::table('users')->where('user_id', $userId)->whereNull('deleted_at')->first() : null;
-        $authorInput = trim((string) ($data['author'] ?? ''));
+        $authorInput = ContentSafety::text($data['author'] ?? '', 200);
         $author = $user ? (string) $user['username'] : ($authorInput !== '' ? $authorInput : ($locale === 'en' ? 'Guest User' : 'کاربر مهمان'));
-        $email = trim((string) ($user ? ($user['email'] ?? '') : ($data['author_email'] ?? '')));
+        $email = ContentSafety::text($user ? ($user['email'] ?? '') : ($data['author_email'] ?? ''), 254);
         if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new RuntimeException('ایمیل معتبر نیست.');
         }

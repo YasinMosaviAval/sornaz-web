@@ -13,6 +13,7 @@
     },
     "autoload": {
         "classmap": ["core/", "Modules/"],
+        "exclude-from-classmap": ["/Modules/System/Lib/HTMLPurifier/"],
         "psr-4": {
             "Core\\": "core/",
             "Modules\\": "Modules/",

@@ -991,6 +991,8 @@ class AcademyBranchService
         if (!$siteAdmin && !$this->canAccessBranch($actorId, (int) $member['branch_id'])) {
             throw new RuntimeException('دسترسی حذف این عضو را ندارید.');
         }
+        TermRecordGuard::assertNoHistory('academy_branch_course_term_enrollments', 'member_id', $memberId);
+        TermRecordGuard::assertNoHistory('academy_branch_course_term_invoices', 'member_id', $memberId);
         $now = date('Y-m-d H:i:s');
         DB::table('academy_branch_member_contracts')->where('member_id', $memberId)->whereNull('deleted_at')->update(['deleted_at' => $now, 'deleted_by' => $actorId, 'updated_by' => $actorId]);
         DB::table('academy_branch_members')->where('member_id', $memberId)->update(['deleted_at' => $now, 'deleted_by' => $actorId, 'updated_by' => $actorId]);
@@ -1147,6 +1149,7 @@ class AcademyBranchService
             $academyId = $globalBranch ? (int) $globalBranch['academy_id'] : (int) $this->academyForUser($ownerUserId)['academy_id'];
             $this->lockAcademy($academyId);
             $branch = $this->ownedRow($academyId, $branchId);
+            TermRecordGuard::assertNoHistory('academy_branch_courses', 'branch_id', $branchId);
             if ((bool) $branch['is_main']) {
                 throw new RuntimeException('حذف شعبه اصلی آموزشگاه امکان‌پذیر نیست.');
             }

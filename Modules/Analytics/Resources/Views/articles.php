@@ -1,5 +1,5 @@
 <div id="page-articles" class="">
-    <script>window.siteArticlesData = <?= json_encode($articles ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;</script>
+    <script>window.siteArticlesData = <?= \Core\security\ContentSafety::json($articles ?? []) ?>;</script>
     <div class="max-w-6xl mx-auto px-4 py-12">
         <div class="text-center mb-10">
             <h1 class="text-3xl md:text-4xl font-bold mb-3">مقاله‌های آموزشی</h1>

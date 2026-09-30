@@ -42,7 +42,7 @@ class AcademyClassScheduleController
         try {
             return ResponseFactory::json($c());
         } catch (Throwable $e) {
-            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
+            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], in_array($e->getCode(), [403, 404, 409], true) ? $e->getCode() : 422);
         }
     }
 }

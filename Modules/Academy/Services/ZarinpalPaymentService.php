@@ -18,10 +18,8 @@ class ZarinpalPaymentService
             throw new RuntimeException('شناسه پذیرنده زرین‌پال در تنظیمات سیستم ثبت نشده است.');
         }
         [$invoice,$installment] = $this->payable($actor, $invoiceId, $installmentId);
-        $amount = (int) round((float) $installment['amount']);
-        if ($amount < 1) {
-            throw new RuntimeException('مبلغ قسط برای پرداخت معتبر نیست.');
-        }
+        InvoiceLedger::snapshot($invoiceId);
+        $amount = InvoiceLedger::paymentAmount($installment['amount']);
         $pending = DB::table('academy_term_invoice_payments')->where('installment_id', $installmentId)->whereRaw("(status IN ('created','pending') OR (status IN ('failed','canceled') AND authority IS NOT NULL))")->whereNull('deleted_at')->orderBy('payment_id', 'DESC')->first();
         if ($resume = \Modules\System\Services\PaymentMutex::reconcile($pending, $amount, fn ($authority) => $this->request('/pg/v4/payment/inquiry.json', ['merchant_id' => (string) env('ZARINPAL_MERCHANT_ID', ''), 'authority' => $authority]), function ($old) {
             $result = $this->callbackLocked($old['callback_token'], $old['authority'], 'OK');
@@ -89,14 +87,17 @@ class ZarinpalPaymentService
             DB::table('academy_term_invoice_payments')->where('payment_id', (int) $payment['payment_id'])->update(['status' => 'paid', 'reference_id' => (string) ($data['ref_id'] ?? ''), 'card_pan' => $data['card_pan'] ?? null, 'card_hash' => $data['card_hash'] ?? null, 'gateway_code' => $code, 'verified_at' => $now, 'updated_at' => $now]);
             $installment = DB::table('academy_branch_course_term_invoice_installments')->where('term_invoice_installment_id', (int) $payment['installment_id'])->whereNull('deleted_at')->first();
             $invoice = DB::table('academy_branch_course_term_invoices')->where('term_invoice_id', (int) $payment['invoice_id'])->whereNull('deleted_at')->first();
-            if (!$installment || !$invoice || $installment['status'] === 'paid' || in_array($invoice['status'], ['canceled', 'cancelled', 'void'], true) || (int) round((float) $installment['amount']) !== (int) $payment['amount']) {
+            try {
+                InvoiceLedger::snapshot((int) $payment['invoice_id']);
+            } catch (RuntimeException $error) {
+                $review = true;
+            }
+            if ($review || !$installment || !$invoice || (int) $installment['invoice_id'] !== (int) $payment['invoice_id'] || $installment['status'] === 'paid' || in_array($invoice['status'], ['canceled', 'cancelled', 'void'], true) || InvoiceLedger::cents($installment['amount']) !== (int) $payment['amount'] * 100) {
                 $review = true;
                 DB::table('academy_term_invoice_payments')->where('payment_id', (int) $payment['payment_id'])->update(['gateway_message' => 'Verified payment requires manual reconciliation']);
                 return;
             }DB::table('academy_branch_course_term_invoice_installments')->where('term_invoice_installment_id', (int) $payment['installment_id'])->where('invoice_id', (int) $payment['invoice_id'])->update(['status' => 'paid', 'paid_at' => $now, 'updated_at' => $now, 'updated_by' => (int) $payment['user_id']]);
-            $remaining = DB::table('academy_branch_course_term_invoice_installments')->where('invoice_id', (int) $payment['invoice_id'])->whereNull('deleted_at')->where('status', '<>', 'paid')->count();
-            $paid = DB::table('academy_branch_course_term_invoice_installments')->where('invoice_id', (int) $payment['invoice_id'])->whereNull('deleted_at')->where('status', 'paid')->count();
-            DB::table('academy_branch_course_term_invoices')->where('term_invoice_id', (int) $payment['invoice_id'])->update(['status' => $remaining === 0 ? 'paid' : ($paid > 0 ? 'partial' : 'issued'), 'updated_at' => $now, 'updated_by' => (int) $payment['user_id']]);
+            InvoiceLedger::refresh((int) $payment['invoice_id'], (int) $payment['user_id']);
         });
         return ['success' => !$review, 'requiresReview' => $review, 'referenceId' => (string) ($data['ref_id'] ?? ''), 'alreadyVerified' => $code === 101];
     }

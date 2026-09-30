@@ -2019,34 +2019,53 @@ window.viewTerm = async function (id) {
     : '';
 };
 
+function openTermMetadataEditor(item) {
+  const en = document.documentElement.lang === 'en';
+  const label = en
+    ? [
+        'Edit term details',
+        'Use session and invoice management to change schedules or tuition. Existing records are preserved.',
+        'Title',
+        'Summary',
+        'Description',
+        'Save',
+        'Cancel',
+      ]
+    : [
+        'ویرایش توضیحات ترم',
+        'برای تغییر برنامه یا شهریه از مدیریت جلسات و فاکتورها استفاده کنید. سوابق قبلی حفظ می‌شوند.',
+        'عنوان',
+        'خلاصه',
+        'توضیحات',
+        'ذخیره',
+        'انصراف',
+      ];
+  document.getElementById('modalContainer').innerHTML =
+    `<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"><div class="w-full max-w-xl rounded-3xl bg-white p-6 text-gray-900"><h2 class="text-xl font-bold">${label[0]}</h2><p class="my-4 text-sm">${label[1]}</p><label class="block">${label[2]}<input required id="editTermName" value="${escapeHtml(item.name)}" class="my-2 w-full rounded-xl border p-3"></label><label class="block">${label[3]}<textarea id="editTermSummary" class="my-2 w-full rounded-xl border p-3">${escapeHtml(item.summary || '')}</textarea></label><label class="block">${label[4]}<textarea id="editTermDescription" class="my-2 w-full rounded-xl border p-3">${escapeHtml(item.description || '')}</textarea></label><div class="mt-4 flex gap-3"><button onclick="saveEditedTerm(${Number(item.id)})" class="rounded-xl bg-indigo-600 px-5 py-3 text-white">${label[5]}</button><button onclick="closeModal()" class="rounded-xl border px-5 py-3">${label[6]}</button></div></div></div>`;
+}
+
 window.editTerm = async function (id) {
-  const item = allTerms.find(function (x) {
-    return x.id === id;
-  });
+  const item = allTerms.find((x) => x.id === id);
   if (!item) return;
-  document.getElementById('modalContainer').innerHTML = window.getTermEditModalHTML
-    ? window.getTermEditModalHTML(item)
-    : '';
-  document
-    .querySelectorAll('#editTermSessionsContainer .term-session-timezone')
-    .forEach((zone, index) => {
-      if (item.sessions?.[index]?.timezoneId) zone.dataset.userChanged = '1';
-    });
-  syncTermFinancialFields('editTerm');
-  syncTermPeopleVisibility('editTerm');
-  syncTermDateAvailability('editTerm');
-  await refreshAllTermSessionAvailability('editTerm');
+  openTermMetadataEditor(item);
 };
 
 window.saveEditedTerm = async function (id) {
-  const data = readTermForm('editTerm');
-  if (!validateTermData(data)) return;
+  const data = {
+    metadataOnly: true,
+    name: termField('editTerm', 'Name').value.trim(),
+    summary: termField('editTerm', 'Summary').value,
+    description: termField('editTerm', 'Description').value,
+  };
+  if (!data.name) {
+    termField('editTerm', 'Name').reportValidity();
+    return;
+  }
   const index = allTerms.findIndex(function (x) {
     return x.id === id;
   });
   if (index === -1) return;
   try {
-    await validateTermScheduleBeforeSave(data, id);
     await termApi('/academy/admin/terms/' + id + '/update', data);
     await loadTerms();
     editingTermRowId = null;
@@ -2059,21 +2078,9 @@ window.saveEditedTerm = async function (id) {
 
 window.toggleTermInlineEdit = async function (id) {
   attendanceTermRowId = null;
-  editingTermRowId = editingTermRowId === id ? null : id;
+  editingTermRowId = null;
   renderTermsTable(filteredTerms);
-  if (editingTermRowId) {
-    const prefix = 'inlineTerm' + id,
-      item = allTerms.find((x) => x.id === id);
-    document
-      .querySelectorAll(`#${prefix}SessionsContainer .term-session-timezone`)
-      .forEach((zone, index) => {
-        if (item?.sessions?.[index]?.timezoneId) zone.dataset.userChanged = '1';
-      });
-    syncTermFinancialFields(prefix);
-    syncTermPeopleVisibility(prefix);
-    syncTermDateAvailability(prefix);
-    await refreshAllTermSessionAvailability(prefix);
-  }
+  await window.editTerm(id);
 };
 window.cycleTermStatus = async function (id) {
   closeTermInlineEdit();

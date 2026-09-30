@@ -2,12 +2,15 @@
 namespace Modules\Analytics\Services;
 
 use Core\database\DB;
+use Core\security\ContentSafety;
+use Modules\System\Services\SiteAdminAccess;
 use RuntimeException;
 
 class AdminCommentService
 {
     public function index(array $f): array
     {
+        SiteAdminAccess::requireCurrentUser();
         $page = max(1, (int) ($f['page'] ?? 1));
         $per = in_array((int) ($f['perPage'] ?? 20), [10, 20, 30, 50, 100], true) ? (int) $f['perPage'] : 20;
         $where = ['c.deleted_at IS NULL'];
@@ -30,18 +33,26 @@ class AdminCommentService
         foreach ($this->query('SELECT status,COUNT(*) total FROM comments WHERE deleted_at IS NULL GROUP BY status') as $r) {
             $counts[$r['status']] = (int) $r['total'];
         }
+        $posts = $this->postOptions();
+        return ['comments' => array_map(fn ($r) => $this->map($r), $rows), 'posts' => $posts, 'total' => (int) $total, 'page' => $page, 'perPage' => $per, 'statusCounts' => $counts];
+    }
+
+    private function postOptions(): array
+    {
         $posts = [];
         foreach (DB::table('posts')->whereNull('deleted_at')->orderBy('post_id', 'DESC')->get() as $p) {
             $t = DB::table('translations')->where('table_name', 'posts')->where('table_id', (int) $p['post_id'])->where('locale', 'fa')->where('field', 'title')->whereNull('deleted_at')->first();
             $posts[] = ['id' => (int) $p['post_id'], 'title' => $t['value'] ?? ('نوشته ' . $p['post_id'])];
-        }return ['comments' => array_map(fn ($r) => $this->map($r), $rows), 'posts' => $posts, 'total' => (int) $total, 'page' => $page, 'perPage' => $per, 'statusCounts' => $counts];
+        }
+        return $posts;
     }
 
     public function update(int $a, int $id, array $d): void
     {
+        SiteAdminAccess::requireCurrentUser($a);
         $r = $this->find($id);
         $status = in_array($d['status'] ?? '', ['pending', 'approved', 'rejected'], true) ? $d['status'] : $r['status'];
-        $content = trim((string) ($d['content'] ?? $this->content($r)));
+        $content = ContentSafety::comment($d['content'] ?? $this->content($r));
         if ($content === '') {
             throw new RuntimeException('متن دیدگاه الزامی است.');
         }
@@ -52,8 +63,9 @@ class AdminCommentService
 
     public function reply(int $a, int $id, array $d): int
     {
+        SiteAdminAccess::requireCurrentUser($a);
         $p = $this->find($id);
-        $content = trim((string) ($d['content'] ?? ''));
+        $content = ContentSafety::comment($d['content'] ?? '');
         if ($content === '') {
             throw new RuntimeException('متن پاسخ الزامی است.');
         }
@@ -67,6 +79,7 @@ class AdminCommentService
 
     public function delete(int $a, int $id): void
     {
+        SiteAdminAccess::requireCurrentUser($a);
         $this->find($id);
         $now = date('Y-m-d H:i:s');
         DB::table('comments')->where('comment_id', $id)->update(['deleted_at' => $now, 'deleted_by' => $a, 'updated_at' => $now, 'updated_by' => $a]);
@@ -96,7 +109,7 @@ class AdminCommentService
     private function content(array $r): string
     {
         $t = DB::table('translations')->where('table_name', 'comments')->where('table_id', (int) $r['comment_id'])->where('field', 'content')->whereNull('deleted_at')->first();
-        return (string) ($t['value'] ?? '');
+        return ContentSafety::rich((string) ($t['value'] ?? ''), 'comment');
     }
 
     private function setContent(int $id, string $c, int $a): void

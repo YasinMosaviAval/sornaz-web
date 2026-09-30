@@ -93,12 +93,14 @@ $showAcademyPanelSections = $isSiteAdminPanel || $hasMemberManagementRole || $ha
             //component('profiles');
             //component('rating-summaries');
 
+            if ($isSiteAdminPanel) {
             component('posts');
             component('post-categories');
             component('post-editor');
             component('pages');
             component('comments');
             component('media');
+            }
             component('contact-us');
             component('academy-enroll');
             component('academy-requests');

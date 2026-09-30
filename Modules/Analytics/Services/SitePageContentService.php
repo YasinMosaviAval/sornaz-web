@@ -2,6 +2,7 @@
 namespace Modules\Analytics\Services;
 
 use Core\database\DB;
+use Core\security\ContentSafety;
 use RuntimeException;
 
 class SitePageContentService
@@ -33,6 +34,9 @@ class SitePageContentService
         $out = [];
         foreach (DB::table('f_settings')->where('table_name', 'site_page_content')->where('page', $page)->whereNull('deleted_at')->get() as $r) {
             $item = ['key' => $r['variable_name'], 'kind' => $r['status'], 'value' => $r['status'] === 'image' ? ($r['source'] ?? '') : ($r['status'] === 'icon' ? ($r['icon'] ?? '') : ($r['value'] ?? ''))];
+            if ($r['status'] === 'image') {
+                $item['value'] = ContentSafety::url((string) $item['value']);
+            }
             if ($r['status'] === 'text') {
                 $values = [];
                 foreach (DB::table('f_translations')->where('table_name', 'f_settings')->where('table_id', (int) $r['setting_id'])->where('field', 'value')->whereNull('deleted_at')->get() as $tr) {
@@ -47,8 +51,14 @@ class SitePageContentService
 
     public function save(int $actor, array $d): void
     {
-        $page = $this->validPage((string) ($d['page'] ?? ''));
-        $kind = in_array($d['kind'] ?? '', ['text', 'image', 'icon'], true) ? $d['kind'] : throw new RuntimeException('نوع محتوا معتبر نیست.');
+        $d = $this->validatedContent($d);
+        transaction(fn () => $this->persistContent($actor, $d));
+    }
+
+    private function persistContent(int $actor, array $d): void
+    {
+        $page = $this->validPage($d['page']);
+        $kind = $d['kind'];
         $key = trim((string) ($d['key'] ?? ''));
         if (!preg_match('/^site\.page\.[a-z0-9-]+\.(text|image|icon)\.[a-z0-9]+$/', $key)) {
             throw new RuntimeException('کلید محتوا معتبر نیست.');
@@ -71,9 +81,6 @@ class SitePageContentService
         if ($kind === 'text') {
             foreach (['fa', 'en'] as $locale) {
                 $value = trim((string) ($d[$locale] ?? ''));
-                if ($value === '') {
-                    throw new RuntimeException('متن فارسی و انگلیسی الزامی است.');
-                }
                 $tr = DB::table('f_translations')->where('table_name', 'f_settings')->where('table_id', $id)->where('field', 'value')->where('locale', $locale)->first();
                 $v = ['value' => $value, 'version' => 1, 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
                 if ($tr) {
@@ -83,6 +90,29 @@ class SitePageContentService
                 }
             }
         }
+    }
+
+    private function validatedContent(array $d): array
+    {
+        $d['page'] = $this->validPage(ContentSafety::text($d['page'] ?? '', 60, true));
+        $kind = ContentSafety::text($d['kind'] ?? '', 10, true);
+        $key = ContentSafety::text($d['key'] ?? '', 200, true);
+        $prefix = 'site.page.' . $d['page'] . '.' . $kind . '.';
+        if (!in_array($kind, ['text', 'image', 'icon'], true) || !str_starts_with($key, $prefix)) {
+            throw new RuntimeException('Invalid content key.', 422);
+        }
+        if ($kind === 'text') {
+            foreach (['fa', 'en'] as $locale) {
+                $d[$locale] = ContentSafety::text($d[$locale] ?? '', 20000, true);
+            }
+        } else {
+            $value = ContentSafety::text($d['value'] ?? '', 2048, true);
+            if (($kind === 'image' && ContentSafety::url($value) === '') || ($kind === 'icon' && !preg_match('/^[a-zA-Z0-9_ -]+$/D', $value))) {
+                throw new RuntimeException('Invalid content value.', 422);
+            }
+            $d['value'] = $value;
+        }
+        return $d;
     }
 
     private function validPage(string $page): string

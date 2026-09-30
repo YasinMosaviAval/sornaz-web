@@ -6,6 +6,14 @@ use Core\database\DB;
 
 class SiteAdminAccess
 {
+    public static function requireCurrentUser(?int $actor = null): void
+    {
+        $user = auth()->user();
+        if (!self::allows($user) || ($actor !== null && $actor !== (int) ($user['user_id'] ?? 0))) {
+            throw new \RuntimeException('این عملیات فقط برای مدیر سایت مجاز است.', 403);
+        }
+    }
+
     public static function allows(?array $user): bool
     {
         if (!$user) {

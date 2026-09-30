@@ -49,6 +49,8 @@ class OfflineInstallmentPaymentService
         if (!$invoice || !$installment) {
             throw new RuntimeException('فاکتور یا قسط یافت نشد.');
         }
+        InvoiceLedger::snapshot($invoiceId);
+        InvoiceLedger::paymentAmount($installment['amount']);
         if (in_array($invoice['status'], ['paid', 'canceled', 'cancelled', 'void'], true)) {
             throw new RuntimeException('Invoice is not payable.', 422);
         }
@@ -71,9 +73,7 @@ class OfflineInstallmentPaymentService
         transaction(function () use ($a, $invoiceId, $installmentId, $installment, $method, $reference, $payerName, $bankCardType, $paidAt, $description, $now) {
             DB::table('academy_term_invoice_payments')->insert(['invoice_id' => $invoiceId, 'installment_id' => $installmentId, 'user_id' => $a, 'gateway' => 'offline', 'payment_method' => $method, 'payer_name' => $payerName, 'bank_card_type' => $bankCardType, 'amount' => (int) round((float) $installment['amount']), 'currency' => strtoupper((string) env('ZARINPAL_CURRENCY', 'IRT')) === 'IRR' ? 'IRR' : 'IRT', 'callback_token' => bin2hex(random_bytes(32)), 'reference_id' => $reference, 'status' => 'paid', 'gateway_message' => 'پرداخت خارج از درگاه ثبت شد.', 'description' => $description ?: null, 'verified_at' => $paidAt, 'created_at' => $now, 'created_by' => $a, 'updated_at' => $now, 'updated_by' => $a]);
             DB::table('academy_branch_course_term_invoice_installments')->where('term_invoice_installment_id', $installmentId)->update(['status' => 'paid', 'paid_at' => $paidAt, 'approved_at' => $now, 'approved_by' => $a, 'updated_at' => $now, 'updated_by' => $a]);
-            $remaining = DB::table('academy_branch_course_term_invoice_installments')->where('invoice_id', $invoiceId)->whereNull('deleted_at')->where('status', '<>', 'paid')->count();
-            $paid = DB::table('academy_branch_course_term_invoice_installments')->where('invoice_id', $invoiceId)->whereNull('deleted_at')->where('status', 'paid')->count();
-            DB::table('academy_branch_course_term_invoices')->where('term_invoice_id', $invoiceId)->update(['status' => $remaining === 0 ? 'paid' : ($paid > 0 ? 'partial' : 'issued'), 'updated_at' => $now, 'updated_by' => $a]);
+            InvoiceLedger::refresh($invoiceId, $a);
         });
         return ['referenceId' => $reference, 'method' => $method, 'paidAt' => $paidAt, 'payerName' => $payerName, 'bankCardType' => $bankCardType];
     }

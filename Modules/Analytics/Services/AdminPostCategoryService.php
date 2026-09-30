@@ -3,6 +3,7 @@
 namespace Modules\Analytics\Services;
 
 use Core\database\DB;
+use Modules\System\Services\SiteAdminAccess;
 use RuntimeException;
 
 class AdminPostCategoryService
@@ -11,6 +12,7 @@ class AdminPostCategoryService
 
     public function index(string $search = ''): array
     {
+        SiteAdminAccess::requireCurrentUser();
         $where = ['c.deleted_at IS NULL'];
         $bindings = [];
         if (trim($search) !== '') {
@@ -28,6 +30,7 @@ class AdminPostCategoryService
 
     public function create(int $actor, array $data): int
     {
+        SiteAdminAccess::requireCurrentUser($actor);
         [$values, $texts] = $this->validated($data, 0);
         return transaction(function () use ($actor, $values, $texts) {
             $id = (int) DB::table('categories')->insertGetId(['created_by' => $actor] + $this->quoteReservedColumns($values));
@@ -38,6 +41,7 @@ class AdminPostCategoryService
 
     public function update(int $actor, int $id, array $data): void
     {
+        SiteAdminAccess::requireCurrentUser($actor);
         $this->find($id);
         [$values, $texts] = $this->validated($data, $id);
         transaction(function () use ($actor, $id, $values, $texts) {
@@ -48,6 +52,7 @@ class AdminPostCategoryService
 
     public function delete(int $actor, int $id): void
     {
+        SiteAdminAccess::requireCurrentUser($actor);
         $category = $this->find($id);
         if ((int) $category['posts_count'] > 0) {
             throw new RuntimeException('این دسته‌بندی به نوشته‌ها متصل است و قابل حذف نیست.');
