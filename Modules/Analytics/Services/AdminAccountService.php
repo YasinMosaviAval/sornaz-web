@@ -52,7 +52,9 @@ final class AdminAccountService
             throw new RuntimeException('نام حساب الزامی است.');
         }
         $birthday = $this->date($d['founded'] ?? null);
-        DB::table('users')->where('user_id', $uid)->update(['email' => $this->email($d['email'] ?? null), 'phone' => $this->phone($d['phone'] ?? null), 'birthday' => $birthday, 'updated_by' => $actor]);
+        $contacts = $this->verifiedContactChanges($actor, $u, $d);
+        DB::table('users')->where('user_id', $uid)->update(['birthday' => $birthday, 'updated_by' => $actor] + $contacts);
+        $this->clearVerifiedContacts($contacts);
         $this->setTr('users', $uid, 'full_name', $name, $actor);
         $branch = $this->branchContext($uid);
         if ($branch) {
@@ -105,12 +107,6 @@ final class AdminAccountService
         [, $u] = $this->context($actor);
         $uid = (int) $u['user_id'];
         $values = ['updated_by' => $actor];
-        if (array_key_exists('email', $d)) {
-            $values['email'] = $this->email($d['email']);
-        }
-        if (array_key_exists('phone', $d)) {
-            $values['phone'] = $this->phone($d['phone']);
-        }
         $password = (string) ($d['password'] ?? '');
         if ($password !== '') {
             if (strlen($password) < 8) {
@@ -120,7 +116,10 @@ final class AdminAccountService
                 throw new RuntimeException('تکرار رمز عبور مطابقت ندارد.');
             }
             $values['password'] = password_hash($password, PASSWORD_DEFAULT);
-        }DB::table('users')->where('user_id', $uid)->update($values);
+        }
+        $values += $this->verifiedContactChanges($actor, $u, $d);
+        DB::table('users')->where('user_id', $uid)->update($values);
+        $this->clearVerifiedContacts($values);
         if ($password !== '') {
             $this->securityEvent($actor, 'password_changed', 'رمز عبور حساب آموزشگاه تغییر کرد.');
         }
@@ -341,19 +340,30 @@ final class AdminAccountService
         return $b >= 1048576 ? round($b / 1048576, 1) . ' مگابایت' : max(1, round($b / 1024)) . ' کیلوبایت';
     }
 
-    private function email(mixed $v): ?string
+    private function verifiedContactChanges(int $actor, array $user, array $data): array
     {
-        $v = strtolower(trim((string) $v));
-        if ($v !== '' && !filter_var($v, FILTER_VALIDATE_EMAIL)) {
-            throw new RuntimeException('ایمیل معتبر نیست.');
+        $changes = [];
+        foreach (['email', 'phone'] as $field) {
+            if (!array_key_exists($field, $data)) {
+                continue;
+            }
+            $destination = ContactChangeService::normalize($field, $data[$field]);
+            if ($destination === ContactChangeService::normalize($field, $user[$field] ?? null)) {
+                continue;
+            }
+            ContactChangeService::assertVerified($actor, $field, $destination);
+            $changes[$field] = $destination;
         }
-        return $v ?: null;
+        return $changes;
     }
 
-    private function phone(mixed $v): ?string
+    private function clearVerifiedContacts(array $changes): void
     {
-        $v = preg_replace('/[^0-9+]/', '', (string) $v);
-        return $v ?: null;
+        foreach (['email', 'phone'] as $field) {
+            if (array_key_exists($field, $changes)) {
+                ContactChangeService::clear($field);
+            }
+        }
     }
 
     private function date(mixed $v): ?string
@@ -364,7 +374,7 @@ final class AdminAccountService
 
     private function lastBackup(int $aid): ?array
     {
-        $r = DB::table('media_files')->where('fileable_type', 'academy_backup')->where('fileable_id', $aid)->whereNull('deleted_at')->orderBy('media_file_id', 'DESC')->first();
+        $r = DB::table('media_files')->where('fileable_type', 'academy_backup')->where('fileable_id', $aid)->where('filename', 'LIKE', 'academy-scoped-v2-%')->whereNull('deleted_at')->orderBy('media_file_id', 'DESC')->first();
         return $r ? ['id' => (int) $r['media_file_id'], 'date' => $r['created_at'], 'size' => $this->size((int) $r['size'])] : null;
     }
 }

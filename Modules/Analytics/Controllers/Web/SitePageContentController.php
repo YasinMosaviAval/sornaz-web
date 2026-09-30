@@ -44,7 +44,7 @@ class SitePageContentController
         try {
             return ResponseFactory::json($c());
         } catch (\Throwable$e) {
-            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
+            return ResponseFactory::json(['success' => false, 'message' => \Core\security\PublicError::message($e)], \Core\security\PublicError::status($e));
         }
     }
 }

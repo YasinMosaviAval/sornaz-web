@@ -16,6 +16,11 @@ final class ChatController
         return $this->run(fn () => ['success' => true, 'data' => $this->service->index((int) auth()->id())]);
     }
 
+    public function searchUsers()
+    {
+        return $this->run(fn () => ['success' => true, 'data' => $this->service->searchUsers((int) auth()->id(), (string) ($_GET['q'] ?? ''), max(0, (int) ($_GET['conversationId'] ?? 0)))]);
+    }
+
     public function create()
     {
         return $this->run(fn () => ['success' => true, 'data' => $this->service->create((int) auth()->id(), $this->payload())]);

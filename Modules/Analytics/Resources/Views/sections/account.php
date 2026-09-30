@@ -173,11 +173,11 @@
 
     <!-- پشتیبان‌گیری -->
     <div class="bg-white rounded-3xl p-6 shadow mt-8 mb-4">
-        <h3 class="font-bold text-lg mb-2">پشتیبان‌گیری کامل</h3>
-        <p class="text-sm text-gray-500 mb-5">از تمام اطلاعات آموزشگاه (کاربران، شعبه‌ها، گزارش‌ها و تنظیمات) نسخه پشتیبان بگیرید.</p>
+        <h3 class="font-bold text-lg mb-2"><?= e(locale() === 'en' ? 'Export academy records' : 'خروجی اطلاعات آموزشگاه') ?></h3>
+        <p class="text-sm text-gray-500 mb-5"><?= e(locale() === 'en' ? 'Export academy records without account credentials. This export does not include uploaded files or replace a full server backup.' : 'اطلاعات اختصاصی آموزشگاه را بدون اطلاعات ورود حساب‌ها دریافت کنید. این خروجی شامل فایل‌های بارگذاری‌شده نیست و جایگزین پشتیبان کامل سرور نمی‌شود.') ?></p>
         <div class="flex flex-wrap gap-3">
             <button onclick="createFullBackup()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm flex items-center gap-2">
-                <i class="fas fa-database"></i> ایجاد پشتیبان کامل
+                <i class="fas fa-database"></i> <?= e(locale() === 'en' ? 'Create export' : 'ایجاد خروجی اطلاعات') ?>
             </button>
             <button onclick="downloadLastBackup()" class="border border-gray-300 hover:bg-gray-50 px-6 py-3 rounded-2xl text-sm flex items-center gap-2">
                 <i class="fas fa-download"></i> دانلود آخرین پشتیبان

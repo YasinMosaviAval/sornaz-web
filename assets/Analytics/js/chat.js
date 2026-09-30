@@ -9,6 +9,10 @@
     editingMessageId = 0,
     chatEpoch = 0,
     refreshOffset = 0;
+  const selectedNewUsers = new Map(),
+    selectedAddUsers = new Map();
+  let userSearchTimer = 0,
+    userSearchSequence = 0;
   let voiceRecorder = null,
     voiceStream = null,
     voiceChunks = [],
@@ -651,27 +655,52 @@
     }
   };
   window.openNewChatModal = () => {
+    selectedNewUsers.clear();
     document.getElementById('modalContainer').innerHTML =
       `<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"><div class="w-full max-w-xl rounded-3xl bg-white p-6"><div class="mb-4 flex justify-between"><h2 class="text-xl font-bold">گفتگوی جدید</h2><button onclick="closeModal()" class="text-3xl">×</button></div><input id="chatGroupTitle" placeholder="نام گروه (برای گفتگوهای چندنفره)" class="mb-3 w-full rounded-xl border p-3"><input id="chatUserSearch" oninput="filterChatUsers()" placeholder="جستجوی کاربر..." class="mb-3 w-full rounded-xl border p-3"><div id="chatUserChoices" class="max-h-72 space-y-1 overflow-auto">${userChoices(state.users)}</div><button onclick="createChat()" class="mt-4 w-full rounded-xl bg-indigo-600 p-3 text-white">ایجاد گفتگو</button></div></div>`;
+    document
+      .getElementById('chatUserChoices')
+      .addEventListener('change', (event) => rememberChatChoice(event, selectedNewUsers));
   };
+  function rememberChatChoice(event, selected) {
+    const input = event.target.closest('input[type="checkbox"]');
+    if (!input) return;
+    const row = input.closest('label');
+    const id = Number(input.value);
+    if (input.checked)
+      selected.set(id, { id, name: row.dataset.name || 'کاربر', avatar: row.dataset.avatar || '' });
+    else selected.delete(id);
+  }
   function userChoices(users) {
     return users
       .map(
         (u) =>
-          `<label class="chat-user-choice chat-user-selectable flex cursor-pointer items-center gap-3 rounded-xl border border-transparent p-2" data-search="${esc((u.name + ' ' + u.username).toLowerCase())}"><input type="checkbox" value="${u.id}" class="chat-user-id sr-only">${chatAvatar(u.avatar, u.name)}<span class="min-w-0 flex-1"><span class="block truncate">${esc(u.name)}</span><small dir="ltr" class="block truncate text-gray-400">${esc(u.username)}</small></span><i class="chat-user-selected-icon fas fa-check-circle text-indigo-600"></i></label>`
+          `<label class="chat-user-choice chat-user-selectable flex cursor-pointer items-center gap-3 rounded-xl border border-transparent p-2" data-name="${esc(u.name)}" data-avatar="${esc(u.avatar || '')}"><input type="checkbox" value="${u.id}" class="chat-user-id sr-only" ${selectedNewUsers.has(Number(u.id)) ? 'checked' : ''}>${chatAvatar(u.avatar, u.name)}<span class="min-w-0 flex-1"><span class="block truncate">${esc(u.name)}</span><small dir="ltr" class="block truncate text-gray-400">${esc(u.username)}</small></span><i class="chat-user-selected-icon fas fa-check-circle text-indigo-600"></i></label>`
       )
       .join('');
   }
+  async function searchChatUsers(fieldId, listId, conversationId = 0) {
+    const input = document.getElementById(fieldId),
+      list = document.getElementById(listId);
+    if (!input || !list) return;
+    const query = input.value.trim(),
+      sequence = ++userSearchSequence;
+    try {
+      const users = await api(
+        `/analytics/chat/users/search?q=${encodeURIComponent(query)}&conversationId=${conversationId}`
+      );
+      if (sequence !== userSearchSequence || !document.getElementById(listId)) return;
+      list.innerHTML = listId === 'chatUserChoices' ? userChoices(users) : addUserChoices(users);
+    } catch (error) {
+      if (sequence === userSearchSequence) list.textContent = error.message;
+    }
+  }
   window.filterChatUsers = () => {
-    const q = document.getElementById('chatUserSearch').value.toLowerCase();
-    document
-      .querySelectorAll('.chat-user-choice')
-      .forEach((x) => x.classList.toggle('hidden', !x.dataset.search.includes(q)));
+    clearTimeout(userSearchTimer);
+    userSearchTimer = setTimeout(() => searchChatUsers('chatUserSearch', 'chatUserChoices'), 250);
   };
   window.createChat = async () => {
-    const userIds = [...document.querySelectorAll('.chat-user-id:checked')].map((x) =>
-        Number(x.value)
-      ),
+    const userIds = [...selectedNewUsers.keys()],
       title = document.getElementById('chatGroupTitle').value.trim();
     try {
       const d = await api('/analytics/chat', { userIds, title });
@@ -685,6 +714,7 @@
   window.openChatDetails = async () => {
     if (!active) return;
     try {
+      selectedAddUsers.clear();
       const d = await api(`/analytics/chat/${active}/details`),
         available = d.availableUsers || [];
       const members = d.members
@@ -699,10 +729,13 @@
           : '';
       const addSection =
         d.type === 'group' && d.canManage
-          ? `<div class="mt-6 border-t pt-5"><h3 class="mb-3 font-bold">افزودن عضو جدید</h3><input id="chatMemberSearch" oninput="filterAddChatMembers()" placeholder="جستجوی کاربر..." class="mb-2 w-full rounded-xl border p-3"><div class="max-h-52 space-y-1 overflow-y-auto">${available.map((u) => `<label class="chat-add-choice chat-user-selectable flex cursor-pointer items-center gap-3 rounded-xl border border-transparent p-2" data-search="${esc((u.name + ' ' + u.username).toLowerCase())}" data-name="${esc(u.name)}" data-avatar="${esc(u.avatar || '')}"><input type="checkbox" value="${u.id}" class="chat-add-user sr-only">${chatAvatar(u.avatar, u.name)}<span class="chat-user-name min-w-0 flex-1">${esc(u.name)} <small class="block truncate text-gray-400">${esc(u.username)}</small></span><i class="chat-user-selected-icon fas fa-check-circle text-indigo-600"></i></label>`).join('')}</div><button onclick="addChatMembers()" class="mt-3 w-full rounded-xl bg-emerald-600 p-3 text-white">افزودن افراد انتخاب‌شده</button></div>`
+          ? `<div class="mt-6 border-t pt-5"><h3 class="mb-3 font-bold">افزودن عضو جدید</h3><input id="chatMemberSearch" oninput="filterAddChatMembers()" placeholder="جستجوی کاربر..." class="mb-2 w-full rounded-xl border p-3"><div id="chatAddChoices" class="max-h-52 space-y-1 overflow-y-auto">${addUserChoices(available)}</div><button onclick="addChatMembers()" class="mt-3 w-full rounded-xl bg-emerald-600 p-3 text-white">افزودن افراد انتخاب‌شده</button></div>`
           : '';
       document.getElementById('modalContainer').innerHTML =
         `<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"><div class="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white p-6"><div class="mb-5 flex justify-between"><div><h2 class="text-xl font-bold">${esc(d.type === 'group' ? 'اعضای گروه' : 'اطلاعات گفتگو')}</h2><p class="text-xs text-gray-400">${d.members.length} عضو</p></div><button onclick="closeModal()" class="text-3xl">×</button></div>${groupImage}${d.type === 'group' && d.canManage ? `<div class="mb-5 flex gap-2"><input id="chatRenameInput" value="${esc(d.title)}" class="min-w-0 flex-1 rounded-xl border p-3"><button onclick="renameChat()" class="rounded-xl bg-indigo-600 px-4 text-white">ویرایش نام</button></div>` : ''}<div class="space-y-2">${members}</div>${addSection}${d.canDelete ? `<button onclick="deleteChat()" class="mt-6 w-full rounded-xl border border-red-200 p-3 text-red-600">حذف گفتگو</button>` : ''}</div></div>`;
+      document
+        .getElementById('chatAddChoices')
+        ?.addEventListener('change', (event) => rememberChatChoice(event, selectedAddUsers));
       if (d.type === 'group' && d.canManage) {
         const deleteButton = document.querySelector(
           '#modalContainer button[onclick="deleteChat()"]'
@@ -720,6 +753,14 @@
       alert(e.message);
     }
   };
+  function addUserChoices(users) {
+    return users
+      .map(
+        (u) =>
+          `<label class="chat-add-choice chat-user-selectable flex cursor-pointer items-center gap-3 rounded-xl border border-transparent p-2" data-name="${esc(u.name)}" data-avatar="${esc(u.avatar || '')}"><input type="checkbox" value="${u.id}" class="chat-add-user sr-only" ${selectedAddUsers.has(Number(u.id)) ? 'checked' : ''}>${chatAvatar(u.avatar, u.name)}<span class="chat-user-name min-w-0 flex-1">${esc(u.name)} <small class="block truncate text-gray-400">${esc(u.username)}</small></span><i class="chat-user-selected-icon fas fa-check-circle text-indigo-600"></i></label>`
+      )
+      .join('');
+  }
   window.updateGroupAvatar = async (input) => {
     const file = input?.files?.[0];
     if (!file) return;
@@ -763,10 +804,11 @@
     }
   };
   window.filterAddChatMembers = () => {
-    const q = document.getElementById('chatMemberSearch').value.toLowerCase();
-    document
-      .querySelectorAll('.chat-add-choice')
-      .forEach((x) => x.classList.toggle('hidden', !x.dataset.search.includes(q)));
+    clearTimeout(userSearchTimer);
+    userSearchTimer = setTimeout(
+      () => searchChatUsers('chatMemberSearch', 'chatAddChoices', active),
+      250
+    );
   };
   window.renameChat = async () => {
     const title = document.getElementById('chatRenameInput').value.trim();
@@ -790,24 +832,23 @@
     if (modalCount) modalCount.textContent = `${count} عضو`;
   }
   window.addChatMembers = async () => {
-    const choices = [...document.querySelectorAll('.chat-add-user:checked')]
-        .map((input) => input.closest('.chat-add-choice'))
-        .filter(Boolean),
-      userIds = choices.map((x) => Number(x.querySelector('.chat-add-user').value));
+    const choices = [...selectedAddUsers.values()],
+      userIds = choices.map((choice) => choice.id);
     if (!userIds.length) return alert('حداقل یک نفر را انتخاب کنید.');
     try {
       await api(`/analytics/chat/${active}/members`, { userIds });
       const list = document.querySelector('#modalContainer .space-y-2');
       choices.forEach((choice, index) => {
-        const name = choice.dataset.name || 'کاربر',
-          avatar = choice.dataset.avatar || '',
+        const name = choice.name || 'کاربر',
+          avatar = choice.avatar || '',
           id = userIds[index];
         list?.insertAdjacentHTML(
           'beforeend',
           `<div class="flex items-center justify-between rounded-xl border p-3"><div class="flex min-w-0 items-center gap-3">${chatAvatar(avatar, name)}<div><b class="block">${esc(name)}</b><span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">عضو</span></div></div><button onclick="removeChatMember(${id})" class="text-sm text-red-600">حذف</button></div>`
         );
-        choice.remove();
+        document.querySelector(`#chatAddChoices input[value="${id}"]`)?.closest('label')?.remove();
       });
+      selectedAddUsers.clear();
       updateChatMemberCount(userIds.length);
       showChatToast('اعضای جدید اضافه شدند.');
     } catch (e) {

@@ -226,8 +226,9 @@ class AdminPostService
     private function ensurePageType(): void
     {
         $column = $this->query("SHOW COLUMNS FROM posts LIKE 'type'")[0] ?? null;
-        if ($column && !str_contains((string) $column['Type'], "'page'")) {
-            db()->exec("ALTER TABLE posts MODIFY type ENUM('post','product','music_theory','page') DEFAULT 'post'");
+        $type = strtolower((string) ($column['Type'] ?? ''));
+        if (str_starts_with($type, 'enum(') && !str_contains($type, "'page'")) {
+            throw new RuntimeException('نوع صفحه در جدول نوشته‌ها نصب نشده است؛ migration دیتابیس را اجرا کنید.');
         }
     }
 }

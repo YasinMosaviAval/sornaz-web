@@ -27,6 +27,34 @@ final class ChatService
         }return ['conversations' => $items, 'users' => $this->availableUsers($actor)];
     }
 
+    public function searchUsers(int $actor, string $term, int $conversationId = 0): array
+    {
+        $this->user($actor);
+        $term = trim($term);
+        if (mb_strlen($term) > 80) {
+            throw new RuntimeException('عبارت جستجو بیش از حد طولانی است.');
+        }
+        if ($conversationId > 0) {
+            $this->member($actor, $conversationId);
+        }
+        $params = [$actor];
+        $where = "u.user_id<>? AND u.register_method IN ('email','phone') AND u.deleted_at IS NULL";
+        if ($conversationId > 0) {
+            $where .= ' AND NOT EXISTS (SELECT 1 FROM conversation_members cm WHERE cm.conversation_id=? AND cm.user_id=u.user_id AND cm.left_at IS NULL AND cm.deleted_at IS NULL)';
+            $params[] = $conversationId;
+        }
+        if ($term !== '') {
+            $where .= " AND (u.username LIKE ? OR EXISTS (SELECT 1 FROM translations t WHERE t.table_name='users' AND t.table_id=u.user_id AND t.field='full_name' AND t.deleted_at IS NULL AND t.value LIKE ?))";
+            $like = '%' . $term . '%';
+            array_push($params, $like, $like);
+        }
+        $statement = db()->prepare("SELECT u.user_id,u.username,u.avatar_file_id FROM users u WHERE $where ORDER BY u.username LIMIT 30");
+        $statement->execute($params);
+        $rows = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        $names = $this->names(array_map(fn ($row) => (int) $row['user_id'], $rows));
+        return array_map(fn ($row) => ['id' => (int) $row['user_id'], 'name' => $names[(int) $row['user_id']] ?? $row['username'], 'username' => $row['username'], 'avatar' => $this->avatar((int) $row['user_id'])], $rows);
+    }
+
     public function create(int $actor, array $d): array
     {
         $ids = array_values(array_unique(array_filter(array_map('intval', (array) ($d['userIds'] ?? [])))));
@@ -448,6 +476,10 @@ final class ChatService
         if (!$p) {
             return ['id' => $id, 'kind' => $kind, 'available' => false];
         }
+        $author = DB::table('users')->where('user_id', (int) $p['owner_id'])->whereNull('deleted_at')->first();
+        if (!$author || ((int) $p['owner_id'] !== $actor && ($author['visibility'] ?? '') === 'private')) {
+            return ['id' => $id, 'kind' => $kind, 'available' => false];
+        }
         $owner = (int) $p['owner_id'] === $actor;
         $expired = !empty($p['expires_at']) && strtotime($p['expires_at'] . ' UTC') <= time();
         $result = ['id' => $id, 'kind' => $kind, 'owner' => $owner, 'available' => $owner || !$expired, 'expiresAt' => empty($p['expires_at']) ? null : str_replace(' ', 'T', $p['expires_at']) . 'Z'];
@@ -521,7 +553,7 @@ final class ChatService
 
     private function availableUsers(int $actor): array
     {
-        $rows = DB::table('users')->where('user_id', '!=', $actor)->whereIn('register_method', ['email', 'phone'])->whereNull('deleted_at')->orderBy('username')->limit(300)->get();
+        $rows = DB::table('users')->where('user_id', '!=', $actor)->whereIn('register_method', ['email', 'phone'])->whereNull('deleted_at')->orderBy('username')->limit(30)->get();
         $names = $this->names(array_map(fn ($r) => (int) $r['user_id'], $rows));
         return array_map(fn ($r) => ['id' => (int) $r['user_id'], 'name' => $names[(int) $r['user_id']] ?? $r['username'], 'username' => $r['username'] ?? '', 'avatar' => $this->avatar((int) $r['user_id'])], $rows);
     }

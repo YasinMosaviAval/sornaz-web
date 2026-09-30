@@ -12,7 +12,7 @@ class SocialService
 
     public function user(int $id): array
     {
-        $user = $this->r->one('SELECT user_id,username,avatar_file_id,type FROM users WHERE user_id=? AND deleted_at IS NULL', [$id]);
+        $user = $this->r->one('SELECT user_id,username,avatar_file_id,type,visibility FROM users WHERE user_id=? AND deleted_at IS NULL', [$id]);
         if (!$user) {
             throw new RuntimeException('کاربر پیدا نشد.', 404);
         }
@@ -21,7 +21,7 @@ class SocialService
 
     public function profile(int $actor, int $id): array
     {
-        $user = $this->user($id);
+        $user = $this->visibleUser($actor, $id);
         $profile = $this->r->one('SELECT * FROM social_profiles WHERE user_id=?', [$id]) ?: [];
         $avatar = $this->url($profile['avatar_id'] ?? null);
         if (!$avatar && !empty($user['avatar_file_id'])) {
@@ -31,14 +31,14 @@ class SocialService
             }
         }
         $count = fn ($sql, $args) => (int) ($this->r->one($sql, $args)['n'] ?? 0);
-        $settings = json_decode($this->r->one('SELECT settings_json FROM social_account_settings WHERE user_id=?', [$id])['settings_json'] ?? '{}', true) ?: [];
+        $settings = $this->publicLinks($id);
         $locale = str_starts_with(strtolower((string) ($_GET['locale'] ?? $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'fa')), 'en') ? 'en' : 'fa';
         $intro = $this->r->one("SELECT value FROM translations WHERE table_name='users' AND table_id=? AND field='short_description' AND locale=? AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1", [$id, $locale]);
         if (!$intro && $locale !== 'fa') {
             $intro = $this->r->one("SELECT value FROM translations WHERE table_name='users' AND table_id=? AND field='short_description' AND locale='fa' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1", [$id]);
         }
         $articleLocale = $locale === 'en' ? " AND EXISTS (SELECT 1 FROM translations t WHERE t.table_name='posts' AND t.table_id=p.post_id AND t.field='title' AND t.locale='en' AND t.deleted_at IS NULL AND TRIM(t.value)<>'')" : '';
-        return ['shortIntro' => (string) ($intro['value'] ?? ''), 'articles' => $count("SELECT COUNT(*) n FROM posts p WHERE p.author_id=? AND p.type='post' AND p.status='published' AND p.visibility='public' AND p.deleted_at IS NULL" . $articleLocale, [$id]), 'links' => array_intersect_key($settings, array_flip(['email', 'website', 'instagram', 'youtube'])), 'id' => $id, 'username' => $user['username'], 'name' => ($profile['display_name'] ?? '') ?: $user['username'],
+        return ['shortIntro' => (string) ($intro['value'] ?? ''), 'articles' => $count("SELECT COUNT(*) n FROM posts p WHERE p.author_id=? AND p.type='post' AND p.status='published' AND p.visibility='public' AND p.deleted_at IS NULL" . $articleLocale, [$id]), 'links' => $settings, 'id' => $id, 'username' => $user['username'], 'name' => ($profile['display_name'] ?? '') ?: $user['username'],
             'type' => $user['type'] ?? 'human', 'bio' => $profile['bio'] ?? '', 'avatar' => $avatar, 'cover' => $this->url($profile['cover_id'] ?? null),
             'stories' => $this->storySummary($id),
             'followers' => $count('SELECT COUNT(*) n FROM social_follows WHERE following_id=?', [$id]),
@@ -46,6 +46,21 @@ class SocialService
             'posts' => $count("SELECT COUNT(*) n FROM social_posts WHERE owner_id=? AND kind='post' AND deleted_at IS NULL", [$id]),
             'courses' => $count("SELECT COUNT(*) n FROM creator_courses WHERE owner_id=? AND status='published'", [$id]),
             'isFollowing' => (bool) $this->r->one('SELECT 1 FROM social_follows WHERE follower_id=? AND following_id=?', [$actor, $id]), 'isMe' => $actor === $id];
+    }
+
+    private function publicLinks(int $id): array
+    {
+        $settings = json_decode($this->r->one('SELECT settings_json FROM social_account_settings WHERE user_id=?', [$id])['settings_json'] ?? '{}', true) ?: [];
+        return array_intersect_key($settings, array_flip(['email', 'website', 'instagram', 'youtube']));
+    }
+
+    private function visibleUser(int $actor, int $id): array
+    {
+        $user = $this->user($id);
+        if ($actor !== $id && ($user['visibility'] ?? '') === 'private') {
+            throw new RuntimeException('Content unavailable.', 404);
+        }
+        return $user;
     }
 
     private function storySummary(int $owner): array
@@ -62,7 +77,7 @@ class SocialService
 
     public function highlights(int $actor, int $owner): array
     {
-        $this->user($owner);
+        $this->visibleUser($actor, $owner);
         return array_map(function ($h) {
             $h['cover'] = $this->url($h['cover_id']);
             return $h;
@@ -71,9 +86,11 @@ class SocialService
 
     public function highlightStories(int $actor, int $id): array
     {
-        if (!$this->r->one('SELECT id FROM social_highlights WHERE id=?', [$id])) {
+        $highlight = $this->r->one('SELECT id,owner_id FROM social_highlights WHERE id=?', [$id]);
+        if (!$highlight) {
             throw new RuntimeException('هایلایت یافت نشد.', 404);
         }
+        $this->visibleUser($actor, (int) $highlight['owner_id']);
         return array_map(fn ($p) => $this->postData($actor, $p), $this->r->query('SELECT p.*,m.mime FROM social_highlight_stories hs JOIN social_posts p ON p.id=hs.story_id JOIN social_highlights h ON h.id=hs.highlight_id AND h.owner_id=p.owner_id LEFT JOIN social_media m ON m.id=p.media_id WHERE hs.highlight_id=? AND p.deleted_at IS NULL ORDER BY p.created_at,p.id', [$id]));
     }
 
@@ -162,7 +179,7 @@ class SocialService
     public function people(int $actor, string $search, int $id = 0, string $kind = ''): array
     {
         $params = [];
-        $where = "u.deleted_at IS NULL AND u.register_method IN ('email','phone')";
+        $where = "u.deleted_at IS NULL AND u.register_method IN ('email','phone') AND (u.visibility IS NULL OR u.visibility<>'private' OR u.user_id=" . (int) $actor . ')';
         if ($id) {
             $this->user($id);
             $where .= $kind === 'followers' ? ' AND EXISTS(SELECT 1 FROM social_follows f WHERE f.follower_id=u.user_id AND f.following_id=?)' : ' AND EXISTS(SELECT 1 FROM social_follows f WHERE f.following_id=u.user_id AND f.follower_id=?)';
@@ -197,7 +214,7 @@ class SocialService
 
     public function posts(int $actor, string $kind = 'post', int $owner = 0, int $before = 0, bool $saved = false): array
     {
-        $where = "p.deleted_at IS NULL AND (p.expires_at IS NULL OR p.expires_at>UTC_TIMESTAMP()) AND p.kind=?";
+        $where = "p.deleted_at IS NULL AND (p.expires_at IS NULL OR p.expires_at>UTC_TIMESTAMP()) AND p.kind=? AND EXISTS(SELECT 1 FROM users owner WHERE owner.user_id=p.owner_id AND owner.deleted_at IS NULL AND (owner.visibility IS NULL OR owner.visibility<>'private' OR owner.user_id=" . (int) $actor . '))';
         $params = [$kind === 'story' ? 'story' : 'post'];
         if ($kind === 'story' && !$owner) {
             $where .= ' AND (p.owner_id=1 OR EXISTS(SELECT 1 FROM social_follows f WHERE f.follower_id=? AND f.following_id=p.owner_id))';
@@ -230,6 +247,7 @@ class SocialService
 
     private function postData(int $actor, array $p): array
     {
+        $this->visibleUser($actor, (int) $p['owner_id']);
         $id = (int) $p['id'];
         $p['author'] = $this->profile($actor, (int) $p['owner_id']);
         $p['media'] = $this->url($p['media_id']);
@@ -241,7 +259,7 @@ class SocialService
             $p['comments'] = $this->r->query('SELECT c.id,c.body,c.parent_id,c.created_at,u.username,u.user_id FROM social_comments c JOIN users u ON u.user_id=c.user_id WHERE c.post_id=? AND c.deleted_at IS NULL ORDER BY c.id DESC LIMIT 3', [$id]);
         }
         if ($p['kind'] === 'story') {
-            $p['mentions'] = array_map(fn ($u) => $this->profile($actor, (int) $u['user_id']), $this->r->query('SELECT user_id FROM social_story_mentions WHERE story_id=?', [$id]));
+            $p['mentions'] = array_map(fn ($u) => $this->profile($actor, (int) $u['user_id']), $this->r->query("SELECT sm.user_id FROM social_story_mentions sm JOIN users u ON u.user_id=sm.user_id WHERE sm.story_id=? AND u.deleted_at IS NULL AND (u.visibility IS NULL OR u.visibility<>'private' OR u.user_id=?)", [$id, $actor]));
         }
         return $p;
     }
@@ -339,7 +357,14 @@ class SocialService
     public function notifications(int $actor): array
     {
         return array_map(function ($n) use ($actor) {
-            $n['actor'] = $this->profile($actor, (int) $n['actor_id']);
+            try {
+                $n['actor'] = $this->profile($actor, (int) $n['actor_id']);
+            } catch (RuntimeException $e) {
+                if ($e->getCode() !== 404) {
+                    throw $e;
+                }
+                $n['actor'] = ['id' => 0, 'name' => 'User', 'username' => '', 'avatar' => null];
+            }
             return $n;
         }, $this->r->query('SELECT * FROM social_notifications WHERE user_id=? ORDER BY id DESC LIMIT 100', [$actor]));
     }
@@ -402,6 +427,7 @@ class SocialService
         if (!$m) {
             throw new RuntimeException('فایل پیدا نشد.', 404);
         }
+        $this->visibleUser($actor, (int) $m['owner_id']);
         if ((int) $m['owner_id'] !== $actor && !$this->r->one('SELECT 1 FROM social_highlights h LEFT JOIN social_highlight_stories hs ON hs.highlight_id=h.id LEFT JOIN social_posts p ON p.id=hs.story_id AND p.deleted_at IS NULL WHERE h.cover_id=? OR p.media_id=? LIMIT 1', [$id, $id]) && !$this->r->one('SELECT 1 FROM social_profiles WHERE avatar_id=? OR cover_id=?', [$id, $id]) && !$this->r->one('SELECT 1 FROM social_posts WHERE media_id=? AND deleted_at IS NULL AND (owner_id=? OR expires_at IS NULL OR expires_at>UTC_TIMESTAMP())', [$id, $actor])) {
             throw new RuntimeException('محتوا در دسترس نیست.', 404);
         }

@@ -42,6 +42,24 @@
       throw new Error(body.message || 'انجام عملیات ناموفق بود.');
     return body.data ?? body;
   }
+  async function verifyContactChanges(email, phone) {
+    for (const [field, destination, current, label] of [
+      ['email', email, academyProfile.email, 'ایمیل'],
+      ['phone', phone, academyProfile.phone, 'شماره تلفن'],
+    ]) {
+      if ((destination || '').trim() === (current || '').trim()) continue;
+      if (!destination || !destination.trim())
+        throw new Error(`برای حذف ${label} با پشتیبانی تماس بگیرید.`);
+      await accountRequest('/analytics/admin-account/contact/send-code', { field, destination });
+      const code = window.prompt(`کد تأیید ارسال‌شده به ${label} جدید را وارد کنید:`);
+      if (code === null) throw new Error('تأیید اطلاعات تماس لغو شد.');
+      await accountRequest('/analytics/admin-account/contact/verify-code', {
+        field,
+        destination,
+        code: code.trim(),
+      });
+    }
+  }
   async function loadAccountData() {
     try {
       const data = await accountRequest('/analytics/admin-account', undefined, 'GET');
@@ -705,6 +723,7 @@
       ''
     ).trim();
     try {
+      await verifyContactChanges(email, phone);
       await accountRequest('/analytics/admin-account/profile', {
         name,
         address,
@@ -900,6 +919,7 @@
       if (pass.length < 8) return alert('رمز عبور باید حداقل ۸ کاراکتر باشد.');
     }
     try {
+      await verifyContactChanges(email, phone);
       await accountRequest('/analytics/admin-account/security', {
         email,
         phone,

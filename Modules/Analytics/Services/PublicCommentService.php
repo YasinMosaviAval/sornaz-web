@@ -50,21 +50,22 @@ class PublicCommentService
                 throw new RuntimeException('نظری که به آن پاسخ می‌دهید موجود نیست.');
             }
         }
-        $now = date('Y-m-d H:i:s');
-        $id = (int) (db()->query('SELECT COALESCE(MAX(comment_id), 0) + 1 FROM comments')->fetchColumn());
-        DB::table('comments')->insert(['comment_id' => $id, 'post_id' => $postId, 'author' => $author, 'author_email' => $email ?: null, 'author_ip' => $_SERVER['REMOTE_ADDR'] ?? null, 'has_response' => 0, 'agent' => $_SERVER['HTTP_USER_AGENT'] ?? null, 'parent' => $parent ?: null, 'created_at' => $now, 'created_by' => $userId, 'updated_at' => $now, 'updated_by' => $userId, 'approved_at' => null, 'approved_by' => null]);
-        DB::table('translations')->insert(['table_name' => 'comments', 'table_id' => $id, 'field' => 'content', 'locale' => $locale, 'value' => $content, 'version' => 1, 'created_by' => $userId, 'updated_by' => $userId]);
-        if ($parent) {
-            DB::table('comments')->where('comment_id', $parent)->update(['has_response' => 1, 'updated_at' => $now]);
-        }
-        if ($userId) {
-            $recipientId = $parent ? (int) ($parentRow['created_by'] ?? 0) : (int) ($post['author_id'] ?? $post['created_by'] ?? 0);
-            if ($recipientId > 0 && $recipientId !== $userId) {
-                UserPointService::recordPublicAction(db(), $userId, $parent ? 'public.comment.reply' : 'public.comment.submit', 'comment', $id);
-                UserPointService::recordPublicAction(db(), $recipientId, $parent ? 'public.comment.reply.received' : 'public.article.comment.received', 'comment', $id);
+        return transaction(function () use ($postId, $author, $email, $parent, $userId, $locale, $content, $parentRow, $post) {
+            $now = date('Y-m-d H:i:s');
+            $id = (int) DB::table('comments')->insertGetId(['post_id' => $postId, 'author' => $author, 'author_email' => $email ?: null, 'author_ip' => $_SERVER['REMOTE_ADDR'] ?? null, 'has_response' => 0, 'agent' => $_SERVER['HTTP_USER_AGENT'] ?? null, 'parent' => $parent ?: null, 'created_at' => $now, 'created_by' => $userId, 'updated_at' => $now, 'updated_by' => $userId, 'approved_at' => null, 'approved_by' => null]);
+            DB::table('translations')->insert(['table_name' => 'comments', 'table_id' => $id, 'field' => 'content', 'locale' => $locale, 'value' => $content, 'version' => 1, 'created_by' => $userId, 'updated_by' => $userId]);
+            if ($parent) {
+                DB::table('comments')->where('comment_id', $parent)->update(['has_response' => 1, 'updated_at' => $now]);
             }
-        }
-        return $id;
+            if ($userId) {
+                $recipientId = $parent ? (int) ($parentRow['created_by'] ?? 0) : (int) ($post['author_id'] ?? $post['created_by'] ?? 0);
+                if ($recipientId > 0 && $recipientId !== $userId) {
+                    UserPointService::recordPublicAction(db(), $userId, $parent ? 'public.comment.reply' : 'public.comment.submit', 'comment', $id);
+                    UserPointService::recordPublicAction(db(), $recipientId, $parent ? 'public.comment.reply.received' : 'public.article.comment.received', 'comment', $id);
+                }
+            }
+            return $id;
+        });
     }
 
     private function detectContentLocale(string $content, string $fallback): string

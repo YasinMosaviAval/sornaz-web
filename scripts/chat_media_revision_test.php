@@ -18,7 +18,7 @@ function transaction($callback){global $pdo;$pdo->beginTransaction();try{$value=
 $checks=0;
 function check($value,$message){global $checks;if(!$value)throw new RuntimeException($message);$checks++;}
 function denied($callback){try{$callback();}catch(RuntimeException $e){check(true,'Denied');return;}throw new RuntimeException('Unauthorized operation succeeded');}
-$pdo->exec("CREATE TABLE users(user_id INTEGER PRIMARY KEY,username TEXT,type TEXT DEFAULT 'human',register_method TEXT DEFAULT 'email',avatar_file_id INTEGER,timezone TEXT DEFAULT 'UTC',deleted_at TEXT);
+$pdo->exec("CREATE TABLE users(user_id INTEGER PRIMARY KEY,username TEXT,type TEXT DEFAULT 'human',register_method TEXT DEFAULT 'email',avatar_file_id INTEGER,timezone TEXT DEFAULT 'UTC',visibility TEXT DEFAULT 'public',deleted_at TEXT);
 CREATE TABLE translations(translation_id INTEGER PRIMARY KEY,table_name TEXT,table_id INTEGER,field TEXT,locale TEXT,value TEXT,deleted_at TEXT);
 CREATE TABLE media_files(media_file_id INTEGER PRIMARY KEY,user_id INTEGER,collection TEXT,path TEXT,sort_order INTEGER,deleted_at TEXT);
 CREATE TABLE conversations(conversation_id INTEGER PRIMARY KEY,type TEXT,title TEXT,avatar_path TEXT,last_message_id INTEGER,created_at TEXT,created_by INTEGER,updated_at TEXT,updated_by INTEGER,deleted_at TEXT,deleted_by INTEGER);
@@ -36,6 +36,8 @@ INSERT INTO conversation_members(conversation_id,user_id,role) VALUES(1,1,'admin
 INSERT INTO social_media(id,owner_id,mime,path) VALUES(5,1,'image/jpeg','test.jpg');
 INSERT INTO social_posts(id,owner_id,kind,body,media_id,expires_at) VALUES(1,1,'story','Expired story',5,'2000-01-01 00:00:00'),(2,1,'post','Original post',5,NULL);");
 $chat=new Modules\Analytics\Services\ChatService();
+check(array_column($chat->searchUsers(1,'New'),'id')===[3],'Chat search missed a user outside the initial picker');
+denied(fn()=>$chat->searchUsers(3,'',1));
 $parent=$chat->send(1,1,'Original message')['id'];
 $reply=$chat->send(2,1,'Reply',[],$parent)['id'];
 $chat->messages(1,1,0,false);
@@ -50,6 +52,7 @@ check($chat->messages(2,1)['messages'][1]['reply']['body']==='Edited in composer
 $chat->deleteMessage(1,$parent);
 check($chat->messages(2,1)['messages'][0]['reply']['body']==='Message deleted','Deleted reply leaked old text');
 $chat->addMembers(1,1,[1,2,3]);
+check(array_column($chat->searchUsers(1,'',1),'id')===[4],'Chat member search included existing members');
 check($pdo->query('SELECT role FROM conversation_members WHERE conversation_id=1 AND user_id=1')->fetchColumn()==='admin','Adding an existing admin demoted them');
 $rows=$chat->messages(1,1)['messages'];$notice=end($rows);
 check($notice['system']===true,'Membership event was not a system message');

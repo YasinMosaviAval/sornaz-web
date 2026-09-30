@@ -18,6 +18,7 @@ class ZarinpalPaymentService
             throw new RuntimeException('شناسه پذیرنده زرین‌پال در تنظیمات سیستم ثبت نشده است.');
         }
         [$invoice,$installment] = $this->payable($actor, $invoiceId, $installmentId);
+        $this->validateCurrency($invoice);
         InvoiceLedger::snapshot($invoiceId);
         $amount = InvoiceLedger::paymentAmount($installment['amount']);
         $pending = DB::table('academy_term_invoice_payments')->where('installment_id', $installmentId)->whereRaw("(status IN ('created','pending') OR (status IN ('failed','canceled') AND authority IS NOT NULL))")->whereNull('deleted_at')->orderBy('payment_id', 'DESC')->first();
@@ -45,6 +46,16 @@ class ZarinpalPaymentService
         } catch (\Throwable$e) {
             DB::table('academy_term_invoice_payments')->where('payment_id', $paymentId)->update(['status' => 'failed', 'gateway_message' => mb_substr($e->getMessage(), 0, 500), 'updated_at' => date('Y-m-d H:i:s')]);
             throw $e;
+        }
+    }
+
+    private function validateCurrency(array $invoice): void
+    {
+        $currency = DB::table('financial_system_currency')->where('currency_id', (int) ($invoice['currency_id'] ?? 0))->first();
+        $code = strtoupper((string) ($currency['code'] ?? ''));
+        $gateway = strtoupper((string) env('ZARINPAL_CURRENCY', 'IRT'));
+        if (!in_array($code, ['IRR', 'IRT'], true) || $code !== $gateway) {
+            throw new RuntimeException('واحد پول فاکتور با درگاه یکسان نیست؛ پرداخت ایجاد نشد.', 422);
         }
     }
 

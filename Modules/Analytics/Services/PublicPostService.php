@@ -153,7 +153,7 @@ class PublicPostService
         }
         $out = [];
         foreach ($ids as $id) {
-            $post = DB::table('posts')->where('post_id', $id)->where('type', 'post')->where('status', 'published')->whereNull('deleted_at')->first();
+            $post = DB::table('posts')->where('post_id', $id)->where('type', 'post')->where('visibility', 'public')->where('status', 'published')->whereNull('deleted_at')->first();
             if (!$post) {
                 continue;
             }

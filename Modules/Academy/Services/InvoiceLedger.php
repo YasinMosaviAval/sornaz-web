@@ -44,6 +44,7 @@ final class InvoiceLedger
         if ($count < 1 || $count > max(2, count($data['sessions'] ?? [])) || $count > 1000) {
             throw new RuntimeException('تعداد اقساط معتبر نیست.', 422);
         }
+        self::validateDistribution($total, $count);
         $id = DB::table('academy_branch_course_term_invoices')->insertGetId(['term_id' => $termId, 'discount_id' => (int) ($data['discountId'] ?? 0) ?: null, 'payable_amount' => self::amount($total), 'currency_id' => $currency, 'status' => 'draft', 'due_date' => $start, 'created_by' => $actor, 'updated_by' => $actor]);
         for ($index = 0; $index < $count; ++$index) {
             DB::table('academy_branch_course_term_invoice_installments')->insert(['invoice_id' => $id, 'installment_number' => $index + 1, 'amount' => self::share($total, $count, $index), 'due_date' => date('Y-m-d', strtotime($start . ' +' . $index . ' month')), 'status' => 'pending', 'created_by' => $actor, 'updated_by' => $actor]);
@@ -95,10 +96,18 @@ final class InvoiceLedger
         }
         if ($amount !== $state['total']) {
             $count = count($state['rows']);
+            self::validateDistribution($amount, $count);
             foreach ($state['rows'] as $index => $row) {
                 DB::table('academy_branch_course_term_invoice_installments')->where('term_invoice_installment_id', (int) $row['term_invoice_installment_id'])->update(['amount' => self::share($amount, $count, $index), 'updated_by' => $actor]);
             }
         }
         DB::table('academy_branch_course_term_invoices')->where('term_invoice_id', $id)->update(['payable_amount' => self::amount($amount), 'status' => $requested, 'due_date' => ($data['dueDate'] ?? '') ?: null, 'updated_by' => $actor]);
+    }
+
+    private static function validateDistribution(int $total, int $count): void
+    {
+        if ($total % 100 !== 0 || $total < $count * 100) {
+            throw new RuntimeException('مبلغ باید صحیح باشد و برای هر قسط حداقل یک واحد پول در نظر گرفته شود.', 422);
+        }
     }
 }

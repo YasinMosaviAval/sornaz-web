@@ -64,14 +64,18 @@ class AdminCommentService
     public function reply(int $a, int $id, array $d): int
     {
         SiteAdminAccess::requireCurrentUser($a);
+        return transaction(fn () => $this->storeReply($a, $id, $d));
+    }
+
+    private function storeReply(int $a, int $id, array $d): int
+    {
         $p = $this->find($id);
         $content = ContentSafety::comment($d['content'] ?? '');
         if ($content === '') {
             throw new RuntimeException('متن پاسخ الزامی است.');
         }
         $now = date('Y-m-d H:i:s');
-        $new = (int) db()->query('SELECT COALESCE(MAX(comment_id),0)+1 FROM comments')->fetchColumn();
-        DB::table('comments')->insert(['comment_id' => $new, 'post_id' => (int) $p['post_id'], 'user_id' => $a, 'author' => (string) (auth()->user()['username'] ?? 'مدیر سایت'), 'parent' => $id, 'has_response' => 0, 'status' => 'approved', 'approved_at' => $now, 'approved_by' => $a, 'created_at' => $now, 'created_by' => $a, 'updated_at' => $now, 'updated_by' => $a]);
+        $new = (int) DB::table('comments')->insertGetId(['post_id' => (int) $p['post_id'], 'user_id' => $a, 'author' => (string) (auth()->user()['username'] ?? 'مدیر سایت'), 'parent' => $id, 'has_response' => 0, 'status' => 'approved', 'approved_at' => $now, 'approved_by' => $a, 'created_at' => $now, 'created_by' => $a, 'updated_at' => $now, 'updated_by' => $a]);
         DB::table('comments')->where('comment_id', $id)->update(['has_response' => 1, 'updated_at' => $now, 'updated_by' => $a]);
         $this->setContent($new, $content, $a);
         return $new;

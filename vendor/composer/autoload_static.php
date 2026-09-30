@@ -11,30 +11,30 @@ class ComposerStaticInit3f208a4a13df2060db31385814ceea13
     );
 
     public static $prefixLengthsPsr4 = array (
-        'P' =>
+        'P' => 
         array (
             'PHPMailer\\PHPMailer\\' => 20,
         ),
-        'M' =>
+        'M' => 
         array (
             'Modules\\' => 8,
         ),
-        'C' =>
+        'C' => 
         array (
             'Core\\' => 5,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'PHPMailer\\PHPMailer\\' =>
+        'PHPMailer\\PHPMailer\\' => 
         array (
             0 => __DIR__ . '/../..' . '/Modules/System/Lib/PHPMailer',
         ),
-        'Modules\\' =>
+        'Modules\\' => 
         array (
             0 => __DIR__ . '/../..' . '/Modules',
         ),
-        'Core\\' =>
+        'Core\\' => 
         array (
             0 => __DIR__ . '/../..' . '/core',
         ),
@@ -137,6 +137,7 @@ class ComposerStaticInit3f208a4a13df2060db31385814ceea13
         'Core\\router\\Route' => __DIR__ . '/../..' . '/core/router/route.php',
         'Core\\router\\Router' => __DIR__ . '/../..' . '/core/router/router.php',
         'Core\\security\\ContentSafety' => __DIR__ . '/../..' . '/core/security/ContentSafety.php',
+        'Core\\security\\PublicError' => __DIR__ . '/../..' . '/core/security/PublicError.php',
         'Core\\session\\Session' => __DIR__ . '/../..' . '/core/session/Session.php',
         'Core\\support\\AssetManager' => __DIR__ . '/../..' . '/core/support/AssetManager.php',
         'Core\\support\\Env' => __DIR__ . '/../..' . '/core/support/env.php',
@@ -207,6 +208,8 @@ class ComposerStaticInit3f208a4a13df2060db31385814ceea13
         'Modules\\Academy\\Services\\NationalHolidayService' => __DIR__ . '/../..' . '/Modules/Academy/Services/NationalHolidayService.php',
         'Modules\\Academy\\Services\\OfflineInstallmentPaymentService' => __DIR__ . '/../..' . '/Modules/Academy/Services/OfflineInstallmentPaymentService.php',
         'Modules\\Academy\\Services\\PublicAcademyEnrollmentService' => __DIR__ . '/../..' . '/Modules/Academy/Services/PublicAcademyEnrollmentService.php',
+        'Modules\\Academy\\Services\\ScheduleGuard' => __DIR__ . '/../..' . '/Modules/Academy/Services/ScheduleGuard.php',
+        'Modules\\Academy\\Services\\ScheduleTime' => __DIR__ . '/../..' . '/Modules/Academy/Services/ScheduleTime.php',
         'Modules\\Academy\\Services\\TermRecordGuard' => __DIR__ . '/../..' . '/Modules/Academy/Services/TermRecordGuard.php',
         'Modules\\Academy\\Services\\ZarinpalPaymentService' => __DIR__ . '/../..' . '/Modules/Academy/Services/ZarinpalPaymentService.php',
         'Modules\\Analytics\\Controllers\\Api\\ArticleController' => __DIR__ . '/../..' . '/Modules/Analytics/Controllers/Api/ArticleController.php',
@@ -257,6 +260,7 @@ class ComposerStaticInit3f208a4a13df2060db31385814ceea13
         'Modules\\Analytics\\Services\\ArticleApiService' => __DIR__ . '/../..' . '/Modules/Analytics/Services/ArticleApiService.php',
         'Modules\\Analytics\\Services\\ChatAttachmentPolicy' => __DIR__ . '/../..' . '/Modules/Analytics/Services/ChatAttachmentPolicy.php',
         'Modules\\Analytics\\Services\\ChatService' => __DIR__ . '/../..' . '/Modules/Analytics/Services/ChatService.php',
+        'Modules\\Analytics\\Services\\ContactChangeService' => __DIR__ . '/../..' . '/Modules/Analytics/Services/ContactChangeService.php',
         'Modules\\Analytics\\Services\\MobilePanelAccess' => __DIR__ . '/../..' . '/Modules/Analytics/Services/MobilePanelAccess.php',
         'Modules\\Analytics\\Services\\MobilePanelCatalog' => __DIR__ . '/../..' . '/Modules/Analytics/Services/MobilePanelCatalog.php',
         'Modules\\Analytics\\Services\\PublicAccountMediaService' => __DIR__ . '/../..' . '/Modules/Analytics/Services/PublicAccountMediaService.php',

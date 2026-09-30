@@ -67,7 +67,7 @@ function db() { return $GLOBALS['pdo']; }
 function session() { return new class { public function get($key, $default = null) { return $key === 'suppress_database_notifications' ? true : $default; } }; }
 function transaction($callback) { $pdo = db(); $pdo->beginTransaction(); try { $result = $callback(); $pdo->commit(); return $result; } catch (Throwable $e) { $pdo->rollBack(); throw $e; } }
 $pdo->exec("CREATE TABLE posts(post_id INTEGER,status TEXT,visibility TEXT,type TEXT,deleted_at TEXT);
-CREATE TABLE comments(comment_id INTEGER,post_id INTEGER,author TEXT,author_email TEXT,author_ip TEXT,has_response INTEGER,agent TEXT,parent INTEGER,created_at TEXT,created_by INTEGER,updated_at TEXT,updated_by INTEGER,approved_at TEXT,approved_by INTEGER,deleted_at TEXT);
+CREATE TABLE comments(comment_id INTEGER PRIMARY KEY,post_id INTEGER,author TEXT,author_email TEXT,author_ip TEXT,has_response INTEGER,agent TEXT,parent INTEGER,created_at TEXT,created_by INTEGER,updated_at TEXT,updated_by INTEGER,approved_at TEXT,approved_by INTEGER,deleted_at TEXT);
 CREATE TABLE translations(table_name TEXT,table_id INTEGER,field TEXT,locale TEXT,value TEXT,version INTEGER,created_by INTEGER,updated_by INTEGER,deleted_at TEXT);
 INSERT INTO posts VALUES(1,'published','public','post',NULL);");
 $service = new Modules\Analytics\Services\PublicCommentService();
@@ -78,6 +78,11 @@ $pdo->exec("UPDATE comments SET approved_at='2026-09-29'");
 $pdo->prepare('UPDATE translations SET value=?')->execute(['<p>Legacy</p><script>alert(1)</script>']);
 $items = $service->forPost(1, 'en');
 check(count($items) === 1 && !str_contains($items[0]['content'], '<script'), 'Legacy comment read policy bypassed');
+$before = (int) $pdo->query('SELECT COUNT(*) FROM comments')->fetchColumn();
+$pdo->exec("CREATE TRIGGER fail_comment_translation BEFORE INSERT ON translations BEGIN SELECT RAISE(ABORT,'fixture failure'); END;");
+try { $service->store(1, ['content'=>'Rollback test']); throw new LogicException('Expected storage failure'); } catch (PDOException) {}
+check((int) $pdo->query('SELECT COUNT(*) FROM comments')->fetchColumn() === $before, 'Partial comment survived failed translation');
+$pdo->exec('DROP TRIGGER fail_comment_translation');
 $pdo->exec('CREATE TABLE f_settings(setting_id INTEGER PRIMARY KEY,variable_name TEXT,page TEXT,table_name TEXT,status TEXT,source TEXT,icon TEXT,value TEXT,created_by INTEGER,updated_by INTEGER,deleted_at TEXT,deleted_by INTEGER);
 CREATE TABLE f_translations(translation_id INTEGER PRIMARY KEY,table_name TEXT,table_id INTEGER,field TEXT,locale TEXT,value TEXT,version INTEGER,created_by INTEGER,updated_by INTEGER,deleted_at TEXT,deleted_by INTEGER)');
 $pages = new Modules\Analytics\Services\SitePageContentService();

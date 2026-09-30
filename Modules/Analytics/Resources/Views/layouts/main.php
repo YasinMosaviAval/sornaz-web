@@ -46,7 +46,7 @@
     <div id="modalContainer"></div>
     <script>window.adminCsrfToken=<?= json_encode(csrf_token()) ?>;</script>
     <script src="/assets/Page/js/public-ratings.js?v=<?= filemtime(base_path('assets/Page/js/public-ratings.js')) ?: 1 ?>"></script>
-    <script>window.authTranslations=<?= json_encode(translations('auth.js.'),JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;</script>
+    <script>window.authTranslations=<?= json_encode(translations('auth.js.'),JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
     <script src="/assets/System/js/auth.js?v=<?= filemtime(base_path('assets/System/js/auth.js')) ?: 1 ?>"></script>
     <script>
         (function(){

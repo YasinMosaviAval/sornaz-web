@@ -71,11 +71,15 @@ INSERT INTO academy_branch_course_term_invoices VALUES(1,'issued',NULL,NULL,NULL
 ALTER TABLE academy_branch_course_term_invoices ADD COLUMN payable_amount INTEGER DEFAULT 200;
 INSERT INTO academy_branch_course_term_invoice_installments VALUES(1,1,1,100,'pending',NULL,NULL,NULL,NULL),(2,1,2,100,'pending',NULL,NULL,NULL,NULL);
 CREATE TABLE academy_term_invoice_payments(payment_id INTEGER PRIMARY KEY,invoice_id INTEGER,installment_id INTEGER,user_id INTEGER,amount INTEGER,currency TEXT,callback_token TEXT,status TEXT,created_at TEXT,created_by INTEGER,updated_at TEXT,updated_by INTEGER,authority TEXT,gateway_code INTEGER,requested_at TEXT,gateway_message TEXT,reference_id TEXT,card_pan TEXT,card_hash TEXT,verified_at TEXT,deleted_at TEXT);");
+$pdo->exec("ALTER TABLE academy_branch_course_term_invoices ADD COLUMN currency_id INTEGER DEFAULT 1; CREATE TABLE financial_system_currency(currency_id INTEGER,code TEXT); INSERT INTO financial_system_currency VALUES(1,'IRT');");
 $invoiceGateway=new class extends Modules\Academy\Services\ZarinpalPaymentService {
  public int $calls=0;public bool $missingRef=false;
  protected function payable(int$a,int$i,int$s):array{return [DB::table('academy_branch_course_term_invoices')->where('term_invoice_id',$i)->first(),DB::table('academy_branch_course_term_invoice_installments')->where('term_invoice_installment_id',$s)->first()];}
  protected function request(string$path,array$data):array{if(str_contains($path,'inquiry'))return ['data'=>['code'=>100,'status'=>'IN_BANK']];if(str_contains($path,'request'))return ['data'=>['code'=>100,'authority'=>'INVOICE_AUTH_'.++$this->calls]];return ['data'=>['code'=>100,'ref_id'=>$this->missingRef?'':54321]];}
 };
+$pdo->exec("UPDATE financial_system_currency SET code='IRR'");
+denied(fn()=>$invoiceGateway->start(7,1,1));check($invoiceGateway->calls===0,'Currency mismatch reached gateway');
+$pdo->exec("UPDATE financial_system_currency SET code='IRT'");
 $url=$invoiceGateway->start(7,1,1);check($invoiceGateway->start(7,1,1)===$url&&$invoiceGateway->calls===1,'Duplicate invoice request');
 $payment=DB::table('academy_term_invoice_payments')->where('payment_id',1)->first();
 check($invoiceGateway->callback($payment['callback_token'],$payment['authority'],'OK')['success'],'Invoice verification');

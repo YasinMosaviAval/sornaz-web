@@ -11,6 +11,7 @@ CREATE TABLE social_highlights(id INTEGER PRIMARY KEY AUTOINCREMENT,owner_id INT
 CREATE TABLE social_highlight_stories(highlight_id INTEGER,story_id INTEGER);
 INSERT INTO users VALUES(1,'one',NULL,'human','email',NULL),(2,'two',NULL,'human','phone',NULL),(3,'internal',NULL,'human','academy',NULL),(4,'academy',NULL,'academy','email',NULL),(5,'branch',NULL,'branch','phone',NULL);
 INSERT INTO social_media VALUES(1,1,'image/png','one.png'),(2,2,'image/png','two.png'),(3,1,'video/mp4','three.mp4');");
+$db->exec("ALTER TABLE users ADD COLUMN visibility TEXT DEFAULT 'public'");
 $r=new class($db) extends \Modules\Social\Repositories\SocialRepository{public function query(string $sql,array $params=[]):array{return parent::query(str_replace(' FOR UPDATE','',$sql),$params);}};
 $s=new class($r) extends \Modules\Social\Services\SocialService {public function profile(int $actor,int $id):array{$u=$this->user($id);return ['id'=>$id,'username'=>$u['username']];}};
 function check($condition,$message){if(!$condition)throw new RuntimeException($message);}

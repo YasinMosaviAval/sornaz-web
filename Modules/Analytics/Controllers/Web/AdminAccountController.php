@@ -5,12 +5,13 @@ namespace Modules\Analytics\Controllers\Web;
 use Core\http\DownloadResponse;
 use Core\http\ResponseFactory;
 use Modules\Analytics\Services\AdminAccountService;
+use Modules\Analytics\Services\ContactChangeService;
 use Modules\Analytics\Services\AcademyScopedBackupService;
 use Modules\Analytics\Services\UserMergeService;
 
 final class AdminAccountController
 {
-    public function __construct(private AdminAccountService $service, private AcademyScopedBackupService $backups, private UserMergeService $merges)
+    public function __construct(private AdminAccountService $service, private AcademyScopedBackupService $backups, private UserMergeService $merges, private ContactChangeService $contacts)
     {
     }
 
@@ -57,6 +58,23 @@ final class AdminAccountController
         return $this->mutate(fn ($d) => $this->service->saveSecurity((int) auth()->id(), $d));
     }
 
+    public function sendContactCode()
+    {
+        return $this->run(function () {
+            $data = $this->payload();
+            return ['success' => true, 'data' => $this->contacts->send((int) auth()->id(), (string) ($data['field'] ?? ''), (string) ($data['destination'] ?? ''))];
+        });
+    }
+
+    public function verifyContactCode()
+    {
+        return $this->run(function () {
+            $data = $this->payload();
+            $this->contacts->verify((int) auth()->id(), (string) ($data['field'] ?? ''), (string) ($data['destination'] ?? ''), (string) ($data['code'] ?? ''));
+            return ['success' => true];
+        });
+    }
+
     public function upload(string $kind)
     {
         return $this->run(function () use ($kind) {
@@ -83,7 +101,7 @@ final class AdminAccountController
             $f = $this->service->downloadableMedia((int) auth()->id(), $id);
             return new DownloadResponse($f['path'], $f['filename'], $f['mime']);
         } catch (\Throwable$e) {
-            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 404);
+            return ResponseFactory::json(['success' => false, 'message' => \Core\security\PublicError::message($e)], 404);
         }
     }
 
@@ -103,7 +121,7 @@ final class AdminAccountController
             $f = $this->backups->find((int) auth()->id(), $id);
             return new DownloadResponse($f['path'], $f['filename'], 'application/sql');
         } catch (\Throwable$e) {
-            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 404);
+            return ResponseFactory::json(['success' => false, 'message' => \Core\security\PublicError::message($e)], 404);
         }
     }
 
@@ -130,7 +148,7 @@ final class AdminAccountController
         try {
             return ResponseFactory::json($cb());
         } catch (\Throwable$e) {
-            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
+            return ResponseFactory::json(['success' => false, 'message' => \Core\security\PublicError::message($e)], \Core\security\PublicError::status($e));
         }
     }
 }

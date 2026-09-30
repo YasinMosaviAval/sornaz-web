@@ -2374,7 +2374,7 @@ window.addEventListener('sornaz:data-changed', async function (event) {
         alert(e.message);
       });
       pollTermsRealtime();
-      setInterval(pollTermsRealtime, 2000);
+      setInterval(pollTermsRealtime, 10000);
       document.addEventListener('visibilitychange', function () {
         if (!document.hidden) pollTermsRealtime();
       });

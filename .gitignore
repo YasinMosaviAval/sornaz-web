@@ -3,6 +3,7 @@
 /.env
 /.env.*
 !/.env.example
+/config/database.php
 /php-error.log
 /docs/database/*.sql
 !/docs/database/add-*.sql

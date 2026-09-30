@@ -51,7 +51,7 @@ class AcademyClassroomService
         $this->set('access_system_permissions', $id, ['title' => 'View and create classroom types', 'summary' => 'View and create classroom types', 'description' => 'View and create classroom types'], 1, 'en');
     }
 
-    /** The project has no migrations; keep the two required permissions and enum labels idempotently available. */
+    /** Keep the required permissions and category labels idempotently available. */
     private function ensureReferenceData(int $actor): void
     {
         $now = date('Y-m-d H:i:s');
@@ -174,9 +174,20 @@ class AcademyClassroomService
 
     private function enumValues(): array
     {
+        $labels = DB::table('translations')->where('table_name', self::TABLE)->whereNull('table_id')->where('field', 'type')->whereNull('deleted_at')->get();
+        $values = array_column($labels, 'code');
+        foreach (DB::table(self::TABLE)->whereNull('deleted_at')->get() as $row) {
+            $values[] = $row['type'];
+        }
+        return array_values(array_unique(array_filter(array_map('strval', $values))));
+    }
+
+    private function requireFlexibleTypeColumn(): void
+    {
         $column = db()->query("SHOW COLUMNS FROM `classroom_types` LIKE 'type'")->fetch(\PDO::FETCH_ASSOC);
-        preg_match_all("/'((?:[^'\\\\]|\\\\.)*)'/", (string) ($column['Type'] ?? ''), $matches);
-        return array_map(fn ($v) => stripcslashes($v), $matches[1] ?? []);
+        if (!preg_match('/^varchar\([0-9]+\)$/i', (string) ($column['Type'] ?? ''))) {
+            throw new RuntimeException('برای تغییر دسته‌بندی نوع کلاس، migration ستون type را اجرا کنید.');
+        }
     }
 
     private function typeOptions(): array
@@ -515,13 +526,8 @@ class AcademyClassroomService
         if (in_array($value, array_column($this->typeOptions(), 'value'), true)) {
             throw new RuntimeException('این دسته‌بندی قبلاً ایجاد شده است.');
         }
+        $this->requireFlexibleTypeColumn();
         return transaction(function () use ($a, $value, $fa, $en) {
-            $column = db()->query("SHOW COLUMNS FROM `classroom_types` LIKE 'type'")->fetch(\PDO::FETCH_ASSOC);
-            preg_match_all("/'((?:[^'\\\\]|\\\\.)*)'/", (string) ($column['Type'] ?? ''), $matches);
-            $values = array_map(fn ($v) => stripcslashes($v), $matches[1] ?? []);
-            $values[] = $value;
-            $quoted = array_map(fn ($v) => db()->quote($v), array_values(array_unique($values)));
-            db()->exec('ALTER TABLE `classroom_types` MODIFY `type` ENUM(' . implode(',', $quoted) . ') DEFAULT NULL');
             $now = date('Y-m-d H:i:s');
             foreach (['fa' => $fa, 'en' => $en] as $locale => $label) {
                 DB::table('translations')->insert(['table_name' => self::TABLE, 'table_id' => null, 'code' => $value, 'field' => 'type', 'locale' => $locale, 'value' => $label, 'version' => 1, 'created_at' => $now, 'created_by' => $a, 'updated_at' => $now, 'updated_by' => $a]);
@@ -554,29 +560,28 @@ class AcademyClassroomService
             throw new RuntimeException('این مقدار برای دسته دیگری استفاده شده است.');
         }
         if ($value !== $oldValue) {
-            $temporary = array_values(array_unique([...$values, $value]));
-            $quoted = array_map(fn ($v) => db()->quote($v), $temporary);
-            db()->exec('ALTER TABLE `classroom_types` MODIFY `type` ENUM(' . implode(',', $quoted) . ') DEFAULT NULL');
-            DB::table(self::TABLE)->where('type', $oldValue)->update(['type' => $value, 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => $a]);
-            $final = array_map(fn ($v) => $v === $oldValue ? $value : $v, $values);
-            $quoted = array_map(fn ($v) => db()->quote($v), array_values(array_unique($final)));
-            db()->exec('ALTER TABLE `classroom_types` MODIFY `type` ENUM(' . implode(',', $quoted) . ') DEFAULT NULL');
-        }$now = date('Y-m-d H:i:s');
-        foreach (['fa' => $fa, 'en' => $en] as $locale => $label) {
-            $target = DB::table('translations')->where('table_name', self::TABLE)->whereNull('table_id')->where('code', $value)->where('field', 'type')->where('locale', $locale)->first();
-            $source = $value === $oldValue ? $target : DB::table('translations')->where('table_name', self::TABLE)->whereNull('table_id')->where('code', $oldValue)->where('field', 'type')->where('locale', $locale)->first();
-            $payload = ['code' => $value, 'value' => $label, 'updated_at' => $now, 'updated_by' => $a, 'deleted_at' => null, 'deleted_by' => null];
-            if ($target) {
-                DB::table('translations')->where('translation_id', (int) $target['translation_id'])->update($payload);
-            } elseif ($source) {
-                DB::table('translations')->where('translation_id', (int) $source['translation_id'])->update($payload);
-            } else {
-                DB::table('translations')->insert(['table_name' => self::TABLE, 'table_id' => null, 'field' => 'type', 'locale' => $locale, 'version' => 1, 'created_at' => $now, 'created_by' => $a] + $payload);
-            }
-            if ($source && $target && (int) $source['translation_id'] !== (int) $target['translation_id']) {
-                DB::table('translations')->where('translation_id', (int) $source['translation_id'])->update(['deleted_at' => $now, 'deleted_by' => $a, 'updated_at' => $now, 'updated_by' => $a]);
-            }
-        }return ['value' => $value, 'label' => $fa, 'fa' => $fa, 'en' => $en];
+            $this->requireFlexibleTypeColumn();
+        }
+        return transaction(function () use ($a, $oldValue, $value, $fa, $en) {
+            if ($value !== $oldValue) {
+                DB::table(self::TABLE)->where('type', $oldValue)->update(['type' => $value, 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => $a]);
+            }$now = date('Y-m-d H:i:s');
+            foreach (['fa' => $fa, 'en' => $en] as $locale => $label) {
+                $target = DB::table('translations')->where('table_name', self::TABLE)->whereNull('table_id')->where('code', $value)->where('field', 'type')->where('locale', $locale)->first();
+                $source = $value === $oldValue ? $target : DB::table('translations')->where('table_name', self::TABLE)->whereNull('table_id')->where('code', $oldValue)->where('field', 'type')->where('locale', $locale)->first();
+                $payload = ['code' => $value, 'value' => $label, 'updated_at' => $now, 'updated_by' => $a, 'deleted_at' => null, 'deleted_by' => null];
+                if ($target) {
+                    DB::table('translations')->where('translation_id', (int) $target['translation_id'])->update($payload);
+                } elseif ($source) {
+                    DB::table('translations')->where('translation_id', (int) $source['translation_id'])->update($payload);
+                } else {
+                    DB::table('translations')->insert(['table_name' => self::TABLE, 'table_id' => null, 'field' => 'type', 'locale' => $locale, 'version' => 1, 'created_at' => $now, 'created_by' => $a] + $payload);
+                }
+                if ($source && $target && (int) $source['translation_id'] !== (int) $target['translation_id']) {
+                    DB::table('translations')->where('translation_id', (int) $source['translation_id'])->update(['deleted_at' => $now, 'deleted_by' => $a, 'updated_at' => $now, 'updated_by' => $a]);
+                }
+            }return ['value' => $value, 'label' => $fa, 'fa' => $fa, 'en' => $en];
+        });
     }
 
     public function deleteCategory(int $a, string $value, bool $admin): void
@@ -596,9 +601,6 @@ class AcademyClassroomService
         if (DB::table(self::TABLE)->where('type', $value)->whereNull('deleted_at')->count()) {
             throw new RuntimeException('این دسته توسط یک یا چند نوع کلاس استفاده می‌شود و قابل حذف نیست.');
         }
-        $remaining = array_values(array_diff($values, [$value]));
-        $quoted = array_map(fn ($v) => db()->quote($v), $remaining);
-        db()->exec('ALTER TABLE `classroom_types` MODIFY `type` ENUM(' . implode(',', $quoted) . ') DEFAULT NULL');
         $now = date('Y-m-d H:i:s');
         DB::table('translations')->where('table_name', self::TABLE)->whereNull('table_id')->where('code', $value)->where('field', 'type')->whereNull('deleted_at')->update(['deleted_at' => $now, 'deleted_by' => $a, 'updated_at' => $now, 'updated_by' => $a]);
     }

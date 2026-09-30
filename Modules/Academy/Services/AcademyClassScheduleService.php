@@ -89,7 +89,7 @@ class AcademyClassScheduleService
 
     public function save(int $actor, array $d, int $id = 0): array
     {
-        return \Modules\System\Services\PaymentMutex::run(db(), "session:$id", fn () => $this->saveLocked($actor, $d, $id));
+        return \Modules\System\Services\PaymentMutex::run(db(), "schedule-write", fn () => \Modules\System\Services\PaymentMutex::run(db(), "session:$id", fn () => $this->saveLocked($actor, $d, $id)));
     }
 
     private function saveLocked(int $actor, array $d, int $id = 0): array
@@ -104,6 +104,8 @@ class AcademyClassScheduleService
         }
         $term = $this->term($actor, $termId);
         [$date, $start, $end, $mode, $classroom, $status] = $this->validatedSessionInput($d, $term);
+        $bookingZone = $session ? (DB::table('academy_branch_bookings')->where('booking_id', (int) $session['booking_id'])->first()['timezone_id'] ?? 0) : 0;
+        ScheduleGuard::forSession($termId, $date, $start, $end, (int) $bookingZone, (int) $classroom, $id);
         return transaction(function () use ($actor, $d, $id, $session, $termId, $date, $start, $end, $mode, $classroom, $status) {
             $booking = ['requested_date' => $date, 'start_time' => $start, 'end_time' => $end, 'status' => $status, 'updated_by' => $actor];
             if ($id) {
@@ -126,6 +128,7 @@ class AcademyClassScheduleService
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !preg_match('/^\d{2}:\d{2}$/', $start) || !preg_match('/^\d{2}:\d{2}$/', $end) || $end <= $start) {
             throw new RuntimeException('تاریخ و بازه زمانی جلسه معتبر نیست.');
         }
+        ScheduleTime::validate($date, $start, $end);
         $mode = ($d['mode'] ?? 'in_person') === 'online' ? 'online' : 'in_person';
         $classroom = null;
         if ($mode === 'in_person') {

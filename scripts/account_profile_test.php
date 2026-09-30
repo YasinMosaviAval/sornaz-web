@@ -13,6 +13,13 @@ namespace Core\database {
  }
 }
 namespace {
+ class TestContactSession {
+  private array $values=[];
+  public function get(string $key,mixed $default=null):mixed{return $this->values[$key]??$default;}
+  public function put(string $key,mixed $value):void{$this->values[$key]=$value;}
+  public function forget(string $key):void{unset($this->values[$key]);}
+ }
+ function session():TestContactSession{static $session;return $session??=new TestContactSession();}
  spl_autoload_register(function($c){$p=dirname(__DIR__).'/'.str_replace('\\','/',$c).'.php';if(is_file($p))require_once $p;});
  function check($v,$m){if(!$v)throw new RuntimeException($m);}
  $service=new \Modules\Analytics\Services\AdminAccountService();
@@ -20,6 +27,13 @@ namespace {
  $values=\Core\database\DB::$updated['users'];
  check(!array_key_exists('email',$values)&&!array_key_exists('phone',$values),'Password update must preserve contacts');
  check(password_verify('valid-password',$values['password']),'Password must be hashed');
+ try{$service->saveSecurity(2,['email'=>'new@example.com']);throw new RuntimeException('Unverified email accepted');}
+ catch(RuntimeException $e){check(str_contains($e->getMessage(),'تأیید'),'Unverified email must require OTP');}
+ try{$service->saveSecurity(2,['phone'=>'09123456789']);throw new RuntimeException('Unverified phone accepted');}
+ catch(RuntimeException $e){check(str_contains($e->getMessage(),'تأیید'),'Unverified phone must require OTP');}
+ check(\Modules\Analytics\Services\ContactChangeService::normalize('email',' TEST@EXAMPLE.COM ')==='test@example.com','Email normalization failed');
+ try{\Modules\Analytics\Services\ContactChangeService::normalize('phone','123');throw new RuntimeException('Short phone accepted');}
+ catch(RuntimeException $e){check(str_contains($e->getMessage(),'تلفن'),'Short phone must be rejected');}
  $repository=new class(new PDO('sqlite::memory:')) extends \Modules\Social\Repositories\SocialRepository {
   public array $settings=[];
   public function transaction(callable $callback):mixed{return $callback();}

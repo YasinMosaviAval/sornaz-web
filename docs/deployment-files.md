@@ -4,6 +4,8 @@
 
 This guide covers the current `sornaz` website repository. “Do not upload” does not mean “delete from the server.” Preserve production configuration and user data during deployment. Uploading to GitHub here means tracking files in Git and pushing commits.
 
+`config/database.php` contains server-specific credentials and is no longer tracked by Git. For a new installation, copy `config/database.example.php` to `config/database.php` and fill in the credentials on that server. Never publish the populated file.
+
 ## 1. File decision table
 
 | File or path | Production server | GitHub |

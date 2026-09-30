@@ -10,9 +10,10 @@ CREATE TABLE social_follows(follower_id INTEGER,following_id INTEGER);
 CREATE TABLE social_reactions(user_id INTEGER,post_id INTEGER,kind TEXT);
 CREATE TABLE social_story_mentions(story_id INTEGER,user_id INTEGER);
 CREATE TABLE social_comments(id INTEGER,post_id INTEGER,user_id INTEGER,parent_id INTEGER,body TEXT,created_at TEXT,deleted_at TEXT);
-CREATE TABLE users(user_id INTEGER,username TEXT);
+CREATE TABLE users(user_id INTEGER,username TEXT,avatar_file_id INTEGER,type TEXT,visibility TEXT,deleted_at TEXT);
 INSERT INTO social_follows VALUES(7,2);
 INSERT INTO social_posts VALUES(1,1,"story",NULL,NULL,NULL),(2,2,"story",NULL,NULL,NULL),(3,3,"story",NULL,NULL,NULL),(4,7,"story",NULL,NULL,NULL),(5,2,"story",NULL,NULL,"2000-01-01"),(6,2,"story",NULL,"2020-01-01",NULL),(7,3,"post",NULL,NULL,NULL);');
+$db->exec("INSERT INTO users(user_id,visibility) VALUES(1,'public'),(2,'public'),(3,'public'),(7,'public');");
 $service=new class(new \Modules\Social\Repositories\SocialRepository($db)) extends \Modules\Social\Services\SocialService {
     public function profile(int $actor,int $id):array{return ['id'=>$id];}
 };
@@ -25,4 +26,10 @@ check(ids($service->posts(7,'post')),[7],'Ordinary feed posts must remain availa
 check(ids($service->posts(7,'story',0,2)),[1],'Story pagination must preserve filtering');
 $db->exec('DELETE FROM social_follows');
 check(ids($service->posts(7,'story')),[1],'Unfollowing must remove author stories');
-echo "Story feed: followed users, administrator, guest, expiry, deletion, profile lookup and pagination passed.\n";
+$db->exec("UPDATE users SET visibility='private' WHERE user_id=3");
+check(ids($service->posts(7,'post')),[],'Private author leaked into feed');
+check(ids($service->posts(7,'story',3)),[],'Private author leaked through owner filter');
+try { (new \Modules\Social\Services\SocialService(new \Modules\Social\Repositories\SocialRepository($db)))->profile(7,3); throw new LogicException('Private profile accessible'); } catch (RuntimeException $e) { check($e->getCode(),404,'Private profile status'); }
+try { $service->post(7,7); throw new LogicException('Private post accessible directly'); } catch (RuntimeException $e) { check($e->getCode(),404,'Private post status'); }
+check($service->post(3,7)['id'],7,'Owner lost private post access');
+echo "Story feed: followed users, administrator, privacy, guest, expiry, deletion, profile lookup and pagination passed.\n";

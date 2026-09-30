@@ -391,21 +391,21 @@ window.renderSiteArticlesList = async function () {
           .map(
             (a) => `
             <article class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition border border-gray-50 flex flex-col md:flex-row items-center gap-[30px] p-[30px]">
-                ${a.thumbnail || a.cover ? `<a href="/analytics/article-details?id=${a.id}" class="block w-full md:w-80 md:shrink-0"><img src="${a.thumbnail || a.cover}" alt="${a.title}" class="block w-full aspect-[16/9] object-cover rounded-xl" loading="lazy"></a>` : ''}
+                ${a.thumbnail || a.cover ? `<a href="/analytics/article-details?id=${escapeHtml(a.id)}" class="block w-full md:w-80 md:shrink-0"><img src="${escapeHtml(a.thumbnail || a.cover)}" alt="${escapeHtml(a.title)}" class="block w-full aspect-[16/9] object-cover rounded-xl" loading="lazy"></a>` : ''}
                 <div class="flex-1"><div class="flex flex-wrap gap-2 mb-3">
                     ${(a.categories || [])
                       .map(
                         (c) =>
-                          `<span class="px-2.5 py-1 rounded-lg text-xs bg-indigo-50 text-indigo-700">${c}</span>`
+                          `<span class="px-2.5 py-1 rounded-lg text-xs bg-indigo-50 text-indigo-700">${escapeHtml(c)}</span>`
                       )
                       .join('')}
                 </div>
-                <a href="/analytics/article-details?id=${a.id}">
-                    <h2 class="text-xl font-bold mb-3 hover:text-indigo-600">${a.title}</h2>
+                <a href="/analytics/article-details?id=${escapeHtml(a.id)}">
+                    <h2 class="text-xl font-bold mb-3 hover:text-indigo-600">${escapeHtml(a.title)}</h2>
                 </a>
-                <p class="text-gray-600 text-sm leading-relaxed line-clamp-3">${a.summary || a.description || ''}</p>
+                <p class="text-gray-600 text-sm leading-relaxed line-clamp-3">${escapeHtml(a.summary || a.description || '')}</p>
                 <div class="flex items-center justify-between mt-3 text-xs text-gray-400" dir="ltr">
-                    <span><i class="far fa-calendar ml-1"></i>${a.published_at || '—'}</span>
+                    <span><i class="far fa-calendar ml-1"></i>${escapeHtml(a.published_at || '—')}</span>
                 </div>
                 </div>
             </article>
@@ -432,17 +432,17 @@ window.renderSiteAcademies = async function () {
           .map(
             (a) => `
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-50 hover:shadow-md transition">
-                <h3 class="text-xl font-bold mb-1">${a.name}</h3>
-                <p class="text-sm text-gray-500 mb-3">📍 ${a.city || '—'} ${a.rating ? '· ⭐ ' + a.rating : ''}</p>
-                ${a.summary ? `<p class="text-sm text-gray-600 mb-4 line-clamp-2">${a.summary}</p>` : ''}
+                <h3 class="text-xl font-bold mb-1">${escapeHtml(a.name)}</h3>
+                <p class="text-sm text-gray-500 mb-3">📍 ${escapeHtml(a.city || '—')} ${escapeHtml(a.rating ? '· ⭐ ' + a.rating : '')}</p>
+                ${a.summary ? `<p class="text-sm text-gray-600 mb-4 line-clamp-2">${escapeHtml(a.summary)}</p>` : ''}
                 <div class="grid grid-cols-2 gap-2 text-center mb-5">
                     <div class="bg-gray-50 rounded-2xl py-3">
                         <div class="text-xs text-gray-400">کلاس‌ها</div>
-                        <div class="font-bold mt-0.5">${a.classes ?? '—'}</div>
+                        <div class="font-bold mt-0.5">${escapeHtml(a.classes ?? '—')}</div>
                     </div>
                     <div class="bg-gray-50 rounded-2xl py-3">
                         <div class="text-xs text-gray-400">هنرجوها</div>
-                        <div class="font-bold mt-0.5">${a.students ?? '—'}</div>
+                        <div class="font-bold mt-0.5">${escapeHtml(a.students ?? '—')}</div>
                     </div>
                 </div>
                 <div class="flex gap-2">
@@ -519,7 +519,7 @@ window.openSiteAcademyProfile = async function (id) {
   const avatar = document.getElementById('apAvatar');
   if (avatar)
     avatar.innerHTML = a.avatar
-      ? `<img src="${a.avatar}" alt="${a.name || ''}" class="w-full h-full object-cover">`
+      ? `<img src="${escapeHtml(a.avatar)}" alt="${escapeHtml(a.name || '')}" class="w-full h-full object-cover">`
       : initial;
   const academyCover = document.getElementById('apCover');
   if (academyCover) academyCover.style.backgroundImage = a.cover ? `url("${a.cover}")` : '';
@@ -547,7 +547,7 @@ window.openSiteAcademyProfile = async function (id) {
     a.city ||
     (a.addresses && a.addresses[0] && (a.addresses[0].city || a.addresses[0].province)) ||
     '';
-  const rating = a.rating != null ? ` · ⭐ ${a.rating}` : '';
+  const rating = a.rating != null ? ` · ⭐ ${escapeHtml(a.rating)}` : '';
   document.getElementById('apLocation').textContent = city
     ? `📍 ${city}${rating}`
     : rating
@@ -611,7 +611,7 @@ function renderProfileContacts(a) {
           ? value
           : '#';
     items.push(
-      `<a href="${href}" ${!isPhone && contact.mode !== 'email' ? 'target="_blank" rel="noopener"' : ''} class="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-indigo-50 transition"><span class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center"><i class="fas ${isPhone ? 'fa-phone' : contact.mode === 'email' ? 'fa-envelope' : 'fa-link'}"></i></span><span class="truncate" dir="ltr">${value}</span></a>`
+      `<a href="${escapeHtml(href)}" ${!isPhone && contact.mode !== 'email' ? 'target="_blank" rel="noopener"' : ''} class="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-indigo-50 transition"><span class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center"><i class="fas ${isPhone ? 'fa-phone' : contact.mode === 'email' ? 'fa-envelope' : 'fa-link'}"></i></span><span class="truncate" dir="ltr">${escapeHtml(value)}</span></a>`
     );
   });
 
@@ -621,9 +621,9 @@ function renderProfileContacts(a) {
     const num = typeof p === 'string' ? p : p.number || p.value || '';
     if (num) {
       items.push(`
-                <a href="tel:${num}" class="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-indigo-50 transition">
+                <a href="tel:${escapeHtml(num)}" class="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-indigo-50 transition">
                     <span class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center"><i class="fas fa-phone"></i></span>
-                    <span dir="ltr">${num}</span>
+                    <span dir="ltr">${escapeHtml(num)}</span>
                 </a>`);
     }
   });
@@ -632,12 +632,12 @@ function renderProfileContacts(a) {
   const links = a.links || [];
   links.forEach((l) => {
     const title = l.title || l.platform || 'لینک';
-    const url = l.url || '#';
+    const url = /^https?:\/\//i.test(l.url || '') ? l.url : '#';
     items.push(`
-            <a href="${url}" target="_blank" rel="noopener"
+            <a href="${escapeHtml(url)}" target="_blank" rel="noopener"
                class="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-indigo-50 transition">
                 <span class="w-9 h-9 rounded-xl bg-violet-100 text-violet-600 flex items-center justify-center"><i class="fas fa-link"></i></span>
-                <span class="truncate">${title}</span>
+                <span class="truncate">${escapeHtml(title)}</span>
             </a>`);
   });
 
@@ -645,7 +645,7 @@ function renderProfileContacts(a) {
     items.push(`
             <div class="flex items-center gap-3 p-3 rounded-2xl bg-gray-50">
                 <span class="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center"><i class="fas fa-user-tie"></i></span>
-                <span>مدیر: ${a.manager}</span>
+                <span>مدیر: ${escapeHtml(a.manager)}</span>
             </div>`);
   }
 
@@ -678,7 +678,7 @@ function renderProfileAddresses(a) {
                   addr.address ||
                   '—';
             const postal = addr.postal_code
-              ? `<div class="text-xs text-gray-400 mt-1">کد پستی: ${addr.postal_code}</div>`
+              ? `<div class="text-xs text-gray-400 mt-1">کد پستی: ${escapeHtml(addr.postal_code)}</div>`
               : '';
             return `
                 <div class="p-3 rounded-2xl bg-gray-50">
@@ -686,7 +686,7 @@ function renderProfileAddresses(a) {
                         <i class="fas fa-map-marker-alt text-indigo-500 mt-1"></i>
                         <div>
                             ${i === 0 ? '<span class="text-xs text-indigo-600 font-medium">آدرس اصلی</span>' : ''}
-                            <p class="text-gray-700">${line}</p>
+                            <p class="text-gray-700">${escapeHtml(line)}</p>
                             ${postal}
                         </div>
                     </div>
@@ -706,12 +706,12 @@ function renderProfileCourses(a) {
           (c) => `
         <div class="flex items-center justify-between gap-3 p-4 rounded-2xl border border-gray-100 hover:border-indigo-100 transition">
             <div>
-                <div class="font-medium">${c.title || c.name}</div>
-                <div class="text-xs text-gray-400 mt-0.5">${c.level || ''} ${c.students != null ? '· ' + c.students + ' هنرجو' : ''}</div>
+                <div class="font-medium">${escapeHtml(c.title || c.name)}</div>
+                <div class="text-xs text-gray-400 mt-0.5">${escapeHtml(c.level || '')} ${escapeHtml(c.students != null ? '· ' + c.students + ' هنرجو' : '')}</div>
             </div>
             ${
               window.siteUserAuthenticated
-                ? `<button type="button" onclick="goEnrollFromProfile(${c.termId || c.term_id || ''})"
+                ? `<button type="button" onclick="goEnrollFromProfile(${escapeHtml(c.termId || c.term_id || '')})"
                     class="text-indigo-600 text-sm shrink-0 hover:underline">${document.documentElement.lang === 'en' ? 'Register' : 'ثبت‌نام'}</button>`
                 : ''
             }
@@ -733,11 +733,11 @@ function renderProfileTeachers(a) {
           (t) => `
         <div class="flex items-center gap-3 p-3 rounded-2xl border border-gray-100">
             <div class="w-11 h-11 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold shrink-0">
-                ${t.avatar ? `<img src="${t.avatar}" alt="${t.name || ''}" class="w-full h-full rounded-full object-cover">` : (t.name || '?').charAt(0)}
+                ${t.avatar ? `<img src="${escapeHtml(t.avatar)}" alt="${escapeHtml(t.name || '')}" class="w-full h-full rounded-full object-cover">` : (t.name || '?').charAt(0)}
             </div>
             <div class="min-w-0">
-                <div class="font-medium text-sm truncate">${t.name}</div>
-                <div class="text-xs text-gray-400 truncate">${t.instruments || t.roleLabel || 'مدرس'}</div>
+                <div class="font-medium text-sm truncate">${escapeHtml(t.name)}</div>
+                <div class="text-xs text-gray-400 truncate">${escapeHtml(t.instruments || t.roleLabel || 'مدرس')}</div>
             </div>
         </div>
     `
@@ -788,17 +788,17 @@ window.renderSiteUsers = async function () {
           .map(
             (u) => `
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-50 text-center hover:shadow-md transition cursor-pointer flex flex-col"
-                 onclick="openSiteUser(${u.id})">
+                 onclick="openSiteUser(${escapeHtml(u.id)})">
                 <div class="w-20 h-20 mx-auto mb-3 rounded-full bg-indigo-100 text-indigo-600 overflow-hidden flex items-center justify-center text-2xl font-bold">
-                    ${u.avatar ? `<img src="${u.avatar}" alt="${u.name || 'کاربر'}" class="w-full h-full object-cover" loading="lazy">` : (u.name || '?').charAt(0)}
+                    ${u.avatar ? `<img src="${escapeHtml(u.avatar)}" alt="${escapeHtml(u.name || 'کاربر')}" class="w-full h-full object-cover" loading="lazy">` : (u.name || '?').charAt(0)}
                 </div>
-                <h3 class="font-bold text-lg mb-1">${u.name}</h3>
+                <h3 class="font-bold text-lg mb-1">${escapeHtml(u.name)}</h3>
                 <div class="site-user-card-role mb-2" data-role-label="${attr(roleLabel(u))}" aria-label="نقش: ${attr(roleLabel(u))}"></div>
-                ${u.city ? `<p class="text-xs text-gray-400 mb-2">📍 ${u.city}</p>` : ''}
-                <p class="text-sm text-gray-500 line-clamp-2">${u.bio || ''}</p>
-                ${u.rating ? `<p class="text-amber-500 text-sm mt-2">⭐ ${u.rating}</p>` : ''}
+                ${u.city ? `<p class="text-xs text-gray-400 mb-2">📍 ${escapeHtml(u.city)}</p>` : ''}
+                <p class="text-sm text-gray-500 line-clamp-2">${escapeHtml(u.bio || '')}</p>
+                ${u.rating ? `<p class="text-amber-500 text-sm mt-2">⭐ ${escapeHtml(u.rating)}</p>` : ''}
                 <div class="flex gap-2 mt-auto pt-4">
-                    <button type="button" onclick="event.stopPropagation();openSiteUser(${u.id})" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm hover:bg-indigo-700 text-center block">
+                    <button type="button" onclick="event.stopPropagation();openSiteUser(${escapeHtml(u.id)})" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm hover:bg-indigo-700 text-center block">
                         ${window.siteUserUiLabels?.view || 'مشاهده'}
                     </button>
                 </div>
@@ -848,7 +848,7 @@ window.openSiteUserProfile = async function (id) {
   const avatar = document.getElementById('upAvatar');
   if (avatar)
     avatar.innerHTML = u.avatar
-      ? `<img src="${u.avatar}" alt="${u.name || 'کاربر'}" class="w-full h-full rounded-full object-cover">`
+      ? `<img src="${escapeHtml(u.avatar)}" alt="${escapeHtml(u.name || 'کاربر')}" class="w-full h-full rounded-full object-cover">`
       : (u.name || '?').charAt(0);
   const cover = document.getElementById('upCover');
   if (cover) {
@@ -944,10 +944,12 @@ function renderUserInstruments(u, instruments) {
     .map((it) => {
       const title = it.title || it.name || it;
       const primary = it.is_primary ? ' ring-2 ring-indigo-300' : '';
-      const level = it.level ? `<span class="text-xs text-gray-400 mr-1">(${it.level})</span>` : '';
+      const level = it.level
+        ? `<span class="text-xs text-gray-400 mr-1">(${escapeHtml(it.level)})</span>`
+        : '';
       return `<span class="inline-flex items-center px-3 py-1.5 rounded-xl text-sm bg-indigo-50 text-indigo-700${primary}">
             ${it.is_primary ? '<i class="fas fa-star text-amber-400 text-xs ml-1"></i>' : ''}
-            ${title}${level}
+            ${escapeHtml(title)}${level}
         </span>`;
     })
     .join('');
@@ -966,10 +968,10 @@ function renderUserLessons(u) {
       const title = l.title || l.name || l;
       const level = l.level ? ` · ${l.level}` : '';
       return `<div class="p-3 rounded-2xl border border-gray-100">
-            <div class="flex items-center justify-between gap-3"><span class="font-medium text-sm">${title}</span>
+            <div class="flex items-center justify-between gap-3"><span class="font-medium text-sm">${escapeHtml(title)}</span>
             <span class="text-xs text-gray-400">${level.replace(' · ', '')}</span></div>
-            ${l.start_date ? `<div class="text-xs text-gray-400 mt-2">شروع: ${l.start_date}</div>` : ''}
-            ${l.summary ? `<p class="text-sm text-gray-500 mt-2">${l.summary}</p>` : ''}
+            ${l.start_date ? `<div class="text-xs text-gray-400 mt-2">شروع: ${escapeHtml(l.start_date)}</div>` : ''}
+            ${l.summary ? `<p class="text-sm text-gray-500 mt-2">${escapeHtml(l.summary)}</p>` : ''}
         </div>`;
     })
     .join('');
@@ -1000,10 +1002,10 @@ function expItemHTML(e) {
   const org = e.organization || '';
   const dates = [e.start_date, e.end_date].filter(Boolean).join(' تا ');
   return `<div class="border-r-4 border-indigo-200 pr-4">
-        <div class="font-medium">${title}</div>
-        ${org ? `<div class="text-sm text-indigo-600">${org}</div>` : ''}
-        ${dates ? `<div class="text-xs text-gray-400 mt-1">${dates}</div>` : ''}
-        ${e.summary || e.description ? `<p class="text-sm text-gray-500 mt-1 line-clamp-2">${e.summary || e.description}</p>` : ''}
+        <div class="font-medium">${escapeHtml(title)}</div>
+        ${org ? `<div class="text-sm text-indigo-600">${escapeHtml(org)}</div>` : ''}
+        ${dates ? `<div class="text-xs text-gray-400 mt-1">${escapeHtml(dates)}</div>` : ''}
+        ${e.summary || e.description ? `<p class="text-sm text-gray-500 mt-1 line-clamp-2">${escapeHtml(e.summary || e.description)}</p>` : ''}
     </div>`;
 }
 
@@ -1023,8 +1025,8 @@ function renderUserAchievements(u) {
                 <i class="fas fa-trophy"></i>
             </span>
             <div>
-                <div class="font-medium text-sm">${a.title || a.name}</div>
-                <div class="text-xs text-gray-400">${a.date || a.published_date || a.organization || ''}</div>
+                <div class="font-medium text-sm">${escapeHtml(a.title || a.name)}</div>
+                <div class="text-xs text-gray-400">${escapeHtml(a.date || a.published_date || a.organization || '')}</div>
             </div>
         </div>
     `
@@ -1059,8 +1061,8 @@ function renderUserInfo(u, role) {
         .map(
           (r) => `
             <div class="flex justify-between gap-2 border-b border-gray-50 pb-2">
-                <span class="text-gray-400">${r.label}</span>
-                <span class="font-medium text-left">${r.value}</span>
+                <span class="text-gray-400">${escapeHtml(r.label)}</span>
+                <span class="font-medium text-left">${escapeHtml(r.value)}</span>
             </div>`
         )
         .join('')
@@ -1102,7 +1104,7 @@ function renderUserAddresses(u) {
     ? rows
         .map(
           (row) => `<div class="rounded-2xl bg-gray-50 p-3">
-        <div class="font-medium leading-6">${row.address || '—'}</div>${row.note ? `<p class="text-xs text-gray-400 mt-2">${row.note}</p>` : ''}
+        <div class="font-medium leading-6">${escapeHtml(row.address || '—')}</div>${row.note ? `<p class="text-xs text-gray-400 mt-2">${escapeHtml(row.note)}</p>` : ''}
         ${row.is_main ? '<span class="inline-block mt-2 text-xs text-indigo-600">نشانی اصلی</span>' : ''}</div>`
         )
         .join('')
@@ -1117,8 +1119,8 @@ function renderUserContacts(u) {
     ? rows
         .map(
           (row) => `<div class="rounded-2xl bg-gray-50 p-3">
-        <div class="flex justify-between gap-2"><span class="font-medium break-all">${row.value || '—'}</span><span class="text-xs text-gray-400">${row.platform || row.mode || ''}</span></div>
-        ${row.note ? `<p class="text-xs text-gray-400 mt-2">${row.note}</p>` : ''}${row.is_main ? '<span class="inline-block mt-2 text-xs text-indigo-600">راه اصلی</span>' : ''}</div>`
+        <div class="flex justify-between gap-2"><span class="font-medium break-all">${escapeHtml(row.value || '—')}</span><span class="text-xs text-gray-400">${escapeHtml(row.platform || row.mode || '')}</span></div>
+        ${row.note ? `<p class="text-xs text-gray-400 mt-2">${escapeHtml(row.note)}</p>` : ''}${row.is_main ? '<span class="inline-block mt-2 text-xs text-indigo-600">راه اصلی</span>' : ''}</div>`
         )
         .join('')
     : '<p class="text-gray-400">راه ارتباطی ثبت نشده</p>';
@@ -1155,11 +1157,11 @@ function renderUserAvailability(u) {
           (
             day
           ) => `<div class="grid grid-cols-1 sm:grid-cols-[100px_1fr] gap-2 border-b border-gray-100 pb-3">
-            <div class="font-medium">${dayLabels[day]}</div><div class="flex flex-wrap gap-2">${(grouped[day] || []).map((row) => `<span class="rounded-xl bg-emerald-50 text-emerald-700 px-3 py-1.5 text-sm" title="${row.description || ''}">${String(row.start_time).slice(0, 5)} تا ${String(row.end_time).slice(0, 5)}</span>`).join('') || '<span class="text-gray-400 text-sm">بدون برنامه</span>'}</div></div>`
+            <div class="font-medium">${dayLabels[day]}</div><div class="flex flex-wrap gap-2">${(grouped[day] || []).map((row) => `<span class="rounded-xl bg-emerald-50 text-emerald-700 px-3 py-1.5 text-sm" title="${escapeHtml(row.description || '')}">${escapeHtml(String(row.start_time).slice(0, 5))} تا ${escapeHtml(String(row.end_time).slice(0, 5))}</span>`).join('') || '<span class="text-gray-400 text-sm">بدون برنامه</span>'}</div></div>`
         )
         .join('') +
       (specific.length
-        ? `<div class="pt-2"><h3 class="font-medium mb-2">حضورهای تاریخ‌دار</h3>${specific.map((row) => `<div class="text-sm rounded-xl bg-indigo-50 text-indigo-700 px-3 py-2 mb-2">${row.date} · ${String(row.start_time).slice(0, 5)} تا ${String(row.end_time).slice(0, 5)} — ${row.summary || ''}</div>`).join('')}</div>`
+        ? `<div class="pt-2"><h3 class="font-medium mb-2">حضورهای تاریخ‌دار</h3>${specific.map((row) => `<div class="text-sm rounded-xl bg-indigo-50 text-indigo-700 px-3 py-2 mb-2">${escapeHtml(row.date)} · ${escapeHtml(String(row.start_time).slice(0, 5))} تا ${escapeHtml(String(row.end_time).slice(0, 5))} — ${escapeHtml(row.summary || '')}</div>`).join('')}</div>`
         : '');
   }
   const exceptionBox = document.getElementById('upAvailabilityExceptions');
@@ -1169,7 +1171,7 @@ function renderUserAvailability(u) {
       ? exceptions
           .map(
             (row) =>
-              `<div class="rounded-2xl bg-rose-50 p-4"><div class="flex flex-wrap justify-between gap-2"><span class="font-medium text-rose-700">${typeLabels[row.type] || row.type}</span><span class="text-sm text-gray-500">${row.date}${row.start_time ? ' · ' + String(row.start_time).slice(0, 5) + ' تا ' + String(row.end_time).slice(0, 5) : ' · تمام‌روز'}</span></div><p class="text-sm text-gray-600 mt-2">${row.summary || ''}</p>${row.description ? `<p class="text-xs text-gray-400 mt-1">${row.description}</p>` : ''}</div>`
+              `<div class="rounded-2xl bg-rose-50 p-4"><div class="flex flex-wrap justify-between gap-2"><span class="font-medium text-rose-700">${escapeHtml(typeLabels[row.type] || row.type)}</span><span class="text-sm text-gray-500">${escapeHtml(row.date)}${escapeHtml(row.start_time ? ' · ' + String(row.start_time).slice(0, 5) + ' تا ' + String(row.end_time).slice(0, 5) : ' · تمام‌روز')}</span></div><p class="text-sm text-gray-600 mt-2">${escapeHtml(row.summary || '')}</p>${row.description ? `<p class="text-xs text-gray-400 mt-1">${escapeHtml(row.description)}</p>` : ''}</div>`
           )
           .join('')
       : '<p class="text-gray-400">موردی ثبت نشده</p>';
@@ -1283,7 +1285,10 @@ window.renderSiteEnrollPage = async function () {
   sel.innerHTML =
     '<option value="">انتخاب آموزشگاه</option>' +
     list
-      .map((a) => `<option value="${a.id}">${a.name}${a.city ? ' — ' + a.city : ''}</option>`)
+      .map(
+        (a) =>
+          `<option value="${escapeHtml(a.id)}">${escapeHtml(a.name)}${escapeHtml(a.city ? ' — ' + a.city : '')}</option>`
+      )
       .join('');
 };
 
@@ -1514,11 +1519,11 @@ function renderRelatedArticles(current) {
       : related
           .map(
             (a) => `
-            <button type="button" onclick="openSiteArticle(${a.id})"
+            <button type="button" onclick="openSiteArticle(${escapeHtml(a.id)})"
                     class="text-right bg-white rounded-2xl p-5 shadow-sm border border-gray-50 hover:border-indigo-200 hover:shadow transition">
-                <div class="text-xs text-indigo-500 mb-1">${(a.categories || [])[0] || ''}</div>
-                <div class="font-bold text-sm line-clamp-2">${a.title}</div>
-                <div class="text-xs text-gray-400 mt-2">${a.published_at || ''}</div>
+                <div class="text-xs text-indigo-500 mb-1">${escapeHtml((a.categories || [])[0] || '')}</div>
+                <div class="font-bold text-sm line-clamp-2">${escapeHtml(a.title)}</div>
+                <div class="text-xs text-gray-400 mt-2">${escapeHtml(a.published_at || '')}</div>
             </button>
         `
           )

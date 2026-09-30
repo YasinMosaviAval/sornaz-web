@@ -1,4 +1,8 @@
 <?php
+$lockRoot = sys_get_temp_dir().'/sornaz-tenant-'.bin2hex(random_bytes(6));
+function storage_path($path = '') { return $GLOBALS['lockRoot'].'/'.$path; }
+register_shutdown_function(static function () use ($lockRoot) { foreach (glob($lockRoot.'/payment-locks/*.lock') ?: [] as $f) unlink($f); if (is_dir($lockRoot.'/payment-locks')) rmdir($lockRoot.'/payment-locks'); if (is_dir($lockRoot)) rmdir($lockRoot); });
+
 
 // Isolated SQLite fixtures; never boots the application or reads production data.
 $map = require __DIR__.'/../vendor/composer/autoload_classmap.php';

@@ -137,6 +137,11 @@ class AcademyTermService
 
     public function save(int $actor, array $d, int $id = 0): array
     {
+        return \Modules\System\Services\PaymentMutex::run(db(), 'schedule-write', fn () => $this->saveLocked($actor, $d, $id));
+    }
+
+    private function saveLocked(int $actor, array $d, int $id = 0): array
+    {
         if ($id !== 0) {
             return $this->updateRecordedTerm($actor, $d, $id);
         }
@@ -165,16 +170,23 @@ class AcademyTermService
         return transaction(function () use ($actor, $d, $id, $values, $name, $sessions, $teachers, $students, $room) {
             $id = DB::table('academy_branch_course_terms')->insertGetId(['created_by' => $actor] + $values);
             $this->setTexts($id, ['title' => $name, 'summary' => trim((string) ($d['summary'] ?? '')), 'description' => trim((string) ($d['description'] ?? ''))], $actor);
-            foreach ($sessions as $s) {
-                $booking = DB::table('academy_branch_bookings')->insertGetId(['type' => 'group-class', 'status' => 'approved', 'requested_date' => $s['date'], 'start_time' => $s['startTime'], 'end_time' => $s['endTime'], 'timezone_id' => (int) ($s['timezoneId'] ?? 0) ?: null, 'created_by' => $actor, 'updated_by' => $actor]);
-                DB::table('academy_branch_course_term_sessions')->insert(['term_id' => $id, 'booking_id' => $booking, 'classroom_id' => (int) $room['classroom_id'], 'created_by' => $actor, 'updated_by' => $actor]);
-            }$this->saveScheduleSkips($id, $d['skippedDates'] ?? [], $actor);
+            $this->createSessions($id, $actor, $sessions, $room, $teachers, $students);
+            $this->saveScheduleSkips($id, $d['skippedDates'] ?? [], $actor);
             foreach (array_merge(array_map(fn ($x) => [$x, 'teacher'], $teachers), array_map(fn ($x) => [$x, 'student'], $students)) as [$member,$type]) {
                 DB::table('academy_branch_course_term_enrollments')->insert(['term_id' => $id, 'member_id' => $member, 'type' => $type, 'status' => 'active', 'joined_at' => date('Y-m-d H:i:s'), 'created_by' => $actor, 'updated_by' => $actor]);
             }
             InvoiceLedger::create($id, $actor, $d, $values['start_date'], $values['currency_id']);
             return ['id' => $id];
         });
+    }
+
+    private function createSessions(int $id, int $actor, array $sessions, array $room, array $teachers, array $students): void
+    {
+        foreach ($sessions as $s) {
+            ScheduleGuard::available($s['date'], $s['startTime'], $s['endTime'], (int) ($s['timezoneId'] ?? 0), (int) $room['classroom_id'], array_merge($teachers, $students));
+            $booking = DB::table('academy_branch_bookings')->insertGetId(['type' => 'group-class', 'status' => 'approved', 'requested_date' => $s['date'], 'start_time' => $s['startTime'], 'end_time' => $s['endTime'], 'timezone_id' => (int) ($s['timezoneId'] ?? 0) ?: null, 'created_by' => $actor, 'updated_by' => $actor]);
+            DB::table('academy_branch_course_term_sessions')->insert(['term_id' => $id, 'booking_id' => $booking, 'classroom_id' => (int) $room['classroom_id'], 'created_by' => $actor, 'updated_by' => $actor]);
+        }
     }
 
     public function saveDiscount(int $actor, array $d): array
@@ -191,6 +203,11 @@ class AcademyTermService
     }
 
     public function saveAcademyTerm(int $actor, array $d, int $id = 0): array
+    {
+        return \Modules\System\Services\PaymentMutex::run(db(), 'schedule-write', fn () => $this->saveAcademyTermLocked($actor, $d, $id));
+    }
+
+    private function saveAcademyTermLocked(int $actor, array $d, int $id = 0): array
     {
         if ($id !== 0) {
             return $this->updateRecordedTerm($actor, $d, $id);
@@ -223,10 +240,8 @@ class AcademyTermService
         return transaction(function () use ($actor, $d, $id, $values, $name, $sessions, $teachers, $students, $room) {
             $id = DB::table('academy_branch_course_terms')->insertGetId(['created_by' => $actor] + $values);
             $this->setTexts($id, ['title' => $name, 'summary' => trim((string) ($d['summary'] ?? '')), 'description' => trim((string) ($d['description'] ?? ''))], $actor);
-            foreach ($sessions as $s) {
-                $booking = DB::table('academy_branch_bookings')->insertGetId(['type' => 'group-class', 'status' => 'approved', 'requested_date' => $s['date'], 'start_time' => $s['startTime'], 'end_time' => $s['endTime'], 'timezone_id' => (int) ($s['timezoneId'] ?? 0) ?: null, 'created_by' => $actor, 'updated_by' => $actor]);
-                DB::table('academy_branch_course_term_sessions')->insert(['term_id' => $id, 'booking_id' => $booking, 'classroom_id' => (int) $room['classroom_id'], 'created_by' => $actor, 'updated_by' => $actor]);
-            }$this->saveScheduleSkips($id, $d['skippedDates'] ?? [], $actor);
+            $this->createSessions($id, $actor, $sessions, $room, $teachers, $students);
+            $this->saveScheduleSkips($id, $d['skippedDates'] ?? [], $actor);
             foreach (array_merge(array_map(fn ($x) => [$x, 'teacher'], $teachers), array_map(fn ($x) => [$x, 'student'], $students)) as [$member,$type]) {
                 DB::table('academy_branch_course_term_enrollments')->insert(['term_id' => $id, 'member_id' => $member, 'type' => $type, 'status' => 'active', 'joined_at' => date('Y-m-d H:i:s'), 'created_by' => $actor, 'updated_by' => $actor]);
             }
@@ -450,7 +465,7 @@ class AcademyTermService
 
     public function cancelSession(int $actor, int $termId, int $sessionId, array $d, bool $pending): array
     {
-        return \Modules\System\Services\PaymentMutex::run(db(), "session:$sessionId", fn () => $this->cancelSessionLocked($actor, $termId, $sessionId, $d, $pending));
+        return \Modules\System\Services\PaymentMutex::run(db(), "schedule-write", fn () => \Modules\System\Services\PaymentMutex::run(db(), "session:$sessionId", fn () => $this->cancelSessionLocked($actor, $termId, $sessionId, $d, $pending)));
     }
 
     private function cancelSessionLocked(int $actor, int $termId, int $sessionId, array $d, bool $pending): array
@@ -518,7 +533,7 @@ class AcademyTermService
 
     public function decideSessionCancellation(int $actor, int $termId, int $sessionId, bool $approve): array
     {
-        return \Modules\System\Services\PaymentMutex::run(db(), "session:$sessionId", fn () => $this->decideSessionCancellationLocked($actor, $termId, $sessionId, $approve));
+        return \Modules\System\Services\PaymentMutex::run(db(), "schedule-write", fn () => \Modules\System\Services\PaymentMutex::run(db(), "session:$sessionId", fn () => $this->decideSessionCancellationLocked($actor, $termId, $sessionId, $approve)));
     }
 
     private function decideSessionCancellationLocked(int $actor, int $termId, int $sessionId, bool $approve): array
@@ -538,6 +553,7 @@ class AcademyTermService
             DB::table('academy_branch_bookings')->where('booking_id', (int) $context['booking']['booking_id'])->update(['status' => $approve ? 'canceled' : 'approved', 'updated_at' => $now, 'updated_by' => $actor, 'approved_at' => $now, 'approved_by' => $actor]);
             DB::table('academy_branch_bookings')->where('booking_id', (int) $makeup['booking_id'])->update(['status' => $approve ? 'approved' : 'rejected', 'updated_at' => $now, 'updated_by' => $actor, 'approved_at' => $approve ? $now : null, 'approved_by' => $approve ? $actor : null]);
             DB::table('academy_branch_course_term_sessions')->where('term_session_id', (int) $makeup['term_session_id'])->update(['approved_at' => $approve ? $now : null, 'approved_by' => $approve ? $actor : null, 'updated_at' => $now, 'updated_by' => $actor]);
+            ScheduleGuard::session($approve ? (int) $makeup['term_session_id'] : $sessionId);
             $this->refreshTermEndDate($termId, $actor);
             return ['sessionId' => $sessionId, 'makeupSessionId' => (int) $makeup['term_session_id'], 'status' => $approve ? 'approved' : 'rejected'];
         });
@@ -545,7 +561,7 @@ class AcademyTermService
 
     public function restoreCanceledSession(int $actor, int $termId, int $sessionId, bool $isReceptionist = false): array
     {
-        return \Modules\System\Services\PaymentMutex::run(db(), "session:$sessionId", fn () => $this->restoreCanceledSessionLocked($actor, $termId, $sessionId, $isReceptionist));
+        return \Modules\System\Services\PaymentMutex::run(db(), "schedule-write", fn () => \Modules\System\Services\PaymentMutex::run(db(), "session:$sessionId", fn () => $this->restoreCanceledSessionLocked($actor, $termId, $sessionId, $isReceptionist)));
     }
 
     private function restoreCanceledSessionLocked(int $actor, int $termId, int $sessionId, bool $isReceptionist = false): array
@@ -561,31 +577,39 @@ class AcademyTermService
             throw new RuntimeException('کاربر پذیرش فقط می‌تواند درخواست لغو در انتظار تأیید خود را پس بگیرد.');
         }
         $now = date('Y-m-d H:i:s');
-        return transaction(function () use ($actor, $termId, $sessionId, $booking, $now) {
-            $descendants = [];
-            $parents = [$sessionId];
-            while ($parents) {
-                $rows = DB::table('academy_branch_course_term_sessions')->where('term_id', $termId)->whereIn('makeup_for_session_id', $parents)->whereNull('deleted_at')->get();
-                $parents = [];
-                foreach ($rows as $row) {
-                    $id = (int) $row['term_session_id'];
-                    if (isset($descendants[$id])) {
-                        continue;
-                    }
-                    $descendants[$id] = $row;
-                    $parents[] = $id;
-                }
-            }
+        return transaction(function () use ($actor, $termId, $sessionId, $session, $booking, $now) {
+            $descendants = $this->sessionDescendants($termId, $sessionId);
             foreach (array_reverse($descendants, true) as $row) {
                 DB::table('academy_branch_bookings')->where('booking_id', (int) $row['booking_id'])->update(['deleted_at' => $now, 'deleted_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
                 DB::table('academy_branch_course_term_sessions')->where('term_session_id', (int) $row['term_session_id'])->update(['deleted_at' => $now, 'deleted_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
             }
             DB::table('academy_branch_course_term_sessions')->where('term_session_id', $sessionId)->update(['cancellation_status' => 'none', 'cancellation_requested_at' => null, 'cancellation_requested_by' => null, 'cancellation_decided_at' => null, 'cancellation_decided_by' => null, 'updated_at' => $now, 'updated_by' => $actor]);
+            ScheduleGuard::booking($session, $booking);
             DB::table('academy_branch_bookings')->where('booking_id', (int) $booking['booking_id'])->update(['status' => 'approved', 'approved_at' => $now, 'approved_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
             DB::table('translations')->where('table_name', 'academy_branch_course_term_sessions')->where('table_id', $sessionId)->where('field', 'cancellation_reason')->whereNull('deleted_at')->update(['deleted_at' => $now, 'deleted_by' => $actor, 'updated_by' => $actor]);
             $this->refreshTermEndDate($termId, $actor);
             return ['sessionId' => $sessionId, 'status' => 'restored', 'removedMakeupSessions' => count($descendants)];
         });
+    }
+
+    private function sessionDescendants(int $termId, int $sessionId): array
+    {
+        $descendants = [];
+        $parents = [$sessionId];
+        while ($parents) {
+            $rows = DB::table('academy_branch_course_term_sessions')->where('term_id', $termId)->whereIn('makeup_for_session_id', $parents)->whereNull('deleted_at')->get();
+            $parents = [];
+            foreach ($rows as $row) {
+                $id = (int) $row['term_session_id'];
+                if (isset($descendants[$id])) {
+                    continue;
+                }
+                $descendants[$id] = $row;
+                $parents[] = $id;
+            }
+        }
+
+        return $descendants;
     }
 
     private function termSessionContext(int $actor, int $termId, int $sessionId): array
@@ -622,6 +646,8 @@ class AcademyTermService
 
     private function assertMakeupSlotAvailable(int $actor, array $branch, array $session, string $date, string $start, string $end): void
     {
+        $zone = DB::table('academy_branch_bookings')->where('booking_id', (int) $session['booking_id'])->first()['timezone_id'] ?? 0;
+        ScheduleGuard::forSession((int) $session['term_id'], $date, $start, $end, (int) $zone, (int) $session['classroom_id']);
         $availability = $this->effectiveAvailability($actor, (int) $branch['branch_id'], $date);
         if ($availability['closed']) {
             throw new RuntimeException('شعبه یا آموزشگاه در تاریخ جلسه جبرانی تعطیل است.');
@@ -899,6 +925,7 @@ class AcademyTermService
             throw new RuntimeException('تاریخ جلسات الزامی است.');
         }
         foreach ($sessions as $s) {
+            ScheduleTime::validate((string) $s['date'], (string) ($s['startTime'] ?? ''), (string) ($s['endTime'] ?? ''));
             if (!preg_match('/^\d{2}:\d{2}$/', (string) ($s['startTime'] ?? '')) || !preg_match('/^\d{2}:\d{2}$/', (string) ($s['endTime'] ?? '')) || $s['endTime'] <= $s['startTime']) {
                 throw new RuntimeException('ساعت شروع و پایان تمام جلسات باید معتبر باشد.');
             }

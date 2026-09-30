@@ -33,6 +33,7 @@ use Modules\Analytics\Controllers\Api\ArticleController;
 
 Router::get('/analytics/admin-panel', [AnalyticsController::class, 'adminPanel'])->middleware('academy-panel');
 Router::get('/analytics/chat', [ChatController::class, 'index'])->middleware('academy-panel');
+Router::get('/analytics/chat/users/search', [ChatController::class, 'searchUsers'])->middleware('academy-panel');
 Router::post('/analytics/chat', [ChatController::class, 'create'])->middleware(['academy-panel', 'csrf']);
 Router::get('/analytics/chat/{id}/messages', [ChatController::class, 'messages'])->middleware('academy-panel');
 Router::post('/analytics/chat/{id}/messages', [ChatController::class, 'send'])->middleware(['academy-panel', 'csrf']);
@@ -58,6 +59,8 @@ Router::post('/analytics/admin-account/profile', [AdminAccountController::class,
 Router::post('/analytics/admin-account/bio', [AdminAccountController::class, 'bio'])->middleware(['academy-panel', 'csrf']);
 Router::post('/analytics/admin-account/privacy', [AdminAccountController::class, 'privacy'])->middleware(['academy-panel', 'csrf']);
 Router::post('/analytics/admin-account/security', [AdminAccountController::class, 'security'])->middleware(['academy-panel', 'csrf']);
+Router::post('/analytics/admin-account/contact/send-code', [AdminAccountController::class, 'sendContactCode'])->middleware(['academy-panel', 'csrf', 'auth-rate-limit']);
+Router::post('/analytics/admin-account/contact/verify-code', [AdminAccountController::class, 'verifyContactCode'])->middleware(['academy-panel', 'csrf', 'auth-rate-limit']);
 Router::post('/analytics/admin-account/merges', [AdminAccountController::class, 'requestMerge'])->middleware(['academy-panel', 'csrf']);
 Router::post('/analytics/admin-account/merges/{id}/cancel', [AdminAccountController::class, 'cancelMerge'])->middleware(['academy-panel', 'csrf']);
 Router::post('/analytics/admin-account/merges/{id}/decision', [AdminAccountController::class, 'decideMerge'])->middleware(['site-admin', 'csrf']);

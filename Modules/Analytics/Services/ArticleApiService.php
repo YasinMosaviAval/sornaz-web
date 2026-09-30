@@ -173,7 +173,7 @@ class ArticleApiService
             if (($e->errorInfo[0] ?? '') !== '42S02') {
                 throw $e;
             }
-            db()->exec('CREATE TABLE IF NOT EXISTS article_comment_receipts (comment_id BIGINT UNSIGNED PRIMARY KEY, post_id BIGINT UNSIGNED NOT NULL, token_hash CHAR(64) NOT NULL, created_at DATETIME NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+            throw new \RuntimeException('جدول رسید نظرها نصب نشده است؛ migration دیتابیس را اجرا کنید.', 0, $e);
         }
     }
 
