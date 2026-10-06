@@ -697,7 +697,7 @@ class AcademyBranchService
             $addressMap[(int) $a['user_id']][] = ['province' => $province['province_name'] ?? '', 'city' => $county['county_name'] ?? '', 'address' => $this->tr('user_addresses', (int) $a['address_id'], 'address', ''), 'postal_code' => $a['postal_code'], 'lat' => $a['latitude'], 'lng' => $a['longitude'], 'is_main' => (bool) $a['is_main']];
         }
         return array_map(function (array $r) use ($names, $branches, $lessonNames, $contractTexts, $memberRoles, $academyUsers, $branchUsers, $currencyNames, $studentData, $studentLessons, $fatherNames, $addressMap) {
-            $student = str_contains((string) $r['username'], '_student_');
+            $student = str_contains((string) $r['username'], '_student_') || isset($studentData[(int) $r['member_id']]);
             return ['id' => (int) $r['member_id'], 'user_id' => (int) $r['user_id'], 'name' => $names[(int) $r['user_id']] ?? $r['username'], 'phone' => $r['phone'] ?: '',
                 'nationalId' => $r['national_code'] ?: '', 'gender' => $r['gender'] ?: 'other', 'birthDate' => $r['birthday'] ?: '', 'roleId' => $memberRoles[(int) $r['member_id']] ?? 0, 'organizationUserId' => $r['branch_id'] ? ($branchUsers[(int) $r['branch_id']] ?? 0) : ($academyUsers[(int) $r['academy_id']] ?? 0), 'branchId' => (int) $r['branch_id'], 'branch' => $r['branch_id'] ? ($branches[(int) $r['branch_id']] ?? ('شعبه ' . $r['branch_id'])) : 'آموزشگاه',
                 'type' => $student ? 'student' : ($r['contract_type'] ?: 'other'), 'typeLabel' => $student ? 'هنرجو' : match ($r['contract_type']) {

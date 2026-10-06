@@ -36,7 +36,7 @@
 
   window.getClassroomRowHTML = function (item, statusClass) {
     return `
-            <td class="py-4 px-5 font-medium">${escapeHtml(item.name)}</td>
+            <td class="py-4 px-5 font-medium">${escapeHtml(item.name)}${item.deliveryMode === 'online' ? '<span class="mr-2 rounded-full bg-indigo-50 px-2 py-1 text-xs text-indigo-700">آنلاین</span>' : ''}</td>
             <td class="py-4 px-5">${escapeHtml(item.typeLabel || item.type || '—')}</td>
             <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
             <td class="py-4 px-5">${item.capacity} نفر</td>
@@ -105,6 +105,8 @@
                     <label class="block text-sm font-medium mb-2">نام کلاس *</label>
                     <input id="${id('Name')}" type="text" value="${escapeHtml(item.name || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                 </div>
+                <div><label class="block text-sm font-medium mb-2">شیوه برگزاری *</label><select id="${id('DeliveryMode')}" onchange="toggleClassroomOnlineFields('${prefix}')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"><option value="in_person" ${item.deliveryMode !== 'online' ? 'selected' : ''}>حضوری</option><option value="online" ${item.deliveryMode === 'online' ? 'selected' : ''}>آنلاین</option></select></div>
+                <div id="${id('OnlineUrlField')}" class="${item.deliveryMode === 'online' ? '' : 'hidden'} sm:col-span-2"><label class="block text-sm font-medium mb-2">لینک ورود به کلاس آنلاین *</label><input id="${id('OnlineUrl')}" type="url" maxlength="2048" placeholder="https://..." value="${escapeHtml(item.onlineUrl || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5" dir="ltr"><p class="mt-1 text-xs text-gray-500">این لینک فقط در پنل مدرس و هنرجوی عضو ترم فعال نمایش داده می‌شود.</p></div>
                 <div>
                     <label class="block text-sm font-medium mb-2">نوع کلاس *</label>
                     <select id="${id('Type')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
@@ -229,6 +231,8 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">نام</span><span class="font-medium">${escapeHtml(item.name)}</span></div>
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">نوع کلاس</span><span class="font-medium">${escapeHtml(item.typeLabel || item.type || '—')}</span></div>
+                                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">شیوه برگزاری</span><span class="font-medium">${item.deliveryMode === 'online' ? 'آنلاین' : 'حضوری'}</span></div>
+                                ${item.deliveryMode === 'online' ? `<div class="flex justify-between gap-3 border-b pb-2"><span class="text-gray-500">لینک کلاس</span><a href="${escapeHtml(item.onlineUrl || '')}" target="_blank" rel="noopener noreferrer" class="break-all text-indigo-600">باز کردن لینک</a></div>` : ''}
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">شعبه</span><span class="font-medium">${escapeHtml(item.branchName)}</span></div>
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">ظرفیت</span><span class="font-medium">${item.capacity} نفر</span></div>
                                 <div class="flex justify-between border-b pb-2"><span class="text-gray-500">وضعیت</span><span class="font-medium">${escapeHtml(item.status)}</span></div>

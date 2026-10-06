@@ -20,6 +20,11 @@
         </div>
     </div>
 
+    <div class="mb-6 rounded-2xl border border-indigo-200 bg-indigo-50 p-4 text-sm leading-7 text-indigo-900">
+        <strong class="block">برنامهٔ مدرس و ترم دو مرحلهٔ جدا هستند</strong>
+        روزها و ساعت‌های ممکن هر استاد را اینجا ثبت کنید. سپس در «مدیریت ترم‌ها» برای هر زمان قابل ارائه، ترم بازی بدون هنرجو و بدون تاریخ با مدرس، کلاس برگزاری، تعداد جلسات و الگوی ساعت بسازید. تاریخ جلسهٔ اول پس از توافق با هنرجو تعیین می‌شود.
+    </div>
+
     <!-- تاپ‌بار شعبه‌ها -->
     <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
         <div class="flex gap-2 min-w-max" id="memberSchedulesBranchTabs">

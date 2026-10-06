@@ -21,17 +21,17 @@ class ZarinpalPaymentService
         $this->validateCurrency($invoice);
         InvoiceLedger::snapshot($invoiceId);
         $amount = InvoiceLedger::paymentAmount($installment['amount']);
-        $pending = DB::table('academy_term_invoice_payments')->where('installment_id', $installmentId)->whereRaw("(status IN ('created','pending') OR (status IN ('failed','canceled') AND authority IS NOT NULL))")->whereNull('deleted_at')->orderBy('payment_id', 'DESC')->first();
+        $pending = AcademyPaymentStore::query()->where('installment_id', $installmentId)->whereRaw("(status IN ('created','pending') OR (status IN ('failed','canceled') AND authority IS NOT NULL))")->whereNull('deleted_at')->orderBy('payment_id', 'DESC')->first();
         if ($resume = \Modules\System\Services\PaymentMutex::reconcile($pending, $amount, fn ($authority) => $this->request('/pg/v4/payment/inquiry.json', ['merchant_id' => (string) env('ZARINPAL_MERCHANT_ID', ''), 'authority' => $authority]), function ($old) {
             $result = $this->callbackLocked($old['callback_token'], $old['authority'], 'OK');
             return ['redirectUrl' => '/analytics/admin-panel?' . http_build_query(['payment' => !empty($result['requiresReview']) ? 'review' : 'success', 'ref' => $result['referenceId'] ?? '']) . '#finance'];
-        }, fn ($old) => DB::table('academy_term_invoice_payments')->where('payment_id', (int) $old['payment_id'])->where('status', '<>', 'paid')->update(['status' => 'failed']))) {
+        }, fn ($old) => AcademyPaymentStore::query()->where('payment_id', (int) $old['payment_id'])->where('status', '<>', 'paid')->update(['status' => 'failed']))) {
             return $resume;
         }
         $currency = strtoupper((string) env('ZARINPAL_CURRENCY', 'IRT')) === 'IRR' ? 'IRR' : 'IRT';
         $token = bin2hex(random_bytes(32));
         $now = date('Y-m-d H:i:s');
-        $paymentId = (int) DB::table('academy_term_invoice_payments')->insertGetId(['invoice_id' => $invoiceId, 'installment_id' => $installmentId, 'user_id' => $actor, 'amount' => $amount, 'currency' => $currency, 'callback_token' => $token, 'status' => 'created', 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
+        $paymentId = (int) AcademyPaymentStore::create(['invoice_id' => $invoiceId, 'installment_id' => $installmentId, 'user_id' => $actor, 'amount' => $amount, 'currency' => $currency, 'callback_token' => $token, 'status' => 'created', 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
         $callback = rtrim((string) env('APP_URL', $this->origin()), '/') . '/academy/payments/zarinpal/callback?token=' . rawurlencode($token);
         try {
             $result = $this->request('/pg/v4/payment/request.json', ['merchant_id' => $merchant, 'amount' => $amount, 'currency' => $currency, 'callback_url' => $callback, 'description' => 'پرداخت قسط ' . (int) $installment['installment_number'] . ' فاکتور ' . $invoiceId, 'metadata' => $this->metadata($actor)]);
@@ -40,11 +40,11 @@ class ZarinpalPaymentService
             if ($code !== 100 || $authority === '') {
                 throw new RuntimeException($this->error($result, 'ایجاد درخواست پرداخت زرین‌پال ناموفق بود.'));
             }
-            DB::table('academy_term_invoice_payments')->where('payment_id', $paymentId)->update(['authority' => $authority, 'status' => 'pending', 'gateway_code' => $code, 'requested_at' => $now, 'updated_at' => $now]);
+            AcademyPaymentStore::query()->where('payment_id', $paymentId)->update(['authority' => $authority, 'status' => 'pending', 'gateway_code' => $code, 'requested_at' => $now, 'updated_at' => $now]);
             $sandbox = filter_var(env('ZARINPAL_SANDBOX', false), FILTER_VALIDATE_BOOL);
             return ['redirectUrl' => ($sandbox ? 'https://sandbox.zarinpal.com' : 'https://www.zarinpal.com') . '/pg/StartPay/' . $authority];
         } catch (\Throwable$e) {
-            DB::table('academy_term_invoice_payments')->where('payment_id', $paymentId)->update(['status' => 'failed', 'gateway_message' => mb_substr($e->getMessage(), 0, 500), 'updated_at' => date('Y-m-d H:i:s')]);
+            AcademyPaymentStore::query()->where('payment_id', $paymentId)->update(['status' => 'failed', 'gateway_message' => mb_substr($e->getMessage(), 0, 500), 'updated_at' => date('Y-m-d H:i:s')]);
             throw $e;
         }
     }
@@ -61,7 +61,7 @@ class ZarinpalPaymentService
 
     public function callback(string $token, string $authority, string $status): array
     {
-        $lookup = DB::table('academy_term_invoice_payments')->where('callback_token', $token)->whereNull('deleted_at')->first();
+        $lookup = AcademyPaymentStore::query()->where('callback_token', $token)->whereNull('deleted_at')->first();
         if (!$lookup) {
             throw new RuntimeException('Invalid payment', 422);
         }
@@ -70,7 +70,7 @@ class ZarinpalPaymentService
 
     private function callbackLocked(string $token, string $authority, string $status): array
     {
-        $payment = DB::table('academy_term_invoice_payments')->where('callback_token', $token)->whereNull('deleted_at')->first();
+        $payment = AcademyPaymentStore::query()->where('callback_token', $token)->whereNull('deleted_at')->first();
         if (!$payment || $authority === '' || empty($payment['authority']) || !hash_equals((string) ($payment['authority'] ?? ''), $authority)) {
             throw new RuntimeException('شناسه تراکنش معتبر نیست.');
         }
@@ -91,11 +91,11 @@ class ZarinpalPaymentService
         $now = date('Y-m-d H:i:s');
         $review = false;
         transaction(function () use ($payment, $data, $code, $now, &$review) {
-            $fresh = db()->query('SELECT * FROM academy_term_invoice_payments WHERE payment_id=' . (int) $payment['payment_id'] . (db()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : ''))->fetch();
+            $fresh = db()->query("SELECT * FROM financial_system_payments WHERE record_type='academy_term' AND payment_id=" . (int) $payment['payment_id'] . (db()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : ''))->fetch();
             if ($fresh['status'] === 'paid') {
                 return;
             }
-            DB::table('academy_term_invoice_payments')->where('payment_id', (int) $payment['payment_id'])->update(['status' => 'paid', 'reference_id' => (string) ($data['ref_id'] ?? ''), 'card_pan' => $data['card_pan'] ?? null, 'card_hash' => $data['card_hash'] ?? null, 'gateway_code' => $code, 'verified_at' => $now, 'updated_at' => $now]);
+            AcademyPaymentStore::query()->where('payment_id', (int) $payment['payment_id'])->update(['status' => 'paid', 'reference_id' => (string) ($data['ref_id'] ?? ''), 'reference_code' => (string) ($data['ref_id'] ?? ''), 'paid_at' => $now, 'card_pan' => $data['card_pan'] ?? null, 'card_hash' => $data['card_hash'] ?? null, 'gateway_code' => $code, 'verified_at' => $now, 'updated_at' => $now]);
             $installment = DB::table('academy_branch_course_term_invoice_installments')->where('term_invoice_installment_id', (int) $payment['installment_id'])->whereNull('deleted_at')->first();
             $invoice = DB::table('academy_branch_course_term_invoices')->where('term_invoice_id', (int) $payment['invoice_id'])->whereNull('deleted_at')->first();
             try {
@@ -105,10 +105,10 @@ class ZarinpalPaymentService
             }
             if ($review || !$installment || !$invoice || (int) $installment['invoice_id'] !== (int) $payment['invoice_id'] || $installment['status'] === 'paid' || in_array($invoice['status'], ['canceled', 'cancelled', 'void'], true) || InvoiceLedger::cents($installment['amount']) !== (int) $payment['amount'] * 100) {
                 $review = true;
-                DB::table('academy_term_invoice_payments')->where('payment_id', (int) $payment['payment_id'])->update(['gateway_message' => 'Verified payment requires manual reconciliation']);
+                AcademyPaymentStore::query()->where('payment_id', (int) $payment['payment_id'])->update(['gateway_message' => 'Verified payment requires manual reconciliation']);
                 return;
-            }DB::table('academy_branch_course_term_invoice_installments')->where('term_invoice_installment_id', (int) $payment['installment_id'])->where('invoice_id', (int) $payment['invoice_id'])->update(['status' => 'paid', 'paid_at' => $now, 'updated_at' => $now, 'updated_by' => (int) $payment['user_id']]);
-            InvoiceLedger::refresh((int) $payment['invoice_id'], (int) $payment['user_id']);
+            }DB::table('academy_branch_course_term_invoice_installments')->where('term_invoice_installment_id', (int) $payment['installment_id'])->where('invoice_id', (int) $payment['invoice_id'])->update(['status' => 'paid', 'paid_at' => $now, 'updated_at' => $now, 'updated_by' => (int) $payment['payer_id']]);
+            InvoiceLedger::refresh((int) $payment['invoice_id'], (int) $payment['payer_id']);
         });
         return ['success' => !$review, 'requiresReview' => $review, 'referenceId' => (string) ($data['ref_id'] ?? ''), 'alreadyVerified' => $code === 101];
     }
@@ -168,7 +168,7 @@ class ZarinpalPaymentService
 
     private function fail(int $id, string $message, int $code = 0): void
     {
-        DB::table('academy_term_invoice_payments')->where('payment_id', $id)->where('status', '<>', 'paid')->update(['status' => 'failed', 'gateway_code' => $code ?: null, 'gateway_message' => mb_substr($message, 0, 500), 'updated_at' => date('Y-m-d H:i:s')]);
+        AcademyPaymentStore::query()->where('payment_id', $id)->where('status', '<>', 'paid')->update(['status' => 'failed', 'gateway_code' => $code ?: null, 'gateway_message' => mb_substr($message, 0, 500), 'updated_at' => date('Y-m-d H:i:s')]);
     }
 
     private function error(array $r, string $f): string

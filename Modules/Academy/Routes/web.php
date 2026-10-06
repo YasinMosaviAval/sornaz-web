@@ -1,7 +1,6 @@
 <?php
 
 use Core\router\Router;
-use Modules\Academy\Controllers\Web\AcademyController;
 use Modules\Academy\Controllers\Web\AcademyRegistrationController;
 use Modules\Analytics\Controllers\Web\AnalyticsController;
 use Modules\Academy\Controllers\Web\AcademyBranchController;
@@ -126,15 +125,4 @@ Router::get('/academy/admin/class-schedules', [AcademyClassScheduleController::c
 Router::get('/academy/admin/class-schedule-week-bounds', [AcademyWeeklyScheduleBoundsController::class, 'index'])->middleware('academy-panel');
 Router::post('/academy/admin/class-schedules/{id}/attendance', [AcademyClassScheduleController::class, 'attendance'])->middleware(['academy-panel', 'csrf']);
 
-Router::group(
-    ['prefix' => '/academy'],
-    function () {
-        Router::get('/', [AcademyController::class, 'index']);
-        Router::get('/create', [AcademyController::class, 'create']);
-        Router::post('/', [AcademyController::class, 'store']);
-        Router::get('/{id}', [AcademyController::class, 'show']);
-        Router::get('/{id}/edit', [AcademyController::class, 'edit']);
-        Router::put('/{id}', [AcademyController::class, 'update']);
-        Router::delete('/{id}', [AcademyController::class, 'destroy']);
-    }
-);
+Router::get('/academy/', [AcademyRegistrationController::class, 'index']);

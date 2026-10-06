@@ -454,6 +454,8 @@ function readClassroomForm(prefix) {
   const capacity = parseInt(field('Capacity')?.value || '1', 10) || 1;
   const statusValue =
     field('Status')?.value || (classroomPermissions?.isReceptionist ? 'pending' : 'available');
+  const deliveryMode = field('DeliveryMode')?.value === 'online' ? 'online' : 'in_person';
+  const onlineUrl = field('OnlineUrl')?.value.trim() || '';
   const equipContainerId = prefix
     ? prefix.startsWith('inline')
       ? `${prefix}EquipmentContainer`
@@ -472,11 +474,31 @@ function readClassroomForm(prefix) {
     branchId,
     branchName: branch ? branch.name : '',
     capacity,
+    deliveryMode,
+    onlineUrl,
     statusValue,
     equipment,
     summary: field('Summary')?.value.trim() || '',
     description: field('Description')?.value.trim() || '',
   };
+}
+
+window.toggleClassroomOnlineFields = function (prefix) {
+  const id = (name) => (prefix ? prefix + name : 'classroom' + name);
+  const online = document.getElementById(id('DeliveryMode'))?.value === 'online';
+  document.getElementById(id('OnlineUrlField'))?.classList.toggle('hidden', !online);
+  const input = document.getElementById(id('OnlineUrl'));
+  if (input) input.required = online;
+};
+
+function validClassroomOnlineLink(data) {
+  if (data.deliveryMode !== 'online') return true;
+  try {
+    const url = new URL(data.onlineUrl);
+    if (url.protocol === 'https:') return true;
+  } catch (_) {}
+  alert('برای کلاس آنلاین، لینک معتبر HTTPS وارد کنید.');
+  return false;
 }
 
 // ==================== CRUD ====================
@@ -500,6 +522,7 @@ window.saveClassroom = async function () {
   const data = readClassroomForm('');
   if (!data.name) return alert('نام کلاس الزامی است');
   if (!data.branchId) return alert('شعبه الزامی است');
+  if (!validClassroomOnlineLink(data)) return;
 
   const created = await classroomApi('/academy/admin/classrooms', data);
   allClassrooms.unshift(created);
@@ -531,6 +554,7 @@ window.editClassroom = async function (id) {
 window.saveEditedClassroom = async function (id) {
   const data = readClassroomForm('editClassroom');
   if (!data.name) return alert('نام کلاس الزامی است');
+  if (!validClassroomOnlineLink(data)) return;
   const index = allClassrooms.findIndex((x) => x.id === id);
   if (index === -1) return;
   allClassrooms[index] = await classroomApi(`/academy/admin/classrooms/${id}/update`, data);
@@ -549,6 +573,7 @@ window.toggleClassroomInlineEdit = async function (id) {
 window.saveInlineClassroom = async function (id) {
   const data = readClassroomForm(`inlineClassroom${id}`);
   if (!data.name) return alert('نام کلاس الزامی است');
+  if (!validClassroomOnlineLink(data)) return;
   const index = allClassrooms.findIndex((x) => x.id === id);
   if (index === -1) return;
   allClassrooms[index] = await classroomApi(`/academy/admin/classrooms/${id}/update`, data);

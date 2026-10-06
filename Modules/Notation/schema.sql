@@ -1,9 +1,9 @@
-CREATE TABLE IF NOT EXISTS music_sheets (
+CREATE TABLE IF NOT EXISTS p_music_sheets (
  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
  owner_id BIGINT UNSIGNED NOT NULL,
  title VARCHAR(180) NOT NULL,
- metadata LONGTEXT NOT NULL,
- score LONGTEXT NOT NULL,
+ metadata LONGTEXT NOT NULL CHECK (JSON_VALID(CAST(metadata AS CHAR))),
+ score LONGTEXT NOT NULL CHECK (JSON_VALID(CAST(score AS CHAR))),
  visibility VARCHAR(16) NOT NULL DEFAULT 'private',
  version INT UNSIGNED NOT NULL DEFAULT 1,
  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -11,8 +11,8 @@ CREATE TABLE IF NOT EXISTS music_sheets (
  deleted_at DATETIME NULL,
  INDEX(owner_id,deleted_at,updated_at), INDEX(visibility,deleted_at,updated_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE TABLE IF NOT EXISTS music_sheet_bookmarks (
+CREATE TABLE IF NOT EXISTS p_music_sheet_bookmarks (
  user_id BIGINT UNSIGNED NOT NULL,sheet_id BIGINT UNSIGNED NOT NULL,
  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
- PRIMARY KEY(user_id,sheet_id),FOREIGN KEY(sheet_id) REFERENCES music_sheets(id)
+ PRIMARY KEY(user_id,sheet_id),FOREIGN KEY(sheet_id) REFERENCES p_music_sheets(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

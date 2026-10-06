@@ -110,6 +110,10 @@ Router::get('/analytics/site-settings', [AdminSettingController::class, 'show'])
 Router::post('/analytics/admin-settings', [AdminSettingController::class, 'save'])->middleware(['site-admin', 'csrf']);
 Router::get('/analytics/admin-user-access', [AdminUserAccessController::class, 'index'])->middleware('academy-panel');
 Router::get('/analytics/admin-dashboard', [AdminDashboardController::class, 'index'])->middleware('academy-panel');
+Router::post('/analytics/admin-dashboard/waiting/{id}/approve', [AdminDashboardController::class, 'approveWaiting'])->middleware(['academy-panel', 'csrf']);
+Router::post('/analytics/admin-dashboard/waiting/{id}/chat', [AdminDashboardController::class, 'ensureWaitingChat'])->middleware(['academy-panel', 'csrf']);
+Router::post('/analytics/admin-dashboard/waiting/{id}/finalize', [AdminDashboardController::class, 'finalizeWaiting'])->middleware(['academy-panel', 'csrf']);
+Router::post('/analytics/my-waiting/{id}', [AdminDashboardController::class, 'updateMyWaiting'])->middleware(['auth', 'csrf']);
 Router::get('/analytics/admin-tracking', [AdminTrackingController::class, 'index'])->middleware('site-admin');
 Router::get('/analytics/admin-points', [AdminPointController::class, 'index'])->middleware('academy-panel');
 Router::post('/analytics/admin-points', [AdminPointController::class, 'store'])->middleware(['site-admin', 'csrf']);

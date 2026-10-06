@@ -86,7 +86,7 @@ final class InvoiceLedger
         $state = self::snapshot($id);
         $amount = self::cents($data['amount'] ?? $state['invoice']['payable_amount']);
         $requested = (string) ($data['statusCode'] ?? $state['invoice']['status']);
-        $attempt = DB::table('academy_term_invoice_payments')->where('invoice_id', $id)->first();
+        $attempt = AcademyPaymentStore::query()->where('invoice_id', $id)->first();
         $hasPaid = (bool) array_filter($state['rows'], fn ($r) => $r['status'] === 'paid');
         if (($attempt || $hasPaid) && ($amount !== $state['total'] || $requested !== $state['invoice']['status'])) {
             throw new RuntimeException('فاکتور دارای سابقه پرداخت است؛ مبلغ و وضعیت آن دستی تغییر نمی‌کند.', 409);
@@ -104,7 +104,7 @@ final class InvoiceLedger
         DB::table('academy_branch_course_term_invoices')->where('term_invoice_id', $id)->update(['payable_amount' => self::amount($amount), 'status' => $requested, 'due_date' => ($data['dueDate'] ?? '') ?: null, 'updated_by' => $actor]);
     }
 
-    private static function validateDistribution(int $total, int $count): void
+    public static function validateDistribution(int $total, int $count): void
     {
         if ($total % 100 !== 0 || $total < $count * 100) {
             throw new RuntimeException('مبلغ باید صحیح باشد و برای هر قسط حداقل یک واحد پول در نظر گرفته شود.', 422);

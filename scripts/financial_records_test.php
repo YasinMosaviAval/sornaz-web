@@ -3,7 +3,7 @@
 // Isolated fixtures; no application boot, production database, or gateway calls.
 $map = require __DIR__.'/../vendor/composer/autoload_classmap.php';
 spl_autoload_register(static function ($class) use ($map) { if (isset($map[$class])) { require_once $map[$class]; } });
-$pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+$pdo = new \Core\database\PrefixedPDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 $root = dirname(__DIR__).'/storage/financial-records-test-'.bin2hex(random_bytes(6));
 mkdir($root, 0700);
 register_shutdown_function(static function () use ($root) {
@@ -33,7 +33,7 @@ use Modules\Academy\Services\TermRecordGuard;
 use Modules\Academy\Services\AcademyTermService;
 $pdo->exec("CREATE TABLE academy_branch_course_term_invoices(term_invoice_id INTEGER PRIMARY KEY,term_id INTEGER,member_id INTEGER,discount_id INTEGER,payable_amount TEXT,currency_id INTEGER,status TEXT,due_date TEXT,created_by INTEGER,updated_by INTEGER,updated_at TEXT,deleted_at TEXT);
 CREATE TABLE academy_branch_course_term_invoice_installments(term_invoice_installment_id INTEGER PRIMARY KEY,invoice_id INTEGER,installment_number INTEGER,amount TEXT,due_date TEXT,status TEXT,created_by INTEGER,updated_by INTEGER,updated_at TEXT,paid_at TEXT,deleted_at TEXT);
-CREATE TABLE academy_term_invoice_payments(payment_id INTEGER PRIMARY KEY,invoice_id INTEGER,status TEXT);");
+CREATE TABLE financial_system_payments(payment_id INTEGER PRIMARY KEY,invoice_id INTEGER,status TEXT,record_type TEXT DEFAULT 'academy_term');");
 $input = ['cost' => '100.00', 'installmentCount' => 3, 'sessions' => [[], [], []]];
 transaction(fn () => InvoiceLedger::create(1, 1, $input, '2026-09-01', 1));
 $state = InvoiceLedger::snapshot(1);
@@ -64,7 +64,7 @@ foreach (['-1', '1.001', 'NaN', [], '1e8'] as $bad) { rejected(fn () => InvoiceL
 rejected(fn () => InvoiceLedger::paymentAmount('10.50'));
 check(InvoiceLedger::paymentAmount('10.00') === 10, 'Whole amount changed');
 transaction(fn () => InvoiceLedger::create(2, 1, $input, '2026-09-01', 1));
-$pdo->exec("INSERT INTO academy_term_invoice_payments(invoice_id,status) VALUES(2,'pending')");
+$pdo->exec("INSERT INTO financial_system_payments(invoice_id,status) VALUES(2,'pending')");
 rejected(fn () => transaction(fn () => InvoiceLedger::revise(2, 1, ['amount' => 200, 'statusCode' => 'draft'])));
 
 $pdo->exec("CREATE TABLE users(user_id INTEGER PRIMARY KEY,type TEXT,deleted_at TEXT); INSERT INTO users VALUES(1,'admin',NULL);
@@ -101,7 +101,7 @@ rejected(fn () => TermRecordGuard::assertNoHistory('academy_branch_course_term_e
 rejected(fn () => TermRecordGuard::assertNoHistory('academy_branch_courses', 'branch_id', 1));
 
 // Spy on schema access while a real SQLite transaction is open. DDL must not run.
-$spy = new class('sqlite::memory:') extends PDO {
+$spy = new class('sqlite::memory:') extends \Core\database\PrefixedPDO {
     public bool $missing = false;
     public function query(string $query, ?int $fetchMode = null, mixed ...$args): PDOStatement|false {
         if (str_contains($query, 'information_schema.')) {

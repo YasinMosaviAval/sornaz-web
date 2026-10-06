@@ -17,7 +17,7 @@ final class UserPointService
             throw new RuntimeException('بخش امتیازدهی هنوز آماده نیست؛ مدیر سایت باید به‌روزرسانی پایگاه داده را تکمیل کند.', 503);
         }
         $this->processTracking($pdo, $actor);
-        $rules = $pdo->query("SELECT r.*,IF(r.academy_id IS NULL,'سراسری',CONCAT('آموزشگاه ',r.academy_id)) academy_name,IF(r.branch_id IS NULL,NULL,CONCAT('شعبه ',r.branch_id)) branch_name FROM user_point_rules r WHERE r.deleted_at IS NULL ORDER BY r.user_point_rule_id DESC")->fetchAll(PDO::FETCH_ASSOC);
+        $rules = $pdo->query("SELECT r.*,".\Core\translation\EntityText::expression('user_point_rules','r.user_point_rule_id','description')." AS description,IF(r.academy_id IS NULL,'سراسری',CONCAT('آموزشگاه ',r.academy_id)) academy_name,IF(r.branch_id IS NULL,NULL,CONCAT('شعبه ',r.branch_id)) branch_name FROM user_point_rules r WHERE r.deleted_at IS NULL ORDER BY r.user_point_rule_id DESC")->fetchAll(PDO::FETCH_ASSOC);
         $q = $pdo->prepare("SELECT type,COALESCE(SUM(points),0) total FROM user_points WHERE user_id=? AND deleted_at IS NULL AND approved_at IS NOT NULL GROUP BY type");
         $q->execute([$actor]);
         $balance = ['general' => 0, 'professional' => 0];
@@ -31,11 +31,17 @@ final class UserPointService
 
     public function store(int $actor, array $data): int
     {
+        return \Core\translation\EntityText::atomic(db(),fn()=>$this->persistStore($actor,$data));
+    }
+
+    private function persistStore(int $actor, array $data): int
+    {
         $pdo = db();
         if (!self::ensureSchema($pdo)) {
             throw new RuntimeException('بخش امتیازدهی هنوز آماده نیست؛ مدیر سایت باید به‌روزرسانی پایگاه داده را تکمیل کند.', 503);
         }
         $clean = $this->validate($data);
+        $description=$clean['description'];unset($clean['description']);
         $clean['created_at'] = date('Y-m-d H:i:s');
         $clean['created_by'] = $actor;
         $clean['updated_at'] = $clean['created_at'];
@@ -43,22 +49,31 @@ final class UserPointService
         $cols = array_keys($clean);
         $q = $pdo->prepare('INSERT INTO user_point_rules (`' . implode('`,`', $cols) . '`) VALUES (' . implode(',', array_fill(0, count($cols), '?')) . ')');
         $q->execute(array_values($clean));
-        return (int) $pdo->lastInsertId();
+        $id=(int)$pdo->lastInsertId();
+        \Core\translation\EntityText::save('user_point_rules',$id,'description',$description,$actor,$pdo);
+        return $id;
     }
 
     public function update(int $actor, int $id, array $data): void
+    {
+        \Core\translation\EntityText::atomic(db(),fn()=>$this->persistUpdate($actor,$id,$data));
+    }
+
+    private function persistUpdate(int $actor, int $id, array $data): void
     {
         $pdo = db();
         if (!self::ensureSchema($pdo)) {
             throw new RuntimeException('بخش امتیازدهی هنوز آماده نیست؛ مدیر سایت باید به‌روزرسانی پایگاه داده را تکمیل کند.', 503);
         }
         $clean = $this->validate($data);
+        $description=$clean['description'];unset($clean['description']);
         $clean['updated_at'] = date('Y-m-d H:i:s');
         $clean['updated_by'] = $actor;
         $set = implode(',', array_map(fn ($x) => "`$x`=?", array_keys($clean)));
         $q = $pdo->prepare("UPDATE user_point_rules SET $set WHERE user_point_rule_id=? AND deleted_at IS NULL");
         $q->execute([...array_values($clean), $id]);
-        if (!$q->rowCount()) {
+        \Core\translation\EntityText::save('user_point_rules',$id,'description',$description,$actor,$pdo);
+        if (!\Core\database\DB::table('user_point_rules')->where('user_point_rule_id',$id)->whereNull('deleted_at')->first()) {
             throw new RuntimeException('قانون امتیاز پیدا نشد.');
         }
     }
@@ -144,9 +159,11 @@ final class UserPointService
             return true;
         }
         // Never run DDL here: MySQL would implicitly commit the caller's work.
-        $tables = (int) $pdo->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('user_point_rules','user_points')")->fetchColumn();
-        $columns = (int) $pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='user_points' AND COLUMN_NAME IN ('rule_id','award_key','metadata')")->fetchColumn();
-        $index = (int) $pdo->query("SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='user_points' AND INDEX_NAME='uq_user_points_award_key' AND NON_UNIQUE=0")->fetchColumn();
+        $rulesTable = $pdo instanceof \Core\database\PrefixedPDO ? \Core\database\TableNames::physical('user_point_rules') : 'user_point_rules';
+        $pointsTable = $pdo instanceof \Core\database\PrefixedPDO ? \Core\database\TableNames::physical('user_points') : 'user_points';
+        $tables = (int) $pdo->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('$rulesTable','$pointsTable')")->fetchColumn();
+        $columns = (int) $pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='$pointsTable' AND COLUMN_NAME IN ('rule_id','award_key','metadata')")->fetchColumn();
+        $index = (int) $pdo->query("SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='$pointsTable' AND INDEX_NAME='uq_user_points_award_key' AND NON_UNIQUE=0")->fetchColumn();
         if ($tables !== 2 || $columns !== 3 || !$index) {
             return false;
         }

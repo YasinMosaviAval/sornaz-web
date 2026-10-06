@@ -27,22 +27,22 @@ class CourseExperienceService
         $c['lesson_count'] = (int) ($this->r->one('SELECT COUNT(*) n FROM creator_course_lessons WHERE course_id=? AND deleted_at IS NULL', [$id])['n'] ?? 0);
         $c['rating'] = $this->r->one('SELECT COALESCE(AVG(score),0) average,COUNT(*) count FROM creator_course_reviews WHERE course_id=?', [$id]);
         $c['students'] = (int) ($this->r->one("SELECT COUNT(DISTINCT buyer_id) n FROM creator_course_orders WHERE course_id=? AND status='paid'", [$id])['n'] ?? 0);
-        $u = $this->r->one('SELECT u.user_id id,u.username,sp.display_name,sp.avatar_id,sp.bio FROM users u LEFT JOIN social_profiles sp ON sp.user_id=u.user_id WHERE u.user_id=? AND u.deleted_at IS NULL', [$c['owner_id']]) ?? [];
-        $c['author'] = ['id' => (int) ($u['id'] ?? 0), 'name' => (string) (($u['display_name'] ?? '') ?: ($u['username'] ?? '')), 'avatar' => empty($u['avatar_id']) ? null : '/api/sornaz/v1/social/media/' . $u['avatar_id'], 'bio' => $u['bio'] ?? ''];
+        $u = $this->r->one('SELECT u.user_id id,u.username,sp.display_name,sp.avatar_id FROM users u LEFT JOIN social_profiles sp ON sp.user_id=u.user_id WHERE u.user_id=? AND u.deleted_at IS NULL', [$c['owner_id']]) ?? [];
+        $c['author'] = ['id' => (int) ($u['id'] ?? 0), 'name' => (string) (($u['display_name'] ?? '') ?: ($u['username'] ?? '')), 'avatar' => empty($u['avatar_id']) ? null : '/api/sornaz/v1/social/media/' . $u['avatar_id'], 'bio' => \Core\translation\EntityText::get('social_profiles',(int)$c['owner_id'],'bio',$this->r->connection(),$locale)];
         return $c;
     }
 
     public function detail(int $actor, int $id, string $locale): array
     {
         $c = $this->decorate($this->courses->detail($actor, $id), $actor, $locale);
-        $c['reviews'] = $this->r->query('SELECT r.*,u.username author FROM creator_course_reviews r JOIN users u ON u.user_id=r.user_id WHERE r.course_id=? AND r.locale=? ORDER BY r.updated_at DESC LIMIT 100', [$id, $locale]);
-        $c['questions'] = $this->r->query('SELECT q.*,u.username author FROM creator_course_questions q JOIN users u ON u.user_id=q.user_id WHERE q.course_id=? AND q.locale=? ORDER BY q.id ASC LIMIT 200', [$id, $locale]);
+        $c['reviews'] = $this->r->query('SELECT r.*,'.\Core\translation\EntityText::expression('creator_course_reviews','r.id','body',$locale).' AS body,u.username author FROM creator_course_reviews r JOIN users u ON u.user_id=r.user_id WHERE r.course_id=? AND r.locale=? ORDER BY r.updated_at DESC LIMIT 100', [$id, $locale]);
+        $c['questions'] = $this->r->query('SELECT q.*,'.\Core\translation\EntityText::expression('creator_course_questions','q.id','body',$locale).' AS body,u.username author FROM creator_course_questions q JOIN users u ON u.user_id=q.user_id WHERE q.course_id=? AND q.locale=? ORDER BY q.id ASC LIMIT 200', [$id, $locale]);
         $c['likes'] = (int) ($this->r->one('SELECT COUNT(*) n FROM creator_course_reactions WHERE course_id=? AND reaction=1', [$id])['n'] ?? 0);
         $c['reaction'] = (int) ($this->r->one('SELECT reaction FROM creator_course_reactions WHERE course_id=? AND user_id=?', [$id, $actor])['reaction'] ?? 0);
         $c['bookmarks'] = (int) ($this->r->one("SELECT COUNT(*) n FROM social_bookmarks WHERE kind='course' AND target_id=?", [$id])['n'] ?? 0);
         $c['schedule'] = $actor ? $this->r->one('SELECT starts_at FROM creator_course_schedules WHERE course_id=? AND user_id=?', [$id, $actor]) : null;
         $metadata = json_decode($this->r->one('SELECT metadata FROM creator_course_details WHERE course_id=?', [$id])['metadata'] ?? '{}', true) ?: [];
-        $c['resources'] = $c['access'] ? array_values(array_filter($metadata['resources'] ?? [], fn ($r) => empty($r['media_id']) || !$this->r->one('SELECT post_id FROM creator_course_lessons WHERE course_id=? AND deleted_at IS NULL AND JSON_CONTAINS(media_json,?)', [$id, json_encode((int) $r['media_id'])]))) : [];
+        $c['resources'] = $c['access'] ? array_values(array_filter($metadata['resources'] ?? [], fn ($r) => empty($r['media_id']) || !$this->r->one('SELECT post_id FROM creator_course_lessons WHERE course_id=? AND deleted_at IS NULL AND JSON_CONTAINS(CAST(media_json AS CHAR),?)', [$id, json_encode((int) $r['media_id'])]))) : [];
         // Restricted resource metadata is never included in the public details blob.
         foreach ($c['resources'] as &$resource) {
             if (empty($resource['media_id'])) {
@@ -88,7 +88,11 @@ class CourseExperienceService
             if ($score < 1 || $score > 5 || !in_array($recommend, ['0', '1'], true)) {
                 throw new RuntimeException('Select a rating and recommendation.', 422);
             }
-            $this->r->query('INSERT INTO creator_course_reviews(course_id,user_id,score,recommend,body,locale) VALUES(?,?,?,?,?,?) ON DUPLICATE KEY UPDATE score=VALUES(score),recommend=VALUES(recommend),body=VALUES(body),locale=VALUES(locale),updated_at=CURRENT_TIMESTAMP', [$id, $actor, $score, $recommend, $text, $locale]);
+            $this->r->transaction(function() use($id,$actor,$score,$recommend,$text,$locale){
+                $this->r->query('INSERT INTO creator_course_reviews(course_id,user_id,score,recommend,locale) VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE score=VALUES(score),recommend=VALUES(recommend),locale=VALUES(locale),updated_at=CURRENT_TIMESTAMP',[$id,$actor,$score,$recommend,$locale]);
+                $review=$this->r->one('SELECT id FROM creator_course_reviews WHERE course_id=? AND user_id=?',[$id,$actor]);
+                \Core\translation\EntityText::save('creator_course_reviews',(int)$review['id'],'body',$text,$actor,$this->r->connection(),$locale);
+            });
         } elseif ($action === 'question') {
             $parent = max(0, (int) ($data['parent_id'] ?? 0));
             if ($parent && !$this->r->one('SELECT id FROM creator_course_questions WHERE id=? AND course_id=? AND locale=?', [$parent, $id, $locale])) {
@@ -135,7 +139,7 @@ class CourseExperienceService
             if (!$m || !str_starts_with($m['mime'], 'video/')) {
                 throw new RuntimeException('Select an uploaded course video.', 422);
             }
-            if ($this->r->one('SELECT post_id FROM creator_course_lessons WHERE course_id=? AND deleted_at IS NULL AND JSON_CONTAINS(media_json,?)', [$id, json_encode($meta['preview_id'])])) {
+            if ($this->r->one('SELECT post_id FROM creator_course_lessons WHERE course_id=? AND deleted_at IS NULL AND JSON_CONTAINS(CAST(media_json AS CHAR),?)', [$id, json_encode($meta['preview_id'])])) {
                 throw new RuntimeException('A private lesson file cannot be a public preview.', 422);
             }
         }

@@ -12,7 +12,7 @@ final class UserMergeService
     {
         $user = $this->user($actor);
         $admin = SiteAdminAccess::allows($user);
-        $sql = "SELECT um.user_merge_id id,um.from_user_id sourceUserId,um.to_user_id targetUserId,um.member_id memberId,um.status,um.reason,um.admin_note adminNote,um.created_at createdAt,um.approved_at decidedAt,COALESCE(a.branch_id,0) branchId,COALESCE(a.academy_id,0) academyId FROM user_merges um LEFT JOIN academy_branch_members a ON a.member_id=um.member_id WHERE um.deleted_at IS NULL";
+        $sql = "SELECT um.user_merge_id id,um.from_user_id sourceUserId,um.to_user_id targetUserId,um.member_id memberId,um.status,".\Core\translation\EntityText::expression('user_merges','um.user_merge_id','reason')." reason,".\Core\translation\EntityText::expression('user_merges','um.user_merge_id','admin_note')." adminNote,um.created_at createdAt,um.approved_at decidedAt,COALESCE(a.branch_id,0) branchId,COALESCE(a.academy_id,0) academyId FROM user_merges um LEFT JOIN academy_branch_members a ON a.member_id=um.member_id WHERE um.deleted_at IS NULL";
         $bindings = [];
         if (!$admin) {
             $sql .= ' AND um.to_user_id=?';
@@ -24,6 +24,11 @@ final class UserMergeService
     }
 
     public function request(int $actor, array $data): void
+    {
+        \Core\translation\EntityText::atomic(db(),fn()=>$this->persistRequest($actor,$data));
+    }
+
+    private function persistRequest(int $actor, array $data): void
     {
         $target = $this->user($actor);
         if (!$this->eligible($target)) {
@@ -52,7 +57,8 @@ final class UserMergeService
             throw new RuntimeException('برای این عضویت قبلاً درخواست در انتظار ثبت شده است.');
         }
         $now = date('Y-m-d H:i:s');
-        DB::table('user_merges')->insert(['from_user_id' => $sourceId, 'to_user_id' => $actor, 'member_id' => $memberId, 'status' => 'pending', 'reason' => trim((string) ($data['reason'] ?? '')) ?: null, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
+        $id=(int)DB::table('user_merges')->insertGetId(['from_user_id' => $sourceId, 'to_user_id' => $actor, 'member_id' => $memberId, 'status' => 'pending', 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
+        \Core\translation\EntityText::save('user_merges',$id,'reason',trim((string)($data['reason']??'')),$actor);
     }
 
     public function cancel(int $actor, int $id): void
@@ -86,7 +92,8 @@ final class UserMergeService
             if ($decision === 'approved') {
                 DB::table('academy_branch_members')->where('user_id', (int) $row['from_user_id'])->whereNull('deleted_at')->update(['user_id' => (int) $row['to_user_id'], 'updated_at' => $now, 'updated_by' => $actor]);
             }
-            DB::table('user_merges')->where('user_merge_id', $id)->update(['status' => $decision, 'admin_note' => trim((string) ($data['note'] ?? '')) ?: null, 'merged_at' => $decision === 'approved' ? $now : null, 'merged_by' => $decision === 'approved' ? $actor : null, 'approved_at' => $now, 'approved_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
+            DB::table('user_merges')->where('user_merge_id', $id)->update(['status' => $decision, 'merged_at' => $decision === 'approved' ? $now : null, 'merged_by' => $decision === 'approved' ? $actor : null, 'approved_at' => $now, 'approved_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
+            \Core\translation\EntityText::save('user_merges',$id,'admin_note',trim((string)($data['note']??'')),$actor);
         });
     }
 

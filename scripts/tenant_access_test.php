@@ -11,7 +11,7 @@ spl_autoload_register(static function ($class) use ($map) {
         require_once $map[$class];
     }
 });
-$pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+$pdo = new \Core\database\PrefixedPDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 function db() { return $GLOBALS['pdo']; }
 function base_path($path = '') { return dirname(__DIR__).'/'.$path; }
 function locale() { return 'fa'; }

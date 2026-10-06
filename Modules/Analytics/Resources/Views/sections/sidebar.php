@@ -7,7 +7,7 @@ $hasAcademyManagementRole = $panelUser && (bool)\Core\database\DB::table('academ
     ->join('access_system_roles','access_system_roles.role_id','=','academy_branch_member_roles.role_id')
     ->where('academy_branch_members.user_id', (int)$panelUser['user_id'])
     ->where('academy_branch_members.status', 'active')
-    ->whereIn('access_system_roles.name', ['academy_owner','academy_manager','branch_manager','academy_receptionist','branch_receptionist'])
+    ->whereIn('access_system_roles.name', ['academy_owner','academy_manager','branch_manager','academy_receptionist','branch_receptionist','academy_branch_owner','academy_branch_manager','academy_branch_receptionist'])
     ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->first();
 $hasContractManagementRole = $panelUser && (bool)\Core\database\DB::table('academy_branch_members')
     ->join('academy_branch_member_contracts', 'academy_branch_member_contracts.member_id', '=', 'academy_branch_members.member_id')

@@ -76,14 +76,14 @@ class AnalyticsController
             abort(404);
         }
         $data['selectedTerm'] = (int) ($_GET['term'] ?? 0);
-        return ResponseFactory::view('Analytics::academy-enroll', ['enrollmentData' => $data])->layout('main')->title(locale() === 'en' ? 'Class registration | Sornaz' : 'ثبت‌نام در کلاس | سُرناز');
+        return ResponseFactory::view('Analytics::academy-enroll', ['enrollmentData' => $data])->layout('main')->title(locale() === 'en' ? 'Academy registration | Sornaz' : 'ثبت‌نام در آموزشگاه | سُرناز');
     }
 
     public function academyEnrollStore()
     {
         try {
             $academyId = (int) ($_POST['academy_id'] ?? 0);
-            $result = $this->enrollments->joinWaitingList($academyId, (int) auth()->id(), (int) ($_POST['term_id'] ?? 0), (int) ($_POST['level_id'] ?? 0), (string) ($_POST['phone'] ?? ''), (string) ($_POST['note'] ?? ''), locale());
+            $result = $this->enrollments->joinWaitingList($academyId, (int) auth()->id(), (int) ($_POST['term_id'] ?? 0), (int) ($_POST['level_id'] ?? 0), (string) ($_POST['phone'] ?? ''), (string) ($_POST['note'] ?? ''), locale(), $_POST);
             $message = locale() === 'en' ? 'You were successfully added to the academy waiting list.' : 'با موفقیت در فهرست انتظار آموزشگاه قرار گرفتید.';
             session()->flash('auth_success', $message);
             return ResponseFactory::json(['success' => true, 'message' => $message, 'redirect' => '/academy/academy?id=' . $academyId, 'data' => $result], 201);
@@ -99,6 +99,7 @@ class AnalyticsController
             : [];
         $scheduleFixtures = env('APP_ENV', 'production') === 'local' ? $this->adminTests->scheduleFixtures() : ['schedules' => [], 'exceptions' => []];
         $guides = (int) auth()->id() === 1 ? $this->guides->all(locale()) : [];
-        return ResponseFactory::view('Analytics::admin-panel', ['testStats' => $testStats, 'scheduleFixtures' => $scheduleFixtures, 'guides' => $guides, 'adminUiMap' => $this->adminTests->adminUiMap(locale()), 'inlineTranslationCatalog' => $this->adminTests->inlineTranslationCatalog()])->layout('admin')->title('سُرناز | پنل کاربری');
+        $guideDocuments = (int) auth()->id() === 1 ? $this->guides->documents() : [];
+        return ResponseFactory::view('Analytics::admin-panel', ['testStats' => $testStats, 'scheduleFixtures' => $scheduleFixtures, 'guides' => $guides, 'guideDocuments' => $guideDocuments, 'adminUiMap' => $this->adminTests->adminUiMap(locale()), 'inlineTranslationCatalog' => $this->adminTests->inlineTranslationCatalog()])->layout('admin')->title('سُرناز | پنل کاربری');
     }
 }

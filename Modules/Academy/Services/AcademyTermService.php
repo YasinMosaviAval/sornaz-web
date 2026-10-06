@@ -125,16 +125,31 @@ class AcademyTermService
             }
         }
         $statuses = ['pending' => 'در انتظار', 'open' => 'باز', 'ongoing' => 'در حال برگزاری', 'finished' => 'پایان‌یافته'];
-        return ['branches' => array_map(fn ($r) => ['id' => (int) $r['branch_id'], 'name' => $bmap[(int) $r['branch_id']]], $branches), 'courses' => array_map(fn ($r) => ['id' => (int) $r['course_id'], 'branchId' => (int) $r['branch_id'], 'lessonId' => (int) $r['lesson_id'], 'name' => $tr['academy_branch_courses'][(int) $r['course_id']]['title'] ?? ('دوره ' . $r['course_id']), 'teacher_capacity' => (int) $r['teacher_capacity'], 'student_capacity' => (int) $r['student_capacity']], $courses), 'classrooms' => array_map(fn ($r) => ['id' => (int) $r['classroom_id'], 'branchId' => (int) $r['branch_id'], 'name' => $tr['academy_branch_classrooms'][(int) $r['classroom_id']]['title'] ?? $tr['academy_branch_classrooms'][(int) $r['classroom_id']]['name'] ?? ('کلاس ' . $r['classroom_id'])], $rooms), 'currencies' => $this->currencies(), 'discounts' => $this->discounts(), 'members' => $members, 'terms' => array_map(function ($r) use ($cmap, $bmap, $tr, $people, $sessions, $skips, $invoices, $statuses) {
+        $classroomOptions = $this->classroomOptions($rooms, $tr);
+        return ['branches' => array_map(fn ($r) => ['id' => (int) $r['branch_id'], 'name' => $bmap[(int) $r['branch_id']]], $branches), 'courses' => array_map(fn ($r) => ['id' => (int) $r['course_id'], 'branchId' => (int) $r['branch_id'], 'lessonId' => (int) $r['lesson_id'], 'name' => $tr['academy_branch_courses'][(int) $r['course_id']]['title'] ?? ('دوره ' . $r['course_id']), 'teacher_capacity' => (int) $r['teacher_capacity'], 'student_capacity' => (int) $r['student_capacity']], $courses), 'classrooms' => $classroomOptions, 'currencies' => $this->currencies(), 'discounts' => $this->discounts(), 'members' => $members, 'terms' => array_map(function ($r) use ($cmap, $bmap, $tr, $people, $sessions, $skips, $invoices, $statuses) {
             $id = (int) $r['term_id'];
             $c = $cmap[(int) $r['course_id']];
             $p = $people[$id] ?? [];
             $s = $sessions[$id] ?? [];
             $i = $invoices[$id] ?? null;
-            return ['id' => $id, 'name' => $tr['academy_branch_course_terms'][$id]['title'] ?? ('ترم ' . $id), 'summary' => $tr['academy_branch_course_terms'][$id]['summary'] ?? '', 'description' => $tr['academy_branch_course_terms'][$id]['description'] ?? '', 'branchId' => (int) $c['branch_id'], 'branchName' => $bmap[(int) $c['branch_id']], 'courseId' => (int) $r['course_id'], 'course' => $tr['academy_branch_courses'][(int) $r['course_id']]['title'] ?? ('دوره ' . $r['course_id']), 'classroomId' => (int) ($s[0]['classroomId'] ?? 0), 'currencyId' => (int) ($i['currency_id'] ?? $r['currency_id']), 'cost' => (float) ($i['payable_amount'] ?? $r['price']), 'discountId' => (int) ($i['discount_id'] ?? 0), 'installmentCount' => $i ? $this->installmentCount((int) $i['term_invoice_id']) : 1, 'repeatType' => $r['session_period'], 'status_code' => $r['status'], 'status' => $statuses[$r['status']] ?? $r['status'], 'sessions' => $s, 'skippedDates' => $skips[$id] ?? [], 'teachers' => array_values(array_filter($p, fn ($x) => $x['type'] === 'teacher')), 'students' => array_values(array_filter($p, fn ($x) => $x['type'] === 'student')), 'start' => $r['start_date'], 'end' => $r['end_date']];
+            $draft = json_decode((string) ($tr['academy_branch_course_terms'][$id]['schedule_draft'] ?? ''), true);
+            return ['id' => $id, 'name' => $tr['academy_branch_course_terms'][$id]['title'] ?? ('ترم ' . $id), 'summary' => $tr['academy_branch_course_terms'][$id]['summary'] ?? '', 'description' => $tr['academy_branch_course_terms'][$id]['description'] ?? '', 'branchId' => (int) $c['branch_id'], 'branchName' => $bmap[(int) $c['branch_id']], 'courseId' => (int) $r['course_id'], 'course' => $tr['academy_branch_courses'][(int) $r['course_id']]['title'] ?? ('دوره ' . $r['course_id']), 'classroomId' => (int) ($s[0]['classroomId'] ?? ($draft['classroomId'] ?? 0)), 'sessionCount' => (int) $r['session_count'], 'scheduleDraft' => is_array($draft) ? $draft : null, 'currencyId' => (int) ($i['currency_id'] ?? $r['currency_id']), 'cost' => (float) ($i['payable_amount'] ?? $r['price']), 'discountId' => (int) ($i['discount_id'] ?? ($draft['discountId'] ?? 0)), 'installmentCount' => $i ? $this->installmentCount((int) $i['term_invoice_id']) : (int) ($draft['installmentCount'] ?? 1), 'repeatType' => $r['session_period'], 'status_code' => $r['status'], 'status' => $statuses[$r['status']] ?? $r['status'], 'sessions' => $s, 'skippedDates' => $skips[$id] ?? [], 'teachers' => array_values(array_filter($p, fn ($x) => $x['type'] === 'teacher')), 'students' => array_values(array_filter($p, fn ($x) => $x['type'] === 'student')), 'start' => $r['start_date'], 'end' => $r['end_date']];
         }, $terms)];
     }
 
+    private function classroomOptions(array $rooms, array $translations): array
+    {
+        return array_map(function (array $room) use ($translations): array {
+            $id = (int) $room['classroom_id'];
+            $text = $translations['academy_branch_classrooms'][$id] ?? [];
+            return [
+                'id' => $id,
+                'branchId' => (int) $room['branch_id'],
+                'name' => $text['title'] ?? $text['name'] ?? ('کلاس ' . $id),
+                'deliveryMode' => ($text['delivery_mode'] ?? '') === 'online' ? 'online' : 'in_person',
+            ];
+        }, $rooms);
+    }
     public function save(int $actor, array $d, int $id = 0): array
     {
         return \Modules\System\Services\PaymentMutex::run(db(), 'schedule-write', fn () => $this->saveLocked($actor, $d, $id));
@@ -158,6 +173,9 @@ class AcademyTermService
             $this->assertTermScheduleEditable($id);
         }
         $teachers = $this->validatePeople($d['teachers'] ?? [], 'teacher', (int) $branch['branch_id'], (int) $course['lesson_id'], (int) $course['teacher_capacity']);
+        if (($d['status'] ?? '') === 'open' && !empty($d['undatedTemplate'])) {
+            return $this->saveUndatedTerm($actor, $d, $course, $room, $teachers);
+        }
         $students = $this->validatePeople($d['students'] ?? [], 'student', (int) $branch['branch_id'], 0, (int) $course['student_capacity']);
         $sessions = $this->validatedSessions($d);
         $name = trim((string) ($d['name'] ?? ''));
@@ -180,12 +198,193 @@ class AcademyTermService
         });
     }
 
+    private function saveUndatedTerm(int $actor, array $data, array $course, array $room, array $teachers): array
+    {
+        $name = trim((string) ($data['name'] ?? ''));
+        $count = (int) ($data['sessionCount'] ?? 0);
+        $period = (string) ($data['repeatType'] ?? '');
+        $time = $data['sessions'][0] ?? [];
+        $start = (string) ($time['startTime'] ?? '');
+        $end = (string) ($time['endTime'] ?? '');
+        $timezoneId = (int) ($time['timezoneId'] ?? 0);
+        $installments = (int) ($data['installmentCount'] ?? 1);
+        $recurrence = is_array($data['recurrence'] ?? null) ? $data['recurrence'] : [];
+        // Older/mixed form assets may send the exact-date value after a weekday was selected.
+        // An exact date cannot describe a multi-session term; retain the weekday intent.
+        if ($count > 1 && $period === 'no-period' && empty($recurrence['exactDate']) && preg_match('/^[0-6]$/', (string) ($recurrence['weekday'] ?? ''))) {
+            $requested = (string) ($recurrence['period'] ?? '');
+            $period = in_array($requested, ['week', '2-week', '3-week', '4-week'], true) ? $requested : 'week';
+        }
+        if ($name === '') throw new RuntimeException('نام ترم را وارد کنید.');
+        if (!$teachers) throw new RuntimeException('برای ترم باز، دست‌کم یک مدرس از فهرست مدرسان همان شعبه و درس انتخاب کنید.');
+        if ($count < 1 || $count > 100) throw new RuntimeException('تعداد جلسات باید بین ۱ تا ۱۰۰ باشد.');
+        if (!in_array($period, ['week', '2-week', '3-week', '4-week', 'month', 'year', 'no-period'], true)) throw new RuntimeException('دورهٔ تکرار ترم معتبر نیست.');
+        if ($count > 1 && $period === 'no-period') throw new RuntimeException('برای «سایر (تاریخ دقیق)» تعداد جلسات باید یک باشد.');
+        if ($installments < 1 || $installments > max(2, $count)) throw new RuntimeException('تعداد اقساط با تعداد جلسات ترم سازگار نیست.');
+        $this->validateDraftRecurrence($period, $recurrence);
+        ScheduleTime::validate('2000-01-01', $start, $end);
+        if (!$timezoneId || !DB::table('f_timezone')->where('timezone_id', $timezoneId)->first()) {
+            throw new RuntimeException('منطقهٔ زمانی جلسه معتبر نیست.');
+        }
+        if (in_array($period, ['week', '2-week', '3-week', '4-week'], true)) {
+            $startMinute = (int) substr($start, 0, 2) * 60 + (int) substr($start, 3, 2);
+            $endMinute = (int) substr($end, 0, 2) * 60 + (int) substr($end, 3, 2);
+            $availability = $this->weeklyTemplateAvailability($actor, (int) $room['branch_id'], (int) $recurrence['weekday'], $endMinute - $startMinute);
+            if (!in_array($start, $availability['times'], true) || ($availability['timezoneId'] && $timezoneId !== $availability['timezoneId'])) {
+                throw new RuntimeException('ساعت شروع باید از ساعات کاری روز انتخاب‌شدهٔ شعبه یا آموزشگاه باشد.');
+            }
+        }
+        $costCents = InvoiceLedger::cents($data['cost'] ?? 0);
+        InvoiceLedger::validateDistribution($costCents, $installments);
+        $cost = InvoiceLedger::amount($costCents);
+        $template = ['classroomId' => (int) $room['classroom_id'], 'startTime' => $start, 'endTime' => $end, 'timezoneId' => $timezoneId, 'installmentCount' => $installments, 'discountId' => (int) ($data['discountId'] ?? 0), 'recurrence' => $recurrence];
+        return transaction(function () use ($actor, $data, $course, $teachers, $name, $count, $period, $cost, $template) {
+            $id = (int) DB::table('academy_branch_course_terms')->insertGetId(['course_id' => (int) $course['course_id'], 'start_date' => null, 'end_date' => null, 'session_count' => $count, 'session_period' => $period, 'price' => $cost, 'currency_id' => (int) ($data['currencyId'] ?? 1), 'status' => 'open', 'created_by' => $actor, 'updated_by' => $actor]);
+            $this->setTexts($id, ['title' => $name, 'summary' => trim((string) ($data['summary'] ?? '')), 'description' => trim((string) ($data['description'] ?? '')), 'schedule_draft' => json_encode($template, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)], $actor);
+            foreach ($teachers as $memberId) {
+                DB::table('academy_branch_course_term_enrollments')->insert(['term_id' => $id, 'member_id' => $memberId, 'type' => 'teacher', 'status' => 'active', 'joined_at' => date('Y-m-d H:i:s'), 'created_by' => $actor, 'updated_by' => $actor]);
+            }
+            return ['id' => $id];
+        });
+    }
+
+    public function scheduleUndatedTerm(int $actor, int $termId, string $firstDate, int $studentId, int $teacherId, string $selectedStart = ''): int
+    {
+        return \Modules\System\Services\PaymentMutex::run(db(), 'schedule-write', fn () => transaction(function () use ($actor, $termId, $firstDate, $studentId, $teacherId, $selectedStart) {
+            $term = DB::table('academy_branch_course_terms')->where('term_id', $termId)->whereNull('deleted_at')->first();
+            $course = $term ? DB::table('academy_branch_courses')->where('course_id', (int) $term['course_id'])->whereNull('deleted_at')->first() : null;
+            if (!$term || !$course || $term['status'] !== 'open') throw new RuntimeException('ترم باز یافت نشد.');
+            $branchId = (int) $course['branch_id'];
+            $this->allowedBranch($actor, $branchId);
+            $student = DB::table('academy_branch_members')->where('member_id', $studentId)->where('academy_id', (int) $course['academy_id'])->where('branch_id', $branchId)->whereNull('deleted_at')->first();
+            $teacher = DB::table('academy_branch_members')->where('member_id', $teacherId)->where('academy_id', (int) $course['academy_id'])->where('branch_id', $branchId)->whereNull('deleted_at')->first();
+            $studentEnrollment = DB::table('academy_branch_course_term_enrollments')->where('term_id', $termId)->where('member_id', $studentId)->where('type', 'student')->where('status', 'pending')->whereNull('deleted_at')->first();
+            $teacherEnrollment = DB::table('academy_branch_course_term_enrollments')->where('term_id', $termId)->where('member_id', $teacherId)->where('type', 'teacher')->where('status', 'active')->whereNull('deleted_at')->first();
+            $approvedWaiting = DB::table('academy_branch_course_term_waiting_list')->where('term_id', $termId)->where('member_id', $studentId)->whereNotNull('approved_at')->whereNull('deleted_at')->first();
+            if (!$student || !$teacher || !$studentEnrollment || !$teacherEnrollment || !$approvedWaiting) throw new RuntimeException('درخواست، هنرجو یا مدرس برای زمان‌بندی معتبر نیست.');
+            if (DB::table('academy_branch_course_term_enrollments')->where('term_id', $termId)->where('type', 'student')->where('status', 'active')->whereNull('deleted_at')->first()) throw new RuntimeException('این ترم قبلاً برای هنرجوی دیگری فعال شده است.');
+            $existingSession = DB::table('academy_branch_course_term_sessions')->where('term_id', $termId)->whereNull('deleted_at')->first();
+            if ($existingSession) throw new RuntimeException('جلسات این ترم قبلاً زمان‌بندی شده‌اند.');
+            $draftRow = DB::table('translations')->where('table_name', 'academy_branch_course_terms')->where('table_id', $termId)->where('field', 'schedule_draft')->where('locale', 'fa')->whereNull('deleted_at')->first();
+            $draft = $draftRow ? json_decode((string) $draftRow['value'], true) : null;
+            $first = \DateTimeImmutable::createFromFormat('!Y-m-d', $firstDate);
+            if (!is_array($draft) || !$first || $first->format('Y-m-d') !== $firstDate || $firstDate < date('Y-m-d')) throw new RuntimeException('تاریخ شروع جلسه معتبر نیست.');
+            $room = DB::table('academy_branch_classrooms')->where('classroom_id', (int) ($draft['classroomId'] ?? 0))->where('branch_id', $branchId)->whereNull('deleted_at')->first();
+            if (!$room) throw new RuntimeException('کلاس برگزاری ترم معتبر نیست.');
+            $count = (int) $term['session_count'];
+            $period = (string) $term['session_period'];
+            $recurrence = is_array($draft['recurrence'] ?? null) ? $draft['recurrence'] : [];
+            if ($selectedStart !== '' && in_array($period, ['week', '2-week', '3-week', '4-week'], true)) $recurrence['weekday'] = $first->format('w');
+            $this->validateDraftRecurrence($period, $recurrence);
+            if (!$this->matchesDraftRecurrence($first, $period, $recurrence)) throw new RuntimeException('تاریخ جلسهٔ اول با روز برگزاری تعیین‌شده برای ترم سازگار نیست.');
+            if ($count < 1 || $count > 100 || ($count > 1 && $period === 'no-period')) throw new RuntimeException('تعداد جلسات یا دورهٔ تکرار معتبر نیست.');
+            $draftStart = (string) ($draft['startTime'] ?? '');
+            $draftEnd = (string) ($draft['endTime'] ?? '');
+            $duration = (int) substr($draftEnd, 0, 2) * 60 + (int) substr($draftEnd, 3, 2) - (int) substr($draftStart, 0, 2) * 60 - (int) substr($draftStart, 3, 2);
+            if ($duration < 5 || $duration > 1440 || ($selectedStart !== '' && !preg_match('/^\d{2}:\d{2}$/', $selectedStart))) throw new RuntimeException('مدت یا ساعت شروع جلسه معتبر نیست.');
+            $startTime = $selectedStart ?: $draftStart;
+            $endMinute = (int) substr($startTime, 0, 2) * 60 + (int) substr($startTime, 3, 2) + $duration;
+            if ($endMinute >= 1440) throw new RuntimeException('ساعت پایان جلسه از پایان روز عبور می‌کند.');
+            $endTime = sprintf('%02d:%02d', intdiv($endMinute, 60), $endMinute % 60);
+            $timezoneId = (int) ($draft['timezoneId'] ?? 0);
+            if (!$timezoneId || !DB::table('f_timezone')->where('timezone_id', $timezoneId)->first()) throw new RuntimeException('منطقهٔ زمانی معتبر نیست.');
+            $sessions = [];
+            foreach ($this->draftedDates($first, $count, $period, $recurrence) as $date) {
+                ScheduleTime::validate($date, $startTime, $endTime);
+                $available = $this->effectiveAvailability($actor, $branchId, $date);
+                $teacherTimes = $this->teacherStartTimes($actor, $termId, $teacherId, $date, $duration, $available['times'], $timezoneId);
+                if (!in_array($startTime, $teacherTimes, true)) throw new RuntimeException('مدرس یا شعبه در تاریخ ' . $date . ' و ساعت انتخاب‌شده در دسترس نیست.');
+                $sessions[] = ['date' => $date, 'startTime' => $startTime, 'endTime' => $endTime, 'timezoneId' => $timezoneId];
+            }
+            $draft['recurrence'] = $recurrence;
+            $draft['startTime'] = $startTime;
+            $draft['endTime'] = $endTime;
+            $this->setTexts($termId, ['schedule_draft' => json_encode($draft, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)], $actor);
+            $this->createSessions($termId, $actor, $sessions, $room, [$teacherId], [$studentId]);
+            InvoiceLedger::create($termId, $actor, ['cost' => $term['price'], 'installmentCount' => (int) ($draft['installmentCount'] ?? 1), 'discountId' => (int) ($draft['discountId'] ?? 0), 'sessions' => $sessions], $firstDate, (int) $term['currency_id']);
+            DB::table('academy_branch_course_terms')->where('term_id', $termId)->update(['start_date' => $firstDate, 'end_date' => $sessions[$count - 1]['date'], 'status' => 'ongoing', 'updated_by' => $actor]);
+            $created = DB::table('academy_branch_course_term_sessions')->where('term_id', $termId)->whereNull('deleted_at')->orderBy('term_session_id')->first();
+            return (int) ($created['term_session_id'] ?? 0);
+        }));
+    }
+
+    private function validateDraftRecurrence(string $period, array $rule): void
+    {
+        if (in_array($period, ['week', '2-week', '3-week', '4-week'], true) && (!isset($rule['weekday']) || !preg_match('/^[0-6]$/', (string) $rule['weekday']))) throw new RuntimeException('روز هفتهٔ برگزاری را انتخاب کنید.');
+        if (in_array($period, ['month', 'year'], true)) {
+            $day = (int) ($rule['day'] ?? 0);
+            if ($day < 1 || $day > 31 || (string) $day !== (string) ($rule['day'] ?? '')) throw new RuntimeException('روز ماه شمسی معتبر نیست.');
+        }
+        if ($period === 'year') {
+            $month = (int) ($rule['month'] ?? 0);
+            if ($month < 1 || $month > 12 || ($month > 6 && (int) $rule['day'] > 30) || (string) $month !== (string) ($rule['month'] ?? '')) throw new RuntimeException('ماه یا روز سال شمسی معتبر نیست.');
+        }
+        if ($period === 'no-period') {
+            $date = (string) ($rule['exactDate'] ?? '');
+            $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+            if (!$parsed || $parsed->format('Y-m-d') !== $date || $date < date('Y-m-d')) throw new RuntimeException('تاریخ دقیق جلسه معتبر نیست.');
+        }
+    }
+
+    private function matchesDraftRecurrence(\DateTimeImmutable $date, string $period, array $rule): bool
+    {
+        if (in_array($period, ['week', '2-week', '3-week', '4-week'], true)) return (int) $date->format('w') === (int) $rule['weekday'];
+        if ($period === 'no-period') return $date->format('Y-m-d') === (string) $rule['exactDate'];
+        [$year, $month, $day] = $this->jalaliParts($date);
+        return $day === (int) $rule['day'] && ($period !== 'year' || $month === (int) $rule['month']);
+    }
+
+    private function draftedDates(\DateTimeImmutable $first, int $count, string $period, array $rule): array
+    {
+        $weeks = ['week' => 1, '2-week' => 2, '3-week' => 3, '4-week' => 4];
+        $dates = [];
+        $candidate = $first;
+        for ($i = 0; $i < $count; ++$i) {
+            if ($i && isset($weeks[$period])) $candidate = $first->modify('+' . ($i * $weeks[$period]) . ' weeks');
+            if ($i && in_array($period, ['month', 'year'], true)) {
+                $candidate = $candidate->modify('+1 day');
+                while (!$this->matchesDraftRecurrence($candidate, $period, $rule)) $candidate = $candidate->modify('+1 day');
+            }
+            $dates[] = $candidate->format('Y-m-d');
+        }
+        return $dates;
+    }
+
+    private function jalaliParts(\DateTimeImmutable $date): array
+    {
+        $year = (int) $date->format('Y');
+        $month = (int) $date->format('n');
+        $day = (int) $date->format('j');
+        $shiftedYear = $year - 1600;
+        $days = 365 * $shiftedYear + intdiv($shiftedYear + 3, 4) - intdiv($shiftedYear + 99, 100) + intdiv($shiftedYear + 399, 400);
+        $monthDays = [31, 28 + (int) (($year % 4 === 0 && $year % 100 !== 0) || $year % 400 === 0), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        for ($i = 0; $i < $month - 1; ++$i) $days += $monthDays[$i];
+        $days += $day - 1 - 79;
+        $cycles = intdiv($days, 12053);
+        $days %= 12053;
+        $jalaliYear = 979 + 33 * $cycles + 4 * intdiv($days, 1461);
+        $days %= 1461;
+        if ($days >= 366) {
+            $jalaliYear += intdiv($days - 1, 365);
+            $days = ($days - 1) % 365;
+        }
+        return $days < 186 ? [$jalaliYear, 1 + intdiv($days, 31), 1 + $days % 31] : [$jalaliYear, 7 + intdiv($days - 186, 30), 1 + ($days - 186) % 30];
+    }
+
     private function createSessions(int $id, int $actor, array $sessions, array $room, array $teachers, array $students): void
     {
+        $roomTexts = $this->texts(['academy_branch_classrooms' => [(int) $room['classroom_id']]])['academy_branch_classrooms'][(int) $room['classroom_id']] ?? [];
+        $mode = ($roomTexts['delivery_mode'] ?? '') === 'online' ? 'online' : 'in_person';
+        if ($mode === 'online') {
+            $url = trim((string) ($roomTexts['online_join_url'] ?? ''));
+            if (!filter_var($url, FILTER_VALIDATE_URL) || parse_url($url, PHP_URL_SCHEME) !== 'https') {
+                throw new RuntimeException('لینک کلاس آنلاین معتبر نیست. ابتدا کلاس را ویرایش کنید.');
+            }
+        }
         foreach ($sessions as $s) {
             ScheduleGuard::available($s['date'], $s['startTime'], $s['endTime'], (int) ($s['timezoneId'] ?? 0), (int) $room['classroom_id'], array_merge($teachers, $students));
             $booking = DB::table('academy_branch_bookings')->insertGetId(['type' => 'group-class', 'status' => 'approved', 'requested_date' => $s['date'], 'start_time' => $s['startTime'], 'end_time' => $s['endTime'], 'timezone_id' => (int) ($s['timezoneId'] ?? 0) ?: null, 'created_by' => $actor, 'updated_by' => $actor]);
-            DB::table('academy_branch_course_term_sessions')->insert(['term_id' => $id, 'booking_id' => $booking, 'classroom_id' => (int) $room['classroom_id'], 'created_by' => $actor, 'updated_by' => $actor]);
+            DB::table('academy_branch_course_term_sessions')->insert(['term_id' => $id, 'booking_id' => $booking, 'classroom_id' => (int) $room['classroom_id'], 'delivery_mode' => $mode, 'created_by' => $actor, 'updated_by' => $actor]);
         }
     }
 
@@ -320,6 +519,127 @@ class AcademyTermService
             }
         }
         return ['times' => array_keys($slots), 'closed' => !$slots, 'timezoneId' => $timezoneId];
+    }
+
+    public function weeklyTemplateAvailability(int $actor, int $branchId, int $weekday, int $duration): array
+    {
+        if ($weekday < 0 || $weekday > 6 || $duration < 5 || $duration > 1440) throw new RuntimeException('روز هفته یا مدت جلسه معتبر نیست.');
+        $days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        $day = $days[$weekday];
+        $branch = $this->allowedBranch($actor, $branchId);
+        $academy = DB::table('academies')->where('academy_id', (int) $branch['academy_id'])->whereNull('deleted_at')->first();
+        $academyUserId = (int) ($academy['user_id'] ?? 0);
+        $branchUserId = (int) $branch['user_id'];
+        $read = static function (int $userId) use ($day): array {
+            if (!$userId) return [];
+            $stmt = db()->prepare('SELECT start_time,end_time,status,is_closed,timezone_id FROM user_availabilities WHERE user_id=? AND date IS NULL AND day_of_week=? AND is_repeating=1 AND unavailable_type IS NULL AND deleted_at IS NULL ORDER BY priority,user_availability_id');
+            $stmt->execute([$userId, $day]);
+            return $stmt->fetchAll();
+        };
+        $slots = static function (array $rows): array {
+            $result = [];
+            foreach ($rows as $row) {
+                if (($row['status'] ?? '') !== 'available' || (int) ($row['is_closed'] ?? 0) || !$row['start_time'] || !$row['end_time']) continue;
+                $from = (int) substr($row['start_time'], 0, 2) * 60 + (int) substr($row['start_time'], 3, 2);
+                $to = (int) substr($row['end_time'], 0, 2) * 60 + (int) substr($row['end_time'], 3, 2);
+                for ($minute = $from; $minute < $to; $minute += 5) $result[sprintf('%02d:%02d', intdiv($minute, 60), $minute % 60)] = true;
+            }
+            return $result;
+        };
+        $academyRows = $read($academyUserId);
+        $branchRows = $read($branchUserId);
+        $academySlots = $slots($academyRows);
+        $working = $branchRows ? $slots($branchRows) : $academySlots;
+        if ($branchRows && $academyRows) $working = array_intersect_key($working, $academySlots);
+        $times = [];
+        foreach (array_keys($working) as $start) {
+            $startMinute = (int) substr($start, 0, 2) * 60 + (int) substr($start, 3, 2);
+            if ($startMinute + $duration > 1440) continue;
+            $valid = true;
+            for ($minute = $startMinute; $minute < $startMinute + $duration; $minute += 5) {
+                if (!isset($working[sprintf('%02d:%02d', intdiv($minute, 60), $minute % 60)])) { $valid = false; break; }
+            }
+            if ($valid) $times[] = $start;
+        }
+        sort($times);
+        $zoneRow = $branchRows[0] ?? $academyRows[0] ?? null;
+        return ['times' => $times, 'closed' => !$working, 'timezoneId' => (int) ($zoneRow['timezone_id'] ?? 0)];
+    }
+
+    public function teacherStartTimes(int $actor, int $termId, int $teacherId, string $date, int $duration, array $candidateTimes, int $targetTimezoneId = 0): array
+    {
+        $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+        if (!$parsed || $parsed->format('Y-m-d') !== $date || $duration < 5 || $duration > 1440) throw new RuntimeException('تاریخ یا مدت جلسه معتبر نیست.');
+        $term = DB::table('academy_branch_course_terms')->where('term_id', $termId)->whereNull('deleted_at')->first();
+        $course = $term ? DB::table('academy_branch_courses')->where('course_id', (int) $term['course_id'])->whereNull('deleted_at')->first() : null;
+        $teacher = DB::table('academy_branch_members')->where('member_id', $teacherId)->whereNull('deleted_at')->first();
+        $enrolled = DB::table('academy_branch_course_term_enrollments')->where('term_id', $termId)->where('member_id', $teacherId)->where('type', 'teacher')->where('status', 'active')->whereNull('deleted_at')->first();
+        if (!$course || !$teacher || !$enrolled || (int) $teacher['academy_id'] !== (int) $course['academy_id']) throw new RuntimeException('مدرس عضو فعال این ترم نیست.');
+        $branchId = (int) ($course['branch_id'] ?: $teacher['branch_id']);
+        $this->allowedBranch($actor, $branchId);
+        if ((int) $teacher['branch_id'] !== $branchId) throw new RuntimeException('مدرس متعلق به شعبهٔ ترم نیست.');
+        $pdo = db();
+        $stmt = $pdo->prepare('SELECT start_time,end_time,status,is_closed,timezone_id FROM user_availabilities WHERE user_id=? AND date=? AND unavailable_type IS NULL AND deleted_at IS NULL ORDER BY priority,user_availability_id');
+        $stmt->execute([(int) $teacher['user_id'], $date]);
+        $rows = $stmt->fetchAll();
+        if (!$rows) {
+            $days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            $stmt = $pdo->prepare('SELECT start_time,end_time,status,is_closed,timezone_id FROM user_availabilities WHERE user_id=? AND date IS NULL AND day_of_week=? AND is_repeating=1 AND unavailable_type IS NULL AND deleted_at IS NULL ORDER BY priority,user_availability_id');
+            $stmt->execute([(int) $teacher['user_id'], $days[(int) $parsed->format('w')]]);
+            $rows = $stmt->fetchAll();
+        }
+        $sourceId = (int) ($rows[0]['timezone_id'] ?? 0);
+        $source = $sourceId ? DB::table('f_timezone')->where('timezone_id', $sourceId)->first() : null;
+        $target = $targetTimezoneId ? DB::table('f_timezone')->where('timezone_id', $targetTimezoneId)->first() : null;
+        $sourceZone = new \DateTimeZone((string) ($source['timezone'] ?? env('APP_TIMEZONE', 'Asia/Tehran')));
+        $targetZone = new \DateTimeZone((string) ($target['timezone'] ?? $sourceZone->getName()));
+        $slots = [];
+        foreach ($rows as $row) {
+            if (($row['status'] ?? '') !== 'available' || (int) ($row['is_closed'] ?? 0) || !$row['start_time'] || !$row['end_time']) continue;
+            $from = (int) substr($row['start_time'], 0, 2) * 60 + (int) substr($row['start_time'], 3, 2);
+            $until = (int) substr($row['end_time'], 0, 2) * 60 + (int) substr($row['end_time'], 3, 2);
+            for ($minute = $from; $minute < $until; $minute += 5) $slots[sprintf('%02d:%02d', intdiv($minute, 60), $minute % 60)] = true;
+        }
+        $stmt = $pdo->prepare('SELECT start_time,end_time FROM user_availabilities WHERE user_id=? AND date=? AND unavailable_type IS NOT NULL AND deleted_at IS NULL');
+        $stmt->execute([(int) $teacher['user_id'], $date]);
+        foreach ($stmt->fetchAll() as $exception) {
+            if (!$exception['start_time'] || !$exception['end_time']) return [];
+            $from = (int) substr($exception['start_time'], 0, 2) * 60 + (int) substr($exception['start_time'], 3, 2);
+            $until = (int) substr($exception['end_time'], 0, 2) * 60 + (int) substr($exception['end_time'], 3, 2);
+            for ($minute = $from; $minute < $until; $minute += 5) unset($slots[sprintf('%02d:%02d', intdiv($minute, 60), $minute % 60)]);
+        }
+        $converted = [];
+        foreach (array_keys($slots) as $slot) {
+            $time = (new \DateTimeImmutable($date . ' ' . $slot, $sourceZone))->setTimezone($targetZone);
+            if ($time->format('Y-m-d') === $date) $converted[$time->format('H:i')] = true;
+        }
+        $stmt = $pdo->prepare("SELECT b.start_time,b.end_time,b.timezone_id FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id JOIN academy_branch_course_term_enrollments e ON e.term_id=s.term_id AND e.type='teacher' AND e.status='active' AND e.deleted_at IS NULL JOIN academy_branch_members m ON m.member_id=e.member_id AND m.deleted_at IS NULL WHERE m.user_id=? AND b.requested_date=? AND s.term_id<>? AND s.deleted_at IS NULL AND b.deleted_at IS NULL AND b.status NOT IN ('canceled','rejected')");
+        $stmt->execute([(int) $teacher['user_id'], $date, $termId]);
+        $busy = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $bookingZone = (int) ($row['timezone_id'] ?? 0);
+            $bookingTimezone = $bookingZone ? DB::table('f_timezone')->where('timezone_id', $bookingZone)->first() : null;
+            $zone = new \DateTimeZone((string) ($bookingTimezone['timezone'] ?? $targetZone->getName()));
+            $busy[] = [(new \DateTimeImmutable($date . ' ' . $row['start_time'], $zone))->setTimezone($targetZone)->getTimestamp(), (new \DateTimeImmutable($date . ' ' . $row['end_time'], $zone))->setTimezone($targetZone)->getTimestamp()];
+        }
+        $result = [];
+        foreach ($candidateTimes as $start) {
+            if (!preg_match('/^\d{2}:\d{2}$/', (string) $start)) continue;
+            $startMinute = (int) substr($start, 0, 2) * 60 + (int) substr($start, 3, 2);
+            if ($startMinute + $duration > 1440) continue;
+            $valid = true;
+            for ($minute = $startMinute; $minute < $startMinute + $duration; $minute += 5) {
+                if (!isset($converted[sprintf('%02d:%02d', intdiv($minute, 60), $minute % 60)])) { $valid = false; break; }
+            }
+            if (!$valid) continue;
+            $from = (new \DateTimeImmutable($date . ' ' . $start, $targetZone))->getTimestamp();
+            $until = $from + $duration * 60;
+            foreach ($busy as [$busyFrom, $busyUntil]) {
+                if ($from < $busyUntil && $until > $busyFrom) { $valid = false; break; }
+            }
+            if ($valid) $result[] = $start;
+        }
+        return array_values(array_unique($result));
     }
 
     public function effectiveAvailability(int $actor, int $branchId, string $date): array

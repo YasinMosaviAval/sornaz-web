@@ -18,7 +18,7 @@ class Connection
             $config['charset']
         );
 
-        $this->pdo = new PDO(
+        $this->pdo = new PrefixedPDO(
             $dsn,
             $config['username'],
             $config['password'],

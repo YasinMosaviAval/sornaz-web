@@ -279,10 +279,10 @@ final class AdminAccountService
 
     private function setSetting(int $uid, string $key, string $value, int $actor): void
     {
-        $r = DB::table('z_user_settings')->where('user_id', $uid)->where('`key`', $key)->first();
+        $r = DB::table('z_user_settings')->where('user_id', $uid)->where('`key`', $key)->whereNull('deleted_at')->first();
         $v = ['value' => $value, 'type' => 'bool', 'visibility' => 'private', 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
         if ($r) {
-            DB::table('z_user_settings')->where('` user_setting_id`', (int) $r[' user_setting_id'])->update($v);
+            DB::table('z_user_settings')->where('`user_setting_id`', (int) $r['user_setting_id'])->update($v);
         } else {
             DB::table('z_user_settings')->insert(['user_id' => $uid, '`key`' => $key, 'created_by' => $actor] + $v);
         }

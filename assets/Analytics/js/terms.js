@@ -321,6 +321,22 @@ function validateTermData(data) {
     alert('نام ترم الزامی است');
     return false;
   }
+  if (data.undatedTemplate && !data.sessions?.[0]?.startTime) {
+    alert('ابتدا روز برگزاری و ساعت شروع معتبر را انتخاب کنید.');
+    return false;
+  }
+  if (data.undatedTemplate && !data.teachers?.length) {
+    alert('برای ترم باز، دست‌کم یک مدرس از فهرست مدرسان همان شعبه و درس انتخاب کنید.');
+    return false;
+  }
+  if (data.undatedTemplate && !['week', '2-week', '3-week', '4-week', 'month', 'year', 'no-period'].includes(data.repeatType)) {
+    alert('دورهٔ تکرار را دوباره انتخاب کنید.');
+    return false;
+  }
+  if (data.undatedTemplate && data.repeatType === 'no-period' && data.sessionCount !== 1) {
+    alert('برای «سایر (تاریخ دقیق)» تعداد جلسات باید یک باشد.');
+    return false;
+  }
   const teacherIds = (data.teachers || [])
     .map(function (teacher) {
       return String(teacher && teacher.id ? teacher.id : '');
@@ -878,6 +894,7 @@ window.renderTermsTable = async function (list) {
           ? window.getTermInlineExpandRowHTML(item)
           : '';
         tbody.appendChild(expandRow);
+        restrictRecordedTermEditor('inlineTerm' + item.id);
       } else if (attendanceTermRowId === item.id) {
         const expandRow = document.createElement('tr');
         expandRow.className = 'bg-gray-50 term-inline-expand';
@@ -1041,23 +1058,10 @@ window.promptAddTermDiscount = async function () {
 };
 
 window.promptAddTermClassroom = async function () {
-  const name = ((await AppDialog.prompt('نام کلاس جدید را وارد کنید:')) || '').trim();
-  if (!name) return;
-  if (
-    allTermClassroomOptions.some(function (c) {
-      return c.name === name;
-    })
-  )
-    return alert('این کلاس قبلاً وجود دارد');
-  const item = { id: Date.now(), name: name };
-  allTermClassroomOptions.push(item);
-  document.querySelectorAll('select[id$="Classroom"]').forEach(function (sel) {
-    const opt = document.createElement('option');
-    opt.value = item.id;
-    opt.textContent = name;
-    opt.selected = true;
-    sel.appendChild(opt);
-  });
+  window.closeModal?.();
+  window.showSection?.('classrooms');
+  await window.loadClassrooms?.();
+  window.openAddClassroomModal?.();
 };
 
 // ==================== multi fields helpers ====================
@@ -1146,7 +1150,15 @@ function readTermForm(prefix) {
       installmentCount,
       installments: Array.from({ length: installmentCount }, () => ({ amount: 1 })),
       discountId: Number(discount?.value || 0),
-      repeatType: repeat?.value || 'no-period',
+      repeatType: repeat?.value || '',
+      recurrence: !prefix && status?.value === 'open' ? {
+        weekday: value('RecurrenceWeekday')?.value ?? '',
+        day: value('RecurrenceDay')?.value ?? '',
+        month: value('RecurrenceMonth')?.value ?? '',
+        exactDate: value('RecurrenceExactDate')?.value ?? '',
+      } : null,
+      sessionCount: Math.max(1, Number(value('SessionCount')?.value || 1)),
+      undatedTemplate: !prefix && status?.value === 'open' && sessions?.dataset.undatedTemplate === '1',
       status: status?.value || 'pending',
       summary: value('Summary')?.value.trim() || '',
       description: value('Description')?.value.trim() || '',
@@ -1155,7 +1167,7 @@ function readTermForm(prefix) {
             .filter((x) => x.value)
             .map((x) => ({ id: Number(x.value), name: x.selectedOptions[0]?.textContent || '' }))
         : [],
-      students: students
+      students: status?.value === 'open' ? [] : students
         ? [...students.querySelectorAll('select')]
             .filter((x) => x.value)
             .map((x) => ({ id: Number(x.value), name: x.selectedOptions[0]?.textContent || '' }))
@@ -1171,6 +1183,7 @@ function readTermForm(prefix) {
               startTime,
               endTime: endTime(startTime, durationMinutes),
               durationMinutes,
+              timezoneId: Number(sessions.querySelectorAll('.term-session-timezone')[i]?.value || 0),
             };
           })
         : [],
@@ -1315,7 +1328,7 @@ window.loadTerms = async function () {
   }));
   window.termCourses = (courseData.courses || []).map((x) => ({ ...x, lessonId: x.lesson_id }));
   window.termTimezones = data.timezones || [];
-  window.termClassrooms = data.classrooms || [];
+  window.termClassrooms = (data.classrooms || []).map((room) => ({ ...room, name: room.deliveryMode === 'online' ? 'آنلاین · ' + room.name : room.name }));
   window.termCurrencies = data.currencies || [];
   window.termDiscounts = data.discounts || [];
   window.termMembers = data.members || [];
@@ -1420,6 +1433,13 @@ window.refreshTermPeople = function (prefix, type) {
         x.type === type &&
         (type !== 'teacher' || x.lessonId === course.lessonId)
     );
+  if (type === 'teacher') {
+    const note = termField(prefix, 'TeacherAvailabilityNote');
+    if (note) {
+      note.classList.toggle('hidden', !branch || available.length > 0);
+      note.textContent = 'برای این درس و شعبه مدرس واجد شرایط ثبت نشده است. ابتدا مدرس و درس او را در مدیریت پرسنل ثبت کنید.';
+    }
+  }
   selects.forEach((select, i) => {
     const value = select.value;
     select.disabled = i > 0 && !selects[i - 1].value;
@@ -1444,13 +1464,24 @@ window.rebuildDbTermSessions = function (prefix) {
     termId = box?.dataset.termId || 0,
     repeat = termField(prefix, 'RepeatType'),
     repeatField = termField(prefix, 'RepeatTypeField');
-  if (count === 1 && repeat) repeat.value = 'no-period';
-  repeatField?.classList.toggle('hidden', count === 1);
+  if (count === 1 && repeat && (prefix || termField(prefix, 'Status')?.value !== 'open')) repeat.value = 'no-period';
+  if (count > 1 && repeat?.value === 'no-period') repeat.value = 'week';
+  repeatField?.classList.toggle('hidden', !!prefix && count === 1);
+  if (!prefix) window.syncNewTermRecurrence?.(prefix);
+  if (!prefix && termField(prefix, 'Status')?.value === 'open' && box) {
+    const previous = { startTime: starts[0], durationMinutes: Number(durations[0] || firstDuration), timezoneId: Number(box.querySelector('.term-session-timezone')?.value || 0) };
+    box.innerHTML = window.getTermOpenSessionHTML(prefix, previous);
+    box.dataset.undatedTemplate = '1';
+    window.refreshTermOpenAvailability?.(prefix);
+    syncTermInstallmentLimit(prefix);
+    return;
+  }
+  if (box) box.dataset.undatedTemplate = '0';
   if (box)
     box.innerHTML = Array.from(
       { length: count },
       (_, i) =>
-        `<div class="w-full rounded-2xl border p-4"><label class="mb-2 block text-sm font-medium">جلسه ${i + 1}</label><div class="grid grid-cols-1 gap-2 sm:grid-cols-3">${window.getTermDateInputHTML(prefix, i, dates[i] || '', true)}<select disabled class="term-session-start w-full rounded-xl border px-3 py-2.5 disabled:bg-gray-100" ${i === 0 ? `onchange="syncTermSessionTimes('${prefix}')"` : ''}>${window.getTermTimeOptions(starts[i] ? [starts[i]] : [], starts[i] || '')}</select><div class="relative"><input disabled type="number" min="5" max="1440" step="5" value="${durations[i] || firstDuration}" class="term-session-duration w-full rounded-xl border px-3 py-2.5 pl-14 disabled:bg-gray-100" oninput="termDurationChanged('${prefix}',${i})" onchange="termDurationChanged('${prefix}',${i})"><span class="pointer-events-none absolute left-3 top-3 text-xs text-gray-400">دقیقه</span></div></div><p class="term-session-note mt-2 hidden text-xs text-amber-700"></p></div>`
+        `<div class="w-full border-b border-gray-100 py-2 last:border-b-0"><label class="mb-1 block text-xs font-medium text-gray-500">جلسه ${i + 1}</label><div class="grid grid-cols-1 gap-2 sm:grid-cols-4">${window.getTermDateInputHTML(prefix, i, dates[i] || '', true)}<select disabled class="term-session-start w-full rounded-xl border px-3 py-2.5 disabled:bg-gray-100" ${i === 0 ? `onchange="syncTermSessionTimes('${prefix}')"` : ''}>${window.getTermTimeOptions(starts[i] ? [starts[i]] : [], starts[i] || '')}</select><div class="relative"><input disabled type="number" min="5" max="1440" step="5" value="${durations[i] || firstDuration}" class="term-session-duration w-full rounded-xl border px-3 py-2.5 pl-14 disabled:bg-gray-100" oninput="termDurationChanged('${prefix}',${i})" onchange="termDurationChanged('${prefix}',${i})"><span class="pointer-events-none absolute left-3 top-3 text-xs text-gray-400">دقیقه</span></div></div><p class="term-session-note mt-2 hidden text-xs text-amber-700"></p></div>`
     ).join('');
   box.dataset.termId = termId;
   syncTermInstallmentLimit(prefix);
@@ -1460,6 +1491,10 @@ window.rebuildDbTermSessions = function (prefix) {
 };
 const rebuildDbTermSessionsWithoutTimezones = window.rebuildDbTermSessions;
 window.rebuildDbTermSessions = function (prefix) {
+  if (!prefix && termField(prefix, 'Status')?.value === 'open') {
+    rebuildDbTermSessionsWithoutTimezones(prefix);
+    return;
+  }
   const oldBox = termField(prefix, 'SessionsContainer'),
     oldZones = oldBox
       ? [...oldBox.querySelectorAll('.term-session-timezone')].map((x) => x.value)
@@ -1526,7 +1561,83 @@ window.syncTermPeopleVisibility = function (prefix) {
     teachers = termField(prefix, 'TeachersField'),
     students = termField(prefix, 'StudentsField');
   teachers?.classList.toggle('hidden', !['open', 'ongoing'].includes(status));
-  students?.classList.toggle('hidden', status !== 'open');
+  students?.classList.toggle('hidden', status !== 'ongoing');
+};
+window.syncNewTermStatus = function (prefix) {
+  if (prefix) return;
+  const box = termField(prefix, 'SessionsContainer');
+  const undated = termField(prefix, 'Status')?.value === 'open';
+  if (!box || (box.dataset.undatedTemplate === '1') === undated) return;
+  rebuildDbTermSessions(prefix);
+  window.syncNewTermRecurrence?.(prefix);
+  const label = box.previousElementSibling;
+  if (label) label.textContent = undated ? 'منطقه زمانی، ساعت شروع و مدت جلسه؛ تاریخ هنگام تأیید هنرجو تعیین می‌شود' : 'تاریخ، منطقه زمانی، ساعت شروع و مدت جلسه';
+};
+window.syncNewTermRecurrence = function (prefix) {
+  if (prefix) return;
+  const field = termField(prefix, 'RecurrenceField');
+  if (!field) return;
+  const weekdaySelect = termField(prefix, 'RecurrenceWeekday');
+  if (weekdaySelect && !weekdaySelect.dataset.availabilityBound) {
+    weekdaySelect.addEventListener('change', () => window.refreshTermOpenAvailability(prefix));
+    weekdaySelect.dataset.availabilityBound = '1';
+  }
+  const period = termField(prefix, 'RepeatType')?.value || 'no-period';
+  const count = Number(termField(prefix, 'SessionCount')?.value || 1);
+  const exactOption = termField(prefix, 'RepeatType')?.querySelector('option[value="no-period"]');
+  if (exactOption) exactOption.disabled = count > 1;
+  const open = termField(prefix, 'Status')?.value === 'open';
+  field.classList.toggle('hidden', !open);
+  field.querySelectorAll('[data-recurrence-kind]').forEach((node) => {
+    const kind = node.dataset.recurrenceKind;
+    node.classList.toggle('hidden', !open || !(kind === 'week' && ['week', '2-week', '3-week', '4-week'].includes(period) || kind === 'month' && ['month', 'year'].includes(period) || kind === 'year' && period === 'year' || kind === 'exact' && period === 'no-period'));
+  });
+  window.refreshTermOpenAvailability?.(prefix);
+};
+window.refreshTermOpenAvailability = async function (prefix) {
+  const box = termField(prefix, 'SessionsContainer');
+  if (!box || box.dataset.undatedTemplate !== '1') return;
+  const start = box.querySelector('.term-session-start');
+  const duration = Math.max(5, Number(box.querySelector('.term-session-duration')?.value || 90));
+  const zone = box.querySelector('.term-session-timezone');
+  if (!start) return;
+  const preferred = start.value || start.dataset.preferredStart || '10:00';
+  const period = termField(prefix, 'RepeatType')?.value || 'no-period';
+  const weekly = ['week', '2-week', '3-week', '4-week'].includes(period);
+  const weekday = termField(prefix, 'RecurrenceWeekday')?.value ?? '';
+  const classroom = Number(termField(prefix, 'Classroom')?.value || 0);
+  const branch = Number(termClassrooms.find((room) => room.id === classroom)?.branchId || 0);
+  const serial = String(Number(box.dataset.availabilitySerial || 0) + 1);
+  box.dataset.availabilitySerial = serial;
+  start.disabled = true;
+  start.innerHTML = `<option value="">${weekly ? 'در حال دریافت ساعت‌های کاری...' : 'در حال آماده‌سازی ساعت‌ها...'}</option>`;
+  if (!weekly) {
+    const limit = Math.max(0, Math.floor((1440 - duration) / 5));
+    const times = Array.from({ length: limit + 1 }, (_, i) => String(Math.floor(i * 5 / 60)).padStart(2, '0') + ':' + String(i * 5 % 60).padStart(2, '0'));
+    start.innerHTML = window.getTermTimeOptions(times, preferred);
+    start.value = times.includes(preferred) ? preferred : times.includes('10:00') ? '10:00' : times[0];
+    start.disabled = !times.length;
+    return;
+  }
+  if (weekday === '' || !branch || !classroom) {
+    start.innerHTML = `<option value="">${weekday === '' ? 'ابتدا روز هفته را انتخاب کنید' : 'ابتدا کلاس برگزاری را انتخاب کنید'}</option>`;
+    return;
+  }
+  try {
+    const query = new URLSearchParams({ branch, classroom, weekday, duration });
+    const data = await termApi('/academy/admin/term-available-times?' + query);
+    if (box.dataset.availabilitySerial !== serial || !box.isConnected) return;
+    const times = data.times || [];
+    if (zone && data.timezoneId) zone.value = String(data.timezoneId);
+    start.innerHTML = times.length ? window.getTermTimeOptions(times, preferred) : '<option value="">در این روز ساعت کاری کافی وجود ندارد</option>';
+    start.value = times.includes(preferred) ? preferred : times[0] || '';
+    start.disabled = !times.length;
+    start.dataset.preferredStart = start.value;
+  } catch (error) {
+    if (box.dataset.availabilitySerial !== serial || !box.isConnected) return;
+    start.innerHTML = '<option value="">دریافت ساعت‌های کاری ناموفق بود</option>';
+    start.title = error.message || 'خطا در دریافت ساعت‌های کاری';
+  }
 };
 let termDurationTimer;
 window.termDurationChanged = function (prefix, index) {
@@ -1554,7 +1665,7 @@ window.syncTermInstallmentLimit = function (prefix) {
 window.syncTermDateAvailability = function (prefix) {
   const ready = !!termField(prefix, 'Course')?.value && !!termField(prefix, 'Classroom')?.value,
     box = termField(prefix, 'SessionsContainer');
-  if (!box) return;
+  if (!box || box.dataset.undatedTemplate === '1') return;
   [...box.querySelectorAll('.term-session-date')].forEach((input) => {
     input.disabled = !ready;
     window.syncLocalizedDateInput?.(input);
@@ -1650,6 +1761,7 @@ window.termTimezoneChanged = function (prefix, index, select) {
 window.refreshAllTermSessionAvailability = async function (prefix) {
   const box = termField(prefix, 'SessionsContainer');
   if (!box) return;
+  if (box.dataset.undatedTemplate === '1') return window.refreshTermOpenAvailability(prefix);
   await Promise.all(
     [...box.querySelectorAll('.term-session-date')].map((_, i) =>
       refreshTermSessionAvailability(prefix, i)
@@ -1962,12 +2074,15 @@ window.openAddTermModal = async function () {
   document.getElementById('modalContainer').innerHTML = window.getTermAddModalHTML
     ? window.getTermAddModalHTML()
     : '';
+  window.initLocalizedDateInputs?.(document.getElementById('modalContainer'));
+  window.syncNewTermRecurrence?.('');
   syncTermFinancialFields('');
   syncTermPeopleVisibility('');
   refreshTermDependencies('');
 };
 
 async function validateTermScheduleBeforeSave(data, excludeTerm) {
+  if (data.undatedTemplate) return true;
   const maxInstallments = Math.max(2, data.sessions.length),
     organization = termBranches.find((x) => x.id === data.organizationUserId),
     label = organization?.kind === 'academy' ? 'آموزشگاه' : 'شعبه';
@@ -1997,6 +2112,18 @@ async function validateTermScheduleBeforeSave(data, excludeTerm) {
 
 window.saveTerm = async function () {
   const data = readTermForm('');
+  if (data.undatedTemplate) {
+    const label = termField('', 'RepeatType')?.selectedOptions[0]?.textContent.trim() || '';
+    const visiblePeriods = {
+      'هفتگی': 'week', 'دو هفته یک‌بار': '2-week', 'سه هفته یک‌بار': '3-week',
+      'چهار هفته یک‌بار': '4-week', 'ماهانه': 'month', 'سالانه': 'year',
+    };
+    data.repeatType = visiblePeriods[label] || data.repeatType;
+    if (data.repeatType === 'no-period' && data.sessionCount > 1 && !data.recurrence?.exactDate && /^[0-6]$/.test(String(data.recurrence?.weekday ?? ''))) {
+      data.repeatType = 'week';
+    }
+    if (data.recurrence) data.recurrence.period = data.repeatType;
+  }
   if (!validateTermData(data)) return;
   try {
     await validateTermScheduleBeforeSave(data, 0);
@@ -2018,6 +2145,18 @@ window.viewTerm = async function (id) {
     ? window.getTermDetailsModalHTML(item)
     : '';
 };
+
+function restrictRecordedTermEditor(prefix) {
+  const root = document.querySelector(`[data-term-record-editor="${prefix}"]`);
+  if (!root) return;
+  const editable = new Set([prefix + 'Name', prefix + 'Summary', prefix + 'Description']);
+  root.querySelectorAll('input, select, textarea, button').forEach((control) => {
+    if (!editable.has(control.id)) {
+      control.disabled = true;
+      control.classList.add('opacity-60');
+    }
+  });
+}
 
 function openTermMetadataEditor(item) {
   const en = document.documentElement.lang === 'en';
@@ -2047,7 +2186,9 @@ function openTermMetadataEditor(item) {
 window.editTerm = async function (id) {
   const item = allTerms.find((x) => x.id === id);
   if (!item) return;
-  openTermMetadataEditor(item);
+  if (typeof window.getTermEditModalHTML !== 'function') return openTermMetadataEditor(item);
+  document.getElementById('modalContainer').innerHTML = window.getTermEditModalHTML(item);
+  restrictRecordedTermEditor('editTerm');
 };
 
 window.saveEditedTerm = async function (id) {
@@ -2078,9 +2219,8 @@ window.saveEditedTerm = async function (id) {
 
 window.toggleTermInlineEdit = async function (id) {
   attendanceTermRowId = null;
-  editingTermRowId = null;
+  editingTermRowId = editingTermRowId === id ? null : id;
   renderTermsTable(filteredTerms);
-  await window.editTerm(id);
 };
 window.cycleTermStatus = async function (id) {
   closeTermInlineEdit();
@@ -2093,14 +2233,19 @@ window.cycleTermStatus = async function (id) {
 };
 
 window.saveInlineTerm = async function (id) {
-  const data = readTermForm('inlineTerm' + id);
-  if (!validateTermData(data)) return;
+  const prefix = 'inlineTerm' + id;
+  const data = {
+    metadataOnly: true,
+    name: termField(prefix, 'Name')?.value.trim() || '',
+    summary: termField(prefix, 'Summary')?.value || '',
+    description: termField(prefix, 'Description')?.value || '',
+  };
+  if (!data.name) return termField(prefix, 'Name')?.reportValidity();
   const index = allTerms.findIndex(function (x) {
     return x.id === id;
   });
   if (index === -1) return;
   try {
-    await validateTermScheduleBeforeSave(data, id);
     await termApi('/academy/admin/terms/' + id + '/update', data);
     editingTermRowId = null;
     await loadTerms();

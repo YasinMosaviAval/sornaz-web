@@ -61,7 +61,8 @@ final class AcademyScopedBackupService
                 $selected[$t][] = $r[$pk];
                 $cols = '`' . implode('`,`', array_map(fn ($x) => str_replace('`', '``', $x), array_keys($r))) . '`';
                 $vals = implode(',', array_map(fn ($v) => $v === null ? 'NULL' : db()->quote((string) $v), array_values($r)));
-                $dump .= "INSERT INTO `$t` ($cols) VALUES ($vals);\n";
+                $physical = db() instanceof \Core\database\PrefixedPDO ? \Core\database\TableNames::physical($t) : $t;
+                $dump .= "INSERT INTO `$physical` ($cols) VALUES ($vals);\n";
             }$dump .= "\n";
         }
         $translationParts = [];
@@ -75,7 +76,8 @@ final class AcademyScopedBackupService
             foreach ($rows as $r) {
                 $cols = '`' . implode('`,`', array_keys($r)) . '`';
                 $vals = implode(',', array_map(fn ($v) => $v === null ? 'NULL' : db()->quote((string) $v), array_values($r)));
-                $dump .= "INSERT INTO `translations` ($cols) VALUES ($vals);\n";
+                $physical = db() instanceof \Core\database\PrefixedPDO ? \Core\database\TableNames::physical('translations') : 'translations';
+                $dump .= "INSERT INTO `$physical` ($cols) VALUES ($vals);\n";
             }
         }
         $dump .= "\nCOMMIT;\n";
@@ -109,7 +111,8 @@ final class AcademyScopedBackupService
     private function tables(): array
     {
         $q = db()->query("SELECT table_name FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE' ORDER BY table_name");
-        return $q->fetchAll(\PDO::FETCH_COLUMN);
+        $tables = $q->fetchAll(\PDO::FETCH_COLUMN);
+        return db() instanceof \Core\database\PrefixedPDO ? array_map([\Core\database\TableNames::class, 'logical'], $tables) : $tables;
     }
 
     private function ids(array $r, string $k): array

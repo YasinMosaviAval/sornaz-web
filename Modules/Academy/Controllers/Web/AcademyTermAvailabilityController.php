@@ -14,6 +14,10 @@ class AcademyTermAvailabilityController
     public function index()
     {
         try {
+            if (isset($_GET['weekday'])) {
+                $availability = $this->service->weeklyTemplateAvailability((int) auth()->id(), (int) ($_GET['branch'] ?? 0), (int) $_GET['weekday'], (int) ($_GET['duration'] ?? 90));
+                return ResponseFactory::json(['success' => true, 'data' => ['times' => $availability['times'], 'closed' => $availability['closed'], 'timezoneId' => $availability['timezoneId']]]);
+            }
             $organizationKind = (string) ($_GET['organizationKind'] ?? 'branch');
             $availability = $organizationKind === 'academy'
                 ? $this->service->academyAvailability((int) auth()->id(), (int) ($_GET['organizationUserId'] ?? 0), (string) ($_GET['date'] ?? ''), (int) ($_GET['timezoneId'] ?? 0))
@@ -68,6 +72,10 @@ class AcademyTermAvailabilityController
                     }
                     return true;
                 }));
+            }
+            $teacherId = (int) ($_GET['teacher'] ?? 0);
+            if ($teacherId) {
+                $times = $this->service->teacherStartTimes((int) auth()->id(), (int) ($_GET['term'] ?? 0), $teacherId, (string) ($_GET['date'] ?? ''), $duration, $times, (int) ($availability['timezoneId'] ?? ($_GET['timezoneId'] ?? 0)));
             }
             $selectedStart = (string) ($_GET['selectedStart'] ?? '');
             $sourceTimezoneId = (int) ($_GET['sourceTimezoneId'] ?? 0);

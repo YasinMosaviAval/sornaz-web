@@ -21,6 +21,7 @@
 
 # Local database sources and safety backups
 /docs/database/backups/
+/docs/database/*.local.json
 /docs/database/sornaz database/
 
 # Runtime chat uploads
@@ -44,3 +45,4 @@
 /storage/theme-fix-baseline.txt
 /storage/code-quality/
 /scripts/format-tools/node_modules/
+/scripts/*.local.php

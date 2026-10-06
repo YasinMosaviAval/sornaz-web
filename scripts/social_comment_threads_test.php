@@ -9,6 +9,8 @@ $db=new PDO('sqlite::memory:');$db->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_
 $db->sqliteCreateFunction('UTC_TIMESTAMP',fn()=>gmdate('Y-m-d H:i:s'));
 $db->exec('CREATE TABLE social_comments(id INTEGER PRIMARY KEY AUTOINCREMENT,post_id INTEGER,user_id INTEGER,parent_id INTEGER,body TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP,deleted_at TEXT);
 CREATE TABLE social_comment_likes(comment_id INTEGER,user_id INTEGER,PRIMARY KEY(comment_id,user_id));');
+require_once __DIR__.'/lib/TranslatedTextFixture.php';
+TranslatedTextFixture::install($db);
 $repository=new class($db) extends \Modules\Social\Repositories\SocialRepository {
  public function query(string $sql,array $params=[]):array{return parent::query(str_replace('INSERT IGNORE','INSERT OR IGNORE',$sql),$params);}
 };

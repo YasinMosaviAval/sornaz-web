@@ -28,6 +28,11 @@
         </div>
     </div>
 
+    <div class="mb-6 rounded-2xl border border-indigo-200 bg-indigo-50 p-4 text-sm leading-7 text-indigo-900">
+        <strong class="block">پیش از پذیرش هنرجو برای مدرس جدید</strong>
+        پس از ثبت استاد، همهٔ روزها و ساعت‌های قابل تدریس او را در «زمان‌بندی اعضا» ثبت کنید. سپس در «مدیریت ترم‌ها» برای هر ساعت قابل ارائه، ترم بازی بدون هنرجو و تاریخ با مدرس، کلاس برگزاری، تعداد جلسات و الگوی ساعت بسازید. تاریخ جلسهٔ اول هنگام فعال‌سازی ثبت‌نام تعیین می‌شود.
+    </div>
+
     <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
         <div class="flex gap-2 min-w-max" id="staffBranchTabs">
             <button data-staff-organization="all" onclick="filterStaffByBranch('all')" class="staff-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium bg-indigo-600 text-white">همه</button>

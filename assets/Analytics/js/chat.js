@@ -69,6 +69,7 @@
       closeMobileChat();
     }
   }
+  window.reloadChat = load;
   function renderList() {
     const box = document.getElementById('chatConversationList'),
       query = (document.getElementById('chatConversationSearch')?.value || '').trim().toLowerCase(),

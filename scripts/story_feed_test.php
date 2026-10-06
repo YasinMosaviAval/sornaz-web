@@ -14,6 +14,8 @@ CREATE TABLE users(user_id INTEGER,username TEXT,avatar_file_id INTEGER,type TEX
 INSERT INTO social_follows VALUES(7,2);
 INSERT INTO social_posts VALUES(1,1,"story",NULL,NULL,NULL),(2,2,"story",NULL,NULL,NULL),(3,3,"story",NULL,NULL,NULL),(4,7,"story",NULL,NULL,NULL),(5,2,"story",NULL,NULL,"2000-01-01"),(6,2,"story",NULL,"2020-01-01",NULL),(7,3,"post",NULL,NULL,NULL);');
 $db->exec("INSERT INTO users(user_id,visibility) VALUES(1,'public'),(2,'public'),(3,'public'),(7,'public');");
+require_once __DIR__.'/lib/TranslatedTextFixture.php';
+TranslatedTextFixture::install($db);
 $service=new class(new \Modules\Social\Repositories\SocialRepository($db)) extends \Modules\Social\Services\SocialService {
     public function profile(int $actor,int $id):array{return ['id'=>$id];}
 };

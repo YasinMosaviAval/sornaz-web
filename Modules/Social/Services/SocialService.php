@@ -23,6 +23,7 @@ class SocialService
     {
         $user = $this->visibleUser($actor, $id);
         $profile = $this->r->one('SELECT * FROM social_profiles WHERE user_id=?', [$id]) ?: [];
+        $profile['bio']=\Core\translation\EntityText::get('social_profiles',$id,'bio',$this->r->connection());
         $avatar = $this->url($profile['avatar_id'] ?? null);
         if (!$avatar && !empty($user['avatar_file_id'])) {
             $legacy = $this->r->one('SELECT path FROM media_files WHERE media_file_id=? AND deleted_at IS NULL', [(int) $user['avatar_file_id']]);
@@ -172,7 +173,10 @@ class SocialService
             }
             $ids[] = $id ?: null;
         }
-        $this->r->query('INSERT INTO social_profiles(user_id,display_name,bio,avatar_id,cover_id) VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE display_name=VALUES(display_name),bio=VALUES(bio),avatar_id=VALUES(avatar_id),cover_id=VALUES(cover_id)', [$actor, $name, $bio, ...$ids]);
+        $this->r->transaction(function() use($actor,$name,$bio,$ids){
+        $this->r->query('INSERT INTO social_profiles(user_id,display_name,avatar_id,cover_id) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE display_name=VALUES(display_name),avatar_id=VALUES(avatar_id),cover_id=VALUES(cover_id)', [$actor, $name, ...$ids]);
+        \Core\translation\EntityText::save('social_profiles',$actor,'bio',$bio,$actor,$this->r->connection());
+        });
         return $this->profile($actor, $actor);
     }
 
@@ -249,6 +253,7 @@ class SocialService
     {
         $this->visibleUser($actor, (int) $p['owner_id']);
         $id = (int) $p['id'];
+        $p['body']=\Core\translation\EntityText::get('social_posts',$id,'body',$this->r->connection());
         $p['author'] = $this->profile($actor, (int) $p['owner_id']);
         $p['media'] = $this->url($p['media_id']);
         $p['liked'] = (bool) $this->r->one("SELECT 1 FROM social_reactions WHERE user_id=? AND post_id=? AND kind='like'", [$actor, $id]);
@@ -256,7 +261,7 @@ class SocialService
         $p['likes'] = (int) $this->r->one("SELECT COUNT(*) n FROM social_reactions WHERE post_id=? AND kind='like'", [$id])['n'];
         if ($p['kind'] === 'post') {
             $p['comment_count'] = (int) $this->r->one('SELECT COUNT(*) n FROM social_comments WHERE post_id=? AND deleted_at IS NULL', [$id])['n'];
-            $p['comments'] = $this->r->query('SELECT c.id,c.body,c.parent_id,c.created_at,u.username,u.user_id FROM social_comments c JOIN users u ON u.user_id=c.user_id WHERE c.post_id=? AND c.deleted_at IS NULL ORDER BY c.id DESC LIMIT 3', [$id]);
+            $p['comments'] = $this->r->query('SELECT c.id,'.\Core\translation\EntityText::expression('social_comments','c.id','body').' AS body,c.parent_id,c.created_at,u.username,u.user_id FROM social_comments c JOIN users u ON u.user_id=c.user_id WHERE c.post_id=? AND c.deleted_at IS NULL ORDER BY c.id DESC LIMIT 3', [$id]);
         }
         if ($p['kind'] === 'story') {
             $p['mentions'] = array_map(fn ($u) => $this->profile($actor, (int) $u['user_id']), $this->r->query("SELECT sm.user_id FROM social_story_mentions sm JOIN users u ON u.user_id=sm.user_id WHERE sm.story_id=? AND u.deleted_at IS NULL AND (u.visibility IS NULL OR u.visibility<>'private' OR u.user_id=?)", [$id, $actor]));

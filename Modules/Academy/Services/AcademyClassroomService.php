@@ -311,7 +311,7 @@ class AcademyClassroomService
         $assets = DB::table('academy_branch_classroom_assets')->where('classroom_id', $id)->whereNull('deleted_at')->get();
         $branch = DB::table('academy_branches')->where('branch_id', (int) $r['branch_id'])->first();
         $typeTitle = $type ? ($this->tr(self::TABLE, (int) $type['classroom_type_id'], 'title') ?: 'نوع کلاس ' . $type['classroom_type_id']) : '—';
-        return ['id' => $id, 'name' => $this->tr('academy_branch_classrooms', $id, 'title') ?: 'کلاس ' . $id, 'summary' => $this->tr('academy_branch_classrooms', $id, 'summary'), 'description' => $this->tr('academy_branch_classrooms', $id, 'description'), 'typeId' => (int) ($r['type_id'] ?: 0), 'type' => $typeTitle, 'typeLabel' => $typeTitle, 'branchId' => (int) $r['branch_id'], 'branchName' => $branch ? ($this->tr('academy_branches', (int) $branch['branch_id'], 'name') ?: 'شعبه ' . $branch['branch_id']) : '—', 'capacity' => (int) $r['capacity'], 'status' => match ($r['status']) {
+        return ['id' => $id, 'name' => $this->tr('academy_branch_classrooms', $id, 'title') ?: 'کلاس ' . $id, 'summary' => $this->tr('academy_branch_classrooms', $id, 'summary'), 'description' => $this->tr('academy_branch_classrooms', $id, 'description'), 'deliveryMode' => $this->tr('academy_branch_classrooms', $id, 'delivery_mode') === 'online' ? 'online' : 'in_person', 'onlineUrl' => $this->tr('academy_branch_classrooms', $id, 'online_join_url'), 'typeId' => (int) ($r['type_id'] ?: 0), 'type' => $typeTitle, 'typeLabel' => $typeTitle, 'branchId' => (int) $r['branch_id'], 'branchName' => $branch ? ($this->tr('academy_branches', (int) $branch['branch_id'], 'name') ?: 'شعبه ' . $branch['branch_id']) : '—', 'capacity' => (int) $r['capacity'], 'status' => match ($r['status']) {
             'available' => 'در دسترس','unavailable' => 'خارج از دسترس',default => 'در انتظار تأیید'
         }, 'statusValue' => (string) $r['status'], 'equipment' => array_map(fn ($x) => ['id' => (int) $x['classroom_asset_id'], 'name' => $this->tr('academy_branch_classroom_assets', (int) $x['classroom_asset_id'], 'title'), 'qty' => (int) $x['quantity']], $assets)];
     }
@@ -336,8 +336,12 @@ class AcademyClassroomService
             if ($id && !$room) {
                 throw new RuntimeException('کلاس یافت نشد.');
             }
+            [$oldMode, $deliveryMode, $onlineUrl] = $this->roomDelivery($d, $room, $id);
             if ($room) {
                 $this->allowedBranch($a, (int) $room['branch_id'], $admin);
+                if ($oldMode !== $deliveryMode && DB::table('academy_branch_course_term_sessions')->where('classroom_id', $id)->whereNull('deleted_at')->first()) {
+                    throw new RuntimeException('شیوه برگزاری کلاس دارای جلسه ثبت‌شده را نمی‌توان تغییر داد.');
+                }
             }
             $requested = (string) ($d['statusValue'] ?? $d['status'] ?? 'available');
             $status = $receptionist ? ($room ? (string) $room['status'] : 'pending') : (in_array($requested, ['available', 'در دسترس'], true) ? 'available' : 'unavailable');
@@ -350,20 +354,39 @@ class AcademyClassroomService
                 $id = (int) DB::table('academy_branch_classrooms')->insertGetId(['created_by' => $a] + $v);
             }
             $this->set('academy_branch_classrooms', $id, ['title' => $name, 'summary' => trim((string) ($d['summary'] ?? '')), 'description' => trim((string) ($d['description'] ?? ''))], $a);
-            $old = DB::table('academy_branch_classroom_assets')->where('classroom_id', $id)->get();
-            $oldIds = array_map(fn ($x) => (int) $x['classroom_asset_id'], $old);
-            if ($oldIds) {
-                DB::table('translations')->where('table_name', 'academy_branch_classroom_assets')->whereIn('table_id', $oldIds)->delete();
-                DB::table('academy_branch_classroom_assets')->whereIn('classroom_asset_id', $oldIds)->delete();
-            }foreach (($d['equipment'] ?? []) as $asset) {
-                $title = trim((string) ($asset['name'] ?? ''));
-                if (!$title) {
-                    continue;
-                }
-                $aid = (int) DB::table('academy_branch_classroom_assets')->insertGetId(['classroom_id' => $id, 'quantity' => max(1, (int) ($asset['qty'] ?? 1)), 'created_by' => $a, 'updated_by' => $a]);
-                $this->set('academy_branch_classroom_assets', $aid, ['title' => $title], $a);
-            }return $this->room(DB::table('academy_branch_classrooms')->where('classroom_id', $id)->first()) + ['canChangeStatus' => !$receptionist];
+            $this->set('academy_branch_classrooms', $id, ['delivery_mode' => $deliveryMode, 'online_join_url' => $deliveryMode === 'online' ? $onlineUrl : ''], $a);
+            $this->replaceRoomEquipment($id, $a, $d['equipment'] ?? []);
+            return $this->room(DB::table('academy_branch_classrooms')->where('classroom_id', $id)->first()) + ['canChangeStatus' => !$receptionist];
         });
+    }
+
+    private function roomDelivery(array $data, ?array $room, int $id): array
+    {
+        $oldMode = $room && $this->tr('academy_branch_classrooms', $id, 'delivery_mode') === 'online' ? 'online' : 'in_person';
+        $mode = ($data['deliveryMode'] ?? $oldMode) === 'online' ? 'online' : 'in_person';
+        $url = trim((string) ($data['onlineUrl'] ?? ($room ? $this->tr('academy_branch_classrooms', $id, 'online_join_url') : '')));
+        if ($mode === 'online' && (strlen($url) > 2048 || !filter_var($url, FILTER_VALIDATE_URL) || parse_url($url, PHP_URL_SCHEME) !== 'https' || parse_url($url, PHP_URL_USER) !== null || parse_url($url, PHP_URL_PASS) !== null)) {
+            throw new RuntimeException('برای کلاس آنلاین، لینک معتبر HTTPS وارد کنید.');
+        }
+        return [$oldMode, $mode, $url];
+    }
+
+    private function replaceRoomEquipment(int $roomId, int $actor, array $equipment): void
+    {
+        $old = DB::table('academy_branch_classroom_assets')->where('classroom_id', $roomId)->get();
+        $oldIds = array_map(fn ($item) => (int) $item['classroom_asset_id'], $old);
+        if ($oldIds) {
+            DB::table('translations')->where('table_name', 'academy_branch_classroom_assets')->whereIn('table_id', $oldIds)->delete();
+            DB::table('academy_branch_classroom_assets')->whereIn('classroom_asset_id', $oldIds)->delete();
+        }
+        foreach ($equipment as $asset) {
+            $title = trim((string) ($asset['name'] ?? ''));
+            if ($title === '') {
+                continue;
+            }
+            $assetId = (int) DB::table('academy_branch_classroom_assets')->insertGetId(['classroom_id' => $roomId, 'quantity' => max(1, (int) ($asset['qty'] ?? 1)), 'created_by' => $actor, 'updated_by' => $actor]);
+            $this->set('academy_branch_classroom_assets', $assetId, ['title' => $title], $actor);
+        }
     }
 
     public function cycleRoomStatus(int $a, int $id, bool $admin): array

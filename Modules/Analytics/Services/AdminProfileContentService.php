@@ -15,7 +15,7 @@ final class AdminProfileContentService
         'educations' => ['table' => 'user_educations', 'key' => 'user_education_id', 'dates' => ['start_date', 'end_date'], 'texts' => ['degree', 'institution', 'field', 'description']],
         'events' => ['table' => 'user_events', 'key' => 'user_event_id', 'dates' => ['event_date'], 'texts' => ['title', 'description']],
         'polls' => ['table' => 'user_polls', 'key' => 'user_poll_id', 'dates' => ['expires_at'], 'texts' => ['question', 'description']],
-        'publications' => ['table' => 'user_publications', 'key' => 'user_publication_id', 'dates' => ['published_date'], 'texts' => []],
+        'publications' => ['table' => 'user_publications', 'key' => 'user_publication_id', 'dates' => ['published_date'], 'texts' => ['content']],
     ];
 
     public function index(int $actor, string $entity): array
@@ -48,7 +48,7 @@ final class AdminProfileContentService
             $row['canChangeStatus'] = $canModerate && (bool) $organization['writable'];
             $row['approval_status'] = $row['approved_at'] ? 'approved' : 'pending';
             foreach ($c['texts'] as $f) {
-                $row[$f] = $this->text($c['table'], $id, $f);
+                $row[$f] = $entity === 'publications' && $f === 'content' ? \Core\translation\EntityText::get('user_publications',$id,'content') : $this->text($c['table'], $id, $f);
             }
             if ($entity === 'polls') {
                 $row['options'] = $this->pollOptions($id, $actor);
@@ -73,6 +73,11 @@ final class AdminProfileContentService
 
     public function save(int $actor, string $entity, ?int $id, array $d): int
     {
+        return \Core\translation\EntityText::atomic(db(),fn()=>$this->persist($actor,$entity,$id,$d));
+    }
+
+    private function persist(int $actor, string $entity, ?int $id, array $d): int
+    {
         $c = $this->config($entity);
         $userId = (int) ($d['user_id'] ?? $d['owner_id'] ?? 0);
         [,,$autoApprove] = $this->organizations($actor);
@@ -91,6 +96,9 @@ final class AdminProfileContentService
             if (!$values['verification_level_id']) {
                 throw new RuntimeException('انتخاب نشان الزامی است.');
             }
+        }
+        if ($entity === 'certificates' && mb_strlen(trim((string)($d['file_path']??'')))>2048) {
+            throw new RuntimeException('File path exceeds 2048 characters.',422);
         }
         if ($entity === 'certificates') {
             $values += ['certificate_url' => $this->url($d['certificate_url'] ?? ''), 'file_path' => trim((string) ($d['file_path'] ?? '')) ?: null];
@@ -113,7 +121,7 @@ final class AdminProfileContentService
             if ($title === '') {
                 throw new RuntimeException('عنوان الزامی است.');
             }
-            $values += ['title' => $title, 'publisher' => trim((string) ($d['publisher'] ?? '')) ?: null, 'url' => $this->url($d['url'] ?? ''), 'content' => trim((string) ($d['content'] ?? '')) ?: null, 'is_peer_reviewed' => !empty($d['is_peer_reviewed']) ? 1 : 0];
+            $values += ['title' => $title, 'publisher' => trim((string) ($d['publisher'] ?? '')) ?: null, 'url' => $this->url($d['url'] ?? ''), 'is_peer_reviewed' => !empty($d['is_peer_reviewed']) ? 1 : 0];
         }
         if ($id) {
             $this->owned($actor, $entity, $id);
@@ -123,7 +131,7 @@ final class AdminProfileContentService
             $id = (int) DB::table($c['table'])->insertGetId($values);
         }
         foreach ($c['texts'] as $f) {
-            $this->setText($c['table'], $id, $f, trim((string) ($d[$f] ?? '')), $actor);
+            if($entity==='publications'&&$f==='content'){\Core\translation\EntityText::save('user_publications',$id,'content',trim((string)($d[$f]??'')),$actor);}else{$this->setText($c['table'], $id, $f, trim((string) ($d[$f] ?? '')), $actor);}
         }
         if ($entity === 'polls') {
             $this->saveOptions($id, $actor, (array) ($d['options'] ?? []));
@@ -378,7 +386,7 @@ final class AdminProfileContentService
     private function url($v): ?string
     {
         $v = trim((string) $v);
-        if ($v !== '' && !filter_var($v, FILTER_VALIDATE_URL)) {
+        if ($v !== '' && (mb_strlen($v)>2048 || !filter_var($v, FILTER_VALIDATE_URL))) {
             throw new RuntimeException('نشانی اینترنتی معتبر نیست.');
         }
         return $v ?: null;

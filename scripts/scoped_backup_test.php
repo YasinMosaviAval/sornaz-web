@@ -1,7 +1,7 @@
 <?php
 $map = require __DIR__ . '/../vendor/composer/autoload_classmap.php';
 spl_autoload_register(static function ($class) use ($map) { if (isset($map[$class])) require_once $map[$class]; });
-class BackupFixture extends PDO
+class BackupFixture extends \Core\database\PrefixedPDO
 {
     public function query(string $query, ?int $fetchMode = null, mixed ...$args): PDOStatement|false
     {
@@ -44,7 +44,7 @@ $sql = file_get_contents($result['path']);
 check(!preg_match('/DROP TABLE|CREATE TABLE|FOREIGN_KEY_CHECKS|DO_NOT_EXPORT|ADMIN_SECRET|SECRET_TOKEN/', $sql), 'Unsafe SQL or credentials exported');
 check(str_contains($sql, 'START TRANSACTION') && str_contains($sql, 'COMMIT'), 'Missing transactional export');
 check(!str_contains($sql, "'200'") && !str_contains($sql, "'20'"), 'Other academy exported');
-check(str_contains($sql, 'INSERT INTO `academies`') && str_contains($sql, "'100'"), 'Owned records missing');
+check(str_contains($sql, 'INSERT INTO `p_academies`') && str_contains($sql, "'100'"), 'Owned records missing');
 check($service->find(7, (int) $result['id'])['filename'] === $result['filename'], 'New export cannot be downloaded');
 $pdo->exec("UPDATE media_files SET filename='academy-10-old.sql'");
 try { $service->find(7, (int) $result['id']); throw new LogicException('Legacy unsafe backup downloadable'); } catch (RuntimeException) {}

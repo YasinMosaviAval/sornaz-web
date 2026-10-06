@@ -48,7 +48,7 @@ final class AcademyInsertApproval
             return self::$approvalColumns[$table] = false;
         }
         $statement = $pdo->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME IN (\'approved_by\',\'approved_at\')');
-        $statement->execute([$table]);
+        $statement->execute([$pdo instanceof PrefixedPDO ? TableNames::physical($table) : $table]);
         return self::$approvalColumns[$table] = (int) $statement->fetchColumn() === 2;
     }
 

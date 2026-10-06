@@ -35,6 +35,8 @@ INSERT INTO conversations(conversation_id,type,title) VALUES(1,'group','Group'),
 INSERT INTO conversation_members(conversation_id,user_id,role) VALUES(1,1,'admin'),(1,2,'member'),(2,1,'admin'),(2,4,'member');
 INSERT INTO social_media(id,owner_id,mime,path) VALUES(5,1,'image/jpeg','test.jpg');
 INSERT INTO social_posts(id,owner_id,kind,body,media_id,expires_at) VALUES(1,1,'story','Expired story',5,'2000-01-01 00:00:00'),(2,1,'post','Original post',5,NULL);");
+require_once __DIR__.'/lib/TranslatedTextFixture.php';
+TranslatedTextFixture::install($pdo);
 $chat=new Modules\Analytics\Services\ChatService();
 check(array_column($chat->searchUsers(1,'New'),'id')===[3],'Chat search missed a user outside the initial picker');
 denied(fn()=>$chat->searchUsers(3,'',1));

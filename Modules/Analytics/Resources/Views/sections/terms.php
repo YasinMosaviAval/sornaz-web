@@ -28,6 +28,11 @@
         </div>
     </div>
 
+    <div class="mb-6 rounded-2xl border border-indigo-200 bg-indigo-50 p-4 text-sm leading-7 text-indigo-900">
+        <strong class="block">ترم‌ها را پیش از درخواست ثبت‌نام آماده کنید</strong>
+        برای ساعت‌های قابل ارائهٔ هر مدرس، ترم «باز» را بدون هنرجو و بدون تاریخ بسازید. مدرس، کلاس حضوری یا آنلاین، تعداد جلسات، دورهٔ تکرار و یک الگوی ساعت را مشخص کنید. پس از توافق با هنرجو، تاریخ جلسهٔ اول را هنگام فعال‌سازی انتخاب کنید.
+    </div>
+
     <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
         <div class="flex gap-2 min-w-max" id="termsBranchTabs">
             <button onclick="filterTermsByBranch('all')"

@@ -3,6 +3,7 @@ const {spawnSync} = require('node:child_process');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const php = [
+ 'table-prefix-test.php',
  'scoped_backup_test.php', 'launch_hardening_test.php', 'content_safety_test.php', 'financial_records_test.php', 'tenant_access_test.php', 'reliability_test.php', 'core_functionality_test.php', 'chat_media_revision_test.php',
  'account_security_test.php', 'account_session_test.php', 'shared_password_login_test.php', 'account_profile_test.php', 'contact_change_test.php',
  'public_directory_privacy_test.php', 'public_copy_test.php', 'registration_otp_policy_test.php',

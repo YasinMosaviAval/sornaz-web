@@ -6,6 +6,22 @@ use RuntimeException;
 
 final class ChatService
 {
+    private function messageRows(): \Core\database\Builder
+    {
+        return DB::table('conversation_messages')->select('conversation_messages.*', \Core\translation\EntityText::expression('conversation_messages','conversation_message_id','body').' AS body');
+    }
+
+    private function insertMessage(array $data): int
+    {
+        $text=$data['body']??'';unset($data['body']);$pdo=db();$own=!$pdo->inTransaction();
+        if($own){$pdo->beginTransaction();}
+        try{
+            $id=(int)DB::table('conversation_messages')->insertGetId($data);
+            \Core\translation\EntityText::save('conversation_messages',$id,'body',$text,(int)$data['sender_id'],$pdo);
+            if($own){$pdo->commit();}return $id;
+        }catch(\Throwable $error){if($own&&$pdo->inTransaction()){$pdo->rollBack();}throw $error;}
+    }
+
     public function index(int $actor): array
     {
         $this->user($actor);
@@ -20,8 +36,8 @@ final class ChatService
             $names = $this->names($peerIds);
             $otherIds = array_values(array_filter($peerIds, fn ($uid) => $uid !== $actor));
             $title = $c['title'] ?: implode('، ', array_values(array_filter($names, fn ($v, $k) => $k !== $actor, ARRAY_FILTER_USE_BOTH)));
-            $last = $c['last_message_id'] ? DB::table('conversation_messages')->where('conversation_message_id', (int) $c['last_message_id'])->whereNull('deleted_at')->first() : null;
-            $unread = DB::table('conversation_messages')->where('conversation_id', $cid)->where('sender_id', '!=', $actor)->whereNull('deleted_at')->where('conversation_message_id', '>', (int) ($cm['last_read_message_id'] ?? 0))->count();
+            $last = $c['last_message_id'] ? $this->messageRows()->where('conversation_message_id', (int) $c['last_message_id'])->whereNull('deleted_at')->first() : null;
+            $unread = $this->messageRows()->where('conversation_id', $cid)->where('sender_id', '!=', $actor)->whereNull('deleted_at')->where('conversation_message_id', '>', (int) ($cm['last_read_message_id'] ?? 0))->count();
             $image = $c['type'] === 'group' ? (!empty($c['avatar_path']) ? '/' . ltrim((string) $c['avatar_path'], '/') : null) : ($otherIds ? $this->avatar((int) $otherIds[0]) : null);
             $items[] = ['id' => $cid, 'type' => $c['type'], 'title' => $title ?: 'گفتگو', 'image' => $image, 'members' => count($peerIds), 'lastMessage' => $last ? ($last['body'] ?: $last['attachment_name'] ?: 'فایل پیوست') : 'هنوز پیامی نیست', 'lastAt' => $last['created_at'] ?? $c['created_at'], 'unread' => (int) $unread];
         }return ['conversations' => $items, 'users' => $this->availableUsers($actor)];
@@ -123,7 +139,7 @@ final class ChatService
     private function messagePage(int $id, int $after): array
     {
         $limit = $after ? 100 : 200;
-        $query = DB::table('conversation_messages')->where('conversation_id', $id)->whereNull('deleted_at');
+        $query = $this->messageRows()->where('conversation_id', $id)->whereNull('deleted_at');
         if ($after) {
             $query->where('conversation_message_id', '>', $after);
         }
@@ -140,7 +156,7 @@ final class ChatService
         if (!$refresh) {
             return [];
         }
-        return DB::table('conversation_messages')
+        return $this->messageRows()
             ->where('conversation_id', $id)
             ->whereIn('conversation_message_id', $refresh)
             ->whereNull('deleted_at')
@@ -209,7 +225,7 @@ final class ChatService
             throw new RuntimeException('متن پیام بیش از حد طولانی است.');
         }
         $now = date('Y-m-d H:i:s');
-        $mid = (int) DB::table('conversation_messages')->insertGetId(['conversation_id' => $id, 'sender_id' => $actor, 'body' => $body ?: null, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + ($attachment ?: []) + ($replyTo ? ['reply_to_id' => $replyTo] : []));
+        $mid = (int) $this->insertMessage(['conversation_id' => $id, 'sender_id' => $actor, 'body' => $body ?: null, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + ($attachment ?: []) + ($replyTo ? ['reply_to_id' => $replyTo] : []));
         DB::table('conversations')->where('conversation_id', $id)->update(['last_message_id' => $mid, 'updated_at' => $now, 'updated_by' => $actor]);
         DB::table('conversation_members')->where('conversation_id', $id)->where('user_id', $actor)->update(['last_read_message_id' => $mid, 'updated_at' => $now, 'updated_by' => $actor]);
         return ['id' => $mid];
@@ -344,7 +360,7 @@ final class ChatService
         transaction(function () use ($actor, $id, $now) {
             DB::table('conversations')->where('conversation_id', $id)->whereNull('deleted_at')->update(['deleted_at' => $now, 'deleted_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
             DB::table('conversation_members')->where('conversation_id', $id)->whereNull('deleted_at')->update(['left_at' => $now, 'deleted_at' => $now, 'deleted_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
-            DB::table('conversation_messages')->where('conversation_id', $id)->whereNull('deleted_at')->update(['deleted_at' => $now, 'deleted_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
+            $this->messageRows()->where('conversation_id', $id)->whereNull('deleted_at')->update(['deleted_at' => $now, 'deleted_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
         });
     }
 
@@ -361,6 +377,11 @@ final class ChatService
     }
 
     public function editMessage(int $actor, int $messageId, string $body): void
+    {
+        \Core\translation\EntityText::atomic(db(),fn()=>$this->persistMessageEdit($actor,$messageId,$body));
+    }
+
+    private function persistMessageEdit(int $actor, int $messageId, string $body): void
     {
         $m = $this->message($actor, $messageId);
         if ((int) $m['sender_id'] !== $actor) {
@@ -380,7 +401,8 @@ final class ChatService
             $body .= "\n" . $ref[0];
         }
         $now = date('Y-m-d H:i:s');
-        DB::table('conversation_messages')->where('conversation_message_id', $messageId)->update(['body' => $body ?: null, 'edited_at' => $now, 'updated_at' => $now, 'updated_by' => $actor]);
+        $this->messageRows()->where('conversation_message_id', $messageId)->update(['edited_at' => $now, 'updated_at' => $now, 'updated_by' => $actor]);
+        \Core\translation\EntityText::save('conversation_messages',$messageId,'body',$body,$actor);
     }
 
     public function deleteMessage(int $actor, int $messageId): void
@@ -390,7 +412,7 @@ final class ChatService
             throw new RuntimeException('فقط فرستنده می‌تواند پیام را حذف کند.');
         }
         $now = date('Y-m-d H:i:s');
-        DB::table('conversation_messages')->where('conversation_message_id', $messageId)->update(['deleted_at' => $now, 'deleted_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
+        $this->messageRows()->where('conversation_message_id', $messageId)->update(['deleted_at' => $now, 'deleted_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
     }
 
     public function forwardMessage(int $actor, int $messageId, array $conversationIds): void
@@ -399,14 +421,14 @@ final class ChatService
         foreach (array_unique(array_filter(array_map('intval', $conversationIds))) as $cid) {
             $this->member($actor, $cid);
             $now = date('Y-m-d H:i:s');
-            $id = (int) DB::table('conversation_messages')->insertGetId(['conversation_id' => $cid, 'sender_id' => $actor, 'body' => $m['body'], 'attachment_path' => $m['attachment_path'], 'attachment_name' => $m['attachment_name'], 'attachment_mime' => $m['attachment_mime'], 'attachment_size' => $m['attachment_size'], 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
+            $id = (int) $this->insertMessage(['conversation_id' => $cid, 'sender_id' => $actor, 'body' => $m['body'], 'attachment_path' => $m['attachment_path'], 'attachment_name' => $m['attachment_name'], 'attachment_mime' => $m['attachment_mime'], 'attachment_size' => $m['attachment_size'], 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
             DB::table('conversations')->where('conversation_id', $cid)->update(['last_message_id' => $id, 'updated_at' => $now, 'updated_by' => $actor]);
         }
     }
 
     public function file(int $actor, int $messageId): array
     {
-        $row = DB::table('conversation_messages')->where('conversation_message_id', $messageId)->whereNull('deleted_at')->first();
+        $row = $this->messageRows()->where('conversation_message_id', $messageId)->whereNull('deleted_at')->first();
         if (!$row || !$row['attachment_path']) {
             throw new RuntimeException('فایل یافت نشد.');
         }
@@ -437,7 +459,7 @@ final class ChatService
 
     private function systemMessage(int $actor, int $id, string $body, string $now): void
     {
-        $mid = (int) DB::table('conversation_messages')->insertGetId(['conversation_id' => $id, 'sender_id' => $actor, 'body' => $body, 'message_kind' => 'system', 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
+        $mid = (int) $this->insertMessage(['conversation_id' => $id, 'sender_id' => $actor, 'body' => $body, 'message_kind' => 'system', 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
         DB::table('conversations')->where('conversation_id', $id)->update(['last_message_id' => $mid, 'updated_at' => $now, 'updated_by' => $actor]);
     }
 
@@ -455,7 +477,7 @@ final class ChatService
         if (empty($row['reply_to_id'])) {
             return null;
         }
-        $parent = DB::table('conversation_messages')->where('conversation_message_id', (int) $row['reply_to_id'])->where('conversation_id', (int) $row['conversation_id'])->whereNull('deleted_at')->first();
+        $parent = $this->messageRows()->where('conversation_message_id', (int) $row['reply_to_id'])->where('conversation_id', (int) $row['conversation_id'])->whereNull('deleted_at')->first();
         return $parent ? ['id' => (int) $parent['conversation_message_id'], 'body' => $parent['body'] ?: ($parent['attachment_name'] ?? ''), 'senderId' => (int) $parent['sender_id']] : ['body' => locale() === 'en' ? 'Message deleted' : 'پیام حذف شده است'];
     }
 
@@ -487,7 +509,7 @@ final class ChatService
             return $result;
         }
         $media = !empty($p['media_id']) ? DB::table('social_media')->where('id', (int) $p['media_id'])->first() : null;
-        return $result + ['body' => $p['body'], 'media' => $media ? '/api/sornaz/v1/social/media/' . (int) $p['media_id'] : null, 'mime' => $media['mime'] ?? ''];
+        return $result + ['body' => \Core\translation\EntityText::get('social_posts',(int)$p['id'],'body'), 'media' => $media ? '/api/sornaz/v1/social/media/' . (int) $p['media_id'] : null, 'mime' => $media['mime'] ?? ''];
     }
 
     private function member(int $actor, int $id): array
@@ -510,7 +532,7 @@ final class ChatService
 
     private function message(int $actor, int $id): array
     {
-        $m = DB::table('conversation_messages')->where('conversation_message_id', $id)->whereNull('deleted_at')->first();
+        $m = $this->messageRows()->where('conversation_message_id', $id)->whereNull('deleted_at')->first();
         if (!$m) {
             throw new RuntimeException('پیام یافت نشد.');
         }

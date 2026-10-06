@@ -23,7 +23,7 @@ This guide covers the current `sornaz` website repository. “Do not upload” d
 | `sornaz` | Only needed when using the CLI entry point | Track; this is a PHP script, not a database dump |
 | `google494712e9ea54cca1.html`, `google7cd438ee4c3edccf.html` | Preserve if used for ownership verification of this site | Track if they belong to the project |
 | `storage/` | Directory structure and write access are needed; do not upload local contents wholesale | Only reviewed structural/protection files such as `.gitkeep` and `.htaccess` |
-| `docs/` | Not required for web requests; use relevant instructions and SQL separately | Track documentation and migrations without private data |
+| `docs/` | Upload `*.md` files if the site owner's Guides page should display them. Keep SQL and backups separate unless specifically needed. Direct HTTP access to `/docs/` must return 403/404. | Track documentation and migrations without private data |
 | `scripts/` | Not required for ordinary web requests; deploy only reviewed operational scripts when needed, preferably outside the web root | Track tool and test source and configuration |
 | `.php-cs-fixer.dist.php`, `.prettierrc.json` | Not required at runtime | Track |
 | `scripts/format-tools/package.json`, `package-lock.json` | Not required at runtime | Track both |
@@ -80,7 +80,8 @@ For `vendor/`, establish reproducible Composer installation before changing trac
 5. Preserve production `.env` and user data. Create required storage directories with appropriate PHP ownership and write permissions; avoid world-writable `777` permissions. Deployment must not blindly delete additional server files.
 6. Apply only required, reviewed migrations. Uploading SQL does not execute it. Do not import the entire local database into production. A SQL file being in `docs/database/` does not establish that it is safe or required to run.
 7. Enforce private-file access rules in the web server. **Uploading `.htaccess` is insufficient for Nginx.** `docs/nginx-security.conf` and `docs/nginx-private-files-emergency.conf` are configuration integration references; placing them in `public_html` does not activate them. Follow [Private-file hosting instructions](private-files-hosting.md).
-8. Check the home page, login, conversations, authorized media access and denial of direct private-file downloads. Refresh OPcache through the hosting panel if needed.
+8. Deploy Markdown files under `docs/` and `Modules/` for the site owner's Guides library. Confirm cards appear for `user_id=1`, while anonymous direct requests to `/docs/manual-release-checklist.fa.md` and `/Modules/Analytics/GUIDE_ANALYTICS.md` return 403/404.
+9. Check the home page, login, conversations, authorized media access and denial of direct private-file downloads. Refresh OPcache through the hosting panel if needed.
 
 The current project has `index.php` at its root. Do not deploy merely by switching the document root to an assumed `public/` directory. PHP source can be required on disk while direct HTTP access to it is blocked. Template locations such as `views/` must not be used to store secrets.
 

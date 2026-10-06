@@ -13,7 +13,7 @@ class CourseService
 
     public function listing(int $actor, string $mode): array
     {
-        $columns = 'c.id,c.title,c.description,c.price,c.status,c.cover_id,c.owner_id,c.created_at,c.updated_at';
+        $columns = 'c.id,c.title,'.\Core\translation\EntityText::expression('creator_courses','c.id','description').' AS description,c.price,c.status,c.cover_id,c.owner_id,c.created_at,c.updated_at';
         if ($mode === 'manage') {
             return $this->repo->query("SELECT $columns FROM creator_courses c WHERE owner_id=? ORDER BY id DESC", [$actor]);
         }
@@ -29,6 +29,7 @@ class CourseService
         if (!$course) {
             throw new RuntimeException('دوره پیدا نشد.', 404);
         }
+        $course['description']=\Core\translation\EntityText::get('creator_courses',$id,'description',$this->repo->connection());
         $course['curriculum'] = (new LessonRepository($this->repo))->hydrate($id, json_decode($course['curriculum'], true) ?: []);
         $course['files'] = $this->repo->query('SELECT id,mime,bytes FROM creator_course_media WHERE course_id=?', [$id]);
         return $course;
@@ -175,7 +176,8 @@ class CourseService
                 $id = $this->repo->insert('creator_courses', ['owner_id' => $actor, 'title' => $title, 'description' => $description, 'price' => $price, 'status' => $status, 'cover_id' => $cover ?: null, 'curriculum' => '[]']);
             }
             $outline = (new LessonRepository($this->repo))->sync($id, $actor, $clean);
-            $this->repo->query('UPDATE creator_courses SET title=?,description=?,price=?,status=?,cover_id=?,curriculum=?,version=version+?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND owner_id=?', [$title, $description, $price, $status, $cover ?: null, json_encode($outline, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), $existing ? 1 : 0, $id, $actor]);
+            $this->repo->query('UPDATE creator_courses SET title=?,price=?,status=?,cover_id=?,curriculum=?,version=version+?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND owner_id=?', [$title, $price, $status, $cover ?: null, json_encode($outline, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), $existing ? 1 : 0, $id, $actor]);
+            \Core\translation\EntityText::save('creator_courses',$id,'description',$description,$actor,$this->repo->connection());
             return $id;
         });
         return $this->course($id);
@@ -239,7 +241,7 @@ class CourseService
         $course = $this->course((int) $media['course_id']);
         $publicCover = $course['status'] === 'published' && (int) $course['cover_id'] === $id && str_starts_with($media['mime'], 'image/');
         $meta = json_decode($this->repo->one('SELECT metadata FROM creator_course_details WHERE course_id=?', [$course['id']])['metadata'] ?? '{}', true) ?: [];
-        $privateLesson = $this->repo->one('SELECT post_id FROM creator_course_lessons WHERE course_id=? AND deleted_at IS NULL AND JSON_CONTAINS(media_json,?)', [$course['id'], json_encode($id)]);
+        $privateLesson = $this->repo->one('SELECT post_id FROM creator_course_lessons WHERE course_id=? AND deleted_at IS NULL AND JSON_CONTAINS(CAST(media_json AS CHAR),?)', [$course['id'], json_encode($id)]);
         $publicCover = $publicCover || (!$privateLesson && $course['status'] === 'published' && (int) ($meta['preview_id'] ?? 0) === $id && str_starts_with($media['mime'], 'video/'));
         if (!$publicCover && !$this->hasAccess($actor, $course)) {
             throw new RuntimeException('برای مشاهده محتوا ابتدا دوره را خریداری کنید.', 403);

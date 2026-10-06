@@ -41,7 +41,7 @@ class SocialInteractionService
             $where = ' AND c.id<?';
             $params[] = $before;
         }
-        $rows = $this->r->query('SELECT c.*,parent.body parent_body,parent.user_id parent_user_id,
+        $rows = $this->r->query('SELECT c.*,'.\Core\translation\EntityText::expression('social_comments','c.id','body').' AS body,CASE WHEN parent.id IS NULL THEN NULL ELSE '.\Core\translation\EntityText::expression('social_comments','parent.id','body').' END parent_body,parent.user_id parent_user_id,
             (SELECT COUNT(*) FROM social_comment_likes l WHERE l.comment_id=c.id) likes,
             EXISTS(SELECT 1 FROM social_comment_likes l WHERE l.comment_id=c.id AND l.user_id=?) liked
             FROM social_comments c LEFT JOIN social_comments parent ON parent.id=c.parent_id AND parent.deleted_at IS NULL
@@ -62,7 +62,7 @@ class SocialInteractionService
         if ($p['kind'] !== 'post') {
             throw new RuntimeException('برای استوری از پاسخ خصوصی استفاده کنید.', 422);
         }
-        $reply = $parent ? $this->r->one('SELECT * FROM social_comments WHERE id=? AND post_id=? AND deleted_at IS NULL', [$parent, $post]) : null;
+        $reply = $parent ? $this->r->one('SELECT social_comments.*,'.\Core\translation\EntityText::expression('social_comments','id','body').' AS body FROM social_comments WHERE id=? AND post_id=? AND deleted_at IS NULL', [$parent, $post]) : null;
         if ($parent && !$reply) {
             throw new RuntimeException('نظر مورد پاسخ پیدا نشد.', 404);
         }
@@ -98,7 +98,7 @@ class SocialInteractionService
     {
         $this->actor($actor);
         $p = $this->social->post($actor, $post);
-        $c = $this->r->one('SELECT * FROM social_comments WHERE id=? AND post_id=? AND deleted_at IS NULL', [$id, $post]);
+        $c = $this->r->one('SELECT social_comments.*,'.\Core\translation\EntityText::expression('social_comments','id','body').' AS body FROM social_comments WHERE id=? AND post_id=? AND deleted_at IS NULL', [$id, $post]);
         if (!$c) {
             throw new RuntimeException('نظر پیدا نشد.', 404);
         }

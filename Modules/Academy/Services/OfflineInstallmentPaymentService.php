@@ -61,17 +61,17 @@ class OfflineInstallmentPaymentService
         if (!$first || (int) $first['term_invoice_installment_id'] !== $installmentId) {
             throw new RuntimeException('ابتدا قسط قبلی را ثبت کنید.');
         }
-        $duplicate = DB::table('academy_term_invoice_payments')->where('invoice_id', $invoiceId)->where('reference_id', $reference)->where('status', 'paid')->whereNull('deleted_at')->first();
+        $duplicate = AcademyPaymentStore::query()->where('invoice_id', $invoiceId)->where('reference_id', $reference)->where('status', 'paid')->whereNull('deleted_at')->first();
         if ($duplicate) {
             throw new RuntimeException('Payment reference already recorded.', 409);
         }
-        $pending = DB::table('academy_term_invoice_payments')->where('installment_id', $installmentId)->whereRaw("(status IN ('created','pending') OR (status IN ('failed','canceled') AND authority IS NOT NULL))")->whereNull('deleted_at')->first();
+        $pending = AcademyPaymentStore::query()->where('installment_id', $installmentId)->whereRaw("(status IN ('created','pending') OR (status IN ('failed','canceled') AND authority IS NOT NULL))")->whereNull('deleted_at')->first();
         if ($pending) {
             throw new RuntimeException('An online payment is still pending.', 409);
         }
         $now = date('Y-m-d H:i:s');
         transaction(function () use ($a, $invoiceId, $installmentId, $installment, $method, $reference, $payerName, $bankCardType, $paidAt, $description, $now) {
-            DB::table('academy_term_invoice_payments')->insert(['invoice_id' => $invoiceId, 'installment_id' => $installmentId, 'user_id' => $a, 'gateway' => 'offline', 'payment_method' => $method, 'payer_name' => $payerName, 'bank_card_type' => $bankCardType, 'amount' => (int) round((float) $installment['amount']), 'currency' => strtoupper((string) env('ZARINPAL_CURRENCY', 'IRT')) === 'IRR' ? 'IRR' : 'IRT', 'callback_token' => bin2hex(random_bytes(32)), 'reference_id' => $reference, 'status' => 'paid', 'gateway_message' => 'پرداخت خارج از درگاه ثبت شد.', 'description' => $description ?: null, 'verified_at' => $paidAt, 'created_at' => $now, 'created_by' => $a, 'updated_at' => $now, 'updated_by' => $a]);
+            AcademyPaymentStore::create(['invoice_id' => $invoiceId, 'installment_id' => $installmentId, 'user_id' => $a, 'gateway' => 'offline', 'payment_method' => $method, 'payer_name' => $payerName, 'bank_card_type' => $bankCardType, 'amount' => (int) round((float) $installment['amount']), 'currency' => strtoupper((string) env('ZARINPAL_CURRENCY', 'IRT')) === 'IRR' ? 'IRR' : 'IRT', 'callback_token' => bin2hex(random_bytes(32)), 'reference_id' => $reference, 'status' => 'paid', 'gateway_message' => 'پرداخت خارج از درگاه ثبت شد.', 'description' => $description ?: null, 'verified_at' => $paidAt, 'created_at' => $now, 'created_by' => $a, 'updated_at' => $now, 'updated_by' => $a]);
             DB::table('academy_branch_course_term_invoice_installments')->where('term_invoice_installment_id', $installmentId)->update(['status' => 'paid', 'paid_at' => $paidAt, 'approved_at' => $now, 'approved_by' => $a, 'updated_at' => $now, 'updated_by' => $a]);
             InvoiceLedger::refresh($invoiceId, $a);
         });
