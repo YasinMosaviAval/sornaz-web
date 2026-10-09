@@ -114,17 +114,28 @@ class NotationService
             }
             $clean[$key] = $v;
         }
+        $staves = $meta['staves'] ?? [['clef' => $clean['clef']]];
+        if (!is_array($staves) || !array_is_list($staves) || count($staves) < 1 || count($staves) > 2) {
+            throw new RuntimeException('Invalid staves.', 422);
+        }
+        $clean['staves'] = [];
+        foreach ($staves as $stave) {
+            if (!is_array($stave) || !in_array($stave['clef'] ?? null, $enums['clef'], true)) {
+                throw new RuntimeException('Invalid staff clef.', 422);
+            }
+            $clean['staves'][] = ['clef' => $stave['clef']];
+        }
         $clean += $this->extendedMetadata($meta, $clean['key']);
         $clean['bpm'] = $this->validatedBpm($meta['bpm'] ?? null);
         [$top,$bottom] = array_map('intval', explode('/', $clean['time']));
         $capacity = $top * 64 / $bottom;
         $measures = [];
         foreach ($score['measures'] as $measure) {
-            if (!is_array($measure) || !isset($measure['notes']) || !is_array($measure['notes']) || !array_is_list($measure['notes']) || count($measure['notes']) > 64) {
+            if (!is_array($measure) || !isset($measure['notes']) || !is_array($measure['notes']) || !array_is_list($measure['notes']) || count($measure['notes']) > 128) {
                 throw new RuntimeException('Invalid measure.', 422);
             }
             $notes = [];
-            $ticks = 0;
+            $ticks = [1 => 0, 2 => 0];
             foreach ($measure['notes'] as $n) {
                 if (!is_array($n) || !isset($n['pitch']) || !is_string($n['pitch']) || !preg_match('/^(?:[A-G][1-7]|[AB]0|C8)$/D', $n['pitch']) || !is_string($n['duration'] ?? null) || !isset(self::DURATIONS[$n['duration']])) {
                     throw new RuntimeException('Invalid note.', 422);
@@ -137,11 +148,28 @@ class NotationService
                 if (!in_array($acc, ['', '#', 'b', 'n', '##', 'bb', '+', 'd'], true)) {
                     throw new RuntimeException('Invalid accidental.', 422);
                 }
-                $ticks += self::DURATIONS[$n['duration']] * (2 - pow(.5, $dots));
-                if ($ticks > $capacity + .001) {
+                $staff = $n['staff'] ?? 1;
+                if (!is_int($staff) || !in_array($staff, [1, 2], true)) {
+                    throw new RuntimeException('Invalid staff.', 422);
+                }
+                $ticks[$staff] += self::DURATIONS[$n['duration']] * (2 - pow(.5, $dots));
+                if ($ticks[$staff] > $capacity + .001) {
                     throw new RuntimeException('This measure is full.', 422);
                 }
-                $note = ['pitch' => $n['pitch'], 'duration' => $n['duration'], 'dots' => $dots, 'rest' => $n['rest'], 'accidental' => $acc];
+                $note = ['pitch' => $n['pitch'], 'duration' => $n['duration'], 'dots' => $dots, 'rest' => $n['rest'], 'accidental' => $acc, 'staff' => $staff];
+                $pitches = $n['pitches'] ?? [];
+                if (!is_array($pitches) || !array_is_list($pitches) || count($pitches) > 7 || ($n['rest'] && $pitches)) {
+                    throw new RuntimeException('Invalid chord.', 422);
+                }
+                $note['pitches'] = [];
+                foreach ($pitches as $tone) {
+                    if (!is_array($tone) || !is_string($tone['pitch'] ?? null)
+                        || !preg_match('/^(?:[A-G][1-7]|[AB]0|C8)$/D', $tone['pitch'])
+                        || !in_array($tone['accidental'] ?? '', ['', '#', 'b', 'n', '##', 'bb', '+', 'd'], true)) {
+                        throw new RuntimeException('Invalid chord tone.', 422);
+                    }
+                    $note['pitches'][] = ['pitch' => $tone['pitch'], 'accidental' => $tone['accidental'] ?? ''];
+                }
                 foreach (['tieNext', 'tiePrevious'] as $tie) {
                     if (isset($n[$tie])) {
                         if (!is_bool($n[$tie]) || ($n[$tie] && $n['rest'])) {

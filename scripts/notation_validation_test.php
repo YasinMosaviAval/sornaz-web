@@ -21,4 +21,16 @@ $score['metadata']['scale_type']='minor';
 try{$service->validate($score);throw new Exception('Incompatible scale accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
 $score['metadata']['scale_type']='major';$score['metadata']['tempo_dots']=3;
 try{$service->validate($score);throw new Exception('Invalid beat dots accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
-echo "Notation validation: seven clefs, full keyboard, persisted ties and integer tempo passed.\n";
+$piano=['metadata'=>$meta+['clef'=>'treble','staves'=>[['clef'=>'treble'],['clef'=>'bass']]],'score'=>['measures'=>[['notes'=>[
+    ['pitch'=>'C4','duration'=>'w','dots'=>0,'rest'=>false,'staff'=>1],
+    ['pitch'=>'C3','duration'=>'w','dots'=>0,'rest'=>false,'staff'=>2,'pitches'=>[['pitch'=>'E3','accidental'=>''],['pitch'=>'G3','accidental'=>'']]],
+]]]]];
+$saved=$service->validate($piano);
+$savedMeta=json_decode($saved['metadata'],true);
+$savedNotes=json_decode($saved['score'],true)['measures'][0]['notes'];
+if(count($savedMeta['staves'])!==2||$savedMeta['staves'][1]['clef']!=='bass'||$savedNotes[1]['staff']!==2||count($savedNotes[1]['pitches'])!==2)throw new Exception('Piano staves or chord tones were lost');
+$legacy=$service->validate(['metadata'=>$meta+['clef'=>'treble'],'score'=>['measures'=>[['notes'=>[['pitch'=>'C4','duration'=>'q','dots'=>0,'rest'=>false]]]]]]);
+if(json_decode($legacy['score'],true)['measures'][0]['notes'][0]['staff']!==1)throw new Exception('Legacy note did not default to upper staff');
+$piano['score']['measures'][0]['notes'][1]['staff']=3;
+try{$service->validate($piano);throw new Exception('Invalid staff accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+echo "Notation validation: legacy scores, seven clefs, independent piano staves, chords and tempo passed.\n";
