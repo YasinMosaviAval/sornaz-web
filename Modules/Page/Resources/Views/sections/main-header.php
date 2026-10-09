@@ -35,6 +35,9 @@
                 <?php if ($hasAdminPanel): ?>
                     <a href="/analytics/admin-panel" data-page="contact" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.user_panel', 'پنل کاربری')) ?></a>
                 <?php endif; ?>
+                <?php if ((int) auth()->id() === 1): ?>
+                    <a href="/analytics/public-ui-preview" class="px-3 py-2 rounded-lg hover:bg-gray-50">نمایش عمومی بخش های غیرعمومی</a>
+                <?php endif; ?>
 
                 <a href="/page/about-us" data-page="about" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.about', 'درباره ما')) ?></a>
                 <a href="/page/contact-us" data-page="contact" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.contact', 'تماس با ما')) ?></a>
@@ -86,6 +89,9 @@
             <a href="/community" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= locale()==='en'?'Community':'جامعه سُرناز' ?></a>
             <?php if ($hasAdminPanel): ?>
                 <a href="/analytics/admin-panel" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.user_panel', 'پنل کاربری')) ?></a>
+            <?php endif; ?>
+            <?php if ((int) auth()->id() === 1): ?>
+                <a href="/analytics/public-ui-preview" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">نمایش عمومی بخش های غیرعمومی</a>
             <?php endif; ?>
             <a href="/page/about-us" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.about', 'درباره ما')) ?></a>
             <a href="/page/contact-us" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.contact', 'تماس با ما')) ?></a>

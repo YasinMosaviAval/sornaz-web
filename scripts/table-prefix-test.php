@@ -26,6 +26,11 @@ $forward = file_get_contents(__DIR__ . '/../docs/database/migrations/2026_10_04_
 $reverse = file_get_contents(__DIR__ . '/../docs/database/migrations/2026_10_04_table_prefixes_rollback.sql');
 foreach ($mapping as $logical => $physical) {
     if ($logical === $physical) { continue; }
+    if ($logical === 'mobile_contact_challenges') {
+        $newTable = file_get_contents(__DIR__ . '/../docs/database/migrations/2026_10_09_mobile_contact_challenges.sql');
+        prefixCheck(str_contains($newTable, "CREATE TABLE IF NOT EXISTS `$physical`"), 'Mobile contact migration differs from runtime map');
+        continue;
+    }
     prefixCheck(str_contains($forward, "`$logical` TO `$physical`"), 'Forward migration differs from runtime map');
     prefixCheck(str_contains($reverse, "`$physical` TO `$logical`"), 'Reverse migration differs from runtime map');
 }

@@ -106,6 +106,7 @@ return [
     "user_lessons" => "p_user_lessons",
     "user_merges" => "f_user_merges",
     "user_messages" => "f_user_messages",
+    "mobile_contact_challenges" => "f_mobile_contact_challenges",
     "user_permissions" => "f_user_permissions",
     "user_points" => "f_user_points",
     "user_point_rules" => "f_user_point_rules",

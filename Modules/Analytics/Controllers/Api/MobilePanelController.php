@@ -23,7 +23,7 @@ final class MobilePanelController
             $capabilities = $this->access->capabilities($user);
             $sections = array_filter($this->catalog->sections(), fn (array $section) => empty($section['hidden']) && ($capabilities[$section['access']] ?? false));
             foreach ($sections as &$section) {
-                $section['actions'] = array_filter($section['actions'], fn (array $action) => empty($action['admin']) || $capabilities['admin']);
+                $section['actions'] = array_filter($section['actions'], fn (array $action) => (empty($action['admin']) || $capabilities['admin']) && (empty($action['access']) || !empty($capabilities[$action['access']])));
             } unset($section);
             return ResponseFactory::json(['sections' => array_values($sections)]);
         });
@@ -38,7 +38,7 @@ final class MobilePanelController
                 return $this->error(404);
             }
             $capabilities = $this->access->capabilities($user);
-            if (empty($capabilities[$definition['access']]) || (!empty($action['admin']) && !$capabilities['admin'])) {
+            if (empty($capabilities[$definition['access']]) || (!empty($action['admin']) && !$capabilities['admin']) || (!empty($action['access']) && empty($capabilities[$action['access']]))) {
                 return $this->error(403);
             }
             if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== $action['method']) {

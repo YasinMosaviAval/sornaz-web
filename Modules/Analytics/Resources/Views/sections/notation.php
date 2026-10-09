@@ -6,6 +6,16 @@
         <?php endforeach; ?>
         <button type="button" data-notation-new aria-pressed="false" class="rounded-2xl bg-white px-5 py-3 text-gray-700 shadow-sm transition hover:bg-indigo-50 dark:bg-slate-800 dark:text-white"><?= e(locale() === 'en' ? 'Write a new sheet' : 'نوشتن نت جدید') ?></button>
     </nav>
+    <?php if (!empty($previewPanelMode)): ?>
+    <div class="rounded-3xl bg-white p-6 shadow-sm">
+        <div class="mb-5 flex items-center justify-between"><strong>نت‌های نمونه</strong><span class="text-sm text-gray-500">۳ نت</span></div>
+        <div class="grid gap-4 md:grid-cols-3">
+            <?php foreach (['تمرین مقدماتی پیانو', 'ملودی نمونه', 'اتود ریتم'] as $previewTitle): ?>
+            <article class="rounded-2xl border border-gray-200 p-5"><i class="fas fa-music mb-4 text-2xl text-indigo-600"></i><h2 class="font-bold"><?= e($previewTitle) ?></h2><p class="mt-2 text-sm text-gray-500">نت نمونه برای طراحی رابط</p></article>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php else: ?>
     <iframe id="panelNotationFrame" loading="lazy" src="/music-sheets?panel=1" title="<?= e(locale() === 'en' ? 'Music notation editor' : 'ویرایشگر نت‌نویسی') ?>" class="block w-full border-0 bg-transparent" style="height:600px;min-height:600px"></iframe>
     <script>
     (() => {
@@ -37,4 +47,5 @@
         });
     })();
     </script>
+    <?php endif; ?>
 </section>

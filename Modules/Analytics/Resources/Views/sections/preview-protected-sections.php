@@ -1,0 +1,18 @@
+<?php // Static design fixtures only. This component must never query account or tenant data. ?>
+<section id="branch-types" class="section hidden">
+    <div class="mb-7 flex flex-wrap items-center justify-between gap-4"><div><h1 class="text-3xl font-bold">انواع آموزشی</h1><p class="mt-2 text-gray-500">مدیریت عنوان، خلاصه و شرح انواع آموزشی شعبه‌ها</p></div><button type="button" class="rounded-xl bg-indigo-600 px-5 py-2.5 text-white"><i class="fas fa-plus ml-2"></i>نوع آموزشی جدید</button></div>
+    <div class="overflow-x-auto rounded-3xl border border-gray-100 bg-white shadow-sm"><table class="w-full min-w-[850px]"><thead class="bg-gray-50 text-right text-sm text-gray-500"><tr><th class="p-4">عنوان</th><th class="p-4">خلاصه</th><th class="p-4">شرح</th><th class="p-4">عملیات</th></tr></thead><tbody><?php foreach (['موسیقی', 'هنرهای نمایشی', 'آموزش گروهی'] as $item): ?><tr><td class="p-4"><?= e($item) ?></td><td class="p-4">نمونهٔ معرفی</td><td class="p-4">شرح نمونه برای طراحی</td><td class="p-4 text-indigo-600">ویرایش</td></tr><?php endforeach; ?></tbody></table></div>
+</section>
+<section id="classroom-types" class="section hidden">
+    <div class="mb-7 flex justify-between"><div><h1 class="text-3xl font-bold">انواع کلاس</h1><p class="mt-2 text-gray-500">مدیریت انواع کلاس‌های فیزیکی</p></div><button type="button" class="rounded-xl bg-indigo-600 px-5 py-2 text-white">+ نوع جدید</button></div>
+    <div class="mb-5 grid grid-cols-1 gap-3 rounded-2xl bg-white p-4 shadow-sm md:grid-cols-3">
+        <label><span class="mb-1 block text-xs text-gray-500">جست‌وجو</span><input type="search" placeholder="عنوان یا نام ایجادکننده" class="w-full rounded-xl border border-gray-200 px-4 py-2.5"></label>
+        <label><span class="mb-1 block text-xs text-gray-500">دسته</span><select class="w-full rounded-xl border border-gray-200 px-4 py-2.5"><option>همه دسته‌ها</option><option>کلاس آموزشی</option></select></label>
+        <label><span class="mb-1 block text-xs text-gray-500">وضعیت</span><select class="w-full rounded-xl border border-gray-200 px-4 py-2.5"><option>همه وضعیت‌ها</option><option>تأیید شده</option><option>در انتظار تأیید</option><option>رد شده</option></select></label>
+    </div>
+    <div class="overflow-x-auto rounded-3xl bg-white shadow"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-4 text-right">ایجادکننده ↕</th><th class="p-4 text-right">عنوان ↕</th><th class="p-4 text-right">خلاصه ↕</th><th class="p-4 text-right">دسته ↕</th><th class="p-4 text-right">وضعیت ↕</th><th class="p-4"></th></tr></thead><tbody><tr><td class="p-4">آموزشگاه نمونه</td><td class="p-4">کلاس تمرین</td><td class="p-4">فضای تمرین موسیقی</td><td class="p-4">آموزشی</td><td class="p-4">تأیید شده</td><td class="p-4 text-indigo-600">ویرایش</td></tr></tbody></table></div>
+</section>
+<section id="national-holidays" class="section hidden">
+    <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"><div><h1 class="text-3xl font-bold">تعطیلات رسمی کشور</h1><p class="mt-1 text-gray-500">تاریخ‌هایی که به‌صورت پیش‌فرض از برنامه‌ریزی خودکار جلسات حذف می‌شوند</p></div><button type="button" class="rounded-2xl bg-indigo-600 px-6 py-3 text-white"><i class="fas fa-plus ml-2"></i>افزودن تعطیل رسمی</button></div>
+    <div class="overflow-hidden rounded-3xl bg-white shadow"><div class="overflow-x-auto"><table class="w-full min-w-[760px]"><thead class="border-b bg-gray-50"><tr><th class="p-5 text-right">عنوان</th><th class="p-5 text-right">تاریخ</th><th class="p-5 text-right">وضعیت</th><th class="p-5"></th></tr></thead><tbody><tr><td class="p-5">تعطیل نمونه</td><td class="p-5">۱۴۰۵/۰۷/۱۷</td><td class="p-5">فعال</td><td class="p-5 text-indigo-600">ویرایش</td></tr></tbody></table></div></div>
+</section>

@@ -1,5 +1,6 @@
 <?php
-$headerPanelUser = auth()->user();
+$previewRole = $previewPanelMode ?? null;
+$headerPanelUser = $previewRole === null ? auth()->user() : ['user_id' => 0, 'username' => 'sample_user'];
 ?>
 <header class="bg-white border-b shadow-sm">
     <div class="flex items-center justify-between gap-2 px-2 sm:px-3 md:px-8 py-3 md:py-4">
@@ -8,11 +9,11 @@ $headerPanelUser = auth()->user();
             <h1 id="panelPageTitle" class="min-w-0 truncate text-base font-bold text-gray-800 sm:text-lg" aria-live="polite"><?= e(locale() === 'en' ? 'Dashboard' : 'داشبورد') ?></h1>
         </div>
         <div class="flex items-center gap-1.5 sm:gap-2 md:gap-5 flex-shrink min-w-0">
-            <? component('inline-edit-switch'); ?>
+            <?php if ($previewRole === null) component('inline-edit-switch'); ?>
             <?php /* component('language-switcher'); */ ?>
             <?php /* component('theme-switcher'); */ ?>
             <?php if($headerPanelUser): ?>
-            <?php $headerPointStmt=db()->prepare('SELECT COALESCE(SUM(points),0) FROM user_points WHERE user_id=? AND deleted_at IS NULL AND approved_at IS NOT NULL');$headerPointStmt->execute([(int)$headerPanelUser['user_id']]);$headerPointBalance=(int)$headerPointStmt->fetchColumn(); ?>
+            <?php if ($previewRole !== null) $headerPointBalance = 125; else { $headerPointStmt=db()->prepare('SELECT COALESCE(SUM(points),0) FROM user_points WHERE user_id=? AND deleted_at IS NULL AND approved_at IS NOT NULL');$headerPointStmt->execute([(int)$headerPanelUser['user_id']]);$headerPointBalance=(int)$headerPointStmt->fetchColumn(); } ?>
             <button onclick="showSection('points')" title="امتیازهای من" aria-label="امتیازهای من" class="relative p-1.5 flex items-center">
                 <i class="fas fa-coins text-xl md:text-2xl text-gray-600"></i>
                 <span id="headerPointBalance" class="absolute -top-1 -right-1 rounded-full bg-amber-500 px-1 min-w-4 h-4 md:min-w-5 md:h-5 flex items-center justify-center text-[10px] font-bold text-white"><?= number_format($headerPointBalance) ?></span>
@@ -28,7 +29,7 @@ $headerPanelUser = auth()->user();
             </button>
             <div class="hidden md:flex items-center gap-2 min-w-0">
                 <div class="text-right hidden sm:block">
-                    <p class="font-medium text-sm truncate" dir="ltr">@<?= e(auth()->user()['username'] ?? '') ?></p>
+                    <p class="font-medium text-sm truncate" dir="ltr">@<?= e($headerPanelUser['username'] ?? '') ?></p>
                     <p class="text-xs text-gray-500 truncate">نام کاربری</p>
                 </div>
                 <div class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
@@ -37,4 +38,7 @@ $headerPanelUser = auth()->user();
             </div>
         </div>
     </div>
+    <?php if ($previewRole === null && (int) auth()->id() === 1): ?>
+    <div class="border-t border-gray-100 px-3 py-1.5 text-right md:px-8"><a href="/analytics/public-ui-preview" class="text-xs font-medium text-indigo-700 hover:underline">نمایش عمومی بخش های غیرعمومی</a></div>
+    <?php endif; ?>
 </header>
