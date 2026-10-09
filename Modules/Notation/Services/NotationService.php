@@ -134,6 +134,9 @@ class NotationService
             if (!is_array($measure) || !isset($measure['notes']) || !is_array($measure['notes']) || !array_is_list($measure['notes']) || count($measure['notes']) > 128) {
                 throw new RuntimeException('Invalid measure.', 422);
             }
+            if (isset($measure['preserve']) && !is_bool($measure['preserve'])) {
+                throw new RuntimeException('Invalid measure.', 422);
+            }
             $notes = [];
             $ticks = [1 => 0, 2 => 0];
             foreach ($measure['notes'] as $n) {
@@ -187,9 +190,9 @@ class NotationService
                 }
                 $notes[] = $note;
             }
-            $measures[] = ['notes' => $notes];
+            $measures[] = ['notes' => $notes, 'preserve' => ($measure['preserve'] ?? false) === true];
         }
-        while ($measures && !$measures[count($measures) - 1]['notes']) {
+        while ($measures && !$measures[count($measures) - 1]['notes'] && !$measures[count($measures) - 1]['preserve']) {
             array_pop($measures);
         }
         if (!$measures) {

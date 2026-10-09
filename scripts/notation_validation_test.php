@@ -33,4 +33,20 @@ $legacy=$service->validate(['metadata'=>$meta+['clef'=>'treble'],'score'=>['meas
 if(json_decode($legacy['score'],true)['measures'][0]['notes'][0]['staff']!==1)throw new Exception('Legacy note did not default to upper staff');
 $piano['score']['measures'][0]['notes'][1]['staff']=3;
 try{$service->validate($piano);throw new Exception('Invalid staff accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+$preserved=['metadata'=>$meta+['clef'=>'treble'],'score'=>['measures'=>[
+    ['notes'=>[['pitch'=>'C4','duration'=>'q','dots'=>0,'rest'=>false]]],
+    ['notes'=>[],'preserve'=>true],
+]]];
+$saved=$service->validate($preserved);
+$savedMeasures=json_decode($saved['score'],true)['measures'];
+if(count($savedMeasures)!==2||$savedMeasures[1]['preserve']!==true)throw new Exception('Intentional empty measure was lost');
+$preserved['score']['measures'][1]['preserve']='yes';
+try{$service->validate($preserved);throw new Exception('Invalid preserve flag accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+$restScore=['metadata'=>$meta+['clef'=>'treble'],'score'=>['measures'=>[['notes'=>[
+    ['pitch'=>'B4','duration'=>'h','dots'=>0,'rest'=>true,'staff'=>2,'accidental'=>'','pitches'=>[]],
+]]]]];
+$restSaved=$service->validate($restScore);
+if(json_decode($restSaved['score'],true)['measures'][0]['notes'][0]['staff']!==2)throw new Exception('Converted chord rest lost its staff');
+$restScore['score']['measures'][0]['notes'][0]['pitches']=[['pitch'=>'E4','accidental'=>'']];
+try{$service->validate($restScore);throw new Exception('Rest with chord tones accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
 echo "Notation validation: legacy scores, seven clefs, independent piano staves, chords and tempo passed.\n";
