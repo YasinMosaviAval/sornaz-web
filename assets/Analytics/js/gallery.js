@@ -64,6 +64,7 @@
     return body.data ?? body;
   }
   async function load() {
+    if (!document.querySelector('[data-gallery-category]')) return;
     try {
       const data = await request('/analytics/admin-gallery');
       owners = data.owners || [];
@@ -81,7 +82,7 @@
   }
   window.reloadAdminGallery = load;
   window.addEventListener('admin-media-changed', (event) => {
-    if (event.detail?.source !== 'gallery') load();
+    if (event.detail?.source !== 'gallery' && document.querySelector('[data-gallery-category]')) load();
   });
   function visibleRows(k) {
     const o = selected[k] || 'all';
@@ -341,6 +342,7 @@
     await load();
   });
   function initGallery() {
+    if (!document.querySelector('[data-gallery-category]')) return;
     load();
     pollGalleryRealtime();
     setInterval(pollGalleryRealtime, 2000);

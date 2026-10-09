@@ -11,14 +11,10 @@ class AdminMessageService
     public function index(int $actor): array
     {
         $academyIds = $this->academyIds($actor);
-        $siteAdmin = SiteAdminAccess::allows(DB::table('users')->where('user_id', $actor)->first());
         $query = DB::table('user_messages')->where('type', 'message')->whereNull('deleted_at')->whereRaw('(sender_id = ? OR receiver_user_id = ?)', [$actor, $actor]);
         $rows = $query->orderBy('user_message_id', 'DESC')->limit(1000)->get();
         $messages = [];
         foreach ($rows as $row) {
-            if (!$siteAdmin && !$this->belongsToAcademies((int) ($row['sender_id'] ?? 0), (int) ($row['receiver_user_id'] ?? 0), $academyIds)) {
-                continue;
-            }
             $messages[] = $this->map($row, $actor);
         }
         $messageUnread = (int) DB::table('user_messages')->where('receiver_user_id', $actor)->where('type', 'message')->where('is_read', 0)->whereNull('deleted_at')->count();

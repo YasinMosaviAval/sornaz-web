@@ -38,7 +38,7 @@ final class AdminAccountService
         $visibility = (string) ($account['visibility'] ?? 'unlisted');
         return [
             'profile' => ['academyId' => $academyId, 'accountUserId' => $accountId, 'accountType' => $isBranch ? 'branch' : ($isAcademy ? 'academy' : 'human'), 'entityLabel' => $isBranch ? 'شعبه' : ($isAcademy ? 'آموزشگاه' : 'کاربر'), 'name' => $isBranch ? $this->tr('academy_branches', (int) $branch['branch_id'], 'name', $locale, $this->tr('users', $accountId, 'full_name', $locale, $account['username'] ?? 'شعبه')) : ($isAcademy ? $this->tr('academies', $academyId, 'title', $locale, $this->tr('users', $accountId, 'full_name', $locale, 'آموزشگاه ' . $academyId)) : $this->tr('users', $accountId, 'full_name', $locale, $account['username'] ?? ('کاربر ' . $accountId))), 'type' => $isBranch ? 'شعبه فیزیکی' : ($isAcademy ? 'آموزشگاه' : 'حساب شخصی'), 'manager' => $isHuman ? '' : $this->tr('users', $managerId, 'full_name', $locale, $manager['username'] ?? ('کاربر ' . $managerId)), 'email' => $account['email'] ?? '', 'phone' => $account['phone'] ?? '', 'address' => $address ? $this->tr('user_addresses', (int) $address['address_id'], 'address', $locale, '') : '', 'founded' => $account['birthday'] ?? '', 'branches' => count($branches), 'students' => count($students), 'teachers' => count($teachers), 'avatarId' => $avatar ? (int) $avatar['media_file_id'] : null, 'coverId' => $cover ? (int) $cover['media_file_id'] : null, 'avatarUrl' => $avatar ? $this->url($avatar['path']) : '', 'coverUrl' => $cover ? $this->url($cover['path']) : '', 'shortIntro' => $isBranch ? $this->tr('academy_branches', (int) $branch['branch_id'], 'short_description', $locale, $this->tr('users', $accountId, 'short_description', $locale, '')) : ($isAcademy ? $this->tr('academies', $academyId, 'short_description', $locale, $this->tr('users', $accountId, 'short_description', $locale, '')) : $this->tr('users', $accountId, 'short_description', $locale, '')), 'biography' => $isBranch ? $this->tr('academy_branches', (int) $branch['branch_id'], 'description', $locale, $this->tr('users', $accountId, 'biography', $locale, '')) : ($isAcademy ? $this->tr('academies', $academyId, 'description', $locale, $this->tr('users', $accountId, 'biography', $locale, '')) : $this->tr('users', $accountId, 'biography', $locale, '')), 'privacy' => ['accountType' => $isBranch ? 'branch' : ($isAcademy ? 'academy' : 'human'), 'showPublicProfile' => $visibility === 'public', 'showBranches' => $this->boolSetting($settings, 'privacy_show_branches', true), 'showTeachers' => $this->boolSetting($settings, 'privacy_show_teachers', true), 'showContact' => $this->boolSetting($settings, 'privacy_show_contact', !$isHuman), 'showStats' => $this->boolSetting($settings, 'privacy_show_stats', false), 'indexable' => $this->boolSetting($settings, 'privacy_indexable', $visibility === 'public')]],
-            'documents' => $isAcademy ? $this->documents($academyId, $locale) : [], 'devices' => $this->devices($actor), 'loginHistory' => $this->loginHistory($actor), 'securityAlerts' => $this->securityAlerts($actor), 'backup' => $isAcademy ? $this->lastBackup($academyId) : null
+            'documents' => $this->documents($accountId, $locale), 'devices' => $this->devices($actor), 'loginHistory' => $this->loginHistory($actor), 'securityAlerts' => $this->securityAlerts($actor), 'backup' => $actor === 1 ? $this->lastBackup($accountId) : null
         ];
     }
 
@@ -139,10 +139,8 @@ final class AdminAccountService
             throw new RuntimeException('حجم فایل بیش از حد مجاز است.');
         }
         $mime = (new \finfo(FILEINFO_MIME_TYPE))->file((string) $file['tmp_name']);
-        if (!isset($allowed[$mime])) {
-            throw new RuntimeException('نوع فایل مجاز نیست.');
-        }
-        $ext = $allowed[$mime];
+        if ($kind === 'document') $mime = $this->documentMime($file, $mime);
+        $ext = $this->mediaExtension($allowed, $mime, $kind);
         $dir = 'storage/account-media/' . $uid . '/' . date('Y/m');
         $abs = base_path($dir);
         if (!is_dir($abs) && !mkdir($abs, 0775, true) && !is_dir($abs)) {
@@ -165,10 +163,50 @@ final class AdminAccountService
         if (in_array($kind, ['avatar', 'cover'], true)) {
             DB::table('media_files')->where('user_id', $uid)->where('collection', $collection)->where('media_file_id', '!=', $id)->whereNull('deleted_at')->update(['deleted_at' => date('Y-m-d H:i:s'), 'deleted_by' => $actor, 'updated_by' => $actor]);
         }
-        if ($kind === 'document') {
+        $this->registerAccountDocument($kind, $aid, $u, $id, $meta, $actor);
+        return ['id' => $id, 'url' => $kind === 'document' ? '/analytics/admin-account/media/' . $id . '/download' : $this->url($path)];
+    }
+
+    private function registerAccountDocument(string $kind, int $aid, array $u, int $id, array $meta, int $actor): void
+    {
+        if ($kind === 'document' && $aid > 0 && ($u['type'] ?? '') === 'academy') {
             DB::table('academy_documents')->insert(['academy_id' => $aid, 'media_file_id' => $id, 'document_type' => in_array($meta['documentType'] ?? '', ['license', 'identity', 'statute', 'tax', 'contract', 'certificate', 'other'], true) ? $meta['documentType'] : 'other', 'document_number' => trim((string) ($meta['documentNumber'] ?? '')) ?: null, 'issued_at' => $this->date($meta['issuedAt'] ?? null), 'expires_at' => $this->date($meta['expiresAt'] ?? null), 'status' => 'pending', 'created_by' => $actor, 'updated_by' => $actor]);
         }
-        return ['id' => $id, 'url' => $kind === 'document' ? '/analytics/admin-account/media/' . $id . '/download' : $this->url($path)];
+    }
+
+    private function mediaExtension(array $allowed, string $mime, string $kind): string
+    {
+        if (!isset($allowed[$mime])) {
+            throw new RuntimeException($kind === 'document' ? 'فرمت‌های مجاز سند: PDF، JPG/JPEG، PNG، WebP و DOCX.' : 'نوع فایل مجاز نیست.');
+        }
+        return $allowed[$mime];
+    }
+
+    private function documentMime(array $file, string $mime): string
+    {
+        // Some libmagic versions identify DOCX containers as ZIP. Check their contents,
+        // never accept a ZIP merely because its filename ends in .docx.
+        if (in_array($mime, ['application/zip', 'application/x-zip-compressed'], true)
+            && strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION)) === 'docx') {
+            $temp = tempnam(sys_get_temp_dir(), 'sornaz-doc-');
+            if ($temp === false) return $mime;
+            $archivePath = $temp . '.zip';
+            try {
+                if (!rename($temp, $archivePath) || !copy((string) $file['tmp_name'], $archivePath)) return $mime;
+                $archive = new \PharData($archivePath);
+                if ($archive->isFileFormat(\Phar::ZIP) && isset($archive['[Content_Types].xml']) && isset($archive['word/document.xml'])
+                    && $archive['[Content_Types].xml']->getSize() < 262144
+                    && str_contains($archive['[Content_Types].xml']->getContent(), 'wordprocessingml.document.main+xml')) {
+                    $mime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+                }
+            } catch (\Throwable) {
+                // The original MIME check below will reject malformed archives.
+            } finally {
+                if (is_file($archivePath)) unlink($archivePath);
+                if (is_file($temp)) unlink($temp);
+            }
+        }
+        return $mime;
     }
 
     public function saveMediaMetadata(int $actor, int $id, array $data): void
@@ -205,9 +243,9 @@ final class AdminAccountService
 
     public function downloadableMedia(int $actor, int $id): array
     {
-        [$a] = $this->context($actor);
-        $row = DB::table('media_files')->where('media_file_id', $id)->where('fileable_type', 'academy')->where('fileable_id', (int) $a['academy_id'])->whereNull('deleted_at')->first();
-        if (!$row || !DB::table('academy_documents')->where('media_file_id', $id)->whereNull('deleted_at')->first()) {
+        $this->context($actor);
+        $row = DB::table('media_files')->where('media_file_id', $id)->where('user_id', $actor)->where('collection', 'document')->whereNull('deleted_at')->first();
+        if (!$row) {
             throw new RuntimeException('سند یافت نشد.');
         }
         return ['path' => base_path($row['path']), 'filename' => $row['original_filename'] ?: $row['filename'], 'mime' => $row['mime_type'] ?: 'application/octet-stream'];
@@ -230,9 +268,6 @@ final class AdminAccountService
         }
         $branch = $this->branchContext($actor);
         $academy = $branch ? DB::table('academies')->where('academy_id', (int) $branch['academy_id'])->whereNull('deleted_at')->first() : (DB::table('academies')->where('user_id', $actor)->whereNull('deleted_at')->first() ?: DB::table('academies')->where('created_by', $actor)->whereNull('deleted_at')->orderBy('academy_id')->first());
-        if (!$academy && SiteAdminAccess::allows($current)) {
-            $academy = DB::table('academies')->whereNull('deleted_at')->orderBy('academy_id')->first();
-        }
         return [$academy ?: ['academy_id' => 0, 'created_by' => $actor], $current];
     }
 
@@ -243,7 +278,7 @@ final class AdminAccountService
 
     private function documents(int $aid, string $locale): array
     {
-        $rows = db()->prepare('SELECT d.*,m.* FROM academy_documents d JOIN media_files m ON m.media_file_id=d.media_file_id AND m.deleted_at IS NULL WHERE d.academy_id=? AND d.deleted_at IS NULL ORDER BY d.academy_document_id DESC');
+        $rows = db()->prepare('SELECT d.*,m.* FROM media_files m LEFT JOIN academy_documents d ON d.media_file_id=m.media_file_id AND d.deleted_at IS NULL WHERE m.user_id=? AND m.collection=\'document\' AND m.deleted_at IS NULL ORDER BY m.media_file_id DESC');
         $rows->execute([$aid]);
         return array_map(fn ($r) => ['id' => (int) $r['media_file_id'], 'documentId' => (int) $r['academy_document_id'], 'name' => $r['original_filename'] ?: $r['filename'], 'size' => $this->size((int) $r['size']), 'date' => $r['created_at'], 'type' => $r['type'], 'documentType' => $r['document_type'], 'number' => $r['document_number'], 'issuedAt' => $r['issued_at'], 'expiresAt' => $r['expires_at'], 'status' => $r['status'], 'url' => '/analytics/admin-account/media/' . (int) $r['media_file_id'] . '/download'], $rows->fetchAll());
     }
@@ -374,7 +409,7 @@ final class AdminAccountService
 
     private function lastBackup(int $aid): ?array
     {
-        $r = DB::table('media_files')->where('fileable_type', 'academy_backup')->where('fileable_id', $aid)->where('filename', 'LIKE', 'academy-scoped-v2-%')->whereNull('deleted_at')->orderBy('media_file_id', 'DESC')->first();
+        $r = DB::table('media_files')->where('user_id', $aid)->where('fileable_type', 'user_export')->whereNull('deleted_at')->orderBy('media_file_id', 'DESC')->first();
         return $r ? ['id' => (int) $r['media_file_id'], 'date' => $r['created_at'], 'size' => $this->size((int) $r['size'])] : null;
     }
 }

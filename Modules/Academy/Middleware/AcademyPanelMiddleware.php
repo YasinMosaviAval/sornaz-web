@@ -23,7 +23,7 @@ class AcademyPanelMiddleware
             return redirect('/system/login');
         }
         $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '';
-        if ($path === '/analytics/admin-panel' || str_starts_with($path, '/analytics/admin-account') || str_starts_with($path, '/analytics/chat') || $path === '/analytics/admin-dashboard') {
+        if ($this->isPersonalPanelPath($path)) {
             return $next($request);
         }
         if (str_starts_with($path, '/analytics/admin-messages')) {
@@ -66,5 +66,14 @@ class AcademyPanelMiddleware
     {
         return str_contains(strtolower((string) ($_SERVER['HTTP_ACCEPT'] ?? '')), 'application/json')
             || strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+    }
+
+    private function isPersonalPanelPath(string $path): bool
+    {
+        return $path === '/analytics/admin-panel' || $path === '/analytics/admin-dashboard'
+            || str_starts_with($path, '/analytics/admin-account')
+            || str_starts_with($path, '/analytics/chat')
+            || str_starts_with($path, '/analytics/admin-gallery')
+            || str_starts_with($path, '/analytics/admin-profile-content/');
     }
 }

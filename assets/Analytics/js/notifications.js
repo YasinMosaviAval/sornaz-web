@@ -367,7 +367,7 @@
       return x.id === id;
     });
     if (!item) return;
-    if (item.readStatus === 'خوانده‌نشده') {
+    if (document.getElementById('notifications')?.dataset.readOnly !== '1' && item.readStatus === 'خوانده‌نشده') {
       try {
         await notificationApi('/analytics/admin-notifications/' + id + '/read', {});
         await window.loadAdminNotifications();

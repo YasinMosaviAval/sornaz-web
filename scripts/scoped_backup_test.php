@@ -39,13 +39,12 @@ CREATE TABLE auth_tokens(user_id INTEGER,token TEXT); INSERT INTO auth_tokens VA
 $fields = ['user_id','disk','directory','filename','extension','mime_type','type','collection','path','original_filename','fileable_type','fileable_id','size','checksum','visibility','created_by','updated_by','deleted_at'];
 $pdo->exec('CREATE TABLE media_files(media_file_id INTEGER PRIMARY KEY,' . implode(',', array_map(fn ($f) => "$f TEXT", $fields)) . ')');
 $service = new Modules\Analytics\Services\AcademyScopedBackupService();
-$result = $service->create(7);
-$sql = file_get_contents($result['path']);
-check(!preg_match('/DROP TABLE|CREATE TABLE|FOREIGN_KEY_CHECKS|DO_NOT_EXPORT|ADMIN_SECRET|SECRET_TOKEN/', $sql), 'Unsafe SQL or credentials exported');
-check(str_contains($sql, 'START TRANSACTION') && str_contains($sql, 'COMMIT'), 'Missing transactional export');
-check(!str_contains($sql, "'200'") && !str_contains($sql, "'20'"), 'Other academy exported');
-check(str_contains($sql, 'INSERT INTO `p_academies`') && str_contains($sql, "'100'"), 'Owned records missing');
-check($service->find(7, (int) $result['id'])['filename'] === $result['filename'], 'New export cannot be downloaded');
-$pdo->exec("UPDATE media_files SET filename='academy-10-old.sql'");
-try { $service->find(7, (int) $result['id']); throw new LogicException('Legacy unsafe backup downloadable'); } catch (RuntimeException) {}
-echo "Scoped backup: tenant boundary, secrets exclusion, non-destructive SQL and legacy download checks passed.\n";
+$result = $service->create(1);
+$json = file_get_contents(base_path('storage/backups/users/1/' . $result['filename']));
+$data = json_decode($json, true, 512, JSON_THROW_ON_ERROR)['records'];
+check(!str_contains($json, 'DO_NOT_EXPORT') && !str_contains($json, 'ADMIN_SECRET') && !str_contains($json, 'SECRET_TOKEN'), 'Credentials exported');
+check(count($data['users']) === 1 && (int)$data['users'][0]['user_id'] === 1, 'Current user boundary failed');
+check($service->find(1, (int) $result['id'])['filename'] === $result['filename'], 'Own export cannot be downloaded');
+try { $service->create(7); throw new LogicException('Non-admin created export'); } catch (RuntimeException $e) { check($e->getCode() === 403, 'Wrong create denial'); }
+try { $service->find(7, (int) $result['id']); throw new LogicException('Non-admin downloaded export'); } catch (RuntimeException $e) { check($e->getCode() === 403, 'Wrong download denial'); }
+echo "User export: admin-only access, own data, secrets exclusion and no-academy checks passed.\n";

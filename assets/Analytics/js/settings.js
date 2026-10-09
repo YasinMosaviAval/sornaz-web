@@ -1,6 +1,21 @@
 (function () {
   'use strict';
   let settings = null;
+  const isSiteAdmin = document.getElementById('settings')?.dataset.siteAdmin === '1';
+  const applyPersonalAppearance = (field, value) => {
+    if (field === 'language') {
+      window.location.href = `/language/${value}`;
+      return;
+    }
+    if (field === 'colorTheme') {
+      localStorage.setItem('sornaz.personalTheme', value);
+      document.documentElement.dataset.theme = value;
+    }
+    if (field === 'themeMode') {
+      localStorage.setItem('sornaz.personalMode', value);
+      document.documentElement.dataset.mode = value;
+    }
+  };
   const encode = (data) =>
     btoa(unescape(encodeURIComponent(JSON.stringify(data))))
       .replace(/\+/g, '-')
@@ -19,6 +34,10 @@
     });
 
   window.applyAppearanceSetting = async (field, value) => {
+    if (!isSiteAdmin) {
+      applyPersonalAppearance(field, value);
+      return;
+    }
     if (field === 'editMode') {
       localStorage.setItem('sornaz.admin.editMode', value ? '1' : '0');
       window.AdminInlineEditor?.setMode(Boolean(value));
@@ -53,11 +72,11 @@
         throw new Error(body.message || 'دریافت فهرست فونت‌ها ناموفق بود.');
       settings = body.data ?? body;
       if (!select) return;
-      document.getElementById('siteColorTheme').value = settings.colorTheme || 'indigo';
-      document.getElementById('siteThemeMode').value = settings.themeMode || 'light';
+      document.getElementById('siteColorTheme').value = (!isSiteAdmin && localStorage.getItem('sornaz.personalTheme')) || settings.colorTheme || 'indigo';
+      document.getElementById('siteThemeMode').checked = ((!isSiteAdmin && localStorage.getItem('sornaz.personalMode')) || settings.themeMode || 'light') === 'dark';
       document.getElementById('siteLanguage').value =
         settings.language || document.documentElement.lang || 'fa';
-      document.getElementById('siteEditMode').checked =
+      if (isSiteAdmin) document.getElementById('siteEditMode').checked =
         localStorage.getItem('sornaz.admin.editMode') === '1';
       select.innerHTML = settings.fonts
         .map(
@@ -65,7 +84,13 @@
             `<option value="${font.value}" ${font.value === settings.primaryFont ? 'selected' : ''}>${font.label}</option>`
         )
         .join('');
-      document.getElementById('siteFontScale').value = Number(settings.fontScale || 0);
+      if (!isSiteAdmin) {
+        const font = localStorage.getItem('sornaz.personalFont');
+        if (font && settings.fonts.some((item) => item.value === font)) select.value = font;
+      }
+      document.getElementById('siteFontScale').value = Number((!isSiteAdmin && localStorage.getItem('sornaz.personalFontScale')) ?? settings.fontScale ?? 0);
+      document.getElementById('siteFontWeight').value = Math.min(5, Math.max(0, Number(localStorage.getItem('sornaz.personalFontWeight') ?? 0)));
+      document.getElementById('siteCornerRadius').value = Math.min(16, Math.max(0, Number(localStorage.getItem('sornaz.personalCornerRadius') ?? 4)));
       previewSiteFont();
     } catch (error) {
       if (select) select.innerHTML = '<option value="">خطا در دریافت فونت‌ها</option>';
@@ -78,6 +103,10 @@
     const key = document.getElementById('sitePrimaryFont').value;
     const font = settings.fonts.find((item) => item.value === key);
     const scale = Number(document.getElementById('siteFontScale').value || 0);
+    const weight = Number(document.getElementById('siteFontWeight').value || 0);
+    const radius = Number(document.getElementById('siteCornerRadius').value || 0);
+    document.getElementById('siteFontWeightOutput').textContent = weight.toLocaleString('fa-IR');
+    document.getElementById('siteCornerRadiusOutput').textContent = `${radius.toLocaleString('fa-IR')} px`;
     const output = document.getElementById('siteFontScaleOutput');
     const persian = document.documentElement.lang !== 'en',
       digits = (value) =>
@@ -100,6 +129,8 @@
     preview.dataset.preserveDigits = '1';
     preview.style.fontFamily = font?.fontFamily || settings.fontFamily;
     preview.style.fontSize = 16 + scale + 'px';
+    preview.style.fontWeight = String(400 + weight * 100);
+    preview.style.borderRadius = `${radius}px`;
     const english = document.documentElement.lang === 'en',
       content = document.getElementById('siteFontPreviewContent');
     content.innerHTML = english
@@ -110,9 +141,24 @@
   window.saveSiteSettings = async () => {
     const primaryFont = document.getElementById('sitePrimaryFont').value;
     const fontScale = Number(document.getElementById('siteFontScale').value || 0);
+    const fontWeight = Number(document.getElementById('siteFontWeight').value || 0);
+    const cornerRadius = Number(document.getElementById('siteCornerRadius').value || 0);
+    localStorage.setItem('sornaz.personalFontWeight', String(fontWeight));
+    localStorage.setItem('sornaz.personalCornerRadius', String(cornerRadius));
+    document.documentElement.style.setProperty('--site-font-weight', String(400 + fontWeight * 100));
+    document.documentElement.style.setProperty('--site-corner-radius', `${cornerRadius}px`);
+    if (!isSiteAdmin) {
+      const selectedFont = settings?.fonts.find((item) => item.value === primaryFont);
+      if (!selectedFont) return;
+      localStorage.setItem('sornaz.personalFont', primaryFont);
+      localStorage.setItem('sornaz.personalFontScale', String(fontScale));
+      window.applySiteTypography?.({ fontFamily: selectedFont.fontFamily, rootFontSize: `${16 + fontScale}px` });
+      document.getElementById('siteSettingsMessage').textContent = 'تنظیمات شخصی در این مرورگر ذخیره شد.';
+      return;
+    }
     try {
       const language = document.getElementById('siteLanguage').value;
-      const themeMode = document.getElementById('siteThemeMode').value;
+      const themeMode = document.getElementById('siteThemeMode').checked ? 'dark' : 'light';
       const colorTheme = document.getElementById('siteColorTheme').value;
       const editMode = document.getElementById('siteEditMode').checked;
       localStorage.setItem('sornaz.admin.editMode', editMode ? '1' : '0');

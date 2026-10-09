@@ -295,7 +295,8 @@ final class AdminProfileContentService
                 }
             }
         }
-        $hide = count(array_filter($out, fn ($o) => $o['writable'])) <= 1 && ($directBranch || (!$academyWide && count($branchIds) === 1));
+        $out += $this->selfOrganization($actor, $me);
+        $hide = $this->hideOrganizationField($out, $directBranch, $academyWide, $branchIds);
         $autoApprove = !$reception;
         return [array_values($out), (bool) $hide, $autoApprove, $siteAdmin || (!$reception && ($directAcademy || $directBranch || $academyWide || $branchIds))];
     }
@@ -312,6 +313,17 @@ final class AdminProfileContentService
         }if (!$o || ($write && !$o['writable'])) {
             throw new RuntimeException('دسترسی به سازمان انتخاب‌شده ندارید.');
         }
+    }
+
+    private function selfOrganization(int $actor, array $user): array
+    {
+        return [$actor => ['id' => $actor, 'entityId' => $actor, 'academyId' => null, 'branchId' => null, 'kind' => 'user', 'name' => (string) ($user['username'] ?? 'من'), 'writable' => true]];
+    }
+
+    private function hideOrganizationField(array $organizations, ?array $directBranch, bool $academyWide, array $branchIds): bool
+    {
+        return count($organizations) === 1 || count(array_filter($organizations, fn ($organization) => $organization['writable'])) <= 1
+            && ($directBranch || (!$academyWide && count($branchIds) === 1));
     }
 
     private function owned(int $a, string $e, int $id): array

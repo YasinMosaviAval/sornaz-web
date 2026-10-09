@@ -44,6 +44,7 @@ $learningRole = static fn(array $row): string => ($row['enrollment_type'] ?? '')
 ?>
 <section id="my-classrooms" class="section hidden space-y-6">
  <header><h1 class="text-3xl font-bold">کلاس‌های من</h1><p class="mt-1 text-gray-500">جلسه‌های کلاس‌هایی که در آن‌ها مدرس یا هنرجو هستید</p></header>
+ <?php component('my-learning-tabs', ['active' => 'my-classrooms']); ?>
  <div class="grid gap-4 lg:grid-cols-2">
   <?php if(!$learningClasses): ?><?= $learningEmpty('هنوز جلسه کلاسی برای شما ثبت نشده است.') ?><?php endif; ?>
   <?php foreach($learningClasses as $row): $joinUrl = trim((string)($row['online_join_url'] ?? '')); $canJoin = ($row['delivery_mode'] ?? '') === 'online' && !in_array(($row['booking_status'] ?? ''), ['canceled', 'rejected'], true) && filter_var($joinUrl, FILTER_VALIDATE_URL) && parse_url($joinUrl, PHP_URL_SCHEME) === 'https'; ?>
@@ -60,6 +61,7 @@ $learningRole = static fn(array $row): string => ($row['enrollment_type'] ?? '')
 </section>
 <section id="my-terms" class="section hidden space-y-6">
  <header><h1 class="text-3xl font-bold">ترم‌های من</h1><p class="mt-1 text-gray-500">ترم‌های مرتبط با ثبت‌نام‌های آموزشی شما</p></header>
+ <?php component('my-learning-tabs', ['active' => 'my-terms']); ?>
  <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
   <?php if(!$learningTerms): ?><?= $learningEmpty('هنوز ترمی برای شما ثبت نشده است.') ?><?php endif; ?>
   <?php foreach($learningTerms as $row): ?><article class="rounded-2xl border bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"><div class="flex items-start justify-between gap-3"><div><h2 class="font-bold"><?=e($row['term_title'])?></h2><p class="mt-1 text-sm text-gray-500"><?=e($row['course_title'])?></p></div><span class="rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700"><?=($row['enrollment_status']??'')==='active'?e($learningRole($row)):'در انتظار برنامه‌ریزی'?></span></div><div class="mt-4 flex justify-between text-xs text-gray-500"><span><?=e((string)$row['start_date'])?></span><span>تا</span><span><?=e((string)$row['end_date'])?></span></div></article><?php endforeach; ?>

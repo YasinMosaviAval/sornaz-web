@@ -3,11 +3,7 @@
         .point-inline-expand { animation: pointSlideDown 220ms ease-out forwards; }
         @keyframes pointSlideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
     </style>
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-3xl font-bold">سیستم امتیازها</h1>
-            <p class="text-gray-500 mt-1">تعریف و مدیریت قوانین امتیازدهی عمومی، تخصصی و اختصاصی</p>
-        </div>
+    <div class="flex flex-col md:flex-row md:items-center md:justify-end gap-4 mb-6">
         <?php if (\Modules\System\Services\SiteAdminAccess::allows(auth()->user())): ?>
         <button onclick="openAddPointModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
             <i class="fas fa-plus"></i> افزودن قانون امتیاز
@@ -19,17 +15,6 @@
         <div class="rounded-3xl bg-gradient-to-l from-amber-400 to-yellow-500 p-5 text-white shadow"><p class="text-sm opacity-90">امتیاز عمومی من</p><strong id="pointGeneralBalance" class="block mt-2 text-3xl">۰</strong></div>
         <div class="rounded-3xl bg-gradient-to-l from-violet-600 to-indigo-600 p-5 text-white shadow"><p class="text-sm opacity-90">امتیاز حرفه‌ای من</p><strong id="pointProfessionalBalance" class="block mt-2 text-3xl">۰</strong></div>
         <div class="rounded-3xl bg-white p-5 shadow"><p class="text-sm text-gray-500">قوانین فعال</p><strong id="pointActiveRules" class="block mt-2 text-3xl text-gray-800">۰</strong><p class="mt-1 text-xs text-gray-400">اعمال خودکار با سقف و کنترل تکرار</p></div>
-    </div>
-
-    <!-- تاپ‌بار شعبه‌ها -->
-    <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
-        <div class="flex gap-2 min-w-max" id="pointsBranchTabs">
-            <button type="button" onclick="filterPointsByBranch('all')"
-                    class="point-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium bg-indigo-600 text-white"
-                    data-value="all">
-                همه شعبه‌ها
-            </button>
-        </div>
     </div>
 
     <!-- فیلترها -->
@@ -105,4 +90,5 @@
             <div class="flex items-center gap-2" id="pointsPaginationButtons"></div>
         </div>
     </div>
+    <?php component('my-points'); ?>
 </div>

@@ -36,6 +36,14 @@ trait BuildsMutationQueries
 
     public function update(array $data): bool
     {
+        if (!empty($data['deleted_at']) && !in_array(\Core\database\TableNames::logical($this->table), ['translations', 'f_translations'], true)) {
+            return $this->withTranslationDeletion($data, fn () => $this->executeUpdate($data));
+        }
+        return $this->executeUpdate($data);
+    }
+
+    private function executeUpdate(array $data): bool
+    {
         $sets = [];
         $bindings = [];
         foreach ($data as $column => $value) {
@@ -55,6 +63,14 @@ trait BuildsMutationQueries
 
     public function delete(): bool
     {
+        if (!in_array(\Core\database\TableNames::logical($this->table), ['translations', 'f_translations'], true)) {
+            return $this->withTranslationDeletion(['deleted_at' => date('Y-m-d H:i:s'), 'deleted_by' => function_exists('auth') ? auth()->id() : null], fn () => $this->executeDelete());
+        }
+        return $this->executeDelete();
+    }
+
+    private function executeDelete(): bool
+    {
         $sql = "DELETE FROM {$this->table}";
         $sql .= ' ' . $this->compileWhere();
         $stmt = $this->pdo->prepare($sql);
@@ -63,6 +79,55 @@ trait BuildsMutationQueries
             DatabaseChangeNotifier::record($this->pdo, $this->table, 'delete', [], $this->mutationEntityId());
         }
         return $result;
+    }
+
+    private function withTranslationDeletion(array $data, callable $mutation): bool
+    {
+        $logical = \Core\database\TableNames::logical($this->table);
+        $own = !$this->pdo->inTransaction();
+        if ($own) $this->pdo->beginTransaction();
+        try {
+            // Read the exact affected rows before changing them; a WHERE binding is
+            // not necessarily the primary key, and bulk updates can delete many rows.
+            $driver = $this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+            $query = $this->pdo->prepare("SELECT * FROM {$this->table} " . $this->compileWhere() . ($driver === 'mysql' ? ' FOR UPDATE' : ''));
+            $query->execute($this->bindings);
+            $rows = $query->fetchAll(\PDO::FETCH_ASSOC);
+            $keys = $this->deletionPrimaryKeys();
+            if (count($keys) === 1 && $rows) {
+                $ids = array_column($rows, $keys[0]);
+                $mainStore = $this->pdo instanceof \Core\database\PrefixedPDO ? \Core\database\TableNames::physical('translations') : 'translations';
+                foreach (array_unique([$mainStore, 'f_translations']) as $store) {
+                    $exists = $this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite'
+                        ? $this->pdo->prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?")
+                        : $this->pdo->prepare('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?');
+                    $exists->execute([$store]);
+                    if (!$exists->fetchColumn()) continue;
+                    $query = $this->pdo->prepare("UPDATE `$store` SET deleted_at=?,deleted_by=? WHERE table_name IN (?,?) AND table_id IN (" . implode(',', array_fill(0, count($ids), '?')) . ') AND deleted_at IS NULL');
+                    $query->execute([$data['deleted_at'], $data['deleted_by'] ?? null, $logical, \Core\database\TableNames::physical($logical), ...$ids]);
+                }
+            }
+            $result = $mutation();
+            if (!$result) throw new \RuntimeException('Deletion failed.');
+            if ($own) $this->pdo->commit();
+            return $result;
+        } catch (\Throwable $error) {
+            if ($own && $this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $error;
+        }
+    }
+
+    private function deletionPrimaryKeys(): array
+    {
+            if ($this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+                $physical = $this->pdo instanceof \Core\database\PrefixedPDO ? \Core\database\TableNames::physical($this->table) : $this->table;
+                $columns = $this->pdo->query("PRAGMA table_info($physical)")->fetchAll(\PDO::FETCH_ASSOC);
+                $keys = array_column(array_filter($columns, fn ($c) => $c['pk'] > 0), 'name');
+            } else {
+                $columns = $this->pdo->query("SHOW COLUMNS FROM {$this->table}")->fetchAll(\PDO::FETCH_ASSOC);
+                $keys = array_column(array_filter($columns, fn ($c) => $c['Key'] === 'PRI'), 'Field');
+            }
+        return $keys;
     }
 
     public function insertGetId(array $data): int|false

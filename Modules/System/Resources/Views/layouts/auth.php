@@ -38,8 +38,8 @@
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
     <header class="auth-header-switchers min-h-16 px-4 py-3 flex items-center justify-between gap-2 border-b border-gray-100 bg-white" dir="ltr">
         <? component('inline-edit-switch'); ?>
-        <? component('theme-switcher'); ?>
-        <? component('language-switcher'); ?>
+        <?php /* component('theme-switcher'); */ ?>
+        <?php /* component('language-switcher'); */ ?>
     </header>
     <?// component('main-header'); ?>
     <main class="flex-1">

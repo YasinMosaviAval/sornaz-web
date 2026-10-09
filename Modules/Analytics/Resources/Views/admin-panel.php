@@ -15,6 +15,7 @@ $hasContractManagementRole = $panelUser && (bool)\Core\database\DB::table('acade
     ->whereIn('academy_branch_member_contracts.type', ['owner','manager','receptionist'])
     ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_contracts.deleted_at')->first();
 $showAcademyPanelSections = $isSiteAdminPanel || $hasMemberManagementRole || $hasContractManagementRole || in_array(($panelUser['type'] ?? ''), ['academy','branch'], true);
+$canUsePanelMessageActions = $showAcademyPanelSections || (bool)\Core\database\DB::table('academy_branch_members')->where('user_id', (int) $panelUser['user_id'])->whereNull('deleted_at')->first();
 ?>
 <div class="relative h-screen overflow-hidden">
     <script>window.adminCsrfToken=<?= json_encode(csrf_token()) ?>;window.adminMemberSchedulesData=<?= json_encode($scheduleFixtures['schedules']??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;window.adminAvailabilityExceptionsData=<?= json_encode($scheduleFixtures['exceptions']??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;window.adminInlineTranslations=<?= json_encode($inlineTranslationCatalog??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;</script>
@@ -43,13 +44,26 @@ $showAcademyPanelSections = $isSiteAdminPanel || $hasMemberManagementRole || $ha
             if ($showAcademyPanelSections) component('dashboard');
             else component('student-dashboard');
             component('account');
+            component('settings');
+            component('points');
+            component('notation');
             component('chat');
+            component('messages', ['canUseMessageActions' => $canUsePanelMessageActions]);
+            component('notifications', ['canUseNotificationActions' => $canUsePanelMessageActions, 'canCreateNotifications' => $showAcademyPanelSections]);
             if (!$showAcademyPanelSections) component('my-learning');
+            if (!$showAcademyPanelSections) component('personal-panel-sections');
+            component('gallery');
+            component('awards');
+            component('certificates');
+            component('experiences');
+            component('educations');
+            component('events');
+            component('polls');
+            component('publications');
+            component('badges');
             if ($showAcademyPanelSections) {
             component('reports');
             component('chart-gallery');
-            component('messages');
-            component('notifications');
             component('students');
             component('teachers');
             component('branches');
@@ -59,7 +73,6 @@ $showAcademyPanelSections = $isSiteAdminPanel || $hasMemberManagementRole || $ha
             component('courses');
             component('course-levels');
             component('terms');
-            component('gallery');
             component('finance');
             component('scheduling-rules');
             component('schedules');
@@ -68,8 +81,6 @@ $showAcademyPanelSections = $isSiteAdminPanel || $hasMemberManagementRole || $ha
             component('member-schedules');
             component('availabilities');
             component('availability-exceptions');
-            component('points');
-            component('settings');
             component('users');
             if ($isSiteAdminPanel) {
                 component('national-holidays');
@@ -78,17 +89,8 @@ $showAcademyPanelSections = $isSiteAdminPanel || $hasMemberManagementRole || $ha
                 component('permissions');
                 component('guides', ['guides' => $guides ?? [], 'guideDocuments' => $guideDocuments ?? []]);
             }
-
-            component('awards');
-            component('certificates');
-            component('experiences');
-            component('educations');
-            component('events');
-            component('polls');
             //component('favorites');
-            component('publications');
             //component('ratings');
-            component('badges');
             //component('approvals');
             //component('contracts');
             //component('profiles');

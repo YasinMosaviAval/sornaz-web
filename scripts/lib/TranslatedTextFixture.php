@@ -9,7 +9,7 @@ final class TranslatedTextFixture
         foreach(['f_translations','translations'] as $store){
             $pdo->exec("CREATE TABLE IF NOT EXISTS $store(translation_id INTEGER PRIMARY KEY AUTOINCREMENT,table_name TEXT,table_id INTEGER,field TEXT,locale TEXT,value TEXT,version INTEGER DEFAULT 1,created_at TEXT,created_by INTEGER,updated_at TEXT,updated_by INTEGER,deleted_at TEXT)");
             $columns=array_column($pdo->query("PRAGMA table_info($store)")->fetchAll(PDO::FETCH_ASSOC),'name');
-            foreach(['version'=>'INTEGER DEFAULT 1','created_at'=>'TEXT','created_by'=>'INTEGER','updated_at'=>'TEXT','updated_by'=>'INTEGER','deleted_at'=>'TEXT'] as $field=>$type){if(!in_array($field,$columns,true)){$pdo->exec("ALTER TABLE $store ADD COLUMN $field $type");}}
+            foreach(['version'=>'INTEGER DEFAULT 1','created_at'=>'TEXT','created_by'=>'INTEGER','updated_at'=>'TEXT','updated_by'=>'INTEGER','deleted_at'=>'TEXT','deleted_by'=>'INTEGER'] as $field=>$type){if(!in_array($field,$columns,true)){$pdo->exec("ALTER TABLE $store ADD COLUMN $field $type");}}
         }
         $config=require __DIR__.'/../../config/translated-fields.php';
         foreach($config as $table=>$item){$columns=array_column($pdo->query("PRAGMA table_info($table)")->fetchAll(PDO::FETCH_ASSOC),'name');foreach($item['fields'] as $field){if(!in_array($field,$columns,true)){continue;}

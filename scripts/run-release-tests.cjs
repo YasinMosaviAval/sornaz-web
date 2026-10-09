@@ -9,7 +9,7 @@ const php = [
  'public_directory_privacy_test.php', 'public_copy_test.php', 'registration_otp_policy_test.php',
  'academy_registration_flow_test.php', 'mobile_panel_test.php', 'story_feed_test.php',
  'story_highlights_test.php', 'social_comment_threads_test.php', 'notation_validation_test.php',
- 'notation_instruments_test.php', 'deployment_case_test.php', 'release_security_test.php'
+ 'notation_instruments_test.php', 'personal_offerings_access_test.php', 'deployment_case_test.php', 'release_security_test.php'
 ];
 const suites = php.map(file => ['php',file]);
 suites.push([process.execPath,'csrf_fetch_test.cjs'],[process.execPath,'profile_render_security_test.cjs']);

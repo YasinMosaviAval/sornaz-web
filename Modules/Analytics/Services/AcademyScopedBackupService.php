@@ -8,111 +8,117 @@ use Modules\System\Services\SiteAdminAccess;
 
 final class AcademyScopedBackupService
 {
+    private function assertSiteAdmin(int $actor): void
+    {
+        if ($actor !== 1) {
+            throw new RuntimeException('دسترسی لازم برای این بخش را ندارید.', 403);
+        }
+    }
+
     public function create(int $actor): array
     {
+        $this->assertSiteAdmin($actor);
         $user = DB::table('users')->where('user_id', $actor)->whereNull('deleted_at')->first();
-        $academy = DB::table('academies')->where('user_id', $actor)->whereNull('deleted_at')->first() ?: DB::table('academies')->where('created_by', $actor)->whereNull('deleted_at')->orderBy('academy_id')->first();
-        if (!$academy && SiteAdminAccess::allows($user)) {
-            $academy = DB::table('academies')->whereNull('deleted_at')->orderBy('academy_id')->first();
+        if (!$user) {
+            throw new RuntimeException('حساب کاربری یافت نشد.');
         }
-        if (!$academy) {
-            throw new RuntimeException('آموزشگاه مرتبط یافت نشد.');
-        }
-        $aid = (int) $academy['academy_id'];
-        $branches = DB::table('academy_branches')->where('academy_id', $aid)->get();
-        $branchIds = $this->ids($branches, 'branch_id');
-        $members = $branchIds ? DB::table('academy_branch_members')->whereIn('branch_id', $branchIds)->get() : [];
-        $memberIds = $this->ids($members, 'member_id');
-        $courses = $branchIds ? DB::table('academy_branch_courses')->whereIn('branch_id', $branchIds)->get() : [];
-        $courseIds = $this->ids($courses, 'course_id');
-        $terms = $courseIds ? DB::table('academy_branch_course_terms')->whereIn('course_id', $courseIds)->get() : [];
-        $termIds = $this->ids($terms, 'term_id');
-        $sessions = $termIds ? DB::table('academy_branch_course_term_sessions')->whereIn('term_id', $termIds)->get() : [];
-        $sessionIds = $this->ids($sessions, 'term_session_id');
-        $bookingIds = $this->ids($sessions, 'booking_id');
-        $invoices = $termIds ? DB::table('academy_branch_course_term_invoices')->whereIn('term_id', $termIds)->get() : [];
-        $invoiceIds = $this->ids($invoices, 'term_invoice_id');
-        $rooms = $branchIds ? DB::table('academy_branch_classrooms')->whereIn('branch_id', $branchIds)->get() : [];
-        $roomIds = $this->ids($rooms, 'classroom_id');
-        $filters = [
-            'academies' => $this->in('academy_id', [$aid]), 'academy_branches' => $this->in('branch_id', $branchIds), 'academy_branch_members' => $this->in('member_id', $memberIds),
-            'academy_branch_member_contracts' => $this->in('member_id', $memberIds), 'academy_branch_member_permissions' => $this->in('member_id', $memberIds), 'academy_branch_member_roles' => $this->in('member_id', $memberIds),
-            'academy_branch_courses' => $this->in('course_id', $courseIds), 'academy_branch_course_terms' => $this->in('term_id', $termIds), 'academy_branch_course_term_sessions' => $this->in('term_session_id', $sessionIds),
-            'academy_branch_course_term_enrollments' => $this->in('term_id', $termIds), 'academy_branch_course_term_invoices' => $this->in('term_invoice_id', $invoiceIds), 'academy_branch_course_term_invoice_installments' => $this->in('invoice_id', $invoiceIds),
-            'academy_branch_course_term_session_attendances' => $this->in('session_id', $sessionIds), 'academy_branch_bookings' => $this->in('booking_id', $bookingIds), 'academy_branch_classrooms' => $this->in('classroom_id', $roomIds),
-            'academy_branch_classroom_assets' => $this->in('classroom_id', $roomIds), 'academy_branch_scheduling_rules' => $this->in('branch_id', $branchIds), 'academy_documents' => $this->in('academy_id', [$aid]),
-        ];
-        // Explicit academy-owned tables only; never export authentication or user-wide data.
-        $tables = array_values(array_intersect(array_keys($filters), $this->tables()));
+        $data = [];
         $selected = [];
-        $dump = "-- Sornaz academy-scoped backup\n-- academy_id: $aid\n-- generated_at: " . date(DATE_ATOM) . "\nSET NAMES utf8mb4;\nSTART TRANSACTION;\n\n";
-        foreach ($tables as $t) {
-            $where = $filters[$t] ?? null;
-            if (!$where) {
+        $members = DB::table('academy_branch_members')->where('user_id', $actor)->get();
+        $memberIds = $this->ids($members, 'member_id');
+        // Export ownership, not authorship: created_by can refer to other users' records.
+        $excluded = ['user_security_tokens', 'user_security_rate_limits', 'tracking_user_sessions'];
+        foreach ($this->tables() as $table) {
+            if (in_array($table, $excluded, true) || $table === 'user_sessions' || preg_match('/^auth_|^security_|token|password|otp/', $table)) {
                 continue;
             }
-            $rows = db()->query("SELECT * FROM `$t` WHERE $where")->fetchAll();
-            if (!$rows) {
+            if (!preg_match('/^[a-zA-Z0-9_]+$/D', $table)) {
                 continue;
             }
-            $selected[$t] = [];
-            foreach ($rows as $r) {
-                $pk = array_key_first($r);
-                $selected[$t][] = $r[$pk];
-                $cols = '`' . implode('`,`', array_map(fn ($x) => str_replace('`', '``', $x), array_keys($r))) . '`';
-                $vals = implode(',', array_map(fn ($v) => $v === null ? 'NULL' : db()->quote((string) $v), array_values($r)));
-                $physical = db() instanceof \Core\database\PrefixedPDO ? \Core\database\TableNames::physical($t) : $t;
-                $dump .= "INSERT INTO `$physical` ($cols) VALUES ($vals);\n";
-            }$dump .= "\n";
+            $columns = $this->columns($table);
+            $names = array_column($columns, 'Field');
+            $owner = in_array('user_id', $names, true) ? 'user_id' : (in_array('owner_id', $names, true) ? 'owner_id' : null);
+            $memberOwned = !$owner && str_starts_with($table, 'academy_branch_') && in_array('member_id', $names, true);
+            if ((!$owner && !$memberOwned) || in_array($table, ['translations', 'f_translations'], true)) {
+                continue;
+            }
+            $query = db()->prepare($memberOwned ? "SELECT * FROM `$table` WHERE " . $this->in('member_id', $memberIds) : "SELECT * FROM `$table` WHERE `$owner`=?");
+            $query->execute($memberOwned ? [] : [$actor]);
+            $rows = $query->fetchAll(\PDO::FETCH_ASSOC);
+            $primary = array_column(array_filter($columns, fn ($c) => $c['Key'] === 'PRI'), 'Field');
+            if (count($primary) === 1) {
+                $selected[$table] = array_column($rows, $primary[0]);
+            }
+            foreach ($rows as &$row) {
+                foreach (array_keys($row) as $field) {
+                    if (preg_match('/password|token|secret|hash|session|credential|remember|otp|api_key/i', $field)) {
+                        unset($row[$field]);
+                    }
+                }
+                if (isset($row['key']) && preg_match('/password|token|secret|credential|otp|api_key/i', (string) $row['key'])) {
+                    $row['value'] = null;
+                }
+            }
+            unset($row);
+            $data[$table] = $rows;
         }
-        $translationParts = [];
-        foreach ($selected as $t => $ids) {
-            if ($ids) {
-                $translationParts[] = "(`table_name`=" . db()->quote($t) . ' AND ' . $this->in('table_id', $ids) . ')';
+        foreach (array_intersect(['translations', 'f_translations'], $this->tables()) as $store) {
+            $data[$store] = [];
+            foreach ($selected as $table => $ids) {
+                if (!$ids) continue;
+                $query = db()->prepare("SELECT * FROM `$store` WHERE table_name=? AND " . $this->in('table_id', $ids));
+                $query->execute([$table]);
+                array_push($data[$store], ...$query->fetchAll(\PDO::FETCH_ASSOC));
             }
         }
-        if ($translationParts) {
-            $rows = db()->query('SELECT * FROM translations WHERE ' . implode(' OR ', $translationParts))->fetchAll();
-            foreach ($rows as $r) {
-                $cols = '`' . implode('`,`', array_keys($r)) . '`';
-                $vals = implode(',', array_map(fn ($v) => $v === null ? 'NULL' : db()->quote((string) $v), array_values($r)));
-                $physical = db() instanceof \Core\database\PrefixedPDO ? \Core\database\TableNames::physical('translations') : 'translations';
-                $dump .= "INSERT INTO `$physical` ($cols) VALUES ($vals);\n";
-            }
-        }
-        $dump .= "\nCOMMIT;\n";
-        $dir = storage_path('backups/academy/' . $aid);
+        $dir = storage_path('backups/users/' . $actor);
         if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
-            throw new RuntimeException('پوشه پشتیبان قابل ایجاد نیست.');
+            throw new RuntimeException('ایجاد پوشه خروجی ناموفق بود.');
         }
-        $filename = 'academy-scoped-v2-' . $aid . '-' . date('Ymd-His') . '-' . bin2hex(random_bytes(4)) . '.sql';
+        $filename = 'user-export-' . $actor . '-' . bin2hex(random_bytes(8)) . '.json';
         $path = $dir . '/' . $filename;
-        if (file_put_contents($path, $dump) === false) {
-            throw new RuntimeException('ساخت فایل پشتیبان ناموفق بود.');
+        $json = json_encode(['userId' => $actor, 'generatedAt' => date(DATE_ATOM), 'records' => $data], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
+        if (file_put_contents($path, $json, LOCK_EX) === false) {
+            throw new RuntimeException('ایجاد خروجی اطلاعات ناموفق بود.');
         }
-        $size = filesize($path);
-        $id = DB::table('media_files')->insertGetId(['user_id' => (int) $academy['user_id'], 'disk' => 'private', 'directory' => str_replace('\\', '/', dirname(str_replace(base_path() . DIRECTORY_SEPARATOR, '', $path))), 'filename' => $filename, 'extension' => 'sql', 'mime_type' => 'application/sql', 'type' => 'archive', 'collection' => null, 'path' => str_replace('\\', '/', str_replace(base_path() . DIRECTORY_SEPARATOR, '', $path)), 'original_filename' => $filename, 'fileable_type' => 'academy_backup', 'fileable_id' => $aid, 'size' => $size, 'checksum' => hash_file('sha256', $path), 'visibility' => 'private', 'created_by' => $actor, 'updated_by' => $actor]);
-        return ['id' => $id, 'path' => $path, 'filename' => $filename, 'size' => $size];
+        $relative = 'storage/backups/users/' . $actor;
+        try {
+            $id = DB::table('media_files')->insertGetId(['user_id' => $actor, 'disk' => 'private', 'directory' => $relative, 'filename' => $filename, 'extension' => 'json', 'mime_type' => 'application/json', 'type' => 'archive', 'path' => $relative . '/' . $filename, 'original_filename' => $filename, 'fileable_type' => 'user_export', 'fileable_id' => $actor, 'size' => strlen($json), 'checksum' => hash('sha256', $json), 'visibility' => 'private', 'created_by' => $actor, 'updated_by' => $actor]);
+        } catch (\Throwable $error) {
+            unlink($path);
+            throw $error;
+        }
+        return ['id' => $id, 'filename' => $filename, 'size' => strlen($json)];
     }
 
     public function find(int $actor, int $id): array
     {
-        $academy = DB::table('academies')->where('user_id', $actor)->whereNull('deleted_at')->first() ?: DB::table('academies')->where('created_by', $actor)->whereNull('deleted_at')->orderBy('academy_id')->first();
-        if (!$academy) {
-            throw new RuntimeException('آموزشگاه یافت نشد.');
+        $this->assertSiteAdmin($actor);
+        $export = DB::table('media_files')->where('media_file_id', $id)->where('user_id', $actor)->where('fileable_type', 'user_export')->where('fileable_id', $actor)->whereNull('deleted_at')->first();
+        if ($export) {
+            return ['path' => base_path($export['path']), 'filename' => $export['filename'], 'mime' => 'application/json'];
         }
-        $m = DB::table('media_files')->where('media_file_id', $id)->where('fileable_type', 'academy_backup')->where('fileable_id', (int) $academy['academy_id'])->whereNull('deleted_at')->first();
-        if (!$m || !str_starts_with((string) $m['filename'], 'academy-scoped-v2-')) {
-            throw new RuntimeException('پشتیبان یافت نشد.');
-        }
-        return ['path' => base_path($m['path']), 'filename' => $m['original_filename'] ?: $m['filename']];
+        throw new RuntimeException('خروجی اطلاعات یافت نشد.', 404);
     }
 
     private function tables(): array
     {
+        if (db()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+            $tables = db()->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(\PDO::FETCH_COLUMN);
+            return db() instanceof \Core\database\PrefixedPDO ? array_map([\Core\database\TableNames::class, 'logical'], $tables) : $tables;
+        }
         $q = db()->query("SELECT table_name FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE' ORDER BY table_name");
         $tables = $q->fetchAll(\PDO::FETCH_COLUMN);
         return db() instanceof \Core\database\PrefixedPDO ? array_map([\Core\database\TableNames::class, 'logical'], $tables) : $tables;
+    }
+
+    private function columns(string $table): array
+    {
+        if (db()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+            $physical = db() instanceof \Core\database\PrefixedPDO ? \Core\database\TableNames::physical($table) : $table;
+            return array_map(fn ($c) => ['Field' => $c['name'], 'Key' => $c['pk'] ? 'PRI' : ''], db()->query("PRAGMA table_info(`$physical`)")->fetchAll(\PDO::FETCH_ASSOC));
+        }
+        return db()->query("SHOW COLUMNS FROM `$table`")->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     private function ids(array $r, string $k): array

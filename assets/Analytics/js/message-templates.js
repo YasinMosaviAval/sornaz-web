@@ -47,9 +47,9 @@
     e(m.readStatus) +
     '</span></td><td class="py-4 px-5 text-left"><button onclick="viewMessage(' +
     m.id +
-    ')" class="ml-3 text-indigo-600">مشاهده</button><button onclick="deleteMessage(' +
-    m.id +
-    ')" class="text-red-500">حذف</button></td>';
+    ')" class="ml-3 text-indigo-600">مشاهده</button>' +
+    (document.getElementById('messages')?.dataset.readOnly === '1' ? '' : '<button onclick="deleteMessage(' + m.id + ')" class="text-red-500">حذف</button>') +
+    '</td>';
   window.getMessageEmptyRowHTML = () =>
     '<tr><td colspan="8" class="py-12 text-center text-gray-400">پیامی یافت نشد</td></tr>';
   window.getMessageAddModalHTML = function () {
@@ -90,7 +90,7 @@
     '</b></div></div><div class="whitespace-pre-wrap rounded-2xl border bg-gray-50 p-5">' +
     e(m.body) +
     '</div>' +
-    (m.readStatus === 'خوانده‌شده' && m.incoming
+    (document.getElementById('messages')?.dataset.readOnly !== '1' && m.readStatus === 'خوانده‌شده' && m.incoming
       ? '<button onclick="markMessageUnread(' +
         m.id +
         ');closeModal()" class="rounded-2xl border px-5 py-3">علامت به‌عنوان نخوانده</button>'

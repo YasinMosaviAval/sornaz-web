@@ -57,6 +57,7 @@
   }
   async function load(silent = false) {
     const oldPage = page;
+    const previous = silent ? JSON.stringify([rows, orgs, canManage]) : '';
     try {
       const d = await api('/analytics/admin-points');
       rows = d.rules || [];
@@ -74,8 +75,9 @@
         document.getElementById('headerPointBalance').textContent = (
           general + professional
         ).toLocaleString('fa-IR');
+      if (silent && previous === JSON.stringify([rows, orgs, canManage])) return;
       tabs();
-      filter(!silent);
+      filter(!silent, !silent);
       if (silent) {
         page = Math.min(oldPage, Math.max(1, Math.ceil(filtered.length / per)));
         render();
@@ -106,7 +108,7 @@
     });
     filter();
   };
-  function filter(reset = true) {
+  function filter(reset = true, paint = true) {
     const q = (document.getElementById('pointSearch')?.value || '').toLowerCase(),
       t = document.getElementById('filterPointType')?.value || '',
       c = document.getElementById('filterPointCategory')?.value || '',
@@ -137,7 +139,7 @@
       );
     });
     if (reset) page = 1;
-    render();
+    if (paint) render();
   }
   window.filterPoints = () => filter(true);
   function sortIcons() {

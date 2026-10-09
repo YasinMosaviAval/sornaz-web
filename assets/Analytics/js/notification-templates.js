@@ -69,7 +69,7 @@
             <td class="py-4 px-5 text-left">
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
                     <button onclick="viewNotification(${item.id})" class="text-indigo-600 hover:underline text-sm">مشاهده</button>
-                    <button onclick="deleteNotification(${item.id})" class="text-red-500 hover:underline text-sm">حذف</button>
+                    ${document.getElementById('notifications')?.dataset.readOnly === '1' ? '' : `<button onclick="deleteNotification(${item.id})" class="text-red-500 hover:underline text-sm">حذف</button>`}
                 </div>
             </td>`;
   };
@@ -147,20 +147,20 @@
                     </div>
                     <div class="flex flex-wrap gap-3 pt-2">
                         ${
-                          item.status === 'پیش‌نویس'
+                          document.getElementById('notifications')?.dataset.canCreate === '1' && item.status === 'پیش‌نویس'
                             ? '<button onclick="publishNotification(' +
                               item.id +
                               ')" class="bg-indigo-600 text-white px-5 py-3 rounded-2xl text-sm hover:bg-indigo-700">انتشار</button>'
                             : ''
                         }
                         ${
-                          item.status === 'منتشر شده'
+                          document.getElementById('notifications')?.dataset.canCreate === '1' && item.status === 'منتشر شده'
                             ? '<button onclick="expireNotification(' +
                               item.id +
                               ')" class="border border-gray-300 px-5 py-3 rounded-2xl text-sm hover:bg-gray-50">منقضی کردن</button>'
                             : ''
                         }
-                        <button onclick="deleteNotification(${item.id}); closeModal();" class="border border-red-200 text-red-600 px-5 py-3 rounded-2xl text-sm hover:bg-red-50">حذف</button>
+                        ${document.getElementById('notifications')?.dataset.readOnly === '1' ? '' : `<button onclick="deleteNotification(${item.id}); closeModal();" class="border border-red-200 text-red-600 px-5 py-3 rounded-2xl text-sm hover:bg-red-50">حذف</button>`}
                         <button onclick="closeModal()" class="border border-gray-300 px-5 py-3 rounded-2xl text-sm hover:bg-gray-50">بستن</button>
                     </div>
                 </div>

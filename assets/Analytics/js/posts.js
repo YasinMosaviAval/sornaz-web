@@ -208,6 +208,10 @@
     document.getElementById('postEditorPageTitle').textContent = post.id
       ? 'ویرایش نوشته'
       : 'افزودن نوشته';
+    if (!document.getElementById('post-editor')?.classList.contains('hidden')) {
+      const panelTitle = document.getElementById('panelPageTitle');
+      if (panelTitle) panelTitle.textContent = document.getElementById('postEditorPageTitle').textContent;
+    }
     document.getElementById('peTrashBtn').classList.toggle('hidden', !post.id);
     peSetEditorMode('visual');
     peUpdateWordCount();

@@ -14,12 +14,7 @@ $studentAddressRow = \Core\database\DB::table('user_addresses')->where('user_id'
 $studentAddress = $studentAddressRow ? $studentText('user_addresses', (int) $studentAddressRow['address_id'], 'address') : '';
 ?>
 <section id="dashboard" class="section hidden space-y-6" data-dashboard-kind="student">
-    <header><h1 class="text-3xl font-bold">داشبورد من</h1><p class="mt-1 text-gray-500">درخواست‌های ثبت‌نام و مسیر کلاس‌های شما</p></header>
-    <div class="grid gap-4 sm:grid-cols-3">
-        <button type="button" onclick="showSection('chat')" class="rounded-2xl bg-indigo-600 p-5 text-right text-white">گفتگوهای من</button>
-        <button type="button" onclick="showSection('my-terms')" class="rounded-2xl bg-white p-5 text-right shadow">ترم‌های من</button>
-        <button type="button" onclick="showSection('my-classrooms')" class="rounded-2xl bg-white p-5 text-right shadow">کلاس‌های من</button>
-    </div>
+    <?php component('my-learning-tabs', ['active' => 'dashboard']); ?>
     <div><h2 class="mb-4 text-xl font-bold">درخواست‌های ثبت‌نام من</h2><div class="grid gap-4 lg:grid-cols-2">
         <?php if (!$studentRequests): ?><p class="rounded-2xl bg-white p-6 text-gray-500">هنوز درخواست ثبت‌نامی ثبت نکرده‌اید.</p><?php endif; ?>
         <?php foreach ($studentRequests as $request):

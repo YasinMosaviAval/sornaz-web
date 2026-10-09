@@ -67,7 +67,7 @@
             <div><h3 class="font-bold text-lg flex items-center gap-2"><i class="fas fa-user-plus text-indigo-600"></i> لینک دعوت من</h3><p class="text-sm text-gray-500 mt-2">این لینک اختصاصی را برای معرفی سرناز ارسال کنید. امتیازها و تخفیف‌های دعوت در آینده بر اساس همین کد محاسبه می‌شوند.</p></div>
             <span id="accountInviteCount" class="rounded-2xl bg-indigo-50 px-4 py-2 text-sm text-indigo-700">۰ کاربر دعوت‌شده</span>
         </div>
-        <div class="mt-5 flex flex-col gap-3 sm:flex-row"><input id="accountInviteUrl" readonly dir="ltr" class="min-w-0 flex-1 rounded-2xl border bg-gray-50 px-5 py-3 text-left font-mono" value="در حال دریافت..."><button type="button" onclick="copyAccountInviteLink()" class="rounded-2xl bg-indigo-600 px-6 py-3 text-white"><i class="fas fa-copy ml-2"></i>کپی لینک</button><button type="button" onclick="shareAccountInviteLink()" class="rounded-2xl border px-6 py-3"><i class="fas fa-share-alt ml-2"></i>اشتراک‌گذاری</button></div>
+        <div class="mt-5 flex flex-col gap-3 sm:flex-row"><input id="accountInviteUrl" readonly dir="ltr" class="min-w-0 flex-1 rounded-2xl border bg-gray-50 px-5 py-3 text-left font-mono" value="در حال دریافت..."><button type="button" onclick="copyAccountInviteLink()" class="rounded-2xl bg-indigo-600 px-6 py-3 text-white"><i class="fas fa-copy ml-2"></i>کپی لینک</button><button type="button" onclick="shareAccountInviteLink()" class="rounded-2xl border px-6 py-3 md:hidden"><i class="fas fa-share-alt ml-2"></i>اشتراک‌گذاری</button></div>
         <p class="mt-3 text-xs text-gray-400">کد اختصاصی: <b id="accountInviteCode" dir="ltr">—</b></p>
     </div>
 
@@ -108,9 +108,10 @@
             <h3 class="font-bold text-lg">اسناد</h3>
             <label class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2.5 rounded-xl text-sm cursor-pointer hover:bg-indigo-100">
                 <i class="fas fa-upload"></i> آپلود سند
-                <input type="file" id="accountDocInput" class="hidden" multiple onchange="onAccountDocumentUpload(event)">
+                <input type="file" id="accountDocInput" accept=".pdf,.jpg,.jpeg,.png,.webp,.docx" class="hidden" multiple onchange="onAccountDocumentUpload(event)">
             </label>
         </div>
+        <p class="mb-4 text-sm text-gray-500"><?= e(locale() === 'en' ? 'Allowed: PDF, JPG/JPEG, PNG, WebP, DOCX. Maximum 20 MB per file.' : 'فرمت‌های مجاز: PDF، JPG/JPEG، PNG، WebP و DOCX؛ حداکثر حجم هر فایل ۲۰ مگابایت.') ?></p>
         <div id="accountDocumentsList" class="space-y-3"></div>
     </div>
 
@@ -171,18 +172,20 @@
         </div>
     </div>
 
+    <?php if ((int) auth()->id() === 1): ?>
     <!-- پشتیبان‌گیری -->
     <div class="bg-white rounded-3xl p-6 shadow mt-8 mb-4">
-        <h3 class="font-bold text-lg mb-2"><?= e(locale() === 'en' ? 'Export academy records' : 'خروجی اطلاعات آموزشگاه') ?></h3>
-        <p class="text-sm text-gray-500 mb-5"><?= e(locale() === 'en' ? 'Export academy records without account credentials. This export does not include uploaded files or replace a full server backup.' : 'اطلاعات اختصاصی آموزشگاه را بدون اطلاعات ورود حساب‌ها دریافت کنید. این خروجی شامل فایل‌های بارگذاری‌شده نیست و جایگزین پشتیبان کامل سرور نمی‌شود.') ?></p>
+        <h3 class="font-bold text-lg mb-2"><?= e(locale() === 'en' ? 'Export information' : 'خروجی اطلاعات') ?></h3>
+        <p class="text-sm text-gray-500 mb-5"><?= e(locale() === 'en' ? 'Export your account records as JSON without passwords or authentication tokens. Uploaded file contents are not included.' : 'اطلاعات حساب خود را به‌صورت JSON، بدون رمزها و توکن‌های ورود دریافت کنید. محتوای فایل‌های بارگذاری‌شده در این خروجی نیست.') ?></p>
         <div class="flex flex-wrap gap-3">
             <button onclick="createFullBackup()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm flex items-center gap-2">
                 <i class="fas fa-database"></i> <?= e(locale() === 'en' ? 'Create export' : 'ایجاد خروجی اطلاعات') ?>
             </button>
             <button onclick="downloadLastBackup()" class="border border-gray-300 hover:bg-gray-50 px-6 py-3 rounded-2xl text-sm flex items-center gap-2">
-                <i class="fas fa-download"></i> دانلود آخرین پشتیبان
+                <i class="fas fa-download"></i> دانلود آخرین خروجی
             </button>
         </div>
         <div id="accountBackupStatus" class="mt-4 text-sm text-gray-500"></div>
     </div>
+    <?php endif; ?>
 </div>

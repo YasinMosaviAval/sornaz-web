@@ -28,10 +28,17 @@ use Modules\Analytics\Controllers\Web\PublicRatingController;
 use Modules\Analytics\Controllers\Web\AdminTrackingController;
 use Modules\Analytics\Controllers\Web\AdminPointController;
 use Modules\Analytics\Controllers\Web\AdminProfileContentController;
+use Modules\Analytics\Controllers\Web\PersonalOfferingController;
 use Modules\Analytics\Controllers\Web\ChatController;
 use Modules\Analytics\Controllers\Api\ArticleController;
 
 Router::get('/analytics/admin-panel', [AnalyticsController::class, 'adminPanel'])->middleware('academy-panel');
+Router::post('/analytics/personal-offerings/lessons', [PersonalOfferingController::class, 'saveLesson'])->middleware(['auth', 'csrf']);
+Router::post('/analytics/personal-offerings/lessons/{id}', [PersonalOfferingController::class, 'saveLesson'])->middleware(['auth', 'csrf']);
+Router::post('/analytics/personal-offerings/schedules', [PersonalOfferingController::class, 'saveSchedule'])->middleware(['auth', 'csrf']);
+Router::post('/analytics/personal-offerings/schedules/{id}', [PersonalOfferingController::class, 'saveSchedule'])->middleware(['auth', 'csrf']);
+Router::post('/analytics/personal-offerings/{type}/{id}/delete', [PersonalOfferingController::class, 'delete'])->middleware(['auth', 'csrf']);
+Router::post('/analytics/personal-invoices/{id}/update', [PersonalOfferingController::class, 'saveInvoice'])->middleware(['auth', 'csrf']);
 Router::get('/analytics/chat', [ChatController::class, 'index'])->middleware('academy-panel');
 Router::get('/analytics/chat/users/search', [ChatController::class, 'searchUsers'])->middleware('academy-panel');
 Router::post('/analytics/chat', [ChatController::class, 'create'])->middleware(['academy-panel', 'csrf']);
@@ -70,8 +77,8 @@ Router::get('/analytics/admin-account/media/{id}/download', [AdminAccountControl
 Router::post('/analytics/admin-account/sessions/{id}/end', [AdminAccountController::class, 'endSession'])->middleware(['academy-panel', 'csrf']);
 Router::post('/analytics/admin-account/backups', [AdminAccountController::class, 'backup'])->middleware(['academy-panel', 'csrf']);
 Router::get('/analytics/admin-account/backups/{id}/download', [AdminAccountController::class, 'download'])->middleware('academy-panel');
-Router::get('/analytics/admin-notifications', [AdminNotificationController::class, 'index'])->middleware('academy-panel');
-Router::get('/analytics/admin-messages', [AdminMessageController::class, 'index'])->middleware('academy-panel');
+Router::get('/analytics/admin-notifications', [AdminNotificationController::class, 'index'])->middleware('auth');
+Router::get('/analytics/admin-messages', [AdminMessageController::class, 'index'])->middleware('auth');
 Router::post('/analytics/admin-messages', [AdminMessageController::class, 'store'])->middleware(['academy-panel', 'csrf']);
 Router::post('/analytics/admin-messages/{id}/read', [AdminMessageController::class, 'read'])->middleware(['academy-panel', 'csrf']);
 Router::post('/analytics/admin-messages/{id}/unread', [AdminMessageController::class, 'unread'])->middleware(['academy-panel', 'csrf']);
@@ -115,7 +122,7 @@ Router::post('/analytics/admin-dashboard/waiting/{id}/chat', [AdminDashboardCont
 Router::post('/analytics/admin-dashboard/waiting/{id}/finalize', [AdminDashboardController::class, 'finalizeWaiting'])->middleware(['academy-panel', 'csrf']);
 Router::post('/analytics/my-waiting/{id}', [AdminDashboardController::class, 'updateMyWaiting'])->middleware(['auth', 'csrf']);
 Router::get('/analytics/admin-tracking', [AdminTrackingController::class, 'index'])->middleware('site-admin');
-Router::get('/analytics/admin-points', [AdminPointController::class, 'index'])->middleware('academy-panel');
+Router::get('/analytics/admin-points', [AdminPointController::class, 'index'])->middleware('auth');
 Router::post('/analytics/admin-points', [AdminPointController::class, 'store'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-points/{id}/update', [AdminPointController::class, 'update'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-points/{id}/delete', [AdminPointController::class, 'delete'])->middleware(['site-admin', 'csrf']);

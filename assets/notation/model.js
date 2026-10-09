@@ -57,6 +57,8 @@
         time: '4/4',
         tempo_text: 'Allegro',
         tempo_note: 'q',
+        tempo_dots: 0,
+        scale_type: 'major',
         bpm: 100,
         clef: 'treble',
       },
@@ -154,7 +156,7 @@
   function timeline(sheet) {
     const events = [],
       meta = sheet.metadata,
-      unit = 60 / meta.bpm / durations[meta.tempo_note];
+      unit = 60 / meta.bpm / ticks({ duration: meta.tempo_note, dots: meta.tempo_dots || 0 });
     let elapsed = 0,
       last;
     sheet.score.measures.forEach((bar, barIndex) => {

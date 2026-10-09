@@ -40,7 +40,7 @@ class NotationController
 
     public function page()
     {
-        return ResponseFactory::view('Notation::index', ['boot' => ['locale' => locale() === 'en' ? 'en' : 'fa', 'userId' => (int) auth()->id(), 'csrf' => csrf_token(), 'api' => '/music-sheets/api', 'embedded' => false]]);
+        return ResponseFactory::view('Notation::index', ['boot' => ['locale' => locale() === 'en' ? 'en' : 'fa', 'userId' => (int) auth()->id(), 'csrf' => csrf_token(), 'api' => '/music-sheets/api', 'embedded' => false, 'websitePanel' => isset($_GET['panel'])]]);
     }
 
     private function payload(): array

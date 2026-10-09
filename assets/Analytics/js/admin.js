@@ -1,3 +1,9 @@
+function panelPageHeading(section) {
+  if (!section || section.id === 'chat' || section.id === 'tests') return null;
+  const firstContent = [...section.children].find((child) => !['STYLE', 'SCRIPT'].includes(child.tagName));
+  return firstContent?.matches('h1') ? firstContent : firstContent?.querySelector('h1') || null;
+}
+
 function showSection(id) {
   const section = id;
 
@@ -6,6 +12,18 @@ function showSection(id) {
   const target = document.getElementById(section);
   if (target) {
     target.classList.remove('hidden');
+    const heading = panelPageHeading(target);
+    const title = heading?.textContent?.trim() ||
+      [...document.querySelectorAll('#sidebar a[onclick]')].find((link) => link.getAttribute('onclick') === `showSection('${section}')`)?.textContent?.trim() || section;
+    const panelTitle = document.getElementById('panelPageTitle');
+    if (panelTitle) panelTitle.textContent = title;
+    if (heading) {
+      heading.classList.add('hidden');
+      const description = heading.nextElementSibling;
+      if (description?.tagName === 'P') description.classList.add('hidden');
+      const intro = heading.parentElement;
+      if (intro && [...intro.children].every((child) => child.classList.contains('hidden'))) intro.classList.add('hidden');
+    }
   }
 
   document.getElementById(id).classList.remove('hidden');
@@ -45,7 +63,7 @@ function showSection(id) {
     if (typeof renderDashboardBranchTabs === 'function') renderDashboardBranchTabs();
     if (typeof renderDashboard === 'function') renderDashboard();
   }
-  if (section === 'member-schedules') {
+  if (section === 'member-schedules' && !target?.dataset.personalSection) {
     if (typeof loadMemberSchedules === 'function')
       loadMemberSchedules().catch((error) => alert(error.message));
     else {
@@ -101,7 +119,7 @@ function showSection(id) {
       if (typeof filterInstrumentsByBranch === 'function') filterInstrumentsByBranch('all');
     }, 100);
   }
-  if (section === 'lessons') {
+  if (section === 'lessons' && !target?.dataset.personalSection) {
     setTimeout(async () => {
       try {
         if (typeof loadLessonDatabaseData === 'function') await loadLessonDatabaseData();

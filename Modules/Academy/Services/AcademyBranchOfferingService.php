@@ -252,6 +252,9 @@ class AcademyBranchOfferingService
     public function cycleLessonStatus(int $actor, int $id): array
     {
         $this->assertLessonWritable($actor);
+        if ($this->isPersonalOnly($actor)) {
+            throw new RuntimeException('تأیید وضعیت درس به مدیر آموزشگاه واگذار شده است.');
+        }
         $row = DB::table('user_lessons')->where('user_lesson_id', $id)->whereNull('deleted_at')->first();
         if (!$row) {
             throw new RuntimeException('درس موردنظر یافت نشد.');
@@ -300,6 +303,9 @@ class AcademyBranchOfferingService
     public function createLesson(int $actor, array $data): array
     {
         $this->assertLessonWritable($actor);
+        if ($this->isPersonalOnly($actor)) {
+            throw new RuntimeException('ایجاد درس در فهرست عمومی مجاز نیست.');
+        }
         $title = trim((string) ($data['title'] ?? ''));
         if ($title === '' || mb_strlen($title) > 190) {
             throw new RuntimeException('نام درس جدید معتبر نیست.');
@@ -592,11 +598,14 @@ class AcademyBranchOfferingService
         if (!$record) {
             throw new RuntimeException('رکورد موردنظر یافت نشد.');
         }
+        $this->assertPersonalDeleteAllowed($actor, $type, $id, $record);
         if (in_array($type, ['instrument', 'lesson'], true)) {
             if ($type === 'lesson') {
                 $this->assertLessonWritable($actor);
             }
             $this->allowedOrganization($actor, (int) $record['user_id']);
+        } elseif ($type === 'schedule' && (int) $record['user_id'] === $actor && $this->isPersonalOnly($actor)) {
+            $this->allowedOrganization($actor, $actor);
         } else {
             $branch = DB::table('academy_branches')->where('user_id', (int) $record['user_id'])->whereNull('deleted_at')->first();
             if (!$branch) {
@@ -661,12 +670,7 @@ class AcademyBranchOfferingService
             throw new RuntimeException('حساب کاربری معتبر نیست.');
         }
         if (($user['type'] ?? '') === 'branch') {
-            $branch = DB::table('academy_branches')->where('user_id', $actor)->whereNull('deleted_at')->first();
-            if (!$branch) {
-                return [];
-            }
-            $name = $this->translations('academy_branches', [(int) $branch['branch_id']], ['name']);
-            return [['id' => (int) $branch['branch_id'], 'user_id' => $actor, 'kind' => 'branch', 'name' => $name[(int) $branch['branch_id']]['name'] ?? 'شعبه']];
+            return $this->branchOrganization($actor);
         }
 
         $academyIds = [];
@@ -701,7 +705,7 @@ class AcademyBranchOfferingService
         }
         $academyIds = array_values(array_unique(array_filter($academyIds)));
         if (!$academyIds) {
-            return [];
+            return $this->personalOrganization($actor, $user);
         }
         $academies = DB::table('academies')->whereIn('academy_id', $academyIds)->whereNull('deleted_at')->get();
         $academyNames = $this->translations('academies', $academyIds, ['title', 'name']);
@@ -776,6 +780,37 @@ class AcademyBranchOfferingService
         if (!$this->scopedOrganizations($actor)) {
             throw new RuntimeException('شما اجازه مدیریت درس‌ها را ندارید.');
         }
+    }
+
+    private function isPersonalOnly(int $actor): bool
+    {
+        $organizations = $this->scopedOrganizations($actor);
+        return count($organizations) === 1 && $organizations[0]['kind'] === 'personal';
+    }
+
+    private function assertPersonalDeleteAllowed(int $actor, string $type, int $id, array $record): void
+    {
+        if (!$this->isPersonalOnly($actor)) return;
+        $this->allowedOrganization($actor, (int) $record['user_id']);
+        if ($type === 'schedule' && in_array((string) ($record['status'] ?? ''), ['reserved', 'pending'], true)) {
+            throw new RuntimeException('بازهٔ در حال استفاده یا تأیید قابل حذف نیست.');
+        }
+        if ($type === 'lesson' && DB::table('academy_branch_member_contracts')->where('user_lesson_id', $id)->whereNull('deleted_at')->first()) {
+            throw new RuntimeException('درس متصل به قرارداد فعال قابل حذف نیست.');
+        }
+    }
+
+    private function personalOrganization(int $actor, array $user): array
+    {
+        return [['id' => $actor, 'user_id' => $actor, 'kind' => 'personal', 'name' => (string) ($user['username'] ?? 'حساب من')]];
+    }
+
+    private function branchOrganization(int $actor): array
+    {
+        $branch = DB::table('academy_branches')->where('user_id', $actor)->whereNull('deleted_at')->first();
+        if (!$branch) return [];
+        $name = $this->translations('academy_branches', [(int) $branch['branch_id']], ['name']);
+        return [['id' => (int) $branch['branch_id'], 'user_id' => $actor, 'kind' => 'branch', 'name' => $name[(int) $branch['branch_id']]['name'] ?? 'شعبه']];
     }
 
     private function allowedOrganization(int $actor, int $userId): array

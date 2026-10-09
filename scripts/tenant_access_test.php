@@ -122,7 +122,7 @@ $branchScope = new ReflectionMethod($terms, 'branches');
 check(array_column($branchScope->invoke($terms, 10), 'branch_id') === [101, 102], 'Academy read scope leaked another academy');
 check(array_column($branchScope->invoke($terms, 11), 'branch_id') === [101], 'Branch read scope leaked a sibling');
 $pdo->exec("CREATE TABLE media_files(media_file_id INTEGER PRIMARY KEY,user_id INTEGER,collection TEXT,deleted_at TEXT,deleted_by INTEGER,updated_by INTEGER);
-CREATE TABLE translations(translation_id INTEGER PRIMARY KEY,table_name TEXT,table_id INTEGER,field TEXT,locale TEXT,value TEXT,version INTEGER,deleted_at TEXT);
+CREATE TABLE translations(translation_id INTEGER PRIMARY KEY,table_name TEXT,table_id INTEGER,field TEXT,locale TEXT,value TEXT,version INTEGER,deleted_at TEXT,deleted_by INTEGER);
 INSERT INTO media_files VALUES(1,11,'gallery',NULL,NULL,NULL),(2,21,'gallery',NULL,NULL,NULL);");
 $gallery = new Modules\Analytics\Services\AdminGalleryService;
 try {
@@ -137,7 +137,7 @@ check((int) $pdo->query('SELECT deleted_by FROM media_files WHERE media_file_id=
 
 // The site administrator still has access to site content at the service layer.
 $pdo->exec("CREATE TABLE comments(comment_id INTEGER PRIMARY KEY,deleted_at TEXT,deleted_by INTEGER,updated_at TEXT,updated_by INTEGER);
-ALTER TABLE translations ADD COLUMN deleted_by INTEGER;
+
 INSERT INTO comments(comment_id) VALUES(1);");
 $currentUser = ['user_id' => 1, 'type' => 'admin'];
 (new Modules\Analytics\Services\AdminCommentService)->delete(1, 1);

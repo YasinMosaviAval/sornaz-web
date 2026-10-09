@@ -17,6 +17,12 @@
     Lyricist: 'ترانه‌سرا',
     Copyright: 'حقوق اثر',
     Instrument: 'ساز',
+    Scale: 'گام',
+    Major: 'ماژور',
+    Minor: 'مینور',
+    'Melodic minor': 'مینور ملودیک',
+    'Harmonic minor': 'مینور هارمونیک',
+    'Save changes': 'ذخیره تغییرات',
     'Key Signature': 'سرکلید',
     'Time Signature': 'میزان نما',
     'Tempo Text': 'نام تمپو',
@@ -238,7 +244,7 @@
             '</option>'
         )
         .join('');
-    form.querySelector('.beat-preview').innerHTML = unit ? NotationSymbols.note(unit) : '';
+    form.querySelector('.beat-preview').innerHTML = unit ? NotationSymbols.note(unit) + (config.websitePanel ? `<span class="beat-dots">${'·'.repeat(Number(form.elements.tempo_dots?.value || 0))}</span>` : '') : '';
     NotationSymbols.center(form);
   }
   const pending = new Map();
@@ -376,9 +382,11 @@
         close(false);
       });
       dialog.showModal();
+      if (config.websitePanel && window.parent !== window)
+        window.parent.postMessage({ type: 'sornaz-notation-dialog' }, location.origin);
     });
   }
-  async function back() {
+  async function back(mode = state.mode) {
     if (state.busy) return;
     if (state.route === 'list') {
       if (config.embedded) SornazNotation.postMessage(JSON.stringify({ id: 0, action: 'exit' }));
@@ -394,6 +402,7 @@
       return;
     stop();
     state.dirty = false;
+    state.mode = mode;
     state.route = 'list';
     state.sheet = null;
     notifyRoute();
@@ -430,6 +439,10 @@
     render();
     try {
       state.sheet = M.prepare(await api('get', { sheetId: id }));
+      if (config.websitePanel) {
+        state.sheet.metadata.scale_type ||= String(state.sheet.metadata.key || '').endsWith('m') ? 'minor' : 'major';
+        state.sheet.metadata.tempo_dots = Number(state.sheet.metadata.tempo_dots || 0);
+      }
       state.route = 'editor';
       state.dirty = false;
       state.bar = 0;
@@ -462,6 +475,7 @@
       tempo_note: '',
       tempo_text: '',
       bpm: '',
+      ...(config.websitePanel ? { scale_type: '', key: '', tempo_dots: 0 } : {}),
     });
     state.choice = {
       duration: 'q',
@@ -492,6 +506,7 @@
       .join('')}</select></label>`;
   }
   function renderForm() {
+    if (config.websitePanel) return renderWebsiteForm();
     const m = state.sheet.metadata,
       text = (key, label) =>
         field(key, label, 'text', 'maxlength="180" ' + (key === 'title' ? 'required' : ''));
@@ -568,6 +583,27 @@
       '</button></form></section>'
     );
   }
+  function renderWebsiteForm() {
+    const m = state.sheet.metadata;
+    const textField = (key, label) => field(key, label, 'text', 'maxlength="180" ' + (key === 'title' ? 'required' : ''));
+    const row = (name, content) => `<div class="form-row ${name}">${content}</div>`;
+    const catalog = instruments.map((item) => [String(item.id), item[config.locale] || item.fa || item.en]);
+    if (m.instrument && !catalog.some(([id]) => id === m.instrument)) catalog.push([m.instrument, t(m.instrument)]);
+    const scale = m.scale_type || (m.key ? (String(m.key).endsWith('m') ? 'minor' : 'major') : '');
+    const keys = scale === 'major' ? M.keys.filter((key) => !key.endsWith('m')) : M.keys.filter((key) => key.endsWith('m'));
+    const beatUnits = selectableNotes.flatMap(([duration]) => [0, 1, 2].map((dots) => ({ duration, dots })));
+    const selectedBeat = `${m.tempo_note || ''}:${Number(m.tempo_dots || 0)}`;
+    const beat = `<label class="field beat-field"><span>${h(t('Note type'))}</span><input type="hidden" name="tempo_note" value="${h(m.tempo_note || '')}"><input type="hidden" name="tempo_dots" value="${Number(m.tempo_dots || 0)}"><details class="beat-picker"><summary aria-label="${h(t('Note type'))}"><span class="beat-preview">${m.tempo_note ? NotationSymbols.note(m.tempo_note) + '<span class="beat-dots">' + '·'.repeat(Number(m.tempo_dots || 0)) + '</span>' : ''}</span><span>⌄</span></summary><div class="beat-options">${beatUnits.map(({ duration, dots }) => `<button type="button" data-action="beat-unit" data-value="${duration}:${dots}" aria-pressed="${selectedBeat === `${duration}:${dots}`}">${NotationSymbols.note(duration)}<span class="beat-dots">${'·'.repeat(dots)}</span></button>`).join('')}</div></details></label>`;
+    return '<section class="shell form website-form">' + head('Notation') + '<form id="metadata">' +
+      row('columns-1', textField('title', 'Title')) +
+      row('columns-2', textField('composer', 'Composer') + textField('arranger', 'Arranger')) +
+      row('columns-2', textField('lyricist', 'Lyricist') + select('instrument', 'Instrument', [['', ''], ...catalog])) +
+      row('scale-key-row', select('scale_type', 'Scale', [['', ''], ['major', t('Major')], ['minor', t('Minor')], ['melodic_minor', t('Melodic minor')], ['harmonic_minor', t('Harmonic minor')]]) + `<label class="field"><span>${h(t('Key Signature'))}</span><select name="key" ${scale ? '' : 'disabled'}><option value=""></option>${keys.map((key) => `<option value="${h(key)}" ${m.key === key ? 'selected' : ''}>${h(key)}</option>`).join('')}</select></label>`) +
+      row('clef-time-row', select('clef', 'Clef', ['treble', 'baritone-f', 'bass', 'soprano', 'mezzo-soprano', 'alto', 'tenor']) + select('time', 'Time Signature', ['2/4', '3/4', '4/4', '6/8', '9/8', '12/8', '2/2', '6/4'])) +
+      row('tempo-row', beat + field('bpm', 'Metronome Mark', 'text', 'inputmode="numeric" pattern="[0-9]+" maxlength="3" required') + select('tempo_text', 'Tempo Text', [['', ''], ...NotationSymbols.tempos(m.tempo_note, m.bpm)])) +
+      row('columns-1', `<label class="field"><span>${h(t('Description'))}</span><textarea name="subtitle" maxlength="1000">${h(m.subtitle || '')}</textarea></label>`) +
+      `<button class="primary full" type="submit">${h(t(state.sheet.id ? 'Save changes' : 'Start Writing'))}</button></form></section>`;
+  }
   function renderList() {
     return `<section class="shell">${head('Notation')}<nav class="tabs" aria-label="${h(t('Notation'))}">${[
       ['all', 'All'],
@@ -583,7 +619,7 @@
       )
       .join(
         ''
-      )}</nav>${state.items.map((s) => `<article class="sheet"><button class="open" data-action="open" data-id="${s.id}"><strong>${h(s.title)}</strong><small>${h([s.metadata.composer, s.metadata.arranger || s.author].filter(Boolean).join(' – '))}${s.visibility === 'private' ? ' · ' + h(t('Private')) : ''}</small></button>${!s.local ? button('download', '⇩', `class="icon" data-id="${s.id}" aria-label="${h(t('Download'))}"`) : ''}${iconButton('pdf-item', 'pdf', `class="icon" data-id="${s.id}" aria-label="${h(t('PDF'))}"`)}${s.editable ? iconButton('visibility', s.visibility === 'public' ? 'eye' : 'eye-off', `class="icon" data-id="${s.id}" aria-label="${h(t(s.visibility === 'public' ? 'Make private' : 'Make public'))}"`) : ''}${s.editable ? iconButton('delete', 'trash', `class="icon danger" data-id="${s.id}" aria-label="${h(t('Delete'))}"`) : button('bookmark', s.saved ? '★' : '☆', `class="icon" data-id="${s.id}" aria-label="${h(t(s.saved ? 'Remove bookmark' : 'Bookmark'))}"`)}</article>`).join('')}${state.error ? `<div class="empty">${h(t(state.error))}<p>${button('retry', 'Retry')}${!config.userId ? button('login', 'Sign in to continue.') : ''}</p></div>` : !state.items.length && !state.loading ? `<p class="empty">${h(t('No sheets yet.'))}</p>` : ''}${state.loading ? '<p class="empty">…</p>' : ''}${state.more && !state.loading ? button('more', 'Load more', 'class="full"') : ''}${button('new', '✎', `class="fab" aria-label="${h(t('Start Writing'))}"`)}</section>`;
+      )}</nav>${state.items.map((s) => `<article class="sheet"><button class="open" data-action="open" data-id="${s.id}"><strong>${h(s.title)}</strong><small>${h([s.metadata.composer, s.metadata.arranger || s.author].filter(Boolean).join(' – '))}${s.visibility === 'private' ? ' · ' + h(t('Private')) : ''}</small></button>${!s.local ? button('download', '⇩', `class="icon" data-id="${s.id}" aria-label="${h(t('Download'))}"`) : ''}${iconButton('pdf-item', 'pdf', `class="icon" data-id="${s.id}" aria-label="${h(t('PDF'))}"`)}${s.editable ? iconButton('visibility', s.visibility === 'public' ? 'eye' : 'eye-off', `class="icon" data-id="${s.id}" aria-label="${h(t(s.visibility === 'public' ? 'Make private' : 'Make public'))}"`) : ''}${s.editable ? iconButton('delete', 'trash', `class="icon danger" data-id="${s.id}" aria-label="${h(t('Delete'))}"`) : button('bookmark', s.saved ? '★' : '☆', `class="icon" data-id="${s.id}" aria-label="${h(t(s.saved ? 'Remove bookmark' : 'Bookmark'))}"`)}</article>`).join('')}${state.error ? `<div class="empty">${h(t(state.error))}<p>${button('retry', 'Retry')}${!config.userId ? button('login', 'Sign in to continue.') : ''}</p></div>` : !state.items.length && !state.loading ? `<p class="empty">${h(t('No sheets yet.'))}</p>` : ''}${state.loading ? '<p class="empty">…</p>' : ''}${state.more && !state.loading ? button('more', 'Load more', 'class="full"') : ''}${config.websitePanel ? '' : button('new', '✎', `class="fab" aria-label="${h(t('Start Writing'))}"`)}</section>`;
   }
   function choice(key, label, options) {
     const values = options.map((o) => (Array.isArray(o) ? o : [o, o || '']));
@@ -704,6 +740,7 @@
       const values = Object.fromEntries(new FormData(form));
       delete values.public;
       values.bpm = values.bpm === '' ? '' : Number(values.bpm);
+      if (config.websitePanel) values.tempo_dots = Number(values.tempo_dots || 0);
       Object.assign(state.sheet.metadata, values);
     }
   }
@@ -717,6 +754,17 @@
         : state.route === 'form'
           ? renderForm()
           : renderEditor();
+    if (config.websitePanel) {
+      const internalHeader = root.querySelector('.header');
+      if (internalHeader) {
+        const actions = internalHeader.querySelector('.editor-actions');
+        if (actions) {
+          actions.classList.add('panel-editor-actions');
+          internalHeader.parentNode.insertBefore(actions, internalHeader);
+        }
+        internalHeader.remove();
+      }
+    }
     if (state.busy)
       root.insertAdjacentHTML('beforeend', `<div class="veil">${h(t('Saving…'))}</div>`);
     if (state.route === 'form') {
@@ -729,6 +777,8 @@
       if (piano) piano.scrollLeft = state.pianoScroll ?? 23 * 38 - piano.clientWidth / 2;
     }
     NotationSymbols.center(root);
+    if (config.websitePanel && window.parent !== window)
+      window.parent.postMessage({ type: 'sornaz-notation-state', mode: state.mode, route: state.route }, location.origin);
     requestAnimationFrame(notifyRoute);
   }
   function draw() {
@@ -1019,6 +1069,7 @@
     e.preventDefault();
     const f = Object.fromEntries(new FormData(e.target));
     f.bpm = Number(f.bpm);
+    if (config.websitePanel) f.tempo_dots = Number(f.tempo_dots || 0);
     const visibility = state.sheet.visibility;
     f.tempo_text = f.tempo_text || '';
     f.title = f.title.trim();
@@ -1057,6 +1108,12 @@
   });
   root.addEventListener('change', (e) => {
     if (e.target.name === 'tempo_note') updateTempoOptions();
+    if (config.websitePanel && e.target.name === 'scale_type') {
+      captureForm();
+      state.sheet.metadata.key = '';
+      render();
+      return;
+    }
     const key = e.target.dataset.choice;
     if (key) changeChoice(key, key === 'dots' ? Number(e.target.value) : e.target.value);
   });
@@ -1209,7 +1266,11 @@
     }
     if (action === 'beat-unit') {
       const form = document.getElementById('metadata');
-      form.elements.tempo_note.value = b.dataset.value;
+      if (config.websitePanel) {
+        const [unit, dots] = b.dataset.value.split(':');
+        form.elements.tempo_note.value = unit;
+        form.elements.tempo_dots.value = String(Number(dots || 0));
+      } else form.elements.tempo_note.value = b.dataset.value;
       form.querySelector('.beat-picker').open = false;
       updateTempoOptions();
       state.dirty = true;
@@ -1284,9 +1345,29 @@
       if (state.route === 'editor') draw();
     }, 120);
   });
+  window.addEventListener('message', (event) => {
+    if (config.websitePanel && event.source === window.parent && event.origin === location.origin && event.data?.type === 'sornaz-notation-new') {
+      if (state.busy) return;
+      (async () => {
+        if (state.route !== 'list' && (!state.sheet?.id || state.dirty) && !(await confirmAction(state.sheet?.id ? 'Discard unsaved changes?' : 'Have you decided not to write a new sheet?'))) return;
+        stop();
+        await newSheet();
+      })();
+      return;
+    }
+    if (!config.websitePanel || event.source !== window.parent || event.origin !== location.origin || event.data?.type !== 'sornaz-notation-filter') return;
+    const mode = event.data.mode;
+    if (!['all', 'mine', 'saved'].includes(mode)) return;
+    if (state.route === 'list') {
+      state.mode = mode;
+      load();
+    } else {
+      back(mode);
+    }
+  });
   window.Notation = {
     command(action) {
-      if (!['back', 'save', 'undo', 'redo', 'play', 'metadata', 'export', 'pdf'].includes(action))
+      if (!['back', 'new', 'save', 'undo', 'redo', 'play', 'metadata', 'export', 'pdf'].includes(action))
         return;
       const b = document.createElement('button');
       b.dataset.action = action;

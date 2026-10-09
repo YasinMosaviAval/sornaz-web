@@ -38,6 +38,19 @@ class AcademyTermService
         \Modules\System\Services\PaymentMutex::run(db(), "invoice:$id", fn () => $this->updateInvoiceLocked($actor, $id, $d));
     }
 
+    public function updatePersonalInvoice(int $actor, int $id, array $d): void
+    {
+        \Modules\System\Services\PaymentMutex::run(db(), "invoice:$id", function () use ($actor, $id, $d): void {
+            $members = DB::table('academy_branch_members')->where('user_id', $actor)->whereNull('deleted_at')->get();
+            $memberIds = array_map(static fn (array $member): int => (int) $member['member_id'], $members);
+            $invoice = $memberIds ? DB::table('academy_branch_course_term_invoices')->where('term_invoice_id', $id)->whereIn('member_id', $memberIds)->whereNull('deleted_at')->first() : null;
+            if (!$invoice) {
+                throw new RuntimeException('فاکتور متعلق به این حساب یافت نشد.', 403);
+            }
+            $this->persistInvoiceEdit($actor, $id, $d);
+        });
+    }
+
     private function updateInvoiceLocked(int $actor, int $id, array $d): void
     {
         $invoice = DB::table('academy_branch_course_term_invoices')->where('term_invoice_id', $id)->whereNull('deleted_at')->first();
@@ -50,6 +63,11 @@ class AcademyTermService
             throw new RuntimeException('ترم فاکتور معتبر نیست.');
         }
         $this->allowedBranch($actor, (int) $course['branch_id']);
+        $this->persistInvoiceEdit($actor, $id, $d);
+    }
+
+    private function persistInvoiceEdit(int $actor, int $id, array $d): void
+    {
         $date = (string) ($d['dueDate'] ?? '');
         if ($date !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
             throw new RuntimeException('تاریخ سررسید معتبر نیست.');
@@ -58,7 +76,7 @@ class AcademyTermService
         if ($title === '') {
             throw new RuntimeException('شرح تراکنش الزامی است.');
         }
-        transaction(function () use ($actor, $id, $invoice, $d, $title) {
+        transaction(function () use ($actor, $id, $d, $title) {
             InvoiceLedger::revise($id, $actor, $d);
             $this->setGenericTexts('academy_branch_course_term_invoices', $id, ['title' => $title, 'summary' => trim((string) ($d['summary'] ?? '')), 'description' => trim((string) ($d['description'] ?? ''))], $actor);
         });

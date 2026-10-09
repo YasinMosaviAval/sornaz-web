@@ -90,6 +90,7 @@
     pushScript('instruments.js');
     pushScript('lesson-templates.js');
     pushScript('lessons.js');
+    pushScript('personal-offerings.js');
     pushScript('member-schedule-templates.js');
     pushScript('member-schedules.js');
     pushScript('availability-templates.js');

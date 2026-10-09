@@ -47,11 +47,12 @@
       ['email', email, academyProfile.email, 'ایمیل'],
       ['phone', phone, academyProfile.phone, 'شماره تلفن'],
     ]) {
-      if ((destination || '').trim() === (current || '').trim()) continue;
+      const normalize = (value) => field === 'email' ? String(value || '').trim().toLowerCase() : String(value || '').replace(/[^0-9+]/g, '');
+      if (normalize(destination) === normalize(current)) continue;
       if (!destination || !destination.trim())
         throw new Error(`برای حذف ${label} با پشتیبانی تماس بگیرید.`);
       await accountRequest('/analytics/admin-account/contact/send-code', { field, destination });
-      const code = window.prompt(`کد تأیید ارسال‌شده به ${label} جدید را وارد کنید:`);
+      const code = await AppDialog.prompt(`کد تأیید ارسال‌شده به ${label} جدید را وارد کنید:`);
       if (code === null) throw new Error('تأیید اطلاعات تماس لغو شد.');
       await accountRequest('/analytics/admin-account/contact/verify-code', {
         field,
@@ -73,7 +74,7 @@
       window.renderAccountInfo();
     } catch (error) {
       console.error(error);
-      alert(error.message);
+      AppDialog.alert(error.message);
     }
   }
   async function uploadAccountFile(kind, blob, name, meta = {}) {
@@ -112,6 +113,14 @@
     if (nameEl) nameEl.textContent = academyProfile.name;
     const pageTitle = document.getElementById('accountPageTitle');
     if (pageTitle) pageTitle.textContent = 'حساب کاربری ' + (academyProfile.entityLabel || '');
+    if (!document.getElementById('account')?.classList.contains('hidden')) {
+      const panelTitle = document.getElementById('panelPageTitle');
+      if (panelTitle && pageTitle) panelTitle.textContent = pageTitle.textContent;
+    }
+    if (!document.getElementById('account')?.classList.contains('hidden')) {
+      const panelTitle = document.getElementById('panelPageTitle');
+      if (panelTitle && pageTitle) panelTitle.textContent = pageTitle.textContent;
+    }
     const coverLabel = document.getElementById('accountCoverLabel');
     if (coverLabel)
       coverLabel.textContent = 'کاور پروفایل ' + (academyProfile.entityLabel || 'حساب');
@@ -197,9 +206,9 @@
       });
       event.target.reset();
       await loadAccountData();
-      alert('✅ درخواست برای مدیر سایت ارسال شد.');
+      AppDialog.alert('✅ درخواست برای مدیر سایت ارسال شد.');
     } catch (error) {
-      alert(error.message);
+      AppDialog.alert(error.message);
     }
   };
   window.cancelUserMerge = async function (id) {
@@ -208,7 +217,7 @@
       await accountRequest('/analytics/admin-account/merges/' + id + '/cancel', {});
       await loadAccountData();
     } catch (error) {
-      alert(error.message);
+      AppDialog.alert(error.message);
     }
   };
   window.decideUserMerge = async function (id, decision) {
@@ -221,9 +230,9 @@
         note,
       });
       await loadAccountData();
-      alert('✅ تصمیم ثبت شد.');
+      AppDialog.alert('✅ تصمیم ثبت شد.');
     } catch (error) {
-      alert(error.message);
+      AppDialog.alert(error.message);
     }
   };
 
@@ -255,12 +264,12 @@
     if (!accountInviteData) return;
     try {
       await navigator.clipboard.writeText(accountInviteData.url);
-      alert('✅ لینک دعوت کپی شد.');
+      AppDialog.alert('✅ لینک دعوت کپی شد.');
     } catch (_) {
       const input = document.getElementById('accountInviteUrl');
       input.select();
       document.execCommand('copy');
-      alert('✅ لینک دعوت کپی شد.');
+      AppDialog.alert('✅ لینک دعوت کپی شد.');
     }
   };
   window.shareAccountInviteLink = async function () {
@@ -308,9 +317,9 @@
       window.dispatchEvent(
         new CustomEvent('admin-media-changed', { detail: { source: 'account' } })
       );
-      alert('✅ کاور حذف شد');
+      AppDialog.alert('✅ کاور حذف شد');
     } catch (error) {
-      alert(error.message);
+      AppDialog.alert(error.message);
     }
   };
 
@@ -322,7 +331,7 @@
     const file = event.target && event.target.files && event.target.files[0];
     if (event.target) event.target.value = '';
     if (!file) return;
-    if (!file.type.startsWith('image/')) return alert('فقط فایل تصویری مجاز است.');
+    if (!file.type.startsWith('image/')) return AppDialog.alert('فقط فایل تصویری مجاز است.');
     openImageCropModal(file, 'avatar');
   };
 
@@ -330,12 +339,12 @@
     const file = event.target && event.target.files && event.target.files[0];
     if (event.target) event.target.value = '';
     if (!file) return;
-    if (!file.type.startsWith('image/')) return alert('فقط فایل تصویری مجاز است.');
+    if (!file.type.startsWith('image/')) return AppDialog.alert('فقط فایل تصویری مجاز است.');
     openImageCropModal(file, 'cover');
   };
 
   function openImageCropModal(file, mode, options = {}) {
-    if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
+    if (!document.getElementById('modalContainer')) return AppDialog.alert('modalContainer پیدا نشد!');
     const reader = new FileReader();
     reader.onload = function (e) {
       const img = new Image();
@@ -623,7 +632,7 @@
 
     out.toBlob(
       async function (blob) {
-        if (!blob) return alert('ساخت تصویر ناموفق بود.');
+        if (!blob) return AppDialog.alert('ساخت تصویر ناموفق بود.');
         try {
           if (s.onApply) {
             const callback = s.onApply;
@@ -644,7 +653,7 @@
             meta
           );
         } catch (error) {
-          alert(error.message);
+          AppDialog.alert(error.message);
         }
       },
       'image/jpeg',
@@ -660,7 +669,7 @@
       summary: document.getElementById('accountMediaSummary')?.value.trim() || '',
       description: document.getElementById('accountMediaDescription')?.value.trim() || '',
     };
-    if (!meta.title) return alert('عنوان الزامی است.');
+    if (!meta.title) return AppDialog.alert('عنوان الزامی است.');
     try {
       const mode = pending.mode;
       await uploadAccountFile(mode, pending.blob, mode + '.jpg', meta);
@@ -670,9 +679,9 @@
       window.dispatchEvent(
         new CustomEvent('admin-media-changed', { detail: { source: 'account' } })
       );
-      alert(mode === 'avatar' ? '✅ عکس پروفایل ذخیره شد' : '✅ کاور ذخیره شد');
+      AppDialog.alert(mode === 'avatar' ? '✅ عکس پروفایل ذخیره شد' : '✅ کاور ذخیره شد');
     } catch (error) {
-      alert(error.message);
+      AppDialog.alert(error.message);
     }
   };
   window.cancelAccountCroppedMedia = function () {
@@ -688,7 +697,7 @@
   };
 
   window.openEditProfileModal = async function () {
-    if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
+    if (!document.getElementById('modalContainer')) return AppDialog.alert('modalContainer پیدا نشد!');
     document.getElementById('modalContainer').innerHTML = window.getAccountEditProfileModalHTML
       ? window.getAccountEditProfileModalHTML(academyProfile)
       : '';
@@ -733,9 +742,9 @@
       });
       closeModal();
       await loadAccountData();
-      alert('✅ پروفایل به‌روزرسانی شد');
+      AppDialog.alert('✅ پروفایل به‌روزرسانی شد');
     } catch (error) {
-      alert(error.message);
+      AppDialog.alert(error.message);
     }
   };
 
@@ -753,9 +762,9 @@
       await accountRequest('/analytics/admin-account/bio', { shortIntro, biography });
       closeModal();
       await loadAccountData();
-      alert('✅ معرفی و بیوگرافی ذخیره شد');
+      AppDialog.alert('✅ معرفی و بیوگرافی ذخیره شد');
     } catch (error) {
-      alert(error.message);
+      AppDialog.alert(error.message);
     }
   };
 
@@ -791,9 +800,9 @@
       pendingAccountDocuments = [];
       closeModal();
       await loadAccountData();
-      alert('✅ سند(ها) اضافه شد');
+      AppDialog.alert('✅ سند(ها) اضافه شد');
     } catch (error) {
-      alert(error.message);
+      AppDialog.alert(error.message);
     }
   };
 
@@ -803,7 +812,7 @@
       await accountRequest('/analytics/admin-account/media/' + id + '/delete', {});
       await loadAccountData();
     } catch (error) {
-      alert(error.message);
+      AppDialog.alert(error.message);
     }
   };
 
@@ -826,9 +835,9 @@
     try {
       await accountRequest('/analytics/admin-account/sessions/' + id + '/end', {});
       await loadAccountData();
-      alert('✅ نشست دستگاه پایان یافت');
+      AppDialog.alert('✅ نشست دستگاه پایان یافت');
     } catch (error) {
-      alert(error.message);
+      AppDialog.alert(error.message);
     }
   };
 
@@ -838,9 +847,9 @@
       for (const d of academyDevices.filter((x) => !x.current && x.status !== 'ended'))
         await accountRequest('/analytics/admin-account/sessions/' + d.id + '/end', {});
       await loadAccountData();
-      alert('✅ سایر نشست‌ها پایان یافتند');
+      AppDialog.alert('✅ سایر نشست‌ها پایان یافتند');
     } catch (error) {
-      alert(error.message);
+      AppDialog.alert(error.message);
     }
   };
 
@@ -897,9 +906,9 @@
     try {
       await accountRequest('/analytics/admin-account/privacy', p);
       await loadAccountData();
-      alert('✅ تنظیمات حریم خصوصی ذخیره شد');
+      AppDialog.alert('✅ تنظیمات حریم خصوصی ذخیره شد');
     } catch (error) {
-      alert(error.message);
+      AppDialog.alert(error.message);
     }
   };
 
@@ -915,8 +924,8 @@
       document.getElementById('accountPasswordConfirm') &&
       document.getElementById('accountPasswordConfirm').value;
     if (pass || pass2) {
-      if (pass !== pass2) return alert('تکرار رمز عبور مطابقت ندارد.');
-      if (pass.length < 8) return alert('رمز عبور باید حداقل ۸ کاراکتر باشد.');
+      if (pass !== pass2) return AppDialog.alert('تکرار رمز عبور مطابقت ندارد.');
+      if (pass.length < 8) return AppDialog.alert('رمز عبور باید حداقل ۸ کاراکتر باشد.');
     }
     try {
       await verifyContactChanges(email, phone);
@@ -931,9 +940,9 @@
       if (document.getElementById('accountPasswordConfirm'))
         document.getElementById('accountPasswordConfirm').value = '';
       await loadAccountData();
-      alert('✅ تنظیمات حساب ذخیره شد');
+      AppDialog.alert('✅ تنظیمات حساب ذخیره شد');
     } catch (error) {
-      alert(error.message);
+      AppDialog.alert(error.message);
     }
   };
 
@@ -947,14 +956,14 @@
       };
       window.renderAccountBackupStatus();
       location.href = '/analytics/admin-account/backups/' + data.id + '/download';
-      alert('✅ پشتیبان محدود به اطلاعات همین آموزشگاه ایجاد شد');
+      AppDialog.alert('✅ خروجی اطلاعات حساب شما ایجاد شد');
     } catch (error) {
-      alert(error.message);
+      AppDialog.alert(error.message);
     }
   };
 
   window.downloadLastBackup = async function () {
-    if (!lastBackupMeta) return alert('هنوز پشتیبانی ایجاد نشده است.');
+    if (!lastBackupMeta) return AppDialog.alert('هنوز خروجی اطلاعاتی ایجاد نشده است.');
     location.href = '/analytics/admin-account/backups/' + lastBackupMeta.id + '/download';
   };
 
@@ -962,11 +971,11 @@
     const el = document.getElementById('accountBackupStatus');
     if (!el) return;
     if (!lastBackupMeta) {
-      el.textContent = 'هنوز پشتیبان خودکار ثبت نشده است.';
+      el.textContent = 'هنوز خروجی اطلاعاتی ثبت نشده است.';
       return;
     }
     el.textContent =
-      'آخرین پشتیبان: ' + lastBackupMeta.date + ' · حجم تقریبی: ' + lastBackupMeta.size;
+      'آخرین خروجی: ' + lastBackupMeta.date + ' · حجم تقریبی: ' + lastBackupMeta.size;
   };
 
   setTimeout(function () {

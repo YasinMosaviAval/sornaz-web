@@ -206,7 +206,7 @@
   window.viewMessage = async function (id) {
     let m = allMessages.find((x) => x.id === id);
     if (!m) return;
-    if (m.incoming && m.readStatus === 'خوانده‌نشده') {
+    if (document.getElementById('messages')?.dataset.readOnly !== '1' && m.incoming && m.readStatus === 'خوانده‌نشده') {
       await api('/analytics/admin-messages/' + id + '/read', {});
       await loadAdminMessages(false);
       m = allMessages.find((x) => x.id === id);

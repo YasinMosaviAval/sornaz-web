@@ -96,6 +96,18 @@ check($snapshot() === $before, 'Explicit metadata edit damaged history');
 $service->updateInvoice(1, 1, ['title' => 'Receipt description', 'amount' => 101, 'statusCode' => 'paid']);
 check($pdo->query("SELECT value FROM translations WHERE table_name='academy_branch_course_terms' AND field='title'")->fetchColumn() === 'Metadata only', 'Invoice description renamed the term');
 check($pdo->query("SELECT value FROM translations WHERE table_name='academy_branch_course_term_invoices' AND field='title'")->fetchColumn() === 'Receipt description', 'Invoice description was not stored independently');
+$pdo->exec("CREATE TABLE academy_branch_members(member_id INTEGER PRIMARY KEY,user_id INTEGER,deleted_at TEXT); INSERT INTO academy_branch_members VALUES(7,2,NULL),(8,3,NULL)");
+transaction(fn () => InvoiceLedger::create(1, 1, $input, '2026-09-01', 1));
+$personalInvoiceId = (int) $pdo->query('SELECT MAX(term_invoice_id) FROM academy_branch_course_term_invoices')->fetchColumn();
+$pdo->exec('UPDATE academy_branch_course_term_invoices SET member_id=7 WHERE term_invoice_id='.$personalInvoiceId);
+$service->updatePersonalInvoice(2, $personalInvoiceId, ['amount' => '103.00', 'statusCode' => 'issued', 'dueDate' => '2026-10-01', 'title' => 'Personal invoice']);
+check(InvoiceLedger::snapshot($personalInvoiceId)['total'] === 10300, 'Own invoice amount did not revise installments');
+check($pdo->query('SELECT status FROM academy_branch_course_term_invoices WHERE term_invoice_id='.$personalInvoiceId)->fetchColumn() === 'issued', 'Own invoice status was not saved');
+try { $service->updatePersonalInvoice(3, $personalInvoiceId, ['amount' => '104.00', 'statusCode' => 'draft', 'title' => 'Foreign']); throw new LogicException('Foreign invoice edit accepted'); }
+catch (RuntimeException $error) { check($error->getCode() === 403, 'Foreign invoice edit did not reject ownership'); }
+$pdo->exec("INSERT INTO financial_system_payments(invoice_id,status) VALUES($personalInvoiceId,'pending')");
+rejected(fn () => $service->updatePersonalInvoice(2, $personalInvoiceId, ['amount' => '104.00', 'statusCode' => 'issued', 'title' => 'Locked']));
+check(InvoiceLedger::snapshot($personalInvoiceId)['total'] === 10300, 'Rejected personal edit changed the ledger');
 rejected(fn () => TermRecordGuard::assertNoHistory('academy_branch_course_terms', 'course_id', 1));
 rejected(fn () => TermRecordGuard::assertNoHistory('academy_branch_course_term_enrollments', 'member_id', 7));
 rejected(fn () => TermRecordGuard::assertNoHistory('academy_branch_courses', 'branch_id', 1));

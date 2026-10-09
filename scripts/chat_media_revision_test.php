@@ -19,7 +19,7 @@ $checks=0;
 function check($value,$message){global $checks;if(!$value)throw new RuntimeException($message);$checks++;}
 function denied($callback){try{$callback();}catch(RuntimeException $e){check(true,'Denied');return;}throw new RuntimeException('Unauthorized operation succeeded');}
 $pdo->exec("CREATE TABLE users(user_id INTEGER PRIMARY KEY,username TEXT,type TEXT DEFAULT 'human',register_method TEXT DEFAULT 'email',avatar_file_id INTEGER,timezone TEXT DEFAULT 'UTC',visibility TEXT DEFAULT 'public',deleted_at TEXT);
-CREATE TABLE translations(translation_id INTEGER PRIMARY KEY,table_name TEXT,table_id INTEGER,field TEXT,locale TEXT,value TEXT,deleted_at TEXT);
+CREATE TABLE translations(translation_id INTEGER PRIMARY KEY,table_name TEXT,table_id INTEGER,field TEXT,locale TEXT,value TEXT,deleted_at TEXT,deleted_by INTEGER);
 CREATE TABLE media_files(media_file_id INTEGER PRIMARY KEY,user_id INTEGER,collection TEXT,path TEXT,sort_order INTEGER,deleted_at TEXT);
 CREATE TABLE conversations(conversation_id INTEGER PRIMARY KEY,type TEXT,title TEXT,avatar_path TEXT,last_message_id INTEGER,created_at TEXT,created_by INTEGER,updated_at TEXT,updated_by INTEGER,deleted_at TEXT,deleted_by INTEGER);
 CREATE TABLE conversation_members(conversation_member_id INTEGER PRIMARY KEY AUTOINCREMENT,conversation_id INTEGER,user_id INTEGER,role TEXT,is_muted INTEGER,joined_at TEXT,last_read_message_id INTEGER DEFAULT 0,created_at TEXT,created_by INTEGER,updated_at TEXT,updated_by INTEGER,left_at TEXT,deleted_at TEXT,deleted_by INTEGER);

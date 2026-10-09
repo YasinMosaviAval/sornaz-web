@@ -56,8 +56,8 @@
 
             <div class="flex shrink-0 items-center gap-2 border-l border-gray-200 pl-4" dir="ltr">
                 <? component('inline-edit-switch'); ?>
-                <? component('theme-switcher'); ?>
-                <? component('language-switcher'); ?>
+                <?php /* component('theme-switcher'); */ ?>
+                <?php /* component('language-switcher'); */ ?>
             </div>
         </div>
 
@@ -75,8 +75,8 @@
         <div id="mobileMenu" class="hidden lg:hidden pb-4 border-t border-gray-100 pt-3 space-y-1">
             <div class="mobile-header-switchers grid grid-cols-2 gap-2 px-3 pb-3 mb-2 border-b border-gray-100" dir="ltr">
                 <? component('inline-edit-switch'); ?>
-                <? component('theme-switcher'); ?>
-                <? component('language-switcher'); ?>
+                <?php /* component('theme-switcher'); */ ?>
+                <?php /* component('language-switcher'); */ ?>
             </div>
             <!-- <a href="/page/home" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">خانه</a> -->
             <a href="/analytics/articles" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.articles', 'مقاله‌های آموزشی')) ?></a>

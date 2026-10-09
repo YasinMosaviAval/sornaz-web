@@ -22,6 +22,7 @@ const {once} = require('node:events');
   };
   put('site/.htaccess', fs.readFileSync(path.join(__dirname, '../.htaccess')));
   put('site/index.php', 'FRONT_CONTROLLER');
+  put('site/index2.php', 'FRONT_CONTROLLER');
   const forbidden = ['.env', '.env.example', '.git/config', 'php-error.log', 'composer.json', 'composer.lock', 'sornaz',
     'docs/database/backup.sql', 'core/secret.txt', 'Modules/demo.txt', 'vendor/test.txt',
     'scripts/test.php', 'config/data.json', 'resources/test.txt', 'storage/sessions/sess_test',
@@ -59,7 +60,7 @@ DocumentRoot "${root}/site"
   try {
     let ready = false;
     for (let i = 0; i < 50; i++) {
-      try { await request('index.php'); ready = true; break; } catch {}
+      try { await request('index2.php'); ready = true; break; } catch {}
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     if (!ready) throw Error('Apache did not start: '+logs);
@@ -69,7 +70,7 @@ DocumentRoot "${root}/site"
       if (response.status !== 403) throw Error(url+' returned '+response.status);
       checks++;
     }
-    for (const [url, expected] of [['index.php','FRONT_CONTROLLER'], ['community','FRONT_CONTROLLER'],
+    for (const [url, expected] of [['index2.php','FRONT_CONTROLLER'], ['community','FRONT_CONTROLLER'],
       [account,'FRONT_CONTROLLER'], [library,'FRONT_CONTROLLER'], ['assets/test.css','PUBLIC_ASSET'], ['.well-known/acme-challenge/probe','ACME']]) {
       const response = await request(url);
       if (response.status !== 200 || await response.text() !== expected) throw Error('Unexpected public response: '+url);

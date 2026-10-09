@@ -119,7 +119,7 @@ final class AdminAccountController
     {
         try {
             $f = $this->backups->find((int) auth()->id(), $id);
-            return new DownloadResponse($f['path'], $f['filename'], 'application/sql');
+            return new DownloadResponse($f['path'], $f['filename'], $f['mime'] ?? 'application/sql');
         } catch (\Throwable$e) {
             return ResponseFactory::json(['success' => false, 'message' => \Core\security\PublicError::message($e)], 404);
         }

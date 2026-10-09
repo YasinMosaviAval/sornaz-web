@@ -23,7 +23,7 @@ final class AdminGalleryService
             $ownerMap[(int) $owner['userId']] = $owner;
         }
         $rows = array_values(array_filter($rows, fn ($row) => !str_starts_with((string) ($row['path'] ?? ''), 'assets/media/users/')));
-        return ['owners' => $owners, 'items' => array_map(fn ($row) => $this->map($row, $ownerMap[(int) $row['user_id']]), $rows), 'hideOwnerFilters' => $branchAccount];
+        return ['owners' => $owners, 'items' => array_map(fn ($row) => $this->map($row, $ownerMap[(int) $row['user_id']]), $rows), 'hideOwnerFilters' => $branchAccount || count($owners) <= 1];
     }
 
     public function realtimeVersion(int $actor): array

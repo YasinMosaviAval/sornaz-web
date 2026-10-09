@@ -90,7 +90,7 @@ class NotationService
         }
         $clean = [];
         foreach (['title', 'subtitle', 'composer', 'arranger', 'lyricist', 'tempo_text'] as $field) {
-            $clean[$field] = $this->text($meta[$field] ?? '');
+            $clean[$field] = $this->text($meta[$field] ?? '', $field === 'subtitle' ? 1000 : 180);
         }
         if ($clean['title'] === '') {
             throw new RuntimeException('Enter a title.', 422);
@@ -114,11 +114,8 @@ class NotationService
             }
             $clean[$key] = $v;
         }
-        $bpm = filter_var($meta['bpm'] ?? null, FILTER_VALIDATE_INT);
-        if ($bpm < 20 || $bpm > 300) {
-            throw new RuntimeException('Tempo must be between 20 and 300.', 422);
-        }
-        $clean['bpm'] = $bpm;
+        $clean += $this->extendedMetadata($meta, $clean['key']);
+        $clean['bpm'] = $this->validatedBpm($meta['bpm'] ?? null);
         [$top,$bottom] = array_map('intval', explode('/', $clean['time']));
         $capacity = $top * 64 / $bottom;
         $measures = [];
@@ -175,6 +172,29 @@ class NotationService
             throw new RuntimeException('Invalid visibility.', 422);
         }
         return ['title' => $clean['title'], 'metadata' => json_encode($clean, JSON_UNESCAPED_UNICODE), 'score' => json_encode(['measures' => $measures], JSON_UNESCAPED_UNICODE), 'visibility' => $visibility];
+    }
+
+    private function extendedMetadata(array $meta, string $key): array
+    {
+        $scaleType = $meta['scale_type'] ?? (str_ends_with($key, 'm') ? 'minor' : 'major');
+        if (!in_array($scaleType, ['major', 'minor', 'melodic_minor', 'harmonic_minor'], true)
+            || ($scaleType === 'major') === str_ends_with($key, 'm')) {
+            throw new RuntimeException('Invalid scale.', 422);
+        }
+        $tempoDots = $meta['tempo_dots'] ?? 0;
+        if (!is_int($tempoDots) || $tempoDots < 0 || $tempoDots > 2) {
+            throw new RuntimeException('Invalid beat dots.', 422);
+        }
+        return ['scale_type' => $scaleType, 'tempo_dots' => $tempoDots];
+    }
+
+    private function validatedBpm(mixed $value): int
+    {
+        $bpm = filter_var($value, FILTER_VALIDATE_INT);
+        if ($bpm === false || $bpm < 20 || $bpm > 300) {
+            throw new RuntimeException('Tempo must be between 20 and 300.', 422);
+        }
+        return $bpm;
     }
 
     public function save(int $actor, int $id, array $data): array

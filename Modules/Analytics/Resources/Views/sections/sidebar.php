@@ -62,7 +62,6 @@ $canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager
                 <li><a href="#" onclick="showSection('pages')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-copy w-5 text-center"></i> برگه‌ها</a></li>
                 <li><a href="#" onclick="showSection('media')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-photo-video w-5 text-center"></i> رسانه‌ها</a></li>
                 <li><a href="#" onclick="showSection('comments')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-comments w-5 text-center"></i> دیدگاه‌ها</a></li>
-                <li><a href="#" onclick="showSection('settings')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-cog w-5 text-center"></i> تنظیمات</a></li>
                 <li><a href="#" onclick="showSection('chart-gallery')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-chart-pie w-5 text-center"></i> گالری نمودارها</a></li>
                 <li><a href="#" onclick="showSection('reports')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-yellow-300 hover:text-yellow-200"><i class="fas fa-chart-bar w-5 text-center"></i> گزارش‌ها</a></li>
                 <li>--------------------------------</li>
@@ -76,16 +75,12 @@ $canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager
             <? } ?>
             <li><a href="#" onclick="showSection('dashboard')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-home w-5 text-center"></i> داشبورد</a></li>
             <li><a href="#" onclick="showSection('account')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-user-cog w-5 text-center"></i> حساب کاربری</a></li>
-            <li><a href="#" onclick="showSection('chat')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-comment-dots w-5 text-center"></i> گفتگوها</a></li>
-            <li><a href="/music-sheets" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-music w-5 text-center"></i> <?= locale()==='en'?'Music Sheets':'نت‌نویسی' ?></a></li>
-            <li><a href="/course-market/manage" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-photo-video w-5 text-center"></i> ساخت و فروش دوره</a></li>
-            <li><a href="/course-market/library" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-play-circle w-5 text-center"></i> دوره‌های خریداری‌شده</a></li>
+            <li><a href="#" onclick="showSection('notation')" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-music w-5 text-center"></i> <?= locale()==='en'?'Music Sheets':'نت‌نویسی' ?></a></li>
             <?php if(!$hasAcademyPanelAccess && $hasLearningEnrollment): ?>
             <li><a href="#" onclick="showSection('my-classrooms')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-chalkboard w-5 text-center"></i> کلاس‌های من</a></li>
             <li><a href="#" onclick="showSection('my-courses')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-book-open w-5 text-center"></i> دوره‌های من</a></li>
             <li><a href="#" onclick="showSection('my-terms')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-calendar-check w-5 text-center"></i> ترم‌های من</a></li>
             <?php endif; ?>
-            <?php if($hasAcademyPanelAccess): ?>
             <li><button type="button" onclick="toggleSidebarSubmenu('profileAchievementsSubmenu',this)" class="flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-right transition hover:bg-indigo-800"><span class="flex items-center gap-3"><i class="fas fa-trophy w-5 text-center"></i> سوابق و دستاوردها</span><i class="fas fa-chevron-down text-xs submenu-chevron"></i></button>
                 <ul id="profileAchievementsSubmenu" class="mt-1 mr-4 hidden space-y-1 border-r border-indigo-700/60 pr-2">
                     <li><a href="#" onclick="showSection('awards')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-award w-4"></i>پاداش‌ها و جوایز</a></li>
@@ -98,7 +93,6 @@ $canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager
                     <li><a href="#" onclick="showSection('publications')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800"><i class="fas fa-book-open w-4"></i>آثار منتشر شده</a></li>
                 </ul>
             </li>
-            <?php endif; ?>
             <?php if($isSiteAdmin): ?><li><a href="#" onclick="showSection('tracking')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-chart-line w-5 text-center"></i> تحلیل رفتار کاربران</a></li><?php endif; ?>
             <?php if($isSiteAdmin): ?><li><a href="#" onclick="showSection('national-holidays')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-calendar-times w-5 text-center"></i> تعطیلات رسمی کشور</a></li><?php endif; ?>
             <?php if($hasAcademyPanelAccess): ?>
@@ -170,20 +164,23 @@ $canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager
             <li><a href="#" onclick="showSection('courses')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-book-open w-5 text-center"></i> دوره‌ها</a></li>
             <li><a href="#" onclick="showSection('terms')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-calendar-check w-5 text-center"></i> ترم‌ها</a></li>
             <li><a href="#" onclick="showSection('students')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-users w-5 text-center"></i> هنرجویان</a></li>
-            <li>
-                <button type="button" onclick="toggleSidebarSubmenu('scheduleSubmenu', this)" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-right">
-                    <span class="flex items-center gap-3"><i class="fas fa-calendar-alt w-5 text-center"></i> برنامه زمانی</span><i class="fas fa-chevron-down text-xs submenu-chevron"></i>
-                </button>
-                <ul id="scheduleSubmenu" class="mt-1 mr-4 space-y-1 hidden border-r border-indigo-700/60 pr-2">
-                    <li><a href="#" onclick="showSection('scheduling-rules')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm"><i class="fas fa-gavel w-4"></i>قوانین زمانبندی</a></li>
-                    <li><a href="#" onclick="showSection('availabilities')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm"><i class="fas fa-clock w-4"></i>برنامه زمانی سازمان</a></li>
-                    <li><a href="#" onclick="showSection('member-schedules')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm"><i class="fas fa-user-clock w-4"></i>برنامه زمانی اعضا</a></li>
-                    <li><a href="#" onclick="showSection('availability-exceptions')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm"><i class="fas fa-umbrella-beach w-4"></i>تعطیلات و مرخصی‌ها</a></li>
-                    <li><a href="#" onclick="showSection('schedules')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm"><i class="fas fa-chalkboard w-4"></i>برنامه زمانی کلاس‌ها</a></li>
-                </ul>
-            </li>
+            <li><a href="#" onclick="showSection('member-schedules')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-calendar-alt w-5 text-center"></i> برنامه زمانی</a></li>
             <li><a href="#" onclick="showSection('finance')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-money-bill-wave w-5 text-center"></i> امور مالی</a></li>
             <?php endif; ?>
+            <?php if (!$hasAcademyPanelAccess): ?>
+            <li><button type="button" onclick="toggleSidebarSubmenu('gallerySubmenu', this)" class="flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-right transition hover:bg-indigo-800"><span class="flex items-center gap-3"><i class="fas fa-images w-5 text-center"></i> گالری</span><i class="fas fa-chevron-down text-xs submenu-chevron"></i></button>
+                <ul id="gallerySubmenu" class="mt-1 mr-4 hidden space-y-1 border-r border-indigo-700/60 pr-2">
+                    <li><a href="#" onclick="showSection('gallery-cover')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800">کاور</a></li>
+                    <li><a href="#" onclick="showSection('gallery-logo')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800">لوگو</a></li>
+                    <li><a href="#" onclick="showSection('gallery-intro-video')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800">ویدیو معرفی</a></li>
+                    <li><a href="#" onclick="showSection('gallery-collection')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm hover:bg-indigo-800">مجموعه عکس‌ها و ویدیوها</a></li>
+                </ul>
+            </li>
+            <li><a href="#" onclick="showSection('lessons')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-book w-5 text-center"></i> درس‌ها</a></li>
+            <li><a href="#" onclick="showSection('member-schedules')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-calendar-alt w-5 text-center"></i> برنامه زمانی</a></li>
+            <li><a href="#" onclick="showSection('finance')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-money-bill-wave w-5 text-center"></i> امور مالی</a></li>
+            <?php endif; ?>
+            <li><a href="#settings" onclick="showSection('settings')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-cog w-5 text-center"></i> تنظیمات</a></li>
         </ul>
     </nav>
 </div>

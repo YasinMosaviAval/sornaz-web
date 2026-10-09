@@ -34,6 +34,10 @@
       document.documentElement.style.setProperty('--site-font-family', settings.fontFamily);
     if (settings.rootFontSize)
       document.documentElement.style.setProperty('--site-root-font-size', settings.rootFontSize);
+    const personalWeight = Number(localStorage.getItem('sornaz.personalFontWeight') ?? 0);
+    const personalRadius = Number(localStorage.getItem('sornaz.personalCornerRadius') ?? 4);
+    document.documentElement.style.setProperty('--site-font-weight', String(400 + Math.min(5, Math.max(0, personalWeight)) * 100));
+    document.documentElement.style.setProperty('--site-corner-radius', `${Math.min(16, Math.max(0, personalRadius))}px`);
     digitStyle = document.documentElement.lang === 'en' ? 'en' : 'fa';
     if (document.body) normalizeNode(document.body);
   };
@@ -102,8 +106,15 @@
     .then((p) => {
       const b = p.data ?? p,
         d = b.data ?? b;
-      window.applySiteTypography(d);
-      apply(d.colorTheme, d.themeMode, false);
+      const personalFont = localStorage.getItem('sornaz.personalFont');
+      const font = d.fonts?.find((item) => item.value === personalFont);
+      const personalScale = localStorage.getItem('sornaz.personalFontScale');
+      window.applySiteTypography({
+        ...d,
+        fontFamily: font?.fontFamily || d.fontFamily,
+        rootFontSize: font && personalScale !== null ? `${16 + Number(personalScale)}px` : d.rootFontSize,
+      });
+      apply(localStorage.getItem('sornaz.personalTheme') || d.colorTheme, localStorage.getItem('sornaz.personalMode') || d.themeMode, false);
     })
     .catch(() => {});
   document.addEventListener('DOMContentLoaded', () => {

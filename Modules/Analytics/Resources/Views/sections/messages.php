@@ -1,10 +1,6 @@
-<div id="messages" class="section hidden">
+<div id="messages" class="section hidden" data-read-only="<?= !empty($canUseMessageActions) ? '0' : '1' ?>">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-3xl font-bold">مدیریت پیام‌ها</h1>
-            <p class="text-gray-500 mt-1">پیام‌های داخلی شعبه‌ها و سیستم</p>
-        </div>
-        <div class="flex flex-wrap gap-3"><button onclick="openAddMessageModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2"><i class="fas fa-plus"></i> ارسال پیام جدید</button><button onclick="exportMessagesToExcel()" class="border px-5 py-3 rounded-2xl"><i class="fas fa-file-excel text-green-600 ml-2"></i>خروجی اکسل</button><button onclick="exportMessagesToPDF()" class="border px-5 py-3 rounded-2xl"><i class="fas fa-file-pdf text-red-600 ml-2"></i>خروجی PDF</button></div>
+        <div class="flex flex-wrap gap-3"><?php if (!empty($canUseMessageActions)): ?><button onclick="openAddMessageModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2"><i class="fas fa-plus"></i> ارسال پیام جدید</button><?php endif; ?><button onclick="exportMessagesToExcel()" class="rounded-2xl border bg-white px-5 py-3 text-gray-700 hover:bg-gray-50 dark:bg-slate-800 dark:text-white"><i class="fas fa-file-excel text-green-600 ml-2"></i>خروجی اکسل</button><button onclick="exportMessagesToPDF()" class="rounded-2xl border bg-white px-5 py-3 text-gray-700 hover:bg-gray-50 dark:bg-slate-800 dark:text-white"><i class="fas fa-file-pdf text-red-600 ml-2"></i>خروجی PDF</button></div>
     </div>
 
     <!-- فیلترها -->

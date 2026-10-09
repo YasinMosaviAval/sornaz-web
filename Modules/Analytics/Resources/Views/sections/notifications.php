@@ -1,12 +1,12 @@
-<div id="notifications" class="section hidden">
+<div id="notifications" class="section hidden" data-read-only="<?= !empty($canUseNotificationActions) ? '0' : '1' ?>" data-can-create="<?= !empty($canCreateNotifications) ? '1' : '0' ?>">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-3xl font-bold">مدیریت اعلان‌ها</h1>
             <p class="text-gray-500 mt-1">اعلان‌های سیستمی و اختصاصی شعبه‌ها</p>
         </div>
-        <button onclick="openAddNotificationModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
+        <?php if (!empty($canCreateNotifications)): ?><button onclick="openAddNotificationModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
             <i class="fas fa-plus"></i> ثبت اعلان جدید
-        </button>
+        </button><?php endif; ?>
     </div>
 
     <!-- تاپ‌بار شعبه‌ها -->

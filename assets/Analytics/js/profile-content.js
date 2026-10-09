@@ -277,6 +277,13 @@
     renderPagination(root, e, s, rows.length, pages);
   }
   function renderTabs(root, s) {
+    const tabContainer = root.querySelector('[data-profile-organization-tabs]');
+    if (s.hideOrganizationField && (s.organizations || []).length === 1) {
+      tabContainer.parentElement.classList.add('hidden');
+      s.organization = s.organizations[0].id;
+      return;
+    }
+    tabContainer.parentElement.classList.remove('hidden');
     const all = { id: 'all', name: 'همه' },
       orgs = s.organizations || [],
       academies = orgs.filter((x) => x.kind === 'academy'),
@@ -288,7 +295,7 @@
       );
     }
     for (const org of orgs) if (!ordered.includes(org)) ordered.push(org);
-    root.querySelector('[data-profile-organization-tabs]').innerHTML = ordered
+    tabContainer.innerHTML = ordered
       .map(
         (o) =>
           `<button type="button" data-org="${o.id}" class="rounded-2xl border px-5 py-2.5 text-sm transition ${String(s.organization) === String(o.id) ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-gray-200 bg-white hover:border-indigo-300'}">${esc(o.name)}</button>`
