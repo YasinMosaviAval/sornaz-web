@@ -87,4 +87,15 @@ try{$service->validate($repeatMeasure);throw new Exception('Invalid cut time acc
 $repeatMeasure['score']['measures'][0]['timeSymbol']='common';
 $repeatMeasure['score']['measures'][1]['notes']=[['pitch'=>'D4','duration'=>'q','dots'=>0,'rest'=>false]];
 try{$service->validate($repeatMeasure);throw new Exception('Measure repeat hid existing notes');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
-echo "Notation validation: legacy scores, staves, chords, timing, tuplets and repeats passed.\n";
+$phaseFour=['metadata'=>$meta+['clef'=>'treble','staves'=>[['clef'=>'treble'],['clef'=>'bass']]],'score'=>['measures'=>[
+    ['notes'=>[
+        ['pitch'=>'C4','duration'=>'8','dots'=>0,'rest'=>false,'staff'=>1,'at'=>0,'crossBeam'=>1,'slurStart'=>true,'pedal'=>'sustainDown','pitches'=>[['pitch'=>'E4','accidental'=>'','tieNext'=>true]]],
+        ['pitch'=>'C3','duration'=>'8','dots'=>0,'rest'=>false,'staff'=>2,'at'=>120960,'crossBeam'=>1],
+    ]],
+    ['notes'=>[['pitch'=>'E4','duration'=>'q','dots'=>0,'rest'=>false,'staff'=>1,'slurEnd'=>true,'pitches'=>[['pitch'=>'G4','accidental'=>'','tiePrevious'=>true]]]],'clefs'=>['2'=>'alto']],
+]]];
+$phaseFourSaved=json_decode($service->validate($phaseFour)['score'],true)['measures'];
+if($phaseFourSaved[0]['notes'][0]['pitches'][0]['tieNext']!==true||$phaseFourSaved[0]['notes'][0]['slurStart']!==true||$phaseFourSaved[0]['notes'][0]['pedal']!=='sustainDown'||$phaseFourSaved[0]['notes'][1]['crossBeam']!==1||$phaseFourSaved[1]['clefs']['2']!=='alto')throw new Exception('Piano markings were lost');
+$phaseFour['score']['measures'][0]['notes'][0]['pedal']='invalid';
+try{$service->validate($phaseFour);throw new Exception('Invalid pedal accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+echo "Notation validation: legacy scores, staves, chords, timing, tuplets, repeats and piano markings passed.\n";

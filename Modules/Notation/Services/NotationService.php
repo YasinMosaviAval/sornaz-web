@@ -207,7 +207,14 @@ class NotationService
                         || !in_array($tone['accidental'] ?? '', ['', '#', 'b', 'n', '##', 'bb', '+', 'd'], true)) {
                         throw new RuntimeException('Invalid chord tone.', 422);
                     }
-                    $note['pitches'][] = ['pitch' => $tone['pitch'], 'accidental' => $tone['accidental'] ?? ''];
+                    $cleanTone = ['pitch' => $tone['pitch'], 'accidental' => $tone['accidental'] ?? ''];
+                    foreach (['tieNext', 'tiePrevious'] as $tie) {
+                        if (array_key_exists($tie, $tone)) {
+                            if (!is_bool($tone[$tie])) throw new RuntimeException('Invalid chord tone tie.', 422);
+                            $cleanTone[$tie] = $tone[$tie];
+                        }
+                    }
+                    $note['pitches'][] = $cleanTone;
                 }
                 foreach (['tieNext', 'tiePrevious'] as $tie) {
                     if (isset($n[$tie])) {
@@ -216,6 +223,20 @@ class NotationService
                         }
                         $note[$tie] = $n[$tie];
                     }
+                }
+                foreach (['slurStart', 'slurEnd'] as $slur) {
+                    if (array_key_exists($slur, $n)) {
+                        if (!is_bool($n[$slur]) || ($n[$slur] && $n['rest'])) throw new RuntimeException('Invalid slur.', 422);
+                        $note[$slur] = $n[$slur];
+                    }
+                }
+                if (isset($n['pedal'])) {
+                    if ($n['rest'] || !in_array($n['pedal'], ['sustainDown', 'sustainUp', 'sostenutoDown', 'sostenutoUp', 'unaCorda', 'treCorde'], true)) throw new RuntimeException('Invalid piano pedal.', 422);
+                    $note['pedal'] = $n['pedal'];
+                }
+                if (isset($n['crossBeam'])) {
+                    if (!is_int($n['crossBeam']) || $n['crossBeam'] < 1 || $n['crossBeam'] > 1000000 || $n['rest'] || $length > 120960) throw new RuntimeException('Invalid cross-staff beam.', 422);
+                    $note['crossBeam'] = $n['crossBeam'];
                 }
                 foreach (['dynamic' => ['', 'ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff', 'sf', 'sff', 'sfff', 'sfz', 'sffz', 'sfffz', 'fz', 'ffz', 'fffz'], 'articulation' => ['', 'staccato', 'accent', 'tenuto', 'marcato', 'staccatissimo'], 'bow' => ['', 'up', 'down'], 'ornament' => ['', 'trill', 'mordent'], 'finger' => ['', '0', '1', '2', '3', '4', '5']] as $field => $values) {
                     $value = $n[$field] ?? '';
@@ -227,6 +248,14 @@ class NotationService
                 $notes[] = $note;
             }
             $bar = ['notes' => $notes, 'preserve' => ($measure['preserve'] ?? false) === true];
+            if (isset($measure['clefs'])) {
+                if (!is_array($measure['clefs'])) throw new RuntimeException('Invalid measure clefs.', 422);
+                $bar['clefs'] = [];
+                foreach ($measure['clefs'] as $staffNumber => $clefName) {
+                    if (!in_array((string)$staffNumber, ['1', '2'], true) || !in_array($clefName, $enums['clef'], true)) throw new RuntimeException('Invalid measure clef.', 422);
+                    $bar['clefs'][(string)$staffNumber] = $clefName;
+                }
+            }
             if (isset($measure['time'])) $bar['time'] = $barTime;
             if (isset($measure['timeSymbol'])) {
                 if (!in_array($measure['timeSymbol'], ['common', 'cut'], true)
@@ -294,7 +323,7 @@ class NotationService
         }
         while ($measures && !$measures[count($measures) - 1]['notes'] && !$measures[count($measures) - 1]['preserve']
             && !isset($measures[count($measures) - 1]['time']) && !isset($measures[count($measures) - 1]['timeSymbol']) && !isset($measures[count($measures) - 1]['length'])
-            && !isset($measures[count($measures) - 1]['barline']) && !isset($measures[count($measures) - 1]['repeat'])) {
+            && !isset($measures[count($measures) - 1]['barline']) && !isset($measures[count($measures) - 1]['repeat']) && !isset($measures[count($measures) - 1]['clefs'])) {
             array_pop($measures);
         }
         if (!$measures) {
