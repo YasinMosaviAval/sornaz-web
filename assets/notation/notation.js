@@ -1,1403 +1,344 @@
 /* Sornaz notation UI: identical editor for the website and bundled mobile view. */
-(function () {
-  'use strict';
-  const M = NotationModel,
-    VF = Vex.Flow;
-  const fa = {
-    'Music Sheets': 'نت‌نویسی',
-    Notation: 'نت‌نویسی',
-    All: 'همه',
-    Mine: 'نت‌های من',
-    Saved: 'ذخیره‌شده‌ها',
-    Title: 'عنوان',
-    Subtitle: 'توضیحات',
-    Description: 'توضیحات',
-    Composer: 'آهنگساز',
-    Arranger: 'تنظیم‌کننده',
-    Lyricist: 'ترانه‌سرا',
-    Copyright: 'حقوق اثر',
-    Instrument: 'ساز',
-    Scale: 'گام',
-    Major: 'ماژور',
-    Minor: 'مینور',
-    'Melodic minor': 'مینور ملودیک',
-    'Harmonic minor': 'مینور هارمونیک',
-    'Save changes': 'ذخیره تغییرات',
-    'Key Signature': 'سرکلید',
-    'Time Signature': 'میزان نما',
-    'Tempo Text': 'نام تمپو',
-    'Note type': 'واحد ضرب',
-    'Metronome Mark': 'سرعت مترونوم',
-    Clef: 'کلید',
-    'Start Writing': 'شروع نت‌نویسی',
-    Save: 'ذخیره',
-    Back: 'بازگشت',
-    Delete: 'حذف',
-    Cancel: 'انصراف',
-    Continue: 'ادامه',
-    Publish: 'نمایش عمومی',
-    Private: 'خصوصی',
-    'No sheets yet.': 'هنوز نتی در این بخش وجود ندارد.',
-    'Sign in to continue.': 'برای ادامه وارد حساب شوید.',
-    Retry: 'تلاش دوباره',
-    'Load more': 'نمایش بیشتر',
-    'Saved successfully.': 'با موفقیت ذخیره شد.',
-    'Discard unsaved changes?': 'تغییرات ذخیره‌نشده کنار گذاشته شوند؟',
-    'Delete this sheet?': 'این نت حذف شود؟',
-    'Enter a title.': 'عنوان را وارد کنید.',
-    'This measure is full.': 'ظرفیت این میزان تکمیل شده است.',
-    'This sheet is read-only.': 'این نت فقط قابل مطالعه است.',
-    'Only the owner can edit this sheet.': 'فقط سازنده می‌تواند این نت را ویرایش کند.',
-    'Sheet not found.': 'نت پیدا نشد.',
-    'Notation service unavailable.': 'سرویس نت‌نویسی در دسترس نیست.',
-    'This sheet changed elsewhere. Reload before saving.':
-      'نت در جای دیگری تغییر کرده است. پیش از ذخیره نسخهٔ تازه را باز کنید.',
-    'Refresh the page and try again.': 'صفحه را تازه کنید و دوباره تلاش کنید.',
-    Undo: 'واگرد',
-    Redo: 'ازنو',
-    Play: 'پخش',
-    Stop: 'توقف',
-    Rest: 'سکوت',
-    Measure: 'میزان',
-    'Add measure': 'افزودن میزان',
-    'Remove measure': 'حذف میزان',
-    Duration: 'کشش',
-    Accidental: 'علامت تغییر',
-    Bowing: 'آرشه',
-    Finger: 'انگشت',
-    Dynamics: 'دینامیک',
-    Dots: 'نقطه',
-    Articulation: 'تلفظ',
-    Ornament: 'زینت',
-    Metadata: 'مشخصات',
-    Export: 'خروجی',
-    'Make a copy': 'ساخت نسخهٔ شخصی',
-    'Select a measure, then use the piano.': 'یک میزان را انتخاب کنید؛ سپس روی کلاویه بزنید.',
-    'Saving…': 'در حال ذخیره…',
-    Unsaved: 'ذخیره نشده',
-    Synced: 'ذخیره شده',
-    Bookmark: 'ذخیره در فهرست',
-    'Remove bookmark': 'حذف از ذخیره‌شده‌ها',
-    Theme: 'تغییر تم',
-    Home: 'خانه',
-    Octave: 'اکتاو',
-    Tar: 'تار',
-    Setar: 'سه‌تار',
-    Guitar: 'گیتار',
-    Piano: 'پیانو',
-    Violin: 'ویولن',
-    Flute: 'فلوت',
-    Voice: 'آواز',
-    treble: 'سل',
-    bass: 'فا',
-    'Connection failed. Your changes are still here.':
-      'ارتباط برقرار نشد؛ تغییرات شما همچنان در این صفحه محفوظ است.',
-    'At most 64 measures.': 'حداکثر ۶۴ میزان مجاز است.',
-    'Remove all notes in this measure?': 'تمام نت‌های این میزان حذف شوند؟',
-    'Tempo must be between 20 and 300.': 'تمپو باید بین ۲۰ تا ۳۰۰ باشد.',
-  };
-  let config = {
-    locale: 'en',
-    userId: 0,
-    embedded: false,
-    api: '/music-sheets/api',
-    csrf: '',
-    dark: false,
-  };
-  const state = {
-    route: 'list',
-    mode: 'all',
-    items: [],
-    page: 1,
-    more: false,
-    loading: false,
-    error: '',
-    sheet: null,
-    dirty: false,
-    busy: false,
-    bar: 0,
-    note: -1,
-    history: [],
-    future: [],
-    octave: 3,
-    playing: false,
-    playOffset: null,
-    playStarted: 0,
-    playBar: -1,
-    playNote: -1,
-    lastPitch: 'C4',
-    lastDuration: 'q',
-    lastDots: 0,
-    pianoScroll: null,
-    paletteOpen: false,
-    choice: {
-      duration: 'q',
-      accidental: '',
-      dots: 0,
-      rest: false,
-      dynamic: '',
-      articulation: '',
-      bow: '',
-      finger: '',
-      ornament: '',
-    },
-  };
-  const root = document.getElementById('app');
-  let sequence = 0,
-    requestId = 0,
-    audio,
-    voices = [],
-    timers = [],
-    resizeTimer;
-  Object.assign(fa, {
-    'Close tools': 'بستن ابزارها',
-    'Notation tools': 'ابزارهای نت‌نویسی',
-    'Make private': 'خصوصی شود',
-    'Make public': 'عمومی شود',
-    'Enter at least one note before saving.': 'پیش از ذخیره حداقل یک نت بنویسید.',
-    'PDF export opened.': 'پنجرهٔ خروجی باز شد؛ گزینهٔ ذخیره به‌صورت PDF را انتخاب کنید.',
-    PDF: 'خروجی PDF (A4)',
-    'Storage permission is required to download this sheet.':
-      'برای دانلود نت، اجازهٔ ذخیره‌سازی لازم است.',
-    'Could not save the music sheet.': 'ذخیرهٔ فایل نت انجام نشد.',
-    Yes: 'بلی',
-    No: 'خیر',
-    Download: 'دانلود',
-    Downloaded: 'دانلود شد',
-    'Have you decided not to write a new sheet?': 'آیا از نوشتن نت جدید منصرف شده‌اید',
-    'Save these changes?': 'این تغییرات ذخیره شوند؟',
-    soprano: 'کلید دو خط اول',
-    'mezzo-soprano': 'کلید دو خط دوم',
-    alto: 'کلید دو خط سوم',
-    tenor: 'کلید دو خط چهارم',
-    'baritone-f': 'کلید فا خط سوم',
-    bass: 'کلید فا خط چهارم',
-  });
-  const noteSymbols = {
-    w: '𝅝',
-    h: '𝅗𝅥',
-    q: '𝅘𝅥',
-    8: '𝅘𝅥𝅮',
-    16: '𝅘𝅥𝅯',
-    32: '𝅘𝅥𝅰',
-    64: '𝅘𝅥𝅱',
-    128: '𝅘𝅥𝅲',
-    256: '𝅥',
-  };
-  const selectableNotes = ['w', 'h', 'q', '8', '16', '32', '64'].map((k) => [k, noteSymbols[k]]);
+(function(){
+'use strict';
+const M=NotationModel,VF=Vex.Flow;
+const fa={ 'Music Sheets':'نت‌نویسی',Notation:'نت‌نویسی',All:'همه',Lists:'لیست‌ها',Local:'فقط محلی',Uploaded:'آپلودشده‌ها',Mine:'من',Saved:'ذخیره‌شده‌ها',Title:'عنوان',Subtitle:'توضیحات',Description:'توضیحات',Composer:'آهنگساز',Arranger:'تنظیم‌کننده',Lyricist:'ترانه‌سرا',Copyright:'حقوق اثر',Instrument:'ساز','Key Signature':'سرکلید','Time Signature':'میزان نما','Tempo Text':'نام تمپو','Note type':'واحد ضرب','Metronome Mark':'سرعت مترونوم',Clef:'کلید','Start Writing':'شروع نت‌نویسی',Save:'ذخیره',Back:'بازگشت',Delete:'حذف',Cancel:'انصراف',Continue:'ادامه',Publish:'نمایش عمومی',Private:'خصوصی','No sheets yet.':'هنوز نتی در این بخش وجود ندارد.','Sign in to continue.':'برای ادامه وارد حساب شوید.',Retry:'تلاش دوباره','Load more':'نمایش بیشتر','Saved successfully.':'با موفقیت ذخیره شد.','Discard unsaved changes?':'تغییرات ذخیره‌نشده کنار گذاشته شوند؟','Delete this sheet?':'این نت حذف شود؟','Enter a title.':'عنوان را وارد کنید.','This measure is full.':'ظرفیت این میزان تکمیل شده است.','This sheet is read-only.':'این نت فقط قابل مطالعه است.','Only the owner can edit this sheet.':'فقط سازنده می‌تواند این نت را ویرایش کند.','Sheet not found.':'نت پیدا نشد.','Notation service unavailable.':'سرویس نت‌نویسی در دسترس نیست.','This sheet changed elsewhere. Reload before saving.':'نت در جای دیگری تغییر کرده است. پیش از ذخیره نسخهٔ تازه را باز کنید.','Refresh the page and try again.':'صفحه را تازه کنید و دوباره تلاش کنید.',Undo:'واگرد',Redo:'ازنو',Play:'پخش',Stop:'توقف',Rest:'سکوت',Measure:'میزان','Add measure':'افزودن میزان','Remove measure':'حذف میزان',Duration:'کشش',Accidental:'علامت تغییر',Bowing:'آرشه',Finger:'انگشت',Dynamics:'دینامیک',Dots:'نقطه',Articulation:'تلفظ',Ornament:'زینت',Metadata:'مشخصات',Export:'خروجی','Make a copy':'ساخت نسخهٔ شخصی','Select a measure, then use the piano.':'یک میزان را انتخاب کنید؛ سپس روی کلاویه بزنید.','Saving…':'در حال ذخیره…',Unsaved:'ذخیره نشده',Synced:'ذخیره شده',Bookmark:'ذخیره در فهرست','Remove bookmark':'حذف از ذخیره‌شده‌ها',Theme:'تغییر تم',Home:'خانه',Octave:'اکتاو',Tar:'تار',Setar:'سه‌تار',Guitar:'گیتار',Piano:'پیانو',Violin:'ویولن',Flute:'فلوت',Voice:'آواز',treble:'سل',bass:'فا','Connection failed. Your changes are still here.':'ارتباط برقرار نشد؛ تغییرات شما همچنان در این صفحه محفوظ است.','At most 64 measures.':'حداکثر ۶۴ میزان مجاز است.','Remove all notes in this measure?':'تمام نت‌های این میزان حذف شوند؟','Tempo must be between 20 and 300.':'تمپو باید بین ۲۰ تا ۳۰۰ باشد.'};
+let config={locale:'en',userId:0,embedded:false,api:'/music-sheets/api',csrf:'',dark:false};
+const state={route:'list',mode:'mine',items:[],selected:new Set(),selectedNotes:new Set(),expanded:new Set(),page:1,more:false,loading:false,error:'',sheet:null,dirty:false,busy:false,bar:0,staff:1,voice:1,tuplet:'',note:-1,chordMode:false,chordTone:-1,history:[],future:[],octave:3,playing:false,playOffset:null,playStarted:0,playBar:-1,playNote:-1,lastPitch:'C4',lastDuration:'q',lastDots:0,pianoScroll:null,paletteOpen:false,measureToolsOpen:false,formFromEditor:false,choice:{duration:'q',accidental:'',dots:0,rest:false,dynamic:'',articulation:'',bow:'',finger:'',ornament:''}};
+const root=document.getElementById('app');let sequence=0,requestId=0,audio,voices=[],timers=[],resizeTimer,pitchGesture=null,noteMoveGesture=null,pendingNoteGesture=null,noteSelectionTimer=null,suppressPitchClick=0,suppressNoteClick=0,selectionTimer=null,suppressSheetClick=0,clipboard=[];
+Object.assign(fa,{'Close tools':'بستن ابزارها','Notation tools':'ابزارهای نت‌نویسی','Make private':'خصوصی شود','Make public':'عمومی شود',Rename:'تغییر نام','Add to playlist':'افزودن به لیست',Share:'اشتراک‌گذاری','Export for Sibelius':'خروجی برای سیبلیوس','Select all':'انتخاب همه','Enter at least one note before saving.':'پیش از ذخیره حداقل یک نت بنویسید.','PDF export opened.':'پنجرهٔ خروجی باز شد؛ گزینهٔ ذخیره به‌صورت PDF را انتخاب کنید.',PDF:'خروجی PDF (A4)','Storage permission is required to download this sheet.':'برای دانلود نت، اجازهٔ ذخیره‌سازی لازم است.','Could not save the music sheet.':'ذخیرهٔ فایل نت انجام نشد.',Yes:'بلی',No:'خیر',Download:'دانلود',Downloaded:'دانلود شد',Upload:'آپلود روی سرور','Uploaded successfully.':'با موفقیت روی سرور آپلود شد.','Saved offline.':'به‌صورت آفلاین ذخیره شد.','Have you decided not to write a new sheet?':'آیا از نوشتن نت جدید منصرف شده‌اید','Save these changes?':'این تغییرات ذخیره شوند؟',soprano:'کلید دو خط اول','mezzo-soprano':'کلید دو خط دوم',alto:'کلید دو خط سوم',tenor:'کلید دو خط چهارم','baritone-f':'کلید فا خط سوم',bass:'کلید فا خط چهارم'});
+const noteSymbols={w:'𝅝',h:'𝅗𝅥',q:'𝅘𝅥','8':'𝅘𝅥𝅮','16':'𝅘𝅥𝅯','32':'𝅘𝅥𝅰','64':'𝅘𝅥𝅱','128':'𝅘𝅥𝅲','256':'𝅥'};
+Object.assign(fa,{'Add to list':'افزودن به لیست','Export MusicXML':'خروجی MusicXML',Favorite:'علاقه‌مندی','Save changes':'ذخیره تغییرات'});
+Object.assign(fa,{'Saved music sheets are damaged.':'دادهٔ نت‌های ذخیره‌شده آسیب دیده است.','Saved music sheets and backup are damaged.':'دادهٔ نت‌ها و نسخهٔ پشتیبان آسیب دیده‌اند.','Could not migrate saved music sheets.':'انتقال نت‌های ذخیره‌شده انجام نشد.','Could not back up saved music sheets.':'تهیهٔ نسخهٔ پشتیبان از نت‌ها انجام نشد.','Could not save music sheets.':'ذخیرهٔ نت‌ها انجام نشد.'});
+Object.assign(fa,{Scale:'گام',Major:'ماژور',Minor:'مینور','Melodic minor':'مینور ملودیک','Harmonic minor':'مینور هارمونیک'});
+const selectableNotes=['w','h','q','8','16','32','64'].map(k=>[k,noteSymbols[k]]);
 
-  let instruments = [],
-    instrumentRequest;
-  function loadInstruments() {
-    return (instrumentRequest ??= api('instruments')
-      .then((items) => {
-        if (!Array.isArray(items)) throw Error('Notation service unavailable.');
-        instruments = items;
-      })
-      .catch((e) => {
-        instrumentRequest = null;
-        throw e;
-      }));
+let instruments=[],instrumentRequest;
+function loadInstruments(){return instrumentRequest??=api('instruments').then(items=>{if(!Array.isArray(items))throw Error('Notation service unavailable.');instruments=items;}).catch(e=>{instrumentRequest=null;throw e;});}
+function instrumentStaves(id){const item=instruments.find(entry=>String(entry.id)===String(id));if(Array.isArray(item?.staves)&&item.staves.length===2)return M.clone(item.staves);return String(id).toLowerCase()==='piano'?[{clef:'treble'},{clef:'bass'}]:null;}
+function normalizeLayout(sheet){sheet.metadata.staves??=instrumentStaves(sheet.metadata.instrument)||[{clef:sheet.metadata.clef||'treble'}];}
+function activeStaff(){return M.staves(state.sheet.metadata).length===2?state.staff:1;}
+Object.assign(fa,{'Upper staff':'حامل بالا','Lower staff':'حامل پایین','Add to chord':'افزودن به آکورد','Edit chord tone':'ویرایش نت آکورد','Remove chord tone':'حذف نت آکورد','Hidden second-staff notes are preserved.':'نت‌های حامل دوم حفظ شده‌اند و فعلاً نمایش داده نمی‌شوند.','The lower-staff notes will be hidden, but preserved. Continue?':'نت‌های حامل پایین مخفی می‌شوند، اما حفظ خواهند شد. ادامه می‌دهید؟'});
+Object.assign(fa,{'First voice':'صدای اول','Second voice':'صدای دوم'});
+Object.assign(fa,{Copy:'کپی',Cut:'برش',Paste:'چسباندن',Duplicate:'تکثیر','Nothing to paste.':'چیزی برای چسباندن وجود ندارد.','Paste target is outside the score.':'مقصد چسباندن خارج از قطعه است.'});
+Object.assign(fa,{'Measure tools':'ابزارهای میزان','Inherit time':'میزان‌نمای قبلی','Pickup length':'طول میزان ناقص','Full measure':'میزان کامل',Barline:'خط میزان',Normal:'معمولی',Double:'دوتایی',Final:'پایان',Hidden:'مخفی','Repeat barline':'خط تکرار','Repeat start':'شروع تکرار','Repeat end':'پایان تکرار','Repeat both':'تکرار دوطرفه',Ending:'ولت','No ending':'بدون ولت','One-bar repeat':'تکرار یک میزان','Two-bar repeat':'تکرار دو میزان',Marker:'علامت راهنما',Jump:'پرش',Segno:'سنیو',Coda:'کودا','To Coda':'به کودا',Fine:'فینه'});
+Object.assign(fa,{'Repeat count':'تعداد تکرار'});
+Object.assign(fa,{'Time symbol':'نماد میزان‌نما','Common time':'میزان مشترک','Alla breve':'آلا بروه'});
+Object.assign(fa,{Tuplet:'تقسیم نامنظم','No tuplet':'بدون تقسیم نامنظم',Triplet:'تریوله',Quintuplet:'پنج‌تایی',Septuplet:'هفت‌تایی'});
+Object.assign(fa,{'Empty the measure before adding a repeat sign.':'پیش از افزودن علامت تکرار، نت‌های این میزان را خالی کنید.','Repeated measures must have the same length.':'میزان‌های تکرارشونده باید طول یکسان داشته باشند.'});
+Object.assign(fa,{'Fine marker is missing.':'علامت Fine در قطعه وجود ندارد.','Coda marker is missing.':'علامت Coda یا To Coda در قطعه وجود ندارد.','Repeat target is missing.':'مقصد تکرار در قطعه وجود ندارد.'});
+function iconButton(action,kind,extra=''){return '<button type="button" data-action="'+action+'" '+extra+'>'+NotationSymbols.icon(kind)+'</button>';}
+function musicButton(action,value,extra){return '<button type="button" data-action="'+action+'" '+extra+'>'+NotationSymbols.note(value)+'</button>';}
+function updateTempoOptions(){
+ const form=document.getElementById('metadata');if(!form)return;
+ const raw=form.elements.tempo_unit.value,[unit]=raw.split(':'),bpm=form.elements.bpm.value,control=form.elements.tempo_text,previous=control.value,options=NotationSymbols.tempos(unit,bpm);
+ control.disabled=!options.length;control.innerHTML='<option value=""></option>'+options.map(([value,label])=>'<option value="'+h(value)+'" '+(value===previous?'selected':'')+'>'+h(label)+'</option>').join('');
+ const dots=Number(raw.split(':')[1]||0);form.querySelector('.beat-preview').innerHTML=unit?NotationSymbols.note(unit)+'<span class="beat-dots">'+('·'.repeat(dots))+'</span>':'';NotationSymbols.center(form);
+}
+const pending=new Map();const t=s=>config.locale==='fa'?(fa[s]||s):s;
+const h=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(message){const e=document.getElementById('toast');e.textContent=t(message);e.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.style.display='none',5000);}
+function bridge(action,data={}){return new Promise((resolve,reject)=>{const id=++requestId;const timeout=setTimeout(()=>{pending.delete(id);reject(Error('Connection failed. Your changes are still here.'));},['pdf','download','export'].includes(action)?300000:35000);pending.set(id,{resolve,reject,timeout});SornazNotation.postMessage(JSON.stringify({id,action,...data}));});}
+async function api(action,data={}){
+ if(config.embedded)return bridge(action,data);
+ let path='',method='GET',body;
+ if(action==='list')path='?mode='+encodeURIComponent(data.mode)+'&page='+data.page;
+ if(action==='instruments')path='/instruments';
+ if(action==='get')path='/'+data.sheetId;
+ if(action==='save'){path=data.sheetId?'/'+data.sheetId:'';method='POST';body=data.payload;}
+ if(action==='delete'||action==='bookmark'||action==='upload'){path='/'+data.sheetId+'/'+action;method='POST';body=data.payload||{};}
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),25000);
+ try{const response=await fetch(config.api+path,{method,credentials:'same-origin',signal:controller.signal,headers:{'Accept':'application/json','Content-Type':'application/json','X-CSRF-Token':config.csrf},body:body?JSON.stringify(body):undefined});let result=await response.json();if(result.status!==undefined&&result.data)result=result.data;if(!response.ok||result.success!==true)throw Error(result.message||'Notation service unavailable.');return result.data;}catch(e){if(e instanceof TypeError||e.name==='AbortError')throw Error('Connection failed. Your changes are still here.');throw e;}finally{clearTimeout(timer);}
+}
+function notifyRoute(){if(config.embedded)SornazNotation.postMessage(JSON.stringify({id:0,action:'route',route:state.route,dirty:state.dirty,toolbar:{editable:!!state.sheet?.editable,uploaded:!!state.sheet?.uploaded,uploadable:!!state.sheet?.id,playing:state.playing,undo:!!state.history.length,redo:!!state.future.length,selectedNotes:state.selectedNotes.size,title:state.sheet?.metadata.title||''},guest:false,guestTop:document.querySelector('.tabs')?.getBoundingClientRect().bottom||0}));}
+function theme(){
+ document.documentElement.style.setProperty('--font-scale',config.fontScale||1);
+ document.documentElement.style.setProperty('--app-font-weight',config.fontWeight||400);
+ document.documentElement.style.setProperty('--app-corner-radius',`${Number(config.cornerRadius??4)}px`);
+ const family=/^[a-z0-9_-]+$/i.test(config.fontFamily||'')?config.fontFamily:(config.locale==='fa'?'iran_sansx_fa':'iran_sansx_en');
+ let font=document.getElementById('notation-theme-font');if(!font){font=document.createElement('style');font.id='notation-theme-font';document.head.append(font);}
+ font.textContent=`@font-face{font-family:NotationTheme;src:url('../fonts/${family}/regular.ttf') format('truetype');font-display:swap}`;
+ document.body.classList.toggle('dark',!!config.dark);document.body.classList.toggle('writing',state.route==='editor');document.body.classList.toggle('native-toolbar',!!config.nativeToolbar);document.body.style.setProperty('--accent',config.accent||'#0065ff');document.body.dir=config.locale==='fa'?'rtl':'ltr';document.documentElement.lang=config.locale;
+}
+function button(action,label,extra=''){return `<button type="button" data-action="${action}" ${extra}>${h(t(label))}</button>`;}
+function head(title){return `<header class="header">${button('back',config.locale==='fa'?'→':'←',`class="icon" aria-label="${h(t('Back'))}"`)}<h1>${h(t(title))}</h1>${!config.embedded?`<div class="web-tools">${button('language',config.locale==='fa'?'EN':'فارسی')}${button('theme','◐',`aria-label="${h(t('Theme'))}"`)}</div>`:''}</header>`;}
+function login(){if(config.embedded)SornazNotation.postMessage(JSON.stringify({id:0,action:'login'}));else location.href='/login';}
+async function confirmAction(text){const dialog=document.createElement('dialog');dialog.innerHTML=`<p>${h(t(text))}</p><div class="links">${button('no','No')}${button('yes','Yes','class="primary"')}</div>`;document.body.append(dialog);return new Promise(resolve=>{let done=false;const close=v=>{if(done)return;done=true;dialog.close();dialog.remove();resolve(v);};dialog.addEventListener('click',e=>{const a=e.target.closest('[data-action]')?.dataset.action;if(a==='yes')close(true);if(a==='no')close(false);});dialog.addEventListener('cancel',e=>{e.preventDefault();close(false);});dialog.showModal();});}
+async function back(){if(state.busy)return;if(state.route==='list'){if(config.embedded)SornazNotation.postMessage(JSON.stringify({id:0,action:'exit'}));else location.href='/';return;}if(state.route==='form'&&state.formFromEditor){state.route='editor';state.formFromEditor=false;notifyRoute();render();return;}if((!state.sheet.id||state.dirty)&&!await confirmAction(!state.sheet.id?'Have you decided not to write a new sheet?':'Discard unsaved changes?'))return;stop();state.dirty=false;state.route='list';state.sheet=null;notifyRoute();await load();}
+async function load(more=false){const seq=++sequence;state.route='list';state.loading=true;state.error='';if(!more){state.page=1;state.items=[];}render();try{const result=await api('list',{mode:state.mode,page:state.page});if(seq!==sequence)return;state.items=more?[...state.items,...result.items]:result.items;state.more=result.has_more;}catch(e){if(seq!==sequence)return;state.error=e.message;}finally{if(seq===sequence){state.loading=false;render();}}}
+async function open(id){if(state.busy)return;state.busy=true;render();try{try{await loadInstruments();}catch(_){}state.sheet=await api('get',{sheetId:id});normalizeLayout(state.sheet);M.prepare(state.sheet);if(!state.sheet.metadata.scale_type&&state.sheet.metadata.key)state.sheet.metadata.scale_type=String(state.sheet.metadata.key).endsWith('m')?'minor':'major';state.sheet.metadata.tempo_dots=Number(state.sheet.metadata.tempo_dots||0);state.lastInsertedDuration=null;state.lastInsertedDots=0;state.selectedNotes.clear();state.route='editor';state.dirty=false;state.bar=0;state.staff=1;state.voice=1;state.tuplet='';state.note=-1;state.chordMode=false;state.chordTone=-1;state.history=[];state.future=[];notifyRoute();}catch(e){toast(e.message);}finally{state.busy=false;render();}}
+async function newSheet(){try{await loadInstruments();}catch(e){toast(e.message);return;}state.sheet=M.fresh();state.sheet.editable=true;Object.assign(state.sheet.metadata,{instrument:'',scale_type:'',key:'',tempo_note:'',tempo_dots:0,tempo_text:'',bpm:''});state.choice={duration:'q',accidental:'',dots:0,rest:false,dynamic:'',articulation:'',bow:'',finger:'',ornament:''};state.lastInsertedDuration=null;state.lastInsertedDots=0;state.selectedNotes.clear();state.tuplet='';state.paletteOpen=false;state.formFromEditor=false;state.route='form';state.dirty=false;notifyRoute();render();}
+function field(key,label,type='text',attrs=''){if(type==='textarea')return `<label class="field field-wide"><span>${h(t(label))}</span><textarea name="${key}" rows="5" ${attrs}>${h(state.sheet.metadata[key])}</textarea></label>`;return `<label class="field ${key==='title'?'field-wide':''}"><span>${h(t(label))}</span><input name="${key}" type="${type}" ${attrs} value="${h(state.sheet.metadata[key])}"></label>`;}
+function select(key,label,options){return `<label class="field"><span>${h(t(label))}</span><select name="${key}" ${key==='tempo_note'?'class="beat-native" tabindex="-1" aria-hidden="true"':''}>${options.map(o=>{const[value,title]=Array.isArray(o)?o:[o,t(o)];return `<option value="${h(value)}" ${state.sheet.metadata[key]===value?'selected':''}>${h(title)}</option>`;}).join('')}</select></label>`;}
+function renderForm(){
+  const m=state.sheet.metadata,text=(key,label)=>field(key,label,'text','maxlength="180" '+(key==='title'?'required':'')),grand=instrumentStaves(m.instrument)?.length===2;
+ const catalog=instruments.map(i=>[String(i.id),i[config.locale]||i.fa||i.en]);
+ if(m.instrument&&!catalog.some(([id])=>id===m.instrument))catalog.push([m.instrument,t(m.instrument)]);
+ const row=(count,content)=>'<div class="form-row columns-'+count+'">'+content+'</div>';
+ const scaleType=m.scale_type||'',keys=scaleType==='major'?M.keys.filter(k=>!k.endsWith('m')):M.keys.filter(k=>k.endsWith('m'));
+ const beatUnits=durationOptions().map(({duration,dots})=>({duration,dots,value:M.ticks({duration,dots})})).sort((a,b)=>b.value-a.value);
+ const selectedBeat=(m.tempo_note||'')+':'+Number(m.tempo_dots||0),beatSelect=`<label class="field beat-field"><span>${h(t('Note type'))}</span><select name="tempo_unit" class="beat-native" tabindex="-1" aria-hidden="true"><option value=""></option>${beatUnits.map(item=>`<option value="${item.duration}:${item.dots}" ${selectedBeat===item.duration+':'+item.dots?'selected':''}>${item.duration}</option>`).join('')}</select><details class="beat-picker"><summary aria-label="${h(t('Note type'))}"><span class="beat-preview">${m.tempo_note?NotationSymbols.note(m.tempo_note)+'<span class="beat-dots">'+('·'.repeat(m.tempo_dots||0))+'</span>':''}</span><span>⌄</span></summary><div class="beat-options">${beatUnits.map(item=>`<button type="button" data-action="beat-unit" data-value="${item.duration}:${item.dots}" aria-label="${h(t('Note type'))}">${NotationSymbols.note(item.duration)}<span class="beat-dots">${'·'.repeat(item.dots)}</span></button>`).join('')}</div></details></label>`;
+ return '<section class="shell form">'+head('Notation')+'<form id="metadata">'+
+ row(1,text('title','Title'))+
+ row(2,text('composer','Composer')+text('arranger','Arranger'))+
+ row(2,text('lyricist','Lyricist')+select('instrument','Instrument',[['',''],...catalog]))+
+ '<div class="form-row scale-key-row">'+select('scale_type','Scale',[['',''],['major',t('Major')],['minor',t('Minor')],['melodic_minor',t('Melodic minor')],['harmonic_minor',t('Harmonic minor')]])+`<label class="field"><span>${h(t('Key Signature'))}</span><select name="key" ${scaleType?'':'disabled'}><option value=""></option>${keys.map(key=>`<option value="${h(key)}" ${m.key===key?'selected':''}>${h(key)}</option>`).join('')}</select></label>`+'</div>'+
+  '<div class="form-row clef-time-row">'+(grand?`<label class="field"><span>${h(t('Clef'))}</span><input value="${h(t('Upper staff'))} · ${h(t('Lower staff'))}" readonly></label>`:select('clef','Clef',['treble','baritone-f','bass','soprano','mezzo-soprano','alto','tenor']))+select('time','Time Signature',['2/4','3/4','4/4','6/8','9/8','12/8','2/2','6/4'])+'</div>'+
+ '<div class="form-row tempo-row">'+beatSelect+field('bpm','Metronome Mark','text','inputmode="numeric" pattern="[0-9]+" maxlength="3" required')+select('tempo_text','Tempo Text',[['',''],...NotationSymbols.tempos(m.tempo_note,m.bpm)])+'</div>'+
+ row(1,field('subtitle','Description','textarea','maxlength="1000"'))+
+ '<button class="primary full" type="submit">'+h(t(state.sheet.id?'Save changes':'Start Writing'))+'</button></form></section>';
+}
+function sheetMenu(s){return `<details class="sheet-menu"><summary aria-label="Menu">⋮</summary><div>${s.editable?button('rename','Rename',`data-id="${s.id}"`):''}${button('add-to-list','Add to list',`data-id="${s.id}"`)}${button('share-sheet','Share',`data-id="${s.id}"`)}${button('sibelius','Export for Sibelius',`data-id="${s.id}"`)}${button('musicxml','Export MusicXML',`data-id="${s.id}"`)}${s.editable?button('delete','Delete',`class="danger" data-id="${s.id}"`):''}</div></details>`;}
+function selectionBar(){if(!state.selected.size)return'';const rows=state.items.flatMap(s=>s.kind==='list'?(s.items||[]):[s]),all=rows.length>0&&rows.every(s=>state.selected.has(s.id)),selected=rows.filter(s=>state.selected.has(s.id)),allEditable=selected.every(s=>s.editable);return `<div class="selection-bar">${button('select-all',all?'☑':'☐',`class="icon" aria-label="${h(t('Select all'))}"`)}<span>${state.selected.size}</span><span class="selection-spacer"></span><details class="sheet-menu bulk-menu"><summary aria-label="Menu">⋮</summary><div>${state.selected.size===1&&allEditable?button('rename-selected','Rename'):''}${button('add-selected-to-list','Add to list')}${button('share-selected','Share')}${allEditable?button('delete-selected','Delete','class="danger"'):''}</div></details>${button('clear-selection','×',`class="icon" aria-label="${h(t('Cancel'))}"`)}</div>`;}
+function renderSheet(s,nested=false){if(s.kind==='list'){const open=state.expanded.has(s.id),title=s.favorite?t('Favorite'):s.title;return `<div class="notation-list-wrap"><article class="sheet notation-list"><span class="list-icon">${s.favorite?'♡':'☷'}</span><button class="open" data-action="toggle-list" data-list="${h(s.id)}"><strong>${h(title)}</strong><small>${Number(s.count)||0} ${config.locale==='fa'?'نت':'scores'}</small></button></article>${open?`<div class="list-contents">${(s.items||[]).map(item=>renderSheet(item,true)).join('')}</div>`:''}</div>`;}const selected=state.selected.has(s.id);return `<article class="sheet ${nested?'nested-sheet':''} ${selected?'selected':''}" data-sheet-id="${s.id}"><button class="open" data-action="open" data-id="${s.id}"><strong>${h(s.title)}</strong><small>${h([s.metadata?.composer,s.metadata?.arranger||s.author].filter(Boolean).join(' – '))}</small></button>${iconButton('pdf-item','pdf',`class="icon" data-id="${s.id}" aria-label="${h(t('PDF'))}"`)}${s.editable&&config.userId?iconButton('upload','upload',`class="icon" data-id="${s.id}" aria-label="${h(t('Upload'))}"`):''}<button type="button" class="icon visibility" data-action="visibility" data-id="${s.id}" ${s.editable?'':'disabled'} aria-label="visibility">${NotationSymbols.icon(s.visibility==='private'?'eye-off':'eye')}</button>${sheetMenu(s)}</article>`;}
+function renderList(){return `<section class="shell">${head('Notation')}<nav class="tabs" aria-label="${h(t('Notation'))}">${[['mine','Mine'],['all','All'],['lists','Lists']].map(([mode,label])=>button('filter',label,`class="${state.mode===mode?'active':''}" data-mode="${mode}" aria-pressed="${state.mode===mode}"`)).join('')}</nav>${selectionBar()}<div class="sheet-list">${state.items.map(renderSheet).join('')}</div>${state.error?`<div class="empty">${h(t(state.error))}<p>${button('retry','Retry')}</p></div>`:!state.items.length&&!state.loading?`<p class="empty">${h(t('No sheets yet.'))}</p>`:''}${state.loading?'<p class="empty">…</p>':''}${state.more&&!state.loading?button('more','Load more','class="full"'):''}${state.mode==='lists'?'':button('new','✎',`class="fab" aria-label="${h(t('Start Writing'))}"`)}</section>`;}
+function choice(key,label,options){const values=options.map(o=>Array.isArray(o)?o:[o,o||'']);return `<label><select data-choice="${key}" aria-label="${h(t(label))}" ${!state.sheet.editable?'disabled':''}>${values.map(([v,title])=>`<option value="${h(v)}" ${String(state.choice[key])===String(v)?'selected':''}>${h(title)}</option>`).join('')}</select><span>${h(t(label))}</span></label>`;}
+function durationButtons(){return selectableNotes.map(([value,symbol])=>musicButton('duration',value,`class="duration-btn ${state.choice.duration===value?'is-active':''}" data-value="${value}" aria-label="${h(t('Duration'))} ${value}" aria-pressed="${state.choice.duration===value}"`)).join('')+[1,2].map(value=>button('dots','·'.repeat(value),`class="dot-btn ${state.choice.dots===value?'is-active':''}" data-value="${value}" aria-label="${h(t('Dots'))} ${value}" aria-pressed="${state.choice.dots===value}"`)).join('');}
+function setPaletteOpen(value){state.paletteOpen=value;root.querySelector('.editor-footer')?.classList.toggle('tools-open',value);const panel=root.querySelector('.palette');if(!panel)return;panel.classList.toggle('is-open',value);panel.setAttribute('aria-hidden',String(!value));root.querySelector('.palette-backdrop').hidden=!value;root.querySelector('.palette-key').setAttribute('aria-expanded',String(value));}
+function changeChoice(key,value){state.choice[key]=value;if(state.note>=0)mutate(()=>{const bar=state.sheet.score.measures[state.bar];if(key==='duration'||key==='dots'){state.bar=M.insert(state.sheet,state.bar,{...bar.notes[state.note],[key]:value},state.note);state.note=-1;}else bar.notes[state.note][key]=value;});else render();}
+function durationOptions(){return [...selectableNotes].reverse().flatMap(([duration,symbol])=>{const dots=duration==='w'||duration==='64'?[0]:duration==='32'?[1,0]:[2,1,0];return dots.map(value=>({duration,dots:value,label:symbol+'·'.repeat(value)}));});}
+function renderDurationGesture(){if(!pitchGesture)return;const {options,index,picker}=pitchGesture;picker.innerHTML='';for(let offset=-3;offset<=3;offset++){const at=(index+offset+options.length)%options.length,item=document.createElement('div');item.innerHTML=options[at].label;item.style.opacity=offset===0?'1':String([.75,.5,.25][Math.abs(offset)-1]);if(offset===0)item.className='active';picker.append(item);}}
+function durationGestureStart(event,key){
+ if(event.pointerType==='mouse'&&event.button!==0)return;event.preventDefault();
+ key.classList.add('is-pressed');
+ const options=durationOptions(),picker=document.createElement('div');picker.className='duration-scrubber';document.body.append(picker);
+ const width=160,height=Math.min(innerHeight*.82,720),left=Math.max(8,Math.min(innerWidth-width-8,event.clientX-width/2)),top=(innerHeight-height)/2;picker.style.cssText+=`;left:${left}px;top:${top}px;width:${width}px;height:${height}px`;
+ const initial=state.lastInsertedDuration||'w',initialDots=state.lastInsertedDuration?state.lastInsertedDots:0;
+ const index=Math.max(0,options.findIndex(item=>item.duration===initial&&item.dots===initialDots));pitchGesture={key,picker,options,index,startY:event.clientY,startIndex:index};renderDurationGesture();
+}
+function updateDurationGesture(clientY){if(!pitchGesture)return;const count=pitchGesture.options.length,step=Math.round((clientY-pitchGesture.startY)/12),index=((pitchGesture.startIndex+step)%count+count)%count;if(index===pitchGesture.index)return;pitchGesture.index=index;renderDurationGesture();}
+function finishDurationGesture(cancel=false){if(!pitchGesture)return;const gesture=pitchGesture;pitchGesture=null;gesture.key.classList.remove('is-pressed');gesture.picker.remove();suppressPitchClick=performance.now()+450;if(cancel)return;const selected=gesture.options[gesture.index];state.choice.duration=selected.duration;state.choice.dots=selected.dots;insert(gesture.key.dataset.pitch,gesture.key.dataset.accidental);}
+function shiftedPitch(pitch,steps){const letters='CDEFGAB',letter=letters.indexOf(pitch[0]),octave=Number(pitch.slice(1)),value=Math.max(7,Math.min(62,octave*7+letter+steps));return letters[value%7]+Math.floor(value/7);}
+function noteKey(bar,note){return bar+':'+note;}
+function selectNote(bar,note){const source=state.sheet.score.measures[bar]?.notes?.[note];if(!source)return;state.bar=bar;state.staff=M.staffOf(source);state.voice=M.voiceOf(source);state.tuplet=source.tuplet?`${source.tuplet.actual}:${source.tuplet.normal}`:'';state.note=note;state.chordMode=false;state.chordTone=-1;state.selectedNotes=new Set([noteKey(bar,note)]);Object.assign(state.choice,source);suppressNoteClick=performance.now()+500;document.body.classList.add('note-selected');render();notifyRoute();}
+function startNoteMove(event,hit){const bar=Number(hit.dataset.bar),note=Number(hit.dataset.note),source=state.sheet.score.measures[bar]?.notes?.[note];if(!state.sheet.editable||!source)return;const wasSelected=state.selectedNotes.has(noteKey(bar,note)),initialSelectionSize=state.selectedNotes.size;selectNote(bar,note);noteMoveGesture={bar,note,startX:event.clientX,startY:event.clientY,startPitch:source.pitch,before:snapshot(),steps:0,axis:null,wasSelected,initialSelectionSize};}
+function updateNoteMove(clientX,clientY){const gesture=noteMoveGesture;if(!gesture)return;const dx=clientX-gesture.startX,dy=clientY-gesture.startY;if(!gesture.axis&&Math.max(Math.abs(dx),Math.abs(dy))>8)gesture.axis=Math.abs(dx)>Math.abs(dy)?'horizontal':'vertical';if(gesture.axis==='horizontal'){const hits=[...document.querySelectorAll('#score [data-note]')].filter(hit=>Number(hit.dataset.staff)===state.staff),start=hits.findIndex(hit=>Number(hit.dataset.bar)===gesture.bar&&Number(hit.dataset.note)===gesture.note);if(start<0)return;let nearest=start,distance=Infinity;hits.forEach((hit,i)=>{const rect=hit.getBoundingClientRect(),middle=(rect.left+rect.right)/2,score=Math.abs(middle-clientX)+Math.abs((rect.top+rect.bottom)/2-clientY)*.3;if(score<distance){distance=score;nearest=i;}});state.selectedNotes=new Set(hits.slice(Math.min(start,nearest),Math.max(start,nearest)+1).map(hit=>noteKey(hit.dataset.bar,hit.dataset.note)));draw();notifyRoute();return;}if(gesture.axis==='vertical'&&gesture.startPitch){const steps=Math.round((gesture.startY-clientY)/12);if(steps===gesture.steps)return;gesture.steps=steps;const note=state.sheet.score.measures[gesture.bar].notes[gesture.note],original=gesture.before.score.measures[gesture.bar].notes[gesture.note];note.pitch=shiftedPitch(gesture.startPitch,steps);note.pitches=(original.pitches||[]).map(tone=>({...tone,pitch:shiftedPitch(tone.pitch,steps)}));draw();}}
+function finishNoteMove(cancel=false){if(!noteMoveGesture)return;const gesture=noteMoveGesture;noteMoveGesture=null;if(cancel){Object.assign(state.sheet,gesture.before);state.selectedNotes.clear();document.body.classList.remove('note-selected');draw();notifyRoute();return;}if(!gesture.axis&&gesture.wasSelected&&gesture.initialSelectionSize===1){state.selectedNotes.clear();state.note=-1;document.body.classList.remove('note-selected');}if(gesture.axis==='vertical'&&gesture.steps){state.history.push(gesture.before);if(state.history.length>80)state.history.shift();state.future=[];state.dirty=true;Object.assign(state.choice,state.sheet.score.measures[gesture.bar].notes[gesture.note]);}suppressNoteClick=performance.now()+500;notifyRoute();if(gesture.axis==='vertical'&&gesture.steps)render();else draw();}
+function scaleAllows(name){if(config.pianoLabelMode!==2)return true;const meta=state.sheet.metadata,type=meta.scale_type||'major',root=String(meta.key||'C').replace(/m$/,''),pc={C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11,Cb:11},intervals=type==='harmonic_minor'?[0,2,3,5,7,8,11]:type==='melodic_minor'?[0,2,3,5,7,9,11]:type==='minor'?[0,2,3,5,7,8,10]:[0,2,4,5,7,9,11];return intervals.includes((pc[name]-pc[root]+12)%12);}
+function piano(){let keys='';for(let midi=21;midi<=108;midi++){const letter=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][midi%12];if(letter.includes('#'))continue;const octave=Math.floor(midi/12)-1,p=letter+octave,whiteLabel=scaleAllows(letter)?p:'';let black='';if(!['B','E'].includes(letter)&&midi<108){const sharp=letter+'#';black=`<button class="black" data-pitch="${p}" data-accidental="#" aria-label="${p} sharp"><span>${scaleAllows(sharp)?sharp+octave:''}</span></button>`;}keys+=`<div class="white" role="button" tabindex="0" data-pitch="${p}" aria-label="${p}"><span>${whiteLabel}</span>${black}</div>`;}return `<div class="keyboard-wrap">${iconButton('palette','chevron',`class="palette-key" aria-label="${h(t('Notation tools'))}" aria-expanded="${state.paletteOpen}"`)}${iconButton('rest','rest',`class="rest-key" aria-label="${h(t('Rest'))}"`)}<div class="piano-scroll"><div class="piano" aria-label="Piano">${keys}</div></div></div>`;}
+function measureSelect(key,label,values,value){return `<label><span>${h(t(label))}</span><select data-measure-choice="${key}" aria-label="${h(t(label))}">${values.map(([raw,title])=>`<option value="${h(raw)}" ${String(raw)===String(value)?'selected':''}>${h(t(title))}</option>`).join('')}</select></label>`;}
+function tupletChoice(){const options=[['','No tuplet'],['3:2','Triplet'],['5:4','Quintuplet'],['7:4','Septuplet'],['4:3','4:3'],['6:4','6:4'],['9:8','9:8']];return `<label><select data-tuplet aria-label="${h(t('Tuplet'))}">${options.map(([value,label])=>`<option value="${value}" ${value===state.tuplet?'selected':''}>${h(t(label))}</option>`).join('')}</select><span>${h(t('Tuplet'))}</span></label>`;}
+function measureTools(){
+ const bar=state.sheet.score.measures[state.bar],repeat=bar.repeat||{},repeatLine=repeat.start&&repeat.end?'both':repeat.start?'start':repeat.end?'end':'',times=[];
+ for(const denominator of [2,4,8,16])for(let numerator=1;numerator<=Math.min(16,denominator*4);numerator++)times.push([`${numerator}/${denominator}`,`${numerator}/${denominator}`]);
+ const full=M.barUnits(state.sheet,state.bar),lengths=[['','Full measure']];for(let i=1;i<=16;i++){const length=i*M.wholeUnits/16;if(length<full)lengths.push([String(length),`${i}/16`]);}
+ if(bar.length&&!lengths.some(([value])=>Number(value)===bar.length))lengths.push([String(bar.length),String(bar.length)]);
+ const controls=[
+  measureSelect('time','Time Signature',[['','Inherit time'],...times],bar.time||''),
+  measureSelect('timeSymbol','Time symbol',[['','Normal'],['common','Common time'],['cut','Alla breve']],bar.timeSymbol||''),
+  measureSelect('length','Pickup length',lengths,bar.length||''),
+  measureSelect('barline','Barline',[['','Normal'],['double','Double'],['final','Final'],['hidden','Hidden']],bar.barline||''),
+  measureSelect('repeatLine','Repeat barline',[['','Normal'],['start','Repeat start'],['end','Repeat end'],['both','Repeat both']],repeatLine),
+  measureSelect('repeatCount','Repeat count',[2,3,4,5,6,7,8].map(value=>[String(value),String(value)]),repeat.end||2),
+  measureSelect('ending','Ending',[['','No ending'],...[1,2,3,4].map(value=>[String(value),String(value)])],repeat.endings?.[0]||''),
+  measureSelect('measureRepeat','Measure',[['','Normal'],['1','One-bar repeat'],['2','Two-bar repeat']],repeat.measure||''),
+  measureSelect('marker','Marker',[['','Normal'],['segno','Segno'],['coda','Coda'],['toCoda','To Coda'],['fine','Fine']],repeat.marker||''),
+  measureSelect('jump','Jump',[['','Normal'],['dc','D.C.'],['ds','D.S.'],['dcAlFine','D.C. al Fine'],['dsAlFine','D.S. al Fine'],['dcAlCoda','D.C. al Coda'],['dsAlCoda','D.S. al Coda']],repeat.jump||'')
+ ];
+ return `<details class="measure-tools" ${state.measureToolsOpen?'open':''}><summary>${h(t('Measure tools'))} ${state.bar+1}</summary><div>${controls.join('')}</div></details>`;
+}
+function changeMeasure(key,value){
+ state.measureToolsOpen=true;
+ mutate(()=>{
+  const bar=state.sheet.score.measures[state.bar];
+  if(key==='time'){if(value)bar.time=value;else delete bar.time;delete bar.length;if(bar.timeSymbol&&M.effectiveTime(state.sheet,state.bar)!==(bar.timeSymbol==='common'?'4/4':'2/2'))delete bar.timeSymbol;}
+  else if(key==='timeSymbol'){if(value){bar.timeSymbol=value;bar.time=value==='common'?'4/4':'2/2';}else delete bar.timeSymbol;delete bar.length;}
+  else if(key==='length'){if(value)bar.length=Number(value);else delete bar.length;}
+  else if(key==='barline'){if(value)bar.barline=value;else delete bar.barline;}
+  else{
+   const repeat=bar.repeat||{};
+   if(key==='repeatLine'){if(value==='start'||value==='both')repeat.start=true;else delete repeat.start;if(value==='end'||value==='both')repeat.end=repeat.end||2;else delete repeat.end;}
+   if(key==='repeatCount')repeat.end=Number(value);
+   if(key==='ending'){if(value)repeat.endings=[Number(value)];else delete repeat.endings;}
+   if(key==='measureRepeat'){if(value)repeat.measure=Number(value);else delete repeat.measure;}
+   if(key==='marker'){if(value)repeat.marker=value;else delete repeat.marker;}
+   if(key==='jump'){if(value)repeat.jump=value;else delete repeat.jump;}
+   if(Object.keys(repeat).length)bar.repeat=repeat;else delete bar.repeat;
+   M.performanceOrder(state.sheet);
   }
-  function iconButton(action, kind, extra = '') {
-    return (
-      '<button type="button" data-action="' +
-      action +
-      '" ' +
-      extra +
-      '>' +
-      NotationSymbols.icon(kind) +
-      '</button>'
-    );
-  }
-  function musicButton(action, value, extra) {
-    return (
-      '<button type="button" data-action="' +
-      action +
-      '" ' +
-      extra +
-      '>' +
-      NotationSymbols.note(value) +
-      '</button>'
-    );
-  }
-  function updateTempoOptions() {
-    const form = document.getElementById('metadata');
-    if (!form) return;
-    const unit = form.elements.tempo_note.value,
-      bpm = form.elements.bpm.value,
-      control = form.elements.tempo_text,
-      previous = control.value,
-      options = NotationSymbols.tempos(unit, bpm);
-    control.disabled = !options.length;
-    control.innerHTML =
-      '<option value=""></option>' +
-      options
-        .map(
-          ([value, label]) =>
-            '<option value="' +
-            h(value) +
-            '" ' +
-            (value === previous ? 'selected' : '') +
-            '>' +
-            h(label) +
-            '</option>'
-        )
-        .join('');
-    form.querySelector('.beat-preview').innerHTML = unit ? NotationSymbols.note(unit) + (config.websitePanel ? `<span class="beat-dots">${'·'.repeat(Number(form.elements.tempo_dots?.value || 0))}</span>` : '') : '';
-    NotationSymbols.center(form);
-  }
-  const pending = new Map();
-  const t = (s) => (config.locale === 'fa' ? fa[s] || s : s);
-  const h = (s) =>
-    String(s ?? '').replace(
-      /[&<>"']/g,
-      (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
-    );
-  function toast(message) {
-    const e = document.getElementById('toast');
-    e.textContent = t(message);
-    e.style.display = 'block';
-    clearTimeout(toast.timer);
-    toast.timer = setTimeout(() => (e.style.display = 'none'), 5000);
-  }
-  function bridge(action, data = {}) {
-    return new Promise((resolve, reject) => {
-      const id = ++requestId;
-      const timeout = setTimeout(
-        () => {
-          pending.delete(id);
-          reject(Error('Connection failed. Your changes are still here.'));
-        },
-        ['pdf', 'download', 'export'].includes(action) ? 300000 : 35000
-      );
-      pending.set(id, { resolve, reject, timeout });
-      SornazNotation.postMessage(JSON.stringify({ id, action, ...data }));
-    });
-  }
-  async function api(action, data = {}) {
-    if (config.embedded) return bridge(action, data);
-    let path = '',
-      method = 'GET',
-      body;
-    if (action === 'list') path = '?mode=' + encodeURIComponent(data.mode) + '&page=' + data.page;
-    if (action === 'instruments') path = '/instruments';
-    if (action === 'get') path = '/' + data.sheetId;
-    if (action === 'save') {
-      path = data.sheetId ? '/' + data.sheetId : '';
-      method = 'POST';
-      body = data.payload;
-    }
-    if (action === 'delete' || action === 'bookmark') {
-      path = '/' + data.sheetId + '/' + action;
-      method = 'POST';
-      body = data.payload;
-    }
-    const controller = new AbortController(),
-      timer = setTimeout(() => controller.abort(), 25000);
-    try {
-      const response = await fetch(config.api + path, {
-        method,
-        credentials: 'same-origin',
-        signal: controller.signal,
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': config.csrf,
-        },
-        body: body ? JSON.stringify(body) : undefined,
-      });
-      let result = await response.json();
-      if (result.status !== undefined && result.data) result = result.data;
-      if (!response.ok || result.success !== true)
-        throw Error(result.message || 'Notation service unavailable.');
-      return result.data;
-    } catch (e) {
-      if (e instanceof TypeError || e.name === 'AbortError')
-        throw Error('Connection failed. Your changes are still here.');
-      throw e;
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-  function notifyRoute() {
-    if (config.embedded)
-      SornazNotation.postMessage(
-        JSON.stringify({
-          id: 0,
-          action: 'route',
-          route: state.route,
-          dirty: state.dirty,
-          toolbar: {
-            editable: !!state.sheet?.editable && !!config.userId,
-            playing: state.playing,
-            undo: !!state.history.length,
-            redo: !!state.future.length,
-            title: state.sheet?.metadata.title || '',
-          },
-          guest: state.route === 'list' && !config.userId && state.mode !== 'all',
-          guestTop: document.querySelector('.tabs')?.getBoundingClientRect().bottom || 0,
-        })
-      );
-  }
-  function theme() {
-    document.documentElement.style.setProperty('--font-scale', config.fontScale || 1);
-    document.body.classList.toggle('dark', !!config.dark);
-    document.body.classList.toggle('writing', state.route === 'editor');
-    document.body.classList.toggle('native-toolbar', !!config.nativeToolbar);
-    document.body.style.setProperty('--accent', config.accent || '#0065ff');
-    document.body.dir = config.locale === 'fa' ? 'rtl' : 'ltr';
-    document.documentElement.lang = config.locale;
-  }
-  function button(action, label, extra = '') {
-    return `<button type="button" data-action="${action}" ${extra}>${h(t(label))}</button>`;
-  }
-  function head(title) {
-    return `<header class="header">${button('back', config.locale === 'fa' ? '→' : '←', `class="icon" aria-label="${h(t('Back'))}"`)}<h1>${h(t(title))}</h1>${!config.embedded ? `<div class="web-tools">${button('language', config.locale === 'fa' ? 'EN' : 'فارسی')}${button('theme', '◐', `aria-label="${h(t('Theme'))}"`)}</div>` : ''}</header>`;
-  }
-  function login() {
-    if (config.embedded) SornazNotation.postMessage(JSON.stringify({ id: 0, action: 'login' }));
-    else location.href = '/login';
-  }
-  async function confirmAction(text) {
-    const dialog = document.createElement('dialog');
-    dialog.innerHTML = `<p>${h(t(text))}</p><div class="links">${button('no', 'No')}${button('yes', 'Yes', 'class="primary"')}</div>`;
-    document.body.append(dialog);
-    return new Promise((resolve) => {
-      let done = false;
-      const close = (v) => {
-        if (done) return;
-        done = true;
-        dialog.close();
-        dialog.remove();
-        resolve(v);
-      };
-      dialog.addEventListener('click', (e) => {
-        const a = e.target.closest('[data-action]')?.dataset.action;
-        if (a === 'yes') close(true);
-        if (a === 'no') close(false);
-      });
-      dialog.addEventListener('cancel', (e) => {
-        e.preventDefault();
-        close(false);
-      });
-      dialog.showModal();
-      if (config.websitePanel && window.parent !== window)
-        window.parent.postMessage({ type: 'sornaz-notation-dialog' }, location.origin);
-    });
-  }
-  async function back(mode = state.mode) {
-    if (state.busy) return;
-    if (state.route === 'list') {
-      if (config.embedded) SornazNotation.postMessage(JSON.stringify({ id: 0, action: 'exit' }));
-      else location.href = '/';
-      return;
-    }
-    if (
-      (!state.sheet.id || state.dirty) &&
-      !(await confirmAction(
-        !state.sheet.id ? 'Have you decided not to write a new sheet?' : 'Discard unsaved changes?'
-      ))
-    )
-      return;
-    stop();
-    state.dirty = false;
-    state.mode = mode;
-    state.route = 'list';
-    state.sheet = null;
-    notifyRoute();
-    await load();
-  }
-  async function load(more = false) {
-    const seq = ++sequence;
-    state.route = 'list';
-    state.loading = true;
-    state.error = '';
-    if (!more) {
-      state.page = 1;
-      state.items = [];
-    }
-    render();
-    try {
-      const result = await api('list', { mode: state.mode, page: state.page });
-      if (seq !== sequence) return;
-      state.items = more ? [...state.items, ...result.items] : result.items;
-      state.more = result.has_more;
-    } catch (e) {
-      if (seq !== sequence) return;
-      state.error = e.message;
-    } finally {
-      if (seq === sequence) {
-        state.loading = false;
-        render();
-      }
-    }
-  }
-  async function open(id) {
-    if (state.busy) return;
-    state.busy = true;
-    render();
-    try {
-      state.sheet = M.prepare(await api('get', { sheetId: id }));
-      if (config.websitePanel) {
-        state.sheet.metadata.scale_type ||= String(state.sheet.metadata.key || '').endsWith('m') ? 'minor' : 'major';
-        state.sheet.metadata.tempo_dots = Number(state.sheet.metadata.tempo_dots || 0);
-      }
-      state.route = 'editor';
-      state.dirty = false;
-      state.bar = 0;
-      state.note = -1;
-      state.history = [];
-      state.future = [];
-      notifyRoute();
-    } catch (e) {
-      toast(e.message);
-    } finally {
-      state.busy = false;
-      render();
-    }
-  }
-  async function newSheet() {
-    if (!config.userId) {
-      toast('Sign in to continue.');
-      login();
-      return;
-    }
-    try {
-      await loadInstruments();
-    } catch (e) {
-      toast(e.message);
-      return;
-    }
-    state.sheet = M.fresh();
-    Object.assign(state.sheet.metadata, {
-      instrument: '',
-      tempo_note: '',
-      tempo_text: '',
-      bpm: '',
-      ...(config.websitePanel ? { scale_type: '', key: '', tempo_dots: 0 } : {}),
-    });
-    state.choice = {
-      duration: 'q',
-      accidental: '',
-      dots: 0,
-      rest: false,
-      dynamic: '',
-      articulation: '',
-      bow: '',
-      finger: '',
-      ornament: '',
-    };
-    state.paletteOpen = false;
-    state.route = 'form';
-    state.dirty = false;
-    notifyRoute();
-    render();
-  }
-  function field(key, label, type = 'text', attrs = '') {
-    return `<label class="field"><span>${h(t(label))}</span><input name="${key}" type="${type}" ${attrs} value="${h(state.sheet.metadata[key])}"></label>`;
-  }
-  function select(key, label, options) {
-    return `<label class="field"><span>${h(t(label))}</span><select name="${key}" ${key === 'tempo_note' ? 'class="beat-native" tabindex="-1" aria-hidden="true"' : ''}>${options
-      .map((o) => {
-        const [value, title] = Array.isArray(o) ? o : [o, t(o)];
-        return `<option value="${h(value)}" ${state.sheet.metadata[key] === value ? 'selected' : ''}>${h(title)}</option>`;
-      })
-      .join('')}</select></label>`;
-  }
-  function renderForm() {
-    if (config.websitePanel) return renderWebsiteForm();
-    const m = state.sheet.metadata,
-      text = (key, label) =>
-        field(key, label, 'text', 'maxlength="180" ' + (key === 'title' ? 'required' : ''));
-    const catalog = instruments.map((i) => [String(i.id), i[config.locale] || i.fa || i.en]);
-    if (m.instrument && !catalog.some(([id]) => id === m.instrument))
-      catalog.push([m.instrument, t(m.instrument)]);
-    const row = (count, content) =>
-      '<div class="form-row columns-' + count + '">' + content + '</div>';
-    return (
-      '<section class="shell form">' +
-      head('Notation') +
-      '<form id="metadata">' +
-      row(2, text('title', 'Title') + text('subtitle', 'Description')) +
-      row(2, text('composer', 'Composer') + text('arranger', 'Arranger')) +
-      row(
-        2,
-        text('lyricist', 'Lyricist') + select('instrument', 'Instrument', [['', ''], ...catalog])
-      ) +
-      row(
-        3,
-        select('clef', 'Clef', [
-          'treble',
-          'baritone-f',
-          'bass',
-          'soprano',
-          'mezzo-soprano',
-          'alto',
-          'tenor',
-        ]) +
-          select('key', 'Key Signature', M.keys) +
-          select('time', 'Time Signature', [
-            '2/4',
-            '3/4',
-            '4/4',
-            '6/8',
-            '9/8',
-            '12/8',
-            '2/2',
-            '6/4',
-          ])
-      ) +
-      row(
-        3,
-        '<div class="beat-field">' +
-          select('tempo_note', 'Note type', [['', ''], ...selectableNotes]) +
-          '<details class="beat-picker"><summary aria-label="' +
-          h(t('Note type')) +
-          '"><span class="beat-preview">' +
-          (m.tempo_note ? NotationSymbols.note(m.tempo_note) : '') +
-          '</span><span>⌄</span></summary><div class="beat-options">' +
-          selectableNotes
-            .map(([v]) =>
-              musicButton(
-                'beat-unit',
-                v,
-                'data-value="' + v + '" aria-label="' + h(t('Note type')) + ' ' + v + '"'
-              )
-            )
-            .join('') +
-          '</div></details></div>' +
-          field(
-            'bpm',
-            'Metronome Mark',
-            'text',
-            'inputmode="numeric" pattern="[0-9]+" maxlength="3" required'
-          ) +
-          select('tempo_text', 'Tempo Text', [
-            ['', ''],
-            ...NotationSymbols.tempos(m.tempo_note, m.bpm),
-          ])
-      ) +
-      '<button class="primary full" type="submit">' +
-      h(t('Start Writing')) +
-      '</button></form></section>'
-    );
-  }
-  function renderWebsiteForm() {
-    const m = state.sheet.metadata;
-    const textField = (key, label) => field(key, label, 'text', 'maxlength="180" ' + (key === 'title' ? 'required' : ''));
-    const row = (name, content) => `<div class="form-row ${name}">${content}</div>`;
-    const catalog = instruments.map((item) => [String(item.id), item[config.locale] || item.fa || item.en]);
-    if (m.instrument && !catalog.some(([id]) => id === m.instrument)) catalog.push([m.instrument, t(m.instrument)]);
-    const scale = m.scale_type || (m.key ? (String(m.key).endsWith('m') ? 'minor' : 'major') : '');
-    const keys = scale === 'major' ? M.keys.filter((key) => !key.endsWith('m')) : M.keys.filter((key) => key.endsWith('m'));
-    const beatUnits = selectableNotes.flatMap(([duration]) => [0, 1, 2].map((dots) => ({ duration, dots })));
-    const selectedBeat = `${m.tempo_note || ''}:${Number(m.tempo_dots || 0)}`;
-    const beat = `<label class="field beat-field"><span>${h(t('Note type'))}</span><input type="hidden" name="tempo_note" value="${h(m.tempo_note || '')}"><input type="hidden" name="tempo_dots" value="${Number(m.tempo_dots || 0)}"><details class="beat-picker"><summary aria-label="${h(t('Note type'))}"><span class="beat-preview">${m.tempo_note ? NotationSymbols.note(m.tempo_note) + '<span class="beat-dots">' + '·'.repeat(Number(m.tempo_dots || 0)) + '</span>' : ''}</span><span>⌄</span></summary><div class="beat-options">${beatUnits.map(({ duration, dots }) => `<button type="button" data-action="beat-unit" data-value="${duration}:${dots}" aria-pressed="${selectedBeat === `${duration}:${dots}`}">${NotationSymbols.note(duration)}<span class="beat-dots">${'·'.repeat(dots)}</span></button>`).join('')}</div></details></label>`;
-    return '<section class="shell form website-form">' + head('Notation') + '<form id="metadata">' +
-      row('columns-1', textField('title', 'Title')) +
-      row('columns-2', textField('composer', 'Composer') + textField('arranger', 'Arranger')) +
-      row('columns-2', textField('lyricist', 'Lyricist') + select('instrument', 'Instrument', [['', ''], ...catalog])) +
-      row('scale-key-row', select('scale_type', 'Scale', [['', ''], ['major', t('Major')], ['minor', t('Minor')], ['melodic_minor', t('Melodic minor')], ['harmonic_minor', t('Harmonic minor')]]) + `<label class="field"><span>${h(t('Key Signature'))}</span><select name="key" ${scale ? '' : 'disabled'}><option value=""></option>${keys.map((key) => `<option value="${h(key)}" ${m.key === key ? 'selected' : ''}>${h(key)}</option>`).join('')}</select></label>`) +
-      row('clef-time-row', select('clef', 'Clef', ['treble', 'baritone-f', 'bass', 'soprano', 'mezzo-soprano', 'alto', 'tenor']) + select('time', 'Time Signature', ['2/4', '3/4', '4/4', '6/8', '9/8', '12/8', '2/2', '6/4'])) +
-      row('tempo-row', beat + field('bpm', 'Metronome Mark', 'text', 'inputmode="numeric" pattern="[0-9]+" maxlength="3" required') + select('tempo_text', 'Tempo Text', [['', ''], ...NotationSymbols.tempos(m.tempo_note, m.bpm)])) +
-      row('columns-1', `<label class="field"><span>${h(t('Description'))}</span><textarea name="subtitle" maxlength="1000">${h(m.subtitle || '')}</textarea></label>`) +
-      `<button class="primary full" type="submit">${h(t(state.sheet.id ? 'Save changes' : 'Start Writing'))}</button></form></section>`;
-  }
-  function renderList() {
-    return `<section class="shell">${head('Notation')}<nav class="tabs" aria-label="${h(t('Notation'))}">${[
-      ['all', 'All'],
-      ['mine', 'Mine'],
-      ['saved', 'Saved'],
-    ]
-      .map(([mode, label]) =>
-        button(
-          'filter',
-          label,
-          `class="${state.mode === mode ? 'active' : ''}" data-mode="${mode}" aria-pressed="${state.mode === mode}"`
-        )
-      )
-      .join(
-        ''
-      )}</nav>${state.items.map((s) => `<article class="sheet"><button class="open" data-action="open" data-id="${s.id}"><strong>${h(s.title)}</strong><small>${h([s.metadata.composer, s.metadata.arranger || s.author].filter(Boolean).join(' – '))}${s.visibility === 'private' ? ' · ' + h(t('Private')) : ''}</small></button>${!s.local ? button('download', '⇩', `class="icon" data-id="${s.id}" aria-label="${h(t('Download'))}"`) : ''}${iconButton('pdf-item', 'pdf', `class="icon" data-id="${s.id}" aria-label="${h(t('PDF'))}"`)}${s.editable ? iconButton('visibility', s.visibility === 'public' ? 'eye' : 'eye-off', `class="icon" data-id="${s.id}" aria-label="${h(t(s.visibility === 'public' ? 'Make private' : 'Make public'))}"`) : ''}${s.editable ? iconButton('delete', 'trash', `class="icon danger" data-id="${s.id}" aria-label="${h(t('Delete'))}"`) : button('bookmark', s.saved ? '★' : '☆', `class="icon" data-id="${s.id}" aria-label="${h(t(s.saved ? 'Remove bookmark' : 'Bookmark'))}"`)}</article>`).join('')}${state.error ? `<div class="empty">${h(t(state.error))}<p>${button('retry', 'Retry')}${!config.userId ? button('login', 'Sign in to continue.') : ''}</p></div>` : !state.items.length && !state.loading ? `<p class="empty">${h(t('No sheets yet.'))}</p>` : ''}${state.loading ? '<p class="empty">…</p>' : ''}${state.more && !state.loading ? button('more', 'Load more', 'class="full"') : ''}${config.websitePanel ? '' : button('new', '✎', `class="fab" aria-label="${h(t('Start Writing'))}"`)}</section>`;
-  }
-  function choice(key, label, options) {
-    const values = options.map((o) => (Array.isArray(o) ? o : [o, o || '']));
-    return `<label><select data-choice="${key}" aria-label="${h(t(label))}" ${!state.sheet.editable ? 'disabled' : ''}>${values.map(([v, title]) => `<option value="${h(v)}" ${String(state.choice[key]) === String(v) ? 'selected' : ''}>${h(title)}</option>`).join('')}</select><span>${h(t(label))}</span></label>`;
-  }
-  function deleteNoteButton() {
-    return (
-      '<button type="button" data-action="delete-note" class="icon score-delete" aria-label="' +
-      h(t('Delete')) +
-      '"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg></button>'
-    );
-  }
-  function durationButtons() {
-    return (
-      selectableNotes
-        .map(([value, symbol]) =>
-          musicButton(
-            'duration',
-            value,
-            `class="duration-btn ${state.choice.duration === value ? 'is-active' : ''}" data-value="${value}" aria-label="${h(t('Duration'))} ${value}" aria-pressed="${state.choice.duration === value}"`
-          )
-        )
-        .join('') +
-      [1, 2]
-        .map((value) =>
-          button(
-            'dots',
-            '·'.repeat(value),
-            `class="dot-btn ${state.choice.dots === value ? 'is-active' : ''}" data-value="${value}" aria-label="${h(t('Dots'))} ${value}" aria-pressed="${state.choice.dots === value}"`
-          )
-        )
-        .join('')
-    );
-  }
-  function setPaletteOpen(value) {
-    state.paletteOpen = value;
-    root.querySelector('.editor-footer')?.classList.toggle('tools-open', value);
-    const panel = root.querySelector('.palette');
-    if (!panel) return;
-    panel.classList.toggle('is-open', value);
-    panel.setAttribute('aria-hidden', String(!value));
-    root.querySelector('.palette-backdrop').hidden = !value;
-    root.querySelector('.palette-key').setAttribute('aria-expanded', String(value));
-  }
-  function changeChoice(key, value) {
-    state.choice[key] = value;
-    if (state.note >= 0)
-      mutate(() => {
-        const bar = state.sheet.score.measures[state.bar];
-        if (key === 'duration' || key === 'dots') {
-          state.bar = M.insert(
-            state.sheet,
-            state.bar,
-            { ...bar.notes[state.note], [key]: value },
-            state.note
-          );
-          state.note = -1;
-        } else bar.notes[state.note][key] = value;
-      });
-    else render();
-  }
-  function piano() {
-    let keys = '';
-    for (let midi = 21; midi <= 108; midi++) {
-      const letter = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'][midi % 12];
-      if (letter.includes('#')) continue;
-      const p = letter + (Math.floor(midi / 12) - 1);
-      keys += `<div class="white" role="button" tabindex="0" data-pitch="${p}" aria-label="${p}">${p}${!['B', 'E'].includes(letter) && midi < 108 ? `<button class="black" data-pitch="${p}" data-accidental="#" aria-label="${p} sharp"></button>` : ''}</div>`;
-    }
-    return `<div class="keyboard-wrap">${iconButton('palette', 'chevron', `class="palette-key" aria-label="${h(t('Notation tools'))}" aria-expanded="${state.paletteOpen}"`)}${iconButton('rest', 'rest', `class="rest-key" aria-label="${h(t('Rest'))}"`)}<div class="piano-scroll"><div class="piano" aria-label="Piano">${keys}</div></div></div>`;
-  }
-  function renderEditor() {
-    const s = state.sheet,
-      m = s.metadata,
-      guest = !config.userId,
-      editable = s.editable && !guest;
-    return `<section class="shell ${guest ? 'guest-score' : ''}"><header class="header editor-header">${button('back', '←', `class="icon" aria-label="${h(t('Back'))}"`)}<div class="editor-heading"><h1>${h(t('Notation'))}</h1></div><div class="editor-actions">${editable ? button('save', '▣', `class="icon" aria-label="${h(t('Save'))}"`) : ''}${button('play', state.playing ? '❚❚' : '▶', `class="icon" aria-label="${h(t(state.playing ? 'Stop' : 'Play'))}"`)}${editable ? button('metadata', '✎', `class="icon" aria-label="${h(t('Metadata'))}"`) : ''}</div></header><div class="score-title">${editable ? `<div class="score-history">${button('undo', '↶', `class="icon" aria-label="${h(t('Undo'))}" ${state.history.length ? '' : 'disabled'}`)}${button('redo', '↷', `class="icon" aria-label="${h(t('Redo'))}" ${state.future.length ? '' : 'disabled'}`)}</div>${state.note >= 0 ? deleteNoteButton() : ''}` : ''}<h2>${h(m.title)} ${editable ? `<span class="state ${state.dirty ? 'unsaved' : 'synced'}">${h(t(state.dirty ? 'Unsaved' : 'Synced'))}</span>` : ''}</h2>${m.subtitle ? `<p>${h(m.subtitle)}</p>` : ''}<div class="score-meta"><div class="credits">${m.lyricist ? `<p>${h(t('Lyricist'))}: ${h(m.lyricist)}</p>` : ''}${m.composer ? `<p>${h(t('Composer'))}: ${h(m.composer)}</p>` : ''}${m.arranger ? `<p>${h(t('Arranger'))}: ${h(m.arranger)}</p>` : ''}</div><div class="tempo"><span>${h(m.tempo_text)}</span><span class="metronome-mark">${NotationSymbols.note(m.tempo_note)}<span class="tempo-number">= ${m.bpm}</span></span></div></div></div><div id="score"></div>${
-      editable
-        ? `<footer class="editor-footer ${state.paletteOpen ? 'tools-open' : ''}"><div class="duration-choice">${durationButtons()}</div><button type="button" data-action="palette" class="palette-backdrop" aria-label="${h(t('Close tools'))}" ${state.paletteOpen ? '' : 'hidden'}></button><div class="palette ${state.paletteOpen ? 'is-open' : ''}" aria-hidden="${!state.paletteOpen}" role="region" aria-label="${h(t('Notation tools'))}"><div class="palette-heading"><span>${h(t('Notation tools'))}</span>${button('palette', '⌄', `class="icon" aria-label="${h(t('Close tools'))}"`)}</div>${choice(
-            'accidental',
-            'Accidental',
-            [
-              ['', ''],
-              ['b', '♭'],
-              ['bb', '♭♭'],
-              ['n', '♮'],
-              ['#', '♯'],
-              ['##', '𝄪'],
-              ['d', '¼♭'],
-              ['+', '¼♯'],
-            ]
-          )}${choice('bow', 'Bowing', [
-            ['', ''],
-            ['up', '∨'],
-            ['down', '⊓'],
-          ])}${choice('finger', 'Finger', ['', '0', '1', '2', '3', '4', '5'])}${choice('dynamic', 'Dynamics', ['', 'ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff', 'sf', 'sff', 'sfff', 'sfz', 'sffz', 'sfffz', 'fz', 'ffz', 'fffz'])}${choice(
-            'articulation',
-            'Articulation',
-            [
-              ['', ''],
-              ['staccato', '·'],
-              ['tenuto', '–'],
-              ['accent', '>'],
-              ['marcato', '^'],
-              ['staccatissimo', '▾'],
-            ]
-          )}${choice('ornament', 'Ornament', [
-            ['', ''],
-            ['trill', 'tr'],
-            ['mordent', '~'],
-          ])}</div>${piano()}</footer>`
-        : ''
-    }</section>`;
-  }
-  function captureForm() {
-    const form = document.getElementById('metadata');
-    if (state.route === 'form' && form) {
-      const values = Object.fromEntries(new FormData(form));
-      delete values.public;
-      values.bpm = values.bpm === '' ? '' : Number(values.bpm);
-      if (config.websitePanel) values.tempo_dots = Number(values.tempo_dots || 0);
-      Object.assign(state.sheet.metadata, values);
-    }
-  }
-  function render() {
-    const scroll = document.querySelector('.piano-scroll');
-    if (scroll) state.pianoScroll = scroll.scrollLeft;
-    theme();
-    root.innerHTML =
-      state.route === 'list'
-        ? renderList()
-        : state.route === 'form'
-          ? renderForm()
-          : renderEditor();
-    if (config.websitePanel) {
-      const internalHeader = root.querySelector('.header');
-      if (internalHeader) {
-        const actions = internalHeader.querySelector('.editor-actions');
-        if (actions) {
-          actions.classList.add('panel-editor-actions');
-          internalHeader.parentNode.insertBefore(actions, internalHeader);
-        }
-        internalHeader.remove();
-      }
-    }
-    if (state.busy)
-      root.insertAdjacentHTML('beforeend', `<div class="veil">${h(t('Saving…'))}</div>`);
-    if (state.route === 'form') {
-      updateTempoOptions();
-      root.querySelector('[name=instrument]').required = true;
-    }
-    if (state.route === 'editor') {
-      draw();
-      const piano = document.querySelector('.piano-scroll');
-      if (piano) piano.scrollLeft = state.pianoScroll ?? 23 * 38 - piano.clientWidth / 2;
-    }
-    NotationSymbols.center(root);
-    if (config.websitePanel && window.parent !== window)
-      window.parent.postMessage({ type: 'sornaz-notation-state', mode: state.mode, route: state.route }, location.origin);
-    requestAnimationFrame(notifyRoute);
-  }
-  function draw() {
-    const element = document.getElementById('score');
-    if (!element) return;
-    let ghostBar = state.bar;
-    if (
-      state.sheet.score.measures[ghostBar]?.notes.reduce((v, n) => v + M.ticks(n), 0) >=
-      M.capacity(state.sheet.metadata)
-    )
-      ghostBar++;
-    const written = M.trimmedMeasures(state.sheet);
-    NotationRenderer.draw(element, state.sheet, {
-      lastWritten: written.length - 1,
-      accent: config.accent || '#0065ff',
-      activeBar: state.playing ? state.playBar : state.bar,
-      activeNote: state.playing ? state.playNote : state.note,
-      ghostBar,
-      ghost:
-        state.sheet.editable && config.userId
-          ? {
-              ...state.choice,
-              pitch: state.lastPitch,
-              duration: state.lastDuration,
-              dots: state.lastDots,
-            }
-          : null,
-    });
-  }
+  state.sheet.score.measures.forEach((measure,index)=>{const capacity=M.barUnits(state.sheet,index);if(measure.notes.some((note,noteIndex)=>M.positionOf(measure,noteIndex)+M.units(note)>capacity))throw Error('This measure is full.');});
+ });
+}
+function editorStaffControls(){
+ const grand=M.staves(state.sheet.metadata).length===2,note=state.sheet.score.measures[state.bar]?.notes?.[state.note];
+ const staffButtons=grand?`<div class="staff-picker">${[1,2].map((staff)=>button('staff',staff===1?'Upper staff':'Lower staff',`data-staff="${staff}" class="${activeStaff()===staff?'is-active':''}" aria-pressed="${activeStaff()===staff}"`)).join('')}</div>`:'';
+ const measureControls=state.sheet.editable?`<div class="measure-controls">${[1,2].map(voice=>button('voice',voice===1?'First voice':'Second voice',`data-voice="${voice}" class="${state.voice===voice?'is-active':''}" aria-pressed="${state.voice===voice}"`)).join('')}${button('add-bar','Add measure')}${button('remove-bar','Remove measure')}${state.selectedNotes.size?button('copy-notes','Copy')+button('cut-notes','Cut')+button('duplicate-notes','Duplicate'):''}${clipboard.length?button('paste-notes','Paste'):''}</div>`:'';
+ const chord=note&&!note.rest&&state.sheet.editable?`<div class="chord-controls">${button('chord','Add to chord',`class="${state.chordMode?'is-active':''}" aria-pressed="${state.chordMode}"`)}${(note.pitches||[]).map((tone,i)=>`<button type="button" data-action="chord-tone" data-index="${i}" class="${state.chordMode&&state.chordTone===i?'is-active':''}" aria-label="${h(t('Edit chord tone'))} ${h(tone.pitch)}">${h(tone.pitch)}${h(tone.accidental||'')}</button><button type="button" data-action="remove-chord-tone" data-index="${i}" aria-label="${h(t('Remove chord tone'))} ${h(tone.pitch)}">×</button>`).join('')}</div>`:'';
+ const hidden=!grand&&state.sheet.score.measures.some(bar=>bar.notes.some(n=>M.staffOf(n)===2))?`<p class="hidden-staff-warning">${h(t('Hidden second-staff notes are preserved.'))}</p>`:'';
+ return staffButtons+measureControls+(state.sheet.editable?measureTools():'')+chord+hidden;
+}
+function renderEditor(){const s=state.sheet,m=s.metadata,guest=false,editable=s.editable;return `<section class="shell ${guest?'guest-score':''}"><header class="header editor-header">${button('back','←',`class="icon" aria-label="${h(t('Back'))}"`)}<div class="editor-heading"><h1>${h(t('Notation'))}</h1></div><div class="editor-actions">${editable?button('save','▣',`class="icon" aria-label="${h(t('Save'))}"`):''}${button('play',state.playing?'❚❚':'▶',`class="icon" aria-label="${h(t(state.playing?'Stop':'Play'))}"`)}${editable?button('metadata','✎',`class="icon" aria-label="${h(t('Metadata'))}"`):''}</div></header>${editorStaffControls()}<div class="score-title"><h2>${h(m.title)} ${editable?`<span class="state ${state.dirty?'unsaved':'synced'}">${h(t(state.dirty?'Unsaved':'Synced'))}</span>`:''}</h2>${m.subtitle?`<p>${h(m.subtitle)}</p>`:''}<div class="score-meta"><div class="credits">${m.lyricist?`<p>${h(t('Lyricist'))}: ${h(m.lyricist)}</p>`:''}${m.composer?`<p>${h(t('Composer'))}: ${h(m.composer)}</p>`:''}${m.arranger?`<p>${h(t('Arranger'))}: ${h(m.arranger)}</p>`:''}</div><div class="tempo"><span>${h(m.tempo_text)}</span><span class="metronome-mark">${NotationSymbols.note(m.tempo_note)}<span class="tempo-number">= ${m.bpm}</span></span></div></div></div><div id="score"></div>${editable?`<footer class="editor-footer ${state.paletteOpen?"tools-open":""}"><div class="duration-choice ${config.durationMode===1?'is-hidden':''}">${durationButtons()}</div><button type="button" data-action="palette" class="palette-backdrop" aria-label="${h(t('Close tools'))}" ${state.paletteOpen?'':'hidden'}></button><div class="palette ${state.paletteOpen?'is-open':''}" aria-hidden="${!state.paletteOpen}" role="region" aria-label="${h(t('Notation tools'))}"><div class="palette-heading"><span>${h(t('Notation tools'))}</span>${button('palette','⌄',`class="icon" aria-label="${h(t('Close tools'))}"`)}</div>${choice('accidental','Accidental',[['',''],['b','♭'],['bb','♭♭'],['n','♮'],['#','♯'],['##','𝄪'],['d','¼♭'],['+','¼♯']])}${choice('bow','Bowing',[['',''],['up','∨'],['down','⊓']])}${choice('finger','Finger',['','0','1','2','3','4','5'])}${choice('dynamic','Dynamics',['','ppp','pp','p','mp','mf','f','ff','fff','sf','sff','sfff','sfz','sffz','sfffz','fz','ffz','fffz'])}${choice('articulation','Articulation',[['',''],['staccato','·'],['tenuto','–'],['accent','>'],['marcato','^'],['staccatissimo','▾']])}${tupletChoice()}${choice('ornament','Ornament',[['',''],['trill','tr'],['mordent','~']])}</div>${piano()}</footer>`:''}</section>`;}
+function captureForm(){const form=document.getElementById('metadata');if(state.route==='form'&&form){const values=Object.fromEntries(new FormData(form));delete values.public;values.bpm=values.bpm===''?'':Number(values.bpm);if(values.tempo_unit){const[unit,dots]=values.tempo_unit.split(':');values.tempo_note=unit;values.tempo_dots=Number(dots);delete values.tempo_unit;}Object.assign(state.sheet.metadata,values);}}
+function keepLastMeasureVisible(){if(state.route!=='editor')return;const scroller=document.scrollingElement||document.documentElement;scroller.scrollTop=Math.max(0,scroller.scrollHeight-scroller.clientHeight);}
+function showPlayingMeasure(bar){const rect=document.querySelector(`#score [data-bar="${bar}"]`);if(!rect)return;const bounds=rect.getBoundingClientRect(),scroller=document.scrollingElement||document.documentElement,top=12,bottom=innerHeight-180;if(bounds.bottom>bottom)scroller.scrollTop+=bounds.bottom-bottom;else if(bounds.top<top)scroller.scrollTop+=bounds.top-top;}
+function render(){const scroll=document.querySelector('.piano-scroll');if(scroll)state.pianoScroll=scroll.scrollLeft;theme();document.body.classList.toggle('note-selected',state.route==='editor'&&state.selectedNotes.size>0);root.innerHTML=state.route==='list'?renderList():state.route==='form'?renderForm():renderEditor();if(state.busy)root.insertAdjacentHTML('beforeend',`<div class="veil">${h(t('Saving…'))}</div>`);if(state.route==='form'){updateTempoOptions();root.querySelector('[name=instrument]').required=true;}if(state.route==='editor'){draw();const piano=document.querySelector('.piano-scroll');if(piano)piano.scrollLeft=state.pianoScroll??(23*38-piano.clientWidth/2);requestAnimationFrame(()=>state.playing?showPlayingMeasure(state.playBar<0?state.bar:state.playBar):keepLastMeasureVisible());}NotationSymbols.center(root);requestAnimationFrame(notifyRoute);}
+function draw(){const element=document.getElementById('score');if(!element)return;
+ const previousHeight=element.getBoundingClientRect().height;if(previousHeight>350)element.style.minHeight=previousHeight+'px';
+  let ghostBar=state.bar;if(M.used(state.sheet.score.measures[ghostBar],activeStaff())>=M.capacity(state.sheet.metadata))ghostBar++;
+ const written=M.trimmedMeasures(state.sheet);
+  NotationRenderer.draw(element,state.sheet,{lastWritten:written.length-1,accent:config.accent||'#0065ff',activeBar:state.playing?state.playBar:state.bar,activeNote:state.playing?state.playNote:state.note,selectedNotes:state.selectedNotes,ghostBar,ghost:state.sheet.editable&&config.userId?{...state.choice,pitches:[],staff:activeStaff(),pitch:state.lastPitch,duration:state.lastDuration,dots:state.lastDots}:null});
+ element.style.minHeight='';if(!state.selectedNotes.size&&!state.playing)keepLastMeasureVisible();
+}
 
-  function snapshot() {
-    return M.clone({
-      metadata: state.sheet.metadata,
-      score: state.sheet.score,
-      visibility: state.sheet.visibility,
-    });
-  }
-  function mutate(fn) {
-    if (!state.sheet?.editable || state.busy) return;
-    const before = snapshot(),
-      beforeBar = state.bar,
-      beforeNote = state.note;
-    try {
-      fn();
-      M.prepare(state.sheet);
-      state.bar = Math.min(state.bar, state.sheet.score.measures.length - 1);
-      stop();
-      state.history.push(before);
-      if (state.history.length > 80) state.history.shift();
-      state.future = [];
-      state.dirty = true;
-      notifyRoute();
-      render();
-    } catch (e) {
-      Object.assign(state.sheet, before);
-      state.bar = beforeBar;
-      state.note = beforeNote;
-      toast(e.message);
-    }
-  }
-  function insert(pitch, accidental, rest = false) {
-    if (state.route !== 'editor' || !state.sheet.editable || state.busy) return;
-    const n = { ...state.choice, pitch, rest, accidental: accidental ?? state.choice.accidental };
-    mutate(() => {
-      state.bar = M.insert(state.sheet, state.bar, n);
-      M.prepare(state.sheet);
-      if (
-        state.sheet.score.measures[state.bar].notes.reduce((v, n) => v + M.ticks(n), 0) >=
-          M.capacity(state.sheet.metadata) &&
-        state.bar + 1 < state.sheet.score.measures.length
-      )
-        state.bar++;
-      state.note = -1;
-      state.lastPitch = pitch;
-      state.lastDuration = n.duration;
-      state.lastDots = n.dots;
-    });
-    if (!rest) sound(M.frequency(pitch, n.accidental, state.sheet.metadata.key), 0.18);
-  }
-  function sound(hz, duration, when = 0) {
-    try {
-      audio ??= new (window.AudioContext || window.webkitAudioContext)();
-      if (audio.state === 'suspended') audio.resume();
-      const oscillator = audio.createOscillator(),
-        gain = audio.createGain(),
-        start = audio.currentTime + when;
-      oscillator.type = 'triangle';
-      oscillator.frequency.value = hz;
-      gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(0.17, start + 0.008);
-      gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
-      oscillator.connect(gain);
-      gain.connect(audio.destination);
-      oscillator.start(start);
-      oscillator.stop(start + duration + 0.02);
-      voices.push(oscillator);
-      oscillator.onended = () => {
-        oscillator.disconnect();
-        gain.disconnect();
-        voices = voices.filter((v) => v !== oscillator);
-      };
-    } catch (e) {
-      console.warn('Audio unavailable', e);
-    }
-  }
-  function stop(reset = true) {
-    voices.forEach((v) => {
-      try {
-        v.stop();
-      } catch (_) {}
-    });
-    voices = [];
-    timers.forEach(clearTimeout);
-    timers = [];
-    state.playing = false;
-    if (reset) {
-      state.playOffset = null;
-      state.playBar = -1;
-      state.playNote = -1;
-    }
-  }
-  function play() {
-    if (state.playing) {
-      state.playOffset = (state.playOffset || 0) + (performance.now() - state.playStarted) / 1000;
-      stop(false);
-      render();
-      return;
-    }
-    const timeline = M.timeline(state.sheet);
-    if (!timeline.events.length) return;
-    let offset = state.playOffset;
-    if (offset === null) {
-      const selected = timeline.events.find(
-        (e) => e.bar === state.bar && e.note === Math.max(0, state.note)
-      );
-      offset = selected?.start ?? 0;
-    }
-    if (offset >= timeline.duration) offset = 0;
-    state.playing = true;
-    state.playOffset = offset;
-    state.playStarted = performance.now();
-    for (const event of timeline.events) {
-      if (event.hz && event.start + event.soundLength > offset)
-        sound(
-          event.hz,
-          Math.max(0.03, (event.start + event.soundLength - Math.max(event.start, offset)) * 0.98),
-          Math.max(0, event.start - offset)
-        );
-      if (event.start + event.length <= offset) continue;
-      timers.push(
-        setTimeout(
-          () => {
-            if (!state.playing) return;
-            state.playBar = event.bar;
-            state.playNote = event.note;
-            draw();
-            const rect = document.querySelector(`[data-bar="${event.bar}"]`);
-            if (rect) {
-              const bounds = rect.getBoundingClientRect();
-              if (bounds.bottom > innerHeight - 190 || bounds.top < 0)
-                rect.scrollIntoView({ block: 'center', behavior: 'smooth' });
-            }
-          },
-          Math.max(0, event.start - offset) * 1000
-        )
-      );
-    }
-    timers.push(
-      setTimeout(
-        () => {
-          stop();
-          if (state.route === 'editor') render();
-        },
-        (timeline.duration - offset) * 1000 + 30
-      )
-    );
-    render();
-  }
-  async function save() {
-    if (state.busy) return;
-    if (!M.trimmedMeasures(state.sheet).length)
-      return toast('Enter at least one note before saving.');
-    state.busy = true;
-    render();
-    try {
-      state.sheet = await api('save', {
-        sheetId: state.sheet.id,
-        payload: {
-          ...snapshot(),
-          score: { measures: M.trimmedMeasures(state.sheet) },
-          version: state.sheet.version,
-        },
-      });
-      M.prepare(state.sheet);
-      state.bar = Math.min(state.bar, state.sheet.score.measures.length - 1);
-      state.dirty = false;
-      notifyRoute();
-      toast('Saved successfully.');
-    } catch (e) {
-      toast(e.message);
-    } finally {
-      state.busy = false;
-      render();
-    }
-  }
-  async function download(id) {
-    try {
-      const sheet = await api('get', { sheetId: id });
-      const content = JSON.stringify({
-        format: 'sornaz-notation',
-        version: 1,
-        metadata: sheet.metadata,
-        score: sheet.score,
-        visibility: sheet.visibility,
-      });
-      const name =
-        (sheet.metadata.title.replace(/[^\p{L}\p{N} _-]/gu, '').slice(0, 80) || 'score') + '.json';
-      if (config.embedded) await bridge('download', { sheetId: id, content, name });
-      else {
-        const url = URL.createObjectURL(new Blob([content], { type: 'application/json' })),
-          a = document.createElement('a');
-        a.href = url;
-        a.download = name;
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      }
-      toast('Downloaded');
-      if (config.embedded) await load();
-    } catch (e) {
-      toast(e.message);
-    }
-  }
-  async function exportPdf(sheet = state.sheet) {
-    try {
-      const html = NotationRenderer.printDocument(sheet, config.locale, noteSymbols),
-        name =
-          (sheet.metadata.title.replace(/[^\p{L}\p{N} _-]/gu, '').slice(0, 80) || 'score') + '.pdf';
-      if (config.embedded && !config.browser) {
-        await bridge('pdf', { html, name });
-        toast('PDF export opened.');
-      } else {
-        const frame = document.createElement('iframe');
-        frame.style.cssText = 'position:fixed;width:1px;height:1px;left:-9999px';
-        document.body.append(frame);
-        frame.onload = async () => {
-          await frame.contentDocument.fonts.ready;
-          frame.contentWindow.focus();
-          frame.contentWindow.print();
-          setTimeout(() => frame.remove(), 60000);
-        };
-        frame.srcdoc = html;
-      }
-    } catch (e) {
-      toast(e.message);
-    }
-  }
-  async function exportScore() {
-    const content = JSON.stringify(
-        {
-          format: 'sornaz-notation',
-          version: 1,
-          ...snapshot(),
-          score: { measures: M.trimmedMeasures(state.sheet) },
-        },
-        null,
-        2
-      ),
-      name =
-        (state.sheet.metadata.title.replace(/[^\p{L}\p{N} _-]/gu, '').slice(0, 80) || 'score') +
-        '.json';
-    if (config.embedded) {
-      try {
-        await bridge('export', { content, name });
-      } catch (e) {
-        toast(e.message);
-      }
-    } else {
-      const url = URL.createObjectURL(new Blob([content], { type: 'application/json' })),
-        a = document.createElement('a');
-      a.href = url;
-      a.download = name;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
-  }
-  root.addEventListener('submit', (e) => {
-    if (e.target.id !== 'metadata') return;
-    e.preventDefault();
-    const f = Object.fromEntries(new FormData(e.target));
-    f.bpm = Number(f.bpm);
-    if (config.websitePanel) f.tempo_dots = Number(f.tempo_dots || 0);
-    const visibility = state.sheet.visibility;
-    f.tempo_text = f.tempo_text || '';
-    f.title = f.title.trim();
-    if (!f.title) return toast('Enter a title.');
-    if (!f.tempo_note) {
-      document.querySelector('.beat-picker').open = true;
-      document.querySelector('.beat-picker summary').focus();
-      return;
-    }
-    if (f.bpm < 20 || f.bpm > 300) return toast('Tempo must be between 20 and 300.');
-    if (
-      state.sheet.score.measures.some(
-        (b) => b.notes.reduce((s, n) => s + M.ticks(n), 0) > M.capacity(f)
-      )
-    )
-      return toast('This measure is full.');
-    state.sheet.metadata = f;
-    state.sheet.visibility = visibility;
-    state.dirty = true;
-    state.route = 'editor';
-    notifyRoute();
-    render();
-  });
-  root.addEventListener('input', (e) => {
-    if (e.target.name === 'bpm') {
-      e.target.value = e.target.value
-        .replace(/[۰-۹]/g, (c) => String(c.charCodeAt(0) - 1776))
-        .replace(/[٠-٩]/g, (c) => String(c.charCodeAt(0) - 1632))
-        .replace(/[^0-9]/g, '');
-    }
-    if (e.target.name === 'bpm') updateTempoOptions();
-    if (e.target.closest('#metadata')) {
-      state.dirty = true;
-      notifyRoute();
-    }
-  });
-  root.addEventListener('change', (e) => {
-    if (e.target.name === 'tempo_note') updateTempoOptions();
-    if (config.websitePanel && e.target.name === 'scale_type') {
-      captureForm();
-      state.sheet.metadata.key = '';
-      render();
-      return;
-    }
-    const key = e.target.dataset.choice;
-    if (key) changeChoice(key, key === 'dots' ? Number(e.target.value) : e.target.value);
-  });
-  root.addEventListener('click', async (e) => {
-    if (state.busy) return;
-    const pitch = e.target.closest('[data-pitch]');
-    if (pitch) {
-      insert(pitch.dataset.pitch, pitch.dataset.accidental);
-      return;
-    }
-    const hit = e.target.closest('[data-bar]');
-    if (hit) {
-      stop();
-      state.bar = Number(hit.dataset.bar);
-      state.note = hit.dataset.note === undefined ? -1 : Number(hit.dataset.note);
-      if (state.note >= 0)
-        Object.assign(state.choice, state.sheet.score.measures[state.bar].notes[state.note]);
-      render();
-      return;
-    }
-    const b = e.target.closest('[data-action]');
-    if (!b) return;
-    const action = b.dataset.action,
-      id = Number(b.dataset.id);
-    if (action === 'back') return back();
-    if (action === 'login') return login();
-    if (action === 'new') return newSheet();
-    if (action === 'open') return open(id);
-    if (action === 'filter') {
-      state.mode = b.dataset.mode;
-      return load();
-    }
-    if (action === 'retry') return load();
-    if (action === 'more') {
-      state.page++;
-      return load(true);
-    }
-    if (action === 'language') {
-      captureForm();
-      config.locale = config.locale === 'fa' ? 'en' : 'fa';
-      render();
-      return;
-    }
-    if (action === 'theme') {
-      captureForm();
-      config.dark = !config.dark;
-      render();
-      return;
-    }
-    if (action === 'delete') {
-      const sheet = state.items.find((s) => s.id === id);
-      if (
-        await confirmAction(
-          config.locale === 'fa' ? sheet.title + ' حذف شود' : 'Delete ' + sheet.title + '?'
-        )
-      ) {
-        try {
-          await api('delete', { sheetId: id, payload: { version: sheet.version } });
-          load();
-        } catch (e) {
-          toast(e.message);
-        }
-      }
-      return;
-    }
-    if (action === 'bookmark') {
-      if (!config.userId) return login();
-      const sheet = state.items.find((s) => s.id === id);
-      try {
-        await api('bookmark', { sheetId: id, payload: { active: !sheet.saved } });
-        load();
-      } catch (e) {
-        toast(e.message);
-      }
-      return;
-    }
-    if (action === 'copy') {
-      if (!config.userId) return login();
-      state.sheet = { ...M.fresh(), ...snapshot(), visibility: 'private' };
-      state.dirty = true;
-      notifyRoute();
-      render();
-      return;
-    }
-    if (action === 'pdf-item') {
-      try {
-        return await exportPdf(await api('get', { sheetId: id }));
-      } catch (e) {
-        toast(e.message);
-      }
-      return;
-    }
-    if (action === 'visibility') {
-      try {
-        const sheet = await api('get', { sheetId: id });
-        await api('save', {
-          sheetId: id,
-          payload: {
-            metadata: sheet.metadata,
-            score: sheet.score,
-            visibility: sheet.visibility === 'public' ? 'private' : 'public',
-            version: sheet.version,
-          },
-        });
-        await load();
-      } catch (e) {
-        toast(e.message);
-      }
-      return;
-    }
-    if (action === 'download') return download(id);
-    if (action === 'save') {
-      if (await confirmAction('Save these changes?')) return save();
-      return;
-    }
-    if (action === 'metadata') {
-      stop();
-      try {
-        await loadInstruments();
-      } catch (e) {
-        toast(e.message);
-      }
-      state.route = 'form';
-      notifyRoute();
-      render();
-      return;
-    }
-    if (action === 'play') return play();
-    if (action === 'pdf') return exportPdf();
-    if (action === 'export') return exportScore();
-    if (action === 'print') return window.print();
-    if (action === 'undo' || action === 'redo') {
-      const source = action === 'undo' ? state.history : state.future,
-        target = action === 'undo' ? state.future : state.history;
-      if (source.length) {
-        target.push(snapshot());
-        Object.assign(state.sheet, source.pop());
-        state.bar = Math.min(state.bar, state.sheet.score.measures.length - 1);
-        state.note = -1;
-        state.dirty = true;
-        stop();
-        notifyRoute();
-        render();
-      }
-      return;
-    }
-    if (action === 'palette') {
-      setPaletteOpen(!state.paletteOpen);
-      return;
-    }
-    if (action === 'beat-unit') {
-      const form = document.getElementById('metadata');
-      if (config.websitePanel) {
-        const [unit, dots] = b.dataset.value.split(':');
-        form.elements.tempo_note.value = unit;
-        form.elements.tempo_dots.value = String(Number(dots || 0));
-      } else form.elements.tempo_note.value = b.dataset.value;
-      form.querySelector('.beat-picker').open = false;
-      updateTempoOptions();
-      state.dirty = true;
-      notifyRoute();
-      return;
-    }
-    if (action === 'duration') return changeChoice('duration', b.dataset.value);
-    if (action === 'dots') {
-      const value = Number(b.dataset.value);
-      return changeChoice('dots', state.choice.dots === value ? 0 : value);
-    }
-    if (action === 'rest') return insert('B4', '', true);
-    if (action === 'delete-note')
-      return mutate(() => {
-        const notes = state.sheet.score.measures[state.bar].notes;
-        if (notes.length) notes.splice(state.note < 0 ? notes.length - 1 : state.note, 1);
-        state.note = -1;
-      });
-    if (action === 'add-bar')
-      return mutate(() => {
-        if (state.sheet.score.measures.length >= 64) throw Error('At most 64 measures.');
-        state.sheet.score.measures.splice(state.bar + 1, 0, { notes: [] });
-        state.bar++;
-        state.note = -1;
-      });
-    if (action === 'remove-bar') {
-      if (
-        state.sheet.score.measures[state.bar].notes.length &&
-        !(await confirmAction('Remove all notes in this measure?'))
-      )
-        return;
-      mutate(() => {
-        if (state.sheet.score.measures.length === 1) state.sheet.score.measures[0].notes = [];
-        else state.sheet.score.measures.splice(state.bar, 1);
-        state.bar = Math.min(state.bar, state.sheet.score.measures.length - 1);
-        state.note = -1;
-      });
-      return;
-    }
-    if (action === 'octave-down' || action === 'octave-up') {
-      state.octave = Math.max(1, Math.min(5, state.octave + (action === 'octave-up' ? 1 : -1)));
-      render();
-    }
-  });
-  root.addEventListener(
-    'toggle',
-    (e) => {
-      if (e.target.matches('.beat-picker')) NotationSymbols.center(e.target);
-    },
-    true
-  );
-  root.addEventListener('keydown', (e) => {
-    const key = e.target.closest('[data-pitch]');
-    if (key && (e.key === 'Enter' || e.key === ' ')) {
-      e.preventDefault();
-      insert(key.dataset.pitch, key.dataset.accidental);
-    }
-  });
-  window.addEventListener('beforeunload', (e) => {
-    if (state.dirty) {
-      e.preventDefault();
-      e.returnValue = '';
-    }
-  });
-  window.addEventListener('pagehide', stop);
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) stop();
-  });
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-      if (state.route === 'editor') draw();
-    }, 120);
-  });
-  window.addEventListener('message', (event) => {
-    if (config.websitePanel && event.source === window.parent && event.origin === location.origin && event.data?.type === 'sornaz-notation-new') {
-      if (state.busy) return;
-      (async () => {
-        if (state.route !== 'list' && (!state.sheet?.id || state.dirty) && !(await confirmAction(state.sheet?.id ? 'Discard unsaved changes?' : 'Have you decided not to write a new sheet?'))) return;
-        stop();
-        await newSheet();
-      })();
-      return;
-    }
-    if (!config.websitePanel || event.source !== window.parent || event.origin !== location.origin || event.data?.type !== 'sornaz-notation-filter') return;
-    const mode = event.data.mode;
-    if (!['all', 'mine', 'saved'].includes(mode)) return;
-    if (state.route === 'list') {
-      state.mode = mode;
-      load();
-    } else {
-      back(mode);
-    }
-  });
-  window.Notation = {
-    command(action) {
-      if (!['back', 'new', 'save', 'undo', 'redo', 'play', 'metadata', 'export', 'pdf'].includes(action))
-        return;
-      const b = document.createElement('button');
-      b.dataset.action = action;
-      b.hidden = true;
-      root.append(b);
-      b.click();
-      b.remove();
-    },
-    dispose: stop,
-    configure(next) {
-      captureForm();
-      const initial = !window.Notation.ready;
-      Object.assign(config, next);
-      window.Notation.ready = true;
-      if (initial) load();
-      else {
-        theme();
-        render();
-      }
-      notifyRoute();
-    },
-    receive(id, data, error) {
-      const p = pending.get(id);
-      if (!p) return;
-      pending.delete(id);
-      clearTimeout(p.timeout);
-      error ? p.reject(Error(error)) : p.resolve(data);
-    },
-    back,
-  };
-  if (window.NOTATION_BOOT) window.Notation.configure(window.NOTATION_BOOT);
-  else if (!window.SornazNotation) window.Notation.configure({});
+function snapshot(){return M.clone({metadata:state.sheet.metadata,score:state.sheet.score,visibility:state.sheet.visibility});}
+function mutate(fn){if(!state.sheet?.editable||state.busy)return;const before=snapshot(),beforeBar=state.bar,beforeNote=state.note;try{fn();M.prepare(state.sheet);state.bar=Math.min(state.bar,state.sheet.score.measures.length-1);stop();state.history.push(before);if(state.history.length>80)state.history.shift();state.future=[];state.dirty=true;notifyRoute();render();}catch(e){Object.assign(state.sheet,before);state.bar=beforeBar;state.note=beforeNote;toast(e.message);}}
+function insert(pitch,accidental,rest=false){if(state.route!=='editor'||!state.sheet?.editable||state.busy)return;if(state.chordMode&&state.note>=0&&!rest){mutate(()=>{const note=state.sheet.score.measures[state.bar].notes[state.note],tones=note.pitches||[];if(state.chordTone>=0){tones[state.chordTone]={pitch,accidental:accidental||''};}else if(![note.pitch,...tones.map(t=>t.pitch)].includes(pitch))tones.push({pitch,accidental:accidental||''});note.pitches=tones;state.chordTone=-1;});sound(M.frequency(pitch,accidental,state.sheet.metadata.key),.18);return;}const n={...state.choice,pitch,rest,staff:activeStaff(),voice:state.voice,accidental:accidental??state.choice.accidental};delete n.pitches;delete n.at;if(state.tuplet){const[actual,normal]=state.tuplet.split(':').map(Number);n.tuplet={actual,normal};}else delete n.tuplet;mutate(()=>{if(!Array.isArray(state.sheet.score?.measures))state.sheet.score={measures:[]};if(!state.sheet.score.measures.length)state.sheet.score.measures.push({notes:[]});state.sheet.score.measures=state.sheet.score.measures.map(measure=>measure&&Array.isArray(measure.notes)?measure:{notes:[]});state.bar=Math.max(0,Math.min(Number.isInteger(state.bar)?state.bar:0,state.sheet.score.measures.length-1));const insertedBar=M.insert(state.sheet,state.bar,n);M.prepare(state.sheet);state.bar=Math.max(0,Math.min(insertedBar,state.sheet.score.measures.length-1));const measure=state.sheet.score.measures[state.bar];if(measure&&M.used(measure,activeStaff(),state.voice)>=M.barUnits(state.sheet,state.bar)*64/M.wholeUnits&&state.bar+1<state.sheet.score.measures.length)state.bar++;state.note=-1;state.chordMode=false;state.selectedNotes.clear();state.lastPitch=pitch;state.lastDuration=n.duration;state.lastDots=n.dots;if(!rest){state.lastInsertedDuration=n.duration;state.lastInsertedDots=n.dots;}});requestAnimationFrame(keepLastMeasureVisible);if(!rest)sound(M.frequency(pitch,n.accidental,state.sheet.metadata.key),.18);}
+function compactNotesAfterDelete(){M.compactDelete(state.sheet,state.selectedNotes);state.bar=Math.min(state.bar,state.sheet.score.measures.length-1);state.note=-1;state.selectedNotes.clear();}
+function pasteNotes(){
+ const bar=state.sheet.score.measures[state.bar],selected=bar.notes[state.note];
+ const end=selected?M.positionOf(bar,state.note)+M.units(selected):Math.max(0,...bar.notes.map((note,i)=>M.staffOf(note)===activeStaff()&&M.voiceOf(note)===state.voice?M.positionOf(bar,i)+M.units(note):0));
+ mutate(()=>{state.selectedNotes=M.pasteSelection(state.sheet,clipboard,state.bar,activeStaff(),end);state.note=-1;});
+}
+function sound(hz,duration,when=0){try{audio??=new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const oscillator=audio.createOscillator(),gain=audio.createGain(),start=audio.currentTime+when;oscillator.type='triangle';oscillator.frequency.value=hz;gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(.17,start+.008);gain.gain.exponentialRampToValueAtTime(.001,start+duration);oscillator.connect(gain);gain.connect(audio.destination);oscillator.start(start);oscillator.stop(start+duration+.02);voices.push(oscillator);oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();voices=voices.filter(v=>v!==oscillator);};}catch(e){console.warn('Audio unavailable',e);}}
+function stop(reset=true){voices.forEach(v=>{try{v.stop();}catch(_){}});voices=[];timers.forEach(clearTimeout);timers=[];state.playing=false;if(reset){state.playOffset=null;state.playBar=-1;state.playNote=-1;}}
+function play(){
+ if(state.playing){state.playOffset=(state.playOffset||0)+(performance.now()-state.playStarted)/1000;stop(false);render();return;}
+ const timeline=M.timeline(state.sheet);if(!timeline.events.length)return;
+ let offset=state.playOffset;
+ if(offset===null){const selected=timeline.events.find(e=>e.bar===state.bar&&e.note===Math.max(0,state.note));offset=selected?.start??0;}
+ if(offset>=timeline.duration)offset=0;
+ state.playing=true;state.playOffset=offset;state.playStarted=performance.now();
+ for(const event of timeline.events){
+  if(event.hz&&event.start+event.soundLength>offset)sound(event.hz,Math.max(.03,(event.start+event.soundLength-Math.max(event.start,offset))*.98),Math.max(0,event.start-offset));
+  if(event.start+event.length<=offset)continue;
+  timers.push(setTimeout(()=>{if(!state.playing)return;state.playBar=event.bar;state.playNote=event.note;draw();showPlayingMeasure(event.bar);},Math.max(0,event.start-offset)*1000));
+ }
+ timers.push(setTimeout(()=>{stop();if(state.route==='editor')render();},(timeline.duration-offset)*1000+30));render();
+}
+async function save(){if(state.busy)return;if(!M.trimmedMeasures(state.sheet).length)return toast('Enter at least one note before saving.');state.busy=true;render();try{state.sheet=await api('save',{sheetId:state.sheet.id,payload:{...snapshot(),score:{measures:M.trimmedMeasures(state.sheet)},version:state.sheet.version}});M.prepare(state.sheet);state.bar=Math.min(state.bar,state.sheet.score.measures.length-1);state.dirty=false;notifyRoute();toast('Saved offline.');}catch(e){toast(e.message);}finally{state.busy=false;render();}}
+async function download(id){try{const sheet=await api('get',{sheetId:id});const content=JSON.stringify({format:'sornaz-notation',version:1,metadata:sheet.metadata,score:sheet.score,visibility:sheet.visibility});const name=(sheet.metadata.title.replace(/[^\p{L}\p{N} _-]/gu,'').slice(0,80)||'score')+'.json';if(config.embedded)await bridge('download',{sheetId:id,content,name});else{const url=URL.createObjectURL(new Blob([content],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}toast('Downloaded');if(config.embedded)await load();}catch(e){toast(e.message);}}
+async function exportPdf(sheet=state.sheet){try{const html=NotationRenderer.printDocument(sheet,config.locale,noteSymbols),name=(sheet.metadata.title.replace(/[^\p{L}\p{N} _-]/gu,'').slice(0,80)||'score')+'.pdf';if(config.embedded&&!config.browser){await bridge('pdf',{html,name});toast('PDF export opened.');}else{const frame=document.createElement('iframe');frame.style.cssText='position:fixed;width:1px;height:1px;left:-9999px';document.body.append(frame);frame.onload=async()=>{await frame.contentDocument.fonts.ready;frame.contentWindow.focus();frame.contentWindow.print();setTimeout(()=>frame.remove(),60000);};frame.srcdoc=html;}}catch(e){toast(e.message);}}
+async function exportScore(){const content=JSON.stringify({format:'sornaz-notation',version:1,...snapshot(),score:{measures:M.trimmedMeasures(state.sheet)}},null,2),name=(state.sheet.metadata.title.replace(/[^\p{L}\p{N} _-]/gu,'').slice(0,80)||'score')+'.json';if(config.embedded){try{await bridge('export',{content,name});}catch(e){toast(e.message);}}else{const url=URL.createObjectURL(new Blob([content],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}}
+async function chooseStorageList(ids){let name;if(config.embedded)name=await bridge('choose-list');else{const result=await api('list',{mode:'lists',page:1}),lists=result.items||[];name=prompt(t('Add to list'),lists.map(item=>item.favorite?t('Favorite'):item.title).join('\n'));const match=lists.find(item=>(item.favorite?t('Favorite'):item.title)===name);name=match?.id;}if(!name)return;await api('add-to-list',{name,sheetIds:ids});if(state.mode==='lists')load();}
+async function renameSheet(id){const sheet=await api('get',{sheetId:id}),name=config.embedded?await bridge('rename-dialog',{current:sheet.metadata.title}):prompt(t('Rename'),sheet.metadata.title);if(!name?.trim())return;sheet.metadata.title=name.trim();await api('save',{sheetId:id,payload:{metadata:sheet.metadata,score:sheet.score,visibility:sheet.visibility,version:sheet.version}});await load();}
+async function shareSheets(ids){const sheets=await Promise.all(ids.map(id=>api('get',{sheetId:id}))),content=JSON.stringify({format:'sornaz-notation',version:1,items:sheets.map(sheet=>({metadata:sheet.metadata,score:sheet.score,visibility:sheet.visibility}))}),name=(sheets.length===1?sheets[0].metadata.title:'sornaz-sheets')+'.json';if(config.embedded)await bridge('share',{content,name});else downloadBlob(content,name,'application/json');}
+function downloadBlob(content,name,type){const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function musicXml(sheet){
+ const types={w:'whole',h:'half',q:'quarter','8':'eighth','16':'16th','32':'32nd','64':'64th','128':'128th','256':'256th'};
+ const alterations={b:-1,bb:-2,n:0,'#':1,'##':2,d:-.5,'+':.5};
+ const fifths={C:0,G:1,D:2,A:3,E:4,B:5,'F#':6,'C#':7,F:-1,Bb:-2,Eb:-3,Ab:-4,Db:-5,Gb:-6,Cb:-7,Am:0,Em:1,Bm:2,'F#m':3,'C#m':4,'G#m':5,'D#m':6,'A#m':7,Dm:-1,Gm:-2,Cm:-3,Fm:-4,Bbm:-5,Ebm:-6,Abm:-7};
+ const clefs={treble:['G',2],bass:['F',4],'baritone-f':['F',3],soprano:['C',1],'mezzo-soprano':['C',2],alto:['C',3],tenor:['C',4]};
+ const arts={staccato:'staccato',staccatissimo:'staccatissimo',tenuto:'tenuto',accent:'accent',marcato:'strong-accent'};
+ const meta=sheet.metadata,layout=M.staves(meta),keyFifths=fifths[meta.key]??0,beat=types[meta.tempo_note]||'quarter',duration=n=>M.units(n);
+ const signedOrder=keyFifths>=0?'FCGDAEB':'BEADGCF';
+ const defaultAlter=letter=>signedOrder.slice(0,Math.abs(keyFifths)).includes(letter)?Math.sign(keyFifths):0;
+ const clef=(value,number)=>{const [sign,line]=clefs[value]||clefs.treble;return `<clef${layout.length===2?` number="${number}"`:''}><sign>${sign}</sign><line>${line}</line></clef>`;};
+ const tempoSound=Number(meta.bpm)*M.ticks({duration:meta.tempo_note,dots:meta.tempo_dots||0})/16;
+ const tempo=`<direction placement="above"><direction-type>${meta.tempo_text?`<words>${h(meta.tempo_text)}</words>`:''}<metronome><beat-unit>${beat}</beat-unit>${'<beat-unit-dot/>'.repeat(meta.tempo_dots||0)}<per-minute>${meta.bpm}</per-minute></metronome></direction-type><sound tempo="${tempoSound}"/></direction>`;
+ const xmlNote=(note,staff,tone,chord,carry)=>{
+  const match=/^([A-G])(\d)$/.exec(tone.pitch)||['','C','4'],accidental=tone.accidental||'',pitchKey=tone.pitch;
+  let alter=Object.hasOwn(carry,pitchKey)?carry[pitchKey]:defaultAlter(match[1]);
+  if(accidental){alter=alterations[accidental];carry[pitchKey]=alter;}
+  const ties=note.rest?'':`${note.tiePrevious?'<tie type="stop"/>':''}${note.tieNext?'<tie type="start"/>':''}`;
+  const notations=[note.tiePrevious?'<tied type="stop"/>':'',note.tieNext?'<tied type="start"/>':'',!chord&&arts[note.articulation]?`<articulations><${arts[note.articulation]}/></articulations>`:'',!chord&&note.ornament?`<ornaments><${note.ornament==='trill'?'trill-mark':'mordent'}/></ornaments>`:'',!chord&&note.finger?`<technical><fingering>${h(note.finger)}</fingering></technical>`:'',!chord&&note.bow?`<technical><${note.bow==='up'?'up-bow':'down-bow'}/></technical>`:''].filter(Boolean).join('');
+  const pitch=note.rest?'<rest/>':`<pitch><step>${match[1]}</step>${alter?`<alter>${alter}</alter>`:''}<octave>${match[2]}</octave></pitch>`;
+  const voice=(staff-1)*4+M.voiceOf(note),tuplet=note.tuplet?`<time-modification><actual-notes>${note.tuplet.actual}</actual-notes><normal-notes>${note.tuplet.normal}</normal-notes></time-modification>`:'';
+  return `<note>${chord?'<chord/>':''}${pitch}<duration>${duration(note)}</duration>${ties}<voice>${voice}</voice><type>${types[note.duration]}</type>${'<dot/>'.repeat(note.dots||0)}${tuplet}${accidental?`<accidental>${({'#':'sharp',b:'flat',n:'natural','##':'double-sharp',bb:'flat-flat','+':'quarter-sharp',d:'quarter-flat'})[accidental]}</accidental>`:''}${layout.length===2?`<staff>${staff}</staff>`:''}${notations?`<notations>${notations}</notations>`:''}</note>`;
+ };
+ const measures=M.trimmedMeasures(sheet).map((measure,index)=>{
+  const barTime=M.effectiveTime(sheet,index),barDuration=M.barUnits(sheet,index);
+  const sourceMeasure=sheet.score.measures[M.measureSource(sheet,index)];
+  const timeSymbol=measure.timeSymbol?` symbol="${measure.timeSymbol==='cut'?'cut':'common'}"`:'';
+  const attrs=index===0?`<attributes><divisions>${M.wholeUnits/4}</divisions><key><fifths>${keyFifths}</fifths><mode>${String(meta.key).endsWith('m')?'minor':'major'}</mode></key><time${timeSymbol}><beats>${barTime.split('/')[0]}</beats><beat-type>${barTime.split('/')[1]}</beat-type></time>${layout.length===2?'<staves>2</staves>':''}${layout.map((s,i)=>clef(s.clef,i+1)).join('')}</attributes>${tempo}`:measure.time||measure.timeSymbol?`<attributes><time${timeSymbol}><beats>${barTime.split('/')[0]}</beats><beat-type>${barTime.split('/')[1]}</beat-type></time></attributes>`:'';
+  const content=layout.map((_,i)=>{
+   const notes=M.lane(sourceMeasure,i+1),carry={},prefix=i?`<backup><duration>${barDuration}</duration></backup>`:'',voiceIds=[...new Set(notes.map(M.voiceOf))].sort((a,b)=>a-b);
+   const rendered=voiceIds.length?voiceIds.map((voiceId,voiceIndex)=>{
+    let cursor=0;const chunks=[voiceIndex?`<backup><duration>${barDuration}</duration></backup>`:''];
+    const entries=sourceMeasure.notes.map((note,noteIndex)=>({note,at:M.positionOf(sourceMeasure,noteIndex)})).filter(({note})=>M.staffOf(note)===i+1&&M.voiceOf(note)===voiceId).sort((a,b)=>a.at-b.at);
+    for(const {note,at} of entries){if(at>cursor)chunks.push(`<forward><duration>${at-cursor}</duration></forward>`);cursor=at+duration(note);
+    const dynamic=note.dynamic?`<direction placement="below"><direction-type><dynamics>${/^(ppp|pp|p|mp|mf|f|ff|fff|sfz|sffz|sfffz|fp)$/.test(note.dynamic)?`<${note.dynamic}/>`:`<other-dynamics>${h(note.dynamic)}</other-dynamics>`}</dynamics></direction-type>${layout.length===2?`<staff>${i+1}</staff>`:''}</direction>`:'';
+    chunks.push(dynamic+xmlNote(note,i+1,{pitch:note.pitch,accidental:note.accidental},false,carry)+(note.pitches||[]).map(tone=>xmlNote(note,i+1,tone,true,carry)).join(''));}
+    if(cursor<barDuration)chunks.push(`<forward><duration>${barDuration-cursor}</duration></forward>`);
+    return chunks.join('');
+   }).join(''):`<note><rest measure="yes"/><duration>${barDuration}</duration><voice>${i*4+1}</voice>${layout.length===2?`<staff>${i+1}</staff>`:''}</note>`;
+   return prefix+rendered;
+  }).join('');
+  const repeat=measure.repeat||{},ending=repeat.endings?.join(',');
+  const left=(repeat.start||ending)?`<barline location="left">${ending?`<ending number="${h(ending)}" type="start"/>`:''}${repeat.start?'<repeat direction="forward"/>':''}</barline>`:'';
+  const style={double:'light-light',final:'light-heavy',hidden:'none'}[measure.barline];
+  const right=(repeat.end||ending||style)?`<barline location="right">${style?`<bar-style>${style}</bar-style>`:''}${ending?`<ending number="${h(ending)}" type="stop"/>`:''}${repeat.end?`<repeat direction="backward" times="${repeat.end}"/>`:''}</barline>`:'';
+  const markers={segno:'<segno/>',coda:'<coda/>',toCoda:'<words>To Coda</words>',fine:'<words>Fine</words>'};
+  const jumps={dc:'D.C.',ds:'D.S.',dcAlFine:'D.C. al Fine',dsAlFine:'D.S. al Fine',dcAlCoda:'D.C. al Coda',dsAlCoda:'D.S. al Coda'};
+  const markerSound={segno:'segno="segno1"',coda:'coda="coda1"',toCoda:'tocoda="coda1"',fine:'fine="yes"'};
+  const jumpSound={dc:'dacapo="yes"',ds:'dalsegno="segno1"',dcAlFine:'dacapo="yes"',dsAlFine:'dalsegno="segno1"',dcAlCoda:'dacapo="yes"',dsAlCoda:'dalsegno="segno1"'};
+  const directions=[repeat.marker?`<direction><direction-type>${markers[repeat.marker]}</direction-type><sound ${markerSound[repeat.marker]}/></direction>`:'',repeat.jump?`<direction><direction-type><words>${jumps[repeat.jump]}</words></direction-type><sound ${jumpSound[repeat.jump]}/></direction>`:''].join('');
+  const repeatNumber=at=>{const bars=sheet.score.measures;return bars[at]?.repeat?.measure||(at>0&&bars[at-1]?.repeat?.measure===2?2:0);};
+  const previousRepeat=repeatNumber(index-1),currentRepeat=repeatNumber(index);
+  const measureRepeat=currentRepeat&&repeat.measure&&previousRepeat!==currentRepeat?`<attributes><measure-style><measure-repeat type="start">${currentRepeat}</measure-repeat></measure-style></attributes>`:!currentRepeat&&previousRepeat?'<attributes><measure-style><measure-repeat type="stop"/></measure-style></attributes>':'';
+  return `<measure number="${index+1}"${measure.length?' implicit="yes"':''}>${attrs}${measureRepeat}${left}${directions}${content}${right}</measure>`;
+ }).join('');
+ const creators=[['composer',meta.composer],['lyricist',meta.lyricist],['arranger',meta.arranger]].filter(([,value])=>value).map(([kind,value])=>`<creator type="${kind}">${h(value)}</creator>`).join('');
+ return `<?xml version="1.0" encoding="UTF-8"?><score-partwise version="3.1"><work><work-title>${h(meta.title)}</work-title></work><movement-title>${h(meta.title)}</movement-title>${creators?`<identification>${creators}</identification>`:''}${meta.subtitle?`<credit><credit-words>${h(meta.subtitle)}</credit-words></credit>`:''}<part-list><score-part id="P1"><part-name>${h(meta.instrument||'Music')}</part-name></score-part></part-list><part id="P1">${measures}</part></score-partwise>`;
+}
+async function exportSibelius(id){const sheet=await api('get',{sheetId:id}),content=musicXml(sheet),name=(sheet.metadata.title.replace(/[^\p{L}\p{N} _-]/gu,'').slice(0,80)||'score')+'.musicxml';if(config.embedded)await bridge('sibelius',{content,name});else downloadBlob(content,name,'application/vnd.recordare.musicxml+xml');}
+async function exportMusicXml(id){const sheet=await api('get',{sheetId:id}),content=musicXml(sheet),name=(sheet.metadata.title.replace(/[^\p{L}\p{N} _-]/gu,'').slice(0,80)||'score')+'.musicxml';if(config.embedded)await bridge('musicxml',{content,name});else downloadBlob(content,name,'application/vnd.recordare.musicxml+xml');}
+root.addEventListener('submit',async e=>{if(e.target.id!=='metadata')return;e.preventDefault();const f=Object.fromEntries(new FormData(e.target));f.bpm=Number(f.bpm);const[tempoNote,tempoDots]=String(f.tempo_unit||'').split(':');f.tempo_note=tempoNote;f.tempo_dots=Number(tempoDots||0);delete f.tempo_unit;const visibility=state.sheet.visibility;f.tempo_text=f.tempo_text||'';f.title=f.title.trim();if(!f.title)return toast('Enter a title.');if(!f.tempo_note){document.querySelector('.beat-picker').open=true;document.querySelector('.beat-picker summary').focus();return;}if(f.bpm<20||f.bpm>300)return toast('Tempo must be between 20 and 300.');const nextStaves=instrumentStaves(f.instrument)||[{clef:f.clef||state.sheet.metadata.clef||'treble'}];f.staves=nextStaves;f.clef=nextStaves[0].clef;if(state.sheet.score.measures.some((bar,index)=>bar.notes.some((note,noteIndex)=>M.positionOf(bar,noteIndex)+M.units(note)>M.barUnits({metadata:f,score:state.sheet.score},index))))return toast('This measure is full.');if(M.staves(state.sheet.metadata).length===2&&nextStaves.length===1&&state.sheet.score.measures.some(b=>M.lane(b,2).length)&&!await confirmAction('The lower-staff notes will be hidden, but preserved. Continue?'))return;state.sheet.metadata=f;state.staff=1;state.note=-1;state.chordMode=false;state.sheet.visibility=visibility;state.dirty=true;state.formFromEditor=false;state.route='editor';notifyRoute();render();});
+root.addEventListener('input',e=>{if(e.target.name==='bpm'){e.target.value=e.target.value.replace(/[۰-۹]/g,c=>String(c.charCodeAt(0)-1776)).replace(/[٠-٩]/g,c=>String(c.charCodeAt(0)-1632)).replace(/[^0-9]/g,'');}if(e.target.name==='bpm')updateTempoOptions();if(e.target.closest('#metadata')){state.dirty=true;notifyRoute();}});
+root.addEventListener('change',e=>{if(e.target.matches('[data-tuplet]')){state.tuplet=e.target.value;if(state.note>=0)mutate(()=>{const bar=state.sheet.score.measures[state.bar],note={...bar.notes[state.note]};if(state.tuplet){const[actual,normal]=state.tuplet.split(':').map(Number);note.tuplet={actual,normal};}else delete note.tuplet;state.bar=M.insert(state.sheet,state.bar,note,state.note);state.note=-1;});else render();return;}const measureKey=e.target.dataset.measureChoice;if(measureKey){changeMeasure(measureKey,e.target.value);return;}if(e.target.name==='tempo_unit')updateTempoOptions();if(e.target.name==='scale_type'){captureForm();state.sheet.metadata.key='';render();return;}if(e.target.name==='instrument'){captureForm();render();return;}const key=e.target.dataset.choice;if(key)changeChoice(key,key==='dots'?Number(e.target.value):e.target.value);});
+root.addEventListener('pointerdown',e=>{const key=e.target.closest('[data-pitch]');if(key&&state.route==='editor'&&state.sheet?.editable&&config.durationMode!==2)durationGestureStart(e,key);const note=e.target.closest('[data-note]');if(note&&state.sheet?.editable){e.preventDefault();const bar=Number(note.dataset.bar),index=Number(note.dataset.note);try{root.setPointerCapture(e.pointerId);}catch(_){}if(state.selectedNotes.has(noteKey(bar,index))){startNoteMove(e,note);}else{pendingNoteGesture={bar,note:index,startX:e.clientX,startY:e.clientY,lastX:e.clientX,lastY:e.clientY,pointerId:e.pointerId};noteSelectionTimer=setTimeout(()=>{if(!pendingNoteGesture)return;const pending=pendingNoteGesture;pendingNoteGesture=null;startNoteMove(pending,{dataset:{bar:pending.bar,note:pending.note}});updateNoteMove(pending.lastX,pending.lastY);},320);}}const sheet=e.target.closest('[data-sheet-id]');if(sheet&&!e.target.closest('.icon,.sheet-menu'))selectionTimer=setTimeout(()=>{suppressSheetClick=performance.now()+500;state.selected.add(Number(sheet.dataset.sheetId));render();},450);});
+window.addEventListener('pointermove',e=>{if(pendingNoteGesture&&e.pointerId===pendingNoteGesture.pointerId){pendingNoteGesture.lastX=e.clientX;pendingNoteGesture.lastY=e.clientY;}if(pitchGesture||noteMoveGesture){e.preventDefault();if(pitchGesture)updateDurationGesture(e.clientY);if(noteMoveGesture)updateNoteMove(e.clientX,e.clientY);}},{passive:false});
+window.addEventListener('pointerup',e=>{clearTimeout(selectionTimer);clearTimeout(noteSelectionTimer);const pending=pendingNoteGesture;pendingNoteGesture=null;if(pending&&e.pointerId===pending.pointerId)selectNote(pending.bar,pending.note);finishDurationGesture();finishNoteMove();});
+window.addEventListener('pointercancel',()=>{clearTimeout(selectionTimer);clearTimeout(noteSelectionTimer);pendingNoteGesture=null;finishDurationGesture(true);finishNoteMove(true);});
+root.addEventListener('contextmenu',e=>{if(e.target.closest('[data-note]'))e.preventDefault();});
+window.addEventListener('touchmove',e=>{if(state.route==='editor'&&state.selectedNotes.size&&(noteMoveGesture||e.target.closest?.('#score')))e.preventDefault();},{passive:false});
+root.addEventListener('click',async e=>{
+ document.querySelectorAll('.sheet-menu[open]').forEach(menu=>{if(!menu.contains(e.target))menu.open=false;});
+ if(state.busy)return;const pitch=e.target.closest('[data-pitch]');if(pitch){if(performance.now()<suppressPitchClick)return;insert(pitch.dataset.pitch,pitch.dataset.accidental);return;}
+ const selectedSheet=e.target.closest('[data-sheet-id]');if(selectedSheet&&performance.now()<suppressSheetClick)return;if(selectedSheet&&state.selected.size&&!e.target.closest('.icon,.sheet-menu')){const selectedId=Number(selectedSheet.dataset.sheetId);state.selected.has(selectedId)?state.selected.delete(selectedId):state.selected.add(selectedId);render();return;}
+  const hit=e.target.closest('[data-bar]');if(hit){if(performance.now()<suppressNoteClick)return;stop();state.bar=Number(hit.dataset.bar);state.staff=Number(hit.dataset.staff)||1;state.note=hit.dataset.note===undefined?-1:Number(hit.dataset.note);state.chordMode=false;state.chordTone=-1;state.selectedNotes=state.note>=0?new Set([noteKey(state.bar,state.note)]):new Set();if(state.note>=0){const selected=state.sheet.score.measures[state.bar].notes[state.note];state.voice=M.voiceOf(selected);state.tuplet=selected.tuplet?`${selected.tuplet.actual}:${selected.tuplet.normal}`:'';Object.assign(state.choice,selected);}render();return;}
+ const b=e.target.closest('[data-action]');if(!b)return;const action=b.dataset.action,id=Number(b.dataset.id);
+  if(action==='staff'){state.staff=Number(b.dataset.staff);state.note=-1;state.chordMode=false;state.chordTone=-1;state.selectedNotes.clear();render();return;}
+  if(action==='voice'){state.voice=Number(b.dataset.voice);state.note=-1;state.selectedNotes.clear();render();return;}
+  if(action==='chord'){state.chordMode=!state.chordMode;state.chordTone=-1;render();return;}
+  if(action==='chord-tone'){state.chordMode=true;state.chordTone=Number(b.dataset.index);render();return;}
+  if(action==='remove-chord-tone'){const index=Number(b.dataset.index);mutate(()=>{state.sheet.score.measures[state.bar].notes[state.note].pitches.splice(index,1);state.chordTone=-1;});return;}
+ if(action==='back')return back();if(action==='login')return login();if(action==='new')return newSheet();if(action==='open')return open(id);
+ if(action==='reload')return load();
+ if(action==='lists'){state.mode='lists';return load();}
+ if(action==='toggle-list'){const key=b.dataset.list;state.expanded.has(key)?state.expanded.delete(key):state.expanded.add(key);render();return;}
+ if(action==='filter'){state.mode=b.dataset.mode;state.selected.clear();return load();}if(action==='retry')return load();if(action==='more'){state.page++;return load(true);}
+ if(action==='select-all'){const rows=state.items.flatMap(item=>item.kind==='list'?(item.items||[]):[item]);if(rows.length&&rows.every(item=>state.selected.has(item.id)))state.selected.clear();else rows.forEach(item=>state.selected.add(item.id));render();return;}
+ if(action==='clear-selection'){state.selected.clear();render();return;}
+ if(action==='rename'||action==='rename-selected')return renameSheet(action==='rename'?id:[...state.selected][0]);
+ if(action==='add-to-list'||action==='add-selected-to-list')return chooseStorageList(action==='add-to-list'?[id]:[...state.selected]);
+ if(action==='share-sheet'||action==='share-selected')return shareSheets(action==='share-sheet'?[id]:[...state.selected]);
+ if(action==='sibelius')return exportSibelius(id);
+ if(action==='musicxml')return exportMusicXml(id);
+ if(action==='delete-selected'){if(await confirmAction(config.locale==='fa'?`${state.selected.size} نت حذف شود؟`:`Delete ${state.selected.size} scores?`)){for(const selectedId of state.selected)await api('delete',{sheetId:selectedId});state.selected.clear();await load();}return;}
+ if(action==='language'){captureForm();config.locale=config.locale==='fa'?'en':'fa';render();return;}
+ if(action==='theme'){captureForm();config.dark=!config.dark;render();return;}
+ if(action==='upload'){try{await api('upload',{sheetId:id});toast('Uploaded successfully.');await load();}catch(e){toast(e.message);}return;}
+ if(action==='delete'){const sheet=state.items.find(s=>s.id===id);if(await confirmAction(config.locale==='fa'?sheet.title+' حذف شود':'Delete '+sheet.title+'?')){try{await api('delete',{sheetId:id,payload:{version:sheet.version}});load();}catch(e){toast(e.message);}}return;}
+ if(action==='bookmark'){if(!config.userId)return login();const sheet=state.items.find(s=>s.id===id);try{await api('bookmark',{sheetId:id,payload:{active:!sheet.saved}});load();}catch(e){toast(e.message);}return;}
+ if(action==='copy'){if(!config.userId)return login();state.sheet={...M.fresh(),...snapshot(),visibility:'private'};state.dirty=true;notifyRoute();render();return;}
+ if(action==='pdf-item'){try{return await exportPdf(await api('get',{sheetId:id}));}catch(e){toast(e.message);}return;}
+ if(action==='visibility'){try{const sheet=await api('get',{sheetId:id});await api('save',{sheetId:id,payload:{metadata:sheet.metadata,score:sheet.score,visibility:sheet.visibility==='public'?'private':'public',version:sheet.version}});await load();}catch(e){toast(e.message);}return;}
+ if(action==='download')return download(id);if(action==='upload-current'){try{state.sheet=await api('upload',{sheetId:state.sheet.id});notifyRoute();toast('Uploaded successfully.');render();}catch(e){toast(e.message);}return;}if(action==='save'){if(await confirmAction('Save these changes?'))return save();return;}if(action==='metadata'){stop();try{await loadInstruments();}catch(e){toast(e.message);}state.formFromEditor=true;state.route='form';notifyRoute();render();return;}
+ if(action==='play')return play();if(action==='pdf')return exportPdf();if(action==='export')return exportScore();if(action==='print')return window.print();
+ if(action==='undo'||action==='redo'){const source=action==='undo'?state.history:state.future,target=action==='undo'?state.future:state.history;if(source.length){target.push(snapshot());Object.assign(state.sheet,source.pop());state.bar=Math.min(state.bar,state.sheet.score.measures.length-1);state.note=-1;state.dirty=true;stop();notifyRoute();render();}return;}
+ if(action==='palette'){setPaletteOpen(!state.paletteOpen);return;}
+ if(action==='beat-unit'){const form=document.getElementById('metadata');form.elements.tempo_unit.value=b.dataset.value;form.querySelector('.beat-picker').open=false;updateTempoOptions();state.dirty=true;notifyRoute();return;}
+ if(action==='duration')return changeChoice('duration',b.dataset.value);
+ if(action==='dots'){const value=Number(b.dataset.value);return changeChoice('dots',state.choice.dots===value?0:value);}
+ if(action==='rest')return insert('B4','',true);
+  if(action==='delete-note-rest'){if(!state.selectedNotes.size)return;return mutate(()=>{for(const key of state.selectedNotes){const [bar,index]=key.split(':').map(Number),note=state.sheet.score.measures[bar]?.notes?.[index];if(note)state.sheet.score.measures[bar].notes[index]=M.asRest(note);}state.note=-1;state.selectedNotes.clear();});}
+ if(action==='delete-note-compact'){if(!state.selectedNotes.size)return;return mutate(compactNotesAfterDelete);}
+ if(action==='copy-notes'||action==='cut-notes'||action==='duplicate-notes'){
+  clipboard=M.copySelection(state.sheet,state.selectedNotes);
+  if(action==='cut-notes')return mutate(()=>{for(const key of state.selectedNotes){const[bar,index]=key.split(':').map(Number),note=state.sheet.score.measures[bar]?.notes[index];if(note)state.sheet.score.measures[bar].notes[index]=M.asRest(note);}state.selectedNotes.clear();state.note=-1;});
+  if(action==='duplicate-notes')return pasteNotes();render();return;
+ }
+ if(action==='paste-notes')return pasteNotes();
+ if(action==='add-bar')return mutate(()=>{if(state.sheet.score.measures.length>=64)throw Error('At most 64 measures.');state.sheet.score.measures.splice(state.bar+1,0,{notes:[],preserve:true});state.bar++;state.note=-1;});
+ if(action==='remove-bar'){if(state.sheet.score.measures[state.bar].notes.length&&!await confirmAction('Remove all notes in this measure?'))return;mutate(()=>{if(state.sheet.score.measures.length===1)state.sheet.score.measures[0].notes=[];else state.sheet.score.measures.splice(state.bar,1);state.bar=Math.min(state.bar,state.sheet.score.measures.length-1);state.note=-1;});return;}
+ if(action==='octave-down'||action==='octave-up'){state.octave=Math.max(1,Math.min(5,state.octave+(action==='octave-up'?1:-1)));render();}
+});
+root.addEventListener('toggle',e=>{if(e.target.matches('.measure-tools'))state.measureToolsOpen=e.target.open;if(e.target.matches('.beat-picker'))NotationSymbols.center(e.target);if(e.target.matches('.sheet-menu')&&e.target.open)document.querySelectorAll('.sheet-menu[open]').forEach(menu=>{if(menu!==e.target)menu.open=false;});},true);
+root.addEventListener('keydown',e=>{const key=e.target.closest('[data-pitch]');if(key&&(e.key==='Enter'||e.key===' ')){e.preventDefault();insert(key.dataset.pitch,key.dataset.accidental);}});
+window.addEventListener('beforeunload',e=>{if(state.dirty){e.preventDefault();e.returnValue='';}});
+window.addEventListener('pagehide',stop);document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});
+window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(state.route==='editor')draw();},120);});
+window.Notation={command(action){if(!['back','save','undo','redo','delete-note-rest','delete-note-compact','play','metadata','export','pdf','reload','lists'].includes(action))return;const b=document.createElement('button');b.dataset.action=action;b.hidden=true;root.append(b);b.click();b.remove();},reload:load,dispose:stop,configure(next){captureForm();const initial=!window.Notation.ready;Object.assign(config,next);window.Notation.ready=true;if(initial)load();else{theme();render();}notifyRoute();},receive(id,data,error){const p=pending.get(id);if(!p)return;pending.delete(id);clearTimeout(p.timeout);error?p.reject(Error(error)):p.resolve(data);},back};
+if(window.NOTATION_BOOT)window.Notation.configure(window.NOTATION_BOOT);
+else if(!window.SornazNotation)window.Notation.configure({});
 })();

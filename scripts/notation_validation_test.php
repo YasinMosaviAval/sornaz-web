@@ -49,4 +49,42 @@ $restSaved=$service->validate($restScore);
 if(json_decode($restSaved['score'],true)['measures'][0]['notes'][0]['staff']!==2)throw new Exception('Converted chord rest lost its staff');
 $restScore['score']['measures'][0]['notes'][0]['pitches']=[['pitch'=>'E4','accidental'=>'']];
 try{$service->validate($restScore);throw new Exception('Rest with chord tones accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
-echo "Notation validation: legacy scores, seven clefs, independent piano staves, chords and tempo passed.\n";
+$timed=['metadata'=>$meta+['clef'=>'treble'],'score'=>['measures'=>[['time'=>'7/8','length'=>846720,'notes'=>[
+    ['pitch'=>'C4','duration'=>'8','dots'=>0,'rest'=>false,'staff'=>1,'voice'=>1,'at'=>0,'tuplet'=>['actual'=>3,'normal'=>2]],
+    ['pitch'=>'E4','duration'=>'q','dots'=>0,'rest'=>false,'staff'=>1,'voice'=>2,'at'=>0],
+]]]]];
+$timedSaved=json_decode($service->validate($timed)['score'],true)['measures'][0];
+if($timedSaved['time']!=='7/8'||$timedSaved['length']!==846720||$timedSaved['notes'][0]['at']!==0||$timedSaved['notes'][0]['tuplet']['actual']!==3||$timedSaved['notes'][1]['voice']!==2)throw new Exception('Independent timing fields lost');
+$timed['score']['measures'][]=['notes'=>[['pitch'=>'F4','duration'=>'h','dots'=>0,'rest'=>false,'staff'=>1],['pitch'=>'G4','duration'=>'q','dots'=>0,'rest'=>false,'staff'=>1]]];
+$service->validate($timed);
+$timed['score']['measures'][1]['notes'][0]['duration']='w';
+try{$service->validate($timed);throw new Exception('Time change was not carried into next measure');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+$timed['score']['measures'][1]['notes'][0]['duration']='h';
+$timed['score']['measures'][0]['notes'][1]['voice']=1;
+try{$service->validate($timed);throw new Exception('Overlapping notes accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+$repeat=['metadata'=>$meta+['clef'=>'treble'],'score'=>['measures'=>[
+    ['notes'=>[['pitch'=>'C4','duration'=>'q','dots'=>0,'rest'=>false]],'repeat'=>['start'=>true],'barline'=>'double'],
+    ['notes'=>[['pitch'=>'D4','duration'=>'q','dots'=>0,'rest'=>false]],'repeat'=>['end'=>2,'endings'=>[1]]],
+    ['notes'=>[['pitch'=>'E4','duration'=>'q','dots'=>0,'rest'=>false]],'repeat'=>['endings'=>[2],'marker'=>'fine','jump'=>'dcAlFine']],
+]]];
+$repeatSaved=json_decode($service->validate($repeat)['score'],true)['measures'];
+if($repeatSaved[0]['repeat']['start']!==true||$repeatSaved[1]['repeat']['end']!==2||$repeatSaved[2]['repeat']['jump']!=='dcAlFine')throw new Exception('Repeat structure lost');
+$repeat['score']['measures'][]=['notes'=>[],'repeat'=>['marker'=>'coda']];
+if(count(json_decode($service->validate($repeat)['score'],true)['measures'])!==4)throw new Exception('Trailing repeat marker was removed');
+$repeat['score']['measures'][1]['repeat']['end']=99;
+try{$service->validate($repeat);throw new Exception('Invalid repeat count accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+$repeat['score']['measures'][1]['repeat']['end']=2;$repeat['score']['measures'][2]['repeat']['jump']='dsAlFine';
+try{$service->validate($repeat);throw new Exception('D.S. without Segno accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+$repeatMeasure=['metadata'=>$meta+['clef'=>'treble'],'score'=>['measures'=>[
+    ['notes'=>[['pitch'=>'C4','duration'=>'q','dots'=>0,'rest'=>false]]],
+    ['notes'=>[],'repeat'=>['measure'=>1]],
+]]];
+$service->validate($repeatMeasure);
+$repeatMeasure['score']['measures'][0]['time']='4/4';$repeatMeasure['score']['measures'][0]['timeSymbol']='common';
+if(json_decode($service->validate($repeatMeasure)['score'],true)['measures'][0]['timeSymbol']!=='common')throw new Exception('Common time symbol was lost');
+$repeatMeasure['score']['measures'][0]['timeSymbol']='cut';
+try{$service->validate($repeatMeasure);throw new Exception('Invalid cut time accepted with 4/4');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+$repeatMeasure['score']['measures'][0]['timeSymbol']='common';
+$repeatMeasure['score']['measures'][1]['notes']=[['pitch'=>'D4','duration'=>'q','dots'=>0,'rest'=>false]];
+try{$service->validate($repeatMeasure);throw new Exception('Measure repeat hid existing notes');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+echo "Notation validation: legacy scores, staves, chords, timing, tuplets and repeats passed.\n";

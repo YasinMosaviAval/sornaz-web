@@ -106,7 +106,7 @@ class NotationService
         if (!ctype_digit($clean['instrument']) && !in_array($clean['instrument'], ['Tar', 'Setar', 'Guitar', 'Piano', 'Violin', 'Flute', 'Voice'], true)) {
             throw new RuntimeException('Invalid instrument.', 422);
         }
-        $enums = ['key' => self::KEYS, 'time' => ['2/4', '3/4', '4/4', '6/8', '9/8', '12/8', '2/2', '6/4'], 'tempo_note' => array_map('strval', array_keys(self::DURATIONS)), 'clef' => ['treble', 'bass', 'baritone-f', 'soprano', 'mezzo-soprano', 'alto', 'tenor']];
+        $enums = ['key' => self::KEYS, 'tempo_note' => array_map('strval', array_keys(self::DURATIONS)), 'clef' => ['treble', 'bass', 'baritone-f', 'soprano', 'mezzo-soprano', 'alto', 'tenor']];
         foreach ($enums as $key => $values) {
             $v = $meta[$key] ?? null;
             if (!in_array($v, $values, true)) {
@@ -114,6 +114,7 @@ class NotationService
             }
             $clean[$key] = $v;
         }
+        $clean['time'] = $this->validatedTime($meta['time'] ?? null);
         $staves = $meta['staves'] ?? [['clef' => $clean['clef']]];
         if (!is_array($staves) || !array_is_list($staves) || count($staves) < 1 || count($staves) > 2) {
             throw new RuntimeException('Invalid staves.', 422);
@@ -127,9 +128,9 @@ class NotationService
         }
         $clean += $this->extendedMetadata($meta, $clean['key']);
         $clean['bpm'] = $this->validatedBpm($meta['bpm'] ?? null);
-        [$top,$bottom] = array_map('intval', explode('/', $clean['time']));
-        $capacity = $top * 64 / $bottom;
         $measures = [];
+        $measureLengths = [];
+        $currentTime = $clean['time'];
         foreach ($score['measures'] as $measure) {
             if (!is_array($measure) || !isset($measure['notes']) || !is_array($measure['notes']) || !array_is_list($measure['notes']) || count($measure['notes']) > 128) {
                 throw new RuntimeException('Invalid measure.', 422);
@@ -137,8 +138,17 @@ class NotationService
             if (isset($measure['preserve']) && !is_bool($measure['preserve'])) {
                 throw new RuntimeException('Invalid measure.', 422);
             }
+            if (isset($measure['time'])) $currentTime = $this->validatedTime($measure['time']);
+            $barTime = $currentTime;
+            [$top, $bottom] = array_map('intval', explode('/', $barTime));
+            $fullLength = intdiv($top * 967680, $bottom);
+            $capacity = $measure['length'] ?? $fullLength;
+            if (!is_int($capacity) || $capacity < 1 || $capacity > $fullLength) {
+                throw new RuntimeException('Invalid measure length.', 422);
+            }
             $notes = [];
-            $ticks = [1 => 0, 2 => 0];
+            $cursors = [];
+            $intervals = [];
             foreach ($measure['notes'] as $n) {
                 if (!is_array($n) || !isset($n['pitch']) || !is_string($n['pitch']) || !preg_match('/^(?:[A-G][1-7]|[AB]0|C8)$/D', $n['pitch']) || !is_string($n['duration'] ?? null) || !isset(self::DURATIONS[$n['duration']])) {
                     throw new RuntimeException('Invalid note.', 422);
@@ -155,11 +165,37 @@ class NotationService
                 if (!is_int($staff) || !in_array($staff, [1, 2], true)) {
                     throw new RuntimeException('Invalid staff.', 422);
                 }
-                $ticks[$staff] += self::DURATIONS[$n['duration']] * (2 - pow(.5, $dots));
-                if ($ticks[$staff] > $capacity + .001) {
+                $voice = $n['voice'] ?? 1;
+                if (!is_int($voice) || $voice < 1 || $voice > 4) {
+                    throw new RuntimeException('Invalid voice.', 422);
+                }
+                $tuplet = $n['tuplet'] ?? null;
+                if ($tuplet !== null && (!is_array($tuplet) || !is_int($tuplet['actual'] ?? null) || !is_int($tuplet['normal'] ?? null)
+                    || !in_array($tuplet['actual'] . ':' . $tuplet['normal'], ['3:2', '5:4', '7:4', '4:3', '6:4', '9:8'], true))) {
+                    throw new RuntimeException('Invalid tuplet.', 422);
+                }
+                $length = (int) round(self::DURATIONS[$n['duration']] * 15120 * (2 - pow(.5, $dots)));
+                if ($tuplet !== null) {
+                    $numerator = $length * $tuplet['normal'];
+                    if ($numerator % $tuplet['actual'] !== 0) {
+                        throw new RuntimeException('Invalid tuplet duration.', 422);
+                    }
+                    $length = intdiv($numerator, $tuplet['actual']);
+                }
+                $lane = $staff . ':' . $voice;
+                $at = $n['at'] ?? ($cursors[$lane] ?? 0);
+                if (!is_int($at) || $at < 0 || $at + $length > $capacity) {
                     throw new RuntimeException('This measure is full.', 422);
                 }
-                $note = ['pitch' => $n['pitch'], 'duration' => $n['duration'], 'dots' => $dots, 'rest' => $n['rest'], 'accidental' => $acc, 'staff' => $staff];
+                foreach ($intervals[$lane] ?? [] as [$start, $end]) {
+                    if ($at < $end && $at + $length > $start) {
+                        throw new RuntimeException('Overlapping notes in one voice.', 422);
+                    }
+                }
+                $intervals[$lane][] = [$at, $at + $length];
+                $cursors[$lane] = max($cursors[$lane] ?? 0, $at + $length);
+                $note = ['pitch' => $n['pitch'], 'duration' => $n['duration'], 'dots' => $dots, 'rest' => $n['rest'], 'accidental' => $acc, 'staff' => $staff, 'voice' => $voice, 'at' => $at];
+                if ($tuplet !== null) $note['tuplet'] = ['actual' => $tuplet['actual'], 'normal' => $tuplet['normal']];
                 $pitches = $n['pitches'] ?? [];
                 if (!is_array($pitches) || !array_is_list($pitches) || count($pitches) > 7 || ($n['rest'] && $pitches)) {
                     throw new RuntimeException('Invalid chord.', 422);
@@ -190,9 +226,75 @@ class NotationService
                 }
                 $notes[] = $note;
             }
-            $measures[] = ['notes' => $notes, 'preserve' => ($measure['preserve'] ?? false) === true];
+            $bar = ['notes' => $notes, 'preserve' => ($measure['preserve'] ?? false) === true];
+            if (isset($measure['time'])) $bar['time'] = $barTime;
+            if (isset($measure['timeSymbol'])) {
+                if (!in_array($measure['timeSymbol'], ['common', 'cut'], true)
+                    || ($measure['timeSymbol'] === 'common' && $barTime !== '4/4')
+                    || ($measure['timeSymbol'] === 'cut' && $barTime !== '2/2')) throw new RuntimeException('Invalid time symbol.', 422);
+                $bar['timeSymbol'] = $measure['timeSymbol'];
+            }
+            if (isset($measure['length'])) $bar['length'] = $capacity;
+            if (isset($measure['barline'])) {
+                if (!in_array($measure['barline'], ['single', 'double', 'final', 'hidden'], true)) throw new RuntimeException('Invalid barline.', 422);
+                $bar['barline'] = $measure['barline'];
+            }
+            if (isset($measure['repeat'])) {
+                $repeat = $measure['repeat'];
+                if (!is_array($repeat) || array_diff(array_keys($repeat), ['start', 'end', 'endings', 'measure', 'marker', 'jump'])) throw new RuntimeException('Invalid repeat.', 422);
+                $cleanRepeat = [];
+                if (isset($repeat['start'])) {
+                    if (!is_bool($repeat['start'])) throw new RuntimeException('Invalid repeat start.', 422);
+                    $cleanRepeat['start'] = $repeat['start'];
+                }
+                if (isset($repeat['end'])) {
+                    if (!is_int($repeat['end']) || $repeat['end'] < 2 || $repeat['end'] > 8) throw new RuntimeException('Invalid repeat end.', 422);
+                    $cleanRepeat['end'] = $repeat['end'];
+                }
+                if (isset($repeat['endings'])) {
+                    if (!is_array($repeat['endings']) || !array_is_list($repeat['endings']) || !$repeat['endings'] || count($repeat['endings']) > 8) throw new RuntimeException('Invalid endings.', 422);
+                    foreach ($repeat['endings'] as $ending) if (!is_int($ending) || $ending < 1 || $ending > 8) throw new RuntimeException('Invalid endings.', 422);
+                    $cleanRepeat['endings'] = array_values(array_unique($repeat['endings']));
+                }
+                if (isset($repeat['measure'])) {
+                    if (!in_array($repeat['measure'], [1, 2], true)) throw new RuntimeException('Invalid measure repeat.', 422);
+                    $cleanRepeat['measure'] = $repeat['measure'];
+                }
+                if (isset($repeat['marker'])) {
+                    if (!in_array($repeat['marker'], ['segno', 'coda', 'toCoda', 'fine'], true)) throw new RuntimeException('Invalid repeat marker.', 422);
+                    $cleanRepeat['marker'] = $repeat['marker'];
+                }
+                if (isset($repeat['jump'])) {
+                    if (!in_array($repeat['jump'], ['dc', 'ds', 'dcAlFine', 'dsAlFine', 'dcAlCoda', 'dsAlCoda'], true)) throw new RuntimeException('Invalid repeat jump.', 422);
+                    $cleanRepeat['jump'] = $repeat['jump'];
+                }
+                $bar['repeat'] = $cleanRepeat;
+            }
+            $measures[] = $bar;
+            $measureLengths[] = $capacity;
         }
-        while ($measures && !$measures[count($measures) - 1]['notes'] && !$measures[count($measures) - 1]['preserve']) {
+        foreach ($measures as $index => $bar) {
+            $repeatCount = $bar['repeat']['measure'] ?? 0;
+            if (!$repeatCount) continue;
+            if ($bar['notes'] || $index < $repeatCount || ($repeatCount === 2 && (!isset($measures[$index + 1]) || $measures[$index + 1]['notes']))) {
+                throw new RuntimeException('Invalid measure repeat.', 422);
+            }
+            for ($offset = 0; $offset < $repeatCount; $offset++) {
+                if ($measureLengths[$index + $offset] !== $measureLengths[$index - $repeatCount + $offset]) {
+                    throw new RuntimeException('Repeated measures must have the same length.', 422);
+                }
+            }
+        }
+        $markers = array_map(static fn (array $bar): string => $bar['repeat']['marker'] ?? '', $measures);
+        foreach ($measures as $bar) {
+            $jump = $bar['repeat']['jump'] ?? '';
+            if (str_starts_with($jump, 'ds') && !in_array('segno', $markers, true)) throw new RuntimeException('Segno marker is missing.', 422);
+            if (str_ends_with($jump, 'AlFine') && !in_array('fine', $markers, true)) throw new RuntimeException('Fine marker is missing.', 422);
+            if (str_ends_with($jump, 'AlCoda') && (!in_array('coda', $markers, true) || !in_array('toCoda', $markers, true))) throw new RuntimeException('Coda marker is missing.', 422);
+        }
+        while ($measures && !$measures[count($measures) - 1]['notes'] && !$measures[count($measures) - 1]['preserve']
+            && !isset($measures[count($measures) - 1]['time']) && !isset($measures[count($measures) - 1]['timeSymbol']) && !isset($measures[count($measures) - 1]['length'])
+            && !isset($measures[count($measures) - 1]['barline']) && !isset($measures[count($measures) - 1]['repeat'])) {
             array_pop($measures);
         }
         if (!$measures) {
@@ -203,6 +305,14 @@ class NotationService
             throw new RuntimeException('Invalid visibility.', 422);
         }
         return ['title' => $clean['title'], 'metadata' => json_encode($clean, JSON_UNESCAPED_UNICODE), 'score' => json_encode(['measures' => $measures], JSON_UNESCAPED_UNICODE), 'visibility' => $visibility];
+    }
+
+    private function validatedTime(mixed $time): string
+    {
+        if (!is_string($time) || !preg_match('/^([1-9]|[12][0-9]|3[0-2])\/(1|2|4|8|16|32|64|128|256)$/D', $time)) {
+            throw new RuntimeException('Invalid time signature.', 422);
+        }
+        return $time;
     }
 
     private function extendedMetadata(array $meta, string $key): array
