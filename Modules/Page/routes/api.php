@@ -3,6 +3,10 @@
 use Core\router\Router;
 use Modules\Page\Controllers\Api\PageController;
 
+Router::get('/api/sornaz/v1/site/home', [PageController::class, 'home']);
+Router::get('/api/sornaz/v1/site/about-us', [PageController::class, 'about']);
+Router::get('/api/sornaz/v1/site/contact-us', [PageController::class, 'contact']);
+
 Router::group(
     ['prefix' => '/api/pages'],
     function () {

@@ -5,17 +5,26 @@ $personalTextMap = [];
 $personalText = static function (string $table, int $id, string $field, string $fallback = '') use (&$personalTextMap): string {
     return (string) ($personalTextMap[$table][$id][$field] ?? $fallback);
 };
-$personalLessons = \Core\database\DB::table('user_lessons')->where('user_id', $personalUserId)->whereNull('deleted_at')->orderBy('user_lesson_id', 'DESC')->get();
-$personalSchedules = \Core\database\DB::table('user_availabilities')->where('user_id', $personalUserId)->whereNull('unavailable_type')->whereNull('deleted_at')->orderBy('user_availability_id', 'DESC')->get();
-$personalMembers = \Core\database\DB::table('academy_branch_members')->where('user_id', $personalUserId)->whereNull('deleted_at')->get();
-$personalMemberIds = array_map(static fn ($row) => (int) $row['member_id'], $personalMembers);
-$personalInvoices = $personalMemberIds ? \Core\database\DB::table('academy_branch_course_term_invoices')->whereIn('member_id', $personalMemberIds)->whereNull('deleted_at')->orderBy('term_invoice_id', 'DESC')->get() : [];
+$personalPreview = ($previewPanelMode ?? null) === 'user';
+if ($personalPreview) {
+    $personalLessonData = ['items' => [['user_lesson_id' => 1, 'lesson_id' => 1, 'level_id' => 1, 'is_primary' => 1, 'status' => 'active', 'start_date' => '2026-10-09']], 'lessons' => [['lesson_id' => 1]], 'levels' => [['level_id' => 1]]];
+    $personalScheduleData = ['items' => [['user_availability_id' => 1, 'repeat_period' => 'week', 'date' => null, 'day_of_week' => 'saturday', 'timezone_id' => 1, 'start_time' => '10:00', 'end_time' => '12:00', 'status' => 'available']], 'timezones' => [['timezone_id' => 1, 'timezone' => 'Asia/Tehran']]];
+    $personalFinanceData = ['invoices' => [['term_invoice_id' => 1, 'term_id' => 1, 'payable_amount' => 2500000, 'status' => 'issued', 'due_date' => '2026-10-30']], 'installments' => [['invoice_id' => 1, 'installment_number' => 1, 'amount' => 1250000, 'status' => 'pending', 'due_date' => '2026-10-30']], 'payments' => [['invoice_id' => 1, 'amount' => 500000, 'method' => 'card', 'status' => 'approved', 'paid_at' => '2026-10-09']]];
+} else {
+    $personalData = new \Modules\Analytics\Services\PersonalPanelDataService();
+    $personalLessonData = $personalData->lessons($personalUserId, false);
+    $personalScheduleData = $personalData->schedules($personalUserId, false);
+    $personalFinanceData = $personalData->finance($personalUserId, false);
+}
+$personalLessons = $personalLessonData['items'];
+$personalSchedules = $personalScheduleData['items'];
+$personalInvoices = $personalFinanceData['invoices'];
 $personalInvoiceIds = array_map(static fn (array $row): int => (int) $row['term_invoice_id'], $personalInvoices);
-$personalInstallments = $personalInvoiceIds ? \Core\database\DB::table('academy_branch_course_term_invoice_installments')->whereIn('invoice_id', $personalInvoiceIds)->whereNull('deleted_at')->orderBy('term_invoice_installment_id', 'DESC')->get() : [];
-$personalPayments = $personalInvoiceIds ? \Modules\Academy\Services\AcademyPaymentStore::query()->whereIn('invoice_id', $personalInvoiceIds)->whereNull('deleted_at')->orderBy('payment_id', 'DESC')->get() : [];
+$personalInstallments = $personalFinanceData['installments'];
+$personalPayments = $personalFinanceData['payments'];
 $personalDays = ['saturday' => 'شنبه', 'sunday' => 'یکشنبه', 'monday' => 'دوشنبه', 'tuesday' => 'سه‌شنبه', 'wednesday' => 'چهارشنبه', 'thursday' => 'پنجشنبه', 'friday' => 'جمعه'];
 $personalRepeats = ['week' => 'هفتگی', '2-week' => 'دو هفته', '3-week' => 'سه هفته', '4-week' => 'چهار هفته', 'month' => 'ماهانه', 'year' => 'سالانه', 'none' => 'بی‌تکرار'];
-$personalTimezoneCatalog = \Core\database\DB::table('f_timezone')->where('status', 'active')->whereNull('deleted_at')->orderBy('sort_order')->get();
+$personalTimezoneCatalog = $personalScheduleData['timezones'];
 $personalTimezoneMap = [];
 foreach ($personalTimezoneCatalog as $timezone) $personalTimezoneMap[(int) $timezone['timezone_id']] = (string) $timezone['timezone'];
 $personalScheduleGroups = [];
@@ -24,8 +33,8 @@ foreach ($personalSchedules as $schedule) {
     if (!isset($personalScheduleGroups[$key])) $personalScheduleGroups[$key] = ['id' => (int) $schedule['user_availability_id'], 'ranges' => []];
     $personalScheduleGroups[$key]['ranges'][] = ['start' => substr((string) ($schedule['start_time'] ?? ''), 0, 5), 'end' => substr((string) ($schedule['end_time'] ?? ''), 0, 5), 'status' => ($schedule['status'] ?? '') === 'unavailable' ? 'غیرفعال' : 'فعال'];
 }
-$personalLessonCatalog = \Core\database\DB::table('lessons')->whereNull('deleted_at')->orderBy('lesson_id')->get();
-$personalLevelCatalog = \Core\database\DB::table('levels')->where('type', 'learning')->where('is_active', 1)->whereNull('deleted_at')->orderBy('sort_order')->get();
+$personalLessonCatalog = $personalLessonData['lessons'];
+$personalLevelCatalog = $personalLessonData['levels'];
 $personalTranslationIds = [
     'lessons' => array_column($personalLessonCatalog, 'lesson_id'),
     'levels' => array_column($personalLevelCatalog, 'level_id'),
@@ -34,7 +43,8 @@ $personalTranslationIds = [
     'academy_branch_course_terms' => array_column($personalInvoices, 'term_id'),
     'academy_branch_course_term_invoices' => $personalInvoiceIds,
 ];
-foreach ($personalTranslationIds as $table => $ids) {
+if ($personalPreview) $personalTextMap = ['lessons' => [1 => ['title' => 'پیانو']], 'levels' => [1 => ['title' => 'مقدماتی']], 'user_lessons' => [1 => ['summary' => 'تمرین مقدماتی']], 'user_availabilities' => [1 => ['summary' => 'تمرین هفتگی']], 'academy_branch_course_terms' => [1 => ['title' => 'ترم نمونه']], 'academy_branch_course_term_invoices' => [1 => ['title' => 'فاکتور نمونه']]];
+foreach ($personalPreview ? [] : $personalTranslationIds as $table => $ids) {
     if (!$ids) continue;
     foreach (\Core\database\DB::table('translations')->where('table_name', $table)->whereIn('table_id', array_values(array_unique(array_map('intval', $ids))))->where('locale', locale() === 'en' ? 'en' : 'fa')->whereNull('deleted_at')->orderBy('translation_id', 'DESC')->get() as $translation) {
         $id = (int) $translation['table_id'];

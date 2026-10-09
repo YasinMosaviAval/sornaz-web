@@ -23,7 +23,7 @@ final class MobilePanelAccess
             ->whereIn('academy_branch_member_contracts.type', ['owner', 'manager', 'receptionist'])
             ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_contracts.deleted_at')->first();
         $management = $admin || (bool) $role || (bool) $contract || in_array($user['type'] ?? '', ['academy', 'branch'], true);
-        return ['common' => true, 'member' => (bool) $member || $management,
+        return ['common' => true, 'founder' => $id === 1, 'member' => (bool) $member || $management,
             'management' => $management,
             'admin' => $admin];
     }

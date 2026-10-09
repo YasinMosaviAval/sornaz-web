@@ -1,4 +1,18 @@
 <?php
+$previewRole = $previewPanelMode ?? null;
+if ($previewRole !== null) {
+    $panelUser = ['user_id' => 0, 'type' => $previewRole];
+    $isSiteAdmin = $previewRole === 'admin';
+    $isBranchAccount = $previewRole === 'branch';
+    $hasAcademyManagementRole = $previewRole === 'academy';
+    $hasContractManagementRole = false;
+    $hasAcademyPanelAccess = in_array($previewRole, ['admin', 'academy', 'branch'], true);
+    $panelUserId = 0;
+    $hasLearningEnrollment = $previewRole === 'user';
+    $ownsAcademy = $previewRole === 'academy';
+    $isAcademyManager = $previewRole === 'academy';
+    $canCreateClassroomType = $previewRole !== 'user';
+} else {
 $panelUser = auth()->user();
 $isSiteAdmin = \Modules\System\Services\SiteAdminAccess::allows($panelUser);
 $isBranchAccount = ($panelUser['type'] ?? '') === 'branch';
@@ -34,6 +48,7 @@ $isAcademyManager = $panelUserId && (bool)\Core\database\DB::table('academy_bran
     ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->first();
 $canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager
     || ($panelUserId && (new \Modules\System\Services\AccessControl())->allows($panelUserId, \Modules\Academy\Services\AcademyClassroomService::CREATE_TYPE_PERMISSION));
+}
 ?>
 <div id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-indigo-900 text-white flex flex-col shadow-2xl transform -translate-x-full transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:shadow-none">
     <!-- Header -->
@@ -51,12 +66,14 @@ $canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager
     <!-- Menu -->
     <nav class="flex-1 overflow-y-auto overflow-x-hidden p-4">
         <ul class="space-y-2">
-                <?php if ((int)auth()->id() === 1): ?>
+                <?php if ((int)auth()->id() === 1 || $previewRole === 'admin'): ?>
                 <li><a href="#" onclick="showSection('guides')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-book-reader w-5 text-center"></i> راهنمای عملکردها</a></li>
                 <?php endif; ?>
-            <? if ($isSiteAdmin && env('APP_ENV', 'production') === 'local') { ?>
+            <? if ($isSiteAdmin && ($previewRole === 'admin' || env('APP_ENV', 'production') === 'local')) { ?>
+                <?php if ($previewRole === null): ?>
                 <li><a href="#tests" onclick="showSection('tests')" class="nav-link flex items-center gap-3 rounded-xl bg-indigo-950/40 px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-vials w-5 text-center"></i> مرکز تست‌ها</a></li>
                 <li>--------------------------------</li>
+                <?php endif; ?>
                 <li><a href="#" onclick="showSection('posts')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-file-alt w-5 text-center"></i> نوشته‌ها</a></li>
                 <li><a href="#" onclick="showSection('post-categories')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-folder-open w-5 text-center"></i> دسته‌بندی نوشته‌ها</a></li>
                 <li><a href="#" onclick="showSection('pages')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-copy w-5 text-center"></i> برگه‌ها</a></li>

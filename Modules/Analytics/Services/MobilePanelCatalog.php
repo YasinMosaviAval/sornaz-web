@@ -48,12 +48,12 @@ final class MobilePanelCatalog
             'avatar' => $a('/analytics/admin-account/media/avatar', 'عکس پروفایل', 'POST', [$f('file', 'تصویر', 'file'), $f('title', 'عنوان', 'text', null, true)], false),
             'cover' => $a('/analytics/admin-account/media/cover', 'تصویر کاور', 'POST', [$f('file', 'تصویر', 'file'), $f('title', 'عنوان', 'text', null, true)], false),
             'document' => $a('/analytics/admin-account/media/document', 'افزودن سند', 'POST', [$f('file', 'فایل', 'file'), $f('title', 'عنوان'), $f('document_type', 'نوع سند'), $f('document_number', 'شماره سند'), $f('issued_at', 'تاریخ صدور', 'date'), $f('expires_at', 'تاریخ انقضا', 'date')], false),
-            'backup' => $a('/analytics/admin-account/backups', 'پشتیبان‌گیری', 'POST', [], false),
+            'backup' => $a('/analytics/admin-account/backups', 'پشتیبان‌گیری', 'POST', [], false) + ['access' => 'founder'],
             'merge' => $a('/analytics/admin-account/merges', 'درخواست ادغام حساب', 'POST', [$f('targetUserId', 'کاربر مقصد', 'number'), $f('reason', 'دلیل', 'multiline')], false),
             'end-session' => $a('/analytics/admin-account/sessions/{id}/end', 'پایان نشست'),
             'delete-media' => $a('/analytics/admin-account/media/{id}/delete', 'حذف فایل'),
             'download-media' => $a('/analytics/admin-account/media/{id}/download', 'دانلود فایل', 'GET') + ['download' => true],
-            'download-backup' => $a('/analytics/admin-account/backups/{id}/download', 'دانلود پشتیبان', 'GET') + ['download' => true],
+            'download-backup' => $a('/analytics/admin-account/backups/{id}/download', 'دانلود پشتیبان', 'GET') + ['download' => true, 'access' => 'founder'],
             'cancel-merge' => $a('/analytics/admin-account/merges/{id}/cancel', 'لغو ادغام'),
             'decide-merge' => $a('/analytics/admin-account/merges/{id}/decision', 'بررسی ادغام', 'POST', [$f('decision', 'نتیجه', 'select', ['approved' => 'تأیید', 'rejected' => 'رد']), $f('reason', 'توضیح', 'multiline')]) + ['admin' => true],
         ];
@@ -74,8 +74,10 @@ final class MobilePanelCatalog
             'forward' => $a('/analytics/chat/messages/{id}/forward', 'ارسال به گفتگو', 'POST', [$f('conversationIds', 'گفتگوها', 'multi', ['source' => 'conversations'])]),
             'file' => $a('/analytics/chat/messages/{id}/file', 'دانلود پیوست', 'GET') + ['download' => true],
         ];
-        $sections['messages'] = $s('messages', 'پیام‌ها', 'Messages', '/analytics/admin-messages', 'messages', [$f('receiverId', 'گیرنده', 'select', ['source' => 'recipients']), $f('title', 'عنوان', 'text', null, true), $f('body', 'متن', 'multiline', null, true)], 'member');
-        $sections['notifications'] = $s('notifications', 'اعلان‌ها', 'Notifications', '/analytics/admin-notifications', 'items', [$f('title', 'عنوان', 'text', null, true), $f('body', 'متن', 'multiline', null, true), $f('audience', 'مخاطبان'), $f('asDraft', 'پیش‌نویس', 'bool')], 'member');
+        $sections['messages'] = $s('messages', 'پیام‌ها', 'Messages', '/analytics/admin-messages', 'messages', [$f('receiverId', 'گیرنده', 'select', ['source' => 'recipients']), $f('title', 'عنوان', 'text', null, true), $f('body', 'متن', 'multiline', null, true)], 'common');
+        $sections['messages']['actions']['create']['access'] = 'member';
+        $sections['notifications'] = $s('notifications', 'اعلان‌ها', 'Notifications', '/analytics/admin-notifications', 'items', [$f('title', 'عنوان', 'text', null, true), $f('body', 'متن', 'multiline', null, true), $f('audience', 'مخاطبان'), $f('asDraft', 'پیش‌نویس', 'bool')], 'common');
+        $sections['notifications']['actions']['create']['access'] = 'management';
         foreach (['messages', 'notifications'] as $key) {
             foreach (['read' => 'خوانده‌شده', 'unread' => 'خوانده‌نشده'] as $op => $label) {
                 $sections[$key]['actions'][$op] = $a('/analytics/admin-' . $key . '/{id}/' . $op, $label);
@@ -168,7 +170,7 @@ final class MobilePanelCatalog
         $sections['settings'] = $s('settings', 'تنظیمات سایت', 'Site settings', '/analytics/site-settings', '', [], 'management', false);
         $sections['settings']['actions']['save'] = $a('/analytics/admin-settings', 'ویرایش تنظیمات', 'POST', [$f('primaryFont', 'قلم'), $f('fontScale', 'اندازه متن', 'number'), $f('language', 'زبان', 'select', ['fa' => 'فارسی', 'en' => 'English']), $f('themeMode', 'ظاهر', 'select', ['dark' => 'تیره', 'light' => 'روشن']), $f('colorTheme', 'تم رنگی', 'select', ['indigo' => 'نیلی', 'emerald' => 'زمردی', 'rose' => 'رز', 'amber' => 'کهربایی'])], false);
         $sections['reports'] = $s('reports', 'گزارش‌ها و نمودارها', 'Reports and charts', '/analytics/admin-dashboard', '', [], 'management', false);
-        $sections['guides'] = $s('guides', 'راهنمای عملکردها', 'Guides', '/analytics/admin-guides', 'items', [], 'admin', false);
+        $sections['guides'] = $s('guides', 'راهنمای عملکردها', 'Guides', '/analytics/admin-guides', 'items', [], 'founder', false);
         $guideFields = [$f('fa', 'فارسی', 'object', [$f('title', 'عنوان'), $f('content', 'متن', 'multiline')]), $f('en', 'English', 'object', [$f('title', 'Title'), $f('content', 'Content', 'multiline')])];
         $sections['guides']['actions']['update'] = $a('/analytics/admin-guides', 'ویرایش راهنما', 'POST', $guideFields);
         $sections['pages'] = $s('pages', 'برگه‌ها', 'Pages', '/analytics/admin-site-pages', 'pages', [], 'admin', false);
@@ -178,6 +180,7 @@ final class MobilePanelCatalog
         $sections['notifications']['rows'] = 'notifications';
         foreach (['publish' => 'انتشار', 'expire' => 'پایان انتشار'] as $op => $label) {
             $sections['notifications']['actions'][$op] = $a('/analytics/admin-notifications/{id}/' . $op, $label);
+            $sections['notifications']['actions'][$op]['access'] = 'management';
         }
         $sections['students']['actions']['list']['path'] = '/academy/admin/members/data';
         $sections['students']['rows'] = 'members';
@@ -370,6 +373,12 @@ final class MobilePanelCatalog
             }unset($field);
         }
         $sections['account']['actions']['privacy']['fields'] = [...$sections['account']['actions']['privacy']['fields'], $f('showBranches', 'نمایش شعبه‌ها', 'bool'), $f('showTeachers', 'نمایش مدرسان', 'bool'), $f('showContact', 'نمایش اطلاعات تماس', 'bool'), $f('showStats', 'نمایش آمار', 'bool'), $f('indexable', 'نمایش در موتورهای جستجو', 'bool')];
+        $contactFields = [$f('field', 'نوع تماس', 'select', ['email' => 'ایمیل', 'phone' => 'شماره تماس'], true), $f('destination', 'نشانی جدید', 'text', null, true)];
+        $sections['account']['actions']['contact-send'] = $a('/analytics/mobile-contact/send', 'ارسال کد تغییر تماس', 'POST', $contactFields, false);
+        $sections['account']['actions']['contact-verify'] = $a('/analytics/mobile-contact/verify', 'تأیید کد تغییر تماس', 'POST', [...$contactFields, $f('code', 'کد تأیید', 'text', null, true)], false);
+        $sections['account']['actions']['contact-commit'] = $a('/analytics/mobile-contact/commit', 'ثبت نشانی تماس', 'POST', $contactFields, false);
+        $sections['account']['actions']['backup']['access'] = 'founder';
+        $sections['account']['actions']['download-backup']['access'] = 'founder';
         foreach ($sections['account']['actions']['document']['fields'] as &$field) {
             $field['key'] = ['document_type' => 'documentType', 'document_number' => 'documentNumber', 'issued_at' => 'issuedAt', 'expires_at' => 'expiresAt'][$field['key']] ?? $field['key'];
             if ($field['key'] === 'documentType') {
@@ -387,6 +396,29 @@ final class MobilePanelCatalog
                 $field['options'] = ['-2' => 'کوچک‌تر', '-1' => 'کوچک', '0' => 'عادی', '1' => 'بزرگ', '2' => 'بزرگ‌تر'];
             }
         }unset($field);
+        $sections['my-points'] = $s('my-points', 'امتیازهای من', 'My points', '/analytics/admin-points', 'recent', [], 'common', false);
+        $sections['my-settings'] = $s('my-settings', 'تنظیمات من', 'My settings', '/analytics/personal-data/settings', '', [], 'common', false);
+        $sections['my-settings']['actions']['save'] = $a('/analytics/personal-data/settings', 'ذخیره تنظیمات شخصی', 'POST', [
+            $f('language', 'زبان', 'select', ['fa' => 'فارسی', 'en' => 'English']),
+            $f('themeMode', 'ظاهر', 'select', ['light' => 'روشن', 'dark' => 'تیره']),
+            $f('colorTheme', 'تم رنگی', 'select', ['indigo' => 'نیلی', 'emerald' => 'زمردی', 'rose' => 'رز', 'amber' => 'کهربایی']),
+            $f('primaryFont', 'قلم', 'select', ['vazir' => 'وزیر', 'sahel' => 'ساحل', 'iran_yekan' => 'ایران‌یکان', 'iran_sansx' => 'ایران‌سنس X', 'kalameh' => 'کلمه', 'peyda' => 'پیدا']),
+            $f('fontScale', 'اندازه قلم', 'number'), $f('fontWeight', 'وزن قلم', 'number'), $f('cornerRadius', 'گردی گوشه‌ها', 'number'),
+        ], false);
+        $galleryFields = [$f('file', 'فایل', 'file'), $f('collection', 'مجموعه', 'select', ['cover' => 'کاور', 'logo' => 'لوگو', 'intro_video' => 'ویدیو معرفی', 'gallery' => 'گالری']), $f('title', 'عنوان'), ...$description];
+        $sections['my-gallery'] = $s('my-gallery', 'گالری من', 'My gallery', '/analytics/personal-data/gallery', 'items', $galleryFields, 'common');
+        $lessonFields = [$f('lesson_id', 'درس', 'select', ['source' => 'lessons', 'id' => 'lesson_id']), $f('level_id', 'سطح', 'select', ['source' => 'levels', 'id' => 'level_id']), $f('start_date', 'تاریخ شروع', 'date'), $f('is_primary', 'درس اصلی', 'bool'), ...$description];
+        $sections['my-lessons'] = $s('my-lessons', 'درس‌های من', 'My lessons', '/analytics/personal-offerings/lessons', 'items', $lessonFields, 'common');
+        $sections['my-lessons']['actions']['list']['path'] = '/analytics/personal-data/lessons';
+        $sections['my-lessons']['actions']['update']['path'] = '/analytics/personal-offerings/lessons/{id}';
+        $sections['my-lessons']['actions']['delete']['path'] = '/analytics/personal-offerings/lesson/{id}/delete';
+        $scheduleFields = [$f('day', 'روز', 'text'), $f('repeatPeriod', 'تکرار', 'select', ['هفتگی' => 'هفتگی', 'دو هفته' => 'دو هفته', 'سه هفته' => 'سه هفته', 'چهار هفته' => 'چهار هفته', 'ماهانه' => 'ماهانه', 'سالانه' => 'سالانه', 'بی‌تکرار' => 'بی‌تکرار']), $f('repeatDate', 'تاریخ شروع', 'date'), $f('timezone', 'منطقه زمانی'), $f('ranges', 'بازه‌ها', 'rows', [$f('start', 'شروع', 'time'), $f('end', 'پایان', 'time'), $f('status', 'وضعیت')]), ...$description];
+        $sections['my-schedule'] = $s('my-schedule', 'برنامه زمانی من', 'My schedule', '/analytics/personal-offerings/schedules', 'items', $scheduleFields, 'common');
+        $sections['my-schedule']['actions']['list']['path'] = '/analytics/personal-data/schedules';
+        $sections['my-schedule']['actions']['update']['path'] = '/analytics/personal-offerings/schedules/{id}';
+        $sections['my-schedule']['actions']['delete']['path'] = '/analytics/personal-offerings/schedule/{id}/delete';
+        $sections['my-finance'] = $s('my-finance', 'امور مالی من', 'My finance', '/analytics/personal-data/finance', 'invoices', [], 'common', false);
+        $sections['my-finance']['actions']['update'] = $a('/analytics/personal-invoices/{id}/update', 'ویرایش فاکتور خود', 'POST', [$f('amount', 'مبلغ', 'number', null, true), $f('statusCode', 'وضعیت', 'select', ['draft' => 'پیش‌نویس', 'issued' => 'صادرشده', 'canceled' => 'لغوشده']), $f('dueDate', 'سررسید', 'date'), $f('title', 'شرح', 'text', null, true), ...$description]);
         $sections = $this->authorizedActions($sections);
         $sections['pages']['detail'] = $sections['page-content'];
         return $sections;
