@@ -29,6 +29,12 @@ setTimeout(async()=>{try{
  if(doc.querySelectorAll('measure').length!==2||doc.querySelectorAll('measure:nth-of-type(2) rest[measure="yes"]').length!==2)throw Error('Preserved empty measure was lost in MusicXML');
   if(doc.querySelector('divisions').textContent!=='241920'||doc.querySelector('key fifths').textContent!=='1'||doc.querySelector('clef[number="2"] sign').textContent!=='F')throw Error('Wrong divisions, key or bass clef');
   if(doc.querySelector('note duration').textContent!=='6615'||doc.querySelector('note type').textContent!=='256th')throw Error('Short dotted note lost its duration');
+ const originalMeasures=sheet.score.measures;
+ sheet.score.measures=[{notes:[{pitch:'C4',duration:'8',dots:0,rest:false,staff:1,beamGroup:7},{pitch:'D4',duration:'q',dots:0,rest:false,staff:1}]}];
+ captured=null;button.click();await new Promise(resolve=>setTimeout(resolve,80));
+ const orphanBeamDoc=new DOMParser().parseFromString(await captured.text(),'application/xml');
+ if(orphanBeamDoc.querySelector('parsererror')||orphanBeamDoc.querySelector('beam'))throw Error('A single remaining note exported an unclosed beam');
+ sheet.score.measures=originalMeasures;
  sheet.score.measures[1]={notes:[],preserve:true,repeat:{measure:1}};captured=null;button.click();await new Promise(resolve=>setTimeout(resolve,80));
  const repeatDoc=new DOMParser().parseFromString(await captured.text(),'application/xml');
  if(!repeatDoc.querySelector('measure:nth-of-type(2) measure-repeat[type="start"]')||repeatDoc.querySelectorAll('measure:nth-of-type(2) note pitch').length!==4)throw Error('MusicXML measure repeat did not include actual repeated notes');
