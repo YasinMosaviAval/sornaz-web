@@ -89,15 +89,18 @@ $repeatMeasure['score']['measures'][1]['notes']=[['pitch'=>'D4','duration'=>'q',
 try{$service->validate($repeatMeasure);throw new Exception('Measure repeat hid existing notes');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
 $phaseFour=['metadata'=>$meta+['clef'=>'treble','staves'=>[['clef'=>'treble'],['clef'=>'bass']]],'score'=>['measures'=>[
     ['notes'=>[
-        ['pitch'=>'C4','duration'=>'8','dots'=>0,'rest'=>false,'staff'=>1,'at'=>0,'crossBeam'=>1,'slurStart'=>true,'pedal'=>'sustainDown','arpeggio'=>true,'pitches'=>[['pitch'=>'E4','accidental'=>'','tieNext'=>true]]],
+        ['pitch'=>'C4','duration'=>'8','dots'=>0,'rest'=>false,'staff'=>1,'at'=>0,'crossBeam'=>1,'slurStart'=>true,'pedal'=>'sustainDown','arpeggio'=>true,'pitches'=>[['pitch'=>'E4','accidental'=>'','finger'=>'3','tieNext'=>true]]],
         ['pitch'=>'C3','duration'=>'8','dots'=>0,'rest'=>false,'staff'=>2,'at'=>120960,'crossBeam'=>1],
     ]],
     ['notes'=>[['pitch'=>'E4','duration'=>'q','dots'=>0,'rest'=>false,'staff'=>1,'slurEnd'=>true,'pitches'=>[['pitch'=>'G4','accidental'=>'','tiePrevious'=>true]]]],'clefs'=>['2'=>'alto']],
 ]]];
 $phaseFourSaved=json_decode($service->validate($phaseFour)['score'],true)['measures'];
-if($phaseFourSaved[0]['notes'][0]['pitches'][0]['tieNext']!==true||$phaseFourSaved[0]['notes'][0]['slurStart']!==true||$phaseFourSaved[0]['notes'][0]['pedal']!=='sustainDown'||$phaseFourSaved[0]['notes'][0]['arpeggio']!==true||$phaseFourSaved[0]['notes'][1]['crossBeam']!==1||$phaseFourSaved[1]['clefs']['2']!=='alto')throw new Exception('Piano markings were lost');
+if($phaseFourSaved[0]['notes'][0]['pitches'][0]['tieNext']!==true||$phaseFourSaved[0]['notes'][0]['pitches'][0]['finger']!=='3'||$phaseFourSaved[0]['notes'][0]['slurStart']!==true||$phaseFourSaved[0]['notes'][0]['pedal']!=='sustainDown'||$phaseFourSaved[0]['notes'][0]['arpeggio']!==true||$phaseFourSaved[0]['notes'][1]['crossBeam']!==1||$phaseFourSaved[1]['clefs']['2']!=='alto')throw new Exception('Piano markings were lost');
 $phaseFour['score']['measures'][0]['notes'][0]['pedal']='invalid';
 try{$service->validate($phaseFour);throw new Exception('Invalid pedal accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+$phaseFour['score']['measures'][0]['notes'][0]['pedal']='sustainDown';
+$phaseFour['score']['measures'][0]['notes'][0]['arpeggio']='down';
+if(json_decode($service->validate($phaseFour)['score'],true)['measures'][0]['notes'][0]['arpeggio']!=='down')throw new Exception('Arpeggio direction was lost');
 $expressive=['metadata'=>$meta+['clef'=>'treble'],'score'=>['measures'=>[
     ['notes'=>[['pitch'=>'F4','duration'=>'q','dots'=>0,'rest'=>false]]],
     ['notes'=>[['pitch'=>'F4','duration'=>'q','dots'=>0,'rest'=>false]],'key'=>'G','tempo'=>['mode'=>'ritardando','bpm'=>60]],
@@ -108,11 +111,11 @@ if($expressiveSaved[1]['key']!=='G'||$expressiveSaved[1]['tempo']['bpm']!==60||$
 $expressive['score']['measures'][1]['tempo']['bpm']=120;
 try{$service->validate($expressive);throw new Exception('Ascending ritardando accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
 $textScore=['metadata'=>$meta+['clef'=>'treble'],'score'=>['measures'=>[
-    ['notes'=>[['pitch'=>'C4','duration'=>'q','dots'=>0,'rest'=>false,'articulation'=>'fermata','lyric'=>'آواز','hairpin'=>'crescendo','octaveShift'=>'8va','chordSymbol'=>'Cm7','ornament'=>'turn','tremolo'=>2,'graces'=>[['pitch'=>'D4','accidental'=>'','kind'=>'acciaccatura','duration'=>'8']]]],'rehearsal'=>'A','text'=>'Verse'],
+    ['notes'=>[['pitch'=>'C4','duration'=>'q','dots'=>0,'rest'=>false,'articulation'=>'fermata','lyric'=>'آواز','hairpin'=>'crescendo','octaveShift'=>'8va','chordSymbol'=>'Cm7','ornament'=>'turn','ornamentUpperAccidental'=>'#','tremolo'=>2,'graces'=>[['pitch'=>'D4','accidental'=>'','kind'=>'acciaccatura','duration'=>'8']]]],'rehearsal'=>'A','text'=>'Verse'],
     ['notes'=>[],'rehearsal'=>'B','displayNumber'=>42],
 ]]];
 $textSaved=json_decode($service->validate($textScore)['score'],true)['measures'];
-if(count($textSaved)!==2||$textSaved[0]['notes'][0]['lyric']!=='آواز'||$textSaved[0]['notes'][0]['articulation']!=='fermata'||$textSaved[0]['notes'][0]['hairpin']!=='crescendo'||$textSaved[0]['notes'][0]['octaveShift']!=='8va'||$textSaved[0]['notes'][0]['chordSymbol']!=='Cm7'||$textSaved[0]['notes'][0]['ornament']!=='turn'||$textSaved[0]['notes'][0]['tremolo']!==2||count($textSaved[0]['notes'][0]['graces'])!==1||$textSaved[0]['text']!=='Verse'||$textSaved[1]['rehearsal']!=='B'||$textSaved[1]['displayNumber']!==42)throw new Exception('Lyric, chord, ornament, expression, measure number or rehearsal mark was lost');
+if(count($textSaved)!==2||$textSaved[0]['notes'][0]['lyric']!=='آواز'||$textSaved[0]['notes'][0]['articulation']!=='fermata'||$textSaved[0]['notes'][0]['hairpin']!=='crescendo'||$textSaved[0]['notes'][0]['octaveShift']!=='8va'||$textSaved[0]['notes'][0]['chordSymbol']!=='Cm7'||$textSaved[0]['notes'][0]['ornament']!=='turn'||$textSaved[0]['notes'][0]['ornamentUpperAccidental']!=='#'||$textSaved[0]['notes'][0]['tremolo']!==2||count($textSaved[0]['notes'][0]['graces'])!==1||$textSaved[0]['text']!=='Verse'||$textSaved[1]['rehearsal']!=='B'||$textSaved[1]['displayNumber']!==42)throw new Exception('Lyric, chord, ornament, expression, measure number or rehearsal mark was lost');
 $textScore['score']['measures'][0]['notes'][0]['lyric']=str_repeat('x',161);
 try{$service->validate($textScore);throw new Exception('Oversized lyric accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
 $glideScore=['metadata'=>$meta+['clef'=>'treble'],'score'=>['measures'=>[['notes'=>[
@@ -120,6 +123,21 @@ $glideScore=['metadata'=>$meta+['clef'=>'treble'],'score'=>['measures'=>[['notes
     ['pitch'=>'G4','duration'=>'q','dots'=>0,'rest'=>false],
 ]]]]];
 if(json_decode($service->validate($glideScore)['score'],true)['measures'][0]['notes'][0]['slide']!=='glissando')throw new Exception('Glissando was lost');
+$cueScore=['metadata'=>$meta+['clef'=>'treble'],'score'=>['measures'=>[['notes'=>[
+    ['pitch'=>'C4','duration'=>'q','dots'=>0,'rest'=>false,'noteSize'=>'cue'],
+    ['pitch'=>'D4','duration'=>'q','dots'=>0,'rest'=>false,'noteSize'=>'small'],
+]]]]];
+$cueSaved=json_decode($service->validate($cueScore)['score'],true)['measures'][0]['notes'];
+if($cueSaved[0]['noteSize']!=='cue'||$cueSaved[1]['noteSize']!=='small')throw new Exception('Cue or small note was lost');
+$cueScore['score']['measures'][0]['notes'][0]['tieNext']=true;
+try{$service->validate($cueScore);throw new Exception('Tied cue note accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+$silentScore=['metadata'=>$meta+['clef'=>'treble'],'score'=>['measures'=>[
+    ['notes'=>[],'multiRest'=>2],['notes'=>[]],
+]]];
+$silentSaved=json_decode($service->validate($silentScore)['score'],true)['measures'];
+if(count($silentSaved)!==2||$silentSaved[0]['multiRest']!==2||$silentSaved[1]['preserve']!==true)throw new Exception('Multi-measure rest was lost');
+$silentScore['score']['measures'][1]['notes']=[['pitch'=>'C4','duration'=>'q','dots'=>0,'rest'=>false]];
+try{$service->validate($silentScore);throw new Exception('Multi-measure rest accepted nonempty bar');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
 $glideScore['score']['measures'][0]['notes'][0]['ornament']='turn';
 try{$service->validate($glideScore);throw new Exception('Conflicting slide and ornament accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
 echo "Notation validation: legacy scores, staves, chords, timing, tuplets, repeats and piano markings passed.\n";

@@ -219,6 +219,10 @@ class NotationService
                         if (!is_bool($tone['cautionary']) || ($tone['cautionary'] && !($tone['accidental'] ?? ''))) throw new RuntimeException('Invalid chord accidental.', 422);
                         $cleanTone['cautionary'] = $tone['cautionary'];
                     }
+                    if (isset($tone['finger'])) {
+                        if (!in_array($tone['finger'], ['0', '1', '2', '3', '4', '5'], true)) throw new RuntimeException('Invalid chord fingering.', 422);
+                        $cleanTone['finger'] = $tone['finger'];
+                    }
                     $note['pitches'][] = $cleanTone;
                 }
                 if (array_key_exists('cautionary', $n)) {
@@ -258,6 +262,11 @@ class NotationService
                     }
                     $note[$field] = $value;
                 }
+                foreach (['ornamentUpperAccidental', 'ornamentLowerAccidental'] as $field) {
+                    if (!isset($n[$field])) continue;
+                    if ($n['rest'] || !($note['ornament'] ?? '') || !in_array($n[$field], ['#', 'b', 'n', '##', 'bb'], true)) throw new RuntimeException('Invalid ornament accidental.', 422);
+                    $note[$field] = $n[$field];
+                }
                 if (isset($n['slide'])) {
                     if ($n['rest'] || !in_array($n['slide'], ['glissando', 'portamento'], true) || ($note['ornament'] ?? '') || isset($n['tremolo'])) throw new RuntimeException('Invalid slide.', 422);
                     $note['slide'] = $n['slide'];
@@ -293,8 +302,17 @@ class NotationService
                     if ($n['rest'] || !in_array($n['octaveShift'], ['8va', '8vb', '15ma', '15mb', 'stop'], true)) throw new RuntimeException('Invalid octave shift.', 422);
                     $note['octaveShift'] = $n['octaveShift'];
                 }
+                if (isset($n['noteSize'])) {
+                    if ($n['rest'] || !in_array($n['noteSize'], ['cue', 'small'], true)) throw new RuntimeException('Invalid note size.', 422);
+                    if ($n['noteSize'] === 'cue' && (($n['tieNext'] ?? false) || ($n['tiePrevious'] ?? false))) throw new RuntimeException('Cue notes cannot have ties.', 422);
+                    if ($n['noteSize'] === 'cue') foreach ($n['pitches'] ?? [] as $tone) {
+                        if (($tone['tieNext'] ?? false) || ($tone['tiePrevious'] ?? false)) throw new RuntimeException('Cue notes cannot have ties.', 422);
+                    }
+                    $note['noteSize'] = $n['noteSize'];
+                }
                 if (isset($n['arpeggio'])) {
-                    if (!is_bool($n['arpeggio']) || ($n['arpeggio'] && ($n['rest'] || !$note['pitches']))) throw new RuntimeException('Invalid arpeggio.', 422);
+                    if (!is_bool($n['arpeggio']) && !in_array($n['arpeggio'], ['up', 'down'], true)) throw new RuntimeException('Invalid arpeggio.', 422);
+                    if ($n['arpeggio'] && ($n['rest'] || !$note['pitches'])) throw new RuntimeException('Invalid arpeggio.', 422);
                     $note['arpeggio'] = $n['arpeggio'];
                 }
                 $notes[] = $note;
@@ -319,6 +337,10 @@ class NotationService
             if (isset($measure['displayNumber'])) {
                 if (!is_int($measure['displayNumber']) || $measure['displayNumber'] < 1 || $measure['displayNumber'] > 9999) throw new RuntimeException('Invalid measure number.', 422);
                 $bar['displayNumber'] = $measure['displayNumber'];
+            }
+            if (isset($measure['multiRest'])) {
+                if (!is_int($measure['multiRest']) || $measure['multiRest'] < 2 || $measure['multiRest'] > 8) throw new RuntimeException('Invalid multi-measure rest.', 422);
+                $bar['multiRest'] = $measure['multiRest'];
             }
             if (isset($measure['text'])) {
                 if (!is_string($measure['text']) || mb_strlen($measure['text']) > 160) throw new RuntimeException('Invalid measure note.', 422);
@@ -381,6 +403,19 @@ class NotationService
             $measureLengths[] = $capacity;
         }
         foreach ($measures as $index => $bar) {
+            if (isset($bar['multiRest'])) {
+                $count = $bar['multiRest'];
+                if ($index + $count > count($measures)) throw new RuntimeException('Invalid multi-measure rest.', 422);
+                for ($offset = 0; $offset < $count; $offset++) {
+                    $part = $measures[$index + $offset];
+                    if ($part['notes'] || isset($part['time']) || isset($part['timeSymbol']) || isset($part['length']) || isset($part['barline']) || isset($part['repeat'])
+                        || isset($part['clefs']) || isset($part['key']) || isset($part['tempo']) || isset($part['rehearsal']) || isset($part['text'])
+                        || ($offset > 0 && (isset($part['multiRest']) || isset($part['displayNumber'])))) throw new RuntimeException('Invalid multi-measure rest.', 422);
+                    $measures[$index + $offset]['preserve'] = true;
+                }
+            }
+        }
+        foreach ($measures as $index => $bar) {
             $repeatCount = $bar['repeat']['measure'] ?? 0;
             if (!$repeatCount) continue;
             if ($bar['notes'] || $index < $repeatCount || ($repeatCount === 2 && (!isset($measures[$index + 1]) || $measures[$index + 1]['notes']))) {
@@ -402,7 +437,7 @@ class NotationService
         while ($measures && !$measures[count($measures) - 1]['notes'] && !$measures[count($measures) - 1]['preserve']
             && !isset($measures[count($measures) - 1]['time']) && !isset($measures[count($measures) - 1]['timeSymbol']) && !isset($measures[count($measures) - 1]['length'])
             && !isset($measures[count($measures) - 1]['barline']) && !isset($measures[count($measures) - 1]['repeat']) && !isset($measures[count($measures) - 1]['clefs'])
-            && !isset($measures[count($measures) - 1]['key']) && !isset($measures[count($measures) - 1]['tempo']) && !isset($measures[count($measures) - 1]['rehearsal']) && !isset($measures[count($measures) - 1]['text']) && !isset($measures[count($measures) - 1]['displayNumber'])) {
+            && !isset($measures[count($measures) - 1]['key']) && !isset($measures[count($measures) - 1]['tempo']) && !isset($measures[count($measures) - 1]['rehearsal']) && !isset($measures[count($measures) - 1]['text']) && !isset($measures[count($measures) - 1]['displayNumber']) && !isset($measures[count($measures) - 1]['multiRest'])) {
             array_pop($measures);
         }
         if (!$measures) {
