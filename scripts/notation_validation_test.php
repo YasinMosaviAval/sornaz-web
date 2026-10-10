@@ -100,6 +100,12 @@ $phaseFour=['metadata'=>$meta+['clef'=>'treble','staves'=>[['clef'=>'treble'],['
     ['notes'=>[['pitch'=>'E4','duration'=>'q','dots'=>0,'rest'=>false,'staff'=>1,'slurEnd'=>true,'pitches'=>[['pitch'=>'G4','accidental'=>'','tiePrevious'=>true]]]],'clefs'=>['2'=>'alto']],
 ]]];
 $phaseFourSaved=json_decode($service->validate($phaseFour)['score'],true)['measures'];
+$phaseFour['score']['measures'][0]['clefChanges']=[['at'=>120960,'staff'=>1,'clef'=>'bass']];
+$timedClefs=json_decode($service->validate($phaseFour)['score'],true)['measures'][0]['clefChanges'];
+if(count($timedClefs)!==1||$timedClefs[0]['at']!==120960||$timedClefs[0]['clef']!=='bass')throw new Exception('Timed clef was lost');
+$phaseFour['score']['measures'][0]['clefChanges'][]=['at'=>120960,'staff'=>1,'clef'=>'treble'];
+try{$service->validate($phaseFour);throw new Exception('Duplicate timed clef accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+array_pop($phaseFour['score']['measures'][0]['clefChanges']);
 if($phaseFourSaved[0]['notes'][0]['pitches'][0]['tieNext']!==true||$phaseFourSaved[0]['notes'][0]['pitches'][0]['finger']!=='3'||$phaseFourSaved[0]['notes'][0]['slurStart']!==true||$phaseFourSaved[0]['notes'][0]['pedal']!=='sustainDown'||$phaseFourSaved[0]['notes'][0]['arpeggio']!==true||$phaseFourSaved[0]['notes'][1]['crossBeam']!==1||$phaseFourSaved[1]['clefs']['2']!=='alto')throw new Exception('Piano markings were lost');
 $phaseFour['score']['measures'][0]['notes'][0]['pedal']='invalid';
 try{$service->validate($phaseFour);throw new Exception('Invalid pedal accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
@@ -120,6 +126,11 @@ $textScore=['metadata'=>$meta+['clef'=>'treble'],'score'=>['measures'=>[
     ['notes'=>[],'rehearsal'=>'B','displayNumber'=>42],
 ]]];
 $textSaved=json_decode($service->validate($textScore)['score'],true)['measures'];
+$textScore['score']['measures'][0]['notes'][0]['harmonic']=['kind'=>'natural','partial'=>3];
+if(json_decode($service->validate($textScore)['score'],true)['measures'][0]['notes'][0]['harmonic']['partial']!==3)throw new Exception('Natural harmonic was lost');
+$textScore['score']['measures'][0]['notes'][0]['harmonic']['partial']=5;
+try{$service->validate($textScore);throw new Exception('Unsupported harmonic partial accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+$textScore['score']['measures'][0]['notes'][0]['harmonic']['partial']=3;
 if(count($textSaved)!==2||$textSaved[0]['notes'][0]['lyric']!=='آواز'||$textSaved[0]['notes'][0]['articulation']!=='fermata'||$textSaved[0]['notes'][0]['hairpin']!=='crescendo'||$textSaved[0]['notes'][0]['octaveShift']!=='8va'||$textSaved[0]['notes'][0]['chordSymbol']!=='Cm7'||$textSaved[0]['notes'][0]['ornament']!=='turn'||$textSaved[0]['notes'][0]['ornamentUpperAccidental']!=='#'||$textSaved[0]['notes'][0]['tremolo']!==2||count($textSaved[0]['notes'][0]['graces'])!==1||$textSaved[0]['text']!=='Verse'||$textSaved[1]['rehearsal']!=='B'||$textSaved[1]['displayNumber']!==42)throw new Exception('Lyric, chord, ornament, expression, measure number or rehearsal mark was lost');
 $textScore['score']['measures'][0]['notes'][0]['lyric']=str_repeat('x',161);
 try{$service->validate($textScore);throw new Exception('Oversized lyric accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}

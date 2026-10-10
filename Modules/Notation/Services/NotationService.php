@@ -310,6 +310,12 @@ class NotationService
                     }
                     $note['noteSize'] = $n['noteSize'];
                 }
+                if (isset($n['harmonic'])) {
+                    $harmonic = $n['harmonic'];
+                    if ($n['rest'] || !is_array($harmonic) || ($harmonic['kind'] ?? null) !== 'natural'
+                        || !in_array($harmonic['partial'] ?? null, [2, 3, 4], true)) throw new RuntimeException('Invalid natural harmonic.', 422);
+                    $note['harmonic'] = ['kind' => 'natural', 'partial' => $harmonic['partial']];
+                }
                 if (isset($n['arpeggio'])) {
                     if (!is_bool($n['arpeggio']) && !in_array($n['arpeggio'], ['up', 'down'], true)) throw new RuntimeException('Invalid arpeggio.', 422);
                     if ($n['arpeggio'] && ($n['rest'] || !$note['pitches'])) throw new RuntimeException('Invalid arpeggio.', 422);
@@ -324,6 +330,19 @@ class NotationService
                 foreach ($measure['clefs'] as $staffNumber => $clefName) {
                     if (!in_array((string)$staffNumber, ['1', '2'], true) || !in_array($clefName, $enums['clef'], true)) throw new RuntimeException('Invalid measure clef.', 422);
                     $bar['clefs'][(string)$staffNumber] = $clefName;
+                }
+            }
+            if (isset($measure['clefChanges'])) {
+                if (!is_array($measure['clefChanges']) || !array_is_list($measure['clefChanges']) || count($measure['clefChanges']) > 16) throw new RuntimeException('Invalid timed clefs.', 422);
+                $bar['clefChanges'] = []; $seenClefs = [];
+                foreach ($measure['clefChanges'] as $event) {
+                    if (!is_array($event) || !is_int($event['at'] ?? null) || $event['at'] < 1 || $event['at'] >= $capacity
+                        || !is_int($event['staff'] ?? null) || !in_array($event['staff'], [1, 2], true)
+                        || !in_array($event['clef'] ?? null, $enums['clef'], true)) throw new RuntimeException('Invalid timed clef.', 422);
+                    $key = $event['staff'] . ':' . $event['at'];
+                    if (isset($seenClefs[$key])) throw new RuntimeException('Duplicate timed clef.', 422);
+                    $seenClefs[$key] = true;
+                    $bar['clefChanges'][] = ['at' => $event['at'], 'staff' => $event['staff'], 'clef' => $event['clef']];
                 }
             }
             if (isset($measure['key'])) {
@@ -443,7 +462,7 @@ class NotationService
         }
         while ($measures && !$measures[count($measures) - 1]['notes'] && !$measures[count($measures) - 1]['preserve']
             && !isset($measures[count($measures) - 1]['time']) && !isset($measures[count($measures) - 1]['timeSymbol']) && !isset($measures[count($measures) - 1]['length'])
-            && !isset($measures[count($measures) - 1]['barline']) && !isset($measures[count($measures) - 1]['repeat']) && !isset($measures[count($measures) - 1]['clefs'])
+            && !isset($measures[count($measures) - 1]['barline']) && !isset($measures[count($measures) - 1]['repeat']) && !isset($measures[count($measures) - 1]['clefs']) && !isset($measures[count($measures) - 1]['clefChanges'])
             && !isset($measures[count($measures) - 1]['key']) && !isset($measures[count($measures) - 1]['tempo']) && !isset($measures[count($measures) - 1]['rehearsal']) && !isset($measures[count($measures) - 1]['text']) && !isset($measures[count($measures) - 1]['displayNumber']) && !isset($measures[count($measures) - 1]['multiRest']) && !isset($measures[count($measures) - 1]['beamPattern'])) {
             array_pop($measures);
         }
