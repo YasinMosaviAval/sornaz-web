@@ -62,7 +62,7 @@ setTimeout(async()=>{
   const singleForm=document.getElementById('metadata');singleForm.elements.instrument.value='guitar';
   singleForm.elements.instrument.dispatchEvent(new Event('change',{bubbles:true}));
   document.getElementById('metadata').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));await pause();
-  click('dialog [data-action="yes"]');await pause();
+  click('dialog [data-action="keep-hidden"]');await pause();
   if(document.querySelector('#score [data-staff="2"]')||!document.querySelector('.hidden-staff-warning'))
    throw Error('Switch to a single staff did not preserve hidden bass notes');
   click('[data-action="metadata"]');await pause();

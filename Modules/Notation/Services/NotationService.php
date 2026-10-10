@@ -364,6 +364,13 @@ class NotationService
                 $bar['timeSymbol'] = $measure['timeSymbol'];
             }
             if (isset($measure['length'])) $bar['length'] = $capacity;
+            if (isset($measure['beamPattern'])) {
+                $pattern = $measure['beamPattern'];
+                if (!is_string($pattern) || !preg_match('/^[1-9][0-9]?(?:\\+[1-9][0-9]?){1,15}$/D', $pattern)) throw new RuntimeException('Invalid beam grouping.', 422);
+                $parts = array_map('intval', explode('+', $pattern));
+                if (array_sum($parts) !== $top) throw new RuntimeException('Beam grouping must match the time signature.', 422);
+                $bar['beamPattern'] = $pattern;
+            }
             if (isset($measure['barline'])) {
                 if (!in_array($measure['barline'], ['single', 'double', 'final', 'hidden'], true)) throw new RuntimeException('Invalid barline.', 422);
                 $bar['barline'] = $measure['barline'];
@@ -437,7 +444,7 @@ class NotationService
         while ($measures && !$measures[count($measures) - 1]['notes'] && !$measures[count($measures) - 1]['preserve']
             && !isset($measures[count($measures) - 1]['time']) && !isset($measures[count($measures) - 1]['timeSymbol']) && !isset($measures[count($measures) - 1]['length'])
             && !isset($measures[count($measures) - 1]['barline']) && !isset($measures[count($measures) - 1]['repeat']) && !isset($measures[count($measures) - 1]['clefs'])
-            && !isset($measures[count($measures) - 1]['key']) && !isset($measures[count($measures) - 1]['tempo']) && !isset($measures[count($measures) - 1]['rehearsal']) && !isset($measures[count($measures) - 1]['text']) && !isset($measures[count($measures) - 1]['displayNumber']) && !isset($measures[count($measures) - 1]['multiRest'])) {
+            && !isset($measures[count($measures) - 1]['key']) && !isset($measures[count($measures) - 1]['tempo']) && !isset($measures[count($measures) - 1]['rehearsal']) && !isset($measures[count($measures) - 1]['text']) && !isset($measures[count($measures) - 1]['displayNumber']) && !isset($measures[count($measures) - 1]['multiRest']) && !isset($measures[count($measures) - 1]['beamPattern'])) {
             array_pop($measures);
         }
         if (!$measures) {

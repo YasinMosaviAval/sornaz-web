@@ -55,6 +55,11 @@ $timed=['metadata'=>$meta+['clef'=>'treble'],'score'=>['measures'=>[['time'=>'7/
 ]]]]];
 $timedSaved=json_decode($service->validate($timed)['score'],true)['measures'][0];
 if($timedSaved['time']!=='7/8'||$timedSaved['length']!==846720||$timedSaved['notes'][0]['at']!==0||$timedSaved['notes'][0]['tuplet']['actual']!==3||$timedSaved['notes'][1]['voice']!==2)throw new Exception('Independent timing fields lost');
+$timed['score']['measures'][0]['beamPattern']='2+2+3';
+if(json_decode($service->validate($timed)['score'],true)['measures'][0]['beamPattern']!=='2+2+3')throw new Exception('Asymmetric beam grouping was lost');
+$timed['score']['measures'][0]['beamPattern']='3+3';
+try{$service->validate($timed);throw new Exception('Beam grouping inconsistent with time was accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+$timed['score']['measures'][0]['beamPattern']='2+2+3';
 $timed['score']['measures'][]=['notes'=>[['pitch'=>'F4','duration'=>'h','dots'=>0,'rest'=>false,'staff'=>1],['pitch'=>'G4','duration'=>'q','dots'=>0,'rest'=>false,'staff'=>1]]];
 $service->validate($timed);
 $timed['score']['measures'][1]['notes'][0]['duration']='w';
