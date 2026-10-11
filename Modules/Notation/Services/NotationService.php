@@ -26,7 +26,7 @@ class NotationService
         return $items;
     }
 
-    public function listing(int $actor, string $mode, int $page = 1): array
+    public function listing(int $actor, string $mode, int $page = 1, string $query = ''): array
     {
         if (!in_array($mode, ['all', 'mine', 'saved'], true)) {
             throw new RuntimeException('Invalid list.', 422);
@@ -43,6 +43,13 @@ class NotationService
         if ($mode === 'saved') {
             $where .= ' AND EXISTS(SELECT 1 FROM music_sheet_bookmarks b WHERE b.sheet_id=s.id AND b.user_id=?)';
             $args[] = $actor;
+        }
+        $query = trim($query);
+        if (mb_strlen($query) > 100) throw new RuntimeException('Search text is too long.', 422);
+        if ($query !== '') {
+            $where .= " AND (s.title LIKE ? ESCAPE '!' OR s.metadata LIKE ? ESCAPE '!' OR u.username LIKE ? ESCAPE '!')";
+            $pattern = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $query) . '%';
+            array_push($args, $pattern, $pattern, $pattern);
         }
         $offset = (max(1, min($page, 10000)) - 1) * 30;
         $rows = $this->r->query("SELECT s.id,s.owner_id,s.title,s.metadata,s.visibility,s.version,s.updated_at,u.username author FROM music_sheets s JOIN users u ON u.user_id=s.owner_id AND u.deleted_at IS NULL WHERE $where ORDER BY s.updated_at DESC,s.id DESC LIMIT 31 OFFSET $offset", $args);
