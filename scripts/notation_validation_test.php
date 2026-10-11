@@ -156,4 +156,12 @@ $silentScore['score']['measures'][1]['notes']=[['pitch'=>'C4','duration'=>'q','d
 try{$service->validate($silentScore);throw new Exception('Multi-measure rest accepted nonempty bar');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
 $glideScore['score']['measures'][0]['notes'][0]['ornament']='turn';
 try{$service->validate($glideScore);throw new Exception('Conflicting slide and ornament accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
-echo "Notation validation: legacy scores, staves, chords, timing, tuplets, repeats and piano markings passed.\n";
+$contract=['metadata'=>$meta+['clef'=>'treble'],'score'=>['measures'=>[['notes'=>[['pitch'=>'C4','duration'=>'q','dots'=>0,'rest'=>false,'dynamic'=>'fp']]]]]];
+if(json_decode($service->validate($contract)['score'],true)['measures'][0]['notes'][0]['dynamic']!=='fp')throw new Exception('fp dynamic was rejected or lost');
+foreach(['A0','B0','C8'] as $pitch){$contract['score']['measures'][0]['notes'][0]['pitch']=$pitch;$service->validate($contract);}
+foreach(['C0','G8'] as $pitch){$contract['score']['measures'][0]['notes'][0]['pitch']=$pitch;try{$service->validate($contract);throw new Exception('Out-of-range pitch accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}}
+$contract['score']['measures'][0]['notes'][0]['pitch']='C4';
+$contract['score']['measures'][0]['notes'][0]['pitches']=array_fill(0,7,['pitch'=>'E4','accidental'=>'']);$service->validate($contract);
+$contract['score']['measures'][0]['notes'][0]['pitches'][]=['pitch'=>'G4','accidental'=>''];
+try{$service->validate($contract);throw new Exception('Eight extra chord tones accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+echo "Notation validation: legacy scores, staves, chords, timing, tuplets, repeats, piano markings and import contract passed.\n";
