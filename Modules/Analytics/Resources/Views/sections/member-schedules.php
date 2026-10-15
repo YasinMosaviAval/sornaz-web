@@ -1,6 +1,6 @@
 <div id="member-schedules" class="section hidden">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div class="flex flex-wrap gap-3">
+    <div class="flex flex-col md:flex-row md:items-center justify-end gap-4 mb-6">
+        <div class="flex flex-wrap justify-end gap-3">
             <button onclick="openAddMemberScheduleModal()"
                     class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
                 <i class="fas fa-plus"></i> افزودن زمان‌بندی
@@ -98,38 +98,24 @@
     <!-- جدول -->
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1300px]" id="memberSchedulesTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortMemberSchedulesBy('name')" class="flex items-center gap-1">نام عضو <span id="msSortIcon-name">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortMemberSchedulesBy('role')" class="flex items-center gap-1">نقش <span id="msSortIcon-role">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortMemberSchedulesBy('day')" class="flex items-center gap-1">روز <span id="msSortIcon-day">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortMemberSchedulesBy('timeLabel')" class="flex items-center gap-1">ساعت <span id="msSortIcon-timeLabel">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortMemberSchedulesBy('repeatPeriod')" class="flex items-center gap-1">دوره تکرار <span id="msSortIcon-repeatPeriod">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortMemberSchedulesBy('timezone')" class="flex items-center gap-1">منطقه زمانی <span id="msSortIcon-timezone">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortMemberSchedulesBy('branchName')" class="flex items-center gap-1">شعبه <span id="msSortIcon-branchName">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortMemberSchedulesBy('status')" class="flex items-center gap-1">وضعیت <span id="msSortIcon-status">↕</span></button>
-                        </th>
-                        <th class="w-40 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1300px]" id="memberSchedulesTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => '<button onclick="sortMemberSchedulesBy(\'name\')" class="flex items-center gap-1">نام عضو <span id="msSortIcon-name">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortMemberSchedulesBy(\'role\')" class="flex items-center gap-1">نقش <span id="msSortIcon-role">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortMemberSchedulesBy(\'day\')" class="flex items-center gap-1">روز <span id="msSortIcon-day">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortMemberSchedulesBy(\'timeLabel\')" class="flex items-center gap-1">ساعت <span id="msSortIcon-timeLabel">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortMemberSchedulesBy(\'repeatPeriod\')" class="flex items-center gap-1">دوره تکرار <span id="msSortIcon-repeatPeriod">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortMemberSchedulesBy(\'timezone\')" class="flex items-center gap-1">منطقه زمانی <span id="msSortIcon-timezone">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortMemberSchedulesBy(\'branchName\')" class="flex items-center gap-1">شعبه <span id="msSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortMemberSchedulesBy(\'status\')" class="flex items-center gap-1">وضعیت <span id="msSortIcon-status">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
         <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="memberSchedulesPaginationInfo">نمایش ۱ تا ۱۰ از ۱۰۰ زمان‌بندی</span>

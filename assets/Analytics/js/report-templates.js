@@ -28,20 +28,13 @@
   }
 
   window.getReportRowHTML = function (item) {
-    return `
-            <td class="py-4 px-5 font-medium">${escapeHtml(item.title)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5"><span class="px-2.5 py-1 rounded-full text-xs ${typeBadge(item.type)}">${escapeHtml(item.type)}</span></td>
-            <td class="py-4 px-5">${escapeHtml(item.periodLabel || '—')}</td>
-            <td class="py-4 px-5">${escapeHtml(item.date)}</td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusBadge(item.status)}">${escapeHtml(item.status)}</span></td>
-            <td class="py-4 px-5 text-left">
+    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.title)}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-2.5 py-1 rounded-full text-xs ${typeBadge(item.type)}">${escapeHtml(item.type)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.periodLabel || '—')}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.date)}`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-3 py-1 rounded-full text-xs ${statusBadge(item.status)}">${escapeHtml(item.status)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `
                 <button onclick="viewReport(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
-            </td>`;
+            `, attributes: ` class="py-4 px-5 text-left"` }]);
   };
 
   window.getReportEmptyRowHTML = function () {
-    return '<tr><td colspan="7" class="py-12 text-center text-gray-400">گزارشی یافت نشد</td></tr>';
+    return window.AdminPanelTable.rowHTML([{ html: "گزارشی یافت نشد", attributes: " colspan=\"7\" class=\"py-12 text-center text-gray-400\"" }], "");
   };
 
   window.getReportDetailsModalHTML = function (item) {

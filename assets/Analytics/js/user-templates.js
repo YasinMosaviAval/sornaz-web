@@ -154,37 +154,27 @@
       perms.length > 2
         ? '<span class="text-xs text-gray-400">+' + (perms.length - 2) + '</span>'
         : '';
-    return `
-            <td class="py-4 px-4 font-medium">${escapeHtml(item.name)}</td>
-            <td class="py-4 px-4">${escapeHtml(item.phone)}</td>
-            <td class="py-4 px-4">${escapeHtml(item.userTypeLabel)}</td>
-            <td class="py-4 px-4">
+    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.name)}`, attributes: ` class="py-4 px-4 font-medium"` }, { html: `${escapeHtml(item.phone)}`, attributes: ` class="py-4 px-4"` }, { html: `${escapeHtml(item.userTypeLabel)}`, attributes: ` class="py-4 px-4"` }, { html: `
                 <span class="inline-flex items-center gap-2">
                     <span class="w-2.5 h-2.5 rounded-full" style="background:${escapeHtml(item.roleColor || '#6B7280')}"></span>
                     ${escapeHtml(item.roleTitle)}
                 </span>
-            </td>
-            <td class="py-4 px-4">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-4"><div class="flex flex-wrap items-center gap-1">${shown || '<span class="text-gray-400">—</span>'} ${more}</div></td>
-            <td class="py-4 px-4"><span class="px-3 py-1 rounded-full text-xs ${statusBadge(item.status)}">${escapeHtml(item.status)}</span></td>
-            <td class="py-4 px-4 text-left">
+            `, attributes: ` class="py-4 px-4"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-4"` }, { html: `<div class="flex flex-wrap items-center gap-1">${shown || '<span class="text-gray-400">—</span>'} ${more}</div>`, attributes: ` class="py-4 px-4"` }, { html: `<span class="px-3 py-1 rounded-full text-xs ${statusBadge(item.status)}">${escapeHtml(item.status)}</span>`, attributes: ` class="py-4 px-4"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
                     <button onclick="viewUser(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
                     <button onclick="toggleUserInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
                     <button onclick="deleteUser(${item.id})" class="text-red-500 hover:underline text-sm">حذف</button>
                 </div>
-            </td>`;
+            `, attributes: ` class="py-4 px-4 text-left"` }]);
   };
 
   window.getUserEmptyRowHTML = function () {
-    return '<tr><td colspan="8" class="py-12 text-center text-gray-400">کاربری یافت نشد</td></tr>';
+    return window.AdminPanelTable.rowHTML([{ html: "کاربری یافت نشد", attributes: " colspan=\"8\" class=\"py-12 text-center text-gray-400\"" }], "");
   };
 
   window.getUserInlineExpandRowHTML = function (item) {
     return (
-      '<td colspan="8" class="p-5 border-t">' +
-      (window.getUserInlineEditRowHTML ? window.getUserInlineEditRowHTML(item) : '') +
-      '</td>'
+      window.AdminPanelTable.cellsHTML([{ html: (window.getUserInlineEditRowHTML ? window.getUserInlineEditRowHTML(item) : ''), attributes: " colspan=\"8\" class=\"p-5 border-t\"" }])
     );
   };
 

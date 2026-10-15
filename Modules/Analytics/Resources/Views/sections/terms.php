@@ -106,48 +106,20 @@
 
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1400px]" id="termsTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortTermsBy('name')" class="flex items-center gap-1">
-                                نام ترم <span id="termSortIcon-name">↕</span>
-                            </button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortTermsBy('branchName')" class="flex items-center gap-1">
-                                شعبه <span id="termSortIcon-branchName">↕</span>
-                            </button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortTermsBy('course')" class="flex items-center gap-1">
-                                دوره مرتبط <span id="termSortIcon-course">↕</span>
-                            </button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortTermsBy('start')" class="flex items-center gap-1">
-                                تاریخ شروع <span id="termSortIcon-start">↕</span>
-                            </button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortTermsBy('end')" class="flex items-center gap-1">
-                                تاریخ پایان <span id="termSortIcon-end">↕</span>
-                            </button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">روز برگزاری</th>
-                        <th class="text-right py-5 px-5 font-medium">ساعت برگزاری</th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortTermsBy('status')" class="flex items-center gap-1">
-                                وضعیت <span id="termSortIcon-status">↕</span>
-                            </button>
-                        </th>
-                        <th class="w-52 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1400px]" id="termsTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => 'روز برگزاری', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'ساعت برگزاری', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-52 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
-        <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
+        <div id="termsPagination" hidden class="hidden px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="termsPaginationInfo">نمایش ۱ تا ۱۰ از ۴۰ ترم</span>
             <div class="flex items-center gap-2" id="termsPaginationButtons"></div>
         </div>

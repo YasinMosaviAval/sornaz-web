@@ -41,21 +41,23 @@
 
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1200px]" id="postsTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">عنوان</th>
-                        <th class="text-right py-5 px-5 font-medium">نویسنده</th>
-                        <th class="text-right py-5 px-5 font-medium">دسته‌ها</th>
-                        <th class="text-right py-5 px-5 font-medium">نوع</th>
-                        <th class="text-right py-5 px-5 font-medium">وضعیت</th>
-                        <th class="text-right py-5 px-5 font-medium">بازدید</th>
-                        <th class="text-right py-5 px-5 font-medium">تاریخ</th>
-                        <th class="w-36 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1200px]" id="postsTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => 'عنوان', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'نویسنده', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'دسته‌ها', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'نوع', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'وضعیت', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'بازدید', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'تاریخ', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-36 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
         <div class="flex flex-col gap-3 border-t p-4 text-sm text-gray-500 md:flex-row md:items-center md:justify-between">
             <div class="flex items-center gap-3"><span id="postsPaginationInfo">نمایش ۰ نوشته</span><select id="postsPerPage" onchange="changePostsPerPage(this.value)" class="rounded-xl border px-3 py-2"><option>10</option><option selected>20</option><option>30</option><option>50</option><option>100</option></select></div>

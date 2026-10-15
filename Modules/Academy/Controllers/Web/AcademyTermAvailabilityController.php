@@ -15,7 +15,7 @@ class AcademyTermAvailabilityController
     {
         try {
             if (isset($_GET['weekday'])) {
-                $availability = $this->service->weeklyTemplateAvailability((int) auth()->id(), (int) ($_GET['branch'] ?? 0), (int) $_GET['weekday'], (int) ($_GET['duration'] ?? 90));
+                $availability = $this->service->weeklyTemplateAvailability((int) auth()->id(), (int) ($_GET['branch'] ?? 0), (int) $_GET['weekday'], (int) ($_GET['duration'] ?? 90), (int) ($_GET['academy'] ?? 0));
                 return ResponseFactory::json(['success' => true, 'data' => ['times' => $availability['times'], 'closed' => $availability['closed'], 'timezoneId' => $availability['timezoneId']]]);
             }
             $organizationKind = (string) ($_GET['organizationKind'] ?? 'branch');

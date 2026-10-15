@@ -78,30 +78,22 @@
   }
 
   window.getPermissionRowHTML = function (item) {
-    return `
-            <td class="py-4 px-4 font-medium">${escapeHtml(item.name)}</td>
-            <td class="py-4 px-4">${escapeHtml(item.title)}</td>
-            <td class="py-4 px-4 text-gray-500">${escapeHtml(item.title_en)}</td>
-            <td class="py-4 px-4"><span class="px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700">${escapeHtml(item.group)}</span></td>
-            <td class="py-4 px-4">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-4 text-left">
+    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.name)}`, attributes: ` class="py-4 px-4 font-medium"` }, { html: `${escapeHtml(item.title)}`, attributes: ` class="py-4 px-4"` }, { html: `${escapeHtml(item.title_en)}`, attributes: ` class="py-4 px-4 text-gray-500"` }, { html: `<span class="px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700">${escapeHtml(item.group)}</span>`, attributes: ` class="py-4 px-4"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-4"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
                     <button onclick="viewPermission(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
                     <button onclick="togglePermissionInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
                     <button onclick="deletePermission(${item.id})" class="text-red-500 hover:underline text-sm">حذف</button>
                 </div>
-            </td>`;
+            `, attributes: ` class="py-4 px-4 text-left"` }]);
   };
 
   window.getPermissionEmptyRowHTML = function () {
-    return '<tr><td colspan="6" class="py-12 text-center text-gray-400">دسترسی‌ای یافت نشد</td></tr>';
+    return window.AdminPanelTable.rowHTML([{ html: "دسترسی‌ای یافت نشد", attributes: " colspan=\"6\" class=\"py-12 text-center text-gray-400\"" }], "");
   };
 
   window.getPermissionInlineExpandRowHTML = function (item) {
     return (
-      '<td colspan="6" class="p-5 border-t">' +
-      (window.getPermissionInlineEditRowHTML ? window.getPermissionInlineEditRowHTML(item) : '') +
-      '</td>'
+      window.AdminPanelTable.cellsHTML([{ html: (window.getPermissionInlineEditRowHTML ? window.getPermissionInlineEditRowHTML(item) : ''), attributes: " colspan=\"6\" class=\"p-5 border-t\"" }])
     );
   };
 

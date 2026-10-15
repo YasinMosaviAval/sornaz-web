@@ -132,32 +132,22 @@
   }
 
   window.getPointRowHTML = function (item) {
-    return `
-            <td class="py-4 px-5 font-medium">${escapeHtml(item.title)}</td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${typeBadge(item.type)}">${escapeHtml(typeLabel(item.type))}</span></td>
-            <td class="py-4 px-5"><span class="px-2.5 py-1 rounded-full text-xs bg-slate-100 text-slate-600">${escapeHtml(categoryLabel(item.category))}</span></td>
-            <td class="py-4 px-5 font-bold text-indigo-600">+${item.points}</td>
-            <td class="py-4 px-5 text-sm text-gray-500 font-mono text-xs">${escapeHtml(item.action || '—')}</td>
-            <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusBadge(item.status)}">${escapeHtml(item.status || 'فعال')}</span></td>
-            <td class="py-4 px-5 text-left">
+    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.title)}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `<span class="px-3 py-1 rounded-full text-xs ${typeBadge(item.type)}">${escapeHtml(typeLabel(item.type))}</span>`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-2.5 py-1 rounded-full text-xs bg-slate-100 text-slate-600">${escapeHtml(categoryLabel(item.category))}</span>`, attributes: ` class="py-4 px-5"` }, { html: `+${item.points}`, attributes: ` class="py-4 px-5 font-bold text-indigo-600"` }, { html: `${escapeHtml(item.action || '—')}`, attributes: ` class="py-4 px-5 text-sm text-gray-500 font-mono text-xs"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-3 py-1 rounded-full text-xs ${statusBadge(item.status)}">${escapeHtml(item.status || 'فعال')}</span>`, attributes: ` class="py-4 px-5"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
                     <button onclick="viewPoint(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
                     <button onclick="togglePointInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
                     <button onclick="deletePoint(${item.id})" class="text-red-500 hover:underline text-sm">حذف</button>
                 </div>
-            </td>`;
+            `, attributes: ` class="py-4 px-5 text-left"` }]);
   };
 
   window.getPointEmptyRowHTML = function () {
-    return '<tr><td colspan="8" class="py-12 text-center text-gray-400">قانون امتیازی یافت نشد</td></tr>';
+    return window.AdminPanelTable.rowHTML([{ html: "قانون امتیازی یافت نشد", attributes: " colspan=\"8\" class=\"py-12 text-center text-gray-400\"" }], "");
   };
 
   window.getPointInlineExpandRowHTML = function (item) {
     return (
-      '<td colspan="8" class="p-5 border-t">' +
-      (window.getPointInlineEditRowHTML ? window.getPointInlineEditRowHTML(item) : '') +
-      '</td>'
+      window.AdminPanelTable.cellsHTML([{ html: (window.getPointInlineEditRowHTML ? window.getPointInlineEditRowHTML(item) : ''), attributes: " colspan=\"8\" class=\"p-5 border-t\"" }])
     );
   };
 

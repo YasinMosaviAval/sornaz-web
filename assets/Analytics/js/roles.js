@@ -72,10 +72,10 @@
       list
         .map(
           (x) =>
-            `<tr><td class="p-4"><b>${e(x.translations.fa?.title || x.name)}</b><small class="block text-gray-400">${e(x.name)} · ${e(x.translations.en?.title || '')}</small></td><td class="p-4">${labels[x.scope] || x.scope}</td><td class="p-4"><span class="rounded-full bg-indigo-50 px-3 py-1">${x.level}</span></td><td class="p-4">${e(accessRoles.find((r) => r.id === x.parentId)?.translations.fa?.title || '—')}</td><td class="p-4">${x.permissionIds.length}</td><td class="p-4 text-left"><button onclick="openAccessRole(${x.id})" class="ml-3 text-indigo-600">ویرایش و مجوزها</button><button onclick="deleteAccessRole(${x.id})" class="text-red-500">حذف</button></td></tr>`
+            window.AdminPanelTable.rowHTML([{ html: `<b>${e(x.translations.fa?.title || x.name)}</b><small class="block text-gray-400">${e(x.name)} · ${e(x.translations.en?.title || '')}</small>`, attributes: ` class="p-4"` }, { html: `${labels[x.scope] || x.scope}`, attributes: ` class="p-4"` }, { html: `<span class="rounded-full bg-indigo-50 px-3 py-1">${x.level}</span>`, attributes: ` class="p-4"` }, { html: `${e(accessRoles.find((r) => r.id === x.parentId)?.translations.fa?.title || '—')}`, attributes: ` class="p-4"` }, { html: `${x.permissionIds.length}`, attributes: ` class="p-4"` }, { html: `${x.panelVisible ? 'نمایش' : 'مخفی'}`, attributes: ` class="p-4"` }, { html: `<button onclick="openAccessRole(${x.id})" class="ml-3 text-indigo-600">ویرایش و مجوزها</button><button onclick="deleteAccessRole(${x.id})" class="text-red-500">حذف</button>`, attributes: ` class="p-4 text-left"` }], ``)
         )
         .join('') ||
-      '<tr><td colspan="6" class="p-12 text-center text-gray-400">نقشی یافت نشد</td></tr>';
+      window.AdminPanelTable.rowHTML([{ html: "نقشی یافت نشد", attributes: " colspan=\"7\" class=\"p-12 text-center text-gray-400\"" }], "");
   };
   const fields = (t = {}) =>
     `<div class="grid gap-3 md:grid-cols-3"><input name="title_fa" value="${e(t.fa?.title)}" placeholder="عنوان فارسی" class="rounded-xl border p-3"><input name="summary_fa" value="${e(t.fa?.summary)}" placeholder="خلاصه فارسی" class="rounded-xl border p-3"><textarea name="description_fa" placeholder="شرح فارسی" class="rounded-xl border p-3">${e(t.fa?.description)}</textarea><input name="title_en" value="${e(t.en?.title)}" placeholder="English title" class="rounded-xl border p-3"><input name="summary_en" value="${e(t.en?.summary)}" placeholder="English summary" class="rounded-xl border p-3"><textarea name="description_en" placeholder="English description" class="rounded-xl border p-3">${e(t.en?.description)}</textarea></div>`;
@@ -105,7 +105,7 @@
         )
         .join(
           ''
-        )}</select></div>${fields(x.translations)}<div><h3 class="mb-3 font-bold">مجوزهای نقش (${x.permissionIds.length})</h3><div class="max-h-80 space-y-3 overflow-auto rounded-2xl border p-4">${Object.entries(
+        )}</select></div><label class="flex items-center gap-2"><input type="checkbox" name="panelVisible" ${x.panelVisible ? 'checked' : ''}> نمایش در پنل آموزشگاه</label>${fields(x.translations)}<div><h3 class="mb-3 font-bold">مجوزهای نقش (${x.permissionIds.length})</h3><div class="max-h-80 space-y-3 overflow-auto rounded-2xl border p-4">${Object.entries(
         groups
       )
         .map(
@@ -122,6 +122,7 @@
     d.parentId = d.parentId ? Number(d.parentId) : null;
     d.level = Number(d.level);
     d.sortOrder = 0;
+    d.panelVisible = f.elements.panelVisible.checked;
     d.permissionIds = [...f.querySelectorAll('[name=permissionIds]:checked')].map((x) =>
       Number(x.value)
     );

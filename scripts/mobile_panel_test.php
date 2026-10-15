@@ -6,6 +6,7 @@ namespace Core\database {
  };}}
 }
 namespace {
+ require_once __DIR__.'/../Modules/Analytics/Services/PanelTableRenderer.php';
  $map=require __DIR__.'/../vendor/composer/autoload_classmap.php';
  spl_autoload_register(static function(string $class)use($map):void{if(isset($map[$class]))require_once $map[$class];});
  $testDb=new \PDO('sqlite::memory:');$testDb->exec('CREATE TABLE auth_remember_tokens(token_hash TEXT PRIMARY KEY,user_id INTEGER,expires_at INTEGER)');

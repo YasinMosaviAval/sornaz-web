@@ -1,25 +1,14 @@
 (function () {
   window.getStaffRowHTML = function (item, statusClass) {
-    return `
-            <td class="py-4 px-5 font-medium">${item.name}</td>
-            <td class="py-4 px-5">${item.typeLabel}</td>
-            <td class="py-4 px-5">${item.contractTitle}</td>
-            <td class="py-4 px-5">${item.branch}</td>
-            <td class="py-4 px-5">${item.type === 'teacher' ? escapeHtml(item.lessonName || '—') : '—'}</td>
-            <td class="py-4 px-5">${item.startDate}</td>
-            <td class="py-4 px-5">${item.endDate}</td>
-            <td class="py-4 px-5">${item.price.toLocaleString('fa-IR')} ${item.currency}</td>
-            <td class="py-4 px-5">
+    return window.AdminPanelTable.cellsHTML([{ html: `${item.name}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `${item.typeLabel}`, attributes: ` class="py-4 px-5"` }, { html: `${item.contractTitle}`, attributes: ` class="py-4 px-5"` }, { html: `${item.branch}`, attributes: ` class="py-4 px-5"` }, { html: `${item.type === 'teacher' ? escapeHtml(item.lessonName || '—') : '—'}`, attributes: ` class="py-4 px-5"` }, { html: `${item.startDate}`, attributes: ` class="py-4 px-5"` }, { html: `${item.endDate}`, attributes: ` class="py-4 px-5"` }, { html: `${item.price.toLocaleString('fa-IR')} ${item.currency}`, attributes: ` class="py-4 px-5"` }, { html: `
                 <button type="button" onclick="cycleStaffStatus(${item.id},this)" class="px-3 py-1 rounded-full text-xs transition ${statusClass}" title="برای تغییر وضعیت کلیک کنید">${item.status}</button>
-            </td>
-            <td class="py-4 px-5 text-left">
+            `, attributes: ` class="py-4 px-5"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
                     <button onclick="viewStaff(${item.id})" class="text-indigo-600 hover:underline text-sm leading-6 align-middle">جزئیات</button>
                     <button onclick="toggleStaffInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm leading-6 align-middle">ویرایش</button>
                     <button onclick="deleteStaff(${item.id})" class="text-red-500 hover:text-red-700 text-sm leading-6 align-middle">حذف</button>
                 </div>
-            </td>
-        `;
+            `, attributes: ` class="py-4 px-5 text-left"` }]);
   };
 
   function escapeHtml(value) {
@@ -152,11 +141,11 @@
   };
 
   window.getStaffEmptyRowHTML = function () {
-    return `<tr><td colspan="10" class="py-12 text-center text-gray-400">هیچ پرسنلی یافت نشد</td></tr>`;
+    return window.AdminPanelTable.rowHTML([{ html: `هیچ کارمندی یافت نشد`, attributes: ` colspan="10" class="py-12 text-center text-gray-400"` }], ``);
   };
 
   window.getStaffInlineExpandRowHTML = function (item) {
-    return `<td colspan="10" class="p-5 border-t">${window.getStaffInlineEditRowHTML ? window.getStaffInlineEditRowHTML(item) : ''}</td>`;
+    return window.AdminPanelTable.cellsHTML([{ html: `${window.getStaffInlineEditRowHTML ? window.getStaffInlineEditRowHTML(item) : ''}`, attributes: ` colspan="10" class="p-5 border-t"` }]);
   };
 
   window.getStaffInlineEditRowHTML = function (item) {
@@ -199,11 +188,11 @@
                         <div class="grid grid-cols-1 gap-5">
                             <div>
                                 <label class="block text-sm font-medium mb-2">عنوان گزارش</label>
-                                <input id="pdfTitle" type="text" value="گزارش پرسنل آموزشگاه" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                                <input id="pdfTitle" type="text" value="گزارش کارمند آموزشگاه" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-2">زیرعنوان</label>
-                                <input id="pdfSubtitle" type="text" value="لیست پرسنل و وضعیت قراردادها" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                                <input id="pdfSubtitle" type="text" value="لیست کارمند و وضعیت قراردادها" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                             </div>
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                                 <div>
@@ -341,7 +330,7 @@
             <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onclick="if(event.target === this) closeModal()">
                 <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[calc(100vh-2rem)] shadow-2xl overflow-hidden flex flex-col" onclick="event.stopPropagation()">
                     <div class="shrink-0 bg-white px-8 py-5 border-b flex justify-between items-center">
-                        <h2 class="text-2xl font-bold">افزودن پرسنل جدید</h2>
+                        <h2 class="text-2xl font-bold">افزودن کارمند جدید</h2>
                         <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500 leading-none">×</button>
                     </div>
                     <div class="p-8 space-y-6 min-h-0 flex-1 overflow-y-auto">
@@ -396,7 +385,7 @@
                         ${staffLessonsBlock('staff', { type: 'teacher', lessons: [] })}
                     </div>
                     <div class="shrink-0 flex gap-4 px-8 py-5 border-t bg-white">
-                            <button onclick="saveStaff()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-medium">ذخیره پرسنل</button>
+                            <button onclick="saveStaff()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-medium">ذخیره کارمند</button>
                             <button onclick="closeModal()" class="flex-1 border border-gray-300 py-4 rounded-2xl hover:bg-gray-50">انصراف</button>
                         </div>
                 </div>
@@ -410,7 +399,7 @@
                     <div class="shrink-0 bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl">
                         <div>
                             <h2 class="text-2xl font-bold">${escapeHtml(item.name)}</h2>
-                            <p class="text-sm text-gray-500 mt-1">کد پرسنل: #${item.id}</p>
+                            <p class="text-sm text-gray-500 mt-1">کد کارمند: #${item.id}</p>
                         </div>
                         <div class="flex items-center gap-3">
                             <button onclick="editStaff(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm">ویرایش</button>
@@ -474,7 +463,7 @@
             <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onclick="if(event.target === this) closeModal()">
                 <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[calc(100vh-2rem)] shadow-2xl overflow-hidden flex flex-col" onclick="event.stopPropagation()">
                     <div class="shrink-0 bg-white px-8 py-5 border-b flex justify-between items-center rounded-t-3xl">
-                        <h2 class="text-2xl font-bold">ویرایش پرسنل</h2>
+                        <h2 class="text-2xl font-bold">ویرایش کارمند</h2>
                         <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                     </div>
                     <div class="p-8 space-y-6 min-h-0 flex-1 overflow-y-auto">

@@ -34,10 +34,10 @@
       document.documentElement.style.setProperty('--site-font-family', settings.fontFamily);
     if (settings.rootFontSize)
       document.documentElement.style.setProperty('--site-root-font-size', settings.rootFontSize);
-    const personalWeight = Number(localStorage.getItem('sornaz.personalFontWeight') ?? 0);
-    const personalRadius = Number(localStorage.getItem('sornaz.personalCornerRadius') ?? 4);
-    document.documentElement.style.setProperty('--site-font-weight', String(400 + Math.min(5, Math.max(0, personalWeight)) * 100));
-    document.documentElement.style.setProperty('--site-corner-radius', `${Math.min(16, Math.max(0, personalRadius))}px`);
+    const siteWeight = Number(settings.fontWeight ?? 0);
+    const siteRadius = Number(settings.cornerRadius ?? 4);
+    document.documentElement.style.setProperty('--site-font-weight', String(400 + Math.min(5, Math.max(0, siteWeight)) * 100));
+    document.documentElement.style.setProperty('--site-corner-radius', `${Math.min(16, Math.max(0, siteRadius))}px`);
     digitStyle = document.documentElement.lang === 'en' ? 'en' : 'fa';
     if (document.body) normalizeNode(document.body);
   };
@@ -108,11 +108,9 @@
         d = b.data ?? b;
       const personalFont = localStorage.getItem('sornaz.personalFont');
       const font = d.fonts?.find((item) => item.value === personalFont);
-      const personalScale = localStorage.getItem('sornaz.personalFontScale');
       window.applySiteTypography({
         ...d,
         fontFamily: font?.fontFamily || d.fontFamily,
-        rootFontSize: font && personalScale !== null ? `${16 + Number(personalScale)}px` : d.rootFontSize,
       });
       apply(localStorage.getItem('sornaz.personalTheme') || d.colorTheme, localStorage.getItem('sornaz.personalMode') || d.themeMode, false);
     })

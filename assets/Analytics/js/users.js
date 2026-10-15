@@ -8,6 +8,16 @@
     page = 1,
     perPage = 20,
     timer;
+  let organizationFilter = 'all';
+  window.renderAccessUserBranchTabs = () =>
+    window.renderPanelOrganizationTabs?.('accessUsersBranchTabs', organizationFilter, window.filterAccessUsersByBranch);
+  window.filterAccessUsersByBranch = (value) => {
+    organizationFilter = String(value);
+    const select = document.getElementById('accessUserBranch');
+    if (select) select.value = value === 'all' || value === 'academy' ? '' : value;
+    window.renderAccessUserBranchTabs();
+    window.loadAccessUsers(1);
+  };
   const esc = (v) =>
     String(v ?? '')
       .replace(/&/g, '&amp;')
@@ -52,6 +62,7 @@
     if (q) p.set('search', q);
     if (s) p.set('status', s);
     if (b) p.set('branchId', b);
+    if (organizationFilter === 'academy') p.set('organization', 'academy');
     try {
       const d = await api('/analytics/admin-user-access?' + p);
       users = d.users || [];
@@ -61,6 +72,7 @@
       total = Number(d.total || 0);
       page = Number(d.page || 1);
       renderBranchFilter();
+      window.renderAccessUserBranchTabs();
       render();
     } catch (e) {
       alert(e.message);
@@ -95,10 +107,10 @@
       ? users
           .map(
             (u) =>
-              `<tr><td class="p-5"><strong>${esc(u.name)}</strong><div class="text-xs text-gray-400">${esc(u.username || '')} ${u.phone ? '· ' + esc(u.phone) : ''}</div><div class="text-xs text-gray-400">${esc(u.email || '')}</div></td><td class="p-5 space-x-1 space-x-reverse">${badges(u.roles, 'role')}</td><td class="p-5 space-x-1 space-x-reverse">${badges(u.permissions, 'permission')}</td><td class="p-5">${esc(statusLabel[u.status] || u.status || '—')}</td><td class="p-5 text-left">${u.canEdit === false ? '<span class="text-xs text-gray-400">غیرقابل ویرایش</span>' : `<button onclick="openUserAccess(${u.id})" class="rounded-xl border px-4 py-2 text-indigo-600">مدیریت دسترسی</button>`}</td></tr>`
+              window.AdminPanelTable.rowHTML([{ html: `<strong>${esc(u.name)}</strong>`, attributes: ` class="p-5"` }, { html: `${badges(u.roles, 'role')}`, attributes: ` class="p-5 space-x-1 space-x-reverse"` }, { html: `${badges(u.permissions, 'permission')}`, attributes: ` class="p-5 space-x-1 space-x-reverse"` }, { html: `${esc(statusLabel[u.status] || u.status || '—')}`, attributes: ` class="p-5"` }, { html: `<div class="flex flex-wrap gap-2">${u.canEdit === false ? '' : `<button type="button" onclick="openUserAccess(${u.id}, 'roles')" class="rounded-xl border px-4 py-2 text-indigo-600">تعیین نقش‌ها</button><button type="button" onclick="openUserAccess(${u.id}, 'permissions')" class="rounded-xl border px-4 py-2 text-indigo-600">تعیین دسترسی‌ها</button>`}<button type="button" onclick="viewUserAccess(${u.id})" class="rounded-xl border px-4 py-2 text-indigo-600">مشاهده دسترسی‌ها</button></div>`, attributes: ` class="p-5 text-left"` }], ``)
           )
           .join('')
-      : '<tr><td colspan="5" class="p-12 text-center text-gray-400">کاربری یافت نشد</td></tr>';
+      : window.AdminPanelTable.rowHTML([{ html: "کاربری یافت نشد", attributes: " colspan=\"5\" class=\"p-12 text-center text-gray-400\"" }], "");
     const pages = Math.max(1, Math.ceil(total / perPage)),
       start = (page - 1) * perPage;
     document.getElementById('accessUsersInfo').textContent =
@@ -118,43 +130,53 @@
     perPage = [10, 20, 30, 50, 100].includes(Number(v)) ? Number(v) : 20;
     loadAccessUsers(1);
   };
-  function checks(list, selected, name) {
-    const groups = {};
-    list.forEach((x) => (groups[x.group || 'roles'] ??= []).push(x));
-    return Object.entries(groups)
-      .map(
-        ([g, rows]) =>
-          `<section><h3 class="mb-2 text-sm font-bold text-gray-500">${g === 'roles' ? 'نقش‌ها' : esc(g)}</h3><div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">${rows.map((x) => `<label class="flex items-center gap-2 rounded-xl border p-3"><input type="checkbox" name="${name}" value="${x.id}" ${selected.includes(x.id) ? 'checked' : ''}> <span>${esc(x.title)}</span></label>`).join('')}</div></section>`
-      )
-      .join('');
+  function choiceCards(list, selected) {
+    return list.length
+      ? `<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">${list.map((x) => `<button type="button" data-access-choice="${x.id}" aria-pressed="${selected.includes(x.id)}" class="access-choice rounded-xl border p-3 text-right transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">${esc(x.title)}</button>`).join('')}</div>`
+      : '<p class="rounded-xl p-4 text-gray-500">موردی برای انتخاب وجود ندارد.</p>';
   }
-  window.openUserAccess = (id) => {
+  window.openUserAccess = (id, kind) => {
+    const u = users.find((x) => x.id === id);
+    if (!u || u.canEdit === false || !['roles', 'permissions'].includes(kind)) return;
+    const isRole = kind === 'roles';
+    const title = isRole ? 'نقش‌ها' : 'دسترسی‌ها';
+    const inheritedIds = new Set(u.rolePermissionIds || []);
+    const list = isRole ? roles : permissions.filter((permission) => !inheritedIds.has(permission.id));
+    const selected = (isRole ? u.roles : u.permissions).map((x) => x.id);
+    const html = `<div id="userAccessModal" role="dialog" aria-modal="true" aria-labelledby="userAccessModalTitle" class="fixed inset-0 z-50 overflow-auto bg-black/60 p-4 md:p-8" onclick="if(event.target===this)this.remove()"><div class="mx-auto max-w-5xl rounded-3xl bg-white p-6 dark:bg-slate-900"><div class="mb-5 flex justify-between gap-4"><h2 id="userAccessModalTitle" class="text-2xl font-bold">تعیین ${title}</h2><button type="button" onclick="document.getElementById('userAccessModal').remove()" aria-label="بستن" class="text-3xl">×</button></div><div id="userAccessChoices">${choiceCards(list, selected)}</div><div class="mt-6 flex gap-3"><button type="button" data-access-save onclick="saveUserAccess(${id}, '${kind}')" class="rounded-xl bg-indigo-600 px-6 py-3 text-white disabled:opacity-50">ذخیره ${title}</button><button type="button" onclick="document.getElementById('userAccessModal').remove()" class="rounded-xl border px-6 py-3">انصراف</button></div></div></div>`;
+    document.getElementById('modalContainer').innerHTML = html;
+    document.getElementById('userAccessChoices').addEventListener('click', (event) => {
+      const card = event.target.closest('[data-access-choice]');
+      if (card) card.setAttribute('aria-pressed', String(card.getAttribute('aria-pressed') !== 'true'));
+    });
+  };
+  window.viewUserAccess = (id) => {
     const u = users.find((x) => x.id === id);
     if (!u) return;
-    const html = `<div id="userAccessModal" class="fixed inset-0 z-50 overflow-auto bg-black/60 p-4 md:p-8" onclick="if(event.target===this)this.remove()"><div class="mx-auto max-w-5xl rounded-3xl bg-white p-6"><div class="mb-5 flex justify-between"><div><h2 class="text-2xl font-bold">دسترسی‌های ${esc(u.name)}</h2><p class="text-sm text-gray-500">اولین نقش انتخاب‌شده به‌عنوان نقش اصلی ثبت می‌شود. مجوزهای پایین، مجوزهای مستقیم و مستقل از نقش هستند.</p></div><button onclick="document.getElementById('userAccessModal').remove()" class="text-3xl">×</button></div><form id="userAccessForm" class="space-y-6">${checks(
-      roles,
-      u.roles.map((x) => x.id),
-      'roles'
-    )}${checks(
-      permissions,
-      u.permissions.map((x) => x.id),
-      'permissions'
-    )}<div class="flex gap-3 border-t pt-5"><button type="button" onclick="saveUserAccess(${id})" class="rounded-xl bg-indigo-600 px-6 py-3 text-white">ذخیره نقش‌ها و مجوزها</button><button type="button" onclick="document.getElementById('userAccessModal').remove()" class="rounded-xl border px-6 py-3">انصراف</button></div></form></div></div>`;
-    document.getElementById('modalContainer').innerHTML = html;
+    const inheritedIds = new Set(u.rolePermissionIds || []);
+    const inherited = u.rolePermissions || [];
+    const direct = u.permissions.filter((permission) => !inheritedIds.has(permission.id));
+    const cards = (items) => items.length
+      ? `<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">${items.map((item) => `<div class="rounded-xl border p-3">${esc(item.title)}</div>`).join('')}</div>`
+      : '<p class="text-sm text-gray-500">موردی ثبت نشده است.</p>';
+    document.getElementById('modalContainer').innerHTML = `<div id="userAccessModal" role="dialog" aria-modal="true" aria-labelledby="userAccessModalTitle" class="fixed inset-0 z-50 overflow-auto bg-black/60 p-4 md:p-8" onclick="if(event.target===this)this.remove()"><div class="mx-auto max-w-5xl rounded-3xl bg-white p-6 dark:bg-slate-900"><div class="mb-6 flex justify-between"><h2 id="userAccessModalTitle" class="text-2xl font-bold">مشاهده دسترسی‌ها</h2><button type="button" onclick="document.getElementById('userAccessModal').remove()" aria-label="بستن" class="text-3xl">×</button></div><section class="mb-6"><h3 class="mb-3 font-semibold">دسترسی‌های نقش‌ها</h3>${cards(inherited)}</section><section><h3 class="mb-3 font-semibold">دسترسی‌های مستقل از نقش</h3>${cards(direct)}</section><div class="mt-6"><button type="button" onclick="document.getElementById('userAccessModal').remove()" class="rounded-xl border px-6 py-3">بستن</button></div></div></div>`;
   };
-  window.saveUserAccess = async (id) => {
-    const f = document.getElementById('userAccessForm'),
-      roleIds = [...f.querySelectorAll('[name=roles]:checked')].map((x) => Number(x.value)),
-      permissionIds = [...f.querySelectorAll('[name=permissions]:checked')].map((x) =>
-        Number(x.value)
-      );
+  window.saveUserAccess = async (id, kind) => {
+    const modal = document.getElementById('userAccessModal');
+    if (!modal || !['roles', 'permissions'].includes(kind)) return;
+    const selected = [...modal.querySelectorAll('[data-access-choice][aria-pressed="true"]')].map((x) => Number(x.dataset.accessChoice));
+    const button = modal.querySelector('[data-access-save]');
+    button.disabled = true;
     try {
-      await api('/analytics/admin-user-access/' + id, { roleIds, permissionIds });
-      document.getElementById('userAccessModal')?.remove();
+      const user = users.find((item) => item.id === id);
+      const covered = new Set(user?.rolePermissionIds || []);
+      const retained = (user?.permissions || []).filter((permission) => covered.has(permission.id)).map((permission) => permission.id);
+      await api('/analytics/admin-user-access/' + id, kind === 'roles' ? { roleIds: selected } : { permissionIds: [...selected, ...retained] });
+      modal.remove();
       await loadAccessUsers(page);
-      alert('نقش‌ها و مجوزهای کاربر ذخیره شد.');
     } catch (e) {
       alert(e.message);
+      button.disabled = false;
     }
   };
   setTimeout(() => {

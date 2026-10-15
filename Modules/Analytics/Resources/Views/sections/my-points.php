@@ -11,22 +11,32 @@ foreach (array_keys($personalPoints[0] ?? []) as $field) {
 ?>
 <div id="my-points" class="mt-8">
     <div class="overflow-x-auto rounded-3xl bg-white p-4 shadow dark:bg-slate-900">
-        <table class="w-full min-w-[800px] text-sm">
-            <thead class="border-b bg-gray-50 dark:bg-slate-800"><tr>
-                <?php foreach ($pointFields as [$fa, $en]): ?>
-                    <th class="p-4 text-start"><?= e($pointText($fa, $en)) ?></th>
-                <?php endforeach; ?>
-            </tr></thead>
-            <tbody>
-                <?php foreach ($personalPoints as $point): ?>
-                    <tr class="border-b dark:border-slate-700">
-                        <?php foreach ($pointFields as $field => $labels): ?>
-                            <td class="p-4"><?= e((string) ($field === 'approved_at' ? ($point[$field] ?: $pointText('در انتظار تأیید', 'Pending approval')) : ($point[$field] ?? '—'))) ?></td>
-                        <?php endforeach; ?>
-                    </tr>
-                <?php endforeach; ?>
-                <?php if (!$personalPoints): ?><tr><td colspan="<?= count($pointFields) ?>" class="p-8 text-center text-gray-500"><?= e($pointText('هنوز امتیازی ثبت نشده است.', 'No points recorded yet.')) ?></td></tr><?php endif; ?>
-            </tbody>
-        </table>
+        <?php $panelTable0 = ['columns' => [], 'rows' => []];
+$panelTable0['attributes'] = ' class="w-full min-w-[800px] text-sm"';
+$panelTable0['headAttributes'] = ' class="border-b bg-gray-50 dark:bg-slate-800"';
+$panelTable0['headerRowAttributes'] = '';
+foreach ($pointFields as [$fa, $en]):
+$panelTable0CellAttributes = ' class="p-4 text-start"';
+$panelTable0['columns'][] = ['html' => e($pointText($fa, $en)), 'attributes' => $panelTable0CellAttributes, 'tag' => 'th'];
+endforeach;
+$panelTable0['bodyAttributes'] = '';
+foreach ($personalPoints as $point):
+$panelTable0Row = ['cells' => []];
+$panelTable0Row['attributes'] = ' class="border-b dark:border-slate-700"';
+foreach ($pointFields as $field => $labels):
+$panelTable0CellAttributes = ' class="p-4"';
+$panelTable0Row['cells'][] = ['html' => e((string) ($field === 'approved_at' ? ($point[$field] ?: $pointText('در انتظار تأیید', 'Pending approval')) : ($point[$field] ?? '—'))), 'attributes' => $panelTable0CellAttributes, 'tag' => 'td'];
+endforeach;
+$panelTable0['rows'][] = $panelTable0Row;
+endforeach;
+if (!$personalPoints):
+$panelTable0Row = ['cells' => []];
+ob_start();
+$panelTable0Row['attributes'] = ob_get_clean();
+ob_start(); ?> colspan="<?= count($pointFields) ?>" class="p-8 text-center text-gray-500"<?php $panelTable0CellAttributes = ob_get_clean();
+$panelTable0Row['cells'][] = ['html' => e($pointText('هنوز امتیازی ثبت نشده است.', 'No points recorded yet.')), 'attributes' => $panelTable0CellAttributes, 'tag' => 'td'];
+$panelTable0['rows'][] = $panelTable0Row;
+endif;
+component('panel-table-template', $panelTable0); unset($panelTable0); ?>
     </div>
 </div>

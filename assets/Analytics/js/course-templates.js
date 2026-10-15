@@ -20,32 +20,23 @@
   }
 
   window.getCourseRowHTML = function (item, statusClass) {
-    return `
-            <td class="py-4 px-5 font-medium">${escapeHtml(item.name)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.level || '—')}</td>
-            <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.lessonLabel || item.instrument)}</td>
-            <td class="py-4 px-5">${item.teacher_capacity}</td>
-            <td class="py-4 px-5">${item.student_capacity}</td>
-            <td class="py-4 px-5">
+    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.name)}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `${escapeHtml(item.level || '—')}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.lessonLabel || item.instrument)}`, attributes: ` class="py-4 px-5"` }, { html: `${item.teacher_capacity}`, attributes: ` class="py-4 px-5"` }, { html: `${item.student_capacity}`, attributes: ` class="py-4 px-5"` }, { html: `
                 ${window.coursePermissions?.isReceptionist || item.canChangeStatus === false ? `<span class="px-3 py-1 rounded-full text-xs ${statusClass}">${escapeHtml(item.status)}</span>` : `<button type="button" onclick="cycleCourseStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${statusClass}">${escapeHtml(item.status)}</button>`}
-            </td>
-            <td class="py-4 px-5 text-left">
+            `, attributes: ` class="py-4 px-5"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
                     <button onclick="viewCourse(${item.id})" class="text-indigo-600 hover:underline text-sm leading-6">جزئیات</button>
                     ${item.canEdit === false ? '' : `<button type="button" data-course-action="inline-edit" data-course-id="${item.id}" data-no-inline-edit class="text-gray-500 hover:text-indigo-600 text-sm leading-6">ویرایش</button>`}
                     ${item.canDelete === false ? '' : `<button onclick="deleteCourse(${item.id})" class="text-red-500 hover:text-red-700 text-sm leading-6">حذف</button>`}
                 </div>
-            </td>
-        `;
+            `, attributes: ` class="py-4 px-5 text-left"` }]);
   };
 
   window.getCourseEmptyRowHTML = function () {
-    return `<tr><td colspan="8" class="py-12 text-center text-gray-400">هیچ دوره‌ای یافت نشد</td></tr>`;
+    return window.AdminPanelTable.rowHTML([{ html: `هیچ دوره‌ای یافت نشد`, attributes: ` colspan="8" class="py-12 text-center text-gray-400"` }], ``);
   };
 
   window.getCourseInlineExpandRowHTML = function (item) {
-    return `<td colspan="8" class="p-5 border-t">${window.getCourseInlineEditRowHTML ? window.getCourseInlineEditRowHTML(item) : ''}</td>`;
+    return window.AdminPanelTable.cellsHTML([{ html: `${window.getCourseInlineEditRowHTML ? window.getCourseInlineEditRowHTML(item) : ''}`, attributes: ` colspan="8" class="p-5 border-t"` }]);
   };
 
   function courseFormFields(item, prefix) {

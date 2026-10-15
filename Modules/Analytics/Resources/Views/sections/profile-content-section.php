@@ -8,6 +8,14 @@
  ?>
  <div class="mb-5 rounded-3xl bg-white p-4 shadow-sm"><div class="relative"><i class="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"></i><input data-profile-search class="w-full rounded-2xl border py-3 pr-11 pl-4" placeholder="جستجو در اطلاعات..."></div></div>
  <div data-profile-loading class="rounded-3xl bg-white p-12 text-center text-gray-400">در حال دریافت اطلاعات...</div>
- <div data-profile-table-wrap class="overflow-hidden rounded-3xl bg-white shadow-sm"><div class="overflow-x-auto"><table data-no-identity-column class="w-full min-w-[980px]"><thead data-profile-head class="border-b bg-gray-50"></thead><tbody data-profile-body class="divide-y text-sm"></tbody></table></div></div>
+ <div data-profile-table-wrap class="overflow-hidden rounded-3xl bg-white shadow-sm"><div class="overflow-x-auto"><?php component('panel-table-template', [
+                'attributes' => ' data-no-identity-column class="w-full min-w-[980px]"',
+                'headAttributes' => ' data-profile-head class="border-b bg-gray-50"',
+                'bodyAttributes' => ' data-profile-body class="divide-y text-sm"',
+                'columns' => [
+
+                ],
+                'rows' => [],
+            ]); ?></div></div>
  <div data-profile-cards class="hidden grid gap-4 lg:grid-cols-2"></div><div data-profile-pagination class="mt-5 hidden items-center justify-between rounded-2xl bg-white p-4 shadow-sm"></div>
 </div>

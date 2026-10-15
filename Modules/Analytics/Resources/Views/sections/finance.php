@@ -1,6 +1,6 @@
 <div id="finance" class="section hidden">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div class="flex flex-wrap gap-3">
+    <div class="flex flex-col md:flex-row md:items-center justify-end gap-4 mb-6">
+        <div class="flex flex-wrap justify-end gap-3">
             <button onclick="openAddTransactionModal()"
                     class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-2xl flex items-center gap-2">
                 <i class="fas fa-plus"></i> ثبت تراکنش
@@ -84,32 +84,22 @@
     <!-- جدول -->
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1100px]" id="financeTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortFinanceBy('title')" class="flex items-center gap-1">فاکتور <span id="financeSortIcon-title">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortFinanceBy('branchName')" class="flex items-center gap-1">شعبه <span id="financeSortIcon-branchName">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortFinanceBy('course')" class="flex items-center gap-1">دوره <span id="financeSortIcon-course">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortFinanceBy('amount')" class="flex items-center gap-1">مبلغ <span id="financeSortIcon-amount">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortFinanceBy('date')" class="flex items-center gap-1">تاریخ <span id="financeSortIcon-date">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortFinanceBy('status')" class="flex items-center gap-1">وضعیت <span id="financeSortIcon-status">↕</span></button>
-                        </th>
-                        <th class="w-40 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1100px]" id="financeTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => '<button onclick="sortFinanceBy(\'title\')" class="flex items-center gap-1">فاکتور <span id="financeSortIcon-title">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortFinanceBy(\'branchName\')" class="flex items-center gap-1">شعبه <span id="financeSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortFinanceBy(\'course\')" class="flex items-center gap-1">دوره <span id="financeSortIcon-course">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortFinanceBy(\'amount\')" class="flex items-center gap-1">مبلغ <span id="financeSortIcon-amount">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortFinanceBy(\'date\')" class="flex items-center gap-1">تاریخ <span id="financeSortIcon-date">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortFinanceBy(\'status\')" class="flex items-center gap-1">وضعیت <span id="financeSortIcon-status">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
         <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="financePaginationInfo">در حال دریافت فاکتورها...</span>

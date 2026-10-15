@@ -1,6 +1,8 @@
 <div id="lessons" class="section hidden">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div class="flex flex-wrap gap-3">
+    <h1 class="hidden">درس‌ها</h1>
+    <?php component('lesson-page-tabs', ['active' => 'lessons']); ?>
+    <div class="flex flex-col md:flex-row md:items-center justify-end gap-4 mb-6">
+        <div class="flex flex-wrap justify-end gap-3">
             <button id="addLessonButton" onclick="openAddLessonModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
                 <i class="fas fa-plus"></i> افزودن درس
             </button>
@@ -40,32 +42,22 @@
 
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1100px]" id="lessonsTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortLessonsBy('title')" class="flex items-center gap-1">عنوان / درس <span id="lesnSortIcon-title">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortLessonsBy('levelTitle')" class="flex items-center gap-1">سطح <span id="lesnSortIcon-levelTitle">↕</span></button>
-                        </th>
-                        <th class="text-center py-5 px-5 font-medium">
-                            <button onclick="sortLessonsBy('start_date')" class="flex w-full items-center justify-center gap-1">زمان شروع <span id="lesnSortIcon-start_date">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortLessonsBy('is_primary')" class="flex items-center gap-1">اصلی <span id="lesnSortIcon-is_primary">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortLessonsBy('branchName')" class="flex items-center gap-1">سازمان <span id="lesnSortIcon-branchName">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortLessonsBy('status')" class="flex items-center gap-1">وضعیت <span id="lesnSortIcon-status">↕</span></button>
-                        </th>
-                        <th class="w-40 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1100px]" id="lessonsTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => '<button onclick="sortLessonsBy(\'title\')" class="flex items-center gap-1">عنوان / درس <span id="lesnSortIcon-title">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortLessonsBy(\'levelTitle\')" class="flex items-center gap-1">سطح <span id="lesnSortIcon-levelTitle">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortLessonsBy(\'start_date\')" class="flex w-full items-center justify-center gap-1">زمان شروع <span id="lesnSortIcon-start_date">↕</span></button>', 'attributes' => ' class="text-center py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortLessonsBy(\'is_primary\')" class="flex items-center gap-1">اصلی <span id="lesnSortIcon-is_primary">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortLessonsBy(\'branchName\')" class="flex items-center gap-1">سازمان <span id="lesnSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortLessonsBy(\'status\')" class="flex items-center gap-1">وضعیت <span id="lesnSortIcon-status">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
         <div id="lessonsPagination" class="hidden px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="lessonsPaginationInfo">نمایش ۱ تا ۱۰ از ۴۰ مورد</span>

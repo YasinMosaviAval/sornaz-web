@@ -7,6 +7,27 @@
 <?php foreach (['my-terms' => ['ترم‌های من', 'ترم نمونهٔ پیانو', '۱۴۰۵/۰۷/۱۷', 'فعال'], 'my-classrooms' => ['کلاس‌های من', 'کلاس پیانو', 'شنبه ۱۰:۰۰', 'فعال'], 'my-courses' => ['دوره‌های من', 'دورهٔ مقدماتی پیانو', 'مقدماتی', 'در حال برگزاری']] as $previewKey => $previewValues): ?>
 <section id="<?= e($previewKey) ?>" class="section hidden space-y-6">
     <?php component('my-learning-tabs', ['active' => $previewKey]); ?>
-    <div class="overflow-x-auto rounded-2xl bg-white shadow-sm"><table class="w-full min-w-[600px] text-sm"><thead class="border-b bg-gray-50"><tr><th class="p-4 text-right"><?= e($previewValues[0]) ?></th><th class="p-4 text-right">زمان یا سطح</th><th class="p-4 text-right">وضعیت</th><th class="p-4 text-right">عملیات</th></tr></thead><tbody><tr><td class="p-4"><?= e($previewValues[1]) ?></td><td class="p-4"><?= e($previewValues[2]) ?></td><td class="p-4"><?= e($previewValues[3]) ?></td><td class="p-4 text-indigo-600">مشاهده</td></tr></tbody></table></div>
+    <div class="overflow-x-auto rounded-2xl bg-white shadow-sm"><?php $panelTable0 = ['columns' => [], 'rows' => []];
+$panelTable0['attributes'] = ' class="w-full min-w-[600px] text-sm"';
+$panelTable0['headAttributes'] = ' class="border-b bg-gray-50"';
+$panelTable0['headerRowAttributes'] = '';
+$panelTable0CellAttributes = ' class="p-4 text-right"';
+$panelTable0['columns'][] = ['html' => e($previewValues[0]), 'attributes' => $panelTable0CellAttributes, 'tag' => 'th'];
+$panelTable0['columns'][] = ['html' => 'زمان یا سطح', 'attributes' => ' class="p-4 text-right"'];
+$panelTable0['columns'][] = ['html' => 'وضعیت', 'attributes' => ' class="p-4 text-right"'];
+$panelTable0['columns'][] = ['html' => 'عملیات', 'attributes' => ' class="p-4 text-right"'];
+$panelTable0['bodyAttributes'] = '';
+$panelTable0Row = ['cells' => []];
+$panelTable0Row['attributes'] = '';
+$panelTable0CellAttributes = ' class="p-4"';
+$panelTable0Row['cells'][] = ['html' => e($previewValues[1]), 'attributes' => $panelTable0CellAttributes, 'tag' => 'td'];
+$panelTable0CellAttributes = ' class="p-4"';
+$panelTable0Row['cells'][] = ['html' => e($previewValues[2]), 'attributes' => $panelTable0CellAttributes, 'tag' => 'td'];
+$panelTable0CellAttributes = ' class="p-4"';
+$panelTable0Row['cells'][] = ['html' => e($previewValues[3]), 'attributes' => $panelTable0CellAttributes, 'tag' => 'td'];
+$panelTable0CellAttributes = ' class="p-4 text-indigo-600"';
+$panelTable0Row['cells'][] = ['html' => 'مشاهده', 'attributes' => $panelTable0CellAttributes, 'tag' => 'td'];
+$panelTable0['rows'][] = $panelTable0Row;
+component('panel-table-template', $panelTable0); unset($panelTable0); ?></div>
 </section>
 <?php endforeach; ?>

@@ -354,41 +354,8 @@
     window.updateHolidayLeaveSortIcons();
   };
 
-  window.renderHolidayLeavesBranchTabs = async function () {
-    const container = document.getElementById('holidayLeavesBranchTabs');
-    if (!container) return;
-    container.querySelectorAll('.holiday-leave-branch-tab:not(:first-child)').forEach(function (t) {
-      t.remove();
-    });
-    const academyButton = document.createElement('button');
-    academyButton.dataset.value = 'academy';
-    academyButton.className =
-      'holiday-leave-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ' +
-      (currentHolidayLeaveBranch === 'academy'
-        ? 'bg-indigo-600 text-white border-indigo-600'
-        : 'border-gray-200 hover:bg-gray-50') +
-      ' transition';
-    academyButton.textContent = 'آموزشگاه';
-    academyButton.onclick = function () {
-      window.filterHolidayLeavesByBranch('academy');
-    };
-    container.appendChild(academyButton);
-    window.getHolidayLeaveBranches().forEach(function (b) {
-      const active = currentHolidayLeaveBranch == b.id;
-      const btn = document.createElement('button');
-      btn.className =
-        'holiday-leave-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ' +
-        (active
-          ? 'bg-indigo-600 text-white border-indigo-600'
-          : 'border-gray-200 hover:bg-gray-50') +
-        ' transition';
-      btn.textContent = b.name;
-      btn.dataset.value = b.id;
-      btn.onclick = function () {
-        window.filterHolidayLeavesByBranch(b.id);
-      };
-      container.appendChild(btn);
-    });
+  window.renderHolidayLeavesBranchTabs = function () {
+    window.renderPanelOrganizationTabs?.('holidayLeavesBranchTabs', currentHolidayLeaveBranch, window.filterHolidayLeavesByBranch, { tabClass: 'holiday-leave-branch-tab' });
   };
 
   window.filterHolidayLeavesByBranch = async function (branchId) {
@@ -467,12 +434,12 @@
         : '';
     } else {
       pageItems.forEach(function (item) {
-        const tr = document.createElement('tr');
+        const tr = window.AdminPanelTable.createRow();
         tr.className = 'hover:bg-gray-50 transition';
         tr.innerHTML = window.getHolidayLeaveRowHTML ? window.getHolidayLeaveRowHTML(item) : '';
         tbody.appendChild(tr);
         if (editingHolidayLeaveRowId === item.id) {
-          const expand = document.createElement('tr');
+          const expand = window.AdminPanelTable.createRow();
           expand.className = 'bg-gray-50 admin-inline-expand';
           expand.innerHTML = window.getHolidayLeaveInlineExpandRowHTML
             ? window.getHolidayLeaveInlineExpandRowHTML(item)

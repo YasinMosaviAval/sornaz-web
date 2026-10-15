@@ -8,112 +8,26 @@ let allBranchManagerCandidates = [];
 window.branchReadOnly = false;
 window.branchSiteAdmin = false;
 window.branchAccount = false;
-window.matchesOrganizationFilter = function (item, filter) {
-  if (filter === 'all' || filter === '' || filter == null) return true;
-  if (filter === 'academy')
-    return (
-      item?.organizationKind === 'academy' || Number(item?.branchId ?? item?.branch_id ?? -1) === 0
-    );
-  const branchId = item?.branchId ?? item?.branch_id ?? item?.branchID ?? null;
-  if (branchId != null && String(branchId) === String(filter)) return true;
-  if (item?.organizationUserId != null || item?.user_id != null)
-    return String(item.organizationUserId ?? item.user_id) === String(filter);
-  return (
-    String(branchId) === String(filter) ||
-    String(item?.branch || item?.branchName || '') === String(filter)
-  );
-};
-window.academyOrganizationTabHandlers = {
-  dashboardBranchTabs: 'filterDashboardByBranch',
-  reportsBranchTabs: 'filterReportsByBranch',
-  messagesBranchTabs: 'filterMessagesByBranch',
-  notificationsBranchTabs: 'filterNotificationsByBranch',
-  studentBranchTabs: 'filterStudentsByBranch',
-  staffBranchTabs: 'filterStaffByBranch',
-  coursesBranchTabs: 'filterCoursesByBranch',
-  financeBranchTabs: 'filterFinanceByBranch',
-  rulesBranchTabs: 'filterRulesByBranch',
-  schedulesBranchTabs: 'filterSchedulesByBranch',
-  instrumentsBranchTabs: 'filterInstrumentsByBranch',
-  lessonsBranchTabs: 'filterLessonsByBranch',
-  memberSchedulesBranchTabs: 'filterMemberSchedulesByBranch',
-  branchSchedulesBranchTabs: 'filterBranchSchedulesByBranch',
-  holidayLeavesBranchTabs: 'filterHolidayLeavesByBranch',
-  pointsBranchTabs: 'filterPointsByBranch',
-  termsBranchTabs: 'filterTermsByBranch',
-  approvalsBranchTabs: 'filterApprovalsByBranch',
-  badgesBranchTabs: 'filterBadgesByBranch',
-  eventsBranchTabs: 'filterEventsByBranch',
-  educationsBranchTabs: 'filterEducationsByBranch',
-  favoritesBranchTabs: 'filterFavoritesByBranch',
-  profilesBranchTabs: 'filterProfilesByBranch',
-  publicationsBranchTabs: 'filterPublicationsByBranch',
-  ratingsBranchTabs: 'filterRatingsByBranch',
-  ratingSummariesBranchTabs: 'filterRatingSummariesByBranch',
-  pollsBranchTabs: 'filterPollsByBranch',
-  awardsBranchTabs: 'filterAwardsByBranch',
-  certificatesBranchTabs: 'filterCertificatesByBranch',
-  experiencesBranchTabs: 'filterExperiencesByBranch',
-  contractsBranchTabs: 'filterContractsByBranch',
-};
-window.applyAcademyOrganizationTabs = function () {
-  if (!document.getElementById('organization-filter-styles')) {
-    const style = document.createElement('style');
-    style.id = 'organization-filter-styles';
-    style.textContent =
-      '.organization-filter-tabs button:not(.bg-indigo-600){background-color:#fff!important;color:#374151!important;border-color:#e5e7eb!important}.organization-filter-tabs button:not(.bg-indigo-600):hover{background-color:#f9fafb!important}.organization-filter-tabs button.bg-indigo-600{background-color:#4f46e5!important;color:#fff!important;border-color:#4f46e5!important}.organization-filter-tabs button.bg-indigo-600:hover{background-color:#4338ca!important;border-color:#4338ca!important}';
-    document.head.appendChild(style);
-  }
-  Object.entries(window.academyOrganizationTabHandlers).forEach(function ([id, handlerName]) {
-    const container = document.getElementById(id);
-    if (!container) return;
-    container.classList.add('organization-filter-tabs');
-    if (window.branchAccount || window.branchSiteAdmin) return;
-    window.academyObservedTabs ??= new WeakSet();
-    if (!window.academyObservedTabs.has(container)) {
-      window.academyObservedTabs.add(container);
-      const observer = new MutationObserver(function () {
-        if (container.dataset.organizationTabsPending === '1') return;
-        container.dataset.organizationTabsPending = '1';
-        requestAnimationFrame(function () {
-          delete container.dataset.organizationTabsPending;
-          window.applyAcademyOrganizationTabs();
-        });
-      });
-      observer.observe(container, { childList: true, subtree: true });
-    }
-    const first = container.querySelector('button');
-    if (!first) return;
-    if (first.textContent.trim() !== 'همه') first.textContent = 'همه';
-    if (first.dataset.value !== 'all') first.dataset.value = 'all';
-    if (container.querySelector('[data-value="academy"],[data-staff-organization="academy"]'))
-      return;
-    const button = first.cloneNode(true);
-    button.textContent = 'آموزشگاه';
-    button.dataset.value = 'academy';
-    button.dataset.staffOrganization = 'academy';
-    const academyActive = container.dataset.selectedValue === 'academy';
-    button.classList.toggle('bg-indigo-600', academyActive);
-    button.classList.toggle('text-white', academyActive);
-    button.classList.toggle('border-indigo-600', academyActive);
-    button.classList.toggle('border-gray-200', !academyActive);
-    button.onclick = function () {
-      container.dataset.selectedValue = 'academy';
-      const handler = window[handlerName];
-      if (typeof handler === 'function') handler('academy');
-      setTimeout(function () {
-        container.querySelectorAll('button').forEach((b) => {
-          const active = b.dataset.value === 'academy' || b.dataset.staffOrganization === 'academy';
-          b.classList.toggle('bg-indigo-600', active);
-          b.classList.toggle('text-white', active);
-          b.classList.toggle('border-indigo-600', active);
-          b.classList.toggle('border-gray-200', !active);
-        });
-      }, 0);
-    };
-    first.insertAdjacentElement('afterend', button);
-  });
-};
+// Cached panel HTML may still load this file without the new shared script.
+if (typeof window.renderPanelOrganizationTabs !== 'function') {
+  const pendingOrganizationFilters = [];
+  window.renderPanelOrganizationTabs = (...args) => pendingOrganizationFilters.push(args);
+  window.matchesOrganizationFilter = (_item, filter) => filter === 'all' || filter === '' || filter == null;
+  window.applyAcademyOrganizationTabs = () => {};
+  const sharedFilters = document.createElement('script');
+  sharedFilters.src = '/assets/Analytics/js/panel-organization-filters.js?v=20261014';
+  sharedFilters.onload = () => {
+    pendingOrganizationFilters.forEach((args) => {
+      window.renderPanelOrganizationTabs(...args);
+      if (typeof args[2] === 'function') {
+        Promise.resolve(args[2](args[1])).catch((error) => console.error(error));
+      }
+    });
+    window.applyAcademyOrganizationTabs();
+    window.renderAllGallerySections?.();
+  };
+  document.head.appendChild(sharedFilters);
+}
 window.applyFixedBranchScope = function () {
   if (!window.branchAccount) return;
   document.documentElement.classList.add('branch-scope-fixed');
@@ -327,14 +241,15 @@ window.renderBranches = async function (list = filteredBranches) {
     body.innerHTML = '';
     if (!list.length)
       body.innerHTML =
-        '<tr><td colspan="7" class="p-12 text-center text-gray-400">شعبه‌ای یافت نشد</td></tr>';
+        window.AdminPanelTable.rowHTML([{ html: "شعبه‌ای یافت نشد", attributes: " colspan=\"7\" class=\"p-12 text-center text-gray-400\"" }], "");
     list.forEach((branch) => {
       body.insertAdjacentHTML('beforeend', window.getBranchTableRowHTML(branch));
       if (editingBranchRowId === branch.id)
         body.insertAdjacentHTML('beforeend', window.getBranchInlineEditRowHTML(branch));
     });
   }
-  document.getElementById('branchesCount').textContent = localizeBranchNumber(allBranches.length);
+  const branchesCount = document.getElementById('branchesCount');
+  if (branchesCount) branchesCount.textContent = localizeBranchNumber(allBranches.length);
   const summary = document.getElementById('branchesPaginationSummary'),
     label = document.getElementById('branchesPageLabel');
   if (summary)
@@ -469,16 +384,20 @@ async function loadBranches() {
     const data = await branchRequest('/academy/admin/branches', null, 'GET');
     branchCsrfToken = data.csrf_token || branchCsrfToken;
     allBranches = data.branches || [];
+    window.academyPanelBranches = allBranches.slice();
     filteredBranches = [...allBranches];
     allBranchTypes = data.types || [];
     allBranchAcademies = data.academies || [];
     window.branchReadOnly = Boolean(data.read_only);
     window.branchSiteAdmin = Boolean(data.site_admin);
     window.branchAccount = Boolean(data.branch_account);
+    window.academyHasNoBranches = !window.branchSiteAdmin && !window.branchAccount && allBranches.length === 0;
     window.branchCanCreate = data.can_create_branch !== false;
     window.branchCanDelete = data.can_delete_branch !== false;
     window.applyFixedBranchScope();
     window.applyAcademyOrganizationTabs();
+    window.renderAccessUserBranchTabs?.();
+    window.renderClassroomTypesBranchTabs?.();
     const addButton = document.getElementById('addBranchButton');
     if (addButton) addButton.classList.toggle('hidden', !window.branchCanCreate);
     iranProvinces = (data.provinces || []).map((item) => ({
@@ -497,7 +416,8 @@ async function loadBranches() {
         : window.branchAccount
           ? 'اطلاعات و مدیریت همین شعبه'
           : 'مدیریت شعب آموزشگاه';
-    document.getElementById('branchesAcademiesCount').textContent = localizeBranchNumber(
+    const academiesCount = document.getElementById('branchesAcademiesCount');
+    if (academiesCount) academiesCount.textContent = localizeBranchNumber(
       allBranchAcademies.length || new Set(allBranches.map((item) => item.academy_id)).size
     );
     window.renderBranchFilters();

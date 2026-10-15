@@ -221,7 +221,7 @@
   window.getDashboardQuickLinksHTML = function () {
     const links = [
       { section: 'students', label: 'هنرجویان', icon: 'fa-user-graduate', color: 'indigo' },
-      { section: 'teachers', label: 'پرسنل', icon: 'fa-chalkboard-teacher', color: 'teal' },
+      { section: 'teachers', label: 'کارمند', icon: 'fa-chalkboard-teacher', color: 'teal' },
       { section: 'branches', label: 'شعبه‌ها', icon: 'fa-building', color: 'slate' },
       { section: 'messages', label: 'پیام‌ها', icon: 'fa-comments', color: 'violet' },
       { section: 'reports', label: 'گزارش‌ها', icon: 'fa-chart-bar', color: 'emerald' },

@@ -131,7 +131,7 @@
     body.innerHTML =
       filteredMessages
         .slice(start, start + perPage)
-        .map((m) => '<tr class="hover:bg-gray-50">' + getMessageRowHTML(m) + '</tr>')
+        .map((m) => window.AdminPanelTable.rowHTML([{ fragment: getMessageRowHTML(m) }], 'class="hover:bg-gray-50"'))
         .join('') || getMessageEmptyRowHTML();
     const pager = document.getElementById('messagesPagination');
     if (pager) {

@@ -71,7 +71,7 @@
         <p class="mt-3 text-xs text-gray-400">کد اختصاصی: <b id="accountInviteCode" dir="ltr">—</b></p>
     </div>
 
-    <div class="bg-white rounded-3xl p-6 shadow mt-8" id="accountMergeCard">
+    <div class="hidden bg-white rounded-3xl p-6 shadow mt-8" id="accountMergeCard">
         <h3 class="font-bold text-lg"><i class="fas fa-link text-indigo-600 ml-2"></i>اتصال سوابق عضویت به حساب من</h3>
         <p class="mt-2 text-sm leading-7 text-gray-500">شناسه کاربری و شماره عضویتی را که از آموزشگاه یا شعبه دریافت کرده‌اید وارد کنید. انتقال سوابق فقط پس از بررسی مدیر سایت انجام می‌شود.</p>
         <form id="accountMergeForm" class="mt-5 grid gap-4 md:grid-cols-2" onsubmit="submitUserMerge(event)">

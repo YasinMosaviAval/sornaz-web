@@ -20,10 +20,14 @@
         </div>
     </div>
 
+    <?php if ((int) auth()->id() === 1): ?>
+    <?php if ((int) auth()->id() === 1): ?>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div class="rounded-3xl border border-violet-100 bg-violet-50 p-5"><span class="text-sm text-violet-700">تعداد آموزشگاه‌ها</span><strong id="branchesAcademiesCount" class="mt-2 block text-3xl text-violet-900">۰</strong></div>
         <div class="rounded-3xl border border-indigo-100 bg-indigo-50 p-5"><span class="text-sm text-indigo-700">تعداد شعبه‌ها</span><strong id="branchesCount" class="mt-2 block text-3xl text-indigo-900">۰</strong></div>
     </div>
+    <?php endif; ?>
+    <?php endif; ?>
 
     <?php
     $viewModeTableId='branchesTableViewButton';
@@ -74,11 +78,17 @@
     <!-- کارت‌های شعبه‌ها -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="branchesCards"></div>
     <div id="branchesTableWrap" class="hidden overflow-x-auto rounded-3xl border border-gray-100 bg-white shadow-sm">
-        <table class="w-full min-w-[900px] text-sm"><thead class="bg-gray-50"><tr>
-            <?php foreach ([['academy_name','آموزشگاه'],['name','شعبه'],['type','نوع'],['physical_type','ارائه'],['manager','مدیر'],['status','وضعیت']] as [$field,$label]): ?>
-                <th class="p-4 text-right"><button type="button" onclick="sortBranchesBy('<?= $field ?>')" class="flex items-center gap-2 font-semibold"><?= $label ?><span id="branchSortIcon-<?= $field ?>">↕</span></button></th>
-            <?php endforeach; ?>
-            <th class="p-4 text-right"><button type="button" onclick="sortBranchesBy('id')" class="flex items-center gap-2 font-semibold">عملیات<span id="branchSortIcon-id">↕</span></button></th></tr></thead><tbody id="branchesTableBody"></tbody></table>
+        <?php $panelTable0 = ['columns' => [], 'rows' => []];
+$panelTable0['attributes'] = ' class="w-full min-w-[900px] text-sm"';
+$panelTable0['headAttributes'] = ' class="bg-gray-50"';
+$panelTable0['headerRowAttributes'] = '';
+foreach ([['academy_name','آموزشگاه'],['name','شعبه'],['type','نوع'],['physical_type','ارائه'],['manager','مدیر'],['status','وضعیت']] as [$field,$label]):
+$panelTable0CellAttributes = ' class="p-4 text-right"';
+ob_start(); ?><button type="button" onclick="sortBranchesBy('<?= $field ?>')" class="flex items-center gap-2 font-semibold"><?= $label ?><span id="branchSortIcon-<?= $field ?>">↕</span></button><?php $panelTable0['columns'][] = ['html' => ob_get_clean(), 'attributes' => $panelTable0CellAttributes, 'tag' => 'th'];
+endforeach;
+$panelTable0['columns'][] = ['html' => '<button type="button" onclick="sortBranchesBy(\'id\')" class="flex items-center gap-2 font-semibold">عملیات<span id="branchSortIcon-id">↕</span></button>', 'attributes' => ' class="p-4 text-right"'];
+$panelTable0['bodyAttributes'] = ' id="branchesTableBody"';
+component('panel-table-template', $panelTable0); unset($panelTable0); ?>
     </div>
     <div id="branchesPagination" class="mt-5 flex flex-col items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-4 sm:flex-row"><div id="branchesPaginationSummary" class="text-sm text-gray-500"></div><div class="flex items-center gap-2"><select id="branchesPageSize" onchange="changeBranchesPageSize(this.value)" class="rounded-xl border px-3 py-2"><option>10</option><option selected>20</option><option>50</option><option>100</option></select><button onclick="changeBranchesPage(-1)" id="branchesPrevPage" class="rounded-xl border px-4 py-2">قبلی</button><span id="branchesPageLabel" class="text-sm"></span><button onclick="changeBranchesPage(1)" id="branchesNextPage" class="rounded-xl border px-4 py-2">بعدی</button></div></div>
 </div>

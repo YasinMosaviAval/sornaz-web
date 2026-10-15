@@ -74,49 +74,16 @@
     <!-- جدول -->
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1200px]" id="coursesTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortCoursesBy('name')" class="flex items-center gap-1">
-                                نام دوره <span id="courseSortIcon-name">↕</span>
-                            </button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortCoursesBy('level')" class="flex items-center gap-1">
-                                سطح <span id="courseSortIcon-level">↕</span>
-                            </button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortCoursesBy('branchName')" class="flex items-center gap-1">
-                                سازمان <span id="courseSortIcon-branchName">↕</span>
-                            </button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortCoursesBy('instrument')" class="flex items-center gap-1">
-                                درس <span id="courseSortIcon-instrument">↕</span>
-                            </button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortCoursesBy('teacher_capacity')" class="flex items-center gap-1">
-                                ظرفیت اساتید <span id="courseSortIcon-teacher_capacity">↕</span>
-                            </button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortCoursesBy('student_capacity')" class="flex items-center gap-1">
-                                ظرفیت هنرجوها <span id="courseSortIcon-student_capacity">↕</span>
-                            </button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortCoursesBy('status')" class="flex items-center gap-1">
-                                وضعیت <span id="courseSortIcon-status">↕</span>
-                            </button>
-                        </th>
-                        <th class="w-40 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1200px]" id="coursesTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
 
         <!-- صفحه‌بندی -->

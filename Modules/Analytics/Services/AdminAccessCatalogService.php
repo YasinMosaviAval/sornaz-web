@@ -11,11 +11,11 @@ class AdminAccessCatalogService
         $roles = [];
         foreach (DB::table('access_system_roles')->whereNull('deleted_at')->orderBy('scope')->orderBy('sort_order')->orderBy('name')->get() as $r) {
             $id = (int) $r['role_id'];
-            $roles[] = ['id' => $id, 'parentId' => $r['parent_role_id'] ? (int) $r['parent_role_id'] : null, 'name' => $r['name'], 'type' => $r['type'], 'level' => (int) $r['level'], 'scope' => $r['scope'], 'color' => $r['color'] ?: '#4f46e5', 'sortOrder' => (int) $r['sort_order'], 'translations' => $this->translations('access_system_roles', $id), 'permissionIds' => array_map(fn ($x) => (int) $x['permission_id'], DB::table('access_system_role_permissions')->where('role_id', $id)->whereNull('deleted_at')->get())];
+            $roles[] = ['id' => $id, 'parentId' => $r['parent_role_id'] ? (int) $r['parent_role_id'] : null, 'name' => $r['name'], 'type' => $r['type'], 'level' => (int) $r['level'], 'scope' => $r['scope'], 'color' => $r['color'] ?: '#4f46e5', 'sortOrder' => (int) $r['sort_order'], 'panelVisible' => (bool) $r['is_panel_visible'], 'translations' => $this->translations('access_system_roles', $id), 'permissionIds' => array_map(fn ($x) => (int) $x['permission_id'], DB::table('access_system_role_permissions')->where('role_id', $id)->whereNull('deleted_at')->get())];
         }$permissions = [];
         foreach (DB::table('access_system_permissions')->whereNull('deleted_at')->orderBy('scope')->orderBy('resource')->orderBy('action')->get() as $p) {
             $id = (int) $p['permission_id'];
-            $permissions[] = ['id' => $id, 'name' => $p['name'], 'resource' => $p['resource'], 'action' => $p['action'], 'type' => $p['type'], 'group' => $p['group_name'], 'scope' => $p['scope'], 'risk' => (int) $p['risk_level'], 'approval' => $p['approval'], 'translations' => $this->translations('access_system_permissions', $id)];
+            $permissions[] = ['id' => $id, 'name' => $p['name'], 'resource' => $p['resource'], 'action' => $p['action'], 'type' => $p['type'], 'group' => $p['group_name'], 'scope' => $p['scope'], 'risk' => (int) $p['risk_level'], 'approval' => $p['approval'], 'panelVisible' => (bool) $p['is_panel_visible'], 'translations' => $this->translations('access_system_permissions', $id)];
         }return ['roles' => $roles, 'permissions' => $permissions];
     }
 
@@ -32,7 +32,7 @@ class AdminAccessCatalogService
                 throw new RuntimeException('نام نقش تکراری است.');
             }
             $now = date('Y-m-d H:i:s');
-            $v = ['parent_role_id' => $parent, 'name' => $name, 'type' => $type, 'level' => $level, 'scope' => $scope, 'color' => preg_match('/^#[0-9a-fA-F]{6}$/', (string) ($d['color'] ?? '')) ? $d['color'] : '#4f46e5', 'sort_order' => max(0, min(127, (int) ($d['sortOrder'] ?? 0))), 'updated_at' => $now, 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
+            $v = ['parent_role_id' => $parent, 'name' => $name, 'type' => $type, 'level' => $level, 'scope' => $scope, 'color' => preg_match('/^#[0-9a-fA-F]{6}$/', (string) ($d['color'] ?? '')) ? $d['color'] : '#4f46e5', 'sort_order' => max(0, min(127, (int) ($d['sortOrder'] ?? 0))), 'is_panel_visible' => $this->visibility($d, $id, true), 'updated_at' => $now, 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
             if ($id) {
                 $this->role($id);
                 DB::table('access_system_roles')->where('role_id', $id)->update($v);
@@ -58,7 +58,7 @@ class AdminAccessCatalogService
             $scope = $this->one($d['scope'] ?? '', ['platform', 'website', 'academy', 'branch', 'self'], 'دامنه مجوز');
             $group = in_array($d['group'] ?? '', ['website', 'academy'], true) ? $d['group'] : ($scope === 'academy' || $scope === 'branch' ? 'academy' : 'website');
             $now = date('Y-m-d H:i:s');
-            $v = ['name' => $name, 'resource' => $resource, 'action' => $action, 'type' => $this->one($d['type'] ?? 'sidebar', ['menu', 'sidebar', 'topbar', 'header'], 'نوع مجوز'), 'group_name' => $group, 'scope' => $scope, 'risk_level' => max(1, min(5, (int) ($d['risk'] ?? 1))), 'approval' => $this->one($d['approval'] ?? 'confirm', ['confirm', 'pending'], 'وضعیت تأیید'), 'updated_at' => $now, 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
+            $v = ['name' => $name, 'resource' => $resource, 'action' => $action, 'type' => $this->one($d['type'] ?? 'sidebar', ['menu', 'sidebar', 'topbar', 'header'], 'نوع مجوز'), 'group_name' => $group, 'scope' => $scope, 'risk_level' => max(1, min(5, (int) ($d['risk'] ?? 1))), 'approval' => $this->one($d['approval'] ?? 'confirm', ['confirm', 'pending'], 'وضعیت تأیید'), 'is_panel_visible' => $this->visibility($d, $id, false), 'updated_at' => $now, 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
             if ($id) {
                 $this->permission($id);
                 DB::table('access_system_permissions')->where('permission_id', $id)->update($v);
@@ -147,6 +147,13 @@ class AdminAccessCatalogService
             throw new RuntimeException('نام سیستمی باید انگلیسی و شامل حروف کوچک، عدد، نقطه یا زیرخط باشد.');
         }
         return $v;
+    }
+
+    private function visibility(array $data, ?int $id, bool $role): int
+    {
+        if (array_key_exists('panelVisible', $data)) return (int) (bool) $data['panelVisible'];
+        if (!$id) return 0;
+        return (int) ($role ? $this->role($id) : $this->permission($id))['is_panel_visible'];
     }
 
     private function one(mixed $v, array $a, string $l): string

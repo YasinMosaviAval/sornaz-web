@@ -48,6 +48,14 @@
   function actionButtons(x) {
     return `<div class="inline-flex flex-wrap gap-3"><button onclick="viewClassroomType(${x.id})" class="text-indigo-600">جزئیات</button>${x.canEdit ? `<button onclick="toggleClassroomTypeInlineEdit(${x.id})" class="text-gray-600 hover:text-indigo-600">ویرایش</button>` : ''}${x.canDelete ? `<button onclick="deleteClassroomTypeAdmin(${x.id})" class="text-red-600">حذف</button>` : ''}</div>`;
   }
+  let selectedOrganization = 'all';
+  window.renderClassroomTypesBranchTabs = () =>
+    window.renderPanelOrganizationTabs?.('classroomTypesBranchTabs', selectedOrganization, window.filterClassroomTypesByBranch);
+  window.filterClassroomTypesByBranch = (value) => {
+    selectedOrganization = String(value);
+    window.renderClassroomTypesBranchTabs();
+    render();
+  };
   function visibleRows() {
     const search = (document.getElementById('classroomTypeSearch')?.value || '')
       .trim()
@@ -66,7 +74,8 @@
               .toLocaleLowerCase('fa')
               .includes(search)) &&
           (!category || x.type === category) &&
-          (!status || x.status === status)
+          (!status || x.status === status) &&
+          (selectedOrganization === 'all' || (selectedOrganization === 'academy' ? !Number(x.branchId) : String(x.branchId) === selectedOrganization))
       )
       .sort((a, b) => {
         const av = String(a[sortField] ?? '');
@@ -123,17 +132,18 @@
     let html = '';
     visibleRows().forEach((x) => {
       const status = statusMeta(x.status);
-      html += `<tr class="border-t"><td class="p-4">${esc(x.createdByName || '—')}</td><td class="p-4 font-bold">${esc(x.title)}</td><td class="p-4">${esc(x.summary)}</td>${showCategory ? `<td class="p-4">${esc(x.typeLabel)}</td>` : ''}${showStatus ? `<td class="p-4">${statusControl(x, status)}</td>` : ''}<td class="p-4">${actionButtons(x)}</td></tr>`;
+      html += window.AdminPanelTable.rowHTML([{ html: `${esc(x.createdByName || '—')}`, attributes: ` class="p-4"` }, { html: `${esc(x.title)}`, attributes: ` class="p-4 font-bold"` }, { html: `${esc(x.summary)}`, attributes: ` class="p-4"` }, { fragment: showCategory ? window.AdminPanelTable.cellsHTML([{ html: `${esc(x.typeLabel)}`, attributes: ` class="p-4"` }]) : '' }, { fragment: showStatus ? window.AdminPanelTable.cellsHTML([{ html: `${statusControl(x, status)}`, attributes: ` class="p-4"` }]) : '' }, { html: `${actionButtons(x)}`, attributes: ` class="p-4"` }], ` class="border-t"`);
       if (editingId === x.id)
-        html += `<tr class="classroom-type-inline-expand bg-gray-50"><td colspan="${columnCount}" class="p-5"><div class="space-y-4">${fields(x, 'ctInline' + x.id)}<div class="flex gap-3"><button onclick="saveInlineClassroomType(${x.id},this)" class="rounded-xl bg-indigo-600 px-5 py-2 text-white">ذخیره</button><button onclick="toggleClassroomTypeInlineEdit(${x.id})" class="rounded-xl border px-5 py-2">انصراف</button></div></div></td></tr>`;
+        html += window.AdminPanelTable.rowHTML([{ html: `<div class="space-y-4">${fields(x, 'ctInline' + x.id)}<div class="flex gap-3"><button onclick="saveInlineClassroomType(${x.id},this)" class="rounded-xl bg-indigo-600 px-5 py-2 text-white">ذخیره</button><button onclick="toggleClassroomTypeInlineEdit(${x.id})" class="rounded-xl border px-5 py-2">انصراف</button></div></div>`, attributes: ` colspan="${columnCount}" class="p-5"` }], ` class="classroom-type-inline-expand bg-gray-50"`);
     });
     b.innerHTML =
-      html || `<tr><td colspan="${columnCount}" class="p-10 text-center">موردی یافت نشد</td></tr>`;
+      html || window.AdminPanelTable.rowHTML([{ html: `موردی یافت نشد`, attributes: ` colspan="${columnCount}" class="p-10 text-center"` }], ``);
     updateSortIcons();
   }
   async function load() {
     const d = await classroomApi('/academy/admin/classrooms', null, 'GET');
     rows = d.types || [];
+    window.renderClassroomTypesBranchTabs();
     typeOptions = d.typeOptions || [];
     permissions = { ...permissions, ...(d.permissions || {}) };
     const filter = document.getElementById('classroomTypeCategoryFilter');

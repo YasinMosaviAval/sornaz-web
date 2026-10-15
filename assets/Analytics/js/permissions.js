@@ -39,10 +39,10 @@
       list
         .map(
           (x) =>
-            `<tr><td class="p-4"><b>${e(x.translations.fa?.title || x.name)}</b><small class="block text-gray-400">${e(x.name)} · ${e(x.translations.en?.title || '')}</small></td><td class="p-4">${e(x.resource)}</td><td class="p-4">${e(x.action)}</td><td class="p-4">${labels[x.scope] || x.scope}</td><td class="p-4"><span class="rounded-full px-3 py-1 ${x.risk >= 4 ? 'bg-red-100 text-red-700' : x.risk === 3 ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}">${x.risk}</span></td><td class="p-4 text-left"><button onclick="openAccessPermission(${x.id})" class="ml-3 text-indigo-600">ویرایش</button><button onclick="deleteAccessPermission(${x.id})" class="text-red-500">حذف</button></td></tr>`
+            window.AdminPanelTable.rowHTML([{ html: `<b>${e(x.translations.fa?.title || x.name)}</b><small class="block text-gray-400">${e(x.name)} · ${e(x.translations.en?.title || '')}</small>`, attributes: ` class="p-4"` }, { html: `${e(x.resource)}`, attributes: ` class="p-4"` }, { html: `${e(x.action)}`, attributes: ` class="p-4"` }, { html: `${labels[x.scope] || x.scope}`, attributes: ` class="p-4"` }, { html: `<span class="rounded-full px-3 py-1 ${x.risk >= 4 ? 'bg-red-100 text-red-700' : x.risk === 3 ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}">${x.risk}</span>`, attributes: ` class="p-4"` }, { html: `${x.panelVisible ? 'نمایش' : 'مخفی'}`, attributes: ` class="p-4"` }, { html: `<button onclick="openAccessPermission(${x.id})" class="ml-3 text-indigo-600">ویرایش</button><button onclick="deleteAccessPermission(${x.id})" class="text-red-500">حذف</button>`, attributes: ` class="p-4 text-left"` }], ``)
         )
         .join('') ||
-      '<tr><td colspan="6" class="p-12 text-center text-gray-400">مجوزی یافت نشد</td></tr>';
+      window.AdminPanelTable.rowHTML([{ html: "مجوزی یافت نشد", attributes: " colspan=\"7\" class=\"p-12 text-center text-gray-400\"" }], "");
   };
   window.openAccessPermission = (id) => {
     const x = (window.accessPermissions || []).find((p) => p.id === id) || {
@@ -61,10 +61,12 @@
         .join(
           ''
         )}</select><select name="risk" class="rounded-xl border p-3">${[1, 2, 3, 4, 5].map((v) => `<option ${x.risk === v ? 'selected' : ''}>${v}</option>`).join('')}</select><select name="type" class="rounded-xl border p-3">${['menu', 'sidebar', 'topbar', 'header'].map((v) => `<option ${x.type === v ? 'selected' : ''}>${v}</option>`).join('')}</select><select name="approval" class="rounded-xl border p-3">${['confirm', 'pending'].map((v) => `<option ${x.approval === v ? 'selected' : ''}>${v}</option>`).join('')}</select></div><div class="grid gap-3 md:grid-cols-3"><input name="title_fa" value="${e(x.translations.fa?.title)}" placeholder="عنوان فارسی" class="rounded-xl border p-3"><input name="summary_fa" value="${e(x.translations.fa?.summary)}" placeholder="خلاصه فارسی" class="rounded-xl border p-3"><textarea name="description_fa" placeholder="شرح فارسی" class="rounded-xl border p-3">${e(x.translations.fa?.description)}</textarea><input name="title_en" value="${e(x.translations.en?.title)}" placeholder="English title" class="rounded-xl border p-3"><input name="summary_en" value="${e(x.translations.en?.summary)}" placeholder="English summary" class="rounded-xl border p-3"><textarea name="description_en" placeholder="English description" class="rounded-xl border p-3">${e(x.translations.en?.description)}</textarea></div><button type="button" onclick="saveAccessPermission(${id || 'null'})" class="rounded-xl bg-indigo-600 px-6 py-3 text-white">ذخیره در دیتابیس</button></form></div></div>`;
+    document.getElementById('accessPermissionForm').insertAdjacentHTML('afterbegin', `<label class="flex items-center gap-2"><input type="checkbox" name="panelVisible" ${x.panelVisible ? 'checked' : ''}> نمایش در پنل آموزشگاه</label>`);
   };
   window.saveAccessPermission = async (id) => {
     const d = Object.fromEntries(new FormData(document.getElementById('accessPermissionForm')));
     d.risk = Number(d.risk);
+    d.panelVisible = document.getElementById('accessPermissionForm').elements.panelVisible.checked;
     d.group = ['academy', 'branch'].includes(d.scope) ? 'academy' : 'website';
     d.translations = {
       fa: { title: d.title_fa, summary: d.summary_fa, description: d.description_fa },

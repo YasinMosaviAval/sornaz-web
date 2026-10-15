@@ -14,7 +14,7 @@ const php = [
 const suites = php.map(file => ['php',file]);
 suites.push([process.execPath,'csrf_fetch_test.cjs'],[process.execPath,'profile_render_security_test.cjs']);
 if (process.argv.includes('--browser')) {
- suites.push([process.execPath,'core_functionality_browser_test.cjs'],[process.execPath,'public_copy_test.cjs'],[process.execPath,'financial_records_browser_test.cjs']);
+ suites.push([process.execPath,'core_functionality_browser_test.cjs'],[process.execPath,'public_copy_test.cjs'],[process.execPath,'financial_records_browser_test.cjs'],[process.execPath,'panel_table_browser_test.cjs']);
 }
 let failed=0;
 for (const [command,file] of suites) {

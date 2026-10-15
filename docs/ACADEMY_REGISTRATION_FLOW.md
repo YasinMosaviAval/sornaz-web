@@ -29,7 +29,7 @@ View اصلی `Modules/Academy/Resources/Views/send-academy-request.php` و Java
 - وضعیت کاربر را `approved` می‌کند.
 - `created_by`، `updated_by` و `approved_by` را برابر user_id درخواست‌کننده قرار می‌دهد.
 - نقش `academy_owner` را برای حساب آموزشگاه ایجاد می‌کند.
-- نقش `academy_manager` را برای درخواست‌کننده ثبت می‌کند.
+- درخواست‌کننده را به‌عنوان عضو آموزشگاه با نقش `academy_manager` درجهٔ ۱ ثبت می‌کند.
 - رکورد `academies` را ایجاد می‌کند.
 - پروفایل `z_user_profiles` را ایجاد یا پیدا می‌کند.
 - حساب مالی نوع `academy_wallet` را ایجاد می‌کند.
@@ -42,7 +42,7 @@ View اصلی `Modules/Academy/Resources/Views/send-academy-request.php` و Java
 پس از موفقیت ثبت، `AcademyRegistrationService::register()` اعلان‌های زیر را با `UserNotificationService` ایجاد می‌کند:
 
 - برای مدیر سایت: درخواست ثبت آموزشگاه با شناسه درخواست‌کننده و آموزشگاه
-- برای مدیر سایت: ایجاد نقش موسس آموزشگاه
+- برای مدیر سایت: ایجاد نقش مدیر آموزشگاه درجهٔ ۱
 - برای درخواست‌کننده: موفقیت ارسال درخواست
 - برای حساب آموزشگاه: ارسال درخواست توسط کاربر درخواست‌کننده
 
@@ -55,7 +55,8 @@ View اصلی `Modules/Academy/Resources/Views/send-academy-request.php` و Java
 - `z_user_profiles`: پروفایل کاربر آموزشگاه
 - `financial_system_accounts`: حساب `academy_wallet`
 - `access_system_roles`: نقش‌های آموزشگاه
-- `user_roles`: `academy_owner` و `academy_manager`
+- `user_roles`: نقش `academy_owner` حساب آموزشگاه
+- `academy_branch_members` و `academy_branch_member_roles`: عضویت و نقش مدیر درجهٔ ۱ درخواست‌کننده در همان آموزشگاه
 - `translations`: مشخصات متنی آموزشگاه و اعلان‌ها
 - `user_notifications`: اعلان‌های ثبت درخواست
 - `user_referrals`: برای حساب‌هایی که از مسیر عمومی UserService ایجاد می‌شوند

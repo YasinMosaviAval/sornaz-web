@@ -277,30 +277,23 @@
     renderPagination(root, e, s, rows.length, pages);
   }
   function renderTabs(root, s) {
-    const tabContainer = root.querySelector('[data-profile-organization-tabs]');
+    const tabs = root.querySelector('[data-profile-organization-tabs]');
     if (s.hideOrganizationField && (s.organizations || []).length === 1) {
-      tabContainer.parentElement.classList.add('hidden');
+      tabs.parentElement.classList.add('hidden');
       s.organization = s.organizations[0].id;
       return;
     }
-    tabContainer.parentElement.classList.remove('hidden');
-    const all = { id: 'all', name: 'همه' },
-      orgs = s.organizations || [],
-      academies = orgs.filter((x) => x.kind === 'academy'),
-      ordered = [all];
-    for (const academy of academies) {
-      ordered.push(
-        academy,
-        ...orgs.filter((x) => x.kind === 'branch' && x.academyId === academy.academyId)
-      );
-    }
-    for (const org of orgs) if (!ordered.includes(org)) ordered.push(org);
-    tabContainer.innerHTML = ordered
-      .map(
-        (o) =>
-          `<button type="button" data-org="${o.id}" class="rounded-2xl border px-5 py-2.5 text-sm transition ${String(s.organization) === String(o.id) ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-gray-200 bg-white hover:border-indigo-300'}">${esc(o.name)}</button>`
-      )
-      .join('');
+    tabs.id ||= root.id + '-organization-tabs';
+    const organizations = s.organizations || [];
+    const academies = organizations.filter((o) => o.kind === 'academy');
+    window.renderPanelOrganizationTabs?.(tabs.id, s.organization, (value) => {
+      s.organization = value;
+      s.page = 1;
+      render(root);
+    }, {
+      showAcademy: false,
+      options: organizations.map((o) => ({ value: String(o.id), label: o.kind === 'academy' && academies.length === 1 ? (document.documentElement.lang === 'en' ? 'Academy' : 'آموزشگاه') : o.name })),
+    });
   }
   function renderViews(root, s) {
     root.querySelector('[data-profile-table-wrap]').classList.toggle('hidden', s.view !== 'table');
@@ -323,14 +316,12 @@
       ['approval_status', 'وضعیت تأیید'],
     ];
     root.querySelector('[data-profile-head]').innerHTML =
-      '<tr>' +
-      cols
+      window.AdminPanelTable.rowHTML([{ fragment: cols
         .map(
           (c) =>
-            `<th class="whitespace-nowrap px-5 py-4 text-right">${sortButton(e, s, c[0], c[1])}</th>`
+            window.AdminPanelTable.cellsHTML([{ html: `${sortButton(e, s, c[0], c[1])}`, attributes: ` class="whitespace-nowrap px-5 py-4 text-right"`, tag: 'th' }])
         )
-        .join('') +
-      '<th class="px-5 py-4 text-left">عملیات</th></tr>';
+        .join('') }, { html: "عملیات", attributes: " class=\"px-5 py-4 text-left\"", tag: 'th' }], '');
   }
   function display(f, v) {
     if (v === null || v === undefined || v === '') return '—';
@@ -353,16 +344,16 @@
       html = [];
     for (const x of rows) {
       html.push(
-        `<tr class="hover:bg-gray-50">${[['id', 'شناسه'], ...d.columns, ['user_name', 'سازمان']].map((c) => `<td class="whitespace-nowrap px-5 py-4">${display(c[0], x[c[0]])}</td>`).join('')}<td class="px-5 py-4">${statusControl(e, x)}</td><td class="px-5 py-4 text-left">${actions(e, x)}</td></tr>`
+        window.AdminPanelTable.rowHTML([{ fragment: [['id', 'شناسه'], ...d.columns, ['user_name', 'سازمان']].map((c) => window.AdminPanelTable.cellsHTML([{ html: `${display(c[0], x[c[0]])}`, attributes: ` class="whitespace-nowrap px-5 py-4"` }])).join('') }, { html: `${statusControl(e, x)}`, attributes: ` class="px-5 py-4"` }, { html: `${actions(e, x)}`, attributes: ` class="px-5 py-4 text-left"` }], ` class="hover:bg-gray-50"`)
       );
       if (s.editing === x.id)
         html.push(
-          `<tr><td colspan="${colspan}" class="border-t bg-indigo-50/40 p-5"><div class="profile-inline-editor rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm">${editForm(e, x, s, true)}</div></td></tr>`
+          window.AdminPanelTable.rowHTML([{ html: `<div class="profile-inline-editor rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm">${editForm(e, x, s, true)}</div>`, attributes: ` colspan="${colspan}" class="border-t bg-indigo-50/40 p-5"` }], ``)
         );
     }
     root.querySelector('[data-profile-body]').innerHTML = html.length
       ? html.join('')
-      : `<tr><td colspan="${colspan}" class="p-12 text-center text-gray-400">موردی یافت نشد.</td></tr>`;
+      : window.AdminPanelTable.rowHTML([{ html: `موردی یافت نشد.`, attributes: ` colspan="${colspan}" class="p-12 text-center text-gray-400"` }], ``);
   }
   function card(e, d, x) {
     return `<article class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm"><div class="flex items-start justify-between gap-3"><div><h3 class="text-lg font-bold">${esc(x[d.main] || d.title)}</h3><p class="mt-1 text-sm text-gray-500">${esc(x.user_name)}</p></div>${statusControl(e, x)}</div><div class="mt-4 grid gap-2 text-sm text-gray-600 sm:grid-cols-2">${d.columns

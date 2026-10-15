@@ -143,41 +143,8 @@
     window.updateNotificationSortIcons();
   };
 
-  window.renderNotificationsBranchTabs = async function () {
-    const container = document.getElementById('notificationsBranchTabs');
-    if (!container) return;
-    container
-      .querySelectorAll('.notification-branch-tab:not([data-value="all"])')
-      .forEach(function (t) {
-        t.remove();
-      });
-    window.getNotificationBranches().forEach(function (b) {
-      const active = String(currentNotificationBranch) === String(b.id);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className =
-        'notification-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border transition ' +
-        (active
-          ? 'bg-indigo-600 text-white border-indigo-600'
-          : 'border-gray-200 hover:bg-gray-50');
-      btn.dataset.value = b.id;
-      btn.textContent = b.name;
-      btn.onclick = function () {
-        window.filterNotificationsByBranch(b.id);
-      };
-      container.appendChild(btn);
-    });
-    const allTab = container.querySelector('[data-value="all"]');
-    if (allTab) {
-      const isAll = currentNotificationBranch === 'all';
-      allTab.classList.toggle('bg-indigo-600', isAll);
-      allTab.classList.toggle('text-white', isAll);
-      allTab.classList.toggle('border-indigo-600', isAll);
-      if (!isAll) {
-        allTab.classList.add('border', 'border-gray-200');
-        allTab.classList.remove('bg-indigo-600', 'text-white');
-      }
-    }
+  window.renderNotificationsBranchTabs = function () {
+    window.renderPanelOrganizationTabs?.('notificationsBranchTabs', currentNotificationBranch, window.filterNotificationsByBranch, { tabClass: 'notification-branch-tab' });
   };
 
   window.filterNotificationsByBranch = async function (branchId) {
@@ -254,7 +221,7 @@
         : '';
     } else {
       pageItems.forEach(function (item) {
-        const tr = document.createElement('tr');
+        const tr = window.AdminPanelTable.createRow();
         tr.className = 'hover:bg-gray-50 transition';
         tr.innerHTML = window.getNotificationRowHTML ? window.getNotificationRowHTML(item) : '';
         tbody.appendChild(tr);

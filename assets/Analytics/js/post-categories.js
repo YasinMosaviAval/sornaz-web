@@ -52,10 +52,10 @@
       ? items
           .map(
             (item) =>
-              `<tr class="hover:bg-gray-50"><td class="px-5 py-4 font-medium">${esc(item.title_fa || '—')}</td><td class="px-5 py-4" dir="ltr">${esc(item.title_en || '—')}</td><td class="px-5 py-4 text-gray-500" dir="ltr">${esc(item.slug)}</td><td class="px-5 py-4">${esc(item.group)}</td><td class="px-5 py-4"><span class="rounded-full bg-indigo-50 px-3 py-1 text-indigo-700">${Number(item.posts_count || 0).toLocaleString('fa-IR')}</span></td><td class="whitespace-nowrap px-5 py-4 text-left"><button onclick="editPostCategory(${item.id})" class="ml-4 text-indigo-600">ویرایش</button><button onclick="deletePostCategory(${item.id})" class="text-red-500 ${item.posts_count ? 'opacity-40' : ''}" ${item.posts_count ? 'title="دسته‌بندی دارای نوشته است"' : ''}>حذف</button></td></tr>`
+              window.AdminPanelTable.rowHTML([{ html: `${esc(item.title_fa || '—')}`, attributes: ` class="px-5 py-4 font-medium"` }, { html: `${esc(item.title_en || '—')}`, attributes: ` class="px-5 py-4" dir="ltr"` }, { html: `${esc(item.slug)}`, attributes: ` class="px-5 py-4 text-gray-500" dir="ltr"` }, { html: `${esc(item.group)}`, attributes: ` class="px-5 py-4"` }, { html: `<span class="rounded-full bg-indigo-50 px-3 py-1 text-indigo-700">${Number(item.posts_count || 0).toLocaleString('fa-IR')}</span>`, attributes: ` class="px-5 py-4"` }, { html: `<button onclick="editPostCategory(${item.id})" class="ml-4 text-indigo-600">ویرایش</button><button onclick="deletePostCategory(${item.id})" class="text-red-500 ${item.posts_count ? 'opacity-40' : ''}" ${item.posts_count ? 'title="دسته‌بندی دارای نوشته است"' : ''}>حذف</button>`, attributes: ` class="whitespace-nowrap px-5 py-4 text-left"` }], ` class="hover:bg-gray-50"`)
           )
           .join('')
-      : '<tr><td colspan="6" class="px-5 py-12 text-center text-gray-400">دسته‌بندی‌ای یافت نشد</td></tr>';
+      : window.AdminPanelTable.rowHTML([{ html: "دسته‌بندی‌ای یافت نشد", attributes: " colspan=\"6\" class=\"px-5 py-12 text-center text-gray-400\"" }], "");
     document.getElementById('postCategoriesCount').textContent =
       `${items.length.toLocaleString('fa-IR')} دسته‌بندی`;
   }

@@ -5,7 +5,19 @@
         <button type="button" onclick="openNationalHolidayModal()" class="rounded-2xl bg-indigo-600 px-6 py-3 text-white"><i class="fas fa-plus ml-2"></i>افزودن تعطیل رسمی</button>
     </div>
     <div class="overflow-hidden rounded-3xl bg-white shadow">
-        <div class="overflow-x-auto"><table class="w-full min-w-[760px]"><thead class="border-b bg-gray-50"><tr><th class="p-5 text-right">عنوان</th><th class="p-5 text-right">تاریخ</th><th class="p-5 text-right">وضعیت</th><th class="p-5"></th></tr></thead><tbody id="nationalHolidaysBody"></tbody></table></div>
+        <div class="overflow-x-auto"><?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[760px]"',
+                'headAttributes' => ' class="border-b bg-gray-50"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' id="nationalHolidaysBody"',
+                'columns' => [
+                    ['html' => 'عنوان', 'attributes' => ' class="p-5 text-right"'],
+                    ['html' => 'تاریخ', 'attributes' => ' class="p-5 text-right"'],
+                    ['html' => 'وضعیت', 'attributes' => ' class="p-5 text-right"'],
+                    ['html' => '', 'attributes' => ' class="p-5"'],
+                ],
+                'rows' => [],
+            ]); ?></div>
     </div>
 </div>
 <?php endif; ?>

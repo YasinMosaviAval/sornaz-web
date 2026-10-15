@@ -93,10 +93,10 @@
       ? items
           .map(
             (x) =>
-              `<tr><td class="p-4"><button onclick="openMediaDetails(${x.id})" class="flex items-center gap-3 text-right"><span class="block h-14 w-14 overflow-hidden rounded-lg">${preview(x)}</span><span><strong>${esc(x.title)}</strong><small class="block text-gray-400">${esc(x.filename)}</small></span></button></td><td class="p-4">${esc(x.mime)}</td><td class="p-4">${size(x.size)}</td><td class="p-4">${esc(x.createdAt)}</td><td class="p-4 text-left"><button onclick="openMediaDetails(${x.id})" class="text-indigo-600">ویرایش</button></td></tr>`
+              window.AdminPanelTable.rowHTML([{ html: `<button onclick="openMediaDetails(${x.id})" class="flex items-center gap-3 text-right"><span class="block h-14 w-14 overflow-hidden rounded-lg">${preview(x)}</span><span><strong>${esc(x.title)}</strong><small class="block text-gray-400">${esc(x.filename)}</small></span></button>`, attributes: ` class="p-4"` }, { html: `${esc(x.mime)}`, attributes: ` class="p-4"` }, { html: `${size(x.size)}`, attributes: ` class="p-4"` }, { html: `${esc(x.createdAt)}`, attributes: ` class="p-4"` }, { html: `<button onclick="openMediaDetails(${x.id})" class="text-indigo-600">ویرایش</button>`, attributes: ` class="p-4 text-left"` }], ``)
           )
           .join('')
-      : '<tr><td colspan="5" class="p-12 text-center text-gray-400">رسانه‌ای یافت نشد</td></tr>';
+      : window.AdminPanelTable.rowHTML([{ html: "رسانه‌ای یافت نشد", attributes: " colspan=\"5\" class=\"p-12 text-center text-gray-400\"" }], "");
     const pages = Math.max(1, Math.ceil(total / perPage)),
       start = (page - 1) * perPage;
     document.getElementById('mediaPageInfo').textContent =

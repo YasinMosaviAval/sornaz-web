@@ -50,12 +50,6 @@
   const studentLevels = ['مبتدی', 'متوسط', 'پیشرفته'];
   const studentTeachers = ['موسوی', 'رضایی', 'بهرامی', 'کاظمی', 'نوری'];
   const studentFinancials = ['تسویه', 'بدهکار'];
-  const studentBranchesFallback = [
-    { id: 1, name: 'شعبه مرکزی' },
-    { id: 2, name: 'شعبه ونک' },
-    { id: 3, name: 'شعبه سعادت‌آباد' },
-    { id: 4, name: 'شعبه کرج' },
-  ];
 
   window.studentInstrumentsList = studentInstruments;
   window.studentLevelsList = studentLevels;
@@ -74,7 +68,7 @@
         return { id: b.id, name: b.name };
       });
     }
-    return studentBranchesFallback.slice();
+    return [];
   };
 
   function todayISO() {
@@ -411,53 +405,8 @@
     window.updateStudentSortIcons();
   };
 
-  window.renderStudentBranchTabs = async function () {
-    const container = document.getElementById('studentBranchTabs');
-    if (!container) return;
-    container.querySelectorAll('.student-branch-tab:not([data-value="all"])').forEach(function (t) {
-      t.remove();
-    });
-    const academyButton = document.createElement('button');
-    academyButton.type = 'button';
-    academyButton.dataset.value = 'academy';
-    academyButton.className =
-      'student-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border transition-colors ' +
-      (currentStudentBranch === 'academy'
-        ? 'bg-indigo-600 text-white border-indigo-600'
-        : 'border-gray-200 hover:bg-gray-50');
-    academyButton.textContent = 'آموزشگاه';
-    academyButton.onclick = function () {
-      window.filterStudentsByBranch('academy');
-    };
-    container.appendChild(academyButton);
-    window.getStudentBranches().forEach(function (b) {
-      const active = String(currentStudentBranch) === String(b.id);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className =
-        'student-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border transition-colors ' +
-        (active
-          ? 'bg-indigo-600 text-white border-indigo-600'
-          : 'border-gray-200 hover:bg-gray-50');
-      btn.dataset.value = b.id;
-      btn.textContent = b.name;
-      btn.onclick = function () {
-        window.filterStudentsByBranch(b.id);
-      };
-      container.appendChild(btn);
-    });
-    // sync all tab
-    const allTab = container.querySelector('[data-value="all"]');
-    if (allTab) {
-      const isAll = currentStudentBranch === 'all';
-      allTab.classList.toggle('bg-indigo-600', isAll);
-      allTab.classList.toggle('text-white', isAll);
-      allTab.classList.toggle('border-indigo-600', isAll);
-      if (!isAll) {
-        allTab.classList.add('border', 'border-gray-200');
-        allTab.classList.remove('bg-indigo-600', 'text-white');
-      }
-    }
+  window.renderStudentBranchTabs = function () {
+    window.renderPanelOrganizationTabs?.('studentBranchTabs', currentStudentBranch, window.filterStudentsByBranch, { tabClass: 'student-branch-tab' });
   };
 
   window.filterStudentsByBranch = async function (branchId) {
@@ -559,12 +508,12 @@
       tbody.innerHTML = window.getStudentEmptyRowHTML ? window.getStudentEmptyRowHTML() : '';
     } else {
       pageItems.forEach(function (item) {
-        const tr = document.createElement('tr');
+        const tr = window.AdminPanelTable.createRow();
         tr.className = 'hover:bg-gray-50 transition';
         tr.innerHTML = window.getStudentRowHTML ? window.getStudentRowHTML(item) : '';
         tbody.appendChild(tr);
         if (editingStudentRowId === item.id) {
-          const expand = document.createElement('tr');
+          const expand = window.AdminPanelTable.createRow();
           expand.className = 'bg-gray-50 student-inline-expand';
           expand.innerHTML = window.getStudentInlineExpandRowHTML
             ? window.getStudentInlineExpandRowHTML(item)

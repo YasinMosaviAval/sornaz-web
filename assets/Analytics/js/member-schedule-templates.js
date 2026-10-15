@@ -136,27 +136,18 @@
   }
 
   window.getMemberScheduleRowHTML = function (item) {
-    return `
-            <td class="py-4 px-5 font-medium">${escapeHtml(item.name)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.role)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.day)}</td>
-            <td class="py-4 px-5 font-mono text-sm">${escapeHtml(item.timeLabel || item.time || '—')}</td>
-            <td class="py-4 px-5 text-sm">${escapeHtml(item.repeatPeriod || 'هفتگی')}</td>
-            <td class="py-4 px-5 text-xs text-gray-500">${escapeHtml(item.timezone || 'Asia/Tehran')}</td>
-            <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5"><button type="button" onclick="cycleMemberScheduleStatus(${item.id})" ${item.readOnly ? 'disabled title="این برنامه متعلق به سازمان دیگری است"' : 'title="تغییر وضعیت"'} class="min-w-[92px] px-3 py-1.5 rounded-full text-xs font-medium transition disabled:cursor-not-allowed disabled:hover:bg-inherit ${statusClass(item.status)}">${escapeHtml(item.status)}</button></td>
-            <td class="py-4 px-5 text-left">
+    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.name)}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `${escapeHtml(item.role)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.day)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.timeLabel || item.time || '—')}`, attributes: ` class="py-4 px-5 font-mono text-sm"` }, { html: `${escapeHtml(item.repeatPeriod || 'هفتگی')}`, attributes: ` class="py-4 px-5 text-sm"` }, { html: `${escapeHtml(item.timezone || 'Asia/Tehran')}`, attributes: ` class="py-4 px-5 text-xs text-gray-500"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5"` }, { html: `<button type="button" onclick="cycleMemberScheduleStatus(${item.id})" ${item.readOnly ? 'disabled title="این برنامه متعلق به سازمان دیگری است"' : 'title="تغییر وضعیت"'} class="min-w-[92px] px-3 py-1.5 rounded-full text-xs font-medium transition disabled:cursor-not-allowed disabled:hover:bg-inherit ${statusClass(item.status)}">${escapeHtml(item.status)}</button>`, attributes: ` class="py-4 px-5"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewMemberSchedule(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
                     ${item.readOnly ? '' : `<button onclick="toggleMemberScheduleInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button><button onclick="deleteMemberSchedule(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>`}
                 </div>
-            </td>`;
+            `, attributes: ` class="py-4 px-5 text-left"` }]);
   };
   window.getMemberScheduleEmptyRowHTML = function () {
-    return `<tr><td colspan="9" class="py-12 text-center text-gray-400">زمان‌بندی‌ای یافت نشد</td></tr>`;
+    return window.AdminPanelTable.rowHTML([{ html: `زمان‌بندی‌ای یافت نشد`, attributes: ` colspan="9" class="py-12 text-center text-gray-400"` }], ``);
   };
   window.getMemberScheduleInlineExpandRowHTML = function (item) {
-    return `<td colspan="9" class="p-5 border-t">${window.getMemberScheduleInlineEditRowHTML(item)}</td>`;
+    return window.AdminPanelTable.cellsHTML([{ html: `${window.getMemberScheduleInlineEditRowHTML(item)}`, attributes: ` colspan="9" class="p-5 border-t"` }]);
   };
   window.getMemberScheduleInlineEditRowHTML = function (item) {
     return `<div class="space-y-6">

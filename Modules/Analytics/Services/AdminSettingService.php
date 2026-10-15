@@ -12,6 +12,8 @@ class AdminSettingService
     {
         $key = $this->fontKey($this->value('site_primary_font', 'vazir'));
         $scale = max(-2, min(2, (int) $this->value('site_font_size_scale', 0)));
+        $weight = max(0, min(5, (int) $this->value('site_font_weight', 0)));
+        $radius = max(0, min(16, (int) $this->value('site_corner_radius', 4)));
         $language = (string) $this->value('site_language', 'fa');
         if (!in_array($language, ['fa', 'en'], true)) {
             $language = 'fa';
@@ -29,7 +31,7 @@ class AdminSettingService
         foreach (self::FONTS as $value => $font) {
             $fonts[] = ['value' => $value, 'label' => $font[0], 'fontFamily' => $font[$english ? 2 : 1] . ', Tahoma, sans-serif'];
         }
-        return ['primaryFont' => $key, 'fontFamily' => self::FONTS[$key][$english ? 2 : 1] . ', Tahoma, sans-serif', 'fontScale' => $scale, 'rootFontSize' => (16 + $scale) . 'px', 'digitStyle' => $english ? 'en' : 'fa', 'language' => $language, 'themeMode' => $mode, 'colorTheme' => $theme, 'fonts' => $fonts];
+        return ['primaryFont' => $key, 'fontFamily' => self::FONTS[$key][$english ? 2 : 1] . ', Tahoma, sans-serif', 'fontScale' => $scale, 'rootFontSize' => (16 + $scale) . 'px', 'fontWeight' => $weight, 'cornerRadius' => $radius, 'digitStyle' => $english ? 'en' : 'fa', 'language' => $language, 'themeMode' => $mode, 'colorTheme' => $theme, 'fonts' => $fonts];
     }
 
     public function save(int $actor, array $data): array
@@ -44,7 +46,15 @@ class AdminSettingService
                 throw new RuntimeException('اندازه فونت انتخاب‌شده معتبر نیست.');
             }
             $this->put('site_font_size_scale', $scale, 'integer', $actor);
-        }if (array_key_exists('language', $data)) {
+        }
+        foreach (['fontWeight' => ['site_font_weight', 0, 5], 'cornerRadius' => ['site_corner_radius', 0, 16]] as $field => [$key, $minimum, $maximum]) {
+            if (!array_key_exists($field, $data)) continue;
+            if (filter_var($data[$field], FILTER_VALIDATE_INT) === false || (int) $data[$field] < $minimum || (int) $data[$field] > $maximum) {
+                throw new RuntimeException('مقدار تنظیمات معتبر نیست.');
+            }
+            $this->put($key, (int) $data[$field], 'integer', $actor);
+        }
+        if (array_key_exists('language', $data)) {
             $language = (string) $data['language'];
             if (!in_array($language, ['fa', 'en'], true)) {
                 throw new RuntimeException('زبان انتخاب‌شده معتبر نیست.');

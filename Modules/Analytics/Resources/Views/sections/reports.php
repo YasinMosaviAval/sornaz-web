@@ -64,32 +64,22 @@
     <!-- جدول -->
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1000px]" id="reportsTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortReportsBy('title')" class="flex items-center gap-1">عنوان گزارش <span id="reportSortIcon-title">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortReportsBy('branchName')" class="flex items-center gap-1">شعبه <span id="reportSortIcon-branchName">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortReportsBy('type')" class="flex items-center gap-1">نوع <span id="reportSortIcon-type">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortReportsBy('periodLabel')" class="flex items-center gap-1">بازه زمانی <span id="reportSortIcon-periodLabel">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortReportsBy('date')" class="flex items-center gap-1">تاریخ <span id="reportSortIcon-date">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortReportsBy('status')" class="flex items-center gap-1">وضعیت <span id="reportSortIcon-status">↕</span></button>
-                        </th>
-                        <th class="w-32 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1000px]" id="reportsTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => '<button onclick="sortReportsBy(\'title\')" class="flex items-center gap-1">عنوان گزارش <span id="reportSortIcon-title">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortReportsBy(\'branchName\')" class="flex items-center gap-1">شعبه <span id="reportSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortReportsBy(\'type\')" class="flex items-center gap-1">نوع <span id="reportSortIcon-type">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortReportsBy(\'periodLabel\')" class="flex items-center gap-1">بازه زمانی <span id="reportSortIcon-periodLabel">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortReportsBy(\'date\')" class="flex items-center gap-1">تاریخ <span id="reportSortIcon-date">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortReportsBy(\'status\')" class="flex items-center gap-1">وضعیت <span id="reportSortIcon-status">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-32 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
         <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="reportsPaginationInfo">نمایش ۱ تا ۱۰ از ۰ گزارش</span>

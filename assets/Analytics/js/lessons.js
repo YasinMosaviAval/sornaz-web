@@ -151,33 +151,8 @@ window.sortLessonsBy = async function (field) {
   updateLessonSortIcons();
 };
 
-window.renderLessonsBranchTabs = async function () {
-  const container = document.getElementById('lessonsBranchTabs');
-  if (!container) return;
-  container.querySelectorAll('.lesn-branch-tab:not(:first-child)').forEach(function (t) {
-    t.remove();
-  });
-  const allTab = container.querySelector('.lesn-branch-tab');
-  if (allTab) {
-    const active = currentLesnBranch === 'all';
-    allTab.classList.toggle('bg-indigo-600', active);
-    allTab.classList.toggle('text-white', active);
-    allTab.classList.toggle('border-indigo-600', active);
-    allTab.classList.toggle('border-gray-200', !active);
-  }
-  getLesnBranches().forEach(function (b) {
-    const active = currentLesnBranch == b.id;
-    const btn = document.createElement('button');
-    btn.className =
-      'lesn-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ' +
-      (active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50') +
-      ' transition';
-    btn.textContent = b.name;
-    btn.onclick = function () {
-      filterLessonsByBranch(b.id);
-    };
-    container.appendChild(btn);
-  });
+window.renderLessonsBranchTabs = function () {
+  window.renderPanelOrganizationTabs?.('lessonsBranchTabs', currentLesnBranch, window.filterLessonsByBranch, { tabClass: 'lesn-branch-tab' });
 };
 
 window.filterLessonsByBranch = async function (branchId) {
@@ -264,14 +239,14 @@ window.renderLessonsTable = async function (list) {
     tbody.innerHTML = window.getLessonEmptyRowHTML ? window.getLessonEmptyRowHTML() : '';
   } else {
     pageItems.forEach(function (item) {
-      const tr = document.createElement('tr');
+      const tr = window.AdminPanelTable.createRow();
       tr.className = 'hover:bg-gray-50 transition';
       tr.innerHTML = window.getLessonRowHTML
         ? window.getLessonRowHTML(item, getLessonLevelTitle(item.level_id))
         : '';
       tbody.appendChild(tr);
       if (editingLessonRowId === item.id) {
-        const expand = document.createElement('tr');
+        const expand = window.AdminPanelTable.createRow();
         expand.className = 'bg-gray-50 admin-inline-expand';
         expand.dataset.lessonInlineEditor = 'true';
         expand.innerHTML = window.getLessonInlineExpandRowHTML

@@ -78,25 +78,19 @@ window.renderEnrollmentsTable = function () {
   if (!tbody) return;
   tbody.innerHTML =
     allEnrollments.length === 0
-      ? `<tr><td colspan="4" class="py-10 text-center text-gray-400">درخواستی نیست</td></tr>`
+      ? window.AdminPanelTable.rowHTML([{ html: `درخواستی نیست`, attributes: ` colspan="4" class="py-10 text-center text-gray-400"` }], ``)
       : allEnrollments
           .map((e) => {
             const st = enrollStatusLabels[e.status] || { text: e.status, cls: 'bg-gray-100' };
-            return `
-            <tr class="hover:bg-gray-50">
-                <td class="py-4 px-5">
+            return window.AdminPanelTable.rowHTML([{ html: `
                     <div class="font-medium">${e.name}</div>
                     <div class="text-xs text-gray-400">${e.phone || ''}</div>
-                </td>
-                <td class="py-4 px-5">
+                `, attributes: ` class="py-4 px-5"` }, { html: `
                     <div>${e.academy}</div>
                     <div class="text-xs text-gray-500">${e.course}</div>
-                </td>
-                <td class="py-4 px-5"><span class="px-2.5 py-1 rounded-full text-xs ${st.cls}">${st.text}</span></td>
-                <td class="py-4 px-5 text-left">
+                `, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-2.5 py-1 rounded-full text-xs ${st.cls}">${st.text}</span>`, attributes: ` class="py-4 px-5"` }, { html: `
                     <button onclick="updateEnrollStatus(${e.id})" class="text-indigo-600 text-sm">وضعیت</button>
-                </td>
-            </tr>`;
+                `, attributes: ` class="py-4 px-5 text-left"` }], ` class="hover:bg-gray-50"`);
           })
           .join('');
 };

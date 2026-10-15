@@ -75,34 +75,23 @@
 
   window.getLessonRowHTML = function (item, levelTitle) {
     const sc = statusBadge(item.status);
-    return `
-            <td class="py-4 px-5 font-medium">${escapeHtml(item.title)}</td>
-            <td class="py-4 px-5">${escapeHtml(levelTitle || '—')}</td>
-            <td class="py-4 px-5 text-center" dir="ltr">${escapeHtml(formatLessonStartDate(item.start_date))}</td>
-            <td class="py-4 px-5">${item.is_primary ? '<span class="px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700">اصلی</span>' : '—'}</td>
-            <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5">${
-              item.canChangeStatus === false
+    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.title)}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `${escapeHtml(levelTitle || '—')}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(formatLessonStartDate(item.start_date))}`, attributes: ` class="py-4 px-5 text-center" dir="ltr"` }, { html: `${item.is_primary ? '<span class="px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700">اصلی</span>' : '—'}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5"` }, { html: `${item.canChangeStatus === false
                 ? `<span class="px-3 py-1 rounded-full text-xs ${sc}">${escapeHtml(statusLabels[item.status] || item.status || 'در انتظار تأیید')}</span>`
-                : `<button type="button" onclick="cycleLessonStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${sc}" title="برای تغییر وضعیت کلیک کنید">${escapeHtml(statusLabels[item.status] || item.status || 'در انتظار تأیید')}</button>`
-            }</td>
-            <td class="py-4 px-5 text-left">
+                : `<button type="button" onclick="cycleLessonStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${sc}" title="برای تغییر وضعیت کلیک کنید">${escapeHtml(statusLabels[item.status] || item.status || 'در انتظار تأیید')}</button>`}`, attributes: ` class="py-4 px-5"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewLesson(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
-                    ${
-                      item.canChangeStatus === false
+                    ${item.canChangeStatus === false
                         ? ''
                         : `<button data-lesson-inline-edit-id="${item.id}" onclick="toggleLessonInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
-                    <button onclick="deleteLesson(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>`
-                    }
+                    <button onclick="deleteLesson(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>`}
                 </div>
-            </td>`;
+            `, attributes: ` class="py-4 px-5 text-left"` }]);
   };
   window.getLessonEmptyRowHTML = function () {
-    return `<tr><td colspan="7" class="py-12 text-center text-gray-400">موردی یافت نشد</td></tr>`;
+    return window.AdminPanelTable.rowHTML([{ html: `موردی یافت نشد`, attributes: ` colspan="7" class="py-12 text-center text-gray-400"` }], ``);
   };
   window.getLessonInlineExpandRowHTML = function (item) {
-    return `<td colspan="7" class="p-5 border-t">${window.getLessonInlineEditRowHTML ? window.getLessonInlineEditRowHTML(item) : ''}</td>`;
+    return window.AdminPanelTable.cellsHTML([{ html: `${window.getLessonInlineEditRowHTML ? window.getLessonInlineEditRowHTML(item) : ''}`, attributes: ` colspan="7" class="p-5 border-t"` }]);
   };
 
   function formFields(item, prefix) {

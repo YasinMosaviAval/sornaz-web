@@ -17,19 +17,21 @@
 
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1100px]" id="profilesTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">عنوان</th>
-                        <th class="text-right py-5 px-5 font-medium">سطح هنرجو</th>
-                        <th class="text-right py-5 px-5 font-medium">شروع فعالیت</th>
-                        <th class="text-right py-5 px-5 font-medium">نمایش عمومی</th>
-                        <th class="text-right py-5 px-5 font-medium">شعبه</th>
-                        <th class="w-36 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1100px]" id="profilesTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => 'عنوان', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'سطح هنرجو', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'شروع فعالیت', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'نمایش عمومی', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'شعبه', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-36 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
     </div>
 </div>

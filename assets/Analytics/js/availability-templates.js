@@ -118,25 +118,18 @@
   }
 
   window.getBranchScheduleRowHTML = function (item) {
-    return `
-            <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.day)}</td>
-            <td class="py-4 px-5 font-mono text-sm">${escapeHtml(item.timeLabel || item.time || '—')}</td>
-            <td class="py-4 px-5 text-sm">${escapeHtml(item.repeatPeriod || 'هفتگی')}</td>
-            <td class="py-4 px-5 text-xs text-gray-500">${escapeHtml(item.timezone || 'Asia/Tehran')}</td>
-            <td class="py-4 px-5">${item.readOnly ? `<span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span>` : `<button type="button" onclick="cycleBranchScheduleStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</button>`}</td>
-            <td class="py-4 px-5 text-left">
+    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.day)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.timeLabel || item.time || '—')}`, attributes: ` class="py-4 px-5 font-mono text-sm"` }, { html: `${escapeHtml(item.repeatPeriod || 'هفتگی')}`, attributes: ` class="py-4 px-5 text-sm"` }, { html: `${escapeHtml(item.timezone || 'Asia/Tehran')}`, attributes: ` class="py-4 px-5 text-xs text-gray-500"` }, { html: `${item.readOnly ? `<span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span>` : `<button type="button" onclick="cycleBranchScheduleStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</button>`}`, attributes: ` class="py-4 px-5"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewBranchSchedule(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
                     ${item.readOnly ? '' : `<button onclick="toggleBranchScheduleInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button><button onclick="deleteBranchSchedule(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>`}
                 </div>
-            </td>`;
+            `, attributes: ` class="py-4 px-5 text-left"` }]);
   };
   window.getBranchScheduleEmptyRowHTML = function () {
-    return `<tr><td colspan="7" class="py-12 text-center text-gray-400">زمان‌بندی‌ای یافت نشد</td></tr>`;
+    return window.AdminPanelTable.rowHTML([{ html: `زمان‌بندی‌ای یافت نشد`, attributes: ` colspan="7" class="py-12 text-center text-gray-400"` }], ``);
   };
   window.getBranchScheduleInlineExpandRowHTML = function (item) {
-    return `<td colspan="7" class="p-5 border-t">${window.getBranchScheduleInlineEditRowHTML(item)}</td>`;
+    return window.AdminPanelTable.cellsHTML([{ html: `${window.getBranchScheduleInlineEditRowHTML(item)}`, attributes: ` colspan="7" class="p-5 border-t"` }]);
   };
   window.getBranchScheduleInlineEditRowHTML = function (item) {
     return `<div class="bs-inline-editor space-y-6">

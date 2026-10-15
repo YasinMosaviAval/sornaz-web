@@ -29,7 +29,7 @@ class AcademyRegistrationService
                 $academyId = $this->createAcademy($data, $actor);
                 $managerId = (int) DB::table('academies')->where('academy_id', $academyId)->first()['created_by'];
                 $this->notifications->send(1, 'درخواست ثبت آموزشگاه جدید', 'کاربر با آی‌دی ' . $managerId . ' یک درخواست ثبت آموزشگاه با آی‌دی ' . $academyId . ' ارسال کرد', 'academies', $academyId, $managerId);
-                $this->notifications->send(1, 'ایجاد نقش موسس آموزشگاه', 'برای کاربر با آی‌دی ' . $managerId . ' نقش موسس آموزشگاه ایجاد شد.', 'user_roles', $managerId, $managerId);
+                $this->notifications->send(1, 'ایجاد نقش مدیر آموزشگاه درجه ۱', 'برای کاربر با آی‌دی ' . $managerId . ' نقش مدیر آموزشگاه درجه ۱ ایجاد شد.', 'academy_branch_member_roles', $managerId, $managerId);
                 $this->notifications->send($managerId, 'ثبت درخواست آموزشگاه', 'درخواست ثبت آموزشگاه شما با موفقیت ارسال شد', 'academies', $academyId, $managerId);
                 $this->notifications->send($managerId, 'درخواست ثبت آموزشگاه', 'درخواست ثبت آموزشگاه توسط کاربر با نام کاربری ' . (string) (DB::table('users')->where('user_id', $managerId)->first()['username'] ?? '') . ' ارسال شد', 'academies', $academyId, $managerId);
                 return $academyId;
@@ -657,7 +657,7 @@ class AcademyRegistrationService
                 'created_at' => $now,
             ] + $contractValues);
         }
-        $roleId = $branchId === null ? 7 : 16;
+        $roleId = $this->memberRoleId($branchId);
         $memberRole = DB::table('academy_branch_member_roles')->where('member_id', $memberId)->where('role_id', $roleId)->whereNull('deleted_at')->first();
         $roleValues = [
             'member_id' => $memberId, 'role_id' => $roleId, 'is_main' => 1,
@@ -669,6 +669,14 @@ class AcademyRegistrationService
         } else {
             DB::table('academy_branch_member_roles')->insertGetId($roleValues);
         }
+    }
+
+    private function memberRoleId(?int $branchId): int
+    {
+        if ($branchId !== null) return 16;
+        $role = DB::table('access_system_roles')->where('name', 'academy_manager')->where('level', 1)->whereNull('deleted_at')->first();
+        if (!$role) throw new RuntimeException('نقش مدیر آموزشگاه درجه ۱ تعریف نشده است.');
+        return (int) $role['role_id'];
     }
 
     private function seedUser(array $data, ?int $creatorId = null): int

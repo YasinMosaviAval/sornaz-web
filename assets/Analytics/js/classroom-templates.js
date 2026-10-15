@@ -35,31 +35,23 @@
   }
 
   window.getClassroomRowHTML = function (item, statusClass) {
-    return `
-            <td class="py-4 px-5 font-medium">${escapeHtml(item.name)}${item.deliveryMode === 'online' ? '<span class="mr-2 rounded-full bg-indigo-50 px-2 py-1 text-xs text-indigo-700">آنلاین</span>' : ''}</td>
-            <td class="py-4 px-5">${escapeHtml(item.typeLabel || item.type || '—')}</td>
-            <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5">${item.capacity} نفر</td>
-            <td class="py-4 px-5 text-sm text-gray-600 max-w-[220px] truncate" title="${escapeHtml(equipmentListText(item.equipment))}">${escapeHtml(equipmentListText(item.equipment))}</td>
-            <td class="py-4 px-5">
+    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.name)}${item.deliveryMode === 'online' ? '<span class="mr-2 rounded-full bg-indigo-50 px-2 py-1 text-xs text-indigo-700">آنلاین</span>' : ''}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `${escapeHtml(item.typeLabel || item.type || '—')}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5"` }, { html: `${item.capacity} نفر`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(equipmentListText(item.equipment))}`, attributes: ` class="py-4 px-5 text-sm text-gray-600 max-w-[220px] truncate" title="${escapeHtml(equipmentListText(item.equipment))}"` }, { html: `
                 ${item.canChangeStatus ? `<button type="button" onclick="cycleClassroomStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${statusClass}" title="برای تغییر وضعیت کلیک کنید">${escapeHtml(item.status)}</button>` : `<span class="px-3 py-1 rounded-full text-xs ${statusClass}">${escapeHtml(item.status)}</span>`}
-            </td>
-            <td class="py-4 px-5 text-left">
+            `, attributes: ` class="py-4 px-5"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
                     <button onclick="viewClassroom(${item.id})" class="text-indigo-600 hover:underline text-sm leading-6">جزئیات</button>
                     <button onclick="toggleClassroomInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm leading-6">ویرایش</button>
                     <button onclick="deleteClassroom(${item.id})" class="text-red-500 hover:text-red-700 text-sm leading-6">حذف</button>
                 </div>
-            </td>
-        `;
+            `, attributes: ` class="py-4 px-5 text-left"` }]);
   };
 
   window.getClassroomEmptyRowHTML = function () {
-    return `<tr><td colspan="7" class="py-12 text-center text-gray-400">هیچ کلاسی یافت نشد</td></tr>`;
+    return window.AdminPanelTable.rowHTML([{ html: `هیچ کلاسی یافت نشد`, attributes: ` colspan="7" class="py-12 text-center text-gray-400"` }], ``);
   };
 
   window.getClassroomInlineExpandRowHTML = function (item) {
-    return `<td colspan="7" class="p-5 border-t">${window.getClassroomInlineEditRowHTML ? window.getClassroomInlineEditRowHTML(item) : ''}</td>`;
+    return window.AdminPanelTable.cellsHTML([{ html: `${window.getClassroomInlineEditRowHTML ? window.getClassroomInlineEditRowHTML(item) : ''}`, attributes: ` colspan="7" class="p-5 border-t"` }]);
   };
 
   window.getClassroomEquipmentFieldHTML = function (item = {}) {
@@ -83,7 +75,8 @@
 
   function classroomFormFields(item, prefix) {
     const id = (name) => (prefix ? `${prefix}${name}` : `classroom${name}`);
-    const branches = getBranchesList().map((b) => ({ value: b.id, label: b.name }));
+    const organizations = (window.classroomOrganizations || []).map((o) => ({ value: o.user_id, label: o.name }));
+    const organizationUserId = item.organizationUserId || (window.classroomOrganizations || []).find((o) => o.kind === 'branch' && o.id === item.branchId)?.user_id || organizations[0]?.value || '';
     const types = (typeof allClassroomTypes !== 'undefined' ? allClassroomTypes : []).map((t) => ({
       value: t.id,
       label: t.name,
@@ -116,11 +109,11 @@
                 </div>
                 ${
                   window.classroomPermissions?.isBranchContext
-                    ? `<input id="${id('Branch')}" type="hidden" value="${escapeHtml(item.branchId || (branches[0] && branches[0].value) || '')}">`
+                    ? `<input id="${id('Organization')}" type="hidden" value="${escapeHtml(organizationUserId)}">`
                     : `<div>
-                    <label class="block text-sm font-medium mb-2">شعبه *</label>
-                    <select id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(branches, item.branchId)}
+                    <label class="block text-sm font-medium mb-2">سازمان *</label>
+                    <select id="${id('Organization')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                        <option value="">سازمان را انتخاب کنید</option>${renderOptions(organizations, organizationUserId)}
                     </select>
                 </div>`
                 }
