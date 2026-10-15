@@ -83,11 +83,6 @@ final class MobilePanelNavigation
             $item['links'] = array_values(array_filter(['course-levels', 'courses'],
                 fn ($link) => isset($sections[$link]) && empty($sections[$link]['hidden'])));
         }
-        if ($webKey === 'lessons' && $key === 'lessons') {
-            // Courses moved from the sidebar into the shared lesson page tabs.
-            $item['links'] = array_values(array_filter(['course-levels', 'courses'],
-                fn ($link) => isset($sections[$link]) && empty($sections[$link]['hidden'])));
-        }
         $english = ['account' => 'Account', 'settings' => 'Settings', 'teachers' => 'Staff',
             'gallery' => 'Gallery', 'lessons' => 'Lessons', 'member-schedules' => 'Schedule', 'finance' => 'Finance'];
         $item['en'] = $english[$webKey] ?? $item['en'];
