@@ -80,12 +80,18 @@
                 : `<button type="button" onclick="cycleLessonStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${sc}" title="برای تغییر وضعیت کلیک کنید">${escapeHtml(statusLabels[item.status] || item.status || 'در انتظار تأیید')}</button>`}`, attributes: ` class="py-4 px-5"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewLesson(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
-                    ${item.canChangeStatus === false
+                    ${(item.canEdit ?? item.canChangeStatus) === false
                         ? ''
-                        : `<button data-lesson-inline-edit-id="${item.id}" onclick="toggleLessonInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
-                    <button onclick="deleteLesson(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>`}
+                        : `<button data-lesson-inline-edit-id="${item.id}" onclick="toggleLessonInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>`}
+                    ${(item.canInspectDependencies ?? item.canChangeStatus) === false ? '' : `<button onclick="deleteLesson(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>`}
                 </div>
             `, attributes: ` class="py-4 px-5 text-left"` }]);
+  };
+  window.getLessonDependenciesModalHTML = function (usage) {
+    const en = document.documentElement.lang === 'en';
+    const label = (fa, english) => en ? english : fa;
+    const group = (title, rows, teacher) => `<section class="space-y-3"><h3 class="font-bold">${escapeHtml(title)} (${rows.length})</h3>${rows.map((row) => `<div class="rounded-xl border border-gray-200 p-3 dark:border-slate-700"><b>${escapeHtml(row.title)}</b>${teacher ? `<p class="mt-1 text-sm">${escapeHtml(row.teacher)}</p>` : ''}<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(row.organization)}</p></div>`).join('')}</section>`;
+    return `<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onclick="if(event.target===this)closeModal()"><div role="dialog" aria-modal="true" aria-labelledby="lessonUsageTitle" class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 dark:bg-slate-900"><div class="mb-4 flex items-center justify-between gap-4"><h2 id="lessonUsageTitle" class="text-xl font-bold">${label('حذف درس امکان‌پذیر نیست', 'This lesson cannot be deleted')}</h2><button type="button" onclick="closeModal()" aria-label="${label('بستن', 'Close')}" class="text-3xl text-gray-400">×</button></div><p class="mb-5 text-sm leading-7">${label('این درس در دوره‌ها یا قراردادهای زیر استفاده شده است و قابل حذف نیست.', 'This lesson is used by the following courses or teacher contracts and cannot be deleted.')}</p><div class="space-y-6">${usage.courses?.length ? group(label('دوره‌ها', 'Courses'), usage.courses, false) : ''}${usage.contracts?.length ? group(label('قراردادهای اساتید', 'Teacher contracts'), usage.contracts, true) : ''}</div><button type="button" onclick="closeModal()" class="mt-6 rounded-xl bg-indigo-600 px-5 py-3 text-white">${label('متوجه شدم', 'Got it')}</button></div></div>`;
   };
   window.getLessonEmptyRowHTML = function () {
     return window.AdminPanelTable.rowHTML([{ html: `موردی یافت نشد`, attributes: ` colspan="7" class="py-12 text-center text-gray-400"` }], ``);

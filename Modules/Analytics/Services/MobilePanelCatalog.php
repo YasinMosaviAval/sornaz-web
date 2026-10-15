@@ -419,9 +419,156 @@ final class MobilePanelCatalog
         $sections['my-schedule']['actions']['delete']['path'] = '/analytics/personal-offerings/schedule/{id}/delete';
         $sections['my-finance'] = $s('my-finance', 'امور مالی من', 'My finance', '/analytics/personal-data/finance', 'invoices', [], 'common', false);
         $sections['my-finance']['actions']['update'] = $a('/analytics/personal-invoices/{id}/update', 'ویرایش فاکتور خود', 'POST', [$f('amount', 'مبلغ', 'number', null, true), $f('statusCode', 'وضعیت', 'select', ['draft' => 'پیش‌نویس', 'issued' => 'صادرشده', 'canceled' => 'لغوشده']), $f('dueDate', 'سررسید', 'date'), $f('title', 'شرح', 'text', null, true), ...$description]);
+        $sections = $this->completePanelContracts($sections);
         $sections = $this->authorizedActions($sections);
         $sections['pages']['detail'] = $sections['page-content'];
         return $sections;
+    }
+
+    private function completePanelContracts(array $sections): array
+    {
+        $sections['lessons']['actions']['usage'] = $this->a('/academy/admin/branch-offerings/lessons/{id}/usage', 'محل‌های استفاده از درس', 'GET') + ['en' => 'Lesson usage'];
+        $this->profileAndOrganizationContracts($sections);
+        $this->userAccessContracts($sections);
+        $this->classroomContracts($sections);
+        $this->siteContentContracts($sections);
+        $this->scheduleQueryContracts($sections);
+        $this->holidayContracts($sections);
+        $this->waitingApprovalContracts($sections);
+        $this->waitingFinalizationContracts($sections);
+        return $sections;
+    }
+
+    private function profileAndOrganizationContracts(array &$sections): void
+    {
+        foreach (['members', 'students', 'classrooms', 'classroom-types', 'courses', 'terms', 'lessons', 'availabilities', 'member-schedules', 'availability-exceptions', 'scheduling-rules', 'schedules', 'finance', 'gallery', 'points', 'awards', 'badges', 'experiences', 'certificates', 'educations', 'events', 'polls', 'publications'] as $key) {
+            $sections[$key]['organizationFilter'] = true;
+        }
+        foreach (['awards', 'badges', 'experiences', 'certificates', 'educations', 'events', 'polls', 'publications'] as $key) {
+            // The service scopes ordinary users to their own profile, just as on the website.
+            $sections[$key]['access'] = 'common';
+            $sections[$key]['actions']['status']['access'] = 'management';
+            foreach (['create', 'update'] as $operation) foreach ($sections[$key]['actions'][$operation]['fields'] as &$field) {
+                if ($key === 'polls' && $field['key'] === 'user_id') $field['initial'] = 'owner_id';
+            }
+            unset($field);
+        }
+        $sections['my-settings']['actions']['save']['initialSources'] = ['defaults', 'personal'];
+        foreach (['my-settings', 'settings'] as $key) $sections[$key]['actions']['save']['strictFields'] = true;
+        $sections['settings']['actions']['save']['fields'][] = $this->f('fontWeight', 'وزن قلم', 'select', ['0' => 'عادی', '1' => '۱', '2' => '۲', '3' => '۳', '4' => '۴', '5' => '۵']);
+        $sections['settings']['actions']['save']['fields'][] = $this->f('cornerRadius', 'گردی گوشه‌ها', 'number');
+    }
+
+    private function userAccessContracts(array &$sections): void
+    {
+        foreach (['roles', 'permissions'] as $key) {
+            foreach (['create', 'update'] as $operation) {
+                $sections[$key]['actions'][$operation]['fields'][] = $this->f('panelVisible', 'نمایش در پنل آموزشگاه و شعبه', 'bool') + ['en' => 'Visible in academy and branch panels'];
+            }
+        }
+        // Save roles and direct grants independently, just like the web panel.
+        // Keep the legacy operation callable by already installed clients.
+        $sections['users']['actions']['update']['hidden'] = true;
+        foreach (['roles' => ['roleIds', 'نقش‌ها', 'Roles', 'roles'], 'permissions' => ['permissionIds', 'دسترسی‌های مستقل', 'Direct permissions', 'permissions']] as $operation => [$key, $label, $en, $source]) {
+            $options = ['source' => $source];
+            if ($operation === 'permissions') $options['excludeSource'] = 'record.rolePermissionIds';
+            $field = $this->f($key, $label, 'multi', $options) + ['initial' => $source, 'en' => $en];
+            $sections['users']['actions'][$operation] = $this->a('/analytics/admin-user-access/{id}', $label, 'POST', [$field]) + ['en' => $en, 'permissionField' => 'canEdit'];
+        }
+        $sections['users']['filters'] = [
+            $this->f('branchId', 'شعبه', 'select', ['source' => 'branches']),
+            $this->f('organization', 'محدوده', 'select', ['academy' => 'خود آموزشگاه']),
+            $this->f('status', 'وضعیت', 'select', ['pending' => 'در انتظار', 'approved' => 'تأییدشده', 'rejected' => 'ردشده', 'inactive' => 'غیرفعال', 'banned' => 'مسدود']),
+        ];
+    }
+
+    private function classroomContracts(array &$sections): void
+    {
+        foreach (['create', 'update'] as $operation) {
+            $fields = &$sections['classrooms']['actions'][$operation]['fields'];
+            foreach ($fields as &$field) {
+                if ($field['key'] === 'branchId') $field = $this->f('organizationUserId', 'آموزشگاه یا شعبه', 'select', ['source' => 'organizations', 'id' => 'user_id'], true);
+            }
+            unset($field, $fields);
+        }
+        $sections['classroom-types']['actions']['create-from-classroom'] = $this->a('/academy/admin/classroom-types/from-classroom', 'افزودن نوع کلاس هنگام ساخت کلاس', 'POST', $sections['classroom-types']['actions']['create']['fields'], false) + ['en' => 'Create classroom type from classroom'];
+        $sections['lessons']['actions']['create-lesson'] = $this->a('/academy/admin/branch-offerings/lesson-catalog', 'افزودن درس به فهرست', 'POST', [$this->f('title', 'عنوان درس', 'text', null, true)], false) + ['en' => 'Add lesson to catalog'];
+    }
+
+    private function siteContentContracts(array &$sections): void
+    {
+        $sections['posts']['actions']['details'] = $this->a('/analytics/admin-posts/{id}', 'مشاهده نوشته', 'GET') + ['en' => 'View post'];
+        $sections['posts']['actions']['update']['recordAction'] = 'details';
+        $translationFields = [$this->f('key', 'کلید ترجمه', 'text', null, true), $this->f('fa', 'متن فارسی', 'multiline', null, true), $this->f('en', 'متن انگلیسی', 'multiline', null, true)];
+        $sections['inline-translations'] = $this->s('inline-translations', 'ترجمه‌های رابط سایت', 'Website interface translations', '/analytics/admin-inline-translations', 'translations', [], 'admin', false);
+        $sections['inline-translations']['rowId'] = 'key';
+        $sections['inline-translations']['rowTitle'] = 'fa';
+        $sections['inline-translations']['actions']['update'] = $this->a('/analytics/admin-inline-translations/save', 'ویرایش ترجمه', 'POST', $translationFields);
+        $sections['inline-translations']['actions']['create'] = $this->a('/analytics/admin-inline-translations/save', 'افزودن ترجمه', 'POST', $translationFields, false);
+    }
+
+    private function scheduleQueryContracts(array &$sections): void
+    {
+        $sections['terms']['actions']['available-times'] = $this->a('/academy/admin/term-available-times', 'ساعت‌های آزاد', 'GET', [
+            $this->f('branch', 'شعبه', 'select', ['source' => 'branches']) + ['initial' => 'branchId'],
+            $this->f('classroom', 'کلاس', 'select', ['source' => 'classrooms']) + ['initial' => 'classroomId'],
+            $this->f('date', 'تاریخ', 'date', null, true), $this->f('duration', 'مدت جلسه به دقیقه', 'number', null, true),
+            $this->f('teacher', 'شناسه عضویت مدرس', 'number'), $this->f('excludeTerm', 'ترم مستثنا', 'number') + ['initial' => 'id'],
+            $this->f('organizationKind', 'نوع سازمان', 'select', ['branch' => 'شعبه', 'academy' => 'آموزشگاه']),
+            $this->f('organizationUserId', 'شناسه حساب آموزشگاه', 'number'),
+        ]) + ['queryFields' => true, 'en' => 'Available session times'];
+        $sections['schedules']['actions']['week-bounds'] = $this->a('/academy/admin/class-schedule-week-bounds', 'بازه هفتگی', 'GET', [$this->f('branch', 'شعبه', 'select', ['source' => 'branches'])], false) + ['queryFields' => true, 'en' => 'Weekly schedule bounds'];
+    }
+
+    private function holidayContracts(array &$sections): void
+    {
+        $sections['national-holidays']['access'] = 'management';
+        foreach (['create', 'update', 'delete'] as $operation) {
+            $sections['national-holidays']['actions'][$operation]['access'] = 'admin';
+        }
+        foreach (['create', 'update'] as $operation) {
+            $sections['national-holidays']['actions'][$operation]['fields'] = [
+                $this->f('title', 'عنوان', 'text', null, true), $this->f('date', 'تاریخ', 'date', null, true),
+                $this->f('description', 'توضیحات', 'multiline'), $this->f('status', 'وضعیت', 'select', ['active' => 'فعال', 'inactive' => 'غیرفعال']),
+            ];
+        }
+        $sections['national-holidays']['actions']['status'] = $this->a('/academy/admin/national-holidays/{id}/status', 'تغییر وضعیت تعطیلی') + ['access' => 'admin'];
+        $sections['national-holidays']['actions']['academy-setting'] = $this->a('/academy/admin/national-holiday-settings/{academyId}', 'برگزاری کلاس در تعطیلات رسمی', 'POST', [
+            $this->f('academyId', 'آموزشگاه', 'select', ['source' => 'academies'], true), $this->f('allowClasses', 'اجازه برگزاری کلاس', 'bool'),
+        ], false) + ['params' => ['academyId' => 'academyId'], 'en' => 'Classes on national holidays'];
+
+    }
+
+    private function waitingApprovalContracts(array &$sections): void
+    {
+        $approvalFields = [
+            $this->f('name', 'نام و نام خانوادگی', 'text', null, true) + ['initial' => 'studentName'],
+            $this->f('national_id', 'کد ملی', 'text', null, true) + ['initial' => 'nationalId'],
+            $this->f('father_name', 'نام پدر', 'text', null, true) + ['initial' => 'fatherName'],
+            $this->f('birth_date', 'تاریخ تولد', 'date', null, true) + ['initial' => 'birthDate'],
+            $this->f('phone', 'شماره تماس', 'phone', null, true), $this->f('address', 'نشانی', 'multiline', null, true),
+        ];
+        foreach (['waiting-approvals' => ['تأیید ثبت‌نام هنرجویان', 'Student registration approvals', 'student_waiting'], 'waiting-schedules' => ['نهایی‌کردن ثبت‌نام هنرجویان', 'Finalize student registrations', 'student_pending_schedule']] as $key => [$label, $en, $type]) {
+            $sections[$key] = $this->s($key, $label, $en, '/analytics/admin-dashboard', 'actionItems', [], 'management', false);
+            $sections[$key]['where'] = ['type' => $type];
+            $sections[$key]['rowId'] = 'requestId';
+            $sections[$key]['rowTitle'] = 'studentName';
+            $sections[$key]['rowSubtitle'] = 'termName';
+            $sections[$key]['actions']['chat'] = $this->a('/analytics/admin-dashboard/waiting/{id}/chat', 'ایجاد گفتگوی هماهنگی') + ['en' => 'Create coordination conversation'];
+        }
+        $sections['waiting-approvals']['actions']['approve'] = $this->a('/analytics/admin-dashboard/waiting/{id}/approve', 'تأیید و ثبت هنرجو', 'POST', $approvalFields) + ['en' => 'Approve student registration'];
+        $sections['my-waiting'] = $this->s('my-waiting', 'درخواست‌های ثبت‌نام من', 'My registration requests', '/analytics/personal-data/waiting', 'items', [], 'common', false);
+        $sections['my-waiting']['actions']['update'] = $this->a('/analytics/my-waiting/{id}', 'ویرایش درخواست ثبت‌نام', 'POST', [...$approvalFields, $this->f('note', 'توضیح درخواست', 'multiline')]);
+    }
+
+    private function waitingFinalizationContracts(array &$sections): void
+    {
+        $sections['waiting-schedules']['actions']['finalize'] = $this->a('/analytics/admin-dashboard/waiting/{id}/finalize', 'فعال‌سازی کلاس و صدور فاکتور', 'POST', [
+            $this->f('teacher_id', 'مدرس', 'select', ['source' => 'record.teachers'], true),
+            $this->f('session_id', 'جلسه شروع', 'select', ['source' => 'record.sessions'], true) + ['visibleWhen' => ['record.needsFirstDate' => false]],
+            $this->f('first_date', 'روز شروع', 'date', null, true) + ['visibleWhen' => ['record.needsFirstDate' => true]],
+            $this->f('start_time', 'ساعت شروع', 'time', null, true) + ['visibleWhen' => ['record.needsFirstDate' => true]],
+        ]) + ['en' => 'Activate class and issue invoice'];
     }
 
     private function authorizedActions(array $sections): array

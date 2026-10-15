@@ -17,7 +17,6 @@ class AcademyBranchOfferingService
     {
         $branches = $this->scopedBranches($actor);
         $branchIds = array_map(fn (array $row): int => (int) $row['branch_id'], $branches);
-        $branchUserIds = array_map(fn (array $row): int => (int) $row['user_id'], $branches);
         $branchNames = $this->translations('academy_branches', $branchIds, ['name']);
         $academyIds = array_values(array_unique(array_map(fn (array $row): int => (int) $row['academy_id'], $branches)));
         $academyRows = $academyIds ? DB::table('academies')->whereIn('academy_id', $academyIds)->whereNull('deleted_at')->get() : [];
@@ -142,6 +141,7 @@ class AcademyBranchOfferingService
             $lessonOrganizationsByUser,
             $lessonTitles
         );
+        $this->applyLessonPermissions($result['lessons'], $actor);
 
         $scheduleRows = DB::table('user_availabilities')
             ->whereIn('user_id', $lessonOrganizationUserIds)
@@ -214,14 +214,7 @@ class AcademyBranchOfferingService
         $now = $this->now();
 
         return transaction(function () use ($actor, $data, $id, $organization, $lessonId, $levelId, $status, $startDate, $isPrimary, $now) {
-            $existing = null;
-            if ($id) {
-                $existing = DB::table('user_lessons')->where('user_lesson_id', $id)->whereNull('deleted_at')->first();
-                if (!$existing) {
-                    throw new RuntimeException('درس موردنظر یافت نشد.');
-                }
-                $this->allowedOrganization($actor, (int) $existing['user_id']);
-            }
+            $existing = $id ? $this->editableLesson($actor, $id, $lessonId, (int) $organization['user_id']) : null;
             if ($isPrimary) {
                 $primaryQuery = DB::table('user_lessons')->where('user_id', (int) $organization['user_id'])->where('is_primary', 1)->whereNull('deleted_at');
                 $primary = $primaryQuery->first();
@@ -249,7 +242,28 @@ class AcademyBranchOfferingService
         });
     }
 
+    private function editableLesson(int $actor, int $id, int $lessonId, int $owner): array
+    {
+        $row = DB::table('user_lessons')->where('user_lesson_id', $id)->whereNull('deleted_at')->first();
+        if (!$row) throw new RuntimeException('درس موردنظر یافت نشد.');
+        $this->allowedOrganization($actor, (int) $row['user_id']);
+        $locks = array_unique([(int) $row['lesson_id'], $lessonId]);
+        sort($locks);
+        foreach ($locks as $lock) LessonUsageService::lock($lock);
+        $fresh = LessonUsageService::current($id);
+        if (!$fresh || (int) $fresh['user_id'] !== (int) $row['user_id'] || (int) $fresh['lesson_id'] !== (int) $row['lesson_id']) throw new RuntimeException('درس تغییر کرده است؛ فهرست را تازه‌سازی کنید.');
+        $usage = new LessonUsageService();
+        $usage->assertEditable($actor, $fresh);
+        if ($usage->hasDependencies($fresh) && ((int) $fresh['user_id'] !== $owner || (int) $fresh['lesson_id'] !== $lessonId)) throw new RuntimeException('سازمان و عنوان پایهٔ درس استفاده‌شده قابل جابه‌جایی نیست؛ سایر مشخصات را می‌توانید ویرایش کنید.');
+        return $fresh;
+    }
+
     public function cycleLessonStatus(int $actor, int $id): array
+    {
+        return transaction(fn () => $this->changeLessonStatus($actor, $id));
+    }
+
+    private function changeLessonStatus(int $actor, int $id): array
     {
         $this->assertLessonWritable($actor);
         if ($this->isPersonalOnly($actor)) {
@@ -260,6 +274,11 @@ class AcademyBranchOfferingService
             throw new RuntimeException('درس موردنظر یافت نشد.');
         }
         $this->allowedOrganization($actor, (int) $row['user_id']);
+        LessonUsageService::lock((int) $row['lesson_id']);
+        $fresh = LessonUsageService::current($id);
+        if (!$fresh || (int) $fresh['user_id'] !== (int) $row['user_id'] || (int) $fresh['lesson_id'] !== (int) $row['lesson_id']) throw new RuntimeException('درس تغییر کرده است؛ فهرست را تازه‌سازی کنید.');
+        $row = $fresh;
+        (new LessonUsageService())->assertEditable($actor, $row);
         $next = match ((string) ($row['status'] ?? 'pending')) {
             'pending' => 'active',
             'active' => 'inactive',
@@ -280,7 +299,7 @@ class AcademyBranchOfferingService
     {
         $data = $this->all($actor);
         $payload = [
-            'lessons' => array_map(fn (array $row): array => [$row['id'], $row['status'], $row['lesson_id'], $row['level_id'], $row['start_date'], $row['is_primary'], $row['summary'], $row['description']], $data['lessons']),
+            'lessons' => array_map(fn (array $row): array => [$row['id'], $row['status'], $row['lesson_id'], $row['level_id'], $row['start_date'], $row['is_primary'], $row['summary'], $row['description'], $row['canEdit'], $row['canDelete'], $row['hasDependencies']], $data['lessons']),
             'catalog' => array_map(fn (array $row): array => [$row['id'], $row['title']], $data['lessons_catalog']),
         ];
         return ['resource' => 'lessons', 'version' => sha1(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))];
@@ -584,6 +603,10 @@ class AcademyBranchOfferingService
 
     public function delete(string $type, int $id, int $actor): void
     {
+        if ($type === 'lesson') {
+            $this->deleteLesson($actor, $id);
+            return;
+        }
         $config = [
             'instrument' => ['user_instruments', 'user_instrument_id'],
             'lesson' => ['user_lessons', 'user_lesson_id'],
@@ -613,6 +636,11 @@ class AcademyBranchOfferingService
             }
             $this->allowedBranch($actor, (int) $branch['branch_id']);
         }
+        $this->softDeleteOffering($table, $primaryKey, $id, $actor);
+    }
+
+    private function softDeleteOffering(string $table, string $primaryKey, int $id, int $actor): void
+    {
         $now = $this->now();
         $deleteValues = [
             'deleted_at' => $now,
@@ -625,6 +653,49 @@ class AcademyBranchOfferingService
             'deleted_by' => $actor,
             'updated_by' => $actor,
         ]);
+    }
+
+    private function applyLessonPermissions(array &$rows, int $actor): void
+    {
+        $usage = new LessonUsageService();
+        foreach ($rows as &$item) {
+            if (!$item['canChangeStatus']) {
+                $item += ['hasDependencies' => false, 'canEdit' => false, 'canDelete' => false, 'canInspectDependencies' => false];
+                continue;
+            }
+            $record = ['user_lesson_id' => $item['id'], 'user_id' => $item['user_id'], 'lesson_id' => $item['lesson_id']];
+            $used = $usage->hasDependencies($record);
+            $writable = $item['canChangeStatus'];
+            $item['hasDependencies'] = $used;
+            $item['canEdit'] = $writable && (!$used || $usage->canManageUsed($actor, $record));
+            $item['canDelete'] = $writable && !$used;
+            $item['canInspectDependencies'] = $writable;
+            $item['canChangeStatus'] = $item['canEdit'];
+        }
+    }
+
+    public function lessonUsage(int $actor, int $id): array
+    {
+        $record = DB::table('user_lessons')->where('user_lesson_id', $id)->whereNull('deleted_at')->first();
+        if (!$record) throw new RuntimeException('درس موردنظر یافت نشد.');
+        $this->allowedOrganization($actor, (int) $record['user_id']);
+        return (new LessonUsageService())->dependencies($record);
+    }
+
+    private function deleteLesson(int $actor, int $id): void
+    {
+        transaction(function () use ($actor, $id) {
+            $record = DB::table('user_lessons')->where('user_lesson_id', $id)->whereNull('deleted_at')->first();
+            if (!$record) throw new RuntimeException('درس موردنظر یافت نشد.');
+            $this->allowedOrganization($actor, (int) $record['user_id']);
+            LessonUsageService::lock((int) $record['lesson_id']);
+            $fresh = LessonUsageService::current($id);
+            if (!$fresh || (int) $fresh['user_id'] !== (int) $record['user_id'] || (int) $fresh['lesson_id'] !== (int) $record['lesson_id']) throw new RuntimeException('درس تغییر کرده است؛ فهرست را تازه‌سازی کنید.');
+            $record = $fresh;
+            $dependencies = (new LessonUsageService())->dependencies($record);
+            if ($dependencies['courses'] || $dependencies['contracts']) throw new LessonInUseException($dependencies);
+            $this->softDeleteOffering('user_lessons', 'user_lesson_id', $id, $actor);
+        });
     }
 
     private function scopedBranches(int $actor): array

@@ -90,7 +90,7 @@ if ($sidebarFullName === '') $sidebarFullName = $sidebarUsername;
                 <?php if ((int)auth()->id() === 1 || $previewRole === 'admin'): ?>
                 <li><a href="#" onclick="showSection('guides')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-book-reader w-5 text-center"></i> راهنمای عملکردها</a></li>
                 <?php endif; ?>
-            <? if ($isSiteAdmin && ($previewRole === 'admin' || env('APP_ENV', 'production') === 'local')) { ?>
+            <?php if ($isSiteAdmin && ($previewRole === 'admin' || env('APP_ENV', 'production') === 'local')) { ?>
                 <?php if ($previewRole === null): ?>
                 <li><a href="#tests" onclick="showSection('tests')" class="nav-link flex items-center gap-3 rounded-xl bg-indigo-950/40 px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-vials w-5 text-center"></i> مرکز تست‌ها</a></li>
                 <li>--------------------------------</li>
@@ -110,7 +110,7 @@ if ($sidebarFullName === '') $sidebarFullName = $sidebarUsername;
                     <li><a href="#" onclick="showSection('academy-requests')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-yellow-300 hover:text-yellow-200"><i class="fas fa-chart-bar w-5 text-center"></i> academy-requests</a></li>
                     <li>--------------------------------</li>
                 -->
-            <? } ?>
+            <?php } ?>
             <li><a href="#" onclick="showSection('dashboard')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-home w-5 text-center"></i> داشبورد</a></li>
             <li><a href="#" onclick="showSection('account')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-user-cog w-5 text-center"></i> حساب کاربری</a></li>
             <?php if ((int) ($panelUser['user_id'] ?? 0) === 1 || $previewRole === 'admin'): ?>

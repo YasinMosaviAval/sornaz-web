@@ -319,6 +319,7 @@ window.changeLessonsPage = async function (page) {
 };
 
 window.cycleLessonStatus = async function (id) {
+  if (allUserLessons.find((item) => item.id === id)?.canChangeStatus === false) return;
   if (editingLessonRowId !== null) {
     editingLessonRowId = null;
     renderLessonsTable(filteredLessons);
@@ -467,6 +468,7 @@ window.viewLesson = async function (id) {
 };
 
 window.editLesson = async function (id) {
+  if (allUserLessons.find((item) => item.id === id)?.canEdit === false) return;
   if (editingLessonRowId !== null) {
     editingLessonRowId = null;
     renderLessonsTable(filteredLessons);
@@ -503,6 +505,7 @@ window.saveEditedLesson = async function (id) {
 };
 
 window.toggleLessonInlineEdit = async function (id) {
+  if (allUserLessons.find((item) => item.id === id)?.canEdit === false) return;
   editingLessonRowId = editingLessonRowId === id ? null : id;
   renderLessonsTable(filteredLessons);
 };
@@ -571,8 +574,11 @@ async function lessonApi(url, data = null, method = 'POST') {
   const response = await fetch(url, options);
   const payload = await response.json(),
     envelope = payload.data ?? payload;
-  if (!response.ok || envelope.success === false)
-    throw new Error(envelope.message || 'ذخیره درس ناموفق بود.');
+  if (!response.ok || envelope.success === false) {
+    const error = new Error(envelope.message || 'ذخیره درس ناموفق بود.');
+    error.dependencies = envelope.dependencies;
+    throw error;
+  }
   return envelope.data ?? envelope;
 }
 
@@ -581,8 +587,19 @@ window.deleteLesson = async function (id) {
     editingLessonRowId = null;
     renderLessonsTable(filteredLessons);
   }
-  if (!(await AppDialog.confirmDelete(allUserLessons, id, 'درس'))) return;
-  await branchOfferingDelete('lesson', id);
+  try {
+    const usage = await lessonApi('/academy/admin/branch-offerings/lessons/' + id + '/usage', null, 'GET');
+    if (usage.courses?.length || usage.contracts?.length) {
+      document.getElementById('modalContainer').innerHTML = window.getLessonDependenciesModalHTML(usage);
+      return;
+    }
+    if (!(await AppDialog.confirmDelete(allUserLessons, id, 'درس'))) return;
+    await lessonApi('/academy/admin/branch-offerings/lesson/' + id + '/delete', {});
+  } catch (error) {
+    if (error.dependencies) document.getElementById('modalContainer').innerHTML = window.getLessonDependenciesModalHTML(error.dependencies);
+    else alert(error.message);
+    return;
+  }
   allUserLessons = allUserLessons.filter(function (i) {
     return i.id !== id;
   });

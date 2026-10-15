@@ -20,6 +20,9 @@ class Response implements ResponseInterface
 
     public function json(mixed $data): void
     {
+        if (is_array($data) && !array_is_list($data)) {
+            $data += \Core\view\PageSourceTrace::jsonMetadata();
+        }
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(
             $data,

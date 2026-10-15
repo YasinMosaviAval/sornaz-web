@@ -7,11 +7,20 @@ namespace Core\database {
 }
 namespace {
  require_once __DIR__.'/../Modules/Analytics/Services/PanelTableRenderer.php';
+ require_once __DIR__.'/../Modules/Analytics/Services/MobilePanelNavigation.php';
  $map=require __DIR__.'/../vendor/composer/autoload_classmap.php';
  spl_autoload_register(static function(string $class)use($map):void{if(isset($map[$class]))require_once $map[$class];});
  $testDb=new \PDO('sqlite::memory:');$testDb->exec('CREATE TABLE auth_remember_tokens(token_hash TEXT PRIMARY KEY,user_id INTEGER,expires_at INTEGER)');
+ $testDb->sqliteCreateFunction('NOW', static fn (): string => '2026-10-15 12:00:00');
+ $testDb->exec('CREATE TABLE access_system_permissions(permission_id INTEGER,name TEXT,deleted_at TEXT);
+ CREATE TABLE user_permissions(permission_id INTEGER,user_id INTEGER,deleted_at TEXT,expires_at TEXT);
+ CREATE TABLE user_roles(role_id INTEGER,user_id INTEGER,deleted_at TEXT,expires_at TEXT);
+ CREATE TABLE access_system_role_permissions(permission_id INTEGER,role_id INTEGER,deleted_at TEXT);
+ CREATE TABLE access_system_roles(role_id INTEGER,deleted_at TEXT);');
  function db(){return $GLOBALS['testDb'];}
  function env($key,$default=null){return $default;}
+ if(!function_exists('locale')){function locale():string{return app()->getLocale();}}
+ if(!function_exists('e')){function e(mixed $value):string{return htmlspecialchars((string)$value,ENT_QUOTES,'UTF-8');}}
  function base_path(string $path=''):string{return dirname(__DIR__).'/'.$path;}
  $testRoot=dirname(__DIR__).'/storage/mobile-panel-test-'.bin2hex(random_bytes(6));
  function storage_path(string $path):string{return $GLOBALS['testRoot'].'/'.$path;}
@@ -35,6 +44,7 @@ namespace {
  $GLOBALS['testAuth']=new \Core\auth\Auth($users);
  $GLOBALS['courseService']=new class extends \Modules\Academy\Services\AcademyCourseService{public array $received=[];public function saveCourse(int $actor,array $data,int $id=0):array{$this->received=compact('actor','data','id');return['id'=>14];}};
  require base_path('Modules/Analytics/Routes/routes.php');require base_path('Modules/Academy/Routes/web.php');require base_path('Modules/Analytics/Routes/api.php');
+ if (!in_array('--api-only', $argv, true)) {
  require_once base_path('Modules/Analytics/Controllers/Web/PublicUiPreviewController.php');
  $previewRoute=\Core\router\Router::dispatch('GET','/analytics/public-ui-preview');
  check($previewRoute!==null && $previewRoute['middlewares']===[],'Public design preview must be available without a login');
@@ -60,6 +70,7 @@ namespace {
  check(\Core\database\DB::$calls===$previewDatabaseReads,'Ordinary-user design preview read live account or tenant tables');
  check(str_contains($userPreviewHtml,'data-dashboard-kind="student"') && str_contains($userPreviewHtml,'data-personal-section="1"') && str_contains($userPreviewHtml,'ترم نمونهٔ پیانو') && str_contains($userPreviewHtml,'تمرین مقدماتی'),'Ordinary-user design preview must render the real personal-panel structure with fixture data');
  check(substr_count($userPreviewHtml,'id="finance"')===1 && substr_count($userPreviewHtml,'id="dashboard"')===1,'Ordinary-user design preview duplicated section identifiers');
+ }
  $tokens=new \Modules\System\Services\MobileAuthTokenService($users);
  $catalog=new \Modules\Analytics\Services\MobilePanelCatalog();
  $panel=new \Modules\Analytics\Controllers\Api\MobilePanelController($tokens,new \Modules\Analytics\Services\MobilePanelAccess(),$catalog);
@@ -78,6 +89,9 @@ namespace {
   check(in_array($personalKey,$keys,true),'Personal mobile destination missing: '.$personalKey);
  }
  check(!in_array('branches',$keys,true)&&!in_array('roles',$keys,true),'Ordinary user received management destinations');
+ foreach (['awards','badges','experiences','certificates','educations','events','polls','publications'] as $profileKey) {
+  check(in_array($profileKey,$keys,true),'Own-profile section missing for ordinary user: '.$profileKey);
+ }
  check($_SESSION===$originalSession,'Bearer mutated browser session');
  $result=field($panel->execute('dashboard','list'),'data');
  check($result['actor']===7&&$result['locale']==='en','Controller did not receive bearer identity and locale');
@@ -92,6 +106,11 @@ namespace {
  foreach(['posts','post-categories','comments','media','pages','settings'] as $key){
   check(!in_array($key,$keys,true),'Manager received site content section');
   check(field($panel->execute($key,'list'),'status')===403,'Manager invoked global content through mobile API');
+ }
+ foreach (['academies'=>['academy_id'=>9], 'academy_branches'=>['branch_id'=>5]] as $ownershipTable=>$ownershipRow) {
+  \Core\database\DB::$rows=[$ownershipTable=>$ownershipRow];
+  $ownerKeys=array_column(field($panel->index(),'data')['sections'],'key');
+  check(in_array('branches',$ownerKeys,true)&&!in_array('roles',$ownerKeys,true),'Organization owner capability differs from web or grants site admin');
  }
  \Core\database\DB::$rows=[];$_SERVER['HTTP_AUTHORIZATION']='Bearer '.$tokens->issue($users->rows[1]);$sections=field($panel->index(),'data')['sections'];
  check(in_array('roles',array_column($sections,'key'),true),'Admin role management missing');

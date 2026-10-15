@@ -46,6 +46,7 @@ Router::post('/analytics/mobile-contact/commit', [\Modules\Analytics\Controllers
 Router::get('/analytics/personal-data/lessons', [\Modules\Analytics\Controllers\Web\PersonalPanelDataController::class, 'lessons'])->middleware('auth');
 Router::get('/analytics/personal-data/schedules', [\Modules\Analytics\Controllers\Web\PersonalPanelDataController::class, 'schedules'])->middleware('auth');
 Router::get('/analytics/personal-data/finance', [\Modules\Analytics\Controllers\Web\PersonalPanelDataController::class, 'finance'])->middleware('auth');
+Router::get('/analytics/personal-data/waiting', [\Modules\Analytics\Controllers\Web\PersonalPanelDataController::class, 'waiting'])->middleware('auth');
 Router::get('/analytics/personal-data/gallery', [\Modules\Analytics\Controllers\Web\PersonalPanelDataController::class, 'gallery'])->middleware('auth');
 Router::post('/analytics/personal-data/gallery', [\Modules\Analytics\Controllers\Web\PersonalPanelDataController::class, 'createGallery'])->middleware(['auth', 'csrf']);
 Router::post('/analytics/personal-data/gallery/{id}/update', [\Modules\Analytics\Controllers\Web\PersonalPanelDataController::class, 'updateGallery'])->middleware(['auth', 'csrf']);

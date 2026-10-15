@@ -44,7 +44,7 @@ class AcademyCourseService
             }
             return empty($o['read_only']) || in_array((string) ($c['status'] ?? 'pending'), ['open', 'ongoing'], true);
         }));
-        $lessonRows = $organizationUsers ? DB::table('user_lessons')->whereIn('user_id', $organizationUsers)->where('status', 'active')->whereNull('deleted_at')->get() : [];
+        $lessonRows = (new LessonUsageService())->offeredRows($displayOrganizations);
         $levels = DB::table('levels')->whereNull('deleted_at')->get();
         $levelIds = array_map(fn ($r) => (int) $r['level_id'], $levels);
         $levelTexts = $this->translations('levels', $levelIds, ['title', 'summary', 'description']);
@@ -100,10 +100,7 @@ class AcademyCourseService
     {
         $organization = $this->allowedOrganization($actor, (int) ($data['organizationUserId'] ?? 0));
         $lessonId = (int) ($data['lesson_id'] ?? 0);
-        $lesson = DB::table('user_lessons')->where('user_id', (int) $organization['user_id'])->where('lesson_id', $lessonId)->where('status', 'active')->whereNull('deleted_at')->first();
-        if (!$lesson) {
-            throw new RuntimeException('درس فعال انتخاب‌شده متعلق به سازمان نیست.');
-        }
+        (new LessonUsageService())->available((int) $organization['user_id'], $lessonId);
         $title = trim((string) ($data['name'] ?? ''));
         if ($title === '') {
             throw new RuntimeException('نام دوره الزامی است.');
@@ -126,7 +123,8 @@ class AcademyCourseService
             $academyId = (int) $branch['academy_id'];
         }
         $values = ['academy_id' => $academyId, 'branch_id' => $organization['kind'] === 'branch' ? $organization['id'] : null, 'lesson_id' => $lessonId, 'teacher_capacity' => $teacherCapacity, 'student_capacity' => $studentCapacity, 'status' => $status, 'approved_at' => $approved ? $now : null, 'approved_by' => $approved ? $actor : null, 'updated_at' => $now, 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
-        return transaction(function () use ($actor, $data, $id, $values, $title, $now) {
+        return transaction(function () use ($actor, $data, $id, $values, $title, $now, $organization) {
+            (new LessonUsageService())->available((int) $organization['user_id'], (int) $values['lesson_id'], true);
             if ($id) {
                 $row = DB::table('academy_branch_courses')->where('course_id', $id)->whereNull('deleted_at')->first();
                 if (!$row) {

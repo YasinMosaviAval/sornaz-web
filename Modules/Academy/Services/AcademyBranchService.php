@@ -563,7 +563,7 @@ class AcademyBranchService
             $currencies[] = ['id' => (int) $c['currency_id'], 'name' => $this->ftr('financial_system_currency', (int) $c['currency_id'], 'title', $currencyLocale, $fallback)];
         }
         $lessons = [];
-        foreach (DB::table('user_lessons')->whereIn('user_id', array_column($organizations, 'user_id'))->where('status', 'active')->whereNull('deleted_at')->get() as $ul) {
+        foreach ((new LessonUsageService())->offeredRows($organizations) as $ul) {
             $lessons[] = ['organization_user_id' => (int) $ul['user_id'], 'lesson_id' => (int) $ul['lesson_id'], 'name' => $this->tr('lessons', (int) $ul['lesson_id'], 'title', 'درس')];
         }
         return ['organizations' => $organizations, 'organization_selection' => count($organizations) === 1 && $organizations[0]['branch_id'] !== null ? 'fixed' : 'select', 'roles' => $roles, 'levels' => $levels, 'currencies' => $currencies, 'lessons' => $lessons];
@@ -825,7 +825,7 @@ class AcademyBranchService
             if ($type === 'teacher') {
                 $lessonId = (int) ($data['lessonId'] ?? 0);
                 $levelId = (int) ($data['levelId'] ?? 0);
-                $offered = DB::table('user_lessons')->where('user_id', (int) $organization['user_id'])->where('lesson_id', $lessonId)->where('status', 'active')->whereNull('deleted_at')->first();
+                $offered = (new LessonUsageService())->available((int) $organization['user_id'], $lessonId, true);
                 $level = DB::table('levels')->where('level_id', $levelId)->where('type', 'learning')->where('is_active', 1)->whereNull('deleted_at')->first();
                 if (!$offered || !$level) {
                     throw new RuntimeException('درس یا سطح تدریس معتبر نیست.');
@@ -940,9 +940,7 @@ class AcademyBranchService
             if ($type === 'teacher') {
                 $lessonId = (int) ($data['lessonId'] ?? 0);
                 $levelId = (int) ($data['levelId'] ?? 0);
-                if (!DB::table('user_lessons')->where('user_id', (int) $organization['user_id'])->where('lesson_id', $lessonId)->where('status', 'active')->whereNull('deleted_at')->first()) {
-                    throw new RuntimeException('درس فعال سازمان معتبر نیست.');
-                }
+                (new LessonUsageService())->available((int) $organization['user_id'], $lessonId, true);
                 $ul = $contract && $contract['user_lesson_id'] ? DB::table('user_lessons')->where('user_lesson_id', (int) $contract['user_lesson_id'])->first() : null;
                 $ulv = ['user_id' => $userId, 'lesson_id' => $lessonId, 'level_id' => $levelId, 'status' => $approved ? 'active' : 'pending', 'updated_at' => $now, 'updated_by' => $actorId] + $approval;
                 if ($ul) {

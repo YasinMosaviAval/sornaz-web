@@ -18,6 +18,7 @@ final class PersonalPanelDataController
     public function lessons() { return $this->reply(fn (int $actor) => $this->data->lessons($actor)); }
     public function schedules() { return $this->reply(fn (int $actor) => $this->data->schedules($actor)); }
     public function finance() { return $this->reply(fn (int $actor) => $this->data->finance($actor)); }
+    public function waiting() { return $this->reply(fn (int $actor) => $this->data->waitingRequests($actor)); }
 
     public function gallery()
     {
