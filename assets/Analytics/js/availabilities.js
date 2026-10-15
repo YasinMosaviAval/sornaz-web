@@ -742,32 +742,8 @@
     window.updateBranchScheduleSortIcons();
   };
 
-  window.renderBranchSchedulesBranchTabs = async function () {
-    const container = document.getElementById('branchSchedulesBranchTabs');
-    if (!container) return;
-    container
-      .querySelectorAll('.branch-schedule-branch-tab:not(:first-child)')
-      .forEach(function (t) {
-        t.remove();
-      });
-    window.getBranchScheduleBranches().forEach(function (b) {
-      const active = currentBranchScheduleBranch == b.id;
-      const btn = document.createElement('button');
-      btn.className =
-        'branch-schedule-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ' +
-        (active
-          ? 'bg-indigo-600 text-white border-indigo-600'
-          : 'border-gray-200 hover:bg-gray-50') +
-        ' transition';
-      btn.textContent = b.name;
-      btn.dataset.value = String(b.id);
-      btn.onclick = function () {
-        window.filterBranchSchedulesByBranch(b.id);
-      };
-      container.appendChild(btn);
-    });
-    if (typeof window.applyAcademyOrganizationTabs === 'function')
-      window.applyAcademyOrganizationTabs();
+  window.renderBranchSchedulesBranchTabs = function () {
+    window.renderPanelOrganizationTabs?.('branchSchedulesBranchTabs', currentBranchScheduleBranch, window.filterBranchSchedulesByBranch, { tabClass: 'branch-schedule-branch-tab', branches: () => window.getBranchScheduleBranches() });
   };
 
   window.filterBranchSchedulesByBranch = async function (branchId) {
@@ -858,7 +834,7 @@
         : '';
     } else {
       pageItems.forEach(function (item) {
-        const tr = document.createElement('tr');
+        const tr = window.AdminPanelTable.createRow();
         tr.className = 'hover:bg-gray-50 transition';
         tr.innerHTML = window.getBranchScheduleRowHTML ? window.getBranchScheduleRowHTML(item) : '';
         tbody.appendChild(tr);
@@ -868,7 +844,7 @@
                 return source.id === item.displaySourceIds[0];
               }) || item
             : item;
-          const expand = document.createElement('tr');
+          const expand = window.AdminPanelTable.createRow();
           expand.className = 'bg-gray-50 admin-inline-expand';
           expand.innerHTML = window.getBranchScheduleInlineExpandRowHTML
             ? window.getBranchScheduleInlineExpandRowHTML(withOrganizationDayRanges(editItem))

@@ -444,22 +444,15 @@ window.renderContactMessages = async function () {
 
   tbody.innerHTML =
     allContactMessages.length === 0
-      ? `<tr><td colspan="5" class="py-10 text-center text-gray-400">پیامی نیست</td></tr>`
+      ? window.AdminPanelTable.rowHTML([{ html: `پیامی نیست`, attributes: ` colspan="5" class="py-10 text-center text-gray-400"` }], ``)
       : allContactMessages
           .map(
-            (m) => `
-            <tr class="hover:bg-gray-50 ${m.status === 'unread' ? 'bg-indigo-50/40' : ''}">
-                <td class="py-4 px-5">
+            (m) => window.AdminPanelTable.rowHTML([{ html: `
                     <div class="font-medium">${m.name}</div>
                     <div class="text-xs text-gray-400">${m.email}</div>
-                </td>
-                <td class="py-4 px-5">${m.subject}</td>
-                <td class="py-4 px-5 text-sm text-gray-500">${m.date}</td>
-                <td class="py-4 px-5">${statusMap[m.status] || m.status}</td>
-                <td class="py-4 px-5 text-left">
+                `, attributes: ` class="py-4 px-5"` }, { html: `${m.subject}`, attributes: ` class="py-4 px-5"` }, { html: `${m.date}`, attributes: ` class="py-4 px-5 text-sm text-gray-500"` }, { html: `${statusMap[m.status] || m.status}`, attributes: ` class="py-4 px-5"` }, { html: `
                     <button onclick="viewContactMessage(${m.id})" class="text-indigo-600 text-sm">مشاهده</button>
-                </td>
-            </tr>`
+                `, attributes: ` class="py-4 px-5 text-left"` }], ` class="hover:bg-gray-50 ${m.status === 'unread' ? 'bg-indigo-50/40' : ''}"`)
           )
           .join('');
 };

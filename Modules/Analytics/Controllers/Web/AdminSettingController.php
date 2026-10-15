@@ -24,7 +24,7 @@ class AdminSettingController
             \Modules\System\Services\SiteAdminAccess::requireCurrentUser();
             $d = $this->payload();
             $actor = (int) auth()->id();
-            $map = ['primaryFont' => 'site_primary_font', 'fontScale' => 'site_font_size_scale', 'language' => 'site_language', 'themeMode' => 'site_theme_mode', 'colorTheme' => 'site_color_theme'];
+            $map = ['primaryFont' => 'site_primary_font', 'fontScale' => 'site_font_size_scale', 'fontWeight' => 'site_font_weight', 'cornerRadius' => 'site_corner_radius', 'language' => 'site_language', 'themeMode' => 'site_theme_mode', 'colorTheme' => 'site_color_theme'];
             foreach ($map as $field => $key) {
                 if (array_key_exists($field, $d)) {
                     $setting = DB::table('z_settings')->where('`key`', $key)->whereNull('deleted_at')->first();

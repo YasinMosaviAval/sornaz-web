@@ -141,25 +141,8 @@ window.sortInstrumentsBy = async function (field) {
   updateInstrumentSortIcons();
 };
 
-window.renderInstrumentsBranchTabs = async function () {
-  const container = document.getElementById('instrumentsBranchTabs');
-  if (!container) return;
-  container.querySelectorAll('.inst-branch-tab:not(:first-child)').forEach(function (t) {
-    t.remove();
-  });
-  getInstBranches().forEach(function (b) {
-    const active = currentInstBranch == b.id;
-    const btn = document.createElement('button');
-    btn.className =
-      'inst-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ' +
-      (active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50') +
-      ' transition';
-    btn.textContent = b.name;
-    btn.onclick = function () {
-      filterInstrumentsByBranch(b.id);
-    };
-    container.appendChild(btn);
-  });
+window.renderInstrumentsBranchTabs = function () {
+  window.renderPanelOrganizationTabs?.('instrumentsBranchTabs', currentInstBranch, window.filterInstrumentsByBranch, { tabClass: 'inst-branch-tab' });
 };
 
 window.filterInstrumentsByBranch = async function (branchId) {
@@ -232,14 +215,14 @@ window.renderInstrumentsTable = async function (list) {
     tbody.innerHTML = window.getInstrumentEmptyRowHTML ? window.getInstrumentEmptyRowHTML() : '';
   } else {
     pageItems.forEach(function (item) {
-      const tr = document.createElement('tr');
+      const tr = window.AdminPanelTable.createRow();
       tr.className = 'hover:bg-gray-50 transition';
       tr.innerHTML = window.getInstrumentRowHTML
         ? window.getInstrumentRowHTML(item, getLevelTitle(item.level_id))
         : '';
       tbody.appendChild(tr);
       if (editingInstrumentRowId === item.id) {
-        const expand = document.createElement('tr');
+        const expand = window.AdminPanelTable.createRow();
         expand.className = 'bg-gray-50 admin-inline-expand';
         expand.innerHTML = window.getInstrumentInlineExpandRowHTML
           ? window.getInstrumentInlineExpandRowHTML(item)

@@ -1,0 +1,73 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const { execFileSync } = require('node:child_process');
+const { renderPanelView } = require('./panel-table-fixture.cjs');
+const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/notation-browser-check/package');
+
+(async () => {
+  const browser = await chromium.launch({ channel: 'msedge', headless: true });
+  try {
+    const gallery = execFileSync('php', ['-r', 'function auth(){return new class {function id(){return 10;}};} function e($s){return htmlspecialchars($s,ENT_QUOTES,"UTF-8");} require "Modules/Analytics/Resources/Views/sections/gallery.php";'], { encoding: 'utf8' });
+    const terms = renderPanelView('terms');
+    const scripts = ['panel-organization-filters', 'admin', 'admin-ui-templates', 'gallery-templates', 'gallery', 'term-templates', 'terms', 'finance', 'teachers'];
+    const page = await browser.newPage({ viewport: { width: 1100, height: 900 } });
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const owners = [{ userId: 10, name: 'آموزشگاه واقعی', kind: 'academy' }, { userId: 11, name: 'شعبه واقعی', kind: 'branch' }];
+    const items = owners.map((owner, i) => ({ id: i + 1, ownerId: owner.userId, ownerName: owner.name, category: 'gallery', type: 'image', title: owner.name, url: '/image.png' }));
+    await page.route('**/*', (route) => {
+      const path = new URL(route.request().url()).pathname;
+      if (path.startsWith('/js/')) return route.fulfill({ path: 'assets/Analytics/js/' + path.slice(4) });
+      if (path === '/analytics/admin-gallery') return route.fulfill({ json: { success: true, data: { owners, items, hideOwnerFilters: false } } });
+      if (path.endsWith('/realtime-version')) return route.fulfill({ json: { success: true, data: { version: '1' } } });
+      if (path === '/academy/admin/terms') return route.fulfill({ json: { success: true, data: { terms: [], members: [], classrooms: [], branchAcademies: { 101: 100 } } } });
+      if (path === '/academy/admin/courses') return route.fulfill({ json: { success: true, data: { organizations: [], courses: [] } } });
+      if (path === '/image.png') return route.fulfill({ body: '' });
+      return route.fulfill({ contentType: 'text/html; charset=utf-8', body: `<html lang="fa" dir="rtl"><style>.hidden{display:none!important}.flex{display:flex}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.justify-end{justify-content:flex-end}.justify-between{justify-content:space-between}[data-slot="actions"]{display:flex;justify-content:flex-end}@media(min-width:768px){.md\\:flex-row{flex-direction:row}.md\\:justify-end{justify-content:flex-end}}button{padding:10px}header{display:flex;justify-content:space-between}</style><header><h1 id="panelPageTitle"></h1><a href="/">برگشت به سایت</a></header>${fs.readFileSync('Modules/Analytics/Resources/Views/sections/panel-page-header-template.php', 'utf8')}${fs.readFileSync('Modules/Analytics/Resources/Views/sections/panel-organization-tabs-template.php', 'utf8')}${fs.readFileSync('Modules/Analytics/Resources/Views/sections/panel-table-template.php', 'utf8')}${gallery}${terms}<div id="finance"><div><div id="financeBranchTabs"></div></div></div><div id="modalContainer"></div><script>window.academyPanelBranches=[{id:101,name:'شعبه واقعی'}];window.branchSiteAdmin=false;window.branchAccount=false;window.academyHasNoBranches=false;window.closeModal=()=>document.getElementById('modalContainer').innerHTML='';</script>${scripts.map((script) => `<script src="/js/${script}.js"></script>`).join('')}</html>` });
+    });
+    await page.goto('http://sornaz.test/');
+    await page.evaluate(() => showSection('gallery'));
+    await page.waitForSelector('#gallery .gallery-card');
+    assert.deepEqual(await page.locator('#galleryBranchTabs button').allTextContents(), ['همه', 'آموزشگاه', 'شعبه واقعی']);
+    await page.locator('#galleryBranchTabs [data-value="academy"]').click();
+    assert.equal(await page.locator('#gallery .gallery-card').count(), 1);
+    assert.equal(await page.locator('#gallery .gallery-card-title').textContent(), 'آموزشگاه واقعی');
+    await page.locator('#galleryBranchTabs [data-value="11"]').click();
+    assert.equal(await page.locator('#gallery .gallery-card-title').textContent(), 'شعبه واقعی');
+    const add = page.locator('#gallery button[onclick="openAddGalleryModal()"]');
+    assert.equal(await page.locator('body > header button').count(), 0);
+    const buttonBox = await add.boundingBox();
+    assert(buttonBox.x < 400, 'Gallery add stays at the left side inside its page');
+    await add.click();
+    let fields = await page.locator('#galleryCategory,#galleryFile').evaluateAll((nodes) => nodes.map((node) => node.parentElement.className));
+    assert(!fields.some((classes) => classes.includes('col-span-2')), 'Media kind and file share a row');
+    await page.evaluate(() => editGalleryItem(1));
+    fields = await page.locator('#galleryCategory,#galleryFile').evaluateAll((nodes) => nodes.map((node) => node.parentElement.className));
+    assert(!fields.some((classes) => classes.includes('col-span-2')));
+    await page.evaluate(() => { closeModal(); showSection('terms'); renderTermsBranchTabs(); renderFinanceBranchTabs(); });
+    assert.deepEqual(await page.locator('#termsBranchTabs button').allTextContents(), ['همه', 'آموزشگاه', 'شعبه واقعی']);
+    assert.deepEqual(await page.locator('#financeBranchTabs button').allTextContents(), ['همه', 'آموزشگاه', 'شعبه واقعی']);
+    await page.locator('#termsBranchTabs [data-value="academy"]').click();
+    assert.equal(await page.locator('#termsBranchTabs [data-value="academy"]').evaluate((button) => button.classList.contains('bg-indigo-600')), true);
+    await page.evaluate(() => renderTermsTable([]));
+    assert((await page.locator('#termsTable tbody').textContent()).includes('هیچ ترمی یافت نشد'));
+    assert.equal(await page.locator('#termsPagination').isVisible(), false);
+    await page.evaluate(() => { const rows = Array.from({ length: 11 }, (_, i) => ({ id: i + 1, name: 'Test term', teachers: [], students: [], sessions: [] })); return renderTermsTable(rows); });
+    assert.equal(await page.locator('#termsPagination').isVisible(), true);
+    await page.evaluate(() => renderTermsTable(Array.from({ length: 10 }, (_, i) => ({ id: i + 1, name: 'Test term', teachers: [], students: [], sessions: [] }))));
+    assert.equal(await page.locator('#termsPagination').isVisible(), false);
+    await page.evaluate(async () => {
+      document.body.insertAdjacentHTML('beforeend', '<div><div id="staffBranchTabs"></div></div>');
+      window.academyPanelBranches = [{ id: 101, name: 'شعبه واقعی' }, { id: 102, name: 'شعبه واقعی' }];
+      allStaff = [{ id: 1, branchId: 101, branch: 'شعبه واقعی', name: 'کارمند اول', contractTitle: 'قرارداد' }, { id: 2, branchId: 102, branch: 'شعبه واقعی', name: 'کارمند دوم', contractTitle: 'قرارداد' }];
+      renderStaffBranchTabs();
+      await filterStaffByBranch('102');
+    });
+    assert.equal(await page.locator('#staffBranchTabs button').count(), 4);
+    assert.deepEqual(await page.evaluate(() => filteredStaff.map((item) => item.id)), [2]);
+    await page.evaluate(() => { window.branchAccount = true; applyAcademyOrganizationTabs(); });
+    assert.equal(await page.locator('#termsBranchTabs').isVisible(), false);
+    assert.deepEqual(errors, []);
+    console.log('Panel organization filters: shared tabs, gallery ownership, in-page actions, media forms and term pagination passed.');
+  } finally { await browser.close(); }
+})().catch((error) => { console.error(error); process.exitCode = 1; });

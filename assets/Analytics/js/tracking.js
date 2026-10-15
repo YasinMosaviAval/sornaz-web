@@ -484,22 +484,11 @@
   }
   function table(id, heads, rows, map) {
     document.getElementById(id).innerHTML = rows.length
-      ? '<div class="overflow-x-auto"><table class="w-full min-w-[650px] text-sm"><thead><tr class="border-b bg-gray-50">' +
-        heads.map((h) => '<th class="p-3 text-right">' + h + '</th>').join('') +
-        '</tr></thead><tbody class="divide-y">' +
-        rows
-          .map(
-            (r) =>
-              '<tr>' +
-              map(r)
-                .map(
-                  (v) => '<td class="max-w-xs truncate p-3" title="' + e(v) + '">' + e(v) + '</td>'
-                )
-                .join('') +
-              '</tr>'
-          )
-          .join('') +
-        '</tbody></table></div>'
+      ? '<div class="overflow-x-auto">' + window.AdminPanelTable.tableHTML({
+          attributes: 'class="w-full min-w-[650px] text-sm"',
+          columns: heads.map((h) => ({ value: h, attributes: 'class="p-3 text-right"' })),
+          rows: rows.map((r) => ({ cells: map(r).map((v) => ({ value: v, attributes: 'class="max-w-xs truncate p-3" title="' + e(v) + '"' })) })),
+        }) + '</div>'
       : empty();
   }
   function renderConsents() {
@@ -560,27 +549,14 @@
     const pageRows = rows.slice((rawPage - 1) * per, rawPage * per),
       columns = rows.length ? Object.keys(rows[0]) : [];
     document.getElementById('trackingRawTable').innerHTML = rows.length
-      ? '<table class="w-full min-w-max text-xs"><thead><tr class="border-b bg-gray-50">' +
-        columns.map((c) => '<th class="p-3 text-right font-mono">' + e(c) + '</th>').join('') +
-        '</tr></thead><tbody class="divide-y">' +
-        pageRows
-          .map(
-            (r) =>
-              '<tr>' +
-              columns
-                .map(
-                  (c) =>
-                    '<td class="max-w-64 truncate p-3" title="' +
-                    e(typeof r[c] === 'object' ? JSON.stringify(r[c]) : r[c]) +
-                    '">' +
-                    e(typeof r[c] === 'object' ? JSON.stringify(r[c]) : r[c]) +
-                    '</td>'
-                )
-                .join('') +
-              '</tr>'
-          )
-          .join('') +
-        '</tbody></table><div class="mt-4 flex justify-end gap-2">' +
+      ? window.AdminPanelTable.tableHTML({
+          attributes: 'class="w-full min-w-max text-xs"',
+          columns: columns.map((c) => ({ value: c, attributes: 'class="p-3 text-right font-mono"' })),
+          rows: pageRows.map((r) => ({ cells: columns.map((c) => {
+            const value = typeof r[c] === 'object' ? JSON.stringify(r[c]) : r[c];
+            return { value, attributes: 'class="max-w-64 truncate p-3" title="' + e(value) + '"' };
+          }) })),
+        }) + '<div class="mt-4 flex justify-end gap-2">' +
         Array.from(
           { length: pages },
           (_, i) =>

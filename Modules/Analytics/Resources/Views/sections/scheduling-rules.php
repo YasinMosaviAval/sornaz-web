@@ -54,29 +54,21 @@
     <!-- جدول -->
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1000px]" id="rulesTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortRulesBy('title')" class="flex items-center gap-1">عنوان قانون <span id="ruleSortIcon-title">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortRulesBy('branchName')" class="flex items-center gap-1">سازمان <span id="ruleSortIcon-branchName">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortRulesBy('type')" class="flex items-center gap-1">نوع <span id="ruleSortIcon-type">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortRulesBy('value')" class="flex items-center gap-1">مقدار <span id="ruleSortIcon-value">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortRulesBy('status')" class="flex items-center gap-1">وضعیت <span id="ruleSortIcon-status">↕</span></button>
-                        </th>
-                        <th class="w-40 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1000px]" id="rulesTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => '<button onclick="sortRulesBy(\'title\')" class="flex items-center gap-1">عنوان قانون <span id="ruleSortIcon-title">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortRulesBy(\'branchName\')" class="flex items-center gap-1">سازمان <span id="ruleSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortRulesBy(\'type\')" class="flex items-center gap-1">نوع <span id="ruleSortIcon-type">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortRulesBy(\'value\')" class="flex items-center gap-1">مقدار <span id="ruleSortIcon-value">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortRulesBy(\'status\')" class="flex items-center gap-1">وضعیت <span id="ruleSortIcon-status">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
         <div id="rulesPagination" class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="rulesPaginationInfo">نمایش ۱ تا ۱۰ از ۳۰ قانون</span>

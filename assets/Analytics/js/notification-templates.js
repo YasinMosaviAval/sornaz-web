@@ -57,25 +57,16 @@
   }
 
   window.getNotificationRowHTML = function (item) {
-    return `
-            <td class="py-4 px-5 font-medium">${escapeHtml(item.title)}</td>
-            <td class="py-4 px-5" dir="ltr">@${escapeHtml(item.recipientUsername || '—')} <small class="text-gray-400">(${escapeHtml(item.recipientId || '—')})</small></td>
-            <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5"><span class="px-2.5 py-1 rounded-full text-xs bg-slate-100 text-slate-600">${escapeHtml(item.audience || 'همه')}</span></td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${priorityClass(item.priority)}">${escapeHtml(item.priority)}</span></td>
-            <td class="py-4 px-5">${escapeHtml(item.date)}</td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${readStatusClass(item.readStatus)}">${escapeHtml(item.readStatus)}</span></td>
-            <td class="py-4 px-5 text-left">
+    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.title)}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `@${escapeHtml(item.recipientUsername || '—')} <small class="text-gray-400">(${escapeHtml(item.recipientId || '—')})</small>`, attributes: ` class="py-4 px-5" dir="ltr"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-2.5 py-1 rounded-full text-xs bg-slate-100 text-slate-600">${escapeHtml(item.audience || 'همه')}</span>`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-3 py-1 rounded-full text-xs ${priorityClass(item.priority)}">${escapeHtml(item.priority)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.date)}`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-3 py-1 rounded-full text-xs ${readStatusClass(item.readStatus)}">${escapeHtml(item.readStatus)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
                     <button onclick="viewNotification(${item.id})" class="text-indigo-600 hover:underline text-sm">مشاهده</button>
                     ${document.getElementById('notifications')?.dataset.readOnly === '1' ? '' : `<button onclick="deleteNotification(${item.id})" class="text-red-500 hover:underline text-sm">حذف</button>`}
                 </div>
-            </td>`;
+            `, attributes: ` class="py-4 px-5 text-left"` }]);
   };
 
   window.getNotificationEmptyRowHTML = function () {
-    return '<tr><td colspan="9" class="py-12 text-center text-gray-400">اعلانی یافت نشد</td></tr>';
+    return window.AdminPanelTable.rowHTML([{ html: "اعلانی یافت نشد", attributes: " colspan=\"9\" class=\"py-12 text-center text-gray-400\"" }], "");
   };
 
   window.getNotificationAddModalHTML = function () {

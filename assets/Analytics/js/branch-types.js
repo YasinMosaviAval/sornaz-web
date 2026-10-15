@@ -42,10 +42,10 @@
       ? items
           .map(
             (item) =>
-              `<tr class="border-t border-gray-100"><td class="p-4 font-medium">${esc(item.title || item.name)}</td><td class="p-4 text-sm text-gray-600">${esc(item.summary || '—')}</td><td class="p-4 text-sm text-gray-600 max-w-md"><p class="line-clamp-2">${esc(item.description || '—')}</p></td><td class="p-4"><div class="flex gap-2"><button type="button" onclick="editBranchTypeAdmin(${item.id})" class="rounded-lg bg-indigo-600 px-3 py-1.5 text-white">ویرایش</button><button type="button" onclick="deleteBranchTypeAdmin(${item.id})" class="rounded-lg bg-red-600 px-3 py-1.5 text-white">حذف</button></div></td></tr>`
+              window.AdminPanelTable.rowHTML([{ html: `${esc(item.title || item.name)}`, attributes: ` class="p-4 font-medium"` }, { html: `${esc(item.summary || '—')}`, attributes: ` class="p-4 text-sm text-gray-600"` }, { html: `<p class="line-clamp-2">${esc(item.description || '—')}</p>`, attributes: ` class="p-4 text-sm text-gray-600 max-w-md"` }, { html: `<div class="flex gap-2"><button type="button" onclick="editBranchTypeAdmin(${item.id})" class="rounded-lg bg-indigo-600 px-3 py-1.5 text-white">ویرایش</button><button type="button" onclick="deleteBranchTypeAdmin(${item.id})" class="rounded-lg bg-red-600 px-3 py-1.5 text-white">حذف</button></div>`, attributes: ` class="p-4"` }], ` class="border-t border-gray-100"`)
           )
           .join('')
-      : '<tr><td colspan="4" class="p-12 text-center text-gray-400">نوع آموزشی ثبت نشده است.</td></tr>';
+      : window.AdminPanelTable.rowHTML([{ html: "نوع آموزشی ثبت نشده است.", attributes: " colspan=\"4\" class=\"p-12 text-center text-gray-400\"" }], "");
   }
   async function load() {
     try {

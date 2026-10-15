@@ -1,4 +1,62 @@
 (function () {
+  let tableMarkup;
+  function tablePart(name, values) {
+    tableMarkup ||= JSON.parse(document.getElementById('adminPanelTableMarkup').textContent);
+    return tableMarkup[name].replace(/\{\{(\w+)\}\}/g, (_, key) => String(values[key] ?? ''));
+  }
+
+  function tableText(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (char) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]
+    );
+  }
+
+  // HTML/attribute fragments are escaped by the page's existing trusted cell renderer.
+  // Plain `value` is always escaped here. No rendered DOM is read back into a data model.
+  window.AdminPanelTable = {
+    cellsHTML(cells, heading = false) {
+      return cells.map((cell) => {
+        if (cell && typeof cell === 'object' && 'fragment' in cell) return cell.fragment || '';
+        cell = cell && typeof cell === 'object' ? cell : { value: cell };
+        return tablePart(heading || cell.tag === 'th' ? 'heading' : 'cell', {
+          attributes: cell.attributes || '',
+          html: cell.html ?? tableText(cell.value),
+        });
+      }).join('');
+    },
+    rowHTML(cells, attributes = '') {
+      return tablePart('row', { cells: this.cellsHTML(cells), attributes });
+    },
+    createRow(attributes = '') {
+      const fragment = document.createElement('template');
+      fragment.innerHTML = this.tableHTML({ columns: [], rows: [{ cells: [], attributes }] });
+      return fragment.content.querySelector('tbody tr');
+    },
+    createCell(heading = false) {
+      const row = this.createRow();
+      row.innerHTML = this.cellsHTML([{ value: '' }], heading);
+      return row.firstElementChild;
+    },
+    tableHTML(config) {
+      return tablePart('table', {
+        attributes: config.attributes ?? 'class="w-full"',
+        headAttributes: config.headAttributes ?? 'class="border-b bg-gray-50"',
+        headerRowAttributes: config.headerRowAttributes ?? '',
+        bodyAttributes: config.bodyAttributes ?? 'class="divide-y text-sm"',
+        columns: this.cellsHTML(config.columns || [], true),
+        rows: (config.rows || []).map((row) => this.rowHTML(row.cells || row, row.attributes)).join(''),
+      });
+    },
+    render(target, config) {
+      if (typeof target === 'string') target = document.querySelector(target);
+      if (!target) return;
+      const fragment = document.createElement('template');
+      fragment.innerHTML = this.tableHTML(config);
+      const table = fragment.content.querySelector('table');
+      if (target.tagName === 'TABLE') target.replaceChildren(...table.childNodes);
+      else target.replaceChildren(table);
+    },
+  };
   const template = (id) => document.getElementById(id);
 
   function clone(id) {
@@ -275,7 +333,7 @@
         index++;
         let cell = row.querySelector(':scope > [data-admin-identity-cell]');
         if (!cell) {
-          cell = document.createElement('td');
+          cell = window.AdminPanelTable.createCell();
           cell.dataset.adminIdentityCell = '1';
           cell.className = 'whitespace-nowrap px-5 py-4 font-medium text-gray-500';
           row.prepend(cell);
@@ -313,7 +371,7 @@
     const identities = rows.map(rowIdentity);
     const kind = identities.some((value) => value !== null) ? 'id' : 'row';
     if (!injectedHeading) {
-      injectedHeading = document.createElement('th');
+      injectedHeading = window.AdminPanelTable.createCell(true);
       injectedHeading.dataset.adminIdentityColumn = '1';
       injectedHeading.scope = 'col';
       injectedHeading.className = 'whitespace-nowrap px-5 py-5 text-right font-medium';

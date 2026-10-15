@@ -39,6 +39,21 @@
         -webkit-line-clamp: 3;
     }
 </style>
+<?php if ((int) auth()->id() !== 1): ?>
+<div id="gallery" class="section hidden">
+    <div class="mb-6 flex flex-wrap items-center justify-end gap-4">
+        <h1 class="text-3xl font-bold">گالری</h1>
+        <button type="button" onclick="openAddGalleryModal()" class="rounded-2xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700"><i class="fas fa-plus ml-2"></i>افزودن رسانه</button>
+    </div>
+    <div class="mb-6 overflow-x-auto rounded-3xl bg-white p-3 shadow-sm"><div id="galleryBranchTabs" class="flex min-w-max gap-2"><button type="button" data-value="all" class="rounded-2xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white">همه</button></div></div>
+    <?php foreach (['cover' => 'کاور', 'logo' => 'لوگو', 'intro_video' => 'ویدیو معرفی', 'gallery' => 'گالری'] as $galleryKind => $galleryLabel): ?>
+    <section class="mb-8 border-b pb-8 last:border-b-0" style="border-color:color-mix(in srgb,var(--theme-500) 24%,transparent)" data-gallery-overview-category="<?= e($galleryKind) ?>">
+        <h2 class="mb-5 text-xl font-bold"><?= e($galleryLabel) ?></h2>
+        <div class="gallery-grid grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3" data-gallery-category="<?= e($galleryKind) ?>"></div>
+    </section>
+    <?php endforeach; ?>
+</div>
+<?php endif; ?>
 <div id="gallery-cover" class="section hidden" data-gallery-category="cover">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>

@@ -31,26 +31,19 @@
 
   window.getInstrumentRowHTML = function (item, levelTitle) {
     const sc = statusBadge(item.status);
-    return `
-            <td class="py-4 px-5 font-medium">${escapeHtml(item.title)}</td>
-            <td class="py-4 px-5">${escapeHtml(levelTitle || '—')}</td>
-            <td class="py-4 px-5">${item.years_of_experience ?? '—'}</td>
-            <td class="py-4 px-5">${item.is_primary ? '<span class="px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700">اصلی</span>' : '—'}</td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${sc}">${escapeHtml(item.status || 'فعال')}</span></td>
-            <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5 text-left">
+    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.title)}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `${escapeHtml(levelTitle || '—')}`, attributes: ` class="py-4 px-5"` }, { html: `${item.years_of_experience ?? '—'}`, attributes: ` class="py-4 px-5"` }, { html: `${item.is_primary ? '<span class="px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700">اصلی</span>' : '—'}`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-3 py-1 rounded-full text-xs ${sc}">${escapeHtml(item.status || 'فعال')}</span>`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewInstrument(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
                     <button onclick="toggleInstrumentInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
                     <button onclick="deleteInstrument(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>
                 </div>
-            </td>`;
+            `, attributes: ` class="py-4 px-5 text-left"` }]);
   };
   window.getInstrumentEmptyRowHTML = function () {
-    return `<tr><td colspan="7" class="py-12 text-center text-gray-400">موردی یافت نشد</td></tr>`;
+    return window.AdminPanelTable.rowHTML([{ html: `موردی یافت نشد`, attributes: ` colspan="7" class="py-12 text-center text-gray-400"` }], ``);
   };
   window.getInstrumentInlineExpandRowHTML = function (item) {
-    return `<td colspan="7" class="p-5 border-t">${window.getInstrumentInlineEditRowHTML ? window.getInstrumentInlineEditRowHTML(item) : ''}</td>`;
+    return window.AdminPanelTable.cellsHTML([{ html: `${window.getInstrumentInlineEditRowHTML ? window.getInstrumentInlineEditRowHTML(item) : ''}`, attributes: ` colspan="7" class="p-5 border-t"` }]);
   };
 
   function formFields(item, prefix) {

@@ -17,19 +17,21 @@
 
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1100px]" id="ratingSummariesTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">عنوان</th>
-                        <th class="text-right py-5 px-5 font-medium">نوع هدف</th>
-                        <th class="text-right py-5 px-5 font-medium">میانگین</th>
-                        <th class="text-right py-5 px-5 font-medium">تعداد رأی</th>
-                        <th class="text-right py-5 px-5 font-medium">شعبه</th>
-                        <th class="w-36 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1100px]" id="ratingSummariesTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => 'عنوان', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'نوع هدف', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'میانگین', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'تعداد رأی', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'شعبه', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-36 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
     </div>
 </div>

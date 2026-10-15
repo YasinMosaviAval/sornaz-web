@@ -80,29 +80,21 @@
     <!-- جدول -->
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[900px]" id="studentsTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortStudentsBy('name')" class="flex items-center gap-1">نام هنرجو <span id="stuSortIcon-name">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortStudentsBy('instrument')" class="flex items-center gap-1">ترم آموزشی <span id="stuSortIcon-instrument">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortStudentsBy('level')" class="flex items-center gap-1">سطح <span id="stuSortIcon-level">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortStudentsBy('teacher')" class="flex items-center gap-1">استاد <span id="stuSortIcon-teacher">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortStudentsBy('branch')" class="flex items-center gap-1">سازمان <span id="stuSortIcon-branch">↕</span></button>
-                        </th>
-                        <th class="w-40 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[900px]" id="studentsTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => '<button onclick="sortStudentsBy(\'name\')" class="flex items-center gap-1">نام هنرجو <span id="stuSortIcon-name">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortStudentsBy(\'instrument\')" class="flex items-center gap-1">ترم آموزشی <span id="stuSortIcon-instrument">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortStudentsBy(\'level\')" class="flex items-center gap-1">سطح <span id="stuSortIcon-level">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortStudentsBy(\'teacher\')" class="flex items-center gap-1">استاد <span id="stuSortIcon-teacher">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortStudentsBy(\'branch\')" class="flex items-center gap-1">سازمان <span id="stuSortIcon-branch">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
         <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="studentsPaginationInfo">نمایش ۱ تا ۱۰ از ۲۵۰ هنرجو</span>

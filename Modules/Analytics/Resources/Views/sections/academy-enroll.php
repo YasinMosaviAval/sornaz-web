@@ -57,17 +57,19 @@
         <div class="mt-10">
             <h2 class="text-xl font-bold mb-4">درخواست‌های ثبت‌نام اخیر</h2>
             <div class="bg-white rounded-3xl shadow overflow-hidden">
-                <table class="w-full min-w-[600px]" id="enrollmentsTable">
-                    <thead class="bg-gray-50 border-b">
-                        <tr>
-                            <th class="text-right py-4 px-5 font-medium">نام</th>
-                            <th class="text-right py-4 px-5 font-medium">آموزشگاه / دوره</th>
-                            <th class="text-right py-4 px-5 font-medium">وضعیت</th>
-                            <th class="w-28"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y text-sm"></tbody>
-                </table>
+                <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[600px]" id="enrollmentsTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => 'نام', 'attributes' => ' class="text-right py-4 px-5 font-medium"'],
+                    ['html' => 'آموزشگاه / دوره', 'attributes' => ' class="text-right py-4 px-5 font-medium"'],
+                    ['html' => 'وضعیت', 'attributes' => ' class="text-right py-4 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-28"'],
+                ],
+                'rows' => [],
+            ]); ?>
             </div>
         </div>
     </div>

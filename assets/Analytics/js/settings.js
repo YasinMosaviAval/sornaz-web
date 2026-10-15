@@ -74,10 +74,12 @@
       if (!select) return;
       document.getElementById('siteColorTheme').value = (!isSiteAdmin && localStorage.getItem('sornaz.personalTheme')) || settings.colorTheme || 'indigo';
       document.getElementById('siteThemeMode').checked = ((!isSiteAdmin && localStorage.getItem('sornaz.personalMode')) || settings.themeMode || 'light') === 'dark';
-      document.getElementById('siteLanguage').value =
-        settings.language || document.documentElement.lang || 'fa';
-      if (isSiteAdmin) document.getElementById('siteEditMode').checked =
-        localStorage.getItem('sornaz.admin.editMode') === '1';
+      if (isSiteAdmin) {
+        document.getElementById('siteLanguage').value =
+          settings.language || document.documentElement.lang || 'fa';
+        document.getElementById('siteEditMode').checked =
+          localStorage.getItem('sornaz.admin.editMode') === '1';
+      }
       select.innerHTML = settings.fonts
         .map(
           (font) =>
@@ -88,10 +90,12 @@
         const font = localStorage.getItem('sornaz.personalFont');
         if (font && settings.fonts.some((item) => item.value === font)) select.value = font;
       }
-      document.getElementById('siteFontScale').value = Number((!isSiteAdmin && localStorage.getItem('sornaz.personalFontScale')) ?? settings.fontScale ?? 0);
-      document.getElementById('siteFontWeight').value = Math.min(5, Math.max(0, Number(localStorage.getItem('sornaz.personalFontWeight') ?? 0)));
-      document.getElementById('siteCornerRadius').value = Math.min(16, Math.max(0, Number(localStorage.getItem('sornaz.personalCornerRadius') ?? 4)));
-      previewSiteFont();
+      if (isSiteAdmin) {
+        document.getElementById('siteFontScale').value = Number(settings.fontScale ?? 0);
+        document.getElementById('siteFontWeight').value = Number(settings.fontWeight ?? 0);
+        document.getElementById('siteCornerRadius').value = Number(settings.cornerRadius ?? 4);
+        previewSiteFont();
+      }
     } catch (error) {
       if (select) select.innerHTML = '<option value="">خطا در دریافت فونت‌ها</option>';
       console.error(error);
@@ -99,9 +103,7 @@
   }
 
   window.previewSiteFont = () => {
-    if (!settings) return;
-    const key = document.getElementById('sitePrimaryFont').value;
-    const font = settings.fonts.find((item) => item.value === key);
+    if (!settings || !isSiteAdmin) return;
     const scale = Number(document.getElementById('siteFontScale').value || 0);
     const weight = Number(document.getElementById('siteFontWeight').value || 0);
     const radius = Number(document.getElementById('siteCornerRadius').value || 0);
@@ -125,38 +127,22 @@
           `<span class="inline-flex min-w-5 justify-center" dir="ltr">${signed(value)}</span>`
       )
       .join('');
-    const preview = document.getElementById('siteFontPreview');
-    preview.dataset.preserveDigits = '1';
-    preview.style.fontFamily = font?.fontFamily || settings.fontFamily;
-    preview.style.fontSize = 16 + scale + 'px';
-    preview.style.fontWeight = String(400 + weight * 100);
-    preview.style.borderRadius = `${radius}px`;
-    const english = document.documentElement.lang === 'en',
-      content = document.getElementById('siteFontPreviewContent');
-    content.innerHTML = english
-      ? '<p>Music is the common language of our emotions.</p><p class="mt-1" dir="ltr">Today: 2026/08/15 — 1234567890</p>'
-      : '<p>موسیقی زبان مشترک احساس‌های ماست.</p><p class="mt-1">امروز ۱۴۰۵/۰۵/۲۴ — ۱۲۳۴۵۶۷۸۹۰</p>';
   };
 
   window.saveSiteSettings = async () => {
     const primaryFont = document.getElementById('sitePrimaryFont').value;
-    const fontScale = Number(document.getElementById('siteFontScale').value || 0);
-    const fontWeight = Number(document.getElementById('siteFontWeight').value || 0);
-    const cornerRadius = Number(document.getElementById('siteCornerRadius').value || 0);
-    localStorage.setItem('sornaz.personalFontWeight', String(fontWeight));
-    localStorage.setItem('sornaz.personalCornerRadius', String(cornerRadius));
-    document.documentElement.style.setProperty('--site-font-weight', String(400 + fontWeight * 100));
-    document.documentElement.style.setProperty('--site-corner-radius', `${cornerRadius}px`);
     if (!isSiteAdmin) {
       const selectedFont = settings?.fonts.find((item) => item.value === primaryFont);
       if (!selectedFont) return;
       localStorage.setItem('sornaz.personalFont', primaryFont);
-      localStorage.setItem('sornaz.personalFontScale', String(fontScale));
-      window.applySiteTypography?.({ fontFamily: selectedFont.fontFamily, rootFontSize: `${16 + fontScale}px` });
+      window.applySiteTypography?.({ ...settings, fontFamily: selectedFont.fontFamily });
       document.getElementById('siteSettingsMessage').textContent = 'تنظیمات شخصی در این مرورگر ذخیره شد.';
       return;
     }
     try {
+      const fontScale = Number(document.getElementById('siteFontScale').value || 0);
+      const fontWeight = Number(document.getElementById('siteFontWeight').value || 0);
+      const cornerRadius = Number(document.getElementById('siteCornerRadius').value || 0);
       const language = document.getElementById('siteLanguage').value;
       const themeMode = document.getElementById('siteThemeMode').checked ? 'dark' : 'light';
       const colorTheme = document.getElementById('siteColorTheme').value;
@@ -173,7 +159,7 @@
         },
         body: new URLSearchParams({
           _token: window.adminCsrfToken || '',
-          payload_b64: encode({ primaryFont, fontScale, language, themeMode, colorTheme }),
+          payload_b64: encode({ primaryFont, fontScale, fontWeight, cornerRadius, language, themeMode, colorTheme }),
         }),
       });
       const payload = await response.json(),

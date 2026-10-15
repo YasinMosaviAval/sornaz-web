@@ -67,34 +67,26 @@ window.renderAcademyRequestsTable = async function () {
   if (!tbody) return;
   tbody.innerHTML =
     allAcademyRequests.length === 0
-      ? `<tr><td colspan="4" class="py-10 text-center text-gray-400">درخواستی نیست</td></tr>`
+      ? window.AdminPanelTable.rowHTML([{ html: `درخواستی نیست`, attributes: ` colspan="4" class="py-10 text-center text-gray-400"` }], ``)
       : allAcademyRequests
           .map((r) => {
             const st = reqStatusMap[r.status] || { text: r.status, cls: 'bg-gray-100' };
-            return `
-            <tr class="hover:bg-gray-50">
-                <td class="py-4 px-5">
+            return window.AdminPanelTable.rowHTML([{ html: `
                     <div class="font-medium">${r.academy_name}</div>
                     <div class="text-xs text-gray-400">${r.short_desc || ''}</div>
-                </td>
-                <td class="py-4 px-5">
+                `, attributes: ` class="py-4 px-5"` }, { html: `
                     <div class="text-sm">${r.email}</div>
                     <div class="text-xs text-gray-400">@${r.username}</div>
-                </td>
-                <td class="py-4 px-5"><span class="px-2.5 py-1 rounded-full text-xs ${st.cls}">${st.text}</span></td>
-                <td class="py-4 px-5 text-left whitespace-nowrap">
-                    ${
-                      r.status === 'pending'
+                `, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-2.5 py-1 rounded-full text-xs ${st.cls}">${st.text}</span>`, attributes: ` class="py-4 px-5"` }, { html: `
+                    ${r.status === 'pending'
                         ? `
                         <button onclick="approveAcademyRequest(${r.id})" class="text-green-600 text-sm ml-2">تأیید</button>
                         <button onclick="rejectAcademyRequest(${r.id})" class="text-red-500 text-sm">رد</button>
                     `
                         : `
                         <button onclick="viewAcademyRequest(${r.id})" class="text-indigo-600 text-sm">جزئیات</button>
-                    `
-                    }
-                </td>
-            </tr>`;
+                    `}
+                `, attributes: ` class="py-4 px-5 text-left whitespace-nowrap"` }], ` class="hover:bg-gray-50"`);
           })
           .join('');
 };

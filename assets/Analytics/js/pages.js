@@ -31,10 +31,10 @@
       ? list
           .map(
             (p) =>
-              `<tr class="hover:bg-gray-50"><td class="p-5"><strong>${esc(p.title)}</strong><div class="mt-1 font-mono text-xs text-gray-400" dir="ltr">${esc(p.route)}</div></td><td class="p-5"><span class="rounded-lg bg-indigo-50 px-2 py-1 text-indigo-700">${p.texts}</span></td><td class="p-5"><span class="rounded-lg bg-emerald-50 px-2 py-1 text-emerald-700">${p.images}</span></td><td class="p-5"><span class="rounded-lg bg-violet-50 px-2 py-1 text-violet-700">${p.icons}</span></td><td class="p-5"><span class="rounded-full bg-green-100 px-3 py-1 text-xs text-green-700">فعال</span></td><td class="p-5 text-left whitespace-nowrap"><a href="${esc(p.route)}" target="_blank" class="ml-3 text-gray-500">مشاهده</a><a href="${editorUrl(p)}" target="_blank" class="rounded-xl bg-indigo-600 px-4 py-2 text-white">ویرایش محتوا</a></td></tr>`
+              window.AdminPanelTable.rowHTML([{ html: `<strong>${esc(p.title)}</strong><div class="mt-1 font-mono text-xs text-gray-400" dir="ltr">${esc(p.route)}</div>`, attributes: ` class="p-5"` }, { html: `<span class="rounded-lg bg-indigo-50 px-2 py-1 text-indigo-700">${p.texts}</span>`, attributes: ` class="p-5"` }, { html: `<span class="rounded-lg bg-emerald-50 px-2 py-1 text-emerald-700">${p.images}</span>`, attributes: ` class="p-5"` }, { html: `<span class="rounded-lg bg-violet-50 px-2 py-1 text-violet-700">${p.icons}</span>`, attributes: ` class="p-5"` }, { html: `<span class="rounded-full bg-green-100 px-3 py-1 text-xs text-green-700">فعال</span>`, attributes: ` class="p-5"` }, { html: `<a href="${esc(p.route)}" target="_blank" class="ml-3 text-gray-500">مشاهده</a><a href="${editorUrl(p)}" target="_blank" class="rounded-xl bg-indigo-600 px-4 py-2 text-white">ویرایش محتوا</a>`, attributes: ` class="p-5 text-left whitespace-nowrap"` }], ` class="hover:bg-gray-50"`)
           )
           .join('')
-      : '<tr><td colspan="6" class="p-12 text-center text-gray-400">برگه‌ای یافت نشد</td></tr>';
+      : window.AdminPanelTable.rowHTML([{ html: "برگه‌ای یافت نشد", attributes: " colspan=\"6\" class=\"p-12 text-center text-gray-400\"" }], "");
     document.getElementById('sitePagesCount').textContent = `${list.length} برگه`;
   }
   function editorUrl(p) {

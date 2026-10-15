@@ -12,10 +12,10 @@
       (window.allCourseLevels || [])
         .map(
           (x) =>
-            `<tr><td class="px-5 py-4 font-medium">${esc(x.name)}</td><td class="px-5 py-4">${esc(x.summary)}</td><td class="px-5 py-4 text-left whitespace-nowrap"><button onclick="viewCourseLevelDetails(${x.id})" class="rounded-xl bg-indigo-50 px-4 py-2 text-indigo-700 hover:bg-indigo-100"><i class="fas fa-eye ml-2"></i>جزئیات</button></td></tr>`
+            window.AdminPanelTable.rowHTML([{ html: `${esc(x.name)}`, attributes: ` class="px-5 py-4 font-medium"` }, { html: `${esc(x.summary)}`, attributes: ` class="px-5 py-4"` }, { html: `<button onclick="viewCourseLevelDetails(${x.id})" class="rounded-xl bg-indigo-50 px-4 py-2 text-indigo-700 hover:bg-indigo-100"><i class="fas fa-eye ml-2"></i>جزئیات</button>`, attributes: ` class="px-5 py-4 text-left whitespace-nowrap"` }], ``)
         )
         .join('') ||
-      '<tr><td colspan="3" class="p-10 text-center text-gray-400">سطحی یافت نشد</td></tr>';
+      window.AdminPanelTable.rowHTML([{ html: "سطحی یافت نشد", attributes: " colspan=\"3\" class=\"p-10 text-center text-gray-400\"" }], "");
   };
   window.viewCourseLevelDetails = function (id) {
     const x = (window.allCourseLevels || []).find((v) => Number(v.id) === Number(id));

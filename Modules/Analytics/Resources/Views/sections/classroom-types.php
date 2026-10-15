@@ -8,44 +8,44 @@ $canViewClassroomTypes=$classroomTypeAdmin||$classroomTypeAcademyOwner||$classro
 if(!$canViewClassroomTypes)return;
 ?>
 <section id="classroom-types" class="section hidden">
-    <div class="mb-7 flex justify-between">
-        <div>
-            <h1 class="text-3xl font-bold">انواع کلاس</h1>
-            <p class="mt-2 text-gray-500">مدیریت انواع کلاس‌های فیزیکی</p>
-        </div>
-        <button id="addClassroomTypeButton" onclick="openClassroomTypeAdmin()" class="rounded-xl bg-indigo-600 px-5 py-2 text-white">+ نوع جدید</button>
-    </div>
-    <div class="mb-5 grid grid-cols-1 gap-3 rounded-2xl bg-white p-4 shadow-sm md:grid-cols-3">
+    <h1 class="hidden">انواع کلاس</h1>
+    <?php component('classroom-page-tabs', ['active' => 'classroom-types']); ?>
+    <p class="mb-6 text-gray-500">مدیریت انواع کلاس‌های فیزیکی</p>
+    <div class="mb-6 flex justify-end"><button id="addClassroomTypeButton" onclick="openClassroomTypeAdmin()" class="rounded-xl bg-indigo-600 px-5 py-2 text-white">+ نوع جدید</button></div>
+    <div class="mb-6 overflow-x-auto rounded-3xl bg-white p-3 shadow-sm"><div id="classroomTypesBranchTabs" class="flex min-w-max gap-2"><button type="button" data-value="all" class="rounded-2xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white">همه</button></div></div>
+    <div class="mb-6 rounded-3xl bg-white p-5 shadow-sm">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div>
             <label class="mb-1 block text-xs text-gray-500">جست‌وجو</label>
-            <input id="classroomTypeSearch" type="search" oninput="filterClassroomTypes()" placeholder="عنوان یا نام ایجادکننده" class="w-full rounded-xl border border-gray-200 px-4 py-2.5">
-        </div>
-        <div id="classroomTypeCategoryFilterWrapper">
-            <label class="mb-1 block text-xs text-gray-500">دسته</label>
-            <div class="flex gap-2"><select id="classroomTypeCategoryFilter" onchange="filterClassroomTypes()" class="min-w-0 flex-1 rounded-xl border border-gray-200 px-4 py-2.5"><option value="">همه دسته‌ها</option></select><button id="editClassroomTypeCategoryButton" type="button" onclick="editSelectedClassroomTypeCategory('classroomTypeCategoryFilter')" class="hidden rounded-xl border border-indigo-200 px-3 text-indigo-600" title="ویرایش دسته انتخاب‌شده"><i class="fas fa-pen"></i></button><button id="deleteClassroomTypeCategoryButton" type="button" onclick="deleteSelectedClassroomTypeCategory('classroomTypeCategoryFilter')" class="hidden rounded-xl border border-red-200 px-3 text-red-600" title="حذف دسته انتخاب‌شده"><i class="fas fa-trash"></i></button></div>
+            <input id="classroomTypeSearch" type="search" oninput="filterClassroomTypes()" placeholder="عنوان یا نام ایجادکننده" class="w-full rounded-2xl border border-gray-300 px-4 py-3">
         </div>
         <div id="classroomTypeStatusFilterWrapper">
             <label class="mb-1 block text-xs text-gray-500">وضعیت</label>
-            <select id="classroomTypeStatusFilter" onchange="filterClassroomTypes()" class="w-full rounded-xl border border-gray-200 px-4 py-2.5">
+            <select id="classroomTypeStatusFilter" onchange="filterClassroomTypes()" class="w-full rounded-2xl border border-gray-300 px-4 py-3">
                 <option value="">همه وضعیت‌ها</option><option value="approved">تأیید شده</option><option value="pending">در انتظار تأیید</option><option value="rejected">رد شده</option>
             </select>
         </div>
+        <div id="classroomTypeCategoryFilterWrapper">
+            <label class="mb-1 block text-xs text-gray-500">دسته</label>
+            <div class="flex gap-2"><select id="classroomTypeCategoryFilter" onchange="filterClassroomTypes()" class="min-w-0 flex-1 rounded-2xl border border-gray-300 px-4 py-3"><option value="">همه دسته‌ها</option></select><button id="editClassroomTypeCategoryButton" type="button" onclick="editSelectedClassroomTypeCategory('classroomTypeCategoryFilter')" class="hidden rounded-xl border border-indigo-200 px-3 text-indigo-600" title="ویرایش دسته انتخاب‌شده"><i class="fas fa-pen"></i></button><button id="deleteClassroomTypeCategoryButton" type="button" onclick="deleteSelectedClassroomTypeCategory('classroomTypeCategoryFilter')" class="hidden rounded-xl border border-red-200 px-3 text-red-600" title="حذف دسته انتخاب‌شده"><i class="fas fa-trash"></i></button></div>
+        </div>
+      </div>
     </div>
     <div class="overflow-x-auto rounded-3xl bg-white shadow">
-        <table class="w-full">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="p-4 text-right"><button onclick="sortClassroomTypes('createdByName')">ایجادکننده <span id="classroomTypeSort-createdByName">↕</span></button></th>
-                    <th class="p-4 text-right"><button onclick="sortClassroomTypes('title')">عنوان <span id="classroomTypeSort-title">↕</span></button></th>
-                    <th class="p-4 text-right"><button onclick="sortClassroomTypes('summary')">خلاصه <span id="classroomTypeSort-summary">↕</span></button></th>
-                    <th id="classroomTypeCategoryHeading" class="p-4 text-right"><button onclick="sortClassroomTypes('typeLabel')">دسته <span id="classroomTypeSort-typeLabel">↕</span></button></th>
-                    <th id="classroomTypeStatusHeading" class="p-4 text-right"><button onclick="sortClassroomTypes('statusLabel')">وضعیت <span id="classroomTypeSort-statusLabel">↕</span></button></th>
-                    <th class="p-4"></th>
-                </tr>
-            </thead>
-            <tbody id="classroomTypesBody">
-
-            </tbody>
-        </table>
+        <?php component('panel-table-template', [
+                'attributes' => ' class="w-full"',
+                'headAttributes' => ' class="bg-gray-50"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' id="classroomTypesBody"',
+                'columns' => [
+                    ['html' => '<button onclick="sortClassroomTypes(\'createdByName\')">ایجادکننده <span id="classroomTypeSort-createdByName">↕</span></button>', 'attributes' => ' class="p-4 text-right"'],
+                    ['html' => '<button onclick="sortClassroomTypes(\'title\')">عنوان <span id="classroomTypeSort-title">↕</span></button>', 'attributes' => ' class="p-4 text-right"'],
+                    ['html' => '<button onclick="sortClassroomTypes(\'summary\')">خلاصه <span id="classroomTypeSort-summary">↕</span></button>', 'attributes' => ' class="p-4 text-right"'],
+                    ['html' => '<button onclick="sortClassroomTypes(\'typeLabel\')">دسته <span id="classroomTypeSort-typeLabel">↕</span></button>', 'attributes' => ' id="classroomTypeCategoryHeading" class="p-4 text-right"'],
+                    ['html' => '<button onclick="sortClassroomTypes(\'statusLabel\')">وضعیت <span id="classroomTypeSort-statusLabel">↕</span></button>', 'attributes' => ' id="classroomTypeStatusHeading" class="p-4 text-right"'],
+                    ['html' => '', 'attributes' => ' class="p-4"'],
+                ],
+                'rows' => [],
+            ]); ?>
     </div>
 </section>

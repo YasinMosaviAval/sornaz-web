@@ -51,6 +51,9 @@ final class AdminProfileContentController
 
     private function run(callable $f, int $s = 200)
     {
+        if ((int) auth()->id() !== 1) {
+            return ResponseFactory::json(['success' => false, 'message' => 'دسترسی به این بخش فقط برای مدیر سایت مجاز است.'], 403);
+        }
         try {
             return ResponseFactory::json(['success' => true, 'data' => $f()], $s);
         } catch (\Throwable$e) {

@@ -87,17 +87,9 @@
     }
   }
   function tabs() {
-    const c = document.getElementById('pointsBranchTabs');
-    if (c)
-      c.innerHTML =
-        `<button data-value="all" onclick="filterPointsByBranch('all')" class="point-branch-tab px-5 py-2.5 rounded-2xl ${branch === 'all' ? 'bg-indigo-600 text-white' : 'border'}">همه سازمان‌ها</button>` +
-        orgs
-          .filter((x) => x.id)
-          .map(
-            (x) =>
-              `<button data-value="${x.id}" onclick="filterPointsByBranch(${x.id})" class="point-branch-tab px-5 py-2.5 rounded-2xl ${String(branch) === String(x.id) ? 'bg-indigo-600 text-white' : 'border'}">${esc(x.name)}</button>`
-          )
-          .join('');
+    window.renderPanelOrganizationTabs?.('pointsBranchTabs', branch, window.filterPointsByBranch, {
+      tabClass: 'point-branch-tab', branches: () => orgs.filter((organization) => organization.id), showAcademy: false,
+    });
   }
   window.filterPointsByBranch = (v) => {
     branch = v;
@@ -169,10 +161,10 @@
       ? items
           .map(
             (x) =>
-              `<tr class="border-b hover:bg-gray-50"><td class="p-5"><b>${esc(x.title)}</b><div class="text-xs text-gray-400">${esc(x.summary || '')}</div></td><td class="p-5"><span class="rounded-full px-3 py-1 text-xs ${x.type === 'professional' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">${L.type[x.type]}</span></td><td class="p-5">${esc(L.category[x.category] || x.category)}</td><td class="p-5 font-bold text-emerald-600">+${Number(x.points).toLocaleString('fa-IR')}</td><td class="p-5"><div>${esc(L.source[x.source])}</div><code class="text-xs text-gray-400" dir="ltr">${esc(x.action)}</code></td><td class="p-5">${esc(x.branchName || 'سراسری')}</td><td class="p-5"><div class="text-xs">${esc(L.repeat[x.repeatMode])}${x.dailyCap ? ' · سقف ' + x.dailyCap : ''}${x.cooldownMinutes ? ' · فاصله ' + x.cooldownMinutes + ' دقیقه' : ''}</div>${canManage ? `<button onclick="togglePointStatus(${x.id})" class="mt-2 rounded-full px-3 py-1 text-xs ${x.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">${x.status === 'active' ? 'فعال' : 'غیرفعال'}</button>` : `<span class="mt-2 inline-block rounded-full px-3 py-1 text-xs ${x.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">${x.status === 'active' ? 'فعال' : 'غیرفعال'}</span>`}</td><td class="p-5 whitespace-nowrap">${canManage ? `<button onclick="editPoint(${x.id})" class="ml-3 text-indigo-600">ویرایش</button><button onclick="deletePoint(${x.id})" class="text-red-500">حذف</button>` : ''}</td></tr>`
+              window.AdminPanelTable.rowHTML([{ html: `<b>${esc(x.title)}</b><div class="text-xs text-gray-400">${esc(x.summary || '')}</div>`, attributes: ` class="p-5"` }, { html: `<span class="rounded-full px-3 py-1 text-xs ${x.type === 'professional' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">${L.type[x.type]}</span>`, attributes: ` class="p-5"` }, { html: `${esc(L.category[x.category] || x.category)}`, attributes: ` class="p-5"` }, { html: `+${Number(x.points).toLocaleString('fa-IR')}`, attributes: ` class="p-5 font-bold text-emerald-600"` }, { html: `<div>${esc(L.source[x.source])}</div><code class="text-xs text-gray-400" dir="ltr">${esc(x.action)}</code>`, attributes: ` class="p-5"` }, { html: `${esc(x.branchName || 'سراسری')}`, attributes: ` class="p-5"` }, { html: `<div class="text-xs">${esc(L.repeat[x.repeatMode])}${x.dailyCap ? ' · سقف ' + x.dailyCap : ''}${x.cooldownMinutes ? ' · فاصله ' + x.cooldownMinutes + ' دقیقه' : ''}</div>${canManage ? `<button onclick="togglePointStatus(${x.id})" class="mt-2 rounded-full px-3 py-1 text-xs ${x.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">${x.status === 'active' ? 'فعال' : 'غیرفعال'}</button>` : `<span class="mt-2 inline-block rounded-full px-3 py-1 text-xs ${x.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">${x.status === 'active' ? 'فعال' : 'غیرفعال'}</span>`}`, attributes: ` class="p-5"` }, { html: `${canManage ? `<button onclick="editPoint(${x.id})" class="ml-3 text-indigo-600">ویرایش</button><button onclick="deletePoint(${x.id})" class="text-red-500">حذف</button>` : ''}`, attributes: ` class="p-5 whitespace-nowrap"` }], ` class="border-b hover:bg-gray-50"`)
           )
           .join('')
-      : '<tr><td colspan="8" class="p-12 text-center text-gray-400">قانونی یافت نشد</td></tr>';
+      : window.AdminPanelTable.rowHTML([{ html: "قانونی یافت نشد", attributes: " colspan=\"8\" class=\"p-12 text-center text-gray-400\"" }], "");
     const pages = Math.max(1, Math.ceil(filtered.length / per));
     document.getElementById('pointsPaginationInfo').textContent =
       `نمایش ${filtered.length ? start + 1 : 0} تا ${Math.min(start + per, filtered.length)} از ${filtered.length} قانون`;

@@ -53,14 +53,16 @@ $canUsePanelMessageActions = $showAcademyPanelSections || (bool)\Core\database\D
             if (!$showAcademyPanelSections) component('my-learning');
             if (!$showAcademyPanelSections) component('personal-panel-sections');
             component('gallery');
-            component('awards');
-            component('certificates');
-            component('experiences');
-            component('educations');
-            component('events');
-            component('polls');
-            component('publications');
-            component('badges');
+            if ((int) ($panelUser['user_id'] ?? 0) === 1) {
+                component('awards');
+                component('certificates');
+                component('experiences');
+                component('educations');
+                component('events');
+                component('polls');
+                component('publications');
+                component('badges');
+            }
             if ($showAcademyPanelSections) {
             component('reports');
             component('chart-gallery');

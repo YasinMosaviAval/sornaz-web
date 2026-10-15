@@ -77,35 +77,23 @@
     <!-- جدول -->
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1200px]" id="holidayLeavesTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortHolidayLeavesBy('name')" class="flex items-center gap-1">نام عضو <span id="hlSortIcon-name">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortHolidayLeavesBy('date')" class="flex items-center gap-1">تاریخ <span id="hlSortIcon-date">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortHolidayLeavesBy('timeLabel')" class="flex items-center gap-1">ساعت <span id="hlSortIcon-timeLabel">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortHolidayLeavesBy('typeLabel')" class="flex items-center gap-1">نوع <span id="hlSortIcon-typeLabel">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortHolidayLeavesBy('timezone')" class="flex items-center gap-1">منطقه زمانی <span id="hlSortIcon-timezone">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortHolidayLeavesBy('branchName')" class="flex items-center gap-1">شعبه <span id="hlSortIcon-branchName">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortHolidayLeavesBy('status')" class="flex items-center gap-1">وضعیت <span id="hlSortIcon-status">↕</span></button>
-                        </th>
-                        <th class="w-40 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1200px]" id="holidayLeavesTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => '<button onclick="sortHolidayLeavesBy(\'name\')" class="flex items-center gap-1">نام عضو <span id="hlSortIcon-name">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortHolidayLeavesBy(\'date\')" class="flex items-center gap-1">تاریخ <span id="hlSortIcon-date">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortHolidayLeavesBy(\'timeLabel\')" class="flex items-center gap-1">ساعت <span id="hlSortIcon-timeLabel">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortHolidayLeavesBy(\'typeLabel\')" class="flex items-center gap-1">نوع <span id="hlSortIcon-typeLabel">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortHolidayLeavesBy(\'timezone\')" class="flex items-center gap-1">منطقه زمانی <span id="hlSortIcon-timezone">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortHolidayLeavesBy(\'branchName\')" class="flex items-center gap-1">شعبه <span id="hlSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortHolidayLeavesBy(\'status\')" class="flex items-center gap-1">وضعیت <span id="hlSortIcon-status">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
         <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="holidayLeavesPaginationInfo">نمایش ۱ تا ۱۰ از ۱۰۰ مورد</span>

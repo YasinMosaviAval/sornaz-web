@@ -57,36 +57,24 @@
     <!-- جدول -->
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1100px]" id="notificationsTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortNotificationsBy('title')" class="flex items-center gap-1">عنوان اعلان <span id="notifSortIcon-title">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">گیرنده</th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortNotificationsBy('branchName')" class="flex items-center gap-1">شعبه <span id="notifSortIcon-branchName">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortNotificationsBy('audience')" class="flex items-center gap-1">مخاطب <span id="notifSortIcon-audience">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortNotificationsBy('priority')" class="flex items-center gap-1">اولویت <span id="notifSortIcon-priority">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortNotificationsBy('date')" class="flex items-center gap-1">تاریخ انتشار <span id="notifSortIcon-date">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortNotificationsBy('status')" class="flex items-center gap-1">وضعیت <span id="notifSortIcon-status">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortNotificationsBy('readStatus')" class="flex items-center gap-1">وضعیت مطالعه <span id="notifSortIcon-readStatus">↕</span></button>
-                        </th>
-                        <th class="w-40 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1100px]" id="notificationsTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => '<button onclick="sortNotificationsBy(\'title\')" class="flex items-center gap-1">عنوان اعلان <span id="notifSortIcon-title">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'گیرنده', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortNotificationsBy(\'branchName\')" class="flex items-center gap-1">شعبه <span id="notifSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortNotificationsBy(\'audience\')" class="flex items-center gap-1">مخاطب <span id="notifSortIcon-audience">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortNotificationsBy(\'priority\')" class="flex items-center gap-1">اولویت <span id="notifSortIcon-priority">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortNotificationsBy(\'date\')" class="flex items-center gap-1">تاریخ انتشار <span id="notifSortIcon-date">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortNotificationsBy(\'status\')" class="flex items-center gap-1">وضعیت <span id="notifSortIcon-status">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortNotificationsBy(\'readStatus\')" class="flex items-center gap-1">وضعیت مطالعه <span id="notifSortIcon-readStatus">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
         <div id="notificationsPagination" class="hidden px-6 py-4 border-t flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="notificationsPaginationInfo">نمایش ۱ تا ۱۰ از ۰ اعلان</span>

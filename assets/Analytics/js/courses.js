@@ -119,18 +119,8 @@ window.sortCoursesBy = async function (field) {
 };
 
 // ==================== تب شعبه‌ها ====================
-window.renderCoursesBranchTabs = async function () {
-  const container = document.getElementById('coursesBranchTabs');
-  if (!container) return;
-  container.querySelectorAll('.course-branch-tab:not(:first-child)').forEach((t) => t.remove());
-  getCourseBranches().forEach((b) => {
-    const active = currentCourseBranch == b.id;
-    const btn = document.createElement('button');
-    btn.className = `course-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ${active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50'} transition`;
-    btn.textContent = b.name;
-    btn.onclick = () => filterCoursesByBranch(b.id);
-    container.appendChild(btn);
-  });
+window.renderCoursesBranchTabs = function () {
+  window.renderPanelOrganizationTabs?.('coursesBranchTabs', currentCourseBranch, window.filterCoursesByBranch, { tabClass: 'course-branch-tab' });
 };
 
 window.filterCoursesByBranch = async function (branchId) {
@@ -248,13 +238,13 @@ window.renderCoursesTable = async function (list = filteredCourses) {
           'پایان یافته': 'bg-red-100 text-red-700',
         }[item.status] || 'bg-gray-100 text-gray-600';
 
-      const tr = document.createElement('tr');
+      const tr = window.AdminPanelTable.createRow();
       tr.className = 'hover:bg-gray-50 transition';
       tr.innerHTML = window.getCourseRowHTML ? window.getCourseRowHTML(item, statusClass) : '';
       tbody.appendChild(tr);
 
       if (editingCourseRowId === item.id) {
-        const expandRow = document.createElement('tr');
+        const expandRow = window.AdminPanelTable.createRow();
         expandRow.className = 'bg-gray-50 course-inline-expand';
         expandRow.innerHTML = window.getCourseInlineExpandRowHTML
           ? window.getCourseInlineExpandRowHTML(item)

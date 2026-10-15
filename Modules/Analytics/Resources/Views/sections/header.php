@@ -27,15 +27,9 @@ $headerPanelUser = $previewRole === null ? auth()->user() : ['user_id' => 0, 'us
                 <i class="fas fa-bell text-xl md:text-2xl text-gray-600"></i>
                 <span id="headerUnreadNotifications" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full min-w-4 h-4 md:min-w-5 md:h-5 px-1 flex items-center justify-center">0</span>
             </button>
-            <div class="hidden md:flex items-center gap-2 min-w-0">
-                <div class="text-right hidden sm:block">
-                    <p class="font-medium text-sm truncate" dir="ltr">@<?= e($headerPanelUser['username'] ?? '') ?></p>
-                    <p class="text-xs text-gray-500 truncate">نام کاربری</p>
-                </div>
-                <div class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
-                    <i class="fas fa-user text-indigo-700"></i>
-                </div>
-            </div>
+            <a href="/" class="flex shrink-0 items-center gap-1 rounded-xl border border-gray-200 px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 sm:px-3 sm:text-sm" title="<?= e(locale() === 'en' ? 'Back to site' : 'برگشت به سایت') ?>">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i><span><?= e(locale() === 'en' ? 'Back to site' : 'برگشت به سایت') ?></span>
+            </a>
         </div>
     </div>
     <?php if ($previewRole === null && (int) auth()->id() === 1): ?>

@@ -104,41 +104,25 @@
     <!-- جدول -->
     <div id="schedulesListView" class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1300px]" id="schedulesTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortSchedulesBy('title')" class="flex items-center gap-1">عنوان <span id="scheduleSortIcon-title">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortSchedulesBy('day')" class="flex items-center gap-1">روز <span id="scheduleSortIcon-day">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortSchedulesBy('time')" class="flex items-center gap-1">ساعت <span id="scheduleSortIcon-time">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortSchedulesBy('student')" class="flex items-center gap-1">هنرجو <span id="scheduleSortIcon-student">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortSchedulesBy('teacher')" class="flex items-center gap-1">استاد <span id="scheduleSortIcon-teacher">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortSchedulesBy('lesson')" class="flex items-center gap-1">درس <span id="scheduleSortIcon-lesson">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortSchedulesBy('classroom')" class="flex items-center gap-1">کلاس <span id="scheduleSortIcon-classroom">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortSchedulesBy('type')" class="flex items-center gap-1">نوع <span id="scheduleSortIcon-type">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortSchedulesBy('status')" class="flex items-center gap-1">وضعیت <span id="scheduleSortIcon-status">↕</span></button>
-                        </th>
-                        <th class="w-40 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1300px]" id="schedulesTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => '<button onclick="sortSchedulesBy(\'title\')" class="flex items-center gap-1">عنوان <span id="scheduleSortIcon-title">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortSchedulesBy(\'day\')" class="flex items-center gap-1">روز <span id="scheduleSortIcon-day">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortSchedulesBy(\'time\')" class="flex items-center gap-1">ساعت <span id="scheduleSortIcon-time">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortSchedulesBy(\'student\')" class="flex items-center gap-1">هنرجو <span id="scheduleSortIcon-student">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortSchedulesBy(\'teacher\')" class="flex items-center gap-1">استاد <span id="scheduleSortIcon-teacher">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortSchedulesBy(\'lesson\')" class="flex items-center gap-1">درس <span id="scheduleSortIcon-lesson">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortSchedulesBy(\'classroom\')" class="flex items-center gap-1">کلاس <span id="scheduleSortIcon-classroom">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortSchedulesBy(\'type\')" class="flex items-center gap-1">نوع <span id="scheduleSortIcon-type">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortSchedulesBy(\'status\')" class="flex items-center gap-1">وضعیت <span id="scheduleSortIcon-status">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
         <div id="schedulesPagination" class="px-6 py-4 border-t flex flex-col lg:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="schedulesPaginationInfo">نمایش ۱ تا ۱۰ از ۲۰۰ برنامه</span>

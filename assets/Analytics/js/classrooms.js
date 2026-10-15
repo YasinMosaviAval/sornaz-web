@@ -1,6 +1,7 @@
 // ==================== انواع کلاس و وضعیت‌ها ====================
 let allClassroomTypes = [];
 let allClassroomBranches = [];
+window.classroomOrganizations = [];
 let classroomPermissions = {};
 const classroomStatuses = [
   { value: 'available', label: 'در دسترس' },
@@ -52,6 +53,7 @@ async function loadClassrooms() {
   try {
     const d = await classroomApi('/academy/admin/classrooms', null, 'GET');
     allClassroomBranches = d.branches || [];
+    window.classroomOrganizations = d.organizations || allClassroomBranches.map((branch) => ({ id: branch.id, user_id: branch.id, kind: 'branch', name: branch.name, legacy: true }));
     allClassroomTypes = d.classroomTypes || [];
     classroomPermissions = d.permissions || {};
     window.classroomPermissions = classroomPermissions;
@@ -217,19 +219,8 @@ window.sortClassroomsBy = async function (field) {
 };
 
 // ==================== تب شعبه‌ها ====================
-window.renderClassroomBranchTabs = async function () {
-  const container =
-    document.getElementById('classroomBranchTabs') || document.getElementById('branchTabs');
-  if (!container) return;
-  container.querySelectorAll('.branch-tab:not(:first-child)').forEach((t) => t.remove());
-  getBranchesList().forEach((b) => {
-    const btn = document.createElement('button');
-    const active = currentClassroomBranchFilter == b.id;
-    btn.className = `branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ${active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50'}`;
-    btn.textContent = b.name;
-    btn.onclick = () => filterClassroomsByBranch(b.id);
-    container.appendChild(btn);
-  });
+window.renderClassroomBranchTabs = function () {
+  window.renderPanelOrganizationTabs?.('classroomBranchTabs', currentClassroomBranchFilter, window.filterClassroomsByBranch, { tabClass: 'branch-tab' });
 };
 window.renderBranchTabs = window.renderClassroomBranchTabs;
 
@@ -347,7 +338,7 @@ window.renderClassroomsTable = async function (list = filteredClassrooms) {
           : item.statusValue === 'pending'
             ? 'bg-amber-100 text-amber-700'
             : 'bg-red-100 text-red-700';
-      const tr = document.createElement('tr');
+      const tr = window.AdminPanelTable.createRow();
       tr.className = 'hover:bg-gray-50 transition';
       tr.innerHTML = window.getClassroomRowHTML
         ? window.getClassroomRowHTML(item, statusClass)
@@ -355,7 +346,7 @@ window.renderClassroomsTable = async function (list = filteredClassrooms) {
       tbody.appendChild(tr);
 
       if (editingClassroomRowId === item.id) {
-        const expandRow = document.createElement('tr');
+        const expandRow = window.AdminPanelTable.createRow();
         expandRow.className = 'bg-gray-50 classroom-inline-expand';
         expandRow.innerHTML = window.getClassroomInlineExpandRowHTML
           ? window.getClassroomInlineExpandRowHTML(item)
@@ -450,7 +441,9 @@ function readClassroomForm(prefix) {
   const name = field('Name')?.value.trim();
   const typeId = parseInt(field('Type')?.value, 10);
   const typeObj = allClassroomTypes.find((x) => x.id === typeId);
-  const branchId = parseInt(field('Branch')?.value, 10);
+  const organizationUserId = parseInt(field('Organization')?.value, 10) || 0;
+  const organization = window.classroomOrganizations.find((o) => Number(o.user_id) === organizationUserId);
+  const branchId = organization?.kind === 'branch' ? organization.id : 0;
   const capacity = parseInt(field('Capacity')?.value || '1', 10) || 1;
   const statusValue =
     field('Status')?.value || (classroomPermissions?.isReceptionist ? 'pending' : 'available');
@@ -472,6 +465,7 @@ function readClassroomForm(prefix) {
     type: typeObj?.name || '',
     typeLabel: typeObj?.name || '',
     branchId,
+    organizationUserId: organization?.legacy ? 0 : organizationUserId,
     branchName: branch ? branch.name : '',
     capacity,
     deliveryMode,
@@ -521,7 +515,7 @@ window.cycleClassroomStatus = async function (id) {
 window.saveClassroom = async function () {
   const data = readClassroomForm('');
   if (!data.name) return alert('نام کلاس الزامی است');
-  if (!data.branchId) return alert('شعبه الزامی است');
+  if (!data.branchId && !data.organizationUserId) return alert('سازمان الزامی است');
   if (!validClassroomOnlineLink(data)) return;
 
   const created = await classroomApi('/academy/admin/classrooms', data);

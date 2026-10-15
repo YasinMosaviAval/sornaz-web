@@ -119,16 +119,7 @@
     }
   }
   function renderTabs() {
-    const c = document.getElementById('schedulesBranchTabs');
-    if (!c) return;
-    c.innerHTML =
-      `<button data-value="all" onclick="filterSchedulesByBranch('all')" class="schedule-branch-tab px-5 py-2.5 rounded-2xl text-sm ${currentBranch === 'all' ? 'bg-indigo-600 text-white' : 'border'}">همه</button>` +
-      branches
-        .map(
-          (b) =>
-            `<button onclick="filterSchedulesByBranch(${b.id})" class="schedule-branch-tab px-5 py-2.5 rounded-2xl text-sm ${String(currentBranch) === String(b.id) ? 'bg-indigo-600 text-white' : 'border'}">${b.name}</button>`
-        )
-        .join('');
+    window.renderPanelOrganizationTabs?.('schedulesBranchTabs', currentBranch, window.filterSchedulesByBranch, { tabClass: 'schedule-branch-tab' });
   }
   function renderFilters() {
     const fill = (id, label, rows) => {
@@ -187,14 +178,14 @@
     tb.innerHTML = '';
     if (!allSchedules.length) tb.innerHTML = window.getScheduleEmptyRowHTML();
     for (const item of allSchedules) {
-      const tr = document.createElement('tr');
+      const tr = window.AdminPanelTable.createRow();
       tr.className = 'hover:bg-gray-50';
       tr.innerHTML = window.getScheduleRowHTML(item);
       tb.appendChild(tr);
       if (expanded && expanded.id === item.id) {
-        const x = document.createElement('tr');
+        const x = window.AdminPanelTable.createRow();
         x.className = 'bg-gray-50';
-        x.innerHTML = `<td colspan="10" class="p-5">${window.getScheduleAttendancePanelHTML(item, true)}</td>`;
+        x.innerHTML = window.AdminPanelTable.cellsHTML([{ html: `${window.getScheduleAttendancePanelHTML(item, true)}`, attributes: ` colspan="10" class="p-5"` }]);
         tb.appendChild(x);
       }
     }
@@ -411,22 +402,27 @@
       match = (s, row, column) => original(s, column, row);
       corner = corner.split(' / ').reverse().join(' / ');
     }
-    const body = rows
-      .map(
-        (row) =>
-          `<tr><th class="sticky right-0 z-10 border bg-gray-50 p-3 text-right font-medium">${weeklyAxisLabel(row)}</th>${columns
-            .map((column) => {
+    const body = rows.map((row) => ({
+      cells: [
+        { html: weeklyAxisLabel(row), attributes: 'class="sticky right-0 z-10 border bg-gray-50 p-3 text-right font-medium"', tag: 'th' },
+        ...columns.map((column) => {
               const cell = sessions
                 .filter((s) => match(s, row, column))
                 .sort(
                   (a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)
                 );
-              return `<td class="border p-2 align-top"><div class="space-y-2">${cell.map(cellCard).join('') || '<span class="block py-5 text-center text-xs text-gray-300">بدون جلسه</span>'}</div></td>`;
-            })
-            .join('')}</tr>`
-      )
-      .join('');
-    return `<table class="w-full border-collapse text-sm"><thead><tr><th class="sticky right-0 z-20 border bg-indigo-50 p-3">${corner}</th>${columns.map((item) => `<th class="border bg-indigo-50 p-3">${weeklyAxisLabel(item)}</th>`).join('')}</tr></thead><tbody>${body || `<tr><td colspan="${columns.length + 1}" class="p-10 text-center text-gray-400">جلسه‌ای برای این چیدمان وجود ندارد.</td></tr>`}</tbody></table>`;
+              return { html: `<div class="space-y-2">${cell.map(cellCard).join('') || '<span class="block py-5 text-center text-xs text-gray-300">بدون جلسه</span>'}</div>`, attributes: 'class="border p-2 align-top"' };
+            }),
+      ],
+    }));
+    return window.AdminPanelTable.tableHTML({
+      attributes: 'class="w-full border-collapse text-sm"',
+      columns: [
+        { html: corner, attributes: 'class="sticky right-0 z-20 border bg-indigo-50 p-3"' },
+        ...columns.map((item) => ({ html: weeklyAxisLabel(item), attributes: 'class="border bg-indigo-50 p-3"' })),
+      ],
+      rows: body.length ? body : [{ cells: [{ value: 'جلسه‌ای برای این چیدمان وجود ندارد.', attributes: `colspan="${columns.length + 1}" class="p-10 text-center text-gray-400"` }] }],
+    });
   }
   function renderBranchWeekPaginations() {
     const host = document.getElementById('schedulesWeeklyTables');

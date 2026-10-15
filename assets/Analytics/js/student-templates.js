@@ -219,30 +219,22 @@
   }
 
   window.getStudentRowHTML = function (item) {
-    return `
-            <td class="py-4 px-5 font-medium">${escapeHtml(item.name)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.instrument)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.level)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.teacher)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.branch)}</td>
-            <td class="py-4 px-5 text-left">
+    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.name)}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `${escapeHtml(item.instrument)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.level)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.teacher)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.branch)}`, attributes: ` class="py-4 px-5"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
                     <button onclick="viewStudent(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
                     <button onclick="toggleStudentInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
                     <button onclick="deleteStudent(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>
                 </div>
-            </td>`;
+            `, attributes: ` class="py-4 px-5 text-left"` }]);
   };
 
   window.getStudentEmptyRowHTML = function () {
-    return '<tr><td colspan="6" class="py-12 text-center text-gray-400">هیچ هنرجویی یافت نشد</td></tr>';
+    return window.AdminPanelTable.rowHTML([{ html: "هیچ هنرجویی یافت نشد", attributes: " colspan=\"6\" class=\"py-12 text-center text-gray-400\"" }], "");
   };
 
   window.getStudentInlineExpandRowHTML = function (item) {
     return (
-      '<td colspan="6" class="p-5 border-t">' +
-      (window.getStudentInlineEditRowHTML ? window.getStudentInlineEditRowHTML(item) : '') +
-      '</td>'
+      window.AdminPanelTable.cellsHTML([{ html: (window.getStudentInlineEditRowHTML ? window.getStudentInlineEditRowHTML(item) : ''), attributes: " colspan=\"6\" class=\"p-5 border-t\"" }])
     );
   };
 

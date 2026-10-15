@@ -12,7 +12,7 @@
     <!-- تاپ‌بار شعبه‌ها -->
     <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
         <div class="flex gap-2 min-w-max" id="contractsBranchTabs">
-            <button onclick="filterContractsByBranch('all')" 
+            <button onclick="filterContractsByBranch('all')"
                     class="contract-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium bg-indigo-600 text-white">
                 همه شعبه‌ها
             </button>
@@ -22,20 +22,22 @@
     <!-- جدول قراردادها -->
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1100px]" id="contractsTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">عنوان قرارداد</th>
-                        <th class="text-right py-5 px-5 font-medium">طرف قرارداد</th>
-                        <th class="text-right py-5 px-5 font-medium">شعبه</th>
-                        <th class="text-right py-5 px-5 font-medium">نوع</th>
-                        <th class="text-right py-5 px-5 font-medium">تاریخ شروع</th>
-                        <th class="text-right py-5 px-5 font-medium">وضعیت</th>
-                        <th class="w-32 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1100px]" id="contractsTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => 'عنوان قرارداد', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'طرف قرارداد', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'شعبه', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'نوع', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'تاریخ شروع', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'وضعیت', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-32 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
     </div>
 </div>

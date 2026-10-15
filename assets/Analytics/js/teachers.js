@@ -1,4 +1,4 @@
-// ==================== نمونه داده پرسنل و قرارداد ====================
+// ==================== نمونه داده کارمند و قرارداد ====================
 const staffFirstNames = [
   'محمد',
   'علی',
@@ -29,7 +29,7 @@ const staffTypes = [
   { value: 'manager', label: 'مدیر' },
   { value: 'other', label: 'سایر' },
 ];
-const branches = ['شعبه مرکزی', 'شعبه ونک', 'شعبه سعادت‌آباد', 'شعبه کرج'];
+const branches = [];
 const contractCurrencies = [
   { id: 1, label: 'تومان' },
   { id: 2, label: 'دلار' },
@@ -44,7 +44,7 @@ const contractTitles = [
 ];
 const contractDescriptions = [
   'این قرارداد به منظور انجام امور آموزشی و پشتیبانی آموزشی تنظیم شده است.',
-  'پرسنل موظف است در طول مدت قرارداد وظایف محوله را مطابق دستور مدیریت انجام دهد.',
+  'کارمند موظف است در طول مدت قرارداد وظایف محوله را مطابق دستور مدیریت انجام دهد.',
   'شرح قرارداد شامل ارائه کلاس‌های تخصصی، نظارت بر روند آموزشی و پشتیبانی اداری است.',
   'این قرارداد برای انجام خدمات پذیرش و هماهنگی دانشجویان در نظر گرفته شده است.',
   'قرارداد شامل انجام وظایف مدیریتی، گزارش‌دهی و هماهنگی داخلی می‌باشد.',
@@ -376,13 +376,13 @@ window.renderStaffTable = async function (staff = filteredStaff) {
           rejected: 'bg-black text-white',
         }[item.status_code] || 'bg-red-100 text-red-700';
 
-      const tr = document.createElement('tr');
+      const tr = window.AdminPanelTable.createRow();
       tr.className = 'hover:bg-gray-50 transition';
       tr.innerHTML = window.getStaffRowHTML ? window.getStaffRowHTML(item, statusClass) : '';
       tbody.appendChild(tr);
 
       if (editingRowId === item.id) {
-        const expandRow = document.createElement('tr');
+        const expandRow = window.AdminPanelTable.createRow();
         expandRow.className = 'bg-gray-50 staff-inline-expand';
         expandRow.innerHTML = window.getStaffInlineExpandRowHTML
           ? window.getStaffInlineExpandRowHTML(item)
@@ -403,7 +403,7 @@ function updateStaffPagination(total, start, end, totalPages) {
   if (info) {
     const from = total === 0 ? 0 : start + 1;
     const to = Math.min(end, total);
-    info.textContent = `نمایش ${from} تا ${to} از ${total} پرسنل`;
+    info.textContent = `نمایش ${from} تا ${to} از ${total} کارمند`;
   }
 
   const pagination = document.getElementById('staffPaginationButtons');
@@ -438,55 +438,8 @@ window.changeStaffPage = async function (page) {
 };
 
 // ==================== فیلترها ====================
-window.renderStaffBranchTabs = async function () {
-  const container = document.getElementById('staffBranchTabs');
-  if (!container) return;
-  container.querySelectorAll('.staff-branch-tab:not(:first-child)').forEach(function (tab) {
-    tab.remove();
-  });
-  const allButton = container.querySelector('.staff-branch-tab');
-  if (allButton) {
-    allButton.classList.toggle('bg-indigo-600', currentStaffBranch === 'all');
-    allButton.classList.toggle('text-white', currentStaffBranch === 'all');
-    allButton.classList.toggle('border-indigo-600', currentStaffBranch === 'all');
-    allButton.classList.toggle('border-gray-200', currentStaffBranch !== 'all');
-  }
-  const academyButton = document.createElement('button');
-  academyButton.dataset.staffOrganization = 'academy';
-  academyButton.className =
-    'staff-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ' +
-    (currentStaffBranch === 'academy'
-      ? 'bg-indigo-600 text-white border-indigo-600'
-      : 'border-gray-200 hover:bg-gray-50') +
-    ' transition';
-  academyButton.textContent = 'آموزشگاه';
-  academyButton.onclick = function () {
-    window.filterStaffByBranch('academy');
-  };
-  container.appendChild(academyButton);
-  const branchesList =
-    typeof allBranches !== 'undefined' && allBranches.length
-      ? allBranches
-      : [
-          { id: 1, name: 'شعبه مرکزی' },
-          { id: 2, name: 'شعبه ونک' },
-          { id: 3, name: 'شعبه سعادت‌آباد' },
-          { id: 4, name: 'شعبه کرج' },
-        ];
-  branchesList.forEach(function (branch) {
-    const active = currentStaffBranch === branch.name;
-    const btn = document.createElement('button');
-    btn.className =
-      'staff-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ' +
-      (active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50') +
-      ' transition';
-    btn.dataset.staffOrganization = branch.name;
-    btn.textContent = branch.name;
-    btn.onclick = function () {
-      window.filterStaffByBranch(branch.name);
-    };
-    container.appendChild(btn);
-  });
+window.renderStaffBranchTabs = function () {
+  window.renderPanelOrganizationTabs?.('staffBranchTabs', currentStaffBranch, window.filterStaffByBranch, { tabClass: 'staff-branch-tab' });
 };
 
 window.filterStaffByBranch = async function (branchName) {
@@ -527,7 +480,7 @@ window.filterStaff = async function () {
       (item.phone && item.phone.includes(search));
     const matchType = !type || item.type === type;
     const matchBranch =
-      !branch || (branch === 'academy' ? Number(item.branchId || 0) === 0 : item.branch === branch);
+      window.matchesOrganizationFilter(item, branch);
     const matchStatus = !status || item.status === status;
     const matchCurrency = !currency || item.currency === currency;
     const matchLesson = !lesson || String(item.lessonId || '') === lesson;
@@ -549,10 +502,7 @@ window.renderStaffLessonFilter = function () {
       (item) =>
         item.type === 'teacher' &&
         item.lessonId &&
-        (currentStaffBranch === 'all' ||
-          (currentStaffBranch === 'academy'
-            ? Number(item.branchId || 0) === 0
-            : item.branch === currentStaffBranch))
+        window.matchesOrganizationFilter(item, currentStaffBranch)
     )
     .forEach((item) => items.set(String(item.lessonId), item.lessonName || '—'));
   select.innerHTML =
@@ -671,7 +621,7 @@ window.exportStaffToExcel = async function () {
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `پرسنل_${new Date().toLocaleDateString('fa-IR')}.csv`;
+  link.download = `کارمند_${new Date().toLocaleDateString('fa-IR')}.csv`;
   link.click();
 };
 
@@ -692,8 +642,8 @@ window.generateStaffPDF = async function () {
     return;
   }
 
-  const title = document.getElementById('pdfTitle')?.value || 'گزارش پرسنل آموزشگاه';
-  const subtitle = document.getElementById('pdfSubtitle')?.value || 'لیست پرسنل و وضعیت قراردادها';
+  const title = document.getElementById('pdfTitle')?.value || 'گزارش کارمند آموزشگاه';
+  const subtitle = document.getElementById('pdfSubtitle')?.value || 'لیست کارمند و وضعیت قراردادها';
   const footer = document.getElementById('pdfFooter')?.value || '';
   const format = document.getElementById('pdfFormat')?.value || 'a4';
   const orientation = document.getElementById('pdfOrientation')?.value || 'landscape';
@@ -771,11 +721,11 @@ window.generateStaffPDF = async function () {
     doc.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin, imgWidth, imgHeight);
   });
 
-  doc.save(`پرسنل_${date}.pdf`);
+  doc.save(`کارمند_${date}.pdf`);
   closeModal();
 };
 
-// ==================== Modal افزودن پرسنل ====================
+// ==================== Modal افزودن کارمند ====================
 window.openAddStaffModal = async function () {
   const modalHTML = window.getStaffAddModalHTML ? window.getStaffAddModalHTML() : '';
   document.getElementById('modalContainer').innerHTML = modalHTML;
@@ -843,13 +793,13 @@ window.saveStaff = async function () {
     closeModal();
     await loadStaffData(true);
     announceStaffChange();
-    alert('✅ پرسنل با موفقیت ثبت شد');
+    alert('✅ کارمند با موفقیت ثبت شد');
   } catch (error) {
     alert(error.message);
   }
 };
 
-// ==================== نمایش جزئیات پرسنل ====================
+// ==================== نمایش جزئیات کارمند ====================
 window.viewStaff = async function (id) {
   const item = allStaff.find((x) => x.id === id);
   if (!item) return;
@@ -862,7 +812,7 @@ window.viewStaff = async function (id) {
   document.getElementById('modalContainer').innerHTML = modalHTML;
 };
 
-// ==================== ویرایش پرسنل ====================
+// ==================== ویرایش کارمند ====================
 window.editStaff = async function (id) {
   const item = allStaff.find((x) => x.id === id);
   if (!item) return;

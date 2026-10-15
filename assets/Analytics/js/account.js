@@ -65,6 +65,17 @@
     try {
       const data = await accountRequest('/analytics/admin-account', undefined, 'GET');
       academyProfile = data.profile || { privacy: {} };
+      const sidebarAvatar = document.getElementById('sidebarAvatar');
+      const sidebarAvatarFallback = document.getElementById('sidebarAvatarFallback');
+      if (sidebarAvatar) {
+        sidebarAvatar.onerror = () => {
+          sidebarAvatar.classList.add('hidden');
+          sidebarAvatarFallback?.classList.remove('hidden');
+        };
+        sidebarAvatar.src = academyProfile.avatarUrl || '';
+        sidebarAvatar.classList.toggle('hidden', !academyProfile.avatarUrl);
+        sidebarAvatarFallback?.classList.toggle('hidden', !!academyProfile.avatarUrl);
+      }
       academyDocuments = data.documents || [];
       academyDevices = data.devices || [];
       academyLoginHistory = data.loginHistory || [];
@@ -166,6 +177,9 @@
   };
 
   window.renderUserMerges = function () {
+    const card = document.getElementById('accountMergeCard');
+    if (card) card.classList.toggle('hidden', academyProfile.accountType !== 'human');
+    if (academyProfile.accountType !== 'human') return;
     const form = document.getElementById('accountMergeForm'),
       warning = document.getElementById('accountMergeIneligible'),
       list = document.getElementById('accountMergeRequests');

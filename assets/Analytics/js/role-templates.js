@@ -86,32 +86,22 @@
   }
 
   window.getRoleRowHTML = function (item) {
-    return `
-            <td class="py-4 px-4 font-medium">${escapeHtml(item.name)}</td>
-            <td class="py-4 px-4">${escapeHtml(item.title)}</td>
-            <td class="py-4 px-4 text-gray-500">${escapeHtml(item.title_en)}</td>
-            <td class="py-4 px-4"><span class="px-3 py-1 rounded-full text-xs bg-gray-100">${escapeHtml(item.type)}</span></td>
-            <td class="py-4 px-4"><div class="flex items-center gap-2"><span class="w-5 h-5 rounded-full border" style="background-color:${escapeHtml(item.color)}"></span><span class="text-xs text-gray-500">${escapeHtml(item.color)}</span></div></td>
-            <td class="py-4 px-4">${item.order}</td>
-            <td class="py-4 px-4">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-4 text-left">
+    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.name)}`, attributes: ` class="py-4 px-4 font-medium"` }, { html: `${escapeHtml(item.title)}`, attributes: ` class="py-4 px-4"` }, { html: `${escapeHtml(item.title_en)}`, attributes: ` class="py-4 px-4 text-gray-500"` }, { html: `<span class="px-3 py-1 rounded-full text-xs bg-gray-100">${escapeHtml(item.type)}</span>`, attributes: ` class="py-4 px-4"` }, { html: `<div class="flex items-center gap-2"><span class="w-5 h-5 rounded-full border" style="background-color:${escapeHtml(item.color)}"></span><span class="text-xs text-gray-500">${escapeHtml(item.color)}</span></div>`, attributes: ` class="py-4 px-4"` }, { html: `${item.order}`, attributes: ` class="py-4 px-4"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-4"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
                     <button onclick="viewRole(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
                     <button onclick="toggleRoleInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
                     <button onclick="deleteRole(${item.id})" class="text-red-500 hover:underline text-sm">حذف</button>
                 </div>
-            </td>`;
+            `, attributes: ` class="py-4 px-4 text-left"` }]);
   };
 
   window.getRoleEmptyRowHTML = function () {
-    return '<tr><td colspan="8" class="py-12 text-center text-gray-400">نقشی یافت نشد</td></tr>';
+    return window.AdminPanelTable.rowHTML([{ html: "نقشی یافت نشد", attributes: " colspan=\"8\" class=\"py-12 text-center text-gray-400\"" }], "");
   };
 
   window.getRoleInlineExpandRowHTML = function (item) {
     return (
-      '<td colspan="8" class="p-5 border-t">' +
-      (window.getRoleInlineEditRowHTML ? window.getRoleInlineEditRowHTML(item) : '') +
-      '</td>'
+      window.AdminPanelTable.cellsHTML([{ html: (window.getRoleInlineEditRowHTML ? window.getRoleInlineEditRowHTML(item) : ''), attributes: " colspan=\"8\" class=\"p-5 border-t\"" }])
     );
   };
 

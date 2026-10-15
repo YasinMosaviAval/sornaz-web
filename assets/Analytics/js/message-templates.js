@@ -24,34 +24,11 @@
     );
   }
   window.getMessageRowHTML = (m) =>
-    '<td class="py-4 px-5 font-medium">' +
-    (m.readStatus === 'خوانده‌نشده'
+    window.AdminPanelTable.cellsHTML([{ html: (m.readStatus === 'خوانده‌نشده'
       ? '<i class="ml-2 inline-block h-2 w-2 rounded-full bg-indigo-500"></i>'
-      : '') +
-    e(m.title) +
-    '</td><td class="py-4 px-5">' +
-    e(m.sender) +
-    '</td><td class="py-4 px-5">' +
-    e(m.receiver) +
-    '</td><td class="py-4 px-5">' +
-    e(m.type) +
-    '</td><td class="py-4 px-5">' +
-    e(m.date) +
-    '</td><td class="py-4 px-5"><span class="rounded-full px-3 py-1 text-xs ' +
-    lc(m.status) +
-    '">' +
-    e(m.status) +
-    '</span></td><td class="py-4 px-5"><span class="rounded-full px-3 py-1 text-xs ' +
-    sc(m.readStatus) +
-    '">' +
-    e(m.readStatus) +
-    '</span></td><td class="py-4 px-5 text-left"><button onclick="viewMessage(' +
-    m.id +
-    ')" class="ml-3 text-indigo-600">مشاهده</button>' +
-    (document.getElementById('messages')?.dataset.readOnly === '1' ? '' : '<button onclick="deleteMessage(' + m.id + ')" class="text-red-500">حذف</button>') +
-    '</td>';
+      : '') + (e(m.title)), attributes: " class=\"py-4 px-5 font-medium\"" }, { html: (e(m.sender)), attributes: " class=\"py-4 px-5\"" }, { html: (e(m.receiver)), attributes: " class=\"py-4 px-5\"" }, { html: (e(m.type)), attributes: " class=\"py-4 px-5\"" }, { html: (e(m.date)), attributes: " class=\"py-4 px-5\"" }, { html: "<span class=\"rounded-full px-3 py-1 text-xs " + (lc(m.status)) + "\">" + (e(m.status)) + "</span>", attributes: " class=\"py-4 px-5\"" }, { html: "<span class=\"rounded-full px-3 py-1 text-xs " + (sc(m.readStatus)) + "\">" + (e(m.readStatus)) + "</span>", attributes: " class=\"py-4 px-5\"" }, { html: "<button onclick=\"viewMessage(" + (m.id) + ")\" class=\"ml-3 text-indigo-600\">مشاهده</button>" + (document.getElementById('messages')?.dataset.readOnly === '1' ? '' : '<button onclick="deleteMessage(' + m.id + ')" class="text-red-500">حذف</button>'), attributes: " class=\"py-4 px-5 text-left\"" }]);
   window.getMessageEmptyRowHTML = () =>
-    '<tr><td colspan="8" class="py-12 text-center text-gray-400">پیامی یافت نشد</td></tr>';
+    window.AdminPanelTable.rowHTML([{ html: "پیامی یافت نشد", attributes: " colspan=\"8\" class=\"py-12 text-center text-gray-400\"" }], "");
   window.getMessageAddModalHTML = function () {
     const options = (getMessageRecipients?.() || [])
       .map((x) => '<option value="' + x.id + '">' + e(x.name) + '</option>')

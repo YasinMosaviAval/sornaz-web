@@ -51,32 +51,22 @@
 
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1100px]" id="instrumentsTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortInstrumentsBy('title')" class="flex items-center gap-1">عنوان / ساز <span id="instSortIcon-title">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortInstrumentsBy('levelTitle')" class="flex items-center gap-1">سطح <span id="instSortIcon-levelTitle">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortInstrumentsBy('years_of_experience')" class="flex items-center gap-1">سابقه <span id="instSortIcon-years_of_experience">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortInstrumentsBy('is_primary')" class="flex items-center gap-1">اصلی <span id="instSortIcon-is_primary">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortInstrumentsBy('status')" class="flex items-center gap-1">وضعیت <span id="instSortIcon-status">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortInstrumentsBy('branchName')" class="flex items-center gap-1">شعبه <span id="instSortIcon-branchName">↕</span></button>
-                        </th>
-                        <th class="w-40 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1100px]" id="instrumentsTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => '<button onclick="sortInstrumentsBy(\'title\')" class="flex items-center gap-1">عنوان / ساز <span id="instSortIcon-title">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortInstrumentsBy(\'levelTitle\')" class="flex items-center gap-1">سطح <span id="instSortIcon-levelTitle">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortInstrumentsBy(\'years_of_experience\')" class="flex items-center gap-1">سابقه <span id="instSortIcon-years_of_experience">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortInstrumentsBy(\'is_primary\')" class="flex items-center gap-1">اصلی <span id="instSortIcon-is_primary">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortInstrumentsBy(\'status\')" class="flex items-center gap-1">وضعیت <span id="instSortIcon-status">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortInstrumentsBy(\'branchName\')" class="flex items-center gap-1">شعبه <span id="instSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
         <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="instrumentsPaginationInfo">نمایش ۱ تا ۱۰ از ۴۰ مورد</span>

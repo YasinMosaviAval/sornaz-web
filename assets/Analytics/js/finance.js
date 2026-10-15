@@ -24,13 +24,7 @@ const financeTitleTemplates = {
 };
 
 function getFinanceBranches() {
-  if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
-  return [
-    { id: 1, name: 'شعبه مرکزی' },
-    { id: 2, name: 'شعبه ونک' },
-    { id: 3, name: 'شعبه سعادت‌آباد' },
-    { id: 4, name: 'شعبه کرج' },
-  ];
+  return typeof allBranches !== 'undefined' ? allBranches : [];
 }
 
 function toIsoDate(d) {
@@ -48,36 +42,6 @@ function formatDisplayDate(iso) {
 
 // ۵۰ تراکنش نمونه
 let allTransactions = [];
-(function buildSampleTransactions() {
-  const branches = getFinanceBranches();
-  for (let i = 1; i <= 50; i++) {
-    const type = financeTypes[Math.floor(Math.random() * financeTypes.length)];
-    const titles = financeTitleTemplates[type];
-    const title = titles[Math.floor(Math.random() * titles.length)] + ' #' + i;
-    const branch = branches[Math.floor(Math.random() * branches.length)];
-    const amount =
-      type === 'درآمد'
-        ? (5 + Math.floor(Math.random() * 40)) * 100000
-        : (8 + Math.floor(Math.random() * 80)) * 100000;
-    const daysAgo = Math.floor(Math.random() * 120);
-    const d = new Date();
-    d.setDate(d.getDate() - daysAgo);
-    const iso = toIsoDate(d);
-    allTransactions.push({
-      id: i,
-      title: title,
-      summary: 'خلاصه ' + title,
-      description: 'توضیحات مربوط به ' + title + ' در ' + branch.name,
-      branchId: branch.id,
-      branchName: branch.name,
-      type: type,
-      amount: amount,
-      dateIso: iso,
-      date: formatDisplayDate(iso),
-      status: financeStatuses[Math.floor(Math.random() * financeStatuses.length)],
-    });
-  }
-})();
 
 // داده‌های نمونه بالا برای استفاده‌های بعدی نگه داشته شده‌اند؛ جدول فعلی فقط فاکتورهای واقعی ترم‌ها را نمایش می‌دهد.
 let allTermInvoices = [];
@@ -152,25 +116,8 @@ window.sortFinanceBy = async function (field) {
 };
 
 // ==================== تب شعبه‌ها ====================
-window.renderFinanceBranchTabs = async function () {
-  const container = document.getElementById('financeBranchTabs');
-  if (!container) return;
-  container.querySelectorAll('.finance-branch-tab:not(:first-child)').forEach(function (t) {
-    t.remove();
-  });
-  getFinanceBranches().forEach(function (b) {
-    const active = currentFinanceBranch == b.id;
-    const btn = document.createElement('button');
-    btn.className =
-      'finance-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ' +
-      (active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50') +
-      ' transition';
-    btn.textContent = b.name;
-    btn.onclick = function () {
-      filterFinanceByBranch(b.id);
-    };
-    container.appendChild(btn);
-  });
+window.renderFinanceBranchTabs = function () {
+  window.renderPanelOrganizationTabs?.('financeBranchTabs', currentFinanceBranch, window.filterFinanceByBranch, { tabClass: 'finance-branch-tab' });
 };
 
 window.filterFinanceByBranch = async function (branchId) {
@@ -352,19 +299,19 @@ window.renderFinanceTable = async function (list) {
     tbody.innerHTML = window.getFinanceEmptyRowHTML ? window.getFinanceEmptyRowHTML() : '';
   } else {
     pageItems.forEach(function (item) {
-      const tr = document.createElement('tr');
+      const tr = window.AdminPanelTable.createRow();
       tr.className = 'hover:bg-gray-50 transition';
       tr.innerHTML = window.getFinanceRowHTML ? window.getFinanceRowHTML(item) : '';
       tbody.appendChild(tr);
       if (editingFinanceRowId === item.id) {
-        const expand = document.createElement('tr');
+        const expand = window.AdminPanelTable.createRow();
         expand.className = 'bg-gray-50 admin-inline-expand';
         expand.innerHTML = window.getFinanceInlineExpandRowHTML
           ? window.getFinanceInlineExpandRowHTML(item)
           : '';
         tbody.appendChild(expand);
       } else if (installmentFinanceRowId === item.id) {
-        const expand = document.createElement('tr');
+        const expand = window.AdminPanelTable.createRow();
         expand.className = 'bg-gray-50 admin-inline-expand';
         expand.innerHTML = window.getFinanceInlineInstallmentsRowHTML
           ? window.getFinanceInlineInstallmentsRowHTML(item)

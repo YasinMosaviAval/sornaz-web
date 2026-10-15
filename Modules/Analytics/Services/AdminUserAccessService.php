@@ -22,7 +22,12 @@ class AdminUserAccessService
             }
             $w[] = '(EXISTS(SELECT 1 FROM academy_branch_members m WHERE m.user_id=u.user_id AND m.branch_id=? AND m.deleted_at IS NULL) OR EXISTS(SELECT 1 FROM academy_branches x WHERE x.user_id=u.user_id AND x.branch_id=? AND x.deleted_at IS NULL))';
             array_push($b, $bid, $bid);
-        }if (!empty($f['status'])) {
+        }
+        if (($f['organization'] ?? '') === 'academy' && $c['type'] === 'academy') {
+            $w[] = '(EXISTS(SELECT 1 FROM academy_branch_members m WHERE m.user_id=u.user_id AND m.academy_id=? AND m.branch_id IS NULL AND m.deleted_at IS NULL) OR EXISTS(SELECT 1 FROM academies a WHERE a.user_id=u.user_id AND a.academy_id=? AND a.deleted_at IS NULL))';
+            array_push($b, $c['academy'], $c['academy']);
+        }
+        if (!empty($f['status'])) {
             $w[] = 'u.status=?';
             $b[] = $f['status'];
         }if (!empty($f['search'])) {
@@ -48,20 +53,31 @@ class AdminUserAccessService
         if (!(int) $this->query('SELECT COUNT(*) FROM users u WHERE ' . implode(' AND ', $w), $b, true)) {
             throw new RuntimeException('کاربر خارج از محدوده مدیریت شما است.');
         }
-        $roles = array_values(array_unique(array_map('intval', (array) ($d['roleIds'] ?? []))));
-        $perms = array_values(array_unique(array_map('intval', (array) ($d['permissionIds'] ?? []))));
-        if (array_diff($roles, array_column($this->roles($c), 'id')) || array_diff($perms, array_column($this->permissions($c), 'id'))) {
-            throw new RuntimeException('نقش یا مجوز خارج از دامنه مجاز است.');
-        }
-        transaction(function () use ($a, $id, $c, $roles, $perms) {
+        [$roles, $perms, $saveRoles, $savePerms] = $this->selection($d, $c);
+        transaction(function () use ($a, $id, $c, $roles, $perms, $saveRoles, $savePerms) {
             if ($c['type'] === 'site') {
-                $this->sync('user_roles', 'user_role_id', 'user_id', 'role_id', $id, $roles, $a, true);
-                $this->sync('user_permissions', 'user_permission_id', 'user_id', 'permission_id', $id, $perms, $a, false);
+                if ($saveRoles) $this->sync('user_roles', 'user_role_id', 'user_id', 'role_id', $id, $roles, $a, true);
+                if ($savePerms) $this->sync('user_permissions', 'user_permission_id', 'user_id', 'permission_id', $id, $perms, $a, false);
                 return;
             }$m = $this->member($id, $c);
-            $this->sync('academy_branch_member_roles', 'member_role_id', 'member_id', 'role_id', (int) $m['member_id'], $roles, $a, true);
-            $this->sync('academy_branch_member_permissions', 'academy_branch_member_permission_id', 'member_id', 'permission_id', (int) $m['member_id'], $perms, $a, false);
+            if ($saveRoles) $this->sync('academy_branch_member_roles', 'member_role_id', 'member_id', 'role_id', (int) $m['member_id'], $roles, $a, true, array_column($this->roles($c), 'id'));
+            if ($savePerms) $this->sync('academy_branch_member_permissions', 'academy_branch_member_permission_id', 'member_id', 'permission_id', (int) $m['member_id'], $perms, $a, false, array_column($this->permissions($c), 'id'));
         });
+    }
+
+    private function selection(array $data, array $context): array
+    {
+        $saveRoles = array_key_exists('roleIds', $data);
+        $savePerms = array_key_exists('permissionIds', $data);
+        if ((!$saveRoles && !$savePerms) || ($saveRoles && !is_array($data['roleIds'])) || ($savePerms && !is_array($data['permissionIds']))) {
+            throw new RuntimeException('فهرست نقش‌ها یا مجوزها معتبر نیست.');
+        }
+        $roles = array_values(array_unique(array_map('intval', $data['roleIds'] ?? [])));
+        $perms = array_values(array_unique(array_map('intval', $data['permissionIds'] ?? [])));
+        if (array_diff($roles, array_column($this->roles($context), 'id')) || array_diff($perms, array_column($this->permissions($context), 'id'))) {
+            throw new RuntimeException('نقش یا مجوز خارج از دامنه مجاز است.');
+        }
+        return [$roles, $perms, $saveRoles, $savePerms];
     }
 
     private function context(int $a): array
@@ -129,11 +145,12 @@ class AdminUserAccessService
         throw new RuntimeException('این حساب، عضویت قابل مدیریت ندارد.');
     }
 
-    private function sync(string $t, string $pk, string $owner, string $item, int $oid, array $selected, int $a, bool $main): void
+    private function sync(string $t, string $pk, string $owner, string $item, int $oid, array $selected, int $a, bool $main, ?array $manageable = null): void
     {
         $now = date('Y-m-d H:i:s');
         $rows = DB::table($t)->where($owner, $oid)->get();
         foreach ($rows as $r) {
+            if ($manageable !== null && !in_array((int) $r[$item], $manageable, true)) continue;
             $active = in_array((int) $r[$item], $selected, true);
             $v = $active ? ['deleted_at' => null, 'deleted_by' => null, 'updated_at' => $now, 'updated_by' => $a, 'approved_at' => $now, 'approved_by' => $a] : ['deleted_at' => $now, 'deleted_by' => $a, 'updated_at' => $now, 'updated_by' => $a];
             if ($main && $active) {
@@ -158,6 +175,7 @@ class AdminUserAccessService
         } elseif ($c['type'] === 'branch') {
             $q->whereIn('scope', ['branch', 'self']);
         }
+        if ($c['type'] !== 'site') $q->where('is_panel_visible', 1);
         return array_map(fn ($r) => ['id' => (int) $r['role_id'], 'name' => $r['name'], 'title' => $this->title('access_system_roles', (int) $r['role_id'], $r['name']), 'color' => $r['color'] ?: '#64748b'], $q->orderBy('sort_order')->get());
     }
 
@@ -167,6 +185,7 @@ class AdminUserAccessService
         if ($c['type'] !== 'site') {
             $q->where('group_name', 'academy');
             $q->whereIn('scope', $c['type'] === 'academy' ? ['academy', 'branch', 'self'] : ['branch', 'self']);
+            $q->where('is_panel_visible', 1);
         }return array_map(fn ($p) => ['id' => (int) $p['permission_id'], 'name' => $p['name'], 'title' => $this->title('access_system_permissions', (int) $p['permission_id'], $p['name']), 'group' => $p['group_name'] ?: 'other'], $q->orderBy('name')->get());
     }
 
@@ -185,12 +204,33 @@ class AdminUserAccessService
         } else {
             $rs = $ps = [];
         }foreach ($rs as $r) {
+            if ($c['type'] !== 'site' && !(int) $r['is_panel_visible']) continue;
             $roles[] = ['id' => (int) $r['role_id'], 'title' => $this->title('access_system_roles', (int) $r['role_id'], $r['name']), 'color' => $r['color'] ?: '#64748b'];
         }
         foreach ($ps as $p) {
+            if ($c['type'] !== 'site' && !(int) $p['is_panel_visible']) continue;
             $perms[] = ['id' => (int) $p['permission_id'], 'title' => $this->title('access_system_permissions', (int) $p['permission_id'], $p['name'])];
         }
-        return ['id' => $id, 'name' => $this->title('users', $id, $u['username'] ?: 'کاربر ' . $id, 'full_name'), 'username' => $u['username'], 'email' => $u['email'], 'phone' => $u['phone'], 'type' => $u['type'], 'status' => $u['status'], 'lastLogin' => $u['last_login_at'], 'roles' => $roles, 'permissions' => $perms, 'canEdit' => $id !== 1 && $id !== $a && ($c['type'] === 'site' || (bool) $m)];
+        [$rolePermissionIds, $rolePermissions] = $this->rolePermissionData($rs, $roles, $c);
+        return ['id' => $id, 'name' => $this->title('users', $id, $u['username'] ?: 'کاربر ' . $id, 'full_name'), 'username' => $u['username'], 'email' => $u['email'], 'phone' => $u['phone'], 'type' => $u['type'], 'status' => $u['status'], 'lastLogin' => $u['last_login_at'], 'roles' => $roles, 'permissions' => $perms, 'rolePermissionIds' => $rolePermissionIds, 'rolePermissions' => $rolePermissions, 'canEdit' => $id !== 1 && $id !== $a && ($c['type'] === 'site' || (bool) $m)];
+    }
+
+    private function rolePermissionData(array $assignedRoles, array $visibleRoles, array $context): array
+    {
+        $ids = array_values(array_unique(array_map(fn ($role) => (int) $role['role_id'], $assignedRoles)));
+        if (!$ids) return [[], []];
+        $marks = implode(',', array_fill(0, count($ids), '?'));
+        $rows = $this->query("SELECT rp.role_id,p.permission_id,p.name,p.is_panel_visible FROM access_system_role_permissions rp JOIN access_system_permissions p ON p.permission_id=rp.permission_id WHERE rp.role_id IN ($marks) AND rp.deleted_at IS NULL AND p.deleted_at IS NULL", $ids);
+        $visibleRoleIds = array_column($visibleRoles, 'id');
+        $allIds = [];
+        $visible = [];
+        foreach ($rows as $row) {
+            $permissionId = (int) $row['permission_id'];
+            $allIds[$permissionId] = $permissionId;
+            if (!in_array((int) $row['role_id'], $visibleRoleIds, true) || ($context['type'] !== 'site' && !(int) $row['is_panel_visible'])) continue;
+            $visible[$permissionId] = ['id' => $permissionId, 'title' => $this->title('access_system_permissions', $permissionId, $row['name'])];
+        }
+        return [array_values($allIds), array_values($visible)];
     }
 
     private function findMember(int $uid, array $c): ?array

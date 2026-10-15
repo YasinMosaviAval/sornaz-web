@@ -192,18 +192,20 @@
                     <span class="text-sm text-gray-400" id="contactMsgCount">0 پیام</span>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full min-w-[700px]" id="contactMessagesTable">
-                        <thead class="bg-gray-50 border-b">
-                            <tr>
-                                <th class="text-right py-4 px-5 font-medium">فرستنده</th>
-                                <th class="text-right py-4 px-5 font-medium">موضوع</th>
-                                <th class="text-right py-4 px-5 font-medium">تاریخ</th>
-                                <th class="text-right py-4 px-5 font-medium">وضعیت</th>
-                                <th class="w-28"></th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y text-sm"></tbody>
-                    </table>
+                    <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[700px]" id="contactMessagesTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => 'فرستنده', 'attributes' => ' class="text-right py-4 px-5 font-medium"'],
+                    ['html' => 'موضوع', 'attributes' => ' class="text-right py-4 px-5 font-medium"'],
+                    ['html' => 'تاریخ', 'attributes' => ' class="text-right py-4 px-5 font-medium"'],
+                    ['html' => 'وضعیت', 'attributes' => ' class="text-right py-4 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-28"'],
+                ],
+                'rows' => [],
+            ]); ?>
                 </div>
             </div>
         </div>

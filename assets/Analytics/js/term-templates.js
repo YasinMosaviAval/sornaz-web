@@ -48,38 +48,28 @@
             .map((s) => s.startTime + (s.endTime ? ' تا ' + s.endTime : ''))
         ),
       ].join('، ') || '—';
-    return `
-            <td class="py-4 px-5 font-medium">${escapeHtml(item.name)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.course || '—')}</td>
-            <td class="py-4 px-5">${escapeHtml(item.start || '—')}</td>
-            <td class="py-4 px-5">${escapeHtml(item.end || '—')}</td>
-            <td class="py-4 px-5">${escapeHtml(days)}</td>
-            <td class="py-4 px-5">${escapeHtml(times)}</td>
-            <td class="py-4 px-5">
+    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.name)}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.course || '—')}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.start || '—')}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.end || '—')}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(days)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(times)}`, attributes: ` class="py-4 px-5"` }, { html: `
                 ${window.termPermissions?.isReceptionist ? `<span class="px-3 py-1 rounded-full text-xs ${statusClass || statusBadgeClass(item.status)}">${escapeHtml(item.status)}</span>` : `<button type="button" onclick="cycleTermStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${statusClass || statusBadgeClass(item.status)}">${escapeHtml(item.status)}</button>`}
-            </td>
-            <td class="py-4 px-5 text-left">
+            `, attributes: ` class="py-4 px-5"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewTerm(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
                     <button type="button" data-term-action="inline-edit" data-term-id="${item.id}" onclick="toggleTermInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
                     <button type="button" data-term-action="inline-attendance" data-term-id="${item.id}" onclick="toggleTermInlineAttendance(${item.id})" class="text-emerald-600 hover:underline text-sm">حضور و غیاب</button>
                     <button onclick="deleteTerm(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>
                 </div>
-            </td>
-        `;
+            `, attributes: ` class="py-4 px-5 text-left"` }]);
   };
 
   window.getTermEmptyRowHTML = function () {
-    return `<tr><td colspan="9" class="py-12 text-center text-gray-400">هیچ ترمی یافت نشد</td></tr>`;
+    return window.AdminPanelTable.rowHTML([{ html: `هیچ ترمی یافت نشد`, attributes: ` colspan="9" class="py-12 text-center text-gray-400"` }], ``);
   };
 
   window.getTermInlineExpandRowHTML = function (item) {
-    return `<td colspan="9" class="p-5 border-t">${window.getTermInlineEditRowHTML ? window.getTermInlineEditRowHTML(item) : ''}</td>`;
+    return window.AdminPanelTable.cellsHTML([{ html: `${window.getTermInlineEditRowHTML ? window.getTermInlineEditRowHTML(item) : ''}`, attributes: ` colspan="9" class="p-5 border-t"` }]);
   };
 
   window.getTermInlineAttendanceRowHTML = function (item) {
-    return `<td colspan="9" class="p-5 border-t">${window.getTermAttendancePanelHTML ? window.getTermAttendancePanelHTML(item, true) : ''}</td>`;
+    return window.AdminPanelTable.cellsHTML([{ html: `${window.getTermAttendancePanelHTML ? window.getTermAttendancePanelHTML(item, true) : ''}`, attributes: ` colspan="9" class="p-5 border-t"` }]);
   };
 
   window.getTermTeacherFieldHTML = function (item) {
@@ -264,7 +254,7 @@
                 </div>
             </div>
 
-            
+
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div class="sm:col-span-2 lg:col-span-3">
                     <label class="block text-sm font-medium mb-2">خلاصه ترم</label>

@@ -60,15 +60,9 @@ function renderUsersTable() {
   if (!tbody) return;
   tbody.innerHTML = '';
   users.forEach((user) => {
-    const tr = document.createElement('tr');
+    const tr = window.AdminPanelTable.createRow();
     tr.className = 'border-b hover:bg-gray-50';
-    tr.innerHTML = `
-            <td class="py-4 font-medium">${user.name}</td>
-            <td class="py-4">${user.type}</td>
-            <td class="py-4">${user.phone}</td>
-            <td class="py-4"><span class="px-4 py-1 bg-green-100 text-green-700 rounded-full text-xs">فعال</span></td>
-            <td><button class="text-indigo-600 hover:underline">ویرایش</button></td>
-        `;
+    tr.innerHTML = window.AdminPanelTable.cellsHTML([{ html: `${user.name}`, attributes: ` class="py-4 font-medium"` }, { html: `${user.type}`, attributes: ` class="py-4"` }, { html: `${user.phone}`, attributes: ` class="py-4"` }, { html: `<span class="px-4 py-1 bg-green-100 text-green-700 rounded-full text-xs">فعال</span>`, attributes: ` class="py-4"` }, { html: `<button class="text-indigo-600 hover:underline">ویرایش</button>`, attributes: `` }]);
     tbody.appendChild(tr);
   });
 }

@@ -142,51 +142,13 @@
     window.updateRuleSortIcons();
   };
 
-  window.renderRulesBranchTabs = async function () {
-    const container = document.getElementById('rulesBranchTabs');
-    if (!container) return;
-    container.querySelectorAll('.rule-branch-tab:not(:first-child)').forEach(function (t) {
-      t.remove();
+  window.renderRulesBranchTabs = function () {
+    window.renderPanelOrganizationTabs?.('rulesBranchTabs', currentRuleBranch, window.filterRulesByBranch, {
+      tabClass: 'rule-branch-tab',
+      branches: () => ruleFilterOrganizations,
+      branchValue: (organization) => organization.key,
+      showAcademy: ruleFilterOrganizations.some((organization) => organization.kind === 'academy'),
     });
-    if (
-      ruleFilterOrganizations.some(function (organization) {
-        return organization.kind === 'academy';
-      })
-    ) {
-      const academyButton = document.createElement('button');
-      academyButton.className =
-        'rule-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ' +
-        (currentRuleBranch === 'academy'
-          ? 'bg-indigo-600 text-white border-indigo-600'
-          : 'border-gray-200 hover:bg-gray-50') +
-        ' transition';
-      academyButton.textContent = 'آموزشگاه';
-      academyButton.dataset.value = 'academy';
-      academyButton.onclick = function () {
-        window.filterRulesByBranch('academy');
-      };
-      container.appendChild(academyButton);
-    }
-    ruleFilterOrganizations
-      .filter(function (organization) {
-        return organization.kind === 'branch';
-      })
-      .forEach(function (b) {
-        const active = currentRuleBranch === b.key;
-        const btn = document.createElement('button');
-        btn.className =
-          'rule-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ' +
-          (active
-            ? 'bg-indigo-600 text-white border-indigo-600'
-            : 'border-gray-200 hover:bg-gray-50') +
-          ' transition';
-        btn.textContent = b.name;
-        btn.dataset.value = b.key;
-        btn.onclick = function () {
-          window.filterRulesByBranch(b.key);
-        };
-        container.appendChild(btn);
-      });
   };
 
   window.filterRulesByBranch = async function (branchId) {
@@ -270,12 +232,12 @@
       tbody.innerHTML = window.getRuleEmptyRowHTML ? window.getRuleEmptyRowHTML() : '';
     } else {
       pageItems.forEach(function (item) {
-        const tr = document.createElement('tr');
+        const tr = window.AdminPanelTable.createRow();
         tr.className = 'hover:bg-gray-50 transition';
         tr.innerHTML = window.getRuleRowHTML ? window.getRuleRowHTML(item) : '';
         tbody.appendChild(tr);
         if (editingRuleRowId === item.id) {
-          const expand = document.createElement('tr');
+          const expand = window.AdminPanelTable.createRow();
           expand.className = 'bg-gray-50 admin-inline-expand';
           expand.innerHTML = window.getRuleInlineExpandRowHTML
             ? window.getRuleInlineExpandRowHTML(item)

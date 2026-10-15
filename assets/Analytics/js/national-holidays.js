@@ -72,10 +72,10 @@
         ? data.holidays
             .map(
               (item) =>
-                `<tr class="border-b"><td class="p-5"><b>${esc(item.title)}</b>${item.description ? `<small class="mt-1 block text-gray-400">${esc(item.description)}</small>` : ''}</td><td class="p-5">${esc(window.formatLocalizedDate?.(item.date) || item.date)}</td><td class="p-5"><span class="rounded-full px-3 py-1 text-xs ${item.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">${item.status === 'active' ? 'فعال' : 'غیرفعال'}</span></td><td class="p-5 text-left"><button onclick="openNationalHolidayModal(${item.id})" class="ml-4 text-indigo-600">ویرایش</button><button onclick="deleteNationalHoliday(${item.id})" class="text-red-600">حذف</button></td></tr>`
+                window.AdminPanelTable.rowHTML([{ html: `<b>${esc(item.title)}</b>${item.description ? `<small class="mt-1 block text-gray-400">${esc(item.description)}</small>` : ''}`, attributes: ` class="p-5"` }, { html: `${esc(window.formatLocalizedDate?.(item.date) || item.date)}`, attributes: ` class="p-5"` }, { html: `<span class="rounded-full px-3 py-1 text-xs ${item.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">${item.status === 'active' ? 'فعال' : 'غیرفعال'}</span>`, attributes: ` class="p-5"` }, { html: `<button onclick="openNationalHolidayModal(${item.id})" class="ml-4 text-indigo-600">ویرایش</button><button onclick="deleteNationalHoliday(${item.id})" class="text-red-600">حذف</button>`, attributes: ` class="p-5 text-left"` }], ` class="border-b"`)
             )
             .join('')
-        : '<tr><td colspan="4" class="p-12 text-center text-gray-400">تعطیل رسمی ثبت نشده است.</td></tr>';
+        : window.AdminPanelTable.rowHTML([{ html: "تعطیل رسمی ثبت نشده است.", attributes: " colspan=\"4\" class=\"p-12 text-center text-gray-400\"" }], "");
     const settings = document.getElementById('academyNationalHolidaySettings');
     if (settings)
       settings.innerHTML = data.academies.length

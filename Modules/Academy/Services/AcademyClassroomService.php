@@ -169,7 +169,52 @@ class AcademyClassroomService
                 return $b;
             }
         }
-        throw new RuntimeException('شعبه معتبر نیست.');
+        throw new RuntimeException('شعبه معتبر نیست.', 403);
+    }
+
+    private function roomOrganizations(int $actor, bool $admin): array
+    {
+        $out = [];
+        if (ClassroomOrganizationScope::supportsAcademies()) {
+            foreach (ClassroomOrganizationScope::academies($actor) as $academy) {
+                $id = (int) $academy['academy_id'];
+                $out[] = ['id' => $id, 'user_id' => (int) $academy['user_id'], 'kind' => 'academy', 'name' => $this->tr('academies', $id, 'title') ?: 'آموزشگاه ' . $id];
+            }
+        }
+        foreach ($this->branches($actor, $admin) as $branch) {
+            $id = (int) $branch['branch_id'];
+            $out[] = ['id' => $id, 'user_id' => (int) $branch['user_id'], 'kind' => 'branch', 'name' => $this->tr('academy_branches', $id, 'name') ?: 'شعبه ' . $id];
+        }
+        return $out;
+    }
+
+    private function resolveRoomOrganization(int $actor, array $data, bool $admin): array
+    {
+        if (!empty($data['organizationUserId'])) {
+            foreach ($this->roomOrganizations($actor, $admin) as $organization) {
+                if ((int) $organization['user_id'] === (int) $data['organizationUserId']) return $organization;
+            }
+            throw new RuntimeException('سازمان خارج از محدوده مدیریت شما است.', 403);
+        }
+        $branch = $this->allowedBranch($actor, (int) ($data['branchId'] ?? 0), $admin);
+        return ['kind' => 'branch', 'id' => (int) $branch['branch_id']];
+    }
+
+    private function authorizeRoom(int $actor, array $room, bool $admin): void
+    {
+        if ($room['branch_id'] !== null) {
+            $this->allowedBranch($actor, (int) $room['branch_id'], $admin);
+        } else {
+            ClassroomOrganizationScope::allowedAcademy($actor, (int) ($room['academy_id'] ?? 0));
+        }
+    }
+
+    private function scopedRooms(int $actor, bool $admin): array
+    {
+        $organizations = $this->roomOrganizations($actor, $admin);
+        $branches = array_column(array_filter($organizations, fn ($o) => $o['kind'] === 'branch'), 'id');
+        $academies = array_column(array_filter($organizations, fn ($o) => $o['kind'] === 'academy'), 'id');
+        return ClassroomOrganizationScope::rooms($branches, $academies);
     }
 
     private function enumValues(): array
@@ -289,19 +334,18 @@ class AcademyClassroomService
         $this->ensureReferenceData($a);
         $c = $this->context($a, $admin);
         $branches = $this->branches($a, $admin);
-        $ids = array_map(fn ($b) => (int) $b['branch_id'], $branches);
         $types = $this->deduplicateVisibleTypes(array_values(array_filter(DB::table(self::TABLE)->whereNull('deleted_at')->get(), fn ($r) => $this->visibleType($r, $c, $admin))), $c, $admin);
         $usableTypes = array_values(array_filter($types, fn ($r) => $this->status($r) === 'approved'));
-        $rooms = $ids ? DB::table('academy_branch_classrooms')->whereIn('branch_id', $ids)->whereNull('deleted_at')->get() : [];
+        $rooms = $this->scopedRooms($a, $admin);
         $updateApproved = $admin || $this->access->allows($a, self::UPDATE_APPROVED_PERMISSION);
         $deleteApproved = $admin || $this->access->allows($a, self::DELETE_APPROVED_PERMISSION);
         $canCreate = $this->canCreateType($a, $admin);
         $receptionist = !$admin && $this->isReceptionist($a);
-        return ['branches' => array_map(fn ($b) => ['id' => (int) $b['branch_id'], 'name' => $this->tr('academy_branches', (int) $b['branch_id'], 'name') ?: 'شعبه ' . $b['branch_id']], $branches), 'types' => array_map(function ($t) use ($a, $c, $admin, $updateApproved, $deleteApproved) {
+        return ['organizations' => $this->roomOrganizations($a, $admin), 'branches' => array_map(fn ($b) => ['id' => (int) $b['branch_id'], 'name' => $this->tr('academy_branches', (int) $b['branch_id'], 'name') ?: 'شعبه ' . $b['branch_id']], $branches), 'types' => array_map(function ($t) use ($a, $c, $admin, $updateApproved, $deleteApproved) {
             $owned = $this->ownsType($t, $c, $admin);
             $approved = $this->status($t) === 'approved';
             return $this->type($t) + ['canEdit' => $owned && (!$approved || $updateApproved), 'canDelete' => $owned && (!$approved || $deleteApproved), 'canChangeStatus' => $admin || (int) ($t['created_by'] ?? 0) === $a];
-        }, $types), 'classroomTypes' => array_map(fn ($t) => $this->type($t), $usableTypes), 'classrooms' => array_map(fn ($r) => $this->room($r) + ['canChangeStatus' => !$receptionist], $rooms), 'typeOptions' => $this->typeOptions(), 'permissions' => ['isSiteAdmin' => $admin, 'isReceptionist' => $receptionist, 'canChangeClassroomStatus' => !$receptionist, 'showStatus' => true, 'showCategory' => $admin || $this->isAcademyManager($a), 'canAccessTypes' => $canCreate, 'canCreate' => $canCreate, 'canSetType' => $admin || $this->access->allows($a, self::SET_TYPE_PERMISSION), 'canDeleteCategory' => $admin || $this->access->allows($a, self::DELETE_CATEGORY_PERMISSION), 'canUpdateCategory' => $admin || $this->access->allows($a, self::UPDATE_CATEGORY_PERMISSION), 'canApprove' => $admin || $this->access->allows($a, self::APPROVE_PERMISSION), 'canUpdateApproved' => $updateApproved, 'canDeleteApproved' => $deleteApproved]];
+        }, $types), 'classroomTypes' => array_map(fn ($t) => $this->type($t), $usableTypes), 'classrooms' => array_map(fn ($r) => $this->room($r) + ['canChangeStatus' => !$receptionist], $rooms), 'typeOptions' => $this->typeOptions(), 'permissions' => ['isBranchContext' => $this->isBranchContext($a, $admin), 'isSiteAdmin' => $admin, 'isReceptionist' => $receptionist, 'canChangeClassroomStatus' => !$receptionist, 'showStatus' => true, 'showCategory' => $admin || $this->isAcademyManager($a), 'canAccessTypes' => $canCreate, 'canCreate' => $canCreate, 'canSetType' => $admin || $this->access->allows($a, self::SET_TYPE_PERMISSION), 'canDeleteCategory' => $admin || $this->access->allows($a, self::DELETE_CATEGORY_PERMISSION), 'canUpdateCategory' => $admin || $this->access->allows($a, self::UPDATE_CATEGORY_PERMISSION), 'canApprove' => $admin || $this->access->allows($a, self::APPROVE_PERMISSION), 'canUpdateApproved' => $updateApproved, 'canDeleteApproved' => $deleteApproved]];
     }
 
     private function room(array $r): array
@@ -309,18 +353,25 @@ class AcademyClassroomService
         $id = (int) $r['classroom_id'];
         $type = $r['type_id'] ? DB::table(self::TABLE)->where('classroom_type_id', (int) $r['type_id'])->whereNull('deleted_at')->first() : null;
         $assets = DB::table('academy_branch_classroom_assets')->where('classroom_id', $id)->whereNull('deleted_at')->get();
-        $branch = DB::table('academy_branches')->where('branch_id', (int) $r['branch_id'])->first();
         $typeTitle = $type ? ($this->tr(self::TABLE, (int) $type['classroom_type_id'], 'title') ?: 'نوع کلاس ' . $type['classroom_type_id']) : '—';
-        return ['id' => $id, 'name' => $this->tr('academy_branch_classrooms', $id, 'title') ?: 'کلاس ' . $id, 'summary' => $this->tr('academy_branch_classrooms', $id, 'summary'), 'description' => $this->tr('academy_branch_classrooms', $id, 'description'), 'deliveryMode' => $this->tr('academy_branch_classrooms', $id, 'delivery_mode') === 'online' ? 'online' : 'in_person', 'onlineUrl' => $this->tr('academy_branch_classrooms', $id, 'online_join_url'), 'typeId' => (int) ($r['type_id'] ?: 0), 'type' => $typeTitle, 'typeLabel' => $typeTitle, 'branchId' => (int) $r['branch_id'], 'branchName' => $branch ? ($this->tr('academy_branches', (int) $branch['branch_id'], 'name') ?: 'شعبه ' . $branch['branch_id']) : '—', 'capacity' => (int) $r['capacity'], 'status' => match ($r['status']) {
+        return ['id' => $id, 'name' => $this->tr('academy_branch_classrooms', $id, 'title') ?: 'کلاس ' . $id, 'summary' => $this->tr('academy_branch_classrooms', $id, 'summary'), 'description' => $this->tr('academy_branch_classrooms', $id, 'description'), 'deliveryMode' => $this->tr('academy_branch_classrooms', $id, 'delivery_mode') === 'online' ? 'online' : 'in_person', 'onlineUrl' => $this->tr('academy_branch_classrooms', $id, 'online_join_url'), 'typeId' => (int) ($r['type_id'] ?: 0), 'type' => $typeTitle, 'typeLabel' => $typeTitle, 'branchId' => (int) $r['branch_id'], 'capacity' => (int) $r['capacity'], 'status' => match ($r['status']) {
             'available' => 'در دسترس','unavailable' => 'خارج از دسترس',default => 'در انتظار تأیید'
-        }, 'statusValue' => (string) $r['status'], 'equipment' => array_map(fn ($x) => ['id' => (int) $x['classroom_asset_id'], 'name' => $this->tr('academy_branch_classroom_assets', (int) $x['classroom_asset_id'], 'title'), 'qty' => (int) $x['quantity']], $assets)];
+        }, 'statusValue' => (string) $r['status'], 'equipment' => array_map(fn ($x) => ['id' => (int) $x['classroom_asset_id'], 'name' => $this->tr('academy_branch_classroom_assets', (int) $x['classroom_asset_id'], 'title'), 'qty' => (int) $x['quantity']], $assets)] + $this->roomOrganizationFields($r);
+    }
+
+    private function roomOrganizationFields(array $r): array
+    {
+        $branch = DB::table('academy_branches')->where('branch_id', (int) $r['branch_id'])->first();
+        $academy = !$branch && !empty($r['academy_id']) ? DB::table('academies')->where('academy_id', (int) $r['academy_id'])->whereNull('deleted_at')->first() : null;
+        $organizationName = $branch ? ($this->tr('academy_branches', (int) $branch['branch_id'], 'name') ?: 'شعبه ' . $branch['branch_id']) : ($academy ? ($this->tr('academies', (int) $academy['academy_id'], 'title') ?: 'آموزشگاه ' . $academy['academy_id']) : '—');
+        return ['branchName' => $organizationName, 'organizationName' => $organizationName, 'organizationKind' => $branch ? 'branch' : 'academy', 'academyId' => (int) ($academy['academy_id'] ?? $branch['academy_id'] ?? 0), 'organizationUserId' => (int) ($branch['user_id'] ?? $academy['user_id'] ?? 0)];
     }
 
     public function saveRoom(int $a, array $d, bool $admin, int $id = 0): array
     {
         return transaction(function () use ($a, $d, $admin, $id) {
-            $branchId = (int) ($d['branchId'] ?? 0);
-            $this->allowedBranch($a, $branchId, $admin);
+            $organization = $this->resolveRoomOrganization($a, $d, $admin);
+            $branchId = $organization['kind'] === 'branch' ? (int) $organization['id'] : null;
             $typeId = (int) ($d['typeId'] ?? 0);
             $selectedType = DB::table(self::TABLE)->where('classroom_type_id', $typeId)->whereNull('deleted_at')->first();
             $context = $this->context($a, $admin);
@@ -338,7 +389,11 @@ class AcademyClassroomService
             }
             [$oldMode, $deliveryMode, $onlineUrl] = $this->roomDelivery($d, $room, $id);
             if ($room) {
-                $this->allowedBranch($a, (int) $room['branch_id'], $admin);
+                $this->authorizeRoom($a, $room, $admin);
+                if ($room['branch_id'] === null && empty($d['organizationUserId'])) {
+                    throw new RuntimeException('برای ویرایش کلاس آموزشگاه، صفحه را تازه‌سازی کنید.', 409);
+                }
+                $this->assertRoomOrganizationChange($room, $branchId, $organization, $id);
                 if ($oldMode !== $deliveryMode && DB::table('academy_branch_course_term_sessions')->where('classroom_id', $id)->whereNull('deleted_at')->first()) {
                     throw new RuntimeException('شیوه برگزاری کلاس دارای جلسه ثبت‌شده را نمی‌توان تغییر داد.');
                 }
@@ -348,6 +403,7 @@ class AcademyClassroomService
             $approved = $status !== 'pending';
             $now = date('Y-m-d H:i:s');
             $v = ['branch_id' => $branchId, 'type_id' => $typeId, 'capacity' => max(1, (int) ($d['capacity'] ?? 1)), 'is_active' => $status === 'available' ? 1 : 0, 'status' => $status, 'updated_by' => $a, 'approved_at' => $approved ? ($room['approved_at'] ?? $now) : null, 'approved_by' => $approved ? ($room['approved_by'] ?? $a) : null, 'deleted_at' => null, 'deleted_by' => null];
+            if (ClassroomOrganizationScope::supportsAcademies()) $v['academy_id'] = $branchId === null ? (int) $organization['id'] : null;
             if ($id) {
                 DB::table('academy_branch_classrooms')->where('classroom_id', $id)->update($v);
             } else {
@@ -358,6 +414,12 @@ class AcademyClassroomService
             $this->replaceRoomEquipment($id, $a, $d['equipment'] ?? []);
             return $this->room(DB::table('academy_branch_classrooms')->where('classroom_id', $id)->first()) + ['canChangeStatus' => !$receptionist];
         });
+    }
+
+    private function assertRoomOrganizationChange(array $room, ?int $branchId, array $organization, int $id): void
+    {
+        $organizationChanged = (int) $room['branch_id'] !== (int) $branchId || ($branchId === null && (int) ($room['academy_id'] ?? 0) !== (int) $organization['id']);
+        if ($organizationChanged && DB::table('academy_branch_course_term_sessions')->where('classroom_id', $id)->whereNull('deleted_at')->first()) throw new RuntimeException('سازمان کلاس دارای جلسه ثبت‌شده قابل تغییر نیست.');
     }
 
     private function roomDelivery(array $data, ?array $room, int $id): array
@@ -395,7 +457,7 @@ class AcademyClassroomService
         if (!$row) {
             throw new RuntimeException('کلاس یافت نشد.');
         }
-        $this->allowedBranch($a, (int) $row['branch_id'], $admin);
+        $this->authorizeRoom($a, $row, $admin);
         if (!$admin && $this->isReceptionist($a)) {
             throw new RuntimeException('کاربر پذیرش مجوز تغییر وضعیت کلاس را ندارد.');
         }
@@ -413,7 +475,7 @@ class AcademyClassroomService
         if (!$r) {
             throw new RuntimeException('کلاس یافت نشد.');
         }
-        $this->allowedBranch($a, (int) $r['branch_id'], $admin);
+        $this->authorizeRoom($a, $r, $admin);
         $now = date('Y-m-d H:i:s');
         DB::table('academy_branch_classrooms')->where('classroom_id', $id)->update(['deleted_at' => $now, 'deleted_by' => $a, 'updated_by' => $a]);
         DB::table('academy_branch_classroom_assets')->where('classroom_id', $id)->whereNull('deleted_at')->update(['deleted_at' => $now, 'deleted_by' => $a, 'updated_by' => $a]);
@@ -640,14 +702,13 @@ class AcademyClassroomService
 
     public function classroomsRealtimeVersion(int $a, bool $admin): array
     {
-        $branchIds = array_map(fn ($b) => (int) $b['branch_id'], $this->branches($a, $admin));
-        $rows = $branchIds ? DB::table('academy_branch_classrooms')->whereIn('branch_id', $branchIds)->whereNull('deleted_at')->get() : [];
+        $rows = $this->scopedRooms($a, $admin);
         $ids = array_map(fn ($r) => (int) $r['classroom_id'], $rows);
         $assets = $ids ? DB::table('academy_branch_classroom_assets')->whereIn('classroom_id', $ids)->whereNull('deleted_at')->get() : [];
         $assetIds = array_map(fn ($r) => (int) $r['classroom_asset_id'], $assets);
         $translations = $ids ? DB::table('translations')->where('table_name', 'academy_branch_classrooms')->whereIn('table_id', $ids)->whereNull('deleted_at')->get() : [];
         $assetTranslations = $assetIds ? DB::table('translations')->where('table_name', 'academy_branch_classroom_assets')->whereIn('table_id', $assetIds)->whereNull('deleted_at')->get() : [];
-        $payload = ['rows' => array_map(fn ($r) => [(int) $r['classroom_id'], (int) $r['branch_id'], (int) ($r['type_id'] ?? 0), (int) $r['capacity'], (string) $r['status'], $r['approved_at'] ?? null, $r['approved_by'] ?? null, $r['updated_at'] ?? null], $rows), 'assets' => array_map(fn ($r) => [(int) $r['classroom_asset_id'], (int) $r['classroom_id'], (int) $r['quantity'], $r['updated_at'] ?? null], $assets), 'translations' => array_map(fn ($r) => [$r['table_id'], $r['locale'], $r['field'], $r['value'], $r['updated_at'] ?? null], array_merge($translations, $assetTranslations))];
+        $payload = ['rows' => array_map(fn ($r) => [(int) $r['classroom_id'], (int) $r['branch_id'], (int) ($r['academy_id'] ?? 0), (int) ($r['type_id'] ?? 0), (int) $r['capacity'], (string) $r['status'], $r['approved_at'] ?? null, $r['approved_by'] ?? null, $r['updated_at'] ?? null], $rows), 'assets' => array_map(fn ($r) => [(int) $r['classroom_asset_id'], (int) $r['classroom_id'], (int) $r['quantity'], $r['updated_at'] ?? null], $assets), 'translations' => array_map(fn ($r) => [$r['table_id'], $r['locale'], $r['field'], $r['value'], $r['updated_at'] ?? null], array_merge($translations, $assetTranslations))];
         return ['resource' => 'classrooms', 'version' => sha1(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))];
     }
 

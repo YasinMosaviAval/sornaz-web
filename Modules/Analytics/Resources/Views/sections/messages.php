@@ -21,35 +21,23 @@
     <!-- جدول -->
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1100px]" id="messagesTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortMessagesBy('title')" class="flex items-center gap-1">عنوان <span id="msgSortIcon-title">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortMessagesBy('sender')" class="flex items-center gap-1">فرستنده <span id="msgSortIcon-sender">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortMessagesBy('receiver')" class="flex items-center gap-1">گیرنده <span id="msgSortIcon-receiver">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortMessagesBy('type')" class="flex items-center gap-1">نوع <span id="msgSortIcon-type">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortMessagesBy('date')" class="flex items-center gap-1">تاریخ <span id="msgSortIcon-date">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortMessagesBy('status')" class="flex items-center gap-1">وضعیت <span id="msgSortIcon-status">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortMessagesBy('readStatus')" class="flex items-center gap-1">وضعیت مطالعه <span id="msgSortIcon-readStatus">↕</span></button>
-                        </th>
-                        <th class="w-40 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1100px]" id="messagesTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => '<button onclick="sortMessagesBy(\'title\')" class="flex items-center gap-1">عنوان <span id="msgSortIcon-title">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortMessagesBy(\'sender\')" class="flex items-center gap-1">فرستنده <span id="msgSortIcon-sender">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortMessagesBy(\'receiver\')" class="flex items-center gap-1">گیرنده <span id="msgSortIcon-receiver">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortMessagesBy(\'type\')" class="flex items-center gap-1">نوع <span id="msgSortIcon-type">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortMessagesBy(\'date\')" class="flex items-center gap-1">تاریخ <span id="msgSortIcon-date">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortMessagesBy(\'status\')" class="flex items-center gap-1">وضعیت <span id="msgSortIcon-status">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortMessagesBy(\'readStatus\')" class="flex items-center gap-1">وضعیت مطالعه <span id="msgSortIcon-readStatus">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
         <div id="messagesPagination" class="hidden px-6 py-4 border-t flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="messagesPaginationInfo">نمایش ۱ تا ۱۰ از ۰ پیام</span>

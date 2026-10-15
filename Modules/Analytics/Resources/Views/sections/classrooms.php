@@ -7,12 +7,10 @@
         }
     </style>
 
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-3xl font-bold">مدیریت کلاس‌های فیزیکی</h1>
-            <p class="text-gray-500 mt-1">لیست کلاس‌ها، نوع، تجهیزات و وضعیت هر شعبه</p>
-        </div>
-        <div class="flex flex-wrap gap-3">
+    <h1 class="hidden">مدیریت کلاس‌های فیزیکی</h1>
+    <?php component('classroom-page-tabs', ['active' => 'classrooms']); ?>
+    <p class="mb-6 text-gray-500">لیست کلاس‌ها، نوع، تجهیزات و وضعیت هر شعبه</p>
+    <div class="mb-6 flex flex-wrap justify-end gap-3">
             <button onclick="openAddClassroomModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 transition">
                 <i class="fas fa-plus"></i> افزودن کلاس جدید
             </button>
@@ -22,9 +20,7 @@
             <button onclick="exportClassroomsToPDF()" class="border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl flex items-center gap-2">
                 <i class="fas fa-file-pdf text-red-600"></i> خروجی PDF
             </button>
-        </div>
     </div>
-
     <!-- تاپ‌بار شعبه‌ها -->
     <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
         <div class="flex gap-2 min-w-max" id="classroomBranchTabs">
@@ -67,32 +63,22 @@
     <!-- جدول -->
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1100px]" id="classroomsTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortClassroomsBy('name')" class="flex items-center gap-1">نام کلاس <span id="classroomSortIcon-name">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortClassroomsBy('typeLabel')" class="flex items-center gap-1">نوع کلاس <span id="classroomSortIcon-typeLabel">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortClassroomsBy('branchName')" class="flex items-center gap-1">شعبه <span id="classroomSortIcon-branchName">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortClassroomsBy('capacity')" class="flex items-center gap-1">ظرفیت <span id="classroomSortIcon-capacity">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortClassroomsBy('equipment')" class="flex items-center gap-1">تجهیزات <span id="classroomSortIcon-equipment">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortClassroomsBy('status')" class="flex items-center gap-1">وضعیت <span id="classroomSortIcon-status">↕</span></button>
-                        </th>
-                        <th class="w-40 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1100px]" id="classroomsTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => '<button onclick="sortClassroomsBy(\'name\')" class="flex items-center gap-1">نام کلاس <span id="classroomSortIcon-name">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortClassroomsBy(\'typeLabel\')" class="flex items-center gap-1">نوع کلاس <span id="classroomSortIcon-typeLabel">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortClassroomsBy(\'branchName\')" class="flex items-center gap-1">شعبه <span id="classroomSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortClassroomsBy(\'capacity\')" class="flex items-center gap-1">ظرفیت <span id="classroomSortIcon-capacity">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortClassroomsBy(\'equipment\')" class="flex items-center gap-1">تجهیزات <span id="classroomSortIcon-equipment">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortClassroomsBy(\'status\')" class="flex items-center gap-1">وضعیت <span id="classroomSortIcon-status">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
 
         <!-- صفحه‌بندی -->

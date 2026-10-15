@@ -110,26 +110,18 @@
   }
 
   window.getHolidayLeaveRowHTML = function (item) {
-    return `
-            <td class="py-4 px-5 font-medium">${escapeHtml(item.name)}</td>
-            <td class="py-4 px-5">${escapeHtml(window.formatLocalizedDate ? window.formatLocalizedDate(item.date) : item.date || '—')}</td>
-            <td class="py-4 px-5 font-mono text-sm">${escapeHtml(item.timeLabel || item.time || '—')}</td>
-            <td class="py-4 px-5">${escapeHtml(item.typeLabel || '—')}</td>
-            <td class="py-4 px-5 text-xs text-gray-500">${escapeHtml(item.timezone || 'Asia/Tehran')}</td>
-            <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5"><button type="button" onclick="cycleHolidayLeaveStatus(${item.id})" ${item.readOnly ? 'disabled title="این مورد متعلق به سازمان دیگری است"' : 'title="تغییر وضعیت"'} class="min-w-[92px] px-3 py-1.5 rounded-full text-xs font-medium disabled:cursor-not-allowed ${statusClass(item.status)}">${escapeHtml(item.status)}</button></td>
-            <td class="py-4 px-5 text-left">
+    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.name)}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `${escapeHtml(window.formatLocalizedDate ? window.formatLocalizedDate(item.date) : item.date || '—')}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.timeLabel || item.time || '—')}`, attributes: ` class="py-4 px-5 font-mono text-sm"` }, { html: `${escapeHtml(item.typeLabel || '—')}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.timezone || 'Asia/Tehran')}`, attributes: ` class="py-4 px-5 text-xs text-gray-500"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5"` }, { html: `<button type="button" onclick="cycleHolidayLeaveStatus(${item.id})" ${item.readOnly ? 'disabled title="این مورد متعلق به سازمان دیگری است"' : 'title="تغییر وضعیت"'} class="min-w-[92px] px-3 py-1.5 rounded-full text-xs font-medium disabled:cursor-not-allowed ${statusClass(item.status)}">${escapeHtml(item.status)}</button>`, attributes: ` class="py-4 px-5"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewHolidayLeave(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
                     ${item.readOnly ? '' : `<button onclick="toggleHolidayLeaveInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button><button onclick="deleteHolidayLeave(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>`}
                 </div>
-            </td>`;
+            `, attributes: ` class="py-4 px-5 text-left"` }]);
   };
   window.getHolidayLeaveEmptyRowHTML = function () {
-    return `<tr><td colspan="8" class="py-12 text-center text-gray-400">موردی یافت نشد</td></tr>`;
+    return window.AdminPanelTable.rowHTML([{ html: `موردی یافت نشد`, attributes: ` colspan="8" class="py-12 text-center text-gray-400"` }], ``);
   };
   window.getHolidayLeaveInlineExpandRowHTML = function (item) {
-    return `<td colspan="8" class="p-5 border-t">${window.getHolidayLeaveInlineEditRowHTML(item)}</td>`;
+    return window.AdminPanelTable.cellsHTML([{ html: `${window.getHolidayLeaveInlineEditRowHTML(item)}`, attributes: ` colspan="8" class="p-5 border-t"` }]);
   };
   window.getHolidayLeaveInlineEditRowHTML = function (item) {
     return `<div class="space-y-6">

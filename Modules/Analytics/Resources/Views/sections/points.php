@@ -55,35 +55,23 @@
     <!-- جدول -->
     <div class="bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1200px]" id="pointsTable">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortPointsBy('title')" class="flex items-center gap-1">عنوان <span id="pointSortIcon-title">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortPointsBy('type')" class="flex items-center gap-1">نوع <span id="pointSortIcon-type">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortPointsBy('category')" class="flex items-center gap-1">دسته <span id="pointSortIcon-category">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortPointsBy('points')" class="flex items-center gap-1">امتیاز <span id="pointSortIcon-points">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortPointsBy('source')" class="flex items-center gap-1">منبع / عملیات <span id="pointSortIcon-source">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            <button onclick="sortPointsBy('branchName')" class="flex items-center gap-1">شعبه <span id="pointSortIcon-branchName">↕</span></button>
-                        </th>
-                        <th class="text-right py-5 px-5 font-medium">
-                            کنترل تکرار / وضعیت
-                        </th>
-                        <th class="w-40 py-5 px-5"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y text-sm"></tbody>
-            </table>
+            <?php component('panel-table-template', [
+                'attributes' => ' class="w-full min-w-[1200px]" id="pointsTable"',
+                'headAttributes' => ' class="bg-gray-50 border-b"',
+                'headerRowAttributes' => '',
+                'bodyAttributes' => ' class="divide-y text-sm"',
+                'columns' => [
+                    ['html' => '<button onclick="sortPointsBy(\'title\')" class="flex items-center gap-1">عنوان <span id="pointSortIcon-title">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortPointsBy(\'type\')" class="flex items-center gap-1">نوع <span id="pointSortIcon-type">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortPointsBy(\'category\')" class="flex items-center gap-1">دسته <span id="pointSortIcon-category">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortPointsBy(\'points\')" class="flex items-center gap-1">امتیاز <span id="pointSortIcon-points">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortPointsBy(\'source\')" class="flex items-center gap-1">منبع / عملیات <span id="pointSortIcon-source">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortPointsBy(\'branchName\')" class="flex items-center gap-1">شعبه <span id="pointSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => 'کنترل تکرار / وضعیت', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
+                ],
+                'rows' => [],
+            ]); ?>
         </div>
         <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <span id="pointsPaginationInfo">نمایش ۱ تا ۱۰ از ۰ قانون</span>

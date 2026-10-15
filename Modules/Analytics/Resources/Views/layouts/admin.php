@@ -68,6 +68,7 @@
     pushScript('teacher-templates.js');
     pushScript('teachers.js');
     pushScript('branch-templates.js');
+    pushScript('panel-organization-filters.js');
     pushScript('branches.js');
     pushScript('branch-types.js');
     pushScript('classroom-templates.js');

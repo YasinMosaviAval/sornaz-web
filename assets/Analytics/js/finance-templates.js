@@ -43,20 +43,13 @@
           ? `<button onclick="openAcademySubscriptionPlans(${Number(item.subscriptionId)})" class="rounded-xl bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700">انتخاب پلن و پرداخت</button>`
           : '<span class="text-xs text-gray-400">—</span>'
         : `<div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap"><button onclick="viewTransaction(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button><button onclick="toggleFinanceInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button><button onclick="toggleFinanceInlineInstallments(${item.id})" class="text-emerald-600 hover:underline text-sm">مشاهده اقساط</button></div>`;
-    return `
-            <td class="py-4 px-5 font-medium">#${escapeHtml(item.id)} — ${escapeHtml(item.termName)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.course || '—')}</td>
-            <td class="py-4 px-5 font-medium">${Number(item.amount || 0).toLocaleString('fa-IR')}</td>
-            <td class="py-4 px-5">${escapeHtml(item.date || '—')}</td>
-            <td class="py-4 px-5"><span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td>
-            <td class="py-4 px-5 text-left">
+    return window.AdminPanelTable.cellsHTML([{ html: `#${escapeHtml(item.id)} — ${escapeHtml(item.termName)}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.course || '—')}`, attributes: ` class="py-4 px-5"` }, { html: `${Number(item.amount || 0).toLocaleString('fa-IR')}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `${escapeHtml(item.date || '—')}`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `
                 ${actions}
-            </td>`;
+            `, attributes: ` class="py-4 px-5 text-left"` }]);
   };
 
   window.getFinanceEmptyRowHTML = function () {
-    return `<tr><td colspan="7" class="py-12 text-center text-gray-400">فاکتوری یافت نشد</td></tr>`;
+    return window.AdminPanelTable.rowHTML([{ html: `فاکتوری یافت نشد`, attributes: ` colspan="7" class="py-12 text-center text-gray-400"` }], ``);
   };
 
   function financeInstallmentsPanel(item, isInline) {
@@ -94,7 +87,7 @@
   }
 
   window.getFinanceInlineInstallmentsRowHTML = function (item) {
-    return `<td colspan="7" class="p-5 border-t"><div class="rounded-2xl border border-gray-200 bg-white p-5">${financeInstallmentsPanel(item, true)}</div></td>`;
+    return window.AdminPanelTable.cellsHTML([{ html: `<div class="rounded-2xl border border-gray-200 bg-white p-5">${financeInstallmentsPanel(item, true)}</div>`, attributes: ` colspan="7" class="p-5 border-t"` }]);
   };
 
   window.getFinanceInstallmentsModalHTML = function (item) {
@@ -110,7 +103,7 @@
   };
 
   window.getFinanceInlineExpandRowHTML = function (item) {
-    return `<td colspan="7" class="p-5 border-t">${window.getFinanceInlineEditRowHTML ? window.getFinanceInlineEditRowHTML(item) : ''}</td>`;
+    return window.AdminPanelTable.cellsHTML([{ html: `${window.getFinanceInlineEditRowHTML ? window.getFinanceInlineEditRowHTML(item) : ''}`, attributes: ` colspan="7" class="p-5 border-t"` }]);
   };
 
   function formFields(item, prefix, isInvoiceEdit) {

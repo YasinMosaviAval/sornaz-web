@@ -92,24 +92,18 @@
   }
 
   window.getRuleRowHTML = function (item) {
-    return `
-            <td class="py-4 px-5 font-medium">${escapeHtml(item.title)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.branchName)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.type)}</td>
-            <td class="py-4 px-5">${escapeHtml(item.value)}</td>
-            <td class="py-4 px-5"><button type="button" ${item.canChangeStatus ? `onclick="cycleRuleStatus(${item.id})"` : 'disabled'} class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)} disabled:cursor-default">${escapeHtml(item.status)}</button></td>
-            <td class="py-4 px-5 text-left">
+    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.title)}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.type)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.value)}`, attributes: ` class="py-4 px-5"` }, { html: `<button type="button" ${item.canChangeStatus ? `onclick="cycleRuleStatus(${item.id})"` : 'disabled'} class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)} disabled:cursor-default">${escapeHtml(item.status)}</button>`, attributes: ` class="py-4 px-5"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewRule(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
                     ${item.canEdit ? `<button data-rule-inline-toggle="${item.id}" onclick="toggleRuleInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button><button onclick="deleteRule(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>` : ''}
                 </div>
-            </td>`;
+            `, attributes: ` class="py-4 px-5 text-left"` }]);
   };
   window.getRuleEmptyRowHTML = function () {
-    return `<tr><td colspan="6" class="py-12 text-center text-gray-400">قانونی یافت نشد</td></tr>`;
+    return window.AdminPanelTable.rowHTML([{ html: `قانونی یافت نشد`, attributes: ` colspan="6" class="py-12 text-center text-gray-400"` }], ``);
   };
   window.getRuleInlineExpandRowHTML = function (item) {
-    return `<td colspan="6" class="p-5 border-t">${window.getRuleInlineEditRowHTML(item)}</td>`;
+    return window.AdminPanelTable.cellsHTML([{ html: `${window.getRuleInlineEditRowHTML(item)}`, attributes: ` colspan="6" class="p-5 border-t"` }]);
   };
   window.getRuleInlineEditRowHTML = function (item) {
     return `<div class="rule-inline-editor space-y-6">

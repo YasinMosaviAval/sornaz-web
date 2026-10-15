@@ -81,24 +81,7 @@
   };
 
   window.renderDashboardBranchTabs = function () {
-    const container = document.getElementById('dashboardBranchTabs');
-    if (!container || !dashboardData) return;
-    container.dataset.selectedValue = String(currentDashboardBranch);
-    container.innerHTML = '';
-    [{ id: 'all', name: 'همه' }, ...(dashboardData.branches || [])].forEach((branch) => {
-      const active = String(currentDashboardBranch) === String(branch.id);
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className =
-        'dashboard-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border transition ' +
-        (active
-          ? 'bg-indigo-600 text-white border-indigo-600'
-          : 'border-gray-200 hover:bg-gray-50');
-      button.dataset.value = branch.id;
-      button.textContent = branch.name;
-      button.onclick = () => window.filterDashboardByBranch(branch.id);
-      container.appendChild(button);
-    });
+    window.renderPanelOrganizationTabs?.('dashboardBranchTabs', currentDashboardBranch, window.filterDashboardByBranch, { tabClass: 'dashboard-branch-tab' });
   };
 
   window.filterDashboardByBranch = async function (branchId) {

@@ -60,13 +60,7 @@ const termNameTemplates = [
 ];
 
 function getTermBranches() {
-  if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
-  return [
-    { id: 1, name: 'شعبه مرکزی' },
-    { id: 2, name: 'شعبه ونک' },
-    { id: 3, name: 'شعبه سعادت‌آباد' },
-    { id: 4, name: 'شعبه کرج' },
-  ];
+  return typeof allBranches !== 'undefined' ? allBranches.filter((branch) => branch.kind !== 'academy') : [];
 }
 
 function escapeHtml(value) {
@@ -364,64 +358,6 @@ function validateTermData(data) {
 }
 
 let allTerms = [];
-(function buildSampleTerms() {
-  const branches = getTermBranches();
-  const courses = allTermCourseOptions;
-  const classrooms = allTermClassroomOptions;
-  for (let i = 1; i <= 40; i++) {
-    const branch = branches[Math.floor(Math.random() * branches.length)];
-    const course = courses[Math.floor(Math.random() * courses.length)];
-    const classroom = classrooms[Math.floor(Math.random() * classrooms.length)];
-    const sessionCount = 6 + Math.floor(Math.random() * 6);
-    const sessions = buildSessions(sessionCount);
-    const teachers = pickN(allTermTeacherOptions, 1 + Math.floor(Math.random() * 2));
-    const students = pickN(allTermStudentOptions, 2 + Math.floor(Math.random() * 4));
-    const cost = (5 + Math.floor(Math.random() * 20)) * 500000;
-    const installments = [{ amount: Math.floor(cost / 2) }, { amount: Math.floor(cost / 2) }];
-    const currency = allTermCurrencies[Math.floor(Math.random() * allTermCurrencies.length)].name;
-    const discount = allTermDiscounts[Math.floor(Math.random() * allTermDiscounts.length)].name;
-    const status = termStatuses[Math.floor(Math.random() * termStatuses.length)];
-    const baseName = termNameTemplates[Math.floor(Math.random() * termNameTemplates.length)];
-
-    // sample attendance
-    const attendance = {};
-    sessions.forEach(function (_, si) {
-      const tMap = {};
-      const sMap = {};
-      teachers.forEach(function (t) {
-        tMap[String(t.id)] = Math.random() > 0.2;
-      });
-      students.forEach(function (s) {
-        sMap[String(s.id)] = Math.random() > 0.3;
-      });
-      attendance[String(si)] = { teachers: tMap, students: sMap };
-    });
-
-    allTerms.push({
-      id: i,
-      name: baseName + ' ۱۴۰۴ - ' + i,
-      branchId: branch.id,
-      branchName: branch.name,
-      courseId: course.id,
-      course: course.name,
-      classroomId: classroom.id,
-      classroom: classroom.name,
-      currency: currency,
-      discount: discount,
-      cost: cost,
-      summary: 'خلاصه ' + baseName + ' برای ' + course.name,
-      description: 'شرح ترم ' + baseName + ' مرتبط با ' + course.name + ' در ' + branch.name,
-      status: status,
-      teachers: teachers,
-      students: students,
-      sessions: sessions,
-      installments: installments,
-      start: sessions[0] ? sessions[0].date : '',
-      end: sessions.length ? sessions[sessions.length - 1].date : '',
-      attendance: attendance,
-    });
-  }
-})();
 
 // ==================== state ====================
 let termsCurrentPage = 1;
@@ -591,25 +527,8 @@ window.sortTermsBy = async function (field) {
 };
 
 // ==================== branch tabs ====================
-window.renderTermsBranchTabs = async function () {
-  const container = document.getElementById('termsBranchTabs');
-  if (!container) return;
-  container.querySelectorAll('.term-branch-tab:not(:first-child)').forEach(function (t) {
-    t.remove();
-  });
-  getTermBranches().forEach(function (b) {
-    const active = currentTermBranch == b.id;
-    const btn = document.createElement('button');
-    btn.className =
-      'term-branch-tab px-5 py-2.5 rounded-2xl text-sm font-medium border ' +
-      (active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50') +
-      ' transition';
-    btn.textContent = b.name;
-    btn.onclick = function () {
-      filterTermsByBranch(b.id);
-    };
-    container.appendChild(btn);
-  });
+window.renderTermsBranchTabs = function () {
+  window.renderPanelOrganizationTabs?.('termsBranchTabs', currentTermBranch, window.filterTermsByBranch, { tabClass: 'term-branch-tab' });
 };
 
 window.filterTermsByBranch = async function (branchId) {
@@ -871,7 +790,7 @@ window.renderTermsTable = async function (list) {
   tbody.innerHTML = '';
 
   if (!pageItems.length) {
-    tbody.innerHTML = window.getTermEmptyRowHTML ? window.getTermEmptyRowHTML() : '';
+    tbody.innerHTML = window.getTermEmptyRowHTML ? window.getTermEmptyRowHTML() : window.AdminPanelTable.rowHTML([{ html: "هیچ ترمی یافت نشد", attributes: " colspan=\"9\" class=\"py-12 text-center text-gray-400\"" }], "");
   } else {
     pageItems.forEach(function (item) {
       const statusClass =
@@ -882,13 +801,13 @@ window.renderTermsTable = async function (list) {
           'در انتظار تأیید': 'bg-yellow-100 text-yellow-700',
         }[item.status] || 'bg-gray-100 text-gray-600';
 
-      const tr = document.createElement('tr');
+      const tr = window.AdminPanelTable.createRow();
       tr.className = 'hover:bg-gray-50 transition';
       tr.innerHTML = window.getTermRowHTML ? window.getTermRowHTML(item, statusClass) : '';
       tbody.appendChild(tr);
 
       if (editingTermRowId === item.id) {
-        const expandRow = document.createElement('tr');
+        const expandRow = window.AdminPanelTable.createRow();
         expandRow.className = 'bg-gray-50 term-inline-expand';
         expandRow.innerHTML = window.getTermInlineExpandRowHTML
           ? window.getTermInlineExpandRowHTML(item)
@@ -896,7 +815,7 @@ window.renderTermsTable = async function (list) {
         tbody.appendChild(expandRow);
         restrictRecordedTermEditor('inlineTerm' + item.id);
       } else if (attendanceTermRowId === item.id) {
-        const expandRow = document.createElement('tr');
+        const expandRow = window.AdminPanelTable.createRow();
         expandRow.className = 'bg-gray-50 term-inline-expand';
         expandRow.innerHTML = window.getTermInlineAttendanceRowHTML
           ? window.getTermInlineAttendanceRowHTML(item)
@@ -912,7 +831,12 @@ window.renderTermsTable = async function (list) {
 
 function updateTermsPagination(total, start, end, totalPages) {
   const info = document.getElementById('termsPaginationInfo');
-  if (info?.parentElement) info.parentElement.classList.toggle('hidden', totalPages <= 1);
+  const shell = document.getElementById('termsPagination') || info?.closest('[data-slot="pagination"]') || info?.parentElement;
+  if (shell) {
+    shell.hidden = total <= termsPerPage;
+    shell.classList.toggle('hidden', total <= termsPerPage);
+    shell.style.display = total <= termsPerPage ? 'none' : '';
+  }
   if (info) {
     const from = total === 0 ? 0 : start + 1;
     const to = Math.min(end, total);
@@ -1394,7 +1318,7 @@ window.refreshTermDependencies = function (prefix) {
     room.innerHTML =
       '<option value="">انتخاب کلاس</option>' +
       termClassrooms
-        .filter((x) => branchIds.includes(x.branchId))
+        .filter((x) => branchIds.includes(x.branchId) || (organization?.kind === 'academy' && Number(x.branchId) === 0 && Number(x.academyId) === Number(organization.organizationId)))
         .map((x) => `<option value="${x.id}">${x.name}</option>`)
         .join('');
   }
@@ -1430,6 +1354,7 @@ window.refreshTermPeople = function (prefix, type) {
     available = termMembers.filter(
       (x) =>
         x.branchId === branch &&
+        (branch > 0 || Number(x.academyId) === Number(course.organizationId)) &&
         x.type === type &&
         (type !== 'teacher' || x.lessonId === course.lessonId)
     );
@@ -1624,7 +1549,8 @@ window.refreshTermOpenAvailability = async function (prefix) {
     return;
   }
   try {
-    const query = new URLSearchParams({ branch, classroom, weekday, duration });
+    const academy = Number(termClassrooms.find((room) => room.id === classroom)?.academyId || 0);
+    const query = new URLSearchParams({ branch, classroom, weekday, duration, academy });
     const data = await termApi('/academy/admin/term-available-times?' + query);
     if (box.dataset.availabilitySerial !== serial || !box.isConnected) return;
     const times = data.times || [];
