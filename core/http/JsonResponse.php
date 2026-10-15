@@ -18,7 +18,7 @@ class JsonResponse implements ResponseInterface
             [
                 'status' => $this->status,
                 'data' => $this->data
-            ],
+            ] + \Core\view\PageSourceTrace::jsonMetadata(),
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
         );
     }

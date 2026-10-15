@@ -75,12 +75,13 @@ class View
     public function render(): string
     {
         $path = $this->resolveViewPath();
+        if (PageSourceTrace::enabled()) PageSourceTrace::reset();
         extract($this->data);
         ob_start();
         require $path;
         $content = ob_get_clean();
         if (!$this->layout) {
-            return $content;
+            return PageSourceTrace::decorate($content);
         }
         $layoutPath = null;
         /*
@@ -127,6 +128,7 @@ class View
         // $content = $content; // برای سازگاری با Layoutهای قدیمی
         require $layoutPath;
         $html = ob_get_clean();
+        $html = PageSourceTrace::decorate($html);
         $trackingPath = base_path('assets/theme/user-tracking.js');
         $trackingTag = '<script src="/assets/theme/user-tracking.js?v=' . (file_exists($trackingPath) ? filemtime($trackingPath) : 1) . '"></script>';
         if (stripos($html, '</body>') !== false) {
@@ -176,7 +178,16 @@ class View
         foreach ($paths as $path) {
             if (file_exists($path)) {
                 extract($data);
-                require $path;
+                if (PageSourceTrace::enabled()) {
+                    $sourceBefore = PageSourceTrace::beginComponent($path);
+                    try {
+                        require $path;
+                    } finally {
+                        PageSourceTrace::endComponent($sourceBefore);
+                    }
+                } else {
+                    require $path;
+                }
                 return;
             }
         }

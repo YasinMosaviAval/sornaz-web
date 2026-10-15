@@ -83,6 +83,7 @@ Router::post('/academy/admin/national-holidays/{id}/status', [NationalHolidayCon
 Router::post('/academy/admin/national-holiday-settings/{academyId}', [NationalHolidayController::class, 'saveAcademySetting'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/branch-offerings/lessons', [AcademyBranchOfferingController::class, 'storeLesson'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/branch-offerings/lessons/{id}/update', [AcademyBranchOfferingController::class, 'updateLesson'])->middleware(['academy-panel', 'csrf']);
+Router::get('/academy/admin/branch-offerings/lessons/{id}/usage', [AcademyBranchOfferingController::class, 'lessonUsage'])->middleware('academy-panel');
 Router::post('/academy/admin/branch-offerings/lessons/{id}/status', [AcademyBranchOfferingController::class, 'cycleLessonStatus'])->middleware(['academy-panel', 'csrf']);
 Router::get('/academy/admin/branch-offerings/lessons/realtime-version', [AcademyBranchOfferingController::class, 'lessonsRealtimeVersion'])->middleware('academy-panel');
 Router::get('/academy/admin/branch-offerings/schedules/realtime-version', [AcademyBranchOfferingController::class, 'schedulesRealtimeVersion'])->middleware('academy-panel');

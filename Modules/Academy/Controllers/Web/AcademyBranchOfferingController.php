@@ -107,11 +107,22 @@ class AcademyBranchOfferingController
         }
     }
 
+    public function lessonUsage(int $id)
+    {
+        try {
+            return ResponseFactory::json(['success' => true, 'data' => $this->service->lessonUsage((int) auth()->id(), $id)]);
+        } catch (Throwable $e) {
+            return ResponseFactory::json(['success' => false, 'message' => 'دسترسی به وابستگی‌های این درس مجاز نیست.'], 403);
+        }
+    }
+
     public function delete(string $type, int $id)
     {
         try {
             $this->service->delete($type, $id, (int) auth()->id());
             return ResponseFactory::json(['success' => true]);
+        } catch (\Modules\Academy\Services\LessonInUseException $e) {
+            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage(), 'dependencies' => $e->dependencies], 409);
         } catch (Throwable $e) {
             return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
         }
