@@ -825,7 +825,7 @@
 
     const start = (branchSchedulesCurrentPage - 1) * branchSchedulesPerPage;
     const end = start + branchSchedulesPerPage;
-    const pageItems = list.slice(start, end);
+    const pageItems = window.AdminPanelTable.page?.('#branchSchedulesTable', list, start, end, () => window.renderBranchSchedulesTable(list)) ?? list.slice(start, end);
 
     tbody.innerHTML = '';
     if (!pageItems.length) {

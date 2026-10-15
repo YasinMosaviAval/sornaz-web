@@ -212,7 +212,7 @@
 
     const start = (notificationsCurrentPage - 1) * notificationsPerPage;
     const end = start + notificationsPerPage;
-    const pageItems = list.slice(start, end);
+    const pageItems = window.AdminPanelTable.page?.('#notificationsTable', list, start, end, () => window.renderNotificationsTable(list)) ?? list.slice(start, end);
 
     tbody.innerHTML = '';
     if (!pageItems.length) {

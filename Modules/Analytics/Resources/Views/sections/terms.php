@@ -28,10 +28,10 @@
         </div>
     </div>
 
-    <div class="mb-6 rounded-2xl border border-indigo-200 bg-indigo-50 p-4 text-sm leading-7 text-indigo-900">
-        <strong class="block">ترم‌ها را پیش از درخواست ثبت‌نام آماده کنید</strong>
-        برای ساعت‌های قابل ارائهٔ هر مدرس، ترم «باز» را بدون هنرجو و بدون تاریخ بسازید. مدرس، کلاس حضوری یا آنلاین، تعداد جلسات، دورهٔ تکرار و یک الگوی ساعت را مشخص کنید. پس از توافق با هنرجو، تاریخ جلسهٔ اول را هنگام فعال‌سازی انتخاب کنید.
-    </div>
+    <?php component('panel-page-guide', [
+        'title' => locale() === 'en' ? 'Prepare terms before accepting enrollment requests' : 'ترم‌ها را پیش از درخواست ثبت‌نام آماده کنید',
+        'paragraphs' => [locale() === 'en' ? 'Create an open term for each available teaching slot without a student or date. Specify the teacher, physical or online classroom, number of sessions, recurrence and time pattern. Once agreed with the student, select the first session date during activation.' : 'برای ساعت‌های قابل ارائهٔ هر مدرس، ترم «باز» را بدون هنرجو و بدون تاریخ بسازید. مدرس، کلاس حضوری یا آنلاین، تعداد جلسات، دورهٔ تکرار و یک الگوی ساعت را مشخص کنید. پس از توافق با هنرجو، تاریخ جلسهٔ اول را هنگام فعال‌سازی انتخاب کنید.'],
+    ]); ?>
 
     <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
         <div class="flex gap-2 min-w-max" id="termsBranchTabs">
@@ -112,8 +112,14 @@
                 'headerRowAttributes' => '',
                 'bodyAttributes' => ' class="divide-y text-sm"',
                 'columns' => [
+                    ['html' => '<button onclick="sortTermsBy(\'name\')" class="flex items-center gap-1"> نام ترم <span id="termSortIcon-name">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortTermsBy(\'branchName\')" class="flex items-center gap-1"> شعبه <span id="termSortIcon-branchName">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortTermsBy(\'course\')" class="flex items-center gap-1"> دوره مرتبط <span id="termSortIcon-course">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortTermsBy(\'start\')" class="flex items-center gap-1"> تاریخ شروع <span id="termSortIcon-start">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortTermsBy(\'end\')" class="flex items-center gap-1"> تاریخ پایان <span id="termSortIcon-end">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => 'روز برگزاری', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => 'ساعت برگزاری', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortTermsBy(\'status\')" class="flex items-center gap-1"> وضعیت <span id="termSortIcon-status">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '', 'attributes' => ' class="w-52 py-5 px-5"'],
                 ],
                 'rows' => [],

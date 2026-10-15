@@ -262,7 +262,7 @@ class NotationService
                     if (!is_int($n['beamGroup']) || $n['beamGroup'] < 1 || $n['beamGroup'] > 1000000 || $n['rest'] || $length > 120960 || isset($n['crossBeam'])) throw new RuntimeException('Invalid beam group.', 422);
                     $note['beamGroup'] = $n['beamGroup'];
                 }
-                foreach (['dynamic' => ['', 'ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff', 'sf', 'sff', 'sfff', 'sfz', 'sffz', 'sfffz', 'fz', 'ffz', 'fffz'], 'articulation' => ['', 'staccato', 'accent', 'tenuto', 'marcato', 'staccatissimo', 'fermata', 'breath', 'caesura'], 'bow' => ['', 'up', 'down'], 'ornament' => ['', 'trill', 'mordent', 'invertedMordent', 'turn', 'invertedTurn'], 'finger' => ['', '0', '1', '2', '3', '4', '5']] as $field => $values) {
+                foreach (['dynamic' => ['', 'ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff', 'sf', 'sff', 'sfff', 'sfz', 'sffz', 'sfffz', 'fz', 'ffz', 'fffz', 'fp'], 'articulation' => ['', 'staccato', 'accent', 'tenuto', 'marcato', 'staccatissimo', 'fermata', 'breath', 'caesura'], 'bow' => ['', 'up', 'down'], 'ornament' => ['', 'trill', 'mordent', 'invertedMordent', 'turn', 'invertedTurn'], 'finger' => ['', '0', '1', '2', '3', '4', '5']] as $field => $values) {
                     $value = $n[$field] ?? '';
                     if (!in_array($value, $values, true)) {
                         throw new RuntimeException('Invalid note marking.', 422);

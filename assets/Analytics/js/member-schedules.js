@@ -613,7 +613,7 @@
 
     const start = (memberSchedulesCurrentPage - 1) * memberSchedulesPerPage;
     const end = start + memberSchedulesPerPage;
-    const pageItems = list.slice(start, end);
+    const pageItems = window.AdminPanelTable.page?.('#memberSchedulesTable', list, start, end, () => window.renderMemberSchedulesTable(list)) ?? list.slice(start, end);
 
     tbody.innerHTML = '';
     if (!pageItems.length) {

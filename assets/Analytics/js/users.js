@@ -62,6 +62,8 @@
     if (q) p.set('search', q);
     if (s) p.set('status', s);
     if (b) p.set('branchId', b);
+    const table = document.getElementById('accessUsersTable') || document.getElementById('accessUsersBody')?.closest('table');
+    p.set('sortDirection', table?.dataset.adminIdentityDirection || 'desc');
     if (organizationFilter === 'academy') p.set('organization', 'academy');
     try {
       const d = await api('/analytics/admin-user-access?' + p);
@@ -103,14 +105,19 @@
     );
   }
   function render() {
-    document.getElementById('accessUsersBody').innerHTML = users.length
+    const tableRows = users.length
       ? users
           .map(
             (u) =>
-              window.AdminPanelTable.rowHTML([{ html: `<strong>${esc(u.name)}</strong>`, attributes: ` class="p-5"` }, { html: `${badges(u.roles, 'role')}`, attributes: ` class="p-5 space-x-1 space-x-reverse"` }, { html: `${badges(u.permissions, 'permission')}`, attributes: ` class="p-5 space-x-1 space-x-reverse"` }, { html: `${esc(statusLabel[u.status] || u.status || '—')}`, attributes: ` class="p-5"` }, { html: `<div class="flex flex-wrap gap-2">${u.canEdit === false ? '' : `<button type="button" onclick="openUserAccess(${u.id}, 'roles')" class="rounded-xl border px-4 py-2 text-indigo-600">تعیین نقش‌ها</button><button type="button" onclick="openUserAccess(${u.id}, 'permissions')" class="rounded-xl border px-4 py-2 text-indigo-600">تعیین دسترسی‌ها</button>`}<button type="button" onclick="viewUserAccess(${u.id})" class="rounded-xl border px-4 py-2 text-indigo-600">مشاهده دسترسی‌ها</button></div>`, attributes: ` class="p-5 text-left"` }], ``)
+              ({ cells: [{ html: `<strong>${esc(u.name)}</strong>`, attributes: ` class="p-5"` }, { html: `${badges(u.roles, 'role')}`, attributes: ` class="p-5 space-x-1 space-x-reverse"` }, { html: `${badges(u.permissions, 'permission')}`, attributes: ` class="p-5 space-x-1 space-x-reverse"` }, { html: `${esc(statusLabel[u.status] || u.status || '—')}`, attributes: ` class="p-5"` }, { html: `<div class="flex flex-wrap gap-2">${u.canEdit === false ? '' : `<button type="button" onclick="openUserAccess(${u.id}, 'roles')" class="rounded-xl border px-4 py-2 text-indigo-600">تعیین نقش‌ها</button><button type="button" onclick="openUserAccess(${u.id}, 'permissions')" class="rounded-xl border px-4 py-2 text-indigo-600">تعیین دسترسی‌ها</button>`}<button type="button" onclick="viewUserAccess(${u.id})" class="rounded-xl border px-4 py-2 text-indigo-600">مشاهده دسترسی‌ها</button></div>`, attributes: ` class="p-5 text-left"` }], attributes: `data-id="${u.id}"` })
           )
-          .join('')
-      : window.AdminPanelTable.rowHTML([{ html: "کاربری یافت نشد", attributes: " colspan=\"5\" class=\"p-12 text-center text-gray-400\"" }], "");
+      : [{ cells: [{ html: "کاربری یافت نشد", attributes: " colspan=\"5\" class=\"p-12 text-center text-gray-400\"" }] }];
+    const table = document.getElementById('accessUsersTable') || document.getElementById('accessUsersBody')?.closest('table');
+    if (window.AdminPanelTable.setRows) {
+      window.AdminPanelTable.setRows(table, tableRows, { onIdentitySort: () => loadAccessUsers(1), pageOffset: (page - 1) * perPage });
+    } else {
+      document.getElementById('accessUsersBody').innerHTML = tableRows.map(row => window.AdminPanelTable.rowHTML(row.cells, row.attributes)).join('');
+    }
     const pages = Math.max(1, Math.ceil(total / perPage)),
       start = (page - 1) * perPage;
     document.getElementById('accessUsersInfo').textContent =

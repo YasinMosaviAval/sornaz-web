@@ -175,11 +175,10 @@ class AcademyClassroomService
     private function roomOrganizations(int $actor, bool $admin): array
     {
         $out = [];
-        if (ClassroomOrganizationScope::supportsAcademies()) {
-            foreach (ClassroomOrganizationScope::academies($actor) as $academy) {
-                $id = (int) $academy['academy_id'];
-                $out[] = ['id' => $id, 'user_id' => (int) $academy['user_id'], 'kind' => 'academy', 'name' => $this->tr('academies', $id, 'title') ?: 'آموزشگاه ' . $id];
-            }
+        $supportsAcademies = ClassroomOrganizationScope::supportsAcademies();
+        foreach (ClassroomOrganizationScope::academies($actor) as $academy) {
+            $id = (int) $academy['academy_id'];
+            $out[] = ['id' => $id, 'user_id' => (int) $academy['user_id'], 'kind' => 'academy', 'name' => $this->tr('academies', $id, 'title', locale()) ?: 'آموزشگاه ' . $id, 'selectable' => $supportsAcademies];
         }
         foreach ($this->branches($actor, $admin) as $branch) {
             $id = (int) $branch['branch_id'];
@@ -192,7 +191,11 @@ class AcademyClassroomService
     {
         if (!empty($data['organizationUserId'])) {
             foreach ($this->roomOrganizations($actor, $admin) as $organization) {
-                if ((int) $organization['user_id'] === (int) $data['organizationUserId']) return $organization;
+                if ((int) $organization['user_id'] !== (int) $data['organizationUserId']) continue;
+                if (($organization['selectable'] ?? true) === false) {
+                    throw new RuntimeException('ثبت کلاس برای خود آموزشگاه هنوز فعال نشده است. لطفاً با مدیر سایت تماس بگیرید.');
+                }
+                return $organization;
             }
             throw new RuntimeException('سازمان خارج از محدوده مدیریت شما است.', 403);
         }

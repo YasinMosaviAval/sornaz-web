@@ -83,6 +83,7 @@ $panelTable0['attributes'] = ' class="w-full min-w-[900px] text-sm"';
 $panelTable0['headAttributes'] = ' class="bg-gray-50"';
 $panelTable0['headerRowAttributes'] = '';
 foreach ([['academy_name','آموزشگاه'],['name','شعبه'],['type','نوع'],['physical_type','ارائه'],['manager','مدیر'],['status','وضعیت']] as [$field,$label]):
+if ($field === 'academy_name' && !\Modules\System\Services\SiteAdminAccess::allows(auth()->user()) && ($previewPanelMode ?? '') !== 'admin') continue;
 $panelTable0CellAttributes = ' class="p-4 text-right"';
 ob_start(); ?><button type="button" onclick="sortBranchesBy('<?= $field ?>')" class="flex items-center gap-2 font-semibold"><?= $label ?><span id="branchSortIcon-<?= $field ?>">↕</span></button><?php $panelTable0['columns'][] = ['html' => ob_get_clean(), 'attributes' => $panelTable0CellAttributes, 'tag' => 'th'];
 endforeach;

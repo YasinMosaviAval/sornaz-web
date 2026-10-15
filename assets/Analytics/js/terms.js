@@ -785,7 +785,7 @@ window.renderTermsTable = async function (list) {
 
   const start = (termsCurrentPage - 1) * termsPerPage;
   const end = start + termsPerPage;
-  const pageItems = list.slice(start, end);
+  const pageItems = window.AdminPanelTable.page?.('#termsTable', list, start, end, () => window.renderTermsTable(list)) ?? list.slice(start, end);
 
   tbody.innerHTML = '';
 

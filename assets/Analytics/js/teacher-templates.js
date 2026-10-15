@@ -89,7 +89,7 @@
   }
   function staffRoleOptions(selected) {
     return renderOptions(
-      (window.staffCatalog?.roles || []).map((x) => ({ value: x.id, label: x.title })),
+      [{ value: '', label: document.documentElement.lang.startsWith('en') ? 'Select a role' : 'انتخاب نقش' }, ...(window.staffCatalog?.roles || []).map((x) => ({ value: x.id, label: x.title }))],
       selected
     );
   }
@@ -115,11 +115,11 @@
     );
     if (!matches.length && type === 'other') matches = roles.filter(scoped);
     const current = selected ?? role.value;
+    const english = document.documentElement.lang.startsWith('en');
     role.innerHTML = renderOptions(
-      matches.map((x) => ({ value: x.id, label: x.title })),
+      [{ value: '', label: matches.length ? (english ? 'Select a role' : 'انتخاب نقش') : (english ? 'No roles available' : 'نقش قابل انتخابی وجود ندارد') }, ...matches.map((x) => ({ value: x.id, label: x.title }))],
       current
     );
-    if (!role.value && matches[0]) role.value = String(matches[0].id);
   };
   window.updateStaffOrganization = function (prefix) {
     const org = document.getElementById(prefix + 'Organization'),

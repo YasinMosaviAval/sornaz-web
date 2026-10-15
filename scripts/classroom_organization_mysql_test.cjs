@@ -57,6 +57,10 @@ try{
  ];foreach($tables as $table=>$columns)$pdo->exec('CREATE TABLE '.$table.' ('.$columns.') ENGINE=InnoDB');
  $pdo->exec("INSERT INTO users VALUES(1,'admin','admin',NULL),(10,'academy','academy',NULL),(20,'academy','other',NULL),(11,'branch','branch',NULL);INSERT INTO academies VALUES(100,10,10,NULL),(200,20,20,NULL);INSERT INTO academy_branches VALUES(101,100,11,NULL),(201,200,21,NULL);INSERT INTO classroom_types VALUES(1,NULL,NULL,1,'music','approved',NOW(),NULL);INSERT INTO academy_branch_classrooms(classroom_id,branch_id,type_id,capacity,status) VALUES(1,101,1,5,'available');");
  roomCheck(!Modules\Academy\Services\ClassroomOrganizationScope::supportsAcademies(),'Legacy schema detected');
+ $organizationMethod=new ReflectionMethod(Modules\Academy\Services\AcademyClassroomService::class,'roomOrganizations');
+ $roomService=new Modules\Academy\Services\AcademyClassroomService(new Modules\System\Services\AccessControl());
+ $options=$organizationMethod->invoke($roomService,10,false);
+ roomCheck($options[0]['kind']==='academy'&&$options[0]['user_id']===10&&!$options[0]['selectable'],'Legacy schema keeps academy visible but unavailable');
  roomCheck(count(Modules\Academy\Services\ClassroomOrganizationScope::rooms([101],[100]))===1,'Legacy room preserved');
  $legacyPdo->exec('CREATE TABLE academy_branch_classrooms(branch_id BIGINT UNSIGNED NOT NULL,deleted_at DATETIME) ENGINE=InnoDB');
  $result=applyRoomMigration($pdo,$sql);
@@ -73,6 +77,14 @@ try{
  roomCheck((int)$pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='p_academy_branch_classrooms' AND COLUMN_NAME='academy_id'")->fetchColumn()===0,'Empty additive schema rollback works');
  foreach(explode(';',$sql)as $statement)if(trim($statement)!=='')$pdo->query($statement)->closeCursor();
  $service=new Modules\Academy\Services\AcademyClassroomService(new Modules\System\Services\AccessControl());
+ $pdo->exec("INSERT INTO users VALUES(30,'human','graded_manager',NULL),(31,'human','branch_manager',NULL),(32,'human','teacher',NULL);
+ INSERT INTO access_system_roles VALUES(30,'academy_manager_grade_1',NULL),(31,'academy_branch_manager_grade_1',NULL),(32,'academy_teacher_grade_1',NULL);
+ INSERT INTO academy_branch_members VALUES(30,100,NULL,30,'active',NULL),(31,100,101,31,'active',NULL),(32,100,NULL,32,'active',NULL);
+ INSERT INTO academy_branch_member_roles VALUES(30,30,30,NULL),(31,31,31,NULL),(32,32,32,NULL);");
+ $options=$organizationMethod->invoke($service,30,false);
+ roomCheck($options[0]['kind']==='academy'&&$options[0]['selectable']&&$options[0]['user_id']===10,'Graded academy manager can select academy');
+ roomCheck(array_column(Modules\Academy\Services\ClassroomOrganizationScope::academies(31),'academy_id')===[],'Branch manager cannot select parent academy');
+ roomCheck(Modules\Academy\Services\ClassroomOrganizationScope::academies(32)===[],'Teacher cannot select academy');
  $data=['organizationUserId'=>10,'typeId'=>1,'name'=>'Synthetic academy room','capacity'=>5,'equipment'=>[]];
  $room=$service->saveRoom(10,$data,false);roomCheck($room['organizationKind']==='academy'&&$room['academyId']===100&&$room['branchId']===0,'Academy room created');
  roomCheck($room['organizationUserId']===10,'Organization user returned');

@@ -46,6 +46,7 @@ Router::post('/analytics/mobile-contact/commit', [\Modules\Analytics\Controllers
 Router::get('/analytics/personal-data/lessons', [\Modules\Analytics\Controllers\Web\PersonalPanelDataController::class, 'lessons'])->middleware('auth');
 Router::get('/analytics/personal-data/schedules', [\Modules\Analytics\Controllers\Web\PersonalPanelDataController::class, 'schedules'])->middleware('auth');
 Router::get('/analytics/personal-data/finance', [\Modules\Analytics\Controllers\Web\PersonalPanelDataController::class, 'finance'])->middleware('auth');
+Router::get('/analytics/personal-data/waiting', [\Modules\Analytics\Controllers\Web\PersonalPanelDataController::class, 'waiting'])->middleware('auth');
 Router::get('/analytics/personal-data/gallery', [\Modules\Analytics\Controllers\Web\PersonalPanelDataController::class, 'gallery'])->middleware('auth');
 Router::post('/analytics/personal-data/gallery', [\Modules\Analytics\Controllers\Web\PersonalPanelDataController::class, 'createGallery'])->middleware(['auth', 'csrf']);
 Router::post('/analytics/personal-data/gallery/{id}/update', [\Modules\Analytics\Controllers\Web\PersonalPanelDataController::class, 'updateGallery'])->middleware(['auth', 'csrf']);
@@ -156,6 +157,8 @@ Router::post('/analytics/admin-permissions/{id}/delete', [AdminAccessCatalogCont
 Router::get('/analytics/admin-site-pages', [SitePageContentController::class, 'pages'])->middleware('academy-panel');
 Router::get('/analytics/site-page-content', [SitePageContentController::class, 'content']);
 Router::post('/analytics/admin-site-page-content', [SitePageContentController::class, 'save'])->middleware(['site-admin', 'csrf']);
+Router::get('/analytics/panel-guides', [SitePageContentController::class, 'panelGuides'])->middleware('auth');
+Router::post('/analytics/admin-panel-guide', [SitePageContentController::class, 'savePanelGuide'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-guides', [AdminGuideController::class, 'save'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/_test/seed-academy-managers', [AdminTestController::class, 'seedAcademyManagers'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/_test/delete-academy-managers', [AdminTestController::class, 'deleteAcademyManagers'])->middleware(['site-admin', 'csrf']);

@@ -138,6 +138,9 @@
     pushScript('admin-inline-editor.js');
     ?>
     <div id="modalContainer"></div>
+    <?php component('panel-page-guide', ['asTemplate' => true]); ?>
+    <script>window.canEditPanelGuides=<?= (int) auth()->id() === 1 ? 'true' : 'false' ?>;</script>
+    <script src="/assets/Analytics/js/panel-page-guides.js?v=<?= filemtime(base_path('assets/Analytics/js/panel-page-guides.js')) ?: 1 ?>" defer></script>
     <script>window.adminLocale=<?= json_encode(locale()) ?>;window.adminUiMap=<?= json_encode($adminUiMap??[],JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
     <script src="/assets/theme/dialog.js?v=<?= filemtime(base_path('assets/theme/dialog.js')) ?: 1 ?>"></script>
     <script src="/assets/Analytics/js/network.js?v=<?= filemtime(base_path('assets/Analytics/js/network.js')) ?: 1 ?>"></script>

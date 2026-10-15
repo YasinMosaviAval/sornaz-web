@@ -13,7 +13,42 @@
 
   // HTML/attribute fragments are escaped by the page's existing trusted cell renderer.
   // Plain `value` is always escaped here. No rendered DOM is read back into a data model.
+  const tableSources = new WeakMap();
   window.AdminPanelTable = {
+    setRows(table, rows, options = {}) {
+      if (typeof table === 'string') table = document.querySelector(table);
+      if (!table?.tBodies[0]) return;
+      if (options.onIdentitySort) tableSources.set(table, { render: options.onIdentitySort });
+      if (options.pageOffset != null) table.dataset.adminPageOffset = String(options.pageOffset);
+      table.tBodies[0].innerHTML = rows.map(row => this.rowHTML(row.cells || row, row.attributes)).join('');
+      const section = table.closest('#mainContent > .section');
+      if (section) {
+        normalizeTable(table, section);
+        applySharedAppearance(section);
+      }
+      enhanceIdentityColumn(table);
+    },
+    // Sort the complete filtered dataset before taking the requested page.
+    // Keep page renderers as the source of truth; never collect data from DOM rows.
+    page(table, rows, start, end, render, identity = (row) => row.id ?? row.user_id) {
+      if (typeof table === 'string') table = document.querySelector(table);
+      if (!table) return rows.slice(start, end);
+      tableSources.set(table, { render });
+      table.dataset.adminPageOffset = String(start);
+      table.dataset.adminIdentityActive ??= '1';
+      table.dataset.adminIdentityDirection ||= 'asc';
+      let ordered = rows;
+      if (table.dataset.adminIdentityActive === '1') {
+        const factor = table.dataset.adminIdentityDirection === 'desc' ? -1 : 1;
+        ordered = rows.slice().sort((a, b) => {
+          const av = identity(a), bv = identity(b);
+          if (av == null) return bv == null ? 0 : 1;
+          if (bv == null) return -1;
+          return String(av).localeCompare(String(bv), undefined, { numeric: true }) * factor;
+        });
+      }
+      return ordered.slice(start, end);
+    },
     cellsHTML(cells, heading = false) {
       return cells.map((cell) => {
         if (cell && typeof cell === 'object' && 'fragment' in cell) return cell.fragment || '';
@@ -328,7 +363,7 @@
 
   function updateIdentityCells(table, kind) {
     Array.from(table.tBodies).forEach((body) => {
-      let index = 0;
+      let index = Number(table.dataset.adminPageOffset || 0);
       dataRows(body).forEach((row) => {
         index++;
         let cell = row.querySelector(':scope > [data-admin-identity-cell]');
@@ -379,6 +414,7 @@
     }
     injectedHeading.dataset.adminColumnKind = kind;
     table.dataset.adminColumnKind = kind;
+    table.dataset.adminIdentityDirection ||= 'asc';
     const direction = table.dataset.adminIdentityDirection || 'asc';
     const identityIsActive = table.dataset.adminIdentityActive !== '0';
     if (kind === 'id') {
@@ -387,6 +423,12 @@
       injectedHeading.querySelector('button').onclick = () => {
         const next = table.dataset.adminIdentityDirection === 'asc' ? 'desc' : 'asc';
         table.dataset.adminIdentityActive = '1';
+        table.dataset.adminIdentityDirection = next;
+        const source = tableSources.get(table);
+        if (source) {
+          Promise.resolve(source.render()).then(() => enhanceIdentityColumn(table));
+          return;
+        }
         sortIdentityRows(table, next);
         updateIdentityCells(table, kind);
         table.dataset.adminIdentitySignature = dataRows(table.tBodies[0])
@@ -397,10 +439,9 @@
       };
     } else injectedHeading.textContent = 'ردیف';
     const signature = identities.join('|');
-    if (kind === 'id' && table.dataset.adminIdentityInitialized !== '1') {
-      sortIdentityRows(table, 'asc');
-      table.dataset.adminIdentityDirection = 'asc';
-      table.dataset.adminIdentityActive = '1';
+    if (kind === 'id' && table.dataset.adminIdentityActive !== '0') {
+      // Non-paginated tables contain the complete dataset in their body.
+      if (!tableSources.has(table)) sortIdentityRows(table, direction);
       table.dataset.adminIdentityInitialized = '1';
     }
     table.dataset.adminIdentitySignature = dataRows(table.tBodies[0]).map(rowIdentity).join('|');
@@ -463,22 +504,15 @@
     // پس از ثبت handlerهای صفحه، رندرکننده‌های جدول فقط یک‌بار بسته‌بندی می‌شوند.
     // queueMicrotask اجرای آن را به انتهای همان رویداد، پیش از repaint، منتقل می‌کند.
     window.queueMicrotask(wrapTableRenderers);
+    // Deactivate identity sorting BEFORE a page's native column handler renders.
+    document.addEventListener('click', (event) => {
+      const heading = event.target.closest?.('#mainContent th:not([data-admin-identity-column])');
+      if (heading) heading.closest('table').dataset.adminIdentityActive = '0';
+    }, true);
     // رویداد در فاز bubble اجرا می‌شود؛ بنابراین handler خود صفحه ابتدا جدول را
     // بازسازی می‌کند و ستون مشترک پیش از repaint همان فریم برمی‌گردد.
     const refresh = (event) => {
       if (!event.target.closest?.('#mainContent')) return;
-      const nativeHeading =
-        event.type === 'click'
-          ? event.target.closest('th:not([data-admin-identity-column])')
-          : null;
-      if (nativeHeading) {
-        const section = nativeHeading.closest('#mainContent > .section');
-        (section || document)
-          .querySelectorAll('table[data-admin-identity-initialized="1"]')
-          .forEach((table) => {
-            table.dataset.adminIdentityActive = '0';
-          });
-      }
       enhanceAllIdentityColumns();
     };
     document.addEventListener('click', refresh);

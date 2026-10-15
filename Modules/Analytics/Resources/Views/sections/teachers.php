@@ -29,10 +29,10 @@
         </div>
     </div>
 
-    <div class="mb-6 rounded-2xl border border-indigo-200 bg-indigo-50 p-4 text-sm leading-7 text-indigo-900">
-        <strong class="block">پیش از پذیرش هنرجو برای مدرس جدید</strong>
-        پس از ثبت استاد، همهٔ روزها و ساعت‌های قابل تدریس او را در «زمان‌بندی اعضا» ثبت کنید. سپس در «مدیریت ترم‌ها» برای هر ساعت قابل ارائه، ترم بازی بدون هنرجو و تاریخ با مدرس، کلاس برگزاری، تعداد جلسات و الگوی ساعت بسازید. تاریخ جلسهٔ اول هنگام فعال‌سازی ثبت‌نام تعیین می‌شود.
-    </div>
+    <?php component('panel-page-guide', [
+        'title' => locale() === 'en' ? 'Before accepting students for a new teacher' : 'پیش از پذیرش هنرجو برای مدرس جدید',
+        'paragraphs' => [locale() === 'en' ? 'After registering a teacher, enter all available teaching days and times in Member schedules. Then create an open term for each available slot without a student or date, specifying the teacher, classroom, session count and time pattern. Set the first session date when activating enrollment.' : 'پس از ثبت استاد، همهٔ روزها و ساعت‌های قابل تدریس او را در «زمان‌بندی اعضا» ثبت کنید. سپس در «مدیریت ترم‌ها» برای هر ساعت قابل ارائه، ترم بازی بدون هنرجو و تاریخ با مدرس، کلاس برگزاری، تعداد جلسات و الگوی ساعت بسازید. تاریخ جلسهٔ اول هنگام فعال‌سازی ثبت‌نام تعیین می‌شود.'],
+    ]); ?>
 
     <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
         <div class="flex gap-2 min-w-max" id="staffBranchTabs">
@@ -92,6 +92,15 @@
                 'headerRowAttributes' => '',
                 'bodyAttributes' => ' class="divide-y text-sm"',
                 'columns' => [
+                    ['html' => '<button onclick="sortStaffBy(\'name\')" class="flex items-center gap-1"> نام <span id="sortIcon-name">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortStaffBy(\'typeLabel\')" class="flex items-center gap-1"> نوع قرارداد <span id="sortIcon-typeLabel">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortStaffBy(\'contractTitle\')" class="flex items-center gap-1"> عنوان قرارداد <span id="sortIcon-contractTitle">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortStaffBy(\'branch\')" class="flex items-center gap-1"> سازمان <span id="sortIcon-branch">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortStaffBy(\'lessonName\')" class="flex items-center gap-1"> درس <span id="sortIcon-lessonName">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortStaffBy(\'startDate\')" class="flex items-center gap-1"> تاریخ شروع <span id="sortIcon-startDate">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortStaffBy(\'endDate\')" class="flex items-center gap-1"> تاریخ خاتمه <span id="sortIcon-endDate">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortStaffBy(\'price\')" class="flex items-center gap-1"> مبلغ قرارداد <span id="sortIcon-price">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortStaffBy(\'status\')" class="flex items-center gap-1"> وضعیت <span id="sortIcon-status">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
                 ],
                 'rows' => [],

@@ -7,6 +7,7 @@ use Core\router\Router;
 use Modules\System\Services\MobileAuthTokenService;
 use Modules\Analytics\Services\MobilePanelAccess;
 use Modules\Analytics\Services\MobilePanelCatalog;
+use Modules\Analytics\Services\MobilePanelNavigation;
 
 /** Native clients invoke an explicit catalog of existing application operations.
  * No HTML, web session, arbitrary URL or client-supplied role is accepted.
@@ -25,7 +26,8 @@ final class MobilePanelController
             foreach ($sections as &$section) {
                 $section['actions'] = array_filter($section['actions'], fn (array $action) => (empty($action['admin']) || $capabilities['admin']) && (empty($action['access']) || !empty($capabilities[$action['access']])));
             } unset($section);
-            return ResponseFactory::json(['sections' => array_values($sections)]);
+            $navigation = (new MobilePanelNavigation())->forCurrentUser($sections, $capabilities);
+            return ResponseFactory::json(['sections' => array_values($sections), 'navigationVersion' => 1, 'navigation' => $navigation]);
         });
     }
 

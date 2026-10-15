@@ -56,7 +56,7 @@
 
   window.getClassroomEquipmentFieldHTML = function (item = {}) {
     return `
-            <div class="border border-gray-200 rounded-2xl p-4 mb-3 equipment-item">
+            <div class="mb-2 equipment-item">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                     <div class="sm:col-span-2">
                         <label class="text-xs text-gray-500 mb-1 block">نام تجهیز</label>
@@ -75,8 +75,9 @@
 
   function classroomFormFields(item, prefix) {
     const id = (name) => (prefix ? `${prefix}${name}` : `classroom${name}`);
-    const organizations = (window.classroomOrganizations || []).map((o) => ({ value: o.user_id, label: o.name }));
-    const organizationUserId = item.organizationUserId || (window.classroomOrganizations || []).find((o) => o.kind === 'branch' && o.id === item.branchId)?.user_id || organizations[0]?.value || '';
+    const organizations = window.classroomOrganizations || [];
+    const organizationUserId = item.organizationUserId || organizations.find((o) => o.kind === 'branch' && o.id === item.branchId)?.user_id || organizations.find((o) => o.selectable !== false)?.user_id || '';
+    const organizationOptions = organizations.map((o) => `<option value="${escapeHtml(o.user_id)}" ${String(o.user_id) === String(organizationUserId) ? 'selected' : ''} ${o.selectable === false ? 'disabled' : ''}>${escapeHtml(o.name)}</option>`).join('');
     const types = (typeof allClassroomTypes !== 'undefined' ? allClassroomTypes : []).map((t) => ({
       value: t.id,
       label: t.name,
@@ -105,7 +106,6 @@
                     <select id="${id('Type')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                         ${renderOptions(types, item.typeId || (types[0] && types[0].value))}
                     </select>
-                    ${window.classroomPermissions?.canCreate ? '<button type="button" onclick="promptAddClassroomType()" class="text-sm text-indigo-600 mt-1">+ نوع جدید</button>' : ''}
                 </div>
                 ${
                   window.classroomPermissions?.isBranchContext
@@ -113,7 +113,7 @@
                     : `<div>
                     <label class="block text-sm font-medium mb-2">سازمان *</label>
                     <select id="${id('Organization')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        <option value="">سازمان را انتخاب کنید</option>${renderOptions(organizations, organizationUserId)}
+                        <option value="">سازمان را انتخاب کنید</option>${organizationOptions}
                     </select>
                 </div>`
                 }
@@ -132,8 +132,8 @@
                 </div>`
                 }
             </div>
-            <div class="mt-5"><label class="block text-sm font-medium mb-2">خلاصه کلاس</label><textarea id="${id('Summary')}" rows="2" class="w-full border border-gray-300 rounded-2xl py-3 px-4">${escapeHtml(item.summary || '')}</textarea></div>
-            <div class="mt-5"><label class="block text-sm font-medium mb-2">شرح کلاس</label><textarea id="${id('Description')}" rows="4" class="w-full border border-gray-300 rounded-2xl py-3 px-4">${escapeHtml(item.description || '')}</textarea></div>
+            <div class="mt-5"><label class="block text-sm font-medium mb-2">خلاصه</label><textarea id="${id('Summary')}" rows="2" class="w-full border border-gray-300 rounded-2xl py-3 px-4">${escapeHtml(item.summary || '')}</textarea></div>
+            <div class="mt-5"><label class="block text-sm font-medium mb-2">شرح</label><textarea id="${id('Description')}" rows="4" class="w-full border border-gray-300 rounded-2xl py-3 px-4">${escapeHtml(item.description || '')}</textarea></div>
             <div class="mt-5">
                 <label class="block text-sm font-medium mb-2">تجهیزات</label>
                 <div id="${equipContainer}">${equipHtml}</div>

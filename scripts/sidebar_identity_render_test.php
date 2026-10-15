@@ -43,9 +43,12 @@ namespace {
         if (str_contains($html, 'white_logo_transparent.png')) throw new \RuntimeException('Old site logo remains');
         if ($type !== 'admin' && str_contains($html, 'lessonsSubmenu')) throw new \RuntimeException("$type still has lessons submenu");
         if ($type !== 'admin' && str_contains($html, "showSection('notation')")) throw new \RuntimeException('Non-admin notation menu is visible');
-        if ($type === 'admin' && (substr_count($html, "showSection('classrooms')") !== 1 || strpos($html, "showSection('classrooms')") < strpos($html, "showSection('branches')") || strpos($html, "showSection('classrooms')") > strpos($html, 'profilesSubmenu'))) {
-            throw new \RuntimeException('Admin classrooms must appear once immediately after branches');
+        if ($type === 'admin' && (substr_count($html, "showSection('teachers')") !== 1 || strpos($html, "showSection('teachers')") < strpos($html, "showSection('branches')") || strpos($html, "showSection('teachers')") > strpos($html, 'profilesSubmenu'))) {
+            throw new \RuntimeException('Admin employees must appear once immediately after branches');
         }
+        if ($type === 'academy' && strpos($html, "showSection('classrooms')") > strpos($html, "showSection('teachers')")) throw new \RuntimeException('Academy classrooms must appear before employees');
+        if (str_contains($html, "showSection('courses')")) throw new \RuntimeException('Courses still have a standalone sidebar entry');
+        if ($type === 'admin' && !str_contains($html, '<button type="button" onclick="showSection(\'lessons\')"')) throw new \RuntimeException('Lesson sidebar entry must open lessons, independent of tab order');
         if ($type === 'academy' && (str_contains($html, 'profilesSubmenu') || str_contains($html, "showSection('users')") || !str_contains($html, "showSection('teachers')"))) {
             throw new \RuntimeException('Academy roles must open through employee tabs');
         }

@@ -1,4 +1,5 @@
 <div id="courses" class="section hidden">
+    <?php component('lesson-page-tabs', ['active' => 'courses']); ?>
     <style>
         .course-inline-expand { animation: courseSlideDown 220ms ease-out forwards; }
         @keyframes courseSlideDown {
@@ -80,6 +81,13 @@
                 'headerRowAttributes' => '',
                 'bodyAttributes' => ' class="divide-y text-sm"',
                 'columns' => [
+                    ['html' => '<button onclick="sortCoursesBy(\'name\')" class="flex items-center gap-1"> نام دوره <span id="courseSortIcon-name">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortCoursesBy(\'level\')" class="flex items-center gap-1"> سطح <span id="courseSortIcon-level">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortCoursesBy(\'branchName\')" class="flex items-center gap-1"> سازمان <span id="courseSortIcon-branchName">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortCoursesBy(\'instrument\')" class="flex items-center gap-1"> درس <span id="courseSortIcon-instrument">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortCoursesBy(\'teacher_capacity\')" class="flex items-center gap-1"> ظرفیت اساتید <span id="courseSortIcon-teacher_capacity">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortCoursesBy(\'student_capacity\')" class="flex items-center gap-1"> ظرفیت هنرجوها <span id="courseSortIcon-student_capacity">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortCoursesBy(\'status\')" class="flex items-center gap-1"> وضعیت <span id="courseSortIcon-status">↕</span> </button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
                 ],
                 'rows' => [],

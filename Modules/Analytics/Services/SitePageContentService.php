@@ -7,6 +7,44 @@ use RuntimeException;
 
 class SitePageContentService
 {
+    public function panelGuides(): array
+    {
+        if (!(int) auth()->id()) throw new RuntimeException('ورود به حساب کاربری الزامی است.', 403);
+        $pages = DB::table('f_settings')->where('table_name', 'site_page_content')->where('page', 'LIKE', 'panel-%')->whereNull('deleted_at')->get();
+        $out = [];
+        foreach (array_unique(array_column($pages, 'page')) as $page) {
+            foreach ($this->content($page, locale()) as $item) {
+                $field = substr($item['key'], strrpos($item['key'], '.') + 1);
+                if (in_array($field, ['title', 'body'], true)) $out[substr($page, 6)][$field] = ['fa' => $item['fa'] ?? '', 'en' => $item['en'] ?? ''];
+            }
+        }
+        return $out;
+    }
+
+    private function requireGuideEditor(int $actor): void
+    {
+        if ($actor !== 1 || (int) auth()->id() !== 1) throw new RuntimeException('ویرایش توضیحات فقط برای مدیر اصلی سایت مجاز است.', 403);
+    }
+
+    public function savePanelGuide(int $actor, array $data): void
+    {
+        $this->requireGuideEditor($actor);
+        $page = $this->validPage((string) ($data['page'] ?? ''));
+        if (!str_starts_with($page, 'panel-')) throw new RuntimeException('صفحهٔ پنل معتبر نیست.', 422);
+        $items = [];
+        foreach (['title', 'body'] as $field) {
+            $item = ['page' => $page, 'kind' => 'text', 'key' => 'site.page.' . $page . '.text.' . $field];
+            foreach (['fa', 'en'] as $language) {
+                if (!is_array($data[$language] ?? null)) throw new RuntimeException('ترجمهٔ توضیحات معتبر نیست.', 422);
+                $item[$language] = ContentSafety::text($data[$language][$field] ?? '', $field === 'title' ? 200 : 20000, true);
+            }
+            $items[] = $this->validatedContent($item);
+        }
+        transaction(function () use ($actor, $items) {
+            foreach ($items as $item) $this->persistContent($actor, $item);
+        });
+    }
+
     private const PAGES = [
         ['id' => 'home', 'title' => 'خانه', 'route' => '/'], ['id' => 'articles', 'title' => 'مقاله‌های آموزشی', 'route' => '/analytics/articles'], ['id' => 'article-details', 'title' => 'نمایش مقاله', 'route' => '/analytics/article-details'], ['id' => 'academies', 'title' => 'آموزشگاه‌ها', 'route' => '/academy/academies'], ['id' => 'users', 'title' => 'کاربران', 'route' => '/users'], ['id' => 'about-us', 'title' => 'درباره ما', 'route' => '/page/about-us'], ['id' => 'contact-us', 'title' => 'تماس با ما', 'route' => '/page/contact-us'], ['id' => 'login', 'title' => 'ورود', 'route' => '/system/login'], ['id' => 'register', 'title' => 'ثبت‌نام', 'route' => '/system/register'], ['id' => 'forgot-password', 'title' => 'فراموشی رمز عبور', 'route' => '/system/forgot-password']];
 
@@ -30,6 +68,7 @@ class SitePageContentService
     public function content(string $page, string $locale): array
     {
         $page = $this->validPage($page);
+        if (str_starts_with($page, 'panel-') && !(int) auth()->id()) throw new RuntimeException('ورود به حساب کاربری الزامی است.', 403);
         $locale = in_array($locale, ['fa', 'en'], true) ? $locale : 'fa';
         $out = [];
         foreach (DB::table('f_settings')->where('table_name', 'site_page_content')->where('page', $page)->whereNull('deleted_at')->get() as $r) {
@@ -51,6 +90,7 @@ class SitePageContentService
 
     public function save(int $actor, array $d): void
     {
+        if (str_starts_with((string) ($d['page'] ?? ''), 'panel-')) $this->requireGuideEditor($actor);
         $d = $this->validatedContent($d);
         transaction(fn () => $this->persistContent($actor, $d));
     }
@@ -98,6 +138,7 @@ class SitePageContentService
         $kind = ContentSafety::text($d['kind'] ?? '', 10, true);
         $key = ContentSafety::text($d['key'] ?? '', 200, true);
         $prefix = 'site.page.' . $d['page'] . '.' . $kind . '.';
+        if (str_starts_with($d['page'], 'panel-') && ($kind !== 'text' || !in_array($key, [$prefix . 'title', $prefix . 'body'], true))) throw new RuntimeException('کلید توضیحات معتبر نیست.', 422);
         if (!in_array($kind, ['text', 'image', 'icon'], true) || !str_starts_with($key, $prefix)) {
             throw new RuntimeException('Invalid content key.', 422);
         }
@@ -117,6 +158,7 @@ class SitePageContentService
 
     private function validPage(string $page): string
     {
+        if (preg_match('/^panel-[a-z][a-z0-9-]{0,44}$/D', $page)) return $page;
         foreach (self::PAGES as $p) {
             if ($p['id'] === $page) {
                 return $page;

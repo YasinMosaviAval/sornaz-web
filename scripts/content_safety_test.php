@@ -97,4 +97,19 @@ check($pages->content('home', 'en')[0]['value'] === 'Hello', 'Bilingual page con
 $pdo->exec("CREATE TRIGGER fail_page_translation BEFORE UPDATE ON f_translations WHEN NEW.locale='en' BEGIN SELECT RAISE(ABORT,'fixture failure'); END;");
 try { $pages->save(1, array_replace($valid, ['fa' => 'تغییر', 'en' => 'Changed'])); throw new LogicException('Storage failure accepted'); } catch (PDOException) {}
 check($pages->content('home', 'fa')[0]['value'] === 'سلام', 'Failed bilingual save was not rolled back');
+function auth(): object { return new class { public function id(): int { return $GLOBALS['guideActor'] ?? 1; } }; }
+function locale(): string { return 'fa'; }
+$guide = ['page' => 'panel-classrooms', 'fa' => ['title' => 'راهنما', 'body' => 'متن فارسی'], 'en' => ['title' => 'Guide', 'body' => 'English text']];
+$pages->savePanelGuide(1, $guide);
+check($pages->panelGuides()['classrooms']['body']['en'] === 'English text', 'Saved panel guidance not published bilingually');
+$GLOBALS['guideActor'] = 2;
+foreach ([fn () => $pages->savePanelGuide(2, $guide), fn () => $pages->save(2, ['page' => 'panel-classrooms']), fn () => $pages->savePanelGuide(1, $guide)] as $operation) {
+    try { $operation(); throw new LogicException('Non-founder edited guidance'); } catch (RuntimeException $e) { check($e->getCode() === 403, 'Founder-only guidance boundary lost'); }
+}
+check($pages->panelGuides()['classrooms']['title']['fa'] === 'راهنما', 'Members cannot read shared guidance');
+$GLOBALS['guideActor'] = 0;
+try { $pages->panelGuides(); throw new LogicException('Guest read panel guidance'); } catch (RuntimeException $e) { check($e->getCode() === 403, 'Guest guidance access not rejected'); }
+$GLOBALS['guideActor'] = 1;
+try { $pages->savePanelGuide(1, array_replace($guide, ['fa' => ['title' => 'Changed', 'body' => 'Changed']])); throw new LogicException('Failed guide save accepted'); } catch (PDOException) {}
+check($pages->panelGuides()['classrooms']['title']['fa'] === 'راهنما', 'Failed guide update was not atomic');
 echo "Content safety: $checks checks passed.\n";

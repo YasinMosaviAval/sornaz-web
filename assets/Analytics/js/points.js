@@ -155,7 +155,7 @@
   function render() {
     const body = document.querySelector('#pointsTable tbody'),
       start = (page - 1) * per,
-      items = filtered.slice(start, start + per);
+      items = window.AdminPanelTable.page?.('#pointsTable', filtered, start, start + per, render) ?? filtered.slice(start, start + per);
     if (!body) return;
     body.innerHTML = items.length
       ? items

@@ -7,6 +7,25 @@ use RuntimeException;
 
 class AdminUserAccessService
 {
+    public function staffRoles(int $actor): array
+    {
+        try {
+            $context = $this->context($actor);
+        } catch (RuntimeException) {
+            // A user without role-management scope cannot delegate staff roles.
+            return [];
+        }
+        return $this->roles($context, true);
+    }
+
+    public function staffRole(int $actor, int $roleId): array
+    {
+        foreach ($this->staffRoles($actor) as $role) {
+            if ($role['id'] === $roleId) return $role;
+        }
+        throw new RuntimeException('نقش انتخاب‌شده خارج از محدوده دسترسی شما است.');
+    }
+
     public function index(int $a, array $f): array
     {
         $c = $this->context($a);
@@ -36,9 +55,15 @@ class AdminUserAccessService
             array_push($b, $q, $q, $q, $q);
         }$sql = implode(' AND ', $w);
         $total = (int) $this->query("SELECT COUNT(DISTINCT u.user_id) FROM users u WHERE $sql", $b, true);
-        $offset = ($page - 1) * $per;
-        $rows = $this->query("SELECT DISTINCT u.* FROM users u WHERE $sql ORDER BY u.user_id DESC LIMIT $offset,$per", $b);
+        $rows = $this->userRows($sql, $b, $page, $per, $f);
         return ['users' => array_map(fn ($u) => $this->user($u, $c, $a), $rows), 'roles' => $this->roles($c), 'permissions' => $this->permissions($c), 'branches' => $this->branchOptions($c), 'context' => ['type' => $c['type']], 'total' => $total, 'page' => $page, 'perPage' => $per];
+    }
+
+    private function userRows(string $where, array $bindings, int $page, int $per, array $filters): array
+    {
+        $offset = ($page - 1) * $per;
+        $direction = ($filters['sortDirection'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
+        return $this->query("SELECT DISTINCT u.* FROM users u WHERE $where ORDER BY u.user_id $direction LIMIT $offset,$per", $bindings);
     }
 
     public function save(int $a, int $id, array $d): void
@@ -167,9 +192,10 @@ class AdminUserAccessService
         }
     }
 
-    private function roles(array $c): array
+    private function roles(array $c, bool $staffOnly = false): array
     {
         $q = DB::table('access_system_roles')->whereNull('deleted_at');
+        if ($staffOnly) $q->where('type', 'academy');
         if ($c['type'] === 'academy') {
             $q->whereIn('scope', ['academy', 'branch', 'self']);
         } elseif ($c['type'] === 'branch') {

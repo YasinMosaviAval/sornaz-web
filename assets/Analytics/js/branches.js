@@ -230,7 +230,8 @@ window.renderBranches = async function (list = filteredBranches) {
     pages = Math.max(1, Math.ceil(total / branchesPageSize));
   branchesCurrentPage = Math.min(branchesCurrentPage, pages);
   const start = (branchesCurrentPage - 1) * branchesPageSize;
-  list = list.slice(start, start + branchesPageSize);
+  const sourceRows = list;
+  list = window.AdminPanelTable.page?.(document.getElementById('branchesTableBody')?.closest('table'), list, start, start + branchesPageSize, () => window.renderBranches(sourceRows)) ?? list.slice(start, start + branchesPageSize);
   const box = document.getElementById('branchesCards'),
     body = document.getElementById('branchesTableBody');
   if (box)
@@ -241,7 +242,7 @@ window.renderBranches = async function (list = filteredBranches) {
     body.innerHTML = '';
     if (!list.length)
       body.innerHTML =
-        window.AdminPanelTable.rowHTML([{ html: "شعبه‌ای یافت نشد", attributes: " colspan=\"7\" class=\"p-12 text-center text-gray-400\"" }], "");
+        window.AdminPanelTable.rowHTML([{ html: "شعبه‌ای یافت نشد", attributes: ` colspan="${window.branchSiteAdmin ? 7 : 6}" class="p-12 text-center text-gray-400"` }], "");
     list.forEach((branch) => {
       body.insertAdjacentHTML('beforeend', window.getBranchTableRowHTML(branch));
       if (editingBranchRowId === branch.id)

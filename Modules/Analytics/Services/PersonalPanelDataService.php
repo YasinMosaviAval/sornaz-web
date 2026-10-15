@@ -6,6 +6,34 @@ use Modules\Academy\Services\AcademyPaymentStore;
 
 final class PersonalPanelDataService
 {
+    public function waitingRequests(int $actor, bool $decorate = true): array
+    {
+        $members = DB::table('academy_branch_members')->where('user_id', $actor)->whereNull('deleted_at')->get();
+        $ids = array_column($members, 'member_id');
+        $requests = $ids ? DB::table('academy_branch_course_term_waiting_list')->whereIn('member_id', $ids)->whereNull('deleted_at')->orderBy('term_waiting_list_id', 'DESC')->limit(20)->get() : [];
+        if (!$decorate || !$requests) return ['items' => $requests];
+        $user = DB::table('users')->where('user_id', $actor)->whereNull('deleted_at')->first();
+        $address = DB::table('user_addresses')->where('user_id', $actor)->where('is_main', 1)->whereNull('deleted_at')->first();
+        return ['items' => array_map(fn (array $request): array => $this->waitingRequest($actor, (array) $user, $address ?: null, $request), $requests)];
+    }
+
+    private function waitingRequest(int $actor, array $user, ?array $address, array $request): array
+    {
+            $id = (int) $request['term_waiting_list_id'];
+            $enrollment = DB::table('academy_branch_course_term_enrollments')->where('term_id', (int) $request['term_id'])->where('member_id', (int) $request['member_id'])->where('type', 'student')->whereNull('deleted_at')->first();
+            return [
+                'id' => $id, 'title' => $this->text('academy_branch_course_terms', (int) $request['term_id'], 'title', 'ترم #' . $request['term_id']),
+                'name' => $this->text('users', $actor, 'full_name', (string) ($user['username'] ?? '')),
+                'national_id' => (string) ($user['national_code'] ?? ''), 'father_name' => $this->text('users', $actor, 'father_name'),
+                'birth_date' => (string) ($user['birthday'] ?? ''), 'phone' => (string) ($user['phone'] ?? ''),
+                'address' => $address ? $this->text('user_addresses', (int) $address['address_id'], 'address') : '',
+                'note' => $this->text('academy_branch_course_term_waiting_list', $id, 'description'),
+                'conversationId' => (int) $this->text('academy_branch_course_term_waiting_list', $id, 'conversation_id'),
+                'status' => $enrollment['status'] ?? (empty($request['approved_at']) ? 'waiting' : 'pending_schedule'),
+                'canEdit' => empty($request['approved_at']),
+            ];
+    }
+
     public function lessons(int $actor, bool $decorate = true): array
     {
         $items = DB::table('user_lessons')->where('user_id', $actor)->whereNull('deleted_at')->orderBy('user_lesson_id', 'DESC')->get();

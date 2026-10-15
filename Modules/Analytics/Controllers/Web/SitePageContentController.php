@@ -16,6 +16,19 @@ class SitePageContentController
         return $this->run(fn () => ['success' => true, 'data' => ['pages' => $this->s->pages()]]);
     }
 
+    public function panelGuides()
+    {
+        return $this->run(fn () => ['success' => true, 'data' => $this->s->panelGuides()]);
+    }
+
+    public function savePanelGuide()
+    {
+        return $this->run(function () {
+            $this->s->savePanelGuide((int) auth()->id(), $this->payload());
+            return ['success' => true];
+        });
+    }
+
     public function content()
     {
         return $this->run(fn () => ['success' => true, 'data' => ['items' => $this->s->content((string) ($_GET['page'] ?? ''), locale())]]);

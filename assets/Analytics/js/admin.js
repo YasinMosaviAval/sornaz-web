@@ -1,6 +1,6 @@
 function panelPageHeading(section) {
   if (!section || section.id === 'chat' || section.id === 'tests') return null;
-  const firstContent = [...section.children].find((child) => !['STYLE', 'SCRIPT'].includes(child.tagName));
+  const firstContent = [...section.children].find((child) => !['STYLE', 'SCRIPT', 'NAV'].includes(child.tagName));
   return firstContent?.matches('h1') ? firstContent : firstContent?.querySelector('h1') || null;
 }
 

@@ -7,7 +7,7 @@
         }
     </style>
 
-    <h1 class="hidden">مدیریت کلاس‌های فیزیکی</h1>
+    <h1 class="hidden"><?= e(locale() === 'en' ? 'Class management' : 'مدیریت کلاس') ?></h1>
     <?php component('classroom-page-tabs', ['active' => 'classrooms']); ?>
     <p class="mb-6 text-gray-500">لیست کلاس‌ها، نوع، تجهیزات و وضعیت هر شعبه</p>
     <div class="mb-6 flex flex-wrap justify-end gap-3">

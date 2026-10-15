@@ -233,7 +233,7 @@ window.renderLessonsTable = async function (list) {
   if (lessonsCurrentPage > totalPages) lessonsCurrentPage = totalPages;
   const start = (lessonsCurrentPage - 1) * lessonsPerPage;
   const end = start + lessonsPerPage;
-  const pageItems = list.slice(start, end);
+  const pageItems = window.AdminPanelTable.page?.('#lessonsTable', list, start, end, () => window.renderLessonsTable(list)) ?? list.slice(start, end);
   tbody.innerHTML = '';
   if (!pageItems.length) {
     tbody.innerHTML = window.getLessonEmptyRowHTML ? window.getLessonEmptyRowHTML() : '';

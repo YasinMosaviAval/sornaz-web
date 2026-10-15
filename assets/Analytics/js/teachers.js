@@ -358,7 +358,7 @@ window.renderStaffTable = async function (staff = filteredStaff) {
 
   const start = (staffCurrentPage - 1) * staffPerPage;
   const end = start + staffPerPage;
-  const pageStaff = staff.slice(start, end);
+  const pageStaff = window.AdminPanelTable.page?.('#staffTable', staff, start, end, () => window.renderStaffTable(staff)) ?? staff.slice(start, end);
 
   tbody.innerHTML = '';
 

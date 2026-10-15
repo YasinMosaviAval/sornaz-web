@@ -292,7 +292,7 @@ window.renderFinanceTable = async function (list) {
 
   const start = (financeCurrentPage - 1) * financePerPage;
   const end = start + financePerPage;
-  const pageItems = list.slice(start, end);
+  const pageItems = window.AdminPanelTable.page?.('#financeTable', list, start, end, () => window.renderFinanceTable(list)) ?? list.slice(start, end);
 
   tbody.innerHTML = '';
   if (!pageItems.length) {

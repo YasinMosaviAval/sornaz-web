@@ -540,15 +540,7 @@ class AcademyBranchService
                 $organizations[] = ['user_id' => (int) $b['user_id'], 'academy_id' => (int) $b['academy_id'], 'branch_id' => (int) $b['branch_id'], 'name' => $this->tr('academy_branches', (int) $b['branch_id'], 'name', 'شعبه')];
             }
         }
-        $branchOnly = $branchAccount !== null;
-        $roles = [];
-        foreach (DB::table('access_system_roles')->where('type', 'academy')->whereNull('deleted_at')->get() as $r) {
-            $name = (string) $r['name'];
-            if ($branchOnly && !str_contains($name, 'branch')) {
-                continue;
-            }
-            $roles[] = ['id' => (int) $r['role_id'], 'name' => $name, 'title' => $this->tr('access_system_roles', (int) $r['role_id'], 'title', $name)];
-        }
+        $roles = (new \Modules\Analytics\Services\AdminUserAccessService())->staffRoles($actor);
         $levels = [];
         foreach (DB::table('levels')->where('type', 'learning')->where('is_active', 1)->whereNull('deleted_at')->orderBy('sort_order')->get() as $l) {
             $levels[] = ['id' => (int) $l['level_id'], 'name' => $this->tr('levels', (int) $l['level_id'], 'title', 'سطح')];
@@ -798,10 +790,7 @@ class AcademyBranchService
                 $type = 'other';
             }
             $roleId = (int) ($data['roleId'] ?? 0);
-            $role = DB::table('access_system_roles')->where('role_id', $roleId)->where('type', 'academy')->whereNull('deleted_at')->first();
-            if (!$role) {
-                throw new RuntimeException('نقش قرارداد معتبر نیست.');
-            }
+            $role = (new \Modules\Analytics\Services\AdminUserAccessService())->staffRole($actorId, $roleId);
             if ($organization['branch_id'] !== null && !str_contains((string) $role['name'], 'branch')) {
                 throw new RuntimeException('برای پرسنل شعبه باید نقش شعبه انتخاب شود.');
             }
@@ -922,10 +911,7 @@ class AcademyBranchService
                 $type = 'other';
             }
             $roleId = (int) ($data['roleId'] ?? 0);
-            $role = DB::table('access_system_roles')->where('role_id', $roleId)->where('type', 'academy')->whereNull('deleted_at')->first();
-            if (!$role) {
-                throw new RuntimeException('نقش معتبر نیست.');
-            }
+            $role = (new \Modules\Analytics\Services\AdminUserAccessService())->staffRole($actorId, $roleId);
             if ($organization['branch_id'] !== null && !str_contains((string) $role['name'], 'branch')) {
                 throw new RuntimeException('نقش شعبه معتبر نیست.');
             }

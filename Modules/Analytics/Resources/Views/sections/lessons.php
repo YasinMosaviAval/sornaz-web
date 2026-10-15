@@ -15,10 +15,9 @@
         </div>
     </div>
 
-    <div class="mb-6 rounded-2xl border border-indigo-200 bg-indigo-50 p-4 text-sm leading-7 text-indigo-900 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-100">
-        <strong class="mb-2 block"><?= e(locale() === 'en' ? 'The first step in managing your academy and branches' : 'اولین مرحله مدیریت امور آموزشگاه و شعبه ها') ?></strong>
-        <div class="space-y-3">
-            <?php foreach ([
+    <?php component('panel-page-guide', [
+        'title' => locale() === 'en' ? 'The first step in managing your academy and branches' : 'اولین مرحله مدیریت امور آموزشگاه و شعبه ها',
+        'paragraphs' => array_map(static fn (array $note): string => $note[locale() === 'en' ? 1 : 0], [
                 ['پیش از شروع این مرحله، اگر آموزشگاه شما چند شعبه دارد، باید تمام شعبه های اصلی و فرعی آموزشگاه را ثبت کنید.', 'Before starting, register all main and subsidiary branches if your academy has more than one branch.'],
                 ['پس از ثبت آموزشگاه و شعبه های اصلی و فرعی آن، قبل از هر کار دیگر، فهرست تمام درس های ارائه شده در آموزشگاه و شعبه ها را به تفکیک وارد کنید.', 'After registering the academy and its branches, enter the complete lesson list for each organization before continuing.'],
                 ['اگر درسی را برای آموزشگاه انتخاب کنید، نیازی نیست آن درس را برای شعبه ها ثبت کنید و به صورت خودکار امکان انتخاب درس های آموزشگاه برای شعبه های اصلی و فرعی آموزشگاه وجود دارد.', 'Academy lessons are automatically available to its branches; you do not need to register duplicate lessons for each branch.'],
@@ -26,11 +25,8 @@
                 ['درس ذخیره‌شده باید در فهرست و فرم‌های وابسته قابل انتخاب باشد. در صورت مشاهده‌نشدن، فیلتر شعبه و وضعیت "فعال" بودن یا نبودن درس را بررسی کنید.', 'Saved lessons should appear in the list and related forms. If a lesson is missing, check the branch filter and whether the lesson is active.'],
                 ['ویرایش درسی که در دوره یا قرارداد یکی از اساتید استفاده شده فقط برای مدیر یا کاربر آموزشگاه و شعبهٔ مجاز امکان‌پذیر است.', 'Only the authorized academy or branch account or manager can edit a lesson used in a course or teacher contract.'],
                 ['حذف درسی که در دوره یا قرارداد یکی از اساتید استفاده شده مجاز نیست.', 'A lesson used in any course or teacher contract cannot be deleted.'],
-            ] as $lessonNote): ?>
-            <p><?= e($lessonNote[locale() === 'en' ? 1 : 0]) ?></p>
-            <?php endforeach; ?>
-        </div>
-    </div>
+            ]),
+    ]); ?>
 
     <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
         <div class="flex gap-2 min-w-max" id="lessonsBranchTabs">
