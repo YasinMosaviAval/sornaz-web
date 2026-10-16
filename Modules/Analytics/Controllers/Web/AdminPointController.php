@@ -14,7 +14,7 @@ final class AdminPointController
 
     public function index()
     {
-        return $this->run(fn () => ['success' => true, 'data' => $this->s->index((int) auth()->id())]);
+        return $this->run(fn () => ['success' => true, 'data' => $this->s->index((int) auth()->id(), (string) request()->input('history', '') === '1')]);
     }
 
     public function store()

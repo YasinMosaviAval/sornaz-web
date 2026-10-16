@@ -43,8 +43,7 @@
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه انواع</option>
                 <option value="general">عمومی</option>
-                <option value="specialized">تخصصی</option>
-                <option value="custom">اختصاصی</option>
+                <option value="professional">حرفه‌ای</option>
             </select>
             <select id="filterPointCategory" onchange="filterPoints()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">

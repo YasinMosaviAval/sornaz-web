@@ -10,7 +10,7 @@ final class UserPointService
 {
     private static bool $schemaReady = false;
 
-    public function index(int $actor): array
+    public function index(int $actor, bool $fullHistory = false): array
     {
         $pdo = db();
         if (!self::ensureSchema($pdo)) {
@@ -24,9 +24,18 @@ final class UserPointService
         foreach ($q->fetchAll(PDO::FETCH_ASSOC) as $r) {
             $balance[$r['type']] = (int) $r['total'];
         }
-        $recent = $pdo->prepare("SELECT user_point_id,type,points,action,reference_type,reference_id,created_at FROM user_points WHERE user_id=? AND deleted_at IS NULL ORDER BY user_point_id DESC LIMIT 15");
-        $recent->execute([$actor]);
-        return ['rules' => array_map([$this, 'mapRule'], $rules), 'balance' => $balance, 'recent' => $recent->fetchAll(PDO::FETCH_ASSOC), 'organizations' => $this->organizations($pdo, $actor), 'canManage' => SiteAdminAccess::allows(auth()->user()), 'version' => $this->version($pdo)];
+        $history = $this->pointHistory($pdo, $actor, $fullHistory);
+        return ['rules' => array_map([$this, 'mapRule'], $rules), 'balance' => $balance, 'recent' => $history, 'organizations' => $this->organizations($pdo, $actor), 'canManage' => SiteAdminAccess::allows(auth()->user()), 'version' => $this->version($pdo)];
+    }
+
+    private function pointHistory(PDO $pdo, int $actor, bool $fullHistory): array
+    {
+        $query = $pdo->prepare("SELECT user_point_id,type,points,action,rule_id,reference_type,reference_id,created_at,updated_at FROM user_points WHERE user_id=? AND deleted_at IS NULL ORDER BY user_point_id DESC" . ($fullHistory ? '' : ' LIMIT 15'));
+        $query->execute([$actor]);
+        $history = $query->fetchAll(PDO::FETCH_ASSOC);
+        if ($fullHistory) foreach ($history as &$point) $point['action'] = \Core\database\ActivityText::action((string) $point['action'], locale());
+        unset($point);
+        return $history;
     }
 
     public function store(int $actor, array $data): int

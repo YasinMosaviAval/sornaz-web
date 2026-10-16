@@ -54,9 +54,9 @@
                         class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                     <option value="">همه وضعیت‌ها</option>
                     <option value="در حال برگزاری">در حال برگزاری</option>
-                    <option value="در انتظار">در انتظار</option>
-                    <option value="پایان‌یافته">پایان‌یافته</option>
-                    <option value="تعلیق‌شده">تعلیق‌شده</option>
+                <option value="در انتظار تأیید">در انتظار تأیید</option>
+                <option value="پایان یافته">پایان یافته</option>
+                <option value="باز">باز</option>
                 </select>
             </div>
             <div>

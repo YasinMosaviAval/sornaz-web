@@ -421,6 +421,20 @@ final class MobilePanelCatalog
         $sections['my-finance']['actions']['update'] = $a('/analytics/personal-invoices/{id}/update', 'ویرایش فاکتور خود', 'POST', [$f('amount', 'مبلغ', 'number', null, true), $f('statusCode', 'وضعیت', 'select', ['draft' => 'پیش‌نویس', 'issued' => 'صادرشده', 'canceled' => 'لغوشده']), $f('dueDate', 'سررسید', 'date'), $f('title', 'شرح', 'text', null, true), ...$description]);
         $sections = $this->completePanelContracts($sections, $webDialogs);
         $sections = $this->authorizedActions($sections);
+        if ($webDialogs) {
+            $presentation = require dirname(__DIR__) . '/Resources/mobile-panel-presentation.php';
+            foreach ($presentation as $key => $contract) {
+                if (!isset($sections[$key])) continue;
+                if ($contract['rowActions'] === null) {
+                    $contract['rowActions'] = ['details', ...array_keys(array_filter($sections[$key]['actions'], fn ($action, $name) => ($action['row'] ?? false) && !in_array($name, ['status', 'details'], true), ARRAY_FILTER_USE_BOTH))];
+                }
+                $contract['detailFields'] ??= array_values(array_reduce(
+                    [...$contract['columns'], ...($sections[$key]['fields'] ?? [])],
+                    function ($fields, $field) { $fields[$field['key']] = $field; return $fields; }, []
+                ));
+                $sections[$key]['presentation'] = $contract;
+            }
+        }
         $sections['pages']['detail'] = $sections['page-content'];
         return $sections;
     }
@@ -568,9 +582,9 @@ final class MobilePanelCatalog
         $f = fn (...$args) => $this->f(...$args);
         $fields = [
             $f('name', 'نام ترم', 'text', null, true),
-            $f('branchId', 'سازمان', 'select', ['source' => 'branches'], true) + ['defaultFirstOption' => true, 'hiddenWhen' => ['permissions.isBranchContext' => true], 'submitWhenHidden' => true],
-            $f('courseId', 'دوره مرتبط', 'select', ['source' => 'courses', 'match' => ['branchId' => 'branchId'], 'requireMatch' => true], true) + ['dependsOn' => ['branchId']],
-            $f('classroomId', 'کلاس برگزاری', 'select', ['source' => 'classrooms', 'match' => ['branchId' => 'branchId'], 'requireMatch' => true], true) + ['dependsOn' => ['branchId']],
+            $f('organizationUserId', 'سازمان', 'select', ['source' => 'organizations', 'id' => 'user_id'], true) + ['defaultFirstOption' => true, 'initialLookup' => ['source' => 'courses', 'by' => 'courseId', 'field' => 'organizationUserId'], 'hiddenWhen' => ['permissions.isBranchContext' => true], 'submitWhenHidden' => true],
+            $f('courseId', 'دوره مرتبط', 'select', ['source' => 'courses', 'match' => ['organizationUserId' => 'organizationUserId'], 'requireMatch' => true], true) + ['dependsOn' => ['organizationUserId']],
+            $f('classroomId', 'کلاس برگزاری', 'select', ['source' => 'classrooms', 'match' => ['organizationUserId' => 'organizationUserId'], 'requireMatch' => true], true) + ['dependsOn' => ['organizationUserId']],
             $f('currencyId', 'نوع پول', 'select', ['source' => 'currencies'], true) + ['defaultFirstOption' => true],
             $f('cost', 'هزینه ترم', 'number') + ['default' => 15000000, 'min' => 0],
             $f('installmentCount', 'تعداد اقساط', 'number') + ['default' => 1, 'min' => 1],
@@ -591,9 +605,17 @@ final class MobilePanelCatalog
                 $f('durationMinutes', 'مدت جلسه (دقیقه)', 'number', null, true) + ['default' => 90, 'durationFrom' => ['startTime', 'endTime'], 'min' => 5, 'max' => 1440, 'step' => 5],
             ], true) + ['rowsCountFrom' => 'sessionCount', 'singleWhen' => ['operation' => 'create', '_form.status' => 'open']],
             $f('summary', 'خلاصه ترم'), $f('description', 'شرح ترم', 'multiline'),
-            $f('teachers', 'استادها', 'multi', ['source' => 'members', 'where' => ['type' => 'teacher'], 'match' => ['branchId' => 'branchId', 'lessonId' => '_selected.courseId.lessonId'], 'requireMatch' => true], true) + ['initial' => 'teachers', 'dependsOn' => ['branchId', 'courseId', 'classroomId'], 'maxItemsFrom' => '_selected.courseId.teacher_capacity'],
-            $f('students', 'هنرجویان', 'multi', ['source' => 'members', 'where' => ['type' => 'student'], 'match' => ['branchId' => 'branchId']]) + ['initial' => 'students', 'dependsOn' => ['branchId', 'courseId', 'classroomId'], 'hiddenWhen' => ['_form.status' => ['in' => ['open', 'pending']]], 'maxItemsFrom' => '_selected.courseId.student_capacity'],
+            $f('teachers', 'استادها', 'multi', ['source' => 'members', 'where' => ['type' => 'teacher'], 'match' => ['organizationUserId' => 'organizationUserId', 'lessonId' => '_selected.courseId.lessonId'], 'requireMatch' => true], true) + ['initial' => 'teachers', 'dependsOn' => ['organizationUserId', 'courseId', 'classroomId'], 'maxItemsFrom' => '_selected.courseId.teacher_capacity'],
+            $f('students', 'هنرجویان', 'multi', ['source' => 'members', 'where' => ['type' => 'student'], 'match' => ['organizationUserId' => 'organizationUserId']]) + ['initial' => 'students', 'dependsOn' => ['organizationUserId', 'courseId', 'classroomId'], 'hiddenWhen' => ['_form.status' => ['in' => ['open', 'pending']]], 'maxItemsFrom' => '_selected.courseId.student_capacity'],
         ];
+        foreach ($fields as &$field) {
+            if ($field['key'] === 'classroomId') $field['options'] = ['source' => 'classrooms', 'termRooms' => true];
+            if (in_array($field['key'], ['teachers', 'students'], true)) {
+                $field['options']['termPeople'] = true;
+                unset($field['options']['match']['organizationUserId']);
+            }
+        }
+        unset($field);
         $this->setDialogFields($sections, 'terms', $fields);
     }
 
@@ -777,7 +799,7 @@ final class MobilePanelCatalog
             }
             unset($field, $fields);
         }
-        $sections['classroom-types']['actions']['create-from-classroom'] = $this->a('/academy/admin/classroom-types/from-classroom', 'افزودن نوع کلاس هنگام ساخت کلاس', 'POST', $sections['classroom-types']['actions']['create']['fields'], false) + ['en' => 'Create classroom type from classroom'];
+        $sections['classroom-types']['actions']['create-from-classroom'] = $this->a('/academy/admin/classroom-types/from-classroom', 'افزودن نوع کلاس هنگام ساخت کلاس', 'POST', $sections['classroom-types']['actions']['create']['fields'], false) + ['en' => 'Create classroom type from classroom', 'hidden' => true];
         $sections['lessons']['actions']['create-lesson'] = $this->a('/academy/admin/branch-offerings/lesson-catalog', 'افزودن درس به فهرست', 'POST', [$this->f('title', 'عنوان درس', 'text', null, true)], false) + ['en' => 'Add lesson to catalog'];
     }
 
