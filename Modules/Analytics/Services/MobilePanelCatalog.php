@@ -25,7 +25,7 @@ final class MobilePanelCatalog
         return compact('key', 'label', 'en', 'rows', 'fields', 'access', 'actions');
     }
 
-    public function sections(): array
+    public function sections(bool $webDialogs = false): array
     {
         $f = fn (...$args) => $this->f(...$args);
         $a = fn (...$args) => $this->a(...$args);
@@ -419,13 +419,13 @@ final class MobilePanelCatalog
         $sections['my-schedule']['actions']['delete']['path'] = '/analytics/personal-offerings/schedule/{id}/delete';
         $sections['my-finance'] = $s('my-finance', 'امور مالی من', 'My finance', '/analytics/personal-data/finance', 'invoices', [], 'common', false);
         $sections['my-finance']['actions']['update'] = $a('/analytics/personal-invoices/{id}/update', 'ویرایش فاکتور خود', 'POST', [$f('amount', 'مبلغ', 'number', null, true), $f('statusCode', 'وضعیت', 'select', ['draft' => 'پیش‌نویس', 'issued' => 'صادرشده', 'canceled' => 'لغوشده']), $f('dueDate', 'سررسید', 'date'), $f('title', 'شرح', 'text', null, true), ...$description]);
-        $sections = $this->completePanelContracts($sections);
+        $sections = $this->completePanelContracts($sections, $webDialogs);
         $sections = $this->authorizedActions($sections);
         $sections['pages']['detail'] = $sections['page-content'];
         return $sections;
     }
 
-    private function completePanelContracts(array $sections): array
+    private function completePanelContracts(array $sections, bool $webDialogs = false): array
     {
         $sections['lessons']['actions']['usage'] = $this->a('/academy/admin/branch-offerings/lessons/{id}/usage', 'محل‌های استفاده از درس', 'GET') + ['en' => 'Lesson usage'];
         $this->profileAndOrganizationContracts($sections);
@@ -436,7 +436,293 @@ final class MobilePanelCatalog
         $this->holidayContracts($sections);
         $this->waitingApprovalContracts($sections);
         $this->waitingFinalizationContracts($sections);
+        if ($webDialogs) $this->webDialogContracts($sections);
         return $sections;
+    }
+
+    /** Fields and dependencies of the active web forms (not the legacy demo templates). */
+    private function webDialogContracts(array &$sections): void
+    {
+        $f = fn (...$args) => $this->f(...$args);
+        $number = fn ($key, $label, $default, $min = 0) => $f($key, $label, 'number') + ['default' => $default, 'min' => $min];
+        $select = fn ($key, $label, $source, $id = 'id', $required = false) => $f($key, $label, 'select', ['source' => $source, 'id' => $id], $required);
+        $org = fn ($source = 'organizations') => $select('organizationUserId', 'سازمان', $source, 'user_id', true) + ['defaultFirstOption' => true, 'hiddenWhen' => ['permissions.isBranchContext' => true], 'submitWhenHidden' => true];
+        $text = [$f('summary', 'خلاصه'), $f('description', 'توضیحات', 'multiline')];
+        $active = ['active' => 'فعال', 'inactive' => 'غیرفعال'];
+        $teacher = ['visibleWhen' => ['_form.type' => 'teacher'], 'dependsOn' => ['organizationUserId']];
+        $fields = [
+            $f('name', 'نام و نام خانوادگی', 'text', null, true),
+            $f('gender', 'جنسیت', 'select', ['male' => 'مرد', 'female' => 'زن', 'other' => 'سایر'], true) + ['default' => 'male'],
+            $f('nationalId', 'کد ملی', 'text', null, true), $f('birthDate', 'تاریخ تولد', 'date', null, true),
+            $f('phone', 'شماره تماس', 'phone', null, true),
+            $f('profileVisibility', 'نمایش پروفایل', 'select', ['public' => 'عمومی', 'private' => 'خصوصی']) + ['default' => 'public'],
+            array_replace($org('staff_catalog.organizations'), ['hiddenWhen' => ['staff_catalog.organization_selection' => 'fixed']]),
+            $f('type', 'نوع قرارداد', 'select', ['teacher' => 'مدرس', 'receptionist' => 'پذیرش', 'manager' => 'مدیر', 'other' => 'سایر'], true) + ['default' => 'teacher'],
+            $f('roleId', 'نقش', 'select', ['source' => 'staff_catalog.roles', 'staffRoles' => true], true) + ['dependsOn' => ['organizationUserId', 'type']],
+            $f('contractTitle', 'عنوان قرارداد', 'text', null, true),
+            $f('startDate', 'تاریخ شروع قرارداد', 'date', null, true), $f('endDate', 'تاریخ خاتمه قرارداد', 'date', null, true),
+            $select('currencyId', 'نوع پول پرداختی', 'staff_catalog.currencies', 'id', true) + ['defaultFirstOption' => true],
+            $number('price', 'مبلغ قرارداد', 5000000),
+            $f('lessonId', 'نوع درس', 'select', ['source' => 'staff_catalog.lessons', 'id' => 'lesson_id', 'match' => ['organization_user_id' => 'organizationUserId'], 'requireMatch' => true], true) + $teacher,
+            $f('levelId', 'سطح درس', 'select', ['source' => 'staff_catalog.levels', 'allowedIdsFrom' => ['source' => 'staff_catalog.lessons', 'field' => 'level_ids', 'match' => ['organization_user_id' => 'organizationUserId', 'lesson_id' => 'lessonId']]], true) + array_replace($teacher, ['dependsOn' => ['organizationUserId', 'lessonId']]),
+            $f('contractDescription', 'شرح قرارداد', 'multiline'),
+        ];
+        $this->setDialogFields($sections, 'members', $fields);
+        $fields = [$f('name', 'نام کلاس', 'text', null, true),
+            $f('deliveryMode', 'نوع برگزاری', 'select', ['in_person' => 'حضوری', 'online' => 'آنلاین']) + ['default' => 'in_person'],
+            $f('onlineUrl', 'لینک کلاس آنلاین', 'url', null, true) + ['visibleWhen' => ['_form.deliveryMode' => 'online'], 'maxLength' => 2048],
+            $select('typeId', 'نوع کلاس', 'classroomTypes', 'id', true) + ['defaultFirstOption' => true], $org(),
+            $number('capacity', 'ظرفیت', 1, 1),
+            $f('status', 'وضعیت', 'select', ['available' => 'در دسترس', 'unavailable' => 'خارج از دسترس']) + ['initial' => 'statusValue', 'default' => 'available', 'hiddenWhen' => ['permissions.isReceptionist' => true]],
+            ...$text, $f('equipment', 'تجهیزات', 'rows', [$f('name', 'نام تجهیز'), $number('qty', 'تعداد', 1, 1)])];
+        $this->setDialogFields($sections, 'classrooms', $fields);
+        $this->setDialogFields($sections, 'courses', [
+            $f('name', 'نام دوره', 'text', null, true), $org(),
+            $f('lesson_id', 'درس', 'select', ['source' => 'lessons', 'match' => ['organizationUserId' => 'organizationUserId'], 'requireMatch' => true]) + ['dependsOn' => ['organizationUserId']],
+            $number('teacher_capacity', 'ظرفیت اساتید', 1, 1), $number('student_capacity', 'ظرفیت هنرجوها', 1, 1),
+            $f('status', 'وضعیت', 'select', ['open' => 'باز', 'ongoing' => 'در حال برگزاری', 'finished' => 'پایان یافته']) + ['default' => 'open', 'hiddenWhen' => ['permissions.isReceptionist' => true]], ...$text,
+        ]);
+        $this->setDialogFields($sections, 'branch-types', [$f('title', 'عنوان', 'text', null, true), ...$text]);
+        $this->setDialogFields($sections, 'course-levels', [$f('name', 'عنوان سطح', 'text', null, true), ...$text]);
+        // The website only creates lesson levels; retain the legacy route but hide it.
+        if (isset($sections['course-levels']['actions']['update'])) $sections['course-levels']['actions']['update']['hidden'] = true;
+        $this->setDialogFields($sections, 'classroom-types', [
+            $f('type', 'دسته نوع کلاس', 'select', ['source' => 'typeOptions', 'id' => 'value'], true) + ['default' => 'other', 'hiddenWhen' => ['permissions.canSetType' => false]],
+            $f('title', 'عنوان', 'text', null, true), $f('summary', 'خلاصه', 'multiline', null, true), $f('description', 'شرح', 'multiline', null, true),
+        ]);
+        $sections['classroom-types']['actions']['create-from-classroom']['fields'] = $sections['classroom-types']['actions']['create']['fields'];
+        $sections['classroom-types']['actions']['create-from-classroom']['formContractVersion'] = 2;
+        $this->setDialogFields($sections, 'points', [
+            $f('title', 'عنوان', 'text', null, true), $number('points', 'امتیاز', 10, 1) + ['max' => 100000],
+            $f('type', 'نوع امتیاز', 'select', ['general' => 'عمومی', 'professional' => 'حرفه‌ای']) + ['default' => 'general'],
+            $f('category', 'دسته', 'select', ['attendance' => 'حضور', 'academic' => 'آموزشی', 'event' => 'رویداد', 'social' => 'اجتماعی', 'financial' => 'مالی', 'profile' => 'پروفایل', 'achievement' => 'دستاورد', 'engagement' => 'تعامل', 'management' => 'مدیریت']) + ['default' => 'engagement'],
+            $f('source', 'منبع رویداد', 'select', ['database' => 'رویداد قطعی دیتابیس', 'tracking' => 'رفتار کاربر', 'manual' => 'اعطای دستی']) + ['default' => 'database'],
+            $f('action', 'کد عملیات', 'text', null, true),
+            $f('repeatMode', 'روش تکرار', 'select', ['event' => 'هر رویداد یکتا', 'daily' => 'دارای سقف روزانه', 'once' => 'فقط یک‌بار']) + ['default' => 'event'],
+            $number('dailyCap', 'سقف روزانه (۰ = بدون سقف)', 0), $number('cooldownMinutes', 'فاصله تکرار (دقیقه)', 0),
+            $select('branchId', 'سازمان', 'organizations') + ['defaultFirstOption' => true],
+            $f('status', 'وضعیت', 'select', $active) + ['default' => 'active'], ...$text,
+        ]);
+        foreach (['roles', 'permissions'] as $key) {
+            $fields = $sections[$key]['actions']['create']['fields'];
+            $fields = array_values(array_filter($fields, fn ($field) => !in_array($field['key'], $key === 'roles' ? ['group', 'sortOrder'] : ['name', 'group'], true)));
+            foreach ($fields as &$field) {
+                if ($field['key'] === 'level') $field = $f('level', 'سطح', 'select', ['1' => '۱', '2' => '۲', '3' => '۳']) + ['default' => 1];
+                if ($field['key'] === 'risk') $field = $f('risk', 'درجه حساسیت', 'select', ['1' => '۱', '2' => '۲', '3' => '۳', '4' => '۴', '5' => '۵']) + ['default' => 1];
+                if ($field['key'] === 'scope') $field['default'] = 'website';
+                if ($field['key'] === 'type') $field['default'] = $key === 'roles' ? 'system' : 'sidebar';
+                if ($field['key'] === 'approval') $field['default'] = 'confirm';
+                if ($field['key'] === 'color') { $field['type'] = 'color'; $field['default'] = '#4f46e5'; }
+                if ($field['key'] === 'parentId') $field['options']['excludeSource'] = '_form.id';
+                if ($field['key'] === 'translations') foreach ($field['options'] as &$language) foreach ($language['options'] as &$translation) $translation['required'] = false;
+            }
+            unset($field, $language, $translation);
+            $this->setDialogFields($sections, $key, $fields);
+        }
+        $this->studentDialogContracts($sections);
+        $this->termDialogContracts($sections);
+        $this->scheduleDialogContracts($sections);
+        $this->profileDialogContracts($sections);
+        $this->contentDialogContracts($sections);
+    }
+
+    private function setDialogFields(array &$sections, string $key, array $fields): void
+    {
+        foreach (['create', 'update'] as $operation) {
+            if (!isset($sections[$key]['actions'][$operation])) continue;
+            $sections[$key]['actions'][$operation]['fields'] = $fields;
+            $sections[$key]['actions'][$operation]['formContractVersion'] = 2;
+        }
+        $sections[$key]['fields'] = $fields;
+    }
+
+    private function studentDialogContracts(array &$sections): void
+    {
+        $f = fn (...$args) => $this->f(...$args);
+        $under18 = ['visibleWhen' => ['_form.birthDate' => ['underAge' => 18]]];
+        $ongoing = ['visibleWhen' => ['_selected.termId.status' => 'ongoing']];
+        $fields = [$f('organizationUserId', 'سازمان', 'select', ['source' => 'organizations', 'id' => 'user_id'], true) + ['defaultFirstOption' => true, 'hiddenWhen' => ['permissions.isBranchContext' => true], 'submitWhenHidden' => true]];
+        foreach (['name' => 'نام و نام خانوادگی', 'nationalId' => 'کد ملی', 'fatherName' => 'نام پدر', 'birthDate' => 'تاریخ تولد', 'phone' => 'شماره تماس'] as $key => $label) $fields[] = $f($key, $label, $key === 'birthDate' ? 'date' : ($key === 'phone' ? 'phone' : 'text'), null, true);
+        $fields[] = $f('registrationDate', 'تاریخ ثبت‌نام', 'date') + ['defaultToday' => true];
+        $fields[] = $f('addresses', 'نشانی', 'rows', [
+            $f('province', 'استان', 'select', ['source' => 'provinces', 'id' => 'province_name', 'label' => 'province_name']),
+            $f('city', 'شهر', 'select', ['source' => 'counties', 'id' => 'county_name', 'label' => 'county_name', 'match' => ['province_id' => '_selected.province.province_id'], 'requireMatch' => true]) + ['dependsOn' => ['province']],
+            $f('address', 'نشانی', 'multiline'), $f('postal_code', 'کد پستی'), $f('lat', 'عرض جغرافیایی', 'number'), $f('lng', 'طول جغرافیایی', 'number'),
+            $f('is_main', 'نشانی اصلی', 'bool') + ['default' => true],
+        ]) + ['maxItems' => 1];
+        foreach (['parentName' => 'نام و نام خانوادگی والد', 'parentNationalId' => 'شماره ملی والد', 'parentFatherName' => 'نام پدر والد', 'parentBirthDate' => 'تاریخ تولد والد', 'parentPhone' => 'شماره تماس والد'] as $key => $label) $fields[] = $f($key, $label, $key === 'parentBirthDate' ? 'date' : ($key === 'parentPhone' ? 'phone' : 'text'), null, true) + $under18;
+        $fields[] = $f('termId', 'ترم آموزشی', 'select', ['source' => 'terms', 'match' => ['organizationUserId' => 'organizationUserId'], 'requireMatch' => true], true) + ['dependsOn' => ['organizationUserId']];
+        $days = ['saturday' => 'شنبه', 'sunday' => 'یکشنبه', 'monday' => 'دوشنبه', 'tuesday' => 'سه‌شنبه', 'wednesday' => 'چهارشنبه', 'thursday' => 'پنجشنبه', 'friday' => 'جمعه'];
+        $fields[] = $f('availabilities', 'افزودن برنامه زمانی هنرجو', 'rows', [
+            $f('day', 'روز', 'select', $days, true) + ['default' => 'saturday'],
+            $f('timezoneId', 'منطقه زمانی', 'select', ['source' => 'timezones', 'id' => 'timezone_id', 'label' => 'timezone'], true),
+            $f('startTime', 'ساعت شروع', 'time', null, true), $f('endTime', 'ساعت پایان', 'time', null, true),
+        ], true) + $ongoing;
+        $fields[] = $f('availabilitySummary', 'خلاصه') + $ongoing;
+        $fields[] = $f('availabilityDescription', 'توضیحات', 'multiline') + $ongoing;
+        $this->setDialogFields($sections, 'students', $fields);
+    }
+
+    private function termDialogContracts(array &$sections): void
+    {
+        $f = fn (...$args) => $this->f(...$args);
+        $fields = [
+            $f('name', 'نام ترم', 'text', null, true),
+            $f('branchId', 'سازمان', 'select', ['source' => 'branches'], true) + ['defaultFirstOption' => true, 'hiddenWhen' => ['permissions.isBranchContext' => true], 'submitWhenHidden' => true],
+            $f('courseId', 'دوره مرتبط', 'select', ['source' => 'courses', 'match' => ['branchId' => 'branchId'], 'requireMatch' => true], true) + ['dependsOn' => ['branchId']],
+            $f('classroomId', 'کلاس برگزاری', 'select', ['source' => 'classrooms', 'match' => ['branchId' => 'branchId'], 'requireMatch' => true], true) + ['dependsOn' => ['branchId']],
+            $f('currencyId', 'نوع پول', 'select', ['source' => 'currencies'], true) + ['defaultFirstOption' => true],
+            $f('cost', 'هزینه ترم', 'number') + ['default' => 15000000, 'min' => 0],
+            $f('installmentCount', 'تعداد اقساط', 'number') + ['default' => 1, 'min' => 1],
+            $f('discountId', 'تخفیف', 'select', ['source' => 'discounts']),
+            $f('status', 'وضعیت', 'select', ['open' => 'باز', 'ongoing' => 'در حال برگزاری']) + ['default' => 'open', 'hiddenWhen' => ['permissions.isReceptionist' => true], 'valueWhen' => ['when' => ['permissions.isReceptionist' => true], 'value' => 'pending'], 'submitWhenHidden' => true],
+            $f('sessionCount', 'تعداد جلسات', 'number') + ['default' => 8, 'min' => 1, 'max' => 100],
+            $f('repeatType', 'دوره تکرار', 'select', ['week' => 'هفتگی', '2-week' => 'دو هفته یک‌بار', '3-week' => 'سه هفته یک‌بار', '4-week' => 'چهار هفته یک‌بار', 'month' => 'ماهانه', 'year' => 'سالانه', 'no-period' => 'سایر (تاریخ دقیق)']) + ['default' => 'week'],
+            $f('recurrence', 'زمان تکرار', 'object', [
+                $f('weekday', 'روز هفته', 'select', ['6' => 'شنبه', '0' => 'یکشنبه', '1' => 'دوشنبه', '2' => 'سه‌شنبه', '3' => 'چهارشنبه', '4' => 'پنجشنبه', '5' => 'جمعه']) + ['visibleWhen' => ['_root.repeatType' => ['in' => ['week', '2-week', '3-week', '4-week']]]],
+                $f('day', 'روز ماه شمسی', 'number') + ['min' => 1, 'max' => 31, 'visibleWhen' => ['_root.repeatType' => ['in' => ['month', 'year']]]],
+                $f('month', 'ماه شمسی', 'select', array_combine(range(1, 12), ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'])) + ['visibleWhen' => ['_root.repeatType' => 'year']],
+                $f('exactDate', 'تاریخ دقیق', 'date') + ['visibleWhen' => ['_root.repeatType' => 'no-period']],
+            ]) + ['visibleWhen' => ['operation' => 'create', '_form.status' => 'open']],
+            $f('sessions', 'جلسه‌ها', 'rows', [
+                $f('date', 'تاریخ', 'date', null, true) + ['hiddenWhen' => ['operation' => 'create', '_root.status' => 'open']],
+                $f('timezoneId', 'منطقه زمانی', 'select', ['source' => 'timezones'], true) + ['defaultFirstOption' => true],
+                $f('startTime', 'ساعت شروع', 'time', null, true) + ['default' => '10:00'],
+                $f('durationMinutes', 'مدت جلسه (دقیقه)', 'number', null, true) + ['default' => 90, 'durationFrom' => ['startTime', 'endTime'], 'min' => 5, 'max' => 1440, 'step' => 5],
+            ], true) + ['rowsCountFrom' => 'sessionCount', 'singleWhen' => ['operation' => 'create', '_form.status' => 'open']],
+            $f('summary', 'خلاصه ترم'), $f('description', 'شرح ترم', 'multiline'),
+            $f('teachers', 'استادها', 'multi', ['source' => 'members', 'where' => ['type' => 'teacher'], 'match' => ['branchId' => 'branchId', 'lessonId' => '_selected.courseId.lessonId'], 'requireMatch' => true], true) + ['initial' => 'teachers', 'dependsOn' => ['branchId', 'courseId', 'classroomId'], 'maxItemsFrom' => '_selected.courseId.teacher_capacity'],
+            $f('students', 'هنرجویان', 'multi', ['source' => 'members', 'where' => ['type' => 'student'], 'match' => ['branchId' => 'branchId']]) + ['initial' => 'students', 'dependsOn' => ['branchId', 'courseId', 'classroomId'], 'hiddenWhen' => ['_form.status' => ['in' => ['open', 'pending']]], 'maxItemsFrom' => '_selected.courseId.student_capacity'],
+        ];
+        $this->setDialogFields($sections, 'terms', $fields);
+    }
+
+    private function contentDialogContracts(array &$sections): void
+    {
+        foreach (['lessons', 'my-lessons'] as $key) {
+            $fields = $sections[$key]['actions']['create']['fields'];
+            foreach ($fields as &$field) {
+                if ($field['key'] === 'organization_user_id') $field += ['defaultFirstOption' => true, 'initial' => 'user_id', 'hiddenWhen' => ['organization_selection' => 'fixed'], 'submitWhenHidden' => true];
+                if (in_array($field['key'], ['lesson_id', 'start_date'], true)) $field['required'] = true;
+                if ($field['key'] === 'level_id' && $key === 'lessons') $field['options']['id'] = 'level_id';
+                if ($field['key'] === 'status') { $field['options'] = ['active' => 'فعال', 'inactive' => 'غیرفعال']; $field['default'] = 'active'; $field['hiddenWhen'] = ['lesson_status_mode' => 'pending']; }
+            }
+            unset($field);
+            $this->setDialogFields($sections, $key, $fields);
+        }
+        foreach (['gallery', 'my-gallery'] as $key) {
+            $fields = $sections[$key]['actions']['create']['fields'];
+            foreach ($fields as &$field) if ($field['key'] === 'collection') { $field['default'] = 'gallery'; }
+            unset($field);
+            $this->setDialogFields($sections, $key, $fields);
+            foreach ($sections[$key]['actions']['create']['fields'] as &$field) if ($field['key'] === 'file') $field['required'] = true;
+            unset($field);
+            // Website edit changes metadata, never requires re-uploading the existing file.
+            $sections[$key]['actions']['update']['fields'] = array_values(array_filter($fields, fn ($field) => $field['key'] !== 'file'));
+        }
+        foreach (['create', 'update'] as $operation) {
+            foreach ($sections['posts']['actions'][$operation]['fields'] as &$field) {
+                if ($field['key'] === 'published_at') $field['type'] = 'datetime';
+                if ($field['key'] === 'type') { $field['type'] = 'select'; $field['options'] = ['post' => 'نوشته', 'product' => 'محصول', 'music_theory' => 'تئوری موسیقی']; $field['default'] = 'post'; }
+                if ($field['key'] === 'status') { $field['options'] = ['draft' => 'پیش‌نویس', 'published' => 'منتشرشده', 'pending' => 'در انتظار', 'private' => 'خصوصی', 'future' => 'زمان‌بندی‌شده', 'trash' => 'زباله‌دان']; $field['default'] = 'draft'; }
+                if ($field['key'] === 'visibility') { $field['options'] = ['public' => 'عمومی', 'private' => 'خصوصی', 'followers' => 'دنبال‌کنندگان', 'premium' => 'ویژه']; $field['default'] = 'public'; }
+            }
+            unset($field);
+            $sections['posts']['actions'][$operation]['fields'][] = $this->f('cover_media_id', 'شناسه رسانه تصویر', 'number');
+            $sections['posts']['actions'][$operation]['fields'][] = $this->f('related_posts_id', 'نوشته‌های مرتبط (IDها)');
+            $sections['posts']['actions'][$operation]['fields'][] = $this->f('guid', 'GUID / لینک دائمی');
+            $sections['posts']['actions'][$operation]['formContractVersion'] = 2;
+        }
+        $sections['media']['actions']['update']['fields'] = array_values(array_filter($sections['media']['actions']['update']['fields'], fn ($field) => $field['key'] !== 'file'));
+        $sections['media']['actions']['update']['formContractVersion'] = 2;
+        $fields = $sections['notifications']['actions']['create']['fields'];
+        $byKey = array_column($fields, null, 'key');
+        $byKey['audience']['default'] = 'همه';
+        $fields = [$byKey['audience'], $byKey['title'], $byKey['body']];
+        $this->setDialogFields($sections, 'notifications', $fields);
+        $sections['notifications']['actions']['create']['submitButtons'] = [
+            ['label' => 'انتشار اعلان', 'en' => 'Publish notification', 'values' => ['asDraft' => false]],
+            ['label' => 'ذخیره پیش‌نویس', 'en' => 'Save draft', 'values' => ['asDraft' => true]],
+        ];
+        $fields = $sections['account']['actions']['profile']['fields'];
+        array_splice($fields, 1, 0, [$this->f('manager', 'مدیر اصلی') + ['readOnly' => true, 'submit' => false, 'hiddenWhen' => ['profile.accountType' => 'human']]]);
+        $sections['account']['actions']['profile']['fields'] = $fields;
+        $sections['account']['actions']['profile']['formContractVersion'] = 2;
+    }
+
+    private function profileDialogContracts(array &$sections): void
+    {
+        foreach (['awards', 'badges', 'experiences', 'certificates', 'educations', 'events', 'polls', 'publications'] as $key) {
+            $fields = $sections[$key]['actions']['create']['fields'];
+            foreach ($fields as &$field) {
+                $name = $field['key'];
+                $field['required'] = in_array($name, ['title', 'degree', 'question', 'verification_level_id', 'options'], true);
+                if ($name === 'user_id') {
+                    $field['key'] = $key === 'polls' ? 'owner_id' : 'user_id';
+                    unset($field['initial']);
+                    $field += ['defaultFirstOption' => true, 'hiddenWhen' => ['hideOrganizationField' => true], 'submitWhenHidden' => true];
+                }
+                if ($name === 'address_id' || $name === 'verification_level_id') {
+                    $field['type'] = 'select';
+                    $field['options'] = ['source' => $name === 'address_id' ? 'addresses' : 'levels'];
+                    if ($name === 'address_id') { $field['options']['match'] = ['userId' => 'user_id']; $field['dependsOn'] = ['user_id']; }
+                }
+                if (in_array($name, ['granted_at', 'expires_at'], true)) $field['type'] = 'datetime';
+                if ($name === 'status' && $key === 'badges') { $field['type'] = 'select'; $field['options'] = ['active' => 'فعال', 'expired' => 'منقضی', 'revoked' => 'لغوشده']; $field['default'] = 'active'; }
+                if ($name === 'event_type') { $field['type'] = 'select'; $field['options'] = ['concert' => 'کنسرت', 'festival' => 'جشنواره', 'competition' => 'مسابقه', 'workshop' => 'کارگاه', 'other' => 'سایر']; $field['default'] = 'concert'; }
+                if ($name === 'options') $field['type'] = 'strings';
+                if ($key === 'polls' && $name === 'type') $field['default'] = 'single';
+                if ($key === 'polls' && $name === 'status') $field['default'] = 'active';
+            }
+            unset($field);
+            if ($key === 'polls') array_push($fields, $this->f('target_type', 'نوع هدف'), $this->f('target_id', 'شناسه هدف', 'number'));
+            $orders = [
+                'experiences' => ['user_id', 'title', 'organization', 'address_id', 'start_date', 'end_date', 'description'],
+                'events' => ['user_id', 'title', 'event_type', 'event_date', 'address_id', 'description'],
+                'polls' => ['owner_id', 'question', 'description', 'type', 'status', 'expires_at', 'target_type', 'target_id', 'is_anonymous', 'options'],
+            ];
+            if (isset($orders[$key])) { $byKey = array_column($fields, null, 'key'); $fields = array_map(fn ($name) => $byKey[$name], $orders[$key]); }
+            $this->setDialogFields($sections, $key, $fields);
+        }
+    }
+
+    private function scheduleDialogContracts(array &$sections): void
+    {
+        $timezones = ['Asia/Tehran', 'Asia/Dubai', 'Asia/Istanbul', 'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Rome', 'Europe/Amsterdam', 'America/New_York', 'America/Chicago', 'America/Los_Angeles', 'America/Toronto', 'UTC'];
+        foreach (['availabilities', 'my-schedule', 'member-schedules', 'availability-exceptions'] as $key) {
+            $fields = $sections[$key]['actions']['create']['fields'];
+            if ($key === 'member-schedules') array_unshift($fields, $this->f('organizationUserId', 'سازمان', 'select', ['source' => 'staff_catalog.organizations', 'id' => 'user_id'], true) + ['defaultFirstOption' => true, 'initialLookup' => ['source' => 'members', 'by' => 'membershipId', 'id' => 'id', 'field' => 'organizationUserId'], 'hiddenWhen' => ['staff_catalog.organization_selection' => 'fixed'], 'submitWhenHidden' => true]);
+            foreach ($fields as &$field) {
+                $name = $field['key'];
+                if ($name === 'timezone') { $field['type'] = 'select'; $field['options'] = array_combine($timezones, $timezones); $field['default'] = 'Asia/Tehran'; }
+                if ($name === 'timezone' && $key === 'my-schedule') $field['options'] = ['source' => 'timezones', 'id' => 'timezone', 'label' => 'timezone'];
+                if ($name === 'membershipId') { $field['options']['match'] = ['organizationUserId' => 'organizationUserId']; $field['dependsOn'] = ['organizationUserId']; }
+                if ($name === 'ranges' && $key === 'availability-exceptions') $field['hiddenWhen'] = ['_form.allDay' => true];
+                if ($name === 'repeatPeriod') $field['default'] = 'هفتگی';
+                if ($name === 'day') { $field['default'] = 'شنبه'; $field['hiddenWhen'] = ['_form.repeatPeriod' => ['in' => ['ماهانه', 'سالانه', 'بی‌تکرار']]]; }
+                if ($name === 'repeatDate') $field['visibleWhen'] = ['_form.repeatPeriod' => ['not' => 'هفتگی']];
+            }
+            unset($field);
+            if ($key === 'availability-exceptions') {
+                $fields = array_values(array_filter($fields, fn ($field) => !in_array($field['key'], ['membershipId', 'targetType'], true)));
+                array_splice($fields, 1, 0, [$this->f('targetValue', 'شخص یا سازمان', 'select', ['sources' => [
+                    ['source' => 'staff_catalog.organizations', 'id' => 'user_id', 'prefix' => 'organization:', 'match' => ['user_id' => 'organizationUserId'], 'requireMatch' => true],
+                    ['source' => 'members', 'prefix' => 'member:', 'match' => ['organizationUserId' => 'organizationUserId'], 'requireMatch' => true],
+                ]], true) + ['dependsOn' => ['organizationUserId']]]);
+                array_splice($fields, 4, 0, [$this->f('timezone', 'منطقه زمانی', 'select', array_combine($timezones, $timezones)) + ['default' => 'Asia/Tehran']]);
+            }
+            $this->setDialogFields($sections, $key, $fields);
+        }
+        $fields = $sections['scheduling-rules']['actions']['create']['fields'];
+        foreach ($fields as &$field) {
+            if ($field['key'] === 'type') { $field['type'] = 'select'; $field['options'] = array_combine(['لغو', 'جبرانی', 'رزرو', 'زمان‌بندی'], ['لغو', 'جبرانی', 'رزرو', 'زمان‌بندی']); }
+            if ($field['key'] === 'valueUnit') { $field['type'] = 'select'; $units = ['ساعت', 'دقیقه', 'روز', 'جلسه', 'غیبت', 'نفر', 'سال', 'بله/خیر', 'درصد', 'مبلغ']; $field['options'] = array_combine($units, $units); }
+            if ($field['key'] === 'status') { $field['options'] = ['فعال' => 'فعال', 'غیرفعال' => 'غیرفعال']; $field['hiddenWhen'] = ['show_status_field' => false]; }
+            if ($field['key'] === 'organizationKey') $field += ['defaultFirstOption' => true, 'hiddenWhen' => ['organization_selection' => 'fixed'], 'submitWhenHidden' => true];
+            if ($field['key'] === 'title') $field['required'] = true;
+        }
+        unset($field);
+        $this->setDialogFields($sections, 'scheduling-rules', $fields);
     }
 
     private function profileAndOrganizationContracts(array &$sections): void

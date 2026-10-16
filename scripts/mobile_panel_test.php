@@ -114,6 +114,13 @@ namespace {
  }
  \Core\database\DB::$rows=[];$_SERVER['HTTP_AUTHORIZATION']='Bearer '.$tokens->issue($users->rows[1]);$sections=field($panel->index(),'data')['sections'];
  check(in_array('roles',array_column($sections,'key'),true),'Admin role management missing');
+ $_SERVER['HTTP_X_SORNAZ_PANEL_FORMS']='2';
+ $modern=array_column(field($panel->index(),'data')['sections'],null,'key');
+ check(($modern['members']['actions']['create']['formContractVersion']??0)===2,'Modern client did not receive web dialog schema');
+ check(in_array('onlineUrl',array_column($modern['classrooms']['actions']['create']['fields'],'key'),true),'Modern classroom fields missing');
+ unset($_SERVER['HTTP_X_SORNAZ_PANEL_FORMS']);
+ $legacy=array_column(field($panel->index(),'data')['sections'],null,'key');
+ check(!isset($legacy['members']['actions']['create']['formContractVersion']),'New dialog schema leaked to old clients');
  foreach($sections as$section)foreach($section['actions']as$action){check(!str_contains($action['path'],'admin-panel')&&!str_contains($action['path'],'_test'),'HTML or development action exposed');check(\Core\router\Router::dispatch($action['method'],preg_replace('/\{\w+\}/','1',$action['path']))!==null,'Unregistered action');}
  $_SERVER['REQUEST_METHOD']='POST';$_GET=[];$input=['name'=>'Piano','organizationUserId'=>12,'lesson_id'=>3,'teacher_capacity'=>1,'student_capacity'=>5,'user_id'=>999,'sessions'=>[['date'=>'2026-09-12']]];
  $_POST=['payload_b64'=>base64_encode(json_encode($input))];$_REQUEST=$_POST;$previous=$_POST;

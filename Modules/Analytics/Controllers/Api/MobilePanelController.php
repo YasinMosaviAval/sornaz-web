@@ -22,7 +22,7 @@ final class MobilePanelController
     {
         return $this->authenticated(function (array $user) {
             $capabilities = $this->access->capabilities($user);
-            $sections = array_filter($this->catalog->sections(), fn (array $section) => empty($section['hidden']) && ($capabilities[$section['access']] ?? false));
+            $sections = array_filter($this->catalog->sections(($_SERVER['HTTP_X_SORNAZ_PANEL_FORMS'] ?? '') === '2'), fn (array $section) => empty($section['hidden']) && ($capabilities[$section['access']] ?? false));
             foreach ($sections as &$section) {
                 $section['actions'] = array_filter($section['actions'], fn (array $action) => (empty($action['admin']) || $capabilities['admin']) && (empty($action['access']) || !empty($capabilities[$action['access']])));
             } unset($section);
