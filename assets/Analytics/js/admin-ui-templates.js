@@ -59,13 +59,37 @@
       const footer = box.querySelector('[data-panel-pagination]');
       if (!footer) return;
       const rows = config.rows || [], size = Math.max(1, Math.min(100, Number(config.perPage) || 10));
-      let current = 1;
+      let current = 1, sortColumn = null, sortDirection = 1;
+      const controls = [...document.querySelectorAll('[data-panel-filter]')].filter(control => control.dataset.panelFilter === table.id);
+      const headings = [...table.querySelectorAll('[data-panel-sort]')];
       const renderPage = () => {
         const start = (current - 1) * size;
-        const visible = this.page(table, rows, start, start + size, renderPage, row => row.cells?.[0]?.value);
+        let filtered = rows.filter(row => controls.every(control => !control.value || String(row.cells?.[Number(control.dataset.panelFilterColumn)]?.value ?? '') === control.value));
+        if (sortColumn !== null) {
+          table.dataset.adminIdentityActive = '0';
+          filtered = filtered.slice().sort((a, b) => {
+            const av = a.cells?.[sortColumn]?.value ?? '', bv = b.cells?.[sortColumn]?.value ?? '';
+            const numeric = table.querySelector('[data-panel-sort="' + sortColumn + '"]')?.dataset.panelSortType === 'number';
+            return (numeric ? (Number(av) || 0) - (Number(bv) || 0) : String(av).localeCompare(String(bv), document.documentElement.lang || undefined, { numeric: true })) * sortDirection;
+          });
+        }
+        const visible = this.page(table, filtered, start, start + size, renderPage, row => row.cells?.[0]?.value);
         this.setRows(table, visible.length ? visible : [{ cells: [{ value: config.emptyMessage || '', attributes: 'colspan="' + table.tHead.rows[0].cells.length + '" class="py-12 text-center text-gray-400"' }] }], { pageOffset: start });
-        this.renderPagination(footer, { total: rows.length, perPage: size, page: current, onChange: next => { current = next; renderPage(); } });
+        this.renderPagination(footer, { total: filtered.length, perPage: size, page: current, onChange: next => { current = next; renderPage(); } });
       };
+      controls.forEach(control => control.addEventListener('change', () => { current = 1; renderPage(); }));
+      headings.forEach(button => button.addEventListener('click', () => {
+        const column = Number(button.dataset.panelSort);
+        sortDirection = sortColumn === column ? -sortDirection : 1;
+        sortColumn = column; current = 1;
+        headings.forEach(heading => {
+          const selected = heading === button;
+          heading.closest('th').setAttribute('aria-sort', selected ? (sortDirection === 1 ? 'ascending' : 'descending') : 'none');
+          const icon = heading.querySelector('[data-panel-sort-icon]');
+          if (icon) icon.textContent = selected ? (sortDirection === 1 ? '↑' : '↓') : '↕';
+        });
+        renderPage();
+      }));
       renderPage();
     },
     setRows(table, rows, options = {}) {
