@@ -28,6 +28,40 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/not
     await footer.getByRole('button',{name:'First',exact:true}).click();
     assert.equal(await table.locator('tbody tr').first().locator('td').first().textContent(),'1');
    }
+   if(count===23){
+    const sort=table.locator('[data-panel-sort="2"]');
+    await sort.click();
+    assert.equal(await table.locator('tbody tr').first().locator('td').nth(2).textContent(),'5');
+    await footer.getByRole('button',{name:'Last',exact:true}).click();
+    assert.equal(await table.locator('tbody tr').last().locator('td').nth(2).textContent(),'12');
+    await sort.click();
+    assert.equal(await table.locator('tbody tr').first().locator('td').nth(2).textContent(),'12');
+    await footer.getByRole('button',{name:'Next',exact:true}).click();
+    assert.equal(await table.locator('tbody tr').first().locator('td').nth(2).textContent(),'5');
+    const type=page.locator('#myPointsTypeFilter'),action=page.locator('#myPointsActionFilter');
+    const types=await type.locator('option').evaluateAll(xs=>xs.map(x=>x.value));
+    const actions=await action.locator('option').evaluateAll(xs=>xs.map(x=>x.value));
+    await type.selectOption(types[2]);
+    assert.equal(await table.locator('tbody tr').count(),1);
+    assert.equal(await table.locator('tbody tr').first().locator('td').nth(2).textContent(),'12');
+    assert.equal(await footer.isHidden(),true);
+    await action.selectOption(actions[2]);
+    await type.selectOption(types[1]);
+    assert.equal(await table.locator('tbody tr td').count(),1,'Combined filters can return no results');
+    await action.selectOption(actions[1]);
+    assert.equal(await table.locator('tbody tr').count(),10);
+    assert.match(await footer.textContent(),/of 22/);
+    assert.equal(await sort.locator('..').getAttribute('aria-sort'),'descending');
+    await type.selectOption('');await action.selectOption('');
+    for(let index=0;index<6;index++){
+     const button=table.locator('[data-panel-sort="'+index+'"]');
+     await button.click();
+     // Points was previously sorted descending, so its next click also starts ascending.
+     assert.equal(await button.locator('..').getAttribute('aria-sort'),'ascending');
+     await button.click();
+     assert.equal(await button.locator('..').getAttribute('aria-sort'),'descending');
+    }
+   }
   }
   assert.deepEqual(errors,[]);console.log('Personal points pagination: empty, 10, 11 and 23 rows, shared wrapper, first/next/last and numbering passed.');
  }finally{await browser.close();}
