@@ -15,6 +15,59 @@
   // Plain `value` is always escaped here. No rendered DOM is read back into a data model.
   const tableSources = new WeakMap();
   window.AdminPanelTable = {
+    renderPagination(footer, config) {
+      if (!footer) return;
+      const total = Math.max(0, Number(config.total) || 0), size = Math.max(1, Number(config.perPage) || 10);
+      const pages = Math.max(1, Math.ceil(total / size)), current = Math.max(1, Math.min(pages, Number(config.page) || 1));
+      const start = (current - 1) * size;
+      const english = document.documentElement.lang.startsWith('en');
+      const number = value => Number(value).toLocaleString(english ? 'en' : 'fa-IR');
+      footer.replaceChildren();
+      footer.hidden = total <= size;
+      footer.classList.toggle('hidden', footer.hidden);
+      if (footer.hidden) return;
+      const info = document.createElement('span');
+      info.textContent = english
+        ? 'Showing ' + number(start + 1) + ' to ' + number(Math.min(start + size, total)) + ' of ' + number(total)
+        : 'نمایش ' + number(start + 1) + ' تا ' + number(Math.min(start + size, total)) + ' از ' + number(total);
+      const controls = document.createElement('div');
+      controls.className = 'flex items-center gap-2';
+      const button = (label, page) => {
+        const node = document.createElement('button');
+        node.type = 'button'; node.textContent = label;
+        node.className = 'rounded-lg px-3 py-2 border disabled:opacity-40 hover:bg-gray-50';
+        node.disabled = page < 1 || page > pages || page === current;
+        if (page === current && label === number(page)) {
+          node.className = 'rounded-lg px-3 py-2 bg-indigo-600 text-white';
+          node.setAttribute('aria-current', 'page');
+        }
+        node.addEventListener('click', () => config.onChange(page));
+        controls.appendChild(node);
+      };
+      button(english ? 'First' : 'اول', 1);
+      button(english ? 'Previous' : 'قبلی', current - 1);
+      const first = Math.max(1, Math.min(current - 2, pages - 4));
+      for (let page = first; page <= Math.min(pages, first + 4); page++) button(number(page), page);
+      button(english ? 'Next' : 'بعدی', current + 1);
+      button(english ? 'Last' : 'آخر', pages);
+      footer.append(info, controls);
+    },
+    paginate(table, config) {
+      if (typeof table === 'string') table = document.querySelector(table);
+      const box = table?.closest('.admin-ui-table');
+      if (!table || !box) return;
+      const footer = box.querySelector('[data-panel-pagination]');
+      if (!footer) return;
+      const rows = config.rows || [], size = Math.max(1, Math.min(100, Number(config.perPage) || 10));
+      let current = 1;
+      const renderPage = () => {
+        const start = (current - 1) * size;
+        const visible = this.page(table, rows, start, start + size, renderPage, row => row.cells?.[0]?.value);
+        this.setRows(table, visible.length ? visible : [{ cells: [{ value: config.emptyMessage || '', attributes: 'colspan="' + table.tHead.rows[0].cells.length + '" class="py-12 text-center text-gray-400"' }] }], { pageOffset: start });
+        this.renderPagination(footer, { total: rows.length, perPage: size, page: current, onChange: next => { current = next; renderPage(); } });
+      };
+      renderPage();
+    },
     setRows(table, rows, options = {}) {
       if (typeof table === 'string') table = document.querySelector(table);
       if (!table?.tBodies[0]) return;
@@ -500,6 +553,12 @@
   }
 
   function initializeTemplates() {
+    document.querySelectorAll('[data-panel-pagination-source]').forEach(source => {
+      const table = source.closest('.admin-ui-table')?.querySelector('table');
+      if (!table || source.dataset.initialized) return;
+      window.AdminPanelTable.paginate(table, JSON.parse(source.textContent));
+      source.dataset.initialized = '1';
+    });
     normalizeAll();
     // پس از ثبت handlerهای صفحه، رندرکننده‌های جدول فقط یک‌بار بسته‌بندی می‌شوند.
     // queueMicrotask اجرای آن را به انتهای همان رویداد، پیش از repaint، منتقل می‌کند.

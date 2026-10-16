@@ -1,3 +1,4 @@
+<?php $canCreateNotifications = !empty($canCreateNotifications) && \Modules\System\Services\SiteAdminAccess::allows(auth()->user()); ?>
 <div id="notifications" class="section hidden" data-read-only="<?= !empty($canUseNotificationActions) ? '0' : '1' ?>" data-can-create="<?= !empty($canCreateNotifications) ? '1' : '0' ?>">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
@@ -65,7 +66,7 @@
                 'columns' => [
                     ['html' => '<button onclick="sortNotificationsBy(\'title\')" class="flex items-center gap-1">عنوان اعلان <span id="notifSortIcon-title">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => 'گیرنده', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
-                    ['html' => '<button onclick="sortNotificationsBy(\'branchName\')" class="flex items-center gap-1">شعبه <span id="notifSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortNotificationsBy(\'branchName\')" class="flex items-center gap-1">' . e(locale() === 'en' ? 'Sender' : 'فرستنده') . ' <span id="notifSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '<button onclick="sortNotificationsBy(\'audience\')" class="flex items-center gap-1">مخاطب <span id="notifSortIcon-audience">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '<button onclick="sortNotificationsBy(\'priority\')" class="flex items-center gap-1">اولویت <span id="notifSortIcon-priority">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '<button onclick="sortNotificationsBy(\'date\')" class="flex items-center gap-1">تاریخ انتشار <span id="notifSortIcon-date">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],

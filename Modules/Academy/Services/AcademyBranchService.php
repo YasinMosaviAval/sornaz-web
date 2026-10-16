@@ -556,7 +556,7 @@ class AcademyBranchService
         }
         $lessons = [];
         foreach ((new LessonUsageService())->offeredRows($organizations) as $ul) {
-            $lessons[] = ['organization_user_id' => (int) $ul['user_id'], 'lesson_id' => (int) $ul['lesson_id'], 'name' => $this->tr('lessons', (int) $ul['lesson_id'], 'title', 'درس')];
+            $lessons[] = ['organization_user_id' => (int) $ul['user_id'], 'lesson_id' => (int) $ul['lesson_id'], 'level_ids' => (new LessonUsageService())->teachingLevelIds((int) $ul['user_id'], (int) $ul['lesson_id']), 'name' => $this->tr('lessons', (int) $ul['lesson_id'], 'title', 'درس')];
         }
         return ['organizations' => $organizations, 'organization_selection' => count($organizations) === 1 && $organizations[0]['branch_id'] !== null ? 'fixed' : 'select', 'roles' => $roles, 'levels' => $levels, 'currencies' => $currencies, 'lessons' => $lessons];
     }
@@ -814,11 +814,7 @@ class AcademyBranchService
             if ($type === 'teacher') {
                 $lessonId = (int) ($data['lessonId'] ?? 0);
                 $levelId = (int) ($data['levelId'] ?? 0);
-                $offered = (new LessonUsageService())->available((int) $organization['user_id'], $lessonId, true);
-                $level = DB::table('levels')->where('level_id', $levelId)->where('type', 'learning')->where('is_active', 1)->whereNull('deleted_at')->first();
-                if (!$offered || !$level) {
-                    throw new RuntimeException('درس یا سطح تدریس معتبر نیست.');
-                }
+                (new LessonUsageService())->validateTeachingLevel((int) $organization['user_id'], $lessonId, $levelId);
                 $userLessonId = DB::table('user_lessons')->insertGetId(['user_id' => $userId, 'lesson_id' => $lessonId, 'level_id' => $levelId, 'status' => $approved ? 'active' : 'pending', 'is_primary' => 1, 'created_at' => $now, 'created_by' => $actorId, 'updated_at' => $now, 'updated_by' => $actorId] + $approval);
             }
             $contractId = DB::table('academy_branch_member_contracts')->insertGetId(['member_id' => $memberId, 'type' => $type, 'user_lesson_id' => $userLessonId, 'start_date' => $start, 'end_date' => $end ?: null, 'price' => max(0, (float) ($data['price'] ?? 0)), 'currency_id' => (int) ($data['currencyId'] ?? 0), 'created_at' => $now, 'created_by' => $actorId, 'updated_at' => $now, 'updated_by' => $actorId] + $approval);
@@ -926,7 +922,7 @@ class AcademyBranchService
             if ($type === 'teacher') {
                 $lessonId = (int) ($data['lessonId'] ?? 0);
                 $levelId = (int) ($data['levelId'] ?? 0);
-                (new LessonUsageService())->available((int) $organization['user_id'], $lessonId, true);
+                (new LessonUsageService())->validateTeachingLevel((int) $organization['user_id'], $lessonId, $levelId);
                 $ul = $contract && $contract['user_lesson_id'] ? DB::table('user_lessons')->where('user_lesson_id', (int) $contract['user_lesson_id'])->first() : null;
                 $ulv = ['user_id' => $userId, 'lesson_id' => $lessonId, 'level_id' => $levelId, 'status' => $approved ? 'active' : 'pending', 'updated_at' => $now, 'updated_by' => $actorId] + $approval;
                 if ($ul) {

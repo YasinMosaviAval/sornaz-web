@@ -37,6 +37,25 @@ final class LessonUsageService
         throw new RuntimeException('درس فعال انتخاب‌شده برای این سازمان قابل استفاده نیست.');
     }
 
+    public function validateTeachingLevel(int $organizationUserId, int $lessonId, int $levelId): void
+    {
+        $this->available($organizationUserId, $lessonId, true);
+        $level = DB::table('levels')->where('level_id', $levelId)->where('type', 'learning')->where('is_active', 1)->whereNull('deleted_at')->first();
+        if (!$level || !in_array($levelId, $this->teachingLevelIds($organizationUserId, $lessonId), true)) {
+            throw new RuntimeException('درس یا سطح تدریس معتبر نیست.');
+        }
+    }
+
+    public function teachingLevelIds(int $organizationUserId, int $lessonId): array
+    {
+        foreach ($this->owners($organizationUserId) as $owner) {
+            $rows = DB::table('user_lessons')->where('user_id', $owner)->where('lesson_id', $lessonId)
+                ->where('status', 'active')->whereNull('deleted_at')->get();
+            if ($rows) return array_values(array_unique(array_filter(array_map('intval', array_column($rows, 'level_id')))));
+        }
+        return [];
+    }
+
     private function owners(int $organizationUserId): array
     {
         $owners = [$organizationUserId];

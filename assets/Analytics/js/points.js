@@ -161,10 +161,10 @@
       ? items
           .map(
             (x) =>
-              window.AdminPanelTable.rowHTML([{ html: `<b>${esc(x.title)}</b><div class="text-xs text-gray-400">${esc(x.summary || '')}</div>`, attributes: ` class="p-5"` }, { html: `<span class="rounded-full px-3 py-1 text-xs ${x.type === 'professional' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">${L.type[x.type]}</span>`, attributes: ` class="p-5"` }, { html: `${esc(L.category[x.category] || x.category)}`, attributes: ` class="p-5"` }, { html: `+${Number(x.points).toLocaleString('fa-IR')}`, attributes: ` class="p-5 font-bold text-emerald-600"` }, { html: `<div>${esc(L.source[x.source])}</div><code class="text-xs text-gray-400" dir="ltr">${esc(x.action)}</code>`, attributes: ` class="p-5"` }, { html: `${esc(x.branchName || 'سراسری')}`, attributes: ` class="p-5"` }, { html: `<div class="text-xs">${esc(L.repeat[x.repeatMode])}${x.dailyCap ? ' · سقف ' + x.dailyCap : ''}${x.cooldownMinutes ? ' · فاصله ' + x.cooldownMinutes + ' دقیقه' : ''}</div>${canManage ? `<button onclick="togglePointStatus(${x.id})" class="mt-2 rounded-full px-3 py-1 text-xs ${x.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">${x.status === 'active' ? 'فعال' : 'غیرفعال'}</button>` : `<span class="mt-2 inline-block rounded-full px-3 py-1 text-xs ${x.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">${x.status === 'active' ? 'فعال' : 'غیرفعال'}</span>`}`, attributes: ` class="p-5"` }, { html: `${canManage ? `<button onclick="editPoint(${x.id})" class="ml-3 text-indigo-600">ویرایش</button><button onclick="deletePoint(${x.id})" class="text-red-500">حذف</button>` : ''}`, attributes: ` class="p-5 whitespace-nowrap"` }], ` class="border-b hover:bg-gray-50"`)
+              window.AdminPanelTable.rowHTML([{ html: `<b>${esc(x.title)}</b><div class="text-xs text-gray-400">${esc(x.summary || '')}</div>`, attributes: ` class="p-5"` }, { html: `<span class="rounded-full px-3 py-1 text-xs ${x.type === 'professional' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">${L.type[x.type]}</span>`, attributes: ` class="p-5"` }, { html: `${esc(L.category[x.category] || x.category)}`, attributes: ` class="p-5"` }, { html: `+${Number(x.points).toLocaleString('fa-IR')}`, attributes: ` class="p-5 font-bold text-emerald-600"` }, ...(canManage ? [{ html: `<div>${esc(L.source[x.source])}</div><code class="text-xs text-gray-400" dir="ltr">${esc(x.action)}</code>`, attributes: ` class="p-5"` }, { html: `${esc(x.branchName || 'سراسری')}`, attributes: ` class="p-5"` }] : []), { html: `<div class="text-xs">${esc(L.repeat[x.repeatMode])}${x.dailyCap ? ' · سقف ' + x.dailyCap : ''}${x.cooldownMinutes ? ' · فاصله ' + x.cooldownMinutes + ' دقیقه' : ''}</div>`, attributes: ` class="p-5"` }, ...(canManage ? [{ html: `<button type="button" aria-pressed="${x.status === 'active'}" onclick="togglePointStatus(${x.id}, this)" class="rounded-full px-3 py-1 text-xs ${x.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${x.status === 'active' ? 'فعال' : 'غیرفعال'}</button>`, attributes: ` class="p-5 whitespace-nowrap"` }] : []), { html: `${canManage ? `<button onclick="editPoint(${x.id})" class="ml-3 text-indigo-600">ویرایش</button><button onclick="deletePoint(${x.id})" class="text-red-500">حذف</button>` : ''}`, attributes: ` class="p-5 whitespace-nowrap"` }], ` class="border-b hover:bg-gray-50"`)
           )
           .join('')
-      : window.AdminPanelTable.rowHTML([{ html: "قانونی یافت نشد", attributes: " colspan=\"8\" class=\"p-12 text-center text-gray-400\"" }], "");
+      : window.AdminPanelTable.rowHTML([{ html: "قانونی یافت نشد", attributes: ` colspan="${canManage ? 9 : 6}" class="p-12 text-center text-gray-400"` }], "");
     const pages = Math.max(1, Math.ceil(filtered.length / per));
     document.getElementById('pointsPaginationInfo').textContent =
       `نمایش ${filtered.length ? start + 1 : 0} تا ${Math.min(start + per, filtered.length)} از ${filtered.length} قانون`;
@@ -208,19 +208,36 @@
       alert(e.message);
     }
   };
-  window.togglePointStatus = async (id) => {
+  const updatingPointStatus = new Set();
+  window.togglePointStatus = async (id, button) => {
     const x = rows.find((r) => r.id === id);
-    if (!x) return;
-    await api(`/analytics/admin-points/${id}/update`, {
-      ...x,
-      status: x.status === 'active' ? 'inactive' : 'active',
-    });
-    load(true);
+    if (!canManage || !x || updatingPointStatus.has(id)) return;
+    updatingPointStatus.add(id);
+    if (button) button.disabled = true;
+    try {
+      await api('/analytics/admin-points/' + id + '/update', { ...x, status: x.status === 'active' ? 'inactive' : 'active' });
+      await load(true);
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      updatingPointStatus.delete(id);
+      if (button?.isConnected) button.disabled = false;
+    }
   };
   window.deletePoint = async (id) => {
     if (window.AppDialog && !(await AppDialog.confirm('این قانون امتیاز حذف شود؟'))) return;
     await api(`/analytics/admin-points/${id}/delete`, {});
     load();
+  };
+  window.showPointTab = (selected) => {
+    if (!['personal', 'rules'].includes(selected)) return;
+    document.querySelectorAll('#points [data-point-panel]').forEach(panel => panel.classList.toggle('hidden', panel.dataset.pointPanel !== selected));
+    document.querySelectorAll('#points [data-point-tab]').forEach(button => {
+      const active = button.dataset.pointTab === selected;
+      if (active) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
+      ['bg-indigo-600','text-white'].forEach(name => button.classList.toggle(name, active));
+      ['bg-white','text-gray-700','hover:bg-indigo-50','dark:bg-slate-800','dark:text-white'].forEach(name => button.classList.toggle(name, !active));
+    });
   };
   setTimeout(() => document.getElementById('pointsTable') && load(), 250);
   setInterval(

@@ -160,7 +160,7 @@ const { tableRuntime, renderPanelView } = require('./panel-table-fixture.cjs');
     await page.locator('#accessUsersTable [data-admin-identity-column] button').click();
     await page.waitForFunction(() => document.querySelector('#accessUsersTable [data-admin-identity-cell]')?.textContent === '1');
     await page.evaluate(() => changeAccessUsersPage(2));
-    assert.deepEqual(await page.locator('#accessUsersTable [data-admin-identity-cell]').allTextContents(), ['21', '22', '23', '24', '25']);
+    assert.deepEqual(await page.locator('#accessUsersTable [data-admin-identity-cell]').allTextContents(), Array.from({ length: 10 }, (_, i) => String(i + 11)));
     assert.deepEqual(errors, []);
     console.log('Shared panel table: PHP/JS rendering, fa/en views, escaped values, actions, optional cells, expansion and repeated renders passed.');
   } finally { await browser.close(); }

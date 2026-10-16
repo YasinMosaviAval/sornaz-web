@@ -106,19 +106,30 @@ class AdminNotificationService
         DB::table('user_messages')->where('user_message_id', $id)->update(['is_read' => 1, 'read_at' => date('Y-m-d H:i:s'), 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => $actor]);
     }
 
+    private function senderName(int $sender): string
+    {
+        if ($sender <= 0) return locale() === 'en' ? 'System' : 'سیستم';
+        $user = DB::table('users')->where('user_id', $sender)->whereNull('deleted_at')->first();
+        if (!$user) return locale() === 'en' ? 'System' : 'سیستم';
+        $name = DB::table('translations')->where('table_name', 'users')->where('table_id', $sender)->where('field', 'full_name')->where('locale', locale())->whereNull('deleted_at')->orderBy('translation_id', 'desc')->first();
+        return (string) ($name['value'] ?? $user['username'] ?? '');
+    }
+
     private function map(array $row): array
     {
         $texts = [];
         foreach (DB::table('translations')->where('table_name', 'user_messages')->where('table_id', (int) $row['user_message_id'])->where('locale', locale())->whereIn('field', ['title', 'message', 'audience'])->whereNull('deleted_at')->get() as $translation) {
             $texts[(string) $translation['field']] = (string) $translation['value'];
         }
+        $description = \Core\database\ActivityText::legacy(db(), $row, $texts['title'] ?? '', $texts['message'] ?? '', locale());
+        $sender = $this->senderName((int) ($row['sender_id'] ?? 0));
         $recipient = DB::table('users')->where('user_id', (int) ($row['receiver_user_id'] ?? 0))->whereNull('deleted_at')->first();
         $operation = str_replace('database_', '', (string) ($row['related_entity_type'] ?? ''));
         $priority = $operation === 'delete' ? 'بالا' : ($operation === 'update' ? 'متوسط' : 'کم');
         $status = (string) ($row['status'] ?: 'pending');
         return [
-            'id' => (int) $row['user_message_id'], 'title' => $texts['title'] ?? '', 'body' => $texts['message'] ?? '', 'recipientId' => (int) ($row['receiver_user_id'] ?? 0), 'recipientUsername' => $recipient['username'] ?? '—',
-            'branchId' => 0, 'branchName' => 'سیستم', 'audience' => $texts['audience'] ?? 'همه', 'priority' => $priority,
+            'id' => (int) $row['user_message_id'], 'title' => $description['title'], 'body' => $description['message'], 'recipientId' => (int) ($row['receiver_user_id'] ?? 0), 'recipientUsername' => $recipient['username'] ?? '—',
+            'branchId' => 0, 'branchName' => $sender, 'audience' => $texts['audience'] ?? 'همه', 'priority' => $priority,
             'statusCode' => $status, 'status' => $this->statusLabel($status), 'readStatus' => $row['is_read'] ? 'خوانده‌شده' : 'خوانده‌نشده',
             'date' => date('Y/m/d', strtotime($row['created_at'])), 'dateISO' => date('Y-m-d', strtotime($row['created_at'])),
             'source' => 'سیستم', 'type' => $row['type'], 'entityType' => $row['related_entity_type'], 'entityId' => $row['related_entity_id'],

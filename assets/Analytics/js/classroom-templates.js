@@ -57,8 +57,8 @@
   window.getClassroomEquipmentFieldHTML = function (item = {}) {
     return `
             <div class="mb-2 equipment-item">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-                    <div class="sm:col-span-2">
+                <div class="grid gap-3 items-end" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto">
+                    <div>
                         <label class="text-xs text-gray-500 mb-1 block">نام تجهیز</label>
                         <input type="text" class="equip-name w-full border border-gray-300 rounded-2xl py-3 px-4" value="${escapeHtml(item.name || '')}" placeholder="مثلاً پیانو">
                     </div>
@@ -66,8 +66,8 @@
                         <label class="text-xs text-gray-500 mb-1 block">تعداد</label>
                         <input type="number" min="1" class="equip-qty w-full border border-gray-300 rounded-2xl py-3 px-4" value="${escapeHtml(item.qty || 1)}">
                     </div>
-                    <div class="sm:col-span-3 flex justify-end">
-                        <button type="button" onclick="window.removeClassroomEquipmentField(this)" class="text-red-500 hover:text-red-700 text-sm">حذف تجهیز</button>
+                    <div class="flex items-center self-end">
+                        <button type="button" onclick="window.removeClassroomEquipmentField(this)" class="p-3 text-red-500 hover:text-red-700" aria-label="${document.documentElement.lang.startsWith('en') ? 'Remove equipment' : 'حذف تجهیز'}" title="${document.documentElement.lang.startsWith('en') ? 'Remove equipment' : 'حذف تجهیز'}"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
                     </div>
                 </div>
             </div>`;

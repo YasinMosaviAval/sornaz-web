@@ -26,33 +26,19 @@ class DatabaseChangeNotifier
             return;
         }
 
-        $labels = ['insert' => 'ایجاد', 'update' => 'ویرایش', 'delete' => 'حذف'];
-        $label = $labels[$operation] ?? $operation;
         $actor = self::actorId($data);
-        $fields = array_values(array_filter(array_keys($data), fn ($field) => !in_array($field, ['password'], true)));
-        $fieldText = $fields ? ' فیلدهای «' . implode('، ', array_slice($fields, 0, 6)) . '» تغییر کردند.' : '';
-
         $stmt = $pdo->prepare("INSERT INTO user_messages (sender_id,receiver_user_id,type,status,related_entity_type,related_entity_id,is_read,created_by,updated_by) VALUES (?,?,'notification','published',?,?,0,?,?)");
         $notificationId = null;
         $stmt->execute([$actor, $actor, $table, $entityId, $actor, $actor]);
         $notificationId = (int) $pdo->lastInsertId();
-        $title = $label . ' اطلاعات در ' . $table;
-        $message = 'یک عملیات ' . $label . ' به‌صورت سیستمی در جدول ' . $table . ' ثبت شد.' . $fieldText;
         $translation = $pdo->prepare('INSERT INTO translations (table_name,table_id,field,locale,value,version,created_by,updated_by) VALUES (?,?,?,?,?,1,?,?)');
-        foreach (['fa' => [$title, $message], 'en' => ['Data ' . $operation . ' in ' . $table, 'A system ' . $operation . ' operation was recorded in the ' . $table . ' table.']] as $locale => [$translatedTitle,$translatedMessage]) {
+        foreach (['fa', 'en'] as $locale) {
+            $description = ActivityText::describe($table, $operation, $data, $locale);
+            $translatedTitle = $description['title'];
+            $translatedMessage = $description['message'];
             $translation->execute(['user_messages', $notificationId, 'title', $locale, $translatedTitle, $actor, $actor]);
             $translation->execute(['user_messages', $notificationId, 'message', $locale, $translatedMessage, $actor, $actor]);
         }
-        return;
-        /*$stmt->execute([
-            $actor,
-            'database_' . $operation,
-            $label . ' اطلاعات در ' . $table,
-            'یک عملیات ' . $label . ' به‌صورت سیستمی در جدول ' . $table . ' ثبت شد.' . $fieldText,
-            $table,
-            $entityId,
-            $actor,
-        ]);*/
     }
 
     private static function actorId(array $data): ?int

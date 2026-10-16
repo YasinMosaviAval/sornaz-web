@@ -57,10 +57,10 @@
 
   window.getStaffLessonRowHTML = function (prefix, index, lesson, isFirst) {
     lesson = lesson || {};
-    return `<div data-lesson-row class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end border border-gray-100 rounded-2xl p-3 bg-gray-50/50">
+    return `<div data-lesson-row class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
             <div>
                 <label class="block text-xs font-medium mb-1 text-gray-500">نوع درس *</label>
-                <select data-lesson-type class="w-full border border-gray-300 rounded-2xl py-3 px-4">${lessonTypeOptions(lesson.type)}</select>
+                <select data-lesson-type onchange="updateStaffLessonLevels('${prefix}')" class="w-full border border-gray-300 rounded-2xl py-3 px-4">${lessonTypeOptions(lesson.type)}</select>
             </div>
             <div>
                 <label class="block text-xs font-medium mb-1 text-gray-500">سطح درس *</label>
@@ -121,18 +121,34 @@
       current
     );
   };
+  window.updateStaffLessonLevels = function (prefix) {
+    const org = document.getElementById(prefix + 'Organization');
+    document.querySelectorAll('#' + prefix + 'LessonsContainer [data-lesson-row]').forEach((row) => {
+      const lesson = row.querySelector('[data-lesson-type]'), level = row.querySelector('[data-lesson-level]');
+      if (!lesson || !level) return;
+      const selected = level.value;
+      const offered = (window.staffCatalog?.lessons || []).find((x) =>
+        String(x.organization_user_id) === String(org?.value) && String(x.lesson_id) === String(lesson.value));
+      const ids = offered?.level_ids || [];
+      const english = document.documentElement.lang.startsWith('en');
+      level.innerHTML = renderOptions([{ value: '', label: english ? 'Select a level' : 'انتخاب سطح' },
+        ...(window.staffCatalog?.levels || []).filter((x) => ids.some((id) => String(id) === String(x.id)))
+          .map((x) => ({ value: x.id, label: x.name }))], selected);
+    });
+  };
   window.updateStaffOrganization = function (prefix) {
     const org = document.getElementById(prefix + 'Organization'),
       lesson = document.querySelector('#' + prefix + 'LessonsContainer [data-lesson-type]');
     if (lesson) {
       const selected = lesson.value;
       lesson.innerHTML = renderOptions(
-        (window.staffCatalog?.lessons || [])
+        [{ value: '', label: document.documentElement.lang.startsWith('en') ? 'Select a lesson' : 'انتخاب درس' }, ...(window.staffCatalog?.lessons || [])
           .filter((x) => String(x.organization_user_id) === String(org?.value))
-          .map((x) => ({ value: x.lesson_id, label: x.name })),
+          .map((x) => ({ value: x.lesson_id, label: x.name }))],
         selected
       );
     }
+    window.updateStaffLessonLevels(prefix);
     window.updateStaffRole(
       prefix + 'Role',
       document.getElementById(prefix + 'Type')?.value,
@@ -164,16 +180,20 @@
         <div><label class="block text-sm font-medium mb-2">تاریخ تولد *</label><input id="${p}BirthDate" type="date" value="${escapeHtml(item.birthDate || '')}" class="w-full border rounded-2xl py-3.5 px-5"></div>
         <div><label class="block text-sm font-medium mb-2">شماره تماس *</label><input id="${p}Phone" value="${escapeHtml(item.phone)}" class="w-full border rounded-2xl py-3.5 px-5"></div>
         <div><label class="block text-sm font-medium mb-2">نمایش پروفایل</label><select id="${p}ProfileVisibility" class="w-full border rounded-2xl py-3.5 px-5">${profileVisibilityOptions(item.profileVisibility)}</select></div>
-        <div><label class="block text-sm font-medium mb-2">نوع قرارداد *</label><select id="${p}Type" onchange="toggleStaffLessonFields('${p}Type','${p}LessonsBox')" class="w-full border rounded-2xl py-3.5 px-5">${renderOptions(staffTypes, item.type)}</select></div>
-        <div><label class="block text-sm font-medium mb-2">نقش *</label><select id="${p}Role" class="w-full border rounded-2xl py-3.5 px-5">${staffRoleOptions(item.roleId)}</select></div>
         <div class="${window.staffCatalog?.organization_selection === 'fixed' ? 'hidden' : ''}"><label class="block text-sm font-medium mb-2">سازمان *</label><select id="${p}Organization" onchange="updateStaffOrganization('${p}')" class="w-full border rounded-2xl py-3.5 px-5">${staffOrganizationOptions(item.organizationUserId)}</select></div>
+<div><label class="block text-sm font-medium mb-2">نوع قرارداد *</label><select id="${p}Type" onchange="toggleStaffLessonFields('${p}Type','${p}LessonsBox')" class="w-full border rounded-2xl py-3.5 px-5">${renderOptions(staffTypes, item.type)}</select></div>
+        <div><label class="block text-sm font-medium mb-2">نقش *</label><select id="${p}Role" class="w-full border rounded-2xl py-3.5 px-5">${staffRoleOptions(item.roleId)}</select></div>
+
         <div><label class="block text-sm font-medium mb-2">عنوان قرارداد *</label><input id="${p}ContractTitle" value="${escapeHtml(item.contractTitle)}" class="w-full border rounded-2xl py-3.5 px-5"></div>
-        <div><label class="block text-sm font-medium mb-2">نوع پول پرداختی *</label><select id="${p}Currency" class="w-full border rounded-2xl py-3.5 px-5">${renderOptions(window.contractCurrencies || contractCurrencies, item.currencyId)}</select></div>
-        <div><label class="block text-sm font-medium mb-2">مبلغ قرارداد *</label><input id="${p}Price" type="number" value="${escapeHtml(item.price)}" class="w-full border rounded-2xl py-3.5 px-5"></div>
         <div><label class="block text-sm font-medium mb-2">تاریخ شروع قرارداد *</label><input id="${p}StartDate" type="date" value="${escapeHtml(item.startDate)}" class="w-full border rounded-2xl py-3.5 px-5"></div>
-        <div><label class="block text-sm font-medium mb-2">تاریخ خاتمه قرارداد *</label><input id="${p}EndDate" type="date" value="${escapeHtml(item.endDate)}" class="w-full border rounded-2xl py-3.5 px-5"></div>
-        <div class="sm:col-span-2 lg:col-span-3"><label class="block text-sm font-medium mb-2">شرح قرارداد</label><textarea id="${p}ContractDescription" rows="3" class="w-full border rounded-2xl py-3.5 px-5">${escapeHtml(item.contractDescription)}</textarea></div></div>
-        ${staffLessonsBlock(p, item)}<div class="flex gap-4"><button onclick="saveInlineStaff(${item.id})" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl">ذخیره</button><button onclick="toggleStaffInlineEdit(${item.id})" class="border px-6 py-3 rounded-2xl">انصراف</button></div></div>`;
+<div><label class="block text-sm font-medium mb-2">تاریخ خاتمه قرارداد *</label><input id="${p}EndDate" type="date" value="${escapeHtml(item.endDate)}" class="w-full border rounded-2xl py-3.5 px-5"></div>
+<div><label class="block text-sm font-medium mb-2">نوع پول پرداختی *</label><select id="${p}Currency" class="w-full border rounded-2xl py-3.5 px-5">${renderOptions(window.contractCurrencies || contractCurrencies, item.currencyId)}</select></div>
+        <div><label class="block text-sm font-medium mb-2">مبلغ قرارداد *</label><input id="${p}Price" type="number" value="${escapeHtml(item.price)}" class="w-full border rounded-2xl py-3.5 px-5"></div>
+
+
+        <div class="sm:col-span-2 lg:col-span-3">${staffLessonsBlock(p, item)}</div>
+<div class="sm:col-span-2 lg:col-span-3"><label class="block text-sm font-medium mb-2">شرح قرارداد</label><textarea id="${p}ContractDescription" rows="3" class="w-full border rounded-2xl py-3.5 px-5">${escapeHtml(item.contractDescription)}</textarea></div></div>
+        <div class="flex gap-4"><button onclick="saveInlineStaff(${item.id})" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl">ذخیره</button><button onclick="toggleStaffInlineEdit(${item.id})" class="border px-6 py-3 rounded-2xl">انصراف</button></div></div>`;
   };
 
   window.getStaffPDFModalHTML = function (pdfExportColumns) {
@@ -347,19 +367,28 @@
                                 <input id="staffPhone" type="tel" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                             </div>
                             <div><label class="block text-sm font-medium mb-2">نمایش پروفایل</label><select id="staffProfileVisibility" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${profileVisibilityOptions('public')}</select></div>
-                            <div>
+                            <div class="${window.staffCatalog?.organization_selection === 'fixed' ? 'hidden' : ''}"><label class="block text-sm font-medium mb-2">سازمان *</label><select id="staffOrganization" onchange="updateStaffOrganization('staff')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${staffOrganizationOptions()}</select></div>
+<div>
                                 <label class="block text-sm font-medium mb-2">نوع قرارداد *</label>
                                 <select id="staffType" onchange="toggleStaffLessonFields('staffType', 'staffLessonsBox')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                                     ${renderOptions(staffTypes)}
                                 </select>
                             </div>
                             <div><label class="block text-sm font-medium mb-2">نقش *</label><select id="staffRole" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${staffRoleOptions()}</select></div>
-                            <div class="${window.staffCatalog?.organization_selection === 'fixed' ? 'hidden' : ''}"><label class="block text-sm font-medium mb-2">سازمان *</label><select id="staffOrganization" onchange="updateStaffOrganization('staff')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${staffOrganizationOptions()}</select></div>
+
                             <div>
                                 <label class="block text-sm font-medium mb-2">عنوان قرارداد *</label>
                                 <input id="staffContractTitle" type="text" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                             </div>
                             <div>
+                                <label class="block text-sm font-medium mb-2">تاریخ شروع قرارداد *</label>
+                                <input id="staffStartDate" type="date" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                            </div>
+<div>
+                                <label class="block text-sm font-medium mb-2">تاریخ خاتمه قرارداد *</label>
+                                <input id="staffEndDate" type="date" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                            </div>
+<div>
                                 <label class="block text-sm font-medium mb-2">نوع پول پرداختی *</label>
                                 <select id="staffCurrency" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                                     ${renderOptions(window.contractCurrencies || contractCurrencies)}
@@ -369,20 +398,15 @@
                                 <label class="block text-sm font-medium mb-2">مبلغ قرارداد *</label>
                                 <input id="staffPrice" type="number" value="5000000" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">تاریخ شروع قرارداد *</label>
-                                <input id="staffStartDate" type="date" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">تاریخ خاتمه قرارداد *</label>
-                                <input id="staffEndDate" type="date" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                            </div>
-                            <div class="lg:col-span-3">
+
+
+                            <div class="sm:col-span-2 lg:col-span-3">${staffLessonsBlock('staff', { type: 'teacher', lessons: [] })}</div>
+<div class="lg:col-span-3">
                                 <label class="block text-sm font-medium mb-2">شرح قرارداد</label>
                                 <textarea id="staffContractDescription" rows="4" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"></textarea>
                             </div>
                         </div>
-                        ${staffLessonsBlock('staff', { type: 'teacher', lessons: [] })}
+
                     </div>
                     <div class="shrink-0 flex gap-4 px-8 py-5 border-t bg-white">
                             <button onclick="saveStaff()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-medium">ذخیره کارمند</button>
@@ -487,19 +511,28 @@
                                 <input id="editStaffPhone" type="tel" value="${escapeHtml(item.phone)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                             </div>
                             <div><label class="block text-sm font-medium mb-2">نمایش پروفایل</label><select id="editStaffProfileVisibility" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${profileVisibilityOptions(item.profileVisibility)}</select></div>
-                            <div>
+                            <div class="${window.staffCatalog?.organization_selection === 'fixed' ? 'hidden' : ''}"><label class="block text-sm font-medium mb-2">سازمان *</label><select id="editStaffOrganization" onchange="updateStaffOrganization('editStaff')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${staffOrganizationOptions(item.organizationUserId)}</select></div>
+<div>
                                 <label class="block text-sm font-medium mb-2">نوع قرارداد *</label>
                                 <select id="editStaffType" onchange="toggleStaffLessonFields('editStaffType', 'editStaffLessonsBox')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                                     ${renderOptions(staffTypes, item.type)}
                                 </select>
                             </div>
                             <div><label class="block text-sm font-medium mb-2">نقش *</label><select id="editStaffRole" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${staffRoleOptions(item.roleId)}</select></div>
-                            <div class="${window.staffCatalog?.organization_selection === 'fixed' ? 'hidden' : ''}"><label class="block text-sm font-medium mb-2">سازمان *</label><select id="editStaffOrganization" onchange="updateStaffOrganization('editStaff')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${staffOrganizationOptions(item.organizationUserId)}</select></div>
+
                             <div>
                                 <label class="block text-sm font-medium mb-2">عنوان قرارداد *</label>
                                 <input id="editStaffContractTitle" type="text" value="${escapeHtml(item.contractTitle)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                             </div>
                             <div>
+                                <label class="block text-sm font-medium mb-2">تاریخ شروع قرارداد *</label>
+                                <input id="editStaffStartDate" type="date" value="${escapeHtml(item.startDate)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                            </div>
+<div>
+                                <label class="block text-sm font-medium mb-2">تاریخ خاتمه قرارداد *</label>
+                                <input id="editStaffEndDate" type="date" value="${escapeHtml(item.endDate)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                            </div>
+<div>
                                 <label class="block text-sm font-medium mb-2">نوع پول پرداختی *</label>
                                 <select id="editStaffCurrency" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                                     ${renderOptions(window.contractCurrencies || contractCurrencies, item.currencyId)}
@@ -509,20 +542,15 @@
                                 <label class="block text-sm font-medium mb-2">مبلغ قرارداد *</label>
                                 <input id="editStaffPrice" type="number" value="${escapeHtml(item.price)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">تاریخ شروع قرارداد *</label>
-                                <input id="editStaffStartDate" type="date" value="${escapeHtml(item.startDate)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">تاریخ خاتمه قرارداد *</label>
-                                <input id="editStaffEndDate" type="date" value="${escapeHtml(item.endDate)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                            </div>
-                            <div class="lg:col-span-3">
+
+
+                            <div class="sm:col-span-2 lg:col-span-3">${staffLessonsBlock('editStaff', item)}</div>
+<div class="lg:col-span-3">
                                 <label class="block text-sm font-medium mb-2">شرح قرارداد</label>
                                 <textarea id="editStaffContractDescription" rows="4" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${escapeHtml(item.contractDescription)}</textarea>
                             </div>
                         </div>
-                        ${staffLessonsBlock('editStaff', item)}
+
                     </div>
                     <div class="shrink-0 flex gap-4 px-8 py-5 border-t bg-white">
                             <button onclick="saveEditedStaff(${item.id})" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-medium">ذخیره تغییرات</button>

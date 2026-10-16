@@ -1,8 +1,29 @@
+<?php $pointSiteAdmin = \Modules\System\Services\SiteAdminAccess::allows(auth()->user()); ?>
 <div id="points" class="section hidden">
+    <h1 class="text-3xl font-bold mb-6"><?= e(locale() === 'en' ? 'My points' : 'امتیازهای من') ?></h1>
     <style>
         .point-inline-expand { animation: pointSlideDown 220ms ease-out forwards; }
         @keyframes pointSlideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
     </style>
+    <?php component('panel-page-tabs', [
+        'active' => 'personal', 'onSelect' => 'showPointTab',
+        'label' => locale() === 'en' ? 'Points pages' : 'صفحه‌های امتیاز',
+        'tabs' => [
+            'personal' => ['labels' => ['امتیازهای من', 'My points'], 'attributes' => 'data-point-tab="personal"'],
+            'rules' => ['labels' => ['قوانین امتیازها', 'Point rules'], 'attributes' => 'data-point-tab="rules"'],
+        ],
+    ]); ?>
+
+    <div data-point-panel="personal">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="rounded-3xl bg-gradient-to-l from-amber-400 to-yellow-500 p-5 text-white shadow"><p class="text-sm opacity-90">امتیاز عمومی من</p><strong id="pointGeneralBalance" class="block mt-2 text-3xl">۰</strong></div>
+        <div class="rounded-3xl bg-gradient-to-l from-violet-600 to-indigo-600 p-5 text-white shadow"><p class="text-sm opacity-90">امتیاز حرفه‌ای من</p><strong id="pointProfessionalBalance" class="block mt-2 text-3xl">۰</strong></div>
+
+    </div>
+
+    <?php component('my-points'); ?>
+    </div>
+    <div data-point-panel="rules" class="hidden">
     <div class="flex flex-col md:flex-row md:items-center md:justify-end gap-4 mb-6">
         <?php if (\Modules\System\Services\SiteAdminAccess::allows(auth()->user())): ?>
         <button onclick="openAddPointModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
@@ -11,12 +32,7 @@
         <?php endif; ?>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div class="rounded-3xl bg-gradient-to-l from-amber-400 to-yellow-500 p-5 text-white shadow"><p class="text-sm opacity-90">امتیاز عمومی من</p><strong id="pointGeneralBalance" class="block mt-2 text-3xl">۰</strong></div>
-        <div class="rounded-3xl bg-gradient-to-l from-violet-600 to-indigo-600 p-5 text-white shadow"><p class="text-sm opacity-90">امتیاز حرفه‌ای من</p><strong id="pointProfessionalBalance" class="block mt-2 text-3xl">۰</strong></div>
-        <div class="rounded-3xl bg-white p-5 shadow"><p class="text-sm text-gray-500">قوانین فعال</p><strong id="pointActiveRules" class="block mt-2 text-3xl text-gray-800">۰</strong><p class="mt-1 text-xs text-gray-400">اعمال خودکار با سقف و کنترل تکرار</p></div>
-    </div>
-
+    <div class="rounded-3xl bg-white p-5 shadow mb-6"><p class="text-sm text-gray-500">قوانین فعال</p><strong id="pointActiveRules" class="block mt-2 text-3xl text-gray-800">۰</strong><p class="mt-1 text-xs text-gray-400">اعمال خودکار با سقف و کنترل تکرار</p></div>
     <!-- فیلترها -->
     <div class="bg-white rounded-3xl p-5 mb-6 shadow-sm">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -43,12 +59,14 @@
                 <option value="engagement">تعامل</option>
                 <option value="management">مدیریت</option>
             </select>
+            <?php if ($pointSiteAdmin): ?>
             <select id="filterPointStatus" onchange="filterPoints()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه وضعیت‌ها</option>
                 <option value="فعال">فعال</option>
                 <option value="غیرفعال">غیرفعال</option>
             </select>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -65,9 +83,10 @@
                     ['html' => '<button onclick="sortPointsBy(\'type\')" class="flex items-center gap-1">نوع <span id="pointSortIcon-type">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '<button onclick="sortPointsBy(\'category\')" class="flex items-center gap-1">دسته <span id="pointSortIcon-category">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '<button onclick="sortPointsBy(\'points\')" class="flex items-center gap-1">امتیاز <span id="pointSortIcon-points">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
-                    ['html' => '<button onclick="sortPointsBy(\'source\')" class="flex items-center gap-1">منبع / عملیات <span id="pointSortIcon-source">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
-                    ['html' => '<button onclick="sortPointsBy(\'branchName\')" class="flex items-center gap-1">شعبه <span id="pointSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
-                    ['html' => 'کنترل تکرار / وضعیت', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ...(\Modules\System\Services\SiteAdminAccess::allows(auth()->user()) ? [['html' => '<button onclick="sortPointsBy(\'source\')" class="flex items-center gap-1">منبع / عملیات <span id="pointSortIcon-source">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"']] : []),
+                    ...(\Modules\System\Services\SiteAdminAccess::allows(auth()->user()) ? [['html' => '<button onclick="sortPointsBy(\'branchName\')" class="flex items-center gap-1">شعبه <span id="pointSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"']] : []),
+                    ['html' => e(locale() === 'en' ? 'Repeat control' : 'کنترل تکرار'), 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ...($pointSiteAdmin ? [['html' => e(locale() === 'en' ? 'Status' : 'وضعیت'), 'attributes' => ' class="text-right py-5 px-5 font-medium"']] : []),
                     ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
                 ],
                 'rows' => [],
@@ -78,5 +97,6 @@
             <div class="flex items-center gap-2" id="pointsPaginationButtons"></div>
         </div>
     </div>
-    <?php component('my-points'); ?>
+
+    </div>
 </div>

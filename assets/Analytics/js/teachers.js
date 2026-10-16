@@ -195,6 +195,7 @@ function applyStaffData(data, preservePage = false) {
 async function loadStaffData(preservePage = true) {
   const data = await branchRequest('/academy/admin/members/data', null, 'GET');
   applyStaffData(data, preservePage);
+  window.dispatchEvent(new CustomEvent('staff:data-updated'));
 }
 
 function announceStaffChange() {
@@ -311,7 +312,8 @@ function readLessonsFromPrefix(prefix) {
     const typeSel = row.querySelector('[data-lesson-type]');
     const levelSel = row.querySelector('[data-lesson-level]');
     if (!typeSel || !levelSel) return;
-    list.push({ type: typeSel.value, level: levelSel.value });
+    if (Number(typeSel.value) > 0 && Number(levelSel.value) > 0)
+      list.push({ type: typeSel.value, level: levelSel.value });
   });
   return list;
 }

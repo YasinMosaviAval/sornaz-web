@@ -6,8 +6,9 @@
     branches = [],
     total = 0,
     page = 1,
-    perPage = 20,
+    perPage = 10,
     timer;
+  let loadSequence = 0;
   let organizationFilter = 'all';
   window.renderAccessUserBranchTabs = () =>
     window.renderPanelOrganizationTabs?.('accessUsersBranchTabs', organizationFilter, window.filterAccessUsersByBranch);
@@ -54,6 +55,7 @@
     banned: 'مسدود',
   };
   window.loadAccessUsers = async (next = 1) => {
+    const sequence = ++loadSequence;
     page = next;
     const p = new URLSearchParams({ page, perPage }),
       q = document.getElementById('accessUserSearch')?.value.trim(),
@@ -67,6 +69,7 @@
     if (organizationFilter === 'academy') p.set('organization', 'academy');
     try {
       const d = await api('/analytics/admin-user-access?' + p);
+      if (sequence !== loadSequence) return;
       users = d.users || [];
       roles = d.roles || [];
       permissions = d.permissions || [];
@@ -77,7 +80,7 @@
       window.renderAccessUserBranchTabs();
       render();
     } catch (e) {
-      alert(e.message);
+      if (sequence === loadSequence) alert(e.message);
     }
   };
   function renderBranchFilter() {
@@ -118,13 +121,8 @@
     } else {
       document.getElementById('accessUsersBody').innerHTML = tableRows.map(row => window.AdminPanelTable.rowHTML(row.cells, row.attributes)).join('');
     }
-    const pages = Math.max(1, Math.ceil(total / perPage)),
-      start = (page - 1) * perPage;
-    document.getElementById('accessUsersInfo').textContent =
-      `نمایش ${total ? start + 1 : 0} تا ${Math.min(start + perPage, total)} از ${total}`;
-    document.getElementById('accessUsersPerPage').value = perPage;
-    document.getElementById('accessUsersPagination').innerHTML =
-      `<button onclick="changeAccessUsersPage(${page - 1})" ${page === 1 ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">قبلی</button><span class="px-3 py-2">${page} / ${pages}</span><button onclick="changeAccessUsersPage(${page + 1})" ${page === pages ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">بعدی</button>`;
+    const footer = table?.closest('.admin-ui-table')?.querySelector('[data-panel-pagination]') || document.getElementById('accessUsersPagination');
+    window.AdminPanelTable.renderPagination?.(footer, { total, perPage, page, onChange: next => loadAccessUsers(next) });
   }
   window.searchAccessUsers = () => {
     clearTimeout(timer);
@@ -134,7 +132,7 @@
     if (p >= 1 && p <= Math.max(1, Math.ceil(total / perPage))) loadAccessUsers(p);
   };
   window.changeAccessUsersPerPage = (v) => {
-    perPage = [10, 20, 30, 50, 100].includes(Number(v)) ? Number(v) : 20;
+    perPage = [10, 20, 30, 50, 100].includes(Number(v)) ? Number(v) : 10;
     loadAccessUsers(1);
   };
   function choiceCards(list, selected) {
@@ -186,6 +184,9 @@
       button.disabled = false;
     }
   };
+  window.addEventListener('staff:data-updated', () => {
+    if (document.getElementById('accessUsersBody')) loadAccessUsers(1);
+  });
   setTimeout(() => {
     if (document.getElementById('accessUsersBody')) loadAccessUsers(1);
   }, 300);
