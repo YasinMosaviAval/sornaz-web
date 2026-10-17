@@ -29,6 +29,8 @@
   }
 
   function formFields(item, prefix) {
+    const organizationMode = window.holidayLeaveMode !== 'member';
+    const english = document.documentElement.lang.startsWith('en');
     const id = function (n) {
       return prefix ? prefix + n : 'hl' + n;
     };
@@ -37,20 +39,17 @@
     ).map(function (b) {
       return { value: b.id, label: b.name };
     });
-    const types = (window.holidayLeaveTypeList || []).map(function (t) {
+    const types = (window.getHolidayLeaveTypes?.() || window.holidayLeaveTypeList || []).map(function (t) {
       return { value: t.value, label: t.label };
     });
     const timezones = (window.holidayLeaveTimezoneList || []).map(function (tz) {
       return { value: tz.value, label: tz.label };
     });
-    const branchId = item.organizationUserId || (branches[0] && branches[0].value) || '';
+    const branchId = item.organizationUserId || (window.isHolidayLeaveOrganizationFixed?.() && branches.length === 1 ? branches[0].value : '');
     const members =
       typeof window.getHolidayLeaveMemberOptions === 'function'
         ? window.getHolidayLeaveMemberOptions(branchId)
         : [];
-    const fixedOrganization =
-      typeof window.isHolidayLeaveOrganizationFixed === 'function' &&
-      window.isHolidayLeaveOrganizationFixed();
     const slotsHtml =
       typeof window.buildHolidayLeaveTimeSlotsHTML === 'function'
         ? window.buildHolidayLeaveTimeSlotsHTML(id('TimeSlots'), branchId, item.slots || [])
@@ -59,18 +58,18 @@
     return `
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <input id="${id('RecordId')}" type="hidden" value="${escapeHtml(item.id || '')}">
-                <div class="${fixedOrganization ? 'hidden' : ''}">
+                <div>
                     <label class="block text-sm font-medium mb-2">سازمان *</label>
                     <select id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
                             onchange="window.refreshHolidayLeaveMembers('${prefix}');window.refreshHolidayLeaveTimeSlots('${id('TimeSlots')}', this.value, [])">
-                        ${renderOptions(branches, branchId)}
+                        <option value="">${english ? 'Select organization' : 'انتخاب سازمان'}</option>${renderOptions(branches, branchId)}
                     </select>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">شخص یا سازمان *</label>
-                    <select id="${id('Member')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
+                <div class="${organizationMode ? 'hidden' : ''}">
+                    <label class="block text-sm font-medium mb-2">${english ? 'Employee' : 'کارمند'} *</label>
+                    <select id="${id('Member')}" ${!branchId ? 'disabled' : ''} class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 disabled:opacity-50"
                             onchange="window.refreshHolidayLeaveConflicts('${prefix}')">
-                        <option value="">انتخاب شخص یا سازمان</option>
+                        <option value="">${english ? 'Select employee' : 'انتخاب کارمند'}</option>
                         ${renderOptions(members, item.targetValue || (item.membershipId ? 'member:' + item.membershipId : 'organization:' + item.organizationUserId))}
                     </select>
                 </div>
@@ -82,7 +81,7 @@
                 <div>
                     <label class="block text-sm font-medium mb-2">نوع</label>
                     <select id="${id('Type')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
-                        ${renderOptions(types, item.type || 'vacation')}
+                        ${renderOptions(types, item.type || (organizationMode ? 'closed' : 'vacation'))}
                     </select>
                 </div>
                 <div>
@@ -91,9 +90,9 @@
                         ${renderOptions(timezones, item.timezone || 'Asia/Tehran')}
                     </select>
                 </div>
-                <div class="sm:col-span-2 rounded-2xl border border-indigo-100 bg-indigo-50/40 p-5 space-y-5">
-                    <label class="flex items-center gap-3 text-sm font-medium"><input id="${id('AllDay')}" type="checkbox" ${item.fullDay || item.timeLabel === 'تمام‌روز' ? 'checked' : ''} onchange="window.toggleHolidayLeaveAllDay('${prefix}')" class="h-5 w-5 rounded border-gray-300 text-indigo-600"><span>تعطیلی کل روز</span></label>
-                    <div id="${id('TimeSection')}" class="${item.fullDay || item.timeLabel === 'تمام‌روز' ? 'hidden' : ''}"><label class="block text-sm font-medium mb-2">ساعت تعطیلی</label>
+                <div class="sm:col-span-2 space-y-3">
+                    <label class="flex items-center gap-3 text-sm font-medium"><input id="${id('AllDay')}" type="checkbox" ${item.fullDay || item.timeLabel === 'تمام‌روز' ? 'checked' : ''} onchange="window.toggleHolidayLeaveAllDay('${prefix}')" class="h-5 w-5 rounded border-gray-300 text-indigo-600"><span>${organizationMode ? (english ? 'All-day closure' : 'تعطیلی کل روز') : (english ? 'All-day leave' : 'مرخصی تمام روز')}</span></label>
+                    <div id="${id('TimeSection')}" class="${item.fullDay || item.timeLabel === 'تمام‌روز' ? 'hidden' : ''}"><label class="block text-sm font-medium mb-2">${organizationMode ? (english ? 'Closure hours' : 'ساعت تعطیلی') : (english ? 'Leave hours' : 'ساعت مرخصی')}</label>
                     <div id="${id('TimeSlots')}" class="max-h-64 overflow-y-auto">
                         ${slotsHtml}
                     </div></div>
@@ -136,7 +135,7 @@
     return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-3xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                 <div class="px-8 py-5 border-b flex justify-between items-center">
-                    <h2 class="text-2xl font-bold">افزودن تعطیل / مرخصی</h2>
+                    <h2 class="text-2xl font-bold">${window.holidayLeaveMode === 'member' ? (document.documentElement.lang.startsWith('en') ? 'Add leave' : 'افزودن مرخصی') : (document.documentElement.lang.startsWith('en') ? 'Add holiday' : 'افزودن تعطیلی')}</h2>
                     <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                 </div>
                 <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto">
@@ -153,7 +152,7 @@
     return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-3xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                 <div class="px-8 py-5 border-b flex justify-between items-center">
-                    <h2 class="text-2xl font-bold">ویرایش تعطیل / مرخصی</h2>
+                    <h2 class="text-2xl font-bold">${window.holidayLeaveMode === 'member' ? (document.documentElement.lang.startsWith('en') ? 'Edit leave' : 'ویرایش مرخصی') : (document.documentElement.lang.startsWith('en') ? 'Edit holiday' : 'ویرایش تعطیلی')}</h2>
                     <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                 </div>
                 <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto">

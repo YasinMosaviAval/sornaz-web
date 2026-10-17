@@ -130,12 +130,4 @@
         </div>
     </div>
 
-    <!-- میانبرهای سریع -->
-    <div class="bg-white rounded-3xl p-6 shadow">
-        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-            <i class="fas fa-bolt text-yellow-500"></i>
-            میانبرهای سریع
-        </h2>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" id="dashboardQuickLinks"></div>
-    </div>
 </div>

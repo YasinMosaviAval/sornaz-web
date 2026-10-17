@@ -109,7 +109,7 @@
                         ${renderOptions(timezones, item.timezone || 'Asia/Tehran')}
                     </select>
                 </div>
-                <div class="sm:col-span-2 rounded-2xl border border-indigo-100 bg-indigo-50/40 p-5 space-y-5">
+                <div class="sm:col-span-2 space-y-3">
                     <div><label class="block text-sm font-medium mb-2">ساعات کاری</label><div id="${id('TimeSlots')}">${slotsHtml}</div></div>
                     <div><label class="block text-sm font-medium mb-2">خلاصه</label><input id="${id('Summary')}" type="text" value="${escapeHtml(item.summary || '')}" class="w-full border rounded-2xl py-3.5 px-5 bg-white"></div>
                     <div><label class="block text-sm font-medium mb-2">توضیحات</label><textarea id="${id('Description')}" rows="3" class="w-full border rounded-2xl py-3.5 px-5 bg-white">${escapeHtml(item.description || '')}</textarea></div>

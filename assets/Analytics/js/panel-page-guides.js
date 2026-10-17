@@ -23,6 +23,7 @@
   }
 
   function place(section, node) {
+    section = section.id === 'terms' ? section.querySelector('[data-term-panel="terms"]') || section : section;
     const children = [...section.children];
     const anchor = children.find(child => child.matches('.admin-ui-header')) || children.find(child => !child.matches('nav') && child.querySelector('button[onclick*="export"],button[onclick*="openAdd"]')) || children.filter(child => child.matches('nav')).at(-1);
     if (anchor) anchor.after(node);
@@ -34,7 +35,12 @@
     if (!template) return;
     sections().forEach(section => {
       const saved = guides[section.id];
-      let guide = section.querySelector(':scope > .panel-page-guide');
+      const host = section.id === 'terms' ? section.querySelector('[data-term-panel="terms"]') || section : section;
+      let guide = host.querySelector('.panel-page-guide') || section.querySelector('.panel-page-guide');
+      if (guide && section.id === 'terms') {
+        section.querySelectorAll('.panel-page-guide').forEach(other => { if (other !== guide) other.remove(); });
+        if (!host.contains(guide)) place(section, guide);
+      }
       const title = saved?.title?.[language] || saved?.title?.fa || saved?.title?.en || '';
       const body = saved?.body?.[language] || saved?.body?.fa || saved?.body?.en || '';
       if (saved && (title || body)) {
@@ -51,7 +57,7 @@
           return paragraph;
         }));
       }
-      if (canEdit && !section.querySelector(':scope > [data-edit-page-guide]')) {
+      if (canEdit && !section.querySelector('[data-edit-page-guide]')) {
         const button = document.createElement('button');
         button.type = 'button';
         button.dataset.editPageGuide = section.id;
@@ -61,8 +67,19 @@
         if (guide) guide.before(button);
         else place(section, button);
       }
-      const editor = section.querySelector(':scope > [data-edit-page-guide]');
+      const editor = section.querySelector('[data-edit-page-guide]');
       if (editor && guide) editor.textContent = english ? 'Edit page guidance' : 'ویرایش توضیحات صفحه';
+      if (editor && section.id === 'terms') {
+        let layout = host.querySelector('[data-page-guide-layout]');
+        if (!layout) {
+          layout = document.createElement('div');
+          layout.dataset.pageGuideLayout = '';
+          layout.className = 'mb-4 flex flex-wrap items-start gap-3';
+          place(section, layout);
+        }
+        if (guide) { guide.classList.add('flex-1', 'min-w-0'); layout.append(guide); }
+        layout.append(editor);
+      }
     });
   }
 

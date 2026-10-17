@@ -70,6 +70,31 @@ class AcademyBranchController
         return $this->run(fn () => $this->service->availabilityExceptions((int) auth()->id(), SiteAdminAccess::allows(auth()->user())));
     }
 
+    public function targetAvailabilityExceptions(string $target)
+    {
+        return $this->run(fn () => $this->service->targetAvailabilityExceptions((int) auth()->id(), $target, 0, SiteAdminAccess::allows(auth()->user())));
+    }
+
+    public function mutateTargetAvailabilityException(string $target, int $id = 0, string $operation = 'create')
+    {
+        return $this->run(function () use ($target, $id, $operation) {
+            if (!in_array($operation, ['create', 'update', 'delete', 'status'], true)) throw new RuntimeException('عملیات معتبر نیست.', 404);
+            if (($id > 0) !== ($operation !== 'create')) throw new RuntimeException('مسیر عملیات معتبر نیست.', 404);
+            $actor = (int) auth()->id();
+            $admin = SiteAdminAccess::allows(auth()->user());
+            $this->service->targetAvailabilityExceptions($actor, $target, $id, $admin);
+            if ($operation === 'delete') {
+                $this->service->deleteAvailabilityException($actor, $id, $admin);
+                return null;
+            }
+            if ($operation === 'status') return $this->service->cycleAvailabilityExceptionStatus($actor, $id, $admin);
+            $data = $this->payload();
+            $data['targetType'] = $target;
+            if ($target === 'organization') $data['membershipId'] = 0;
+            return $this->service->saveAvailabilityException($actor, $data, $id, $admin);
+        });
+    }
+
     public function storeAvailabilityException()
     {
         return $this->run(fn () => $this->service->saveAvailabilityException((int) auth()->id(), $this->payload(), 0, SiteAdminAccess::allows(auth()->user())), 201);
@@ -191,7 +216,7 @@ class AcademyBranchController
         try {
             return ResponseFactory::json(['success' => true, 'data' => $callback()], $status);
         } catch (Throwable $e) {
-            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
+            return ResponseFactory::json(['success' => false, 'message' => $e instanceof \PDOException ? 'ذخیره یا دریافت اطلاعات انجام نشد. دوباره تلاش کنید.' : $e->getMessage()], 422);
         }
     }
 }

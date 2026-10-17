@@ -1,4 +1,5 @@
 <div id="schedules" class="section hidden">
+
     <style>
         #schedulesWeeklyTables table {
             width: max-content !important;
@@ -18,7 +19,7 @@
     </style>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
-            <h1 class="text-3xl font-bold">برنامه زمانی کلاس‌ها</h1>
+            <h1 class="text-3xl font-bold">تقویم کلاس‌ها</h1>
             <p class="text-gray-500 mt-1">جلسات حضوری و آنلاین ترم‌های آموزشگاه</p>
         </div>
         <div class="flex flex-wrap gap-3">

@@ -75,16 +75,10 @@ final class MobilePanelNavigation
         if ($key === 'settings' && empty($capabilities['admin'])) $key = 'my-settings';
         if (!isset($sections[$key]) || !empty($sections[$key]['hidden'])) return null;
         $item = ['key' => $webKey, 'section' => $key, 'label' => $label, 'en' => $sections[$key]['en']];
-        if ($webKey === 'dashboard') {
-            $item['links'] = $this->dashboardLinks($sections, !empty($capabilities['websiteManagement'] ?? $capabilities['management']));
-        }
-        if ($webKey === 'lessons' && $key === 'lessons') {
-            // Courses moved from the sidebar into the shared lesson page tabs.
-            $item['links'] = array_values(array_filter(['course-levels', 'courses'],
-                fn ($link) => isset($sections[$link]) && empty($sections[$link]['hidden'])));
-        }
+        $links = $this->pageLinks($webKey, $key, $sections, $capabilities);
+        if ($links !== null) $item['links'] = $links;
         $english = ['account' => 'Account', 'settings' => 'Settings', 'teachers' => 'Staff',
-            'gallery' => 'Gallery', 'lessons' => 'Lessons', 'member-schedules' => 'Schedule', 'finance' => 'Finance'];
+            'branches' => 'Organization', 'schedules' => 'Class calendar', 'gallery' => 'Gallery', 'lessons' => 'Lessons', 'member-schedules' => 'Employees', 'finance' => 'Finance'];
         $item['en'] = $english[$webKey] ?? $item['en'];
         $category = ['gallery-cover' => 'cover', 'gallery-logo' => 'logo', 'gallery-intro-video' => 'intro_video',
             'gallery-collection' => 'gallery'][$webKey] ?? null;
@@ -96,10 +90,22 @@ final class MobilePanelNavigation
         return $item;
     }
 
+    private function pageLinks(string $webKey, string $key, array $sections, array $capabilities): ?array
+    {
+        if ($webKey === 'dashboard') return $this->dashboardLinks($sections, !empty($capabilities['websiteManagement'] ?? $capabilities['management']));
+        $links = match (true) {
+            $webKey === 'lessons' && $key === 'lessons' => ['course-levels', 'courses'],
+            $webKey === 'teachers' => ['users', 'member-schedules', 'employee-leaves'],
+            $webKey === 'branches' => ['availabilities', 'scheduling-rules', 'organization-holidays'],
+            default => null,
+        };
+        return $links === null ? null : array_values(array_filter($links, fn ($link) => isset($sections[$link]) && empty($sections[$link]['hidden'])));
+    }
+
     private function groupEnglish(string $id): string
     {
         return ['gallerySubmenu' => 'Gallery', 'profileAchievementsSubmenu' => 'Background and achievements',
-            'branchesSubmenu' => 'Branches', 'profilesSubmenu' => 'Roles and permissions',
+            'branchesSubmenu' => 'Organization', 'profilesSubmenu' => 'Roles and permissions',
             'lessonsSubmenu' => 'Lessons', 'classroomsSubmenu' => 'Classes', 'scheduleSubmenu' => 'Schedule'][$id] ?? 'Sections';
     }
 

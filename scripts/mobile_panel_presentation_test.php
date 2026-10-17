@@ -19,6 +19,22 @@ expectParity($sections['points']['presentation']['actionsPermission'] === 'canMa
 expectParity(array_column($sections['users']['presentation']['filters'], 'webId') === ['accessUserStatus'], 'Organization selection is duplicated in access filters');
 expectParity(count($sections['terms']['presentation']['filters']) === 7, 'Term filters are incomplete');
 expectParity(count($sections['classrooms']['presentation']['filters']) === 4, 'Classroom filters are incomplete');
+$activity = array_column($sections['notifications']['presentation']['filters'], null, 'webId')['filterNotificationActivity'] ?? null;
+expectParity($activity && $activity['rowPath'] === 'activityTitle' && $activity['distinct'], 'Activity-title filter must use actual notification activity titles');
+foreach (['organization-holidays' => ['vacation'], 'employee-leaves' => ['holiday', 'closed']] as $key => $excluded) {
+    $fields = array_column($sections[$key]['actions']['create']['fields'], null, 'key');
+    expectParity(!isset($fields['targetValue']) && !isset($fields['targetType']), 'Scoped exception forms must not offer a mixed target');
+    expectParity(!array_intersect($excluded, array_keys($fields['type']['options'])), 'Invalid scoped exception types exposed');
+    expectParity(isset($fields['membershipId']) === ($key === 'employee-leaves'), 'Only employee leaves select a member');
+    if ($key === 'employee-leaves') expectParity($fields['membershipId']['dependsOn'] === ['organizationUserId'] && $fields['membershipId']['options']['requireMatch'], 'Employee selection must wait for and match organization');
+    $filter = array_column($sections[$key]['presentation']['filters'], null, 'webId')['filterHolidayLeaveType'];
+    expectParity(!array_intersect($excluded, array_keys($filter['options'])), 'Table type filters must match scoped form types');
+    foreach ($sections[$key]['actions'] as $action) {
+        $route = \Core\router\Router::dispatch($action['method'], str_replace('{id}', '1', $action['path']));
+        expectParity(in_array('academy-panel', $route['middlewares'], true), 'Scoped operation lost panel authorization');
+        if ($action['method'] === 'POST') expectParity(in_array('csrf', $route['middlewares'], true), 'Scoped mutation lost CSRF');
+    }
+}
 $termFields = array_column($sections['terms']['actions']['create']['fields'], null, 'key');
 expectParity($termFields['organizationUserId']['options'] === ['source' => 'organizations', 'id' => 'user_id'], 'Term organization must use the website account IDs');
 expectParity(isset($sections['classroom-types']['actions']['create-from-classroom']['hidden']), 'Context-only classroom-type action leaks into toolbar');
@@ -29,7 +45,7 @@ foreach ($sections as $key => $section) {
     $contract = $section['presentation'];
     foreach ($contract['filters'] as $filter) {
         if (!isset($filter['webId'])) continue;
-        $file = $key === 'members' ? 'teachers' : $key;
+        $file = $key === 'members' ? 'teachers' : (in_array($key, ['organization-holidays', 'employee-leaves'], true) ? 'availability-exceptions' : $key);
         $view = __DIR__ . '/../Modules/Analytics/Resources/Views/sections/' . $file . '.php';
         expectParity(is_file($view) && str_contains(file_get_contents($view), 'id="' . $filter['webId'] . '"'), 'Native filter has no matching web control: ' . $key . '/' . $filter['webId']);
     }

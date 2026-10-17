@@ -1,5 +1,6 @@
+<?php $notificationSiteAdmin = \Modules\System\Services\SiteAdminAccess::allows(auth()->user()); ?>
 <?php $canCreateNotifications = !empty($canCreateNotifications) && \Modules\System\Services\SiteAdminAccess::allows(auth()->user()); ?>
-<div id="notifications" class="section hidden" data-read-only="<?= !empty($canUseNotificationActions) ? '0' : '1' ?>" data-can-create="<?= !empty($canCreateNotifications) ? '1' : '0' ?>">
+<div id="notifications" class="section hidden" data-site-admin="<?= $notificationSiteAdmin ? '1' : '0' ?>" data-read-only="<?= !empty($canUseNotificationActions) ? '0' : '1' ?>" data-can-create="<?= !empty($canCreateNotifications) ? '1' : '0' ?>">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-3xl font-bold">مدیریت اعلان‌ها</h1>
@@ -23,10 +24,14 @@
 
     <!-- فیلترها -->
     <div class="bg-white rounded-3xl p-5 mb-6 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 <?= $notificationSiteAdmin ? 'lg:grid-cols-5' : 'lg:grid-cols-3' ?> gap-4">
             <input type="text" id="notificationSearch" placeholder="جستجو عنوان / متن اعلان..."
                    class="w-full border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500"
                    onkeyup="filterNotifications()">
+            <select id="filterNotificationActivity" onchange="filterNotifications()" aria-label="<?= e(locale() === 'en' ? 'Activity title' : 'عنوان فعالیت') ?>" class="w-full rounded-2xl border border-gray-300 px-4 py-3">
+                <option value=""><?= e(locale() === 'en' ? 'All activity titles' : 'همه عنوان‌های فعالیت') ?></option>
+            </select>
+            <?php if ($notificationSiteAdmin): ?>
             <select id="filterNotificationStatus" onchange="filterNotifications()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه وضعیت‌ها</option>
@@ -36,6 +41,7 @@
                 <option value="خصوصی">خصوصی</option>
                 <option value="زباله‌دان">زباله‌دان</option>
             </select>
+            <?php endif; ?>
             <select id="filterNotificationPriority" onchange="filterNotifications()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه اولویت‌ها</option>
@@ -43,6 +49,7 @@
                 <option value="متوسط">متوسط</option>
                 <option value="کم">کم</option>
             </select>
+            <?php if ($notificationSiteAdmin): ?>
             <select id="filterNotificationAudience" onchange="filterNotifications()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه مخاطبان</option>
@@ -52,6 +59,7 @@
                 <option value="والدین">والدین</option>
                 <option value="پرسنل">پرسنل</option>
             </select>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -65,12 +73,12 @@
                 'bodyAttributes' => ' class="divide-y text-sm"',
                 'columns' => [
                     ['html' => '<button onclick="sortNotificationsBy(\'title\')" class="flex items-center gap-1">عنوان اعلان <span id="notifSortIcon-title">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
-                    ['html' => 'گیرنده', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
-                    ['html' => '<button onclick="sortNotificationsBy(\'branchName\')" class="flex items-center gap-1">' . e(locale() === 'en' ? 'Sender' : 'فرستنده') . ' <span id="notifSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ...($notificationSiteAdmin ? [['html' => '<button onclick="sortNotificationsBy(\'recipientUsername\')" class="flex items-center gap-1">' . e(locale() === 'en' ? 'Recipient' : 'گیرنده') . ' <span id="notifSortIcon-recipientUsername">&#8597;</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"']] : []),
+                    ...($notificationSiteAdmin ? [['html' => '<button onclick="sortNotificationsBy(\'branchName\')" class="flex items-center gap-1">' . e(locale() === 'en' ? 'Sender' : 'فرستنده') . ' <span id="notifSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"']] : []),
                     ['html' => '<button onclick="sortNotificationsBy(\'audience\')" class="flex items-center gap-1">مخاطب <span id="notifSortIcon-audience">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '<button onclick="sortNotificationsBy(\'priority\')" class="flex items-center gap-1">اولویت <span id="notifSortIcon-priority">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '<button onclick="sortNotificationsBy(\'date\')" class="flex items-center gap-1">تاریخ انتشار <span id="notifSortIcon-date">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
-                    ['html' => '<button onclick="sortNotificationsBy(\'status\')" class="flex items-center gap-1">وضعیت <span id="notifSortIcon-status">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ...($notificationSiteAdmin ? [['html' => '<button onclick="sortNotificationsBy(\'status\')" class="flex items-center gap-1">وضعیت <span id="notifSortIcon-status">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"']] : []),
                     ['html' => '<button onclick="sortNotificationsBy(\'readStatus\')" class="flex items-center gap-1">وضعیت مطالعه <span id="notifSortIcon-readStatus">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
                 ],

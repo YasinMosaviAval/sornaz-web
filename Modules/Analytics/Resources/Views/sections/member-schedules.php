@@ -1,4 +1,6 @@
 <div id="member-schedules" class="section hidden">
+    <?php component('staff-page-tabs', ['active' => 'member-schedules']); ?>
+    <h1 class="hidden"><?= e(locale() === 'en' ? 'Member schedules' : 'برنامه زمانی اعضا') ?></h1>
     <div class="flex flex-col md:flex-row md:items-center justify-end gap-4 mb-6">
         <div class="flex flex-wrap justify-end gap-3">
             <button onclick="openAddMemberScheduleModal()"

@@ -57,16 +57,17 @@
   }
 
   window.getNotificationRowHTML = function (item) {
-    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.title)}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `@${escapeHtml(item.recipientUsername || '—')} <small class="text-gray-400">(${escapeHtml(item.recipientId || '—')})</small>`, attributes: ` class="py-4 px-5" dir="ltr"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-2.5 py-1 rounded-full text-xs bg-slate-100 text-slate-600">${escapeHtml(item.audience || 'همه')}</span>`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-3 py-1 rounded-full text-xs ${priorityClass(item.priority)}">${escapeHtml(item.priority)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.date)}`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-3 py-1 rounded-full text-xs ${readStatusClass(item.readStatus)}">${escapeHtml(item.readStatus)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `
+    const cells = [{ html: `${escapeHtml(item.title)}`, attributes: ` class="py-4 px-5 whitespace-nowrap font-medium"` }, { html: `@${escapeHtml(item.recipientUsername || '—')} <small class="text-gray-400">(${escapeHtml(item.recipientId || '—')})</small>`, attributes: ` class="py-4 px-5 whitespace-nowrap" dir="ltr"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5 whitespace-nowrap"` }, { html: `<span class="px-2.5 py-1 rounded-full text-xs bg-slate-100 text-slate-600">${escapeHtml(item.audience || 'همه')}</span>`, attributes: ` class="py-4 px-5 whitespace-nowrap"` }, { html: `<span class="px-3 py-1 rounded-full text-xs ${priorityClass(item.priority)}">${escapeHtml(item.priority)}</span>`, attributes: ` class="py-4 px-5 whitespace-nowrap"` }, { html: `${escapeHtml(item.date)}`, attributes: ` class="py-4 px-5 whitespace-nowrap"` }, { html: `<span class="px-3 py-1 rounded-full text-xs ${statusClass(item.status)}">${escapeHtml(item.status)}</span>`, attributes: ` class="py-4 px-5 whitespace-nowrap"` }, { html: `<span class="px-3 py-1 rounded-full text-xs ${readStatusClass(item.readStatus)}">${escapeHtml(item.readStatus)}</span>`, attributes: ` class="py-4 px-5 whitespace-nowrap"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
                     <button onclick="viewNotification(${item.id})" class="text-indigo-600 hover:underline text-sm">مشاهده</button>
                     ${document.getElementById('notifications')?.dataset.readOnly === '1' ? '' : `<button onclick="deleteNotification(${item.id})" class="text-red-500 hover:underline text-sm">حذف</button>`}
                 </div>
-            `, attributes: ` class="py-4 px-5 text-left"` }]);
+            `, attributes: ` class="py-4 px-5 whitespace-nowrap text-left"` }];
+    return window.AdminPanelTable.cellsHTML(document.getElementById('notifications')?.dataset.siteAdmin === '1' ? cells : cells.filter((_, index) => ![1, 2, 6].includes(index)));
   };
 
   window.getNotificationEmptyRowHTML = function () {
-    return window.AdminPanelTable.rowHTML([{ html: "اعلانی یافت نشد", attributes: " colspan=\"9\" class=\"py-12 text-center text-gray-400\"" }], "");
+    return window.AdminPanelTable.rowHTML([{ html: "اعلانی یافت نشد", attributes: ` colspan="${document.getElementById('notifications')?.dataset.siteAdmin === '1' ? 9 : 6}" class="py-12 text-center text-gray-400"` }], "");
   };
 
   window.getNotificationAddModalHTML = function () {

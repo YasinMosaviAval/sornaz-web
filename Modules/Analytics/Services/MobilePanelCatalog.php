@@ -164,6 +164,7 @@ final class MobilePanelCatalog
         foreach (['create', 'update'] as $op) {
             $sections['terms']['actions'][$op]['fields'] = $sections['terms']['fields'];
         }
+        $sections['terms']['actions']['discounts'] = $a('/academy/admin/term-discounts', 'لیست تخفیف‌ها', 'GET', [], false);
         $sections['terms']['actions']['discount'] = $a('/academy/admin/term-discounts', 'افزودن تخفیف', 'POST', [$f('title', 'عنوان', 'text', null, true), $f('type', 'نوع', 'select', ['percentage' => 'درصدی', 'fixed' => 'مبلغ ثابت']), $f('value', 'مقدار', 'number', null, true)], false);
         $sections['schedules']['rows'] = 'schedules';
         $sections['schedules']['actions']['attendance']['fields'] = [$f('attendance', 'حضور و غیاب', 'rows', [$f('memberId', 'عضو', 'select', ['source' => 'attendance']), $f('status', 'وضعیت', 'select', ['present' => 'حاضر', 'absent' => 'غایب', 'late' => 'تأخیر', 'leave' => 'مرخصی', 'excused_absence' => 'غیبت موجه', 'online' => 'آنلاین']), $f('note', 'توضیح')])];
@@ -420,6 +421,8 @@ final class MobilePanelCatalog
         $sections['my-finance'] = $s('my-finance', 'امور مالی من', 'My finance', '/analytics/personal-data/finance', 'invoices', [], 'common', false);
         $sections['my-finance']['actions']['update'] = $a('/analytics/personal-invoices/{id}/update', 'ویرایش فاکتور خود', 'POST', [$f('amount', 'مبلغ', 'number', null, true), $f('statusCode', 'وضعیت', 'select', ['draft' => 'پیش‌نویس', 'issued' => 'صادرشده', 'canceled' => 'لغوشده']), $f('dueDate', 'سررسید', 'date'), $f('title', 'شرح', 'text', null, true), ...$description]);
         $sections = $this->completePanelContracts($sections, $webDialogs);
+        $this->scopedExceptionContracts($sections);
+        if ($webDialogs) $sections['availability-exceptions']['hidden'] = true;
         $sections = $this->authorizedActions($sections);
         if ($webDialogs) {
             $presentation = require dirname(__DIR__) . '/Resources/mobile-panel-presentation.php';
@@ -538,6 +541,34 @@ final class MobilePanelCatalog
         $this->scheduleDialogContracts($sections);
         $this->profileDialogContracts($sections);
         $this->contentDialogContracts($sections);
+    }
+
+    private function scopedExceptionContracts(array &$sections): void
+    {
+        foreach (['organization-holidays' => ['organization', 'تعطیلات', 'Holidays'], 'employee-leaves' => ['member', 'مرخصی‌ها', 'Leaves']] as $key => [$target, $label, $english]) {
+            $section = $sections['availability-exceptions'];
+            $section['key'] = $key; $section['label'] = $label; $section['en'] = $english;
+            $fields = [$this->f('organizationUserId', 'سازمان', 'select', ['source' => 'staff_catalog.organizations', 'id' => 'user_id'], true)];
+            if ($target === 'member') {
+                $fields[0]['initialLookup'] = ['source' => 'members', 'by' => 'membershipId', 'id' => 'id', 'field' => 'organizationUserId'];
+                $fields[] = $this->f('membershipId', 'کارمند', 'select', ['source' => 'members', 'match' => ['organizationUserId' => 'organizationUserId'], 'requireMatch' => true], true) + ['dependsOn' => ['organizationUserId']];
+            }
+            foreach ($section['actions']['create']['fields'] as $field) {
+                if (in_array($field['key'], ['organizationUserId', 'membershipId', 'targetType', 'targetValue'], true)) continue;
+                if ($field['key'] === 'type') {
+                    $field['type'] = 'select';
+                    $types = ['holiday' => 'تعطیل رسمی', 'closed' => 'تعطیل', 'unavailable' => 'عدم دسترسی', 'busy' => 'مشغول', 'vacation' => 'مرخصی', 'blocked' => 'مسدود'];
+                    $field['options'] = array_filter($types, static fn ($name) => $target === 'organization' ? $name !== 'vacation' : !in_array($name, ['holiday', 'closed'], true), ARRAY_FILTER_USE_KEY);
+                    $field['default'] = $target === 'organization' ? 'closed' : 'vacation';
+                }
+                $fields[] = $field;
+            }
+            $path = '/academy/admin/availability-exceptions/targets/' . $target;
+            foreach ($section['actions'] as $operation => &$action) $action['path'] = $path . (in_array($operation, ['list', 'create'], true) ? '' : '/{id}/' . $operation);
+            unset($action);
+            $sections[$key] = $section;
+            $this->setDialogFields($sections, $key, $fields);
+        }
     }
 
     private function setDialogFields(array &$sections, string $key, array $fields): void

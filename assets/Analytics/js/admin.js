@@ -1,5 +1,18 @@
+function showOrganizationPage(id) {
+  if (id === 'organization-holidays') {
+    window.setHolidayLeaveMode?.('organization');
+    showSection('availability-exceptions');
+  } else showSection(id);
+}
+function showStaffPage(id) {
+  if (id === 'employee-leaves') {
+    window.setHolidayLeaveMode?.('member');
+    showSection('availability-exceptions');
+  } else showSection(id);
+}
 function panelPageHeading(section) {
   if (!section || section.id === 'chat' || section.id === 'tests') return null;
+  if (section.id === 'availability-exceptions') return section.querySelector('h1');
   const firstContent = [...section.children].find((child) => !['STYLE', 'SCRIPT', 'NAV'].includes(child.tagName));
   return firstContent?.matches('h1') ? firstContent : firstContent?.querySelector('h1') || null;
 }

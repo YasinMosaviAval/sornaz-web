@@ -118,22 +118,34 @@ class AdminNotificationService
     private function map(array $row): array
     {
         $texts = [];
-        foreach (DB::table('translations')->where('table_name', 'user_messages')->where('table_id', (int) $row['user_message_id'])->where('locale', locale())->whereIn('field', ['title', 'message', 'audience'])->whereNull('deleted_at')->get() as $translation) {
+        foreach (DB::table('translations')->where('table_name', 'user_messages')->where('table_id', (int) $row['user_message_id'])->where('locale', locale())->whereIn('field', ['title', 'message', 'audience', 'priority', 'event_operation'])->whereNull('deleted_at')->get() as $translation) {
             $texts[(string) $translation['field']] = (string) $translation['value'];
         }
         $description = \Core\database\ActivityText::legacy(db(), $row, $texts['title'] ?? '', $texts['message'] ?? '', locale());
         $sender = $this->senderName((int) ($row['sender_id'] ?? 0));
         $recipient = DB::table('users')->where('user_id', (int) ($row['receiver_user_id'] ?? 0))->whereNull('deleted_at')->first();
-        $operation = str_replace('database_', '', (string) ($row['related_entity_type'] ?? ''));
-        $priority = $operation === 'delete' ? 'بالا' : ($operation === 'update' ? 'متوسط' : 'کم');
+        $event = $this->eventContext($row, $texts, $recipient, $description);
         $status = (string) ($row['status'] ?: 'pending');
         return [
             'id' => (int) $row['user_message_id'], 'title' => $description['title'], 'body' => $description['message'], 'recipientId' => (int) ($row['receiver_user_id'] ?? 0), 'recipientUsername' => $recipient['username'] ?? '—',
-            'branchId' => 0, 'branchName' => $sender, 'audience' => $texts['audience'] ?? 'همه', 'priority' => $priority,
+            'branchId' => 0, 'branchName' => $sender, ...$event,
             'statusCode' => $status, 'status' => $this->statusLabel($status), 'readStatus' => $row['is_read'] ? 'خوانده‌شده' : 'خوانده‌نشده',
             'date' => date('Y/m/d', strtotime($row['created_at'])), 'dateISO' => date('Y-m-d', strtotime($row['created_at'])),
             'source' => 'سیستم', 'type' => $row['type'], 'entityType' => $row['related_entity_type'], 'entityId' => $row['related_entity_id'],
         ];
+    }
+
+    private function eventContext(array $row, array $texts, ?array $recipient, array $description): array
+    {
+        $operation = \Core\database\NotificationMetadata::operation($texts['event_operation'] ?? '', (string) ($row['related_entity_type'] ?? ''), $texts['title'] ?? '');
+        if (($row['related_entity_type'] ?? '') === 'admin_notification') $operation = '';
+        $priorityCode = $texts['priority'] ?? '';
+        if (!in_array($priorityCode, ['high', 'normal', 'low'], true)) $priorityCode = \Core\database\NotificationMetadata::priority((string) ($row['related_entity_type'] ?? ''), $operation);
+        $priority = ['high' => 'بالا', 'normal' => 'متوسط', 'low' => 'کم'][$priorityCode];
+        $audience = $recipient ? $this->senderName((int) $row['receiver_user_id']) : (locale() === 'en' ? 'Recipient' : 'کاربر دریافت‌کننده');
+        $activity = $operation && ($row['related_entity_type'] ?? '') !== 'admin_notification'
+            ? \Core\database\ActivityText::describe((string) $row['related_entity_type'], $operation, [], locale())['title'] : $description['title'];
+        return ['audience' => $audience, 'audienceGroup' => $texts['audience'] ?? '', 'activityTitle' => $activity, 'priorityCode' => $priorityCode, 'priority' => $priority];
     }
 
     private function statusLabel(string $status): string

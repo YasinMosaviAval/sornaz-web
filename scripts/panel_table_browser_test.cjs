@@ -44,7 +44,7 @@ const { tableRuntime, renderPanelView } = require('./panel-table-fixture.cjs');
         await page.setContent(html);
         assert(await page.locator('table[data-panel-table="1"]').count(), `${view}/${locale} renders shared tables`);
         const headerCounts = { courses: 8, teachers: 10, terms: 9 };
-        if (headerCounts[view]) assert.equal(await page.locator('table thead th').count(), headerCounts[view], `${view}: complete column headings`);
+        if (headerCounts[view]) assert.equal(await page.locator('table').first().locator('thead th').count(), headerCounts[view], `${view}: complete column headings`);
         assert(!(await page.locator('body').textContent()).includes('panelTable0'), `${view}/${locale} contains no unrendered PHP`);
         if (view === 'personal-panel-sections') {
           assert.equal(await page.locator('table').count(), 5);
@@ -60,8 +60,8 @@ const { tableRuntime, renderPanelView } = require('./panel-table-fixture.cjs');
       }
     }
     for (const language of ['fa', 'en']) {
-      for (const view of ['lesson-page-tabs', 'classroom-page-tabs', 'staff-page-tabs', 'my-learning-tabs']) {
-        await page.setContent(`<style>.sticky{position:sticky;top:0}.fixed{position:fixed}</style>${renderPanelView(view, language)}<div style="height:1800px"></div><script>window.showSection=id=>window.lastSection=id;</script>`);
+      for (const view of ['lesson-page-tabs', 'classroom-page-tabs', 'staff-page-tabs', 'organization-page-tabs', 'my-learning-tabs']) {
+        await page.setContent(`<style>.sticky{position:sticky;top:0}.fixed{position:fixed}</style>${renderPanelView(view, language)}<div style="height:1800px"></div><script>window.lastSection=null;window.showSection=id=>window.lastSection=id;window.showStaffPage=window.showSection;window.showOrganizationPage=window.showSection;</script>`);
         const tabs = page.locator('.panel-page-tabs');
         assert.equal(await tabs.count(), 1, `${view}: shared navigation`);
         if (view === 'lesson-page-tabs') assert.equal(await tabs.locator('button').first().textContent(), language === 'en' ? 'Lesson levels' : 'سطح درس‌ها');

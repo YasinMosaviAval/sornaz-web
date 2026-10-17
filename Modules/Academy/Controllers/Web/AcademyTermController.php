@@ -76,9 +76,24 @@ class AcademyTermController
         return $this->save($id);
     }
 
+    public function discounts()
+    {
+        return $this->run(fn () => ['success' => true, 'data' => (new \Modules\Academy\Services\AcademyDiscountService())->bootstrap((int) auth()->id())]);
+    }
+
     public function storeDiscount()
     {
         return $this->run(fn () => ['success' => true, 'data' => $this->service->saveDiscount((int) auth()->id(), $this->payload())]);
+    }
+
+    public function updateDiscount(int $id)
+    {
+        return $this->run(fn () => ['success'=>true,'data'=>(new \Modules\Academy\Services\AcademyDiscountService())->save((int)auth()->id(),$this->payload(),$id)]);
+    }
+
+    public function deleteDiscount(int $id)
+    {
+        return $this->run(function () use ($id) { (new \Modules\Academy\Services\AcademyDiscountService())->delete((int)auth()->id(),$id); return ['success'=>true]; });
     }
 
     public function destroy(int $id)
@@ -212,7 +227,7 @@ class AcademyTermController
         try {
             return ResponseFactory::json($callback());
         } catch (Throwable $e) {
-            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], in_array($e->getCode(), [403, 404, 409], true) ? $e->getCode() : 422);
+            return ResponseFactory::json(['success' => false, 'message' => $e instanceof \PDOException ? 'ذخیره یا دریافت اطلاعات انجام نشد. دوباره تلاش کنید.' : $e->getMessage()], in_array($e->getCode(), [403, 404, 409], true) ? $e->getCode() : 422);
         }
     }
 }

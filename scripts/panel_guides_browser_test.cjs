@@ -4,11 +4,11 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/not
 const { renderPanelView } = require('./panel-table-fixture.cjs');
 (async () => {
   const browser = await chromium.launch({ channel: 'msedge', headless: true });
-  let saved = {};
+  let saved = {terms:{title:{fa:'Saved terms',en:'Saved terms'},body:{fa:'Saved body',en:'Saved body'}}};
   try {
     for (const founder of [true, false]) {
       const page = await browser.newPage();
-      await page.setContent(`<html lang="${founder ? 'fa' : 'en'}"><body><main id="mainContent"><section id="classrooms" class="section"><h1>Classes</h1></section><section id="courses" class="section"><h1>Courses</h1></section></main><template id="panelPageGuideTemplate">${renderPanelView('panel-page-guide')}</template></body></html>`);
+      await page.setContent(`<html lang="${founder ? 'fa' : 'en'}"><body><main id="mainContent"><section id="classrooms" class="section"><h1>Classes</h1></section><section id="courses" class="section"><h1>Courses</h1></section><section id="terms" class="section"><nav>Tabs</nav><div data-term-panel="terms"><div class="admin-ui-header">Actions</div>${renderPanelView('panel-page-guide')}</div><div data-term-panel="discounts">Discounts</div></section></main><template id="panelPageGuideTemplate">${renderPanelView('panel-page-guide')}</template></body></html>`);
       await page.evaluate(({ founder, saved }) => {
         window.canEditPanelGuides = founder;
         window.siteCsrfToken = 'fixture-token';
@@ -26,7 +26,7 @@ const { renderPanelView } = require('./panel-table-fixture.cjs');
       await page.addScriptTag({ content: fs.readFileSync('assets/Analytics/js/panel-page-guides.js', 'utf8') });
       if (founder) {
         await page.waitForSelector('[data-edit-page-guide="classrooms"]');
-        assert.equal(await page.locator('[data-edit-page-guide]').count(), 2, 'Founder can add guidance to every section');
+        assert.equal(await page.locator('[data-edit-page-guide]').count(), 3, 'Founder can add guidance to every section');
         await page.locator('[data-edit-page-guide="classrooms"]').click();
         await page.locator('[name="fa-title"]').fill('<img src=x onerror=alert(1)>');
         await page.locator('[name="en-title"]').fill('English guidance');
@@ -48,6 +48,10 @@ const { renderPanelView } = require('./panel-table-fixture.cjs');
         await page.locator('#classrooms summary').click();
         assert.equal(await page.locator('#classrooms .panel-page-guide p').textContent(), 'English description');
       }
+      assert.equal(await page.locator('#terms .panel-page-guide').count(),1);
+      assert.equal(await page.locator('[data-term-panel="terms"] [data-guide-title]').textContent(),'Saved terms');
+      assert.equal(await page.locator('[data-term-panel="discounts"] .panel-page-guide').count(),0);
+      if(founder)assert.equal(await page.locator('[data-page-guide-layout] [data-edit-page-guide="terms"]').count(),1);
       await page.close();
     }
     console.log('Panel guidance: founder editing, bilingual persistence payload, shared template, escaped output and member display passed.');

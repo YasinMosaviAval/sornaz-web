@@ -1293,6 +1293,11 @@ readTermForm = function (prefix) {
 function termField(prefix, name) {
   return document.getElementById(prefix ? prefix + name : 'term' + name);
 }
+window.availableTermDiscounts=function(organizationUserId){
+ const organization=(window.termBranches||[]).find(row=>Number(row.id)===Number(organizationUserId));
+ const academy=(window.termBranches||[]).find(row=>row.kind==='academy'&&Number(row.organizationId)===Number(organization?.academyId));
+ return (window.termDiscounts||[]).filter(row=>(!row.status||row.status==='active')&&(!row.organizationUserId||Number(row.organizationUserId)===Number(organizationUserId)||Number(row.organizationUserId)===Number(academy?.id)));
+};
 window.refreshTermDependencies = function (prefix) {
   const organizationUserId = Number(termField(prefix, 'Branch')?.value || 0),
     organization = termBranches.find((x) => x.id === organizationUserId),
@@ -1322,6 +1327,8 @@ window.refreshTermDependencies = function (prefix) {
         .map((x) => `<option value="${x.id}">${x.name}</option>`)
         .join('');
   }
+  const discount=termField(prefix,'Discount');
+  if(discount){const selected=discount.value;discount.replaceChildren(new Option(document.documentElement.lang.startsWith('en')?'No discount':'بدون تخفیف',''));window.availableTermDiscounts(organizationUserId).forEach(row=>discount.add(new Option(row.name,row.id)));discount.value=[...discount.options].some(option=>option.value===selected)?selected:'';}
   syncTermDateAvailability(prefix);
   refreshAllTermSessionAvailability(prefix);
 };
@@ -1959,39 +1966,96 @@ window.restoreTermSession = async function (termId, sessionId) {
     AppDialog.alert(e.message);
   }
 };
-window.openAddTermDiscountModal = function (prefix) {
-  const host = document.getElementById('modalContainer'),
-    termHtml = host.innerHTML;
-  window.pendingTermModal = { html: termHtml, prefix };
-  host.innerHTML = `<div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"><div class="w-full max-w-lg rounded-3xl bg-white p-7"><h2 class="mb-5 text-xl font-bold">افزودن تخفیف جدید</h2><div class="space-y-4"><input id="newTermDiscountTitle" placeholder="عنوان تخفیف" class="w-full rounded-2xl border p-4"><select id="newTermDiscountType" class="w-full rounded-2xl border p-4"><option value="percentage">درصدی</option><option value="fixed">مبلغ ثابت ویژه</option></select><input id="newTermDiscountValue" type="number" min="0" placeholder="مقدار تخفیف" class="w-full rounded-2xl border p-4"><div class="flex gap-3"><button onclick="saveNewTermDiscount()" class="flex-1 rounded-2xl bg-indigo-600 p-3 text-white">ذخیره</button><button onclick="restoreTermModal()" class="flex-1 rounded-2xl border p-3">انصراف</button></div></div></div></div>`;
+let editingTermDiscount = null;
+let termDiscountCatalog = null, termDiscountPage = 1, termDiscountOrganization = 'all', savingTermDiscount = false;
+const discountText = (fa,en) => document.documentElement.lang.startsWith('en') ? en : fa;
+window.showTermTab = function (selected) {
+  if (!['terms','discounts'].includes(selected)) return;
+  document.querySelectorAll('#terms [data-term-panel]').forEach(panel=>panel.classList.toggle('hidden',panel.dataset.termPanel!==selected));
+  document.querySelectorAll('#terms [data-term-tab]').forEach(button=>{
+    const active=button.dataset.termTab===selected;
+    if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
+    ['bg-indigo-600','text-white'].forEach(name=>button.classList.toggle(name,active));
+    ['bg-white','text-gray-700','hover:bg-indigo-50','dark:bg-slate-800','dark:text-white'].forEach(name=>button.classList.toggle(name,!active));
+  });
+  if(selected==='discounts')loadTermDiscountCatalog().catch(error=>alert(error.message));
 };
-window.restoreTermModal = function () {
-  if (window.pendingTermModal)
-    document.getElementById('modalContainer').innerHTML = window.pendingTermModal.html;
+async function loadTermDiscountCatalog() {
+  termDiscountCatalog=await termApi('/academy/admin/term-discounts');
+  window.termDiscounts=(termDiscountCatalog.discounts||[]).filter(row=>row.status==='active');
+  allTermDiscounts=window.termDiscounts;
+  window.renderPanelOrganizationTabs?.('termDiscountsBranchTabs',termDiscountOrganization,window.filterTermDiscountsByBranch,{branches:()=>termDiscountCatalog.organizations||[],showAcademy:true});
+  renderTermDiscounts();
+}
+window.filterTermDiscountsByBranch=function(value){termDiscountOrganization=String(value);termDiscountPage=1;loadTermDiscountCatalog().catch(error=>alert(error.message));};
+window.filterTermDiscounts=function(){termDiscountPage=1;renderTermDiscounts();};
+function renderTermDiscounts(){
+  const table=document.getElementById('termDiscountsTable');if(!table||!termDiscountCatalog)return;
+  const search=(document.getElementById('termDiscountSearch')?.value||'').trim().toLocaleLowerCase(),type=document.getElementById('termDiscountTypeFilter')?.value||'';
+  const rows=(termDiscountCatalog.discounts||[]).filter(row=>(!type||row.type===type)&&(!search||String(row.name).toLocaleLowerCase().includes(search))&&(!window.matchesOrganizationFilter||window.matchesOrganizationFilter(row,termDiscountOrganization)));
+  termDiscountPage=Math.min(termDiscountPage,Math.max(1,Math.ceil(rows.length/10)));
+  const start=(termDiscountPage-1)*10,visible=window.AdminPanelTable.page(table,rows,start,start+10,renderTermDiscounts);
+  const cells=visible.map(row=>({attributes:'data-id="'+Number(row.id)+'"',cells:[row.name,row.type==='fixed'?discountText('مبلغ ثابت','Fixed amount'):discountText('درصدی','Percentage'),Number(row.value).toLocaleString(document.documentElement.lang.startsWith('en')?'en':'fa-IR')+(row.type==='percentage'?'%':''),row.organizationName].map(value=>({value,attributes:'class="px-5 py-4 whitespace-nowrap"'})).concat([{html:discountRowActions(row),attributes:'class="px-5 py-4 whitespace-nowrap"'}])}));
+  window.AdminPanelTable.setRows(table,cells.length?cells:[{cells:[{value:discountText('هیچ تخفیفی یافت نشد','No discounts found'),attributes:'colspan="5" class="py-12 text-center text-gray-400"'}]}],{pageOffset:start});
+  renderDiscountInlineEditor(table);
+  window.AdminPanelTable.renderPagination(table.closest('.admin-ui-table')?.querySelector('[data-panel-pagination]'),{total:rows.length,perPage:10,page:termDiscountPage,onChange:page=>{termDiscountPage=page;renderTermDiscounts();}});
+}
+function discountRowActions(row){
+ const id=Number(row.id);
+ return '<div class="inline-flex gap-3"><button type="button" class="text-indigo-600" onclick="viewTermDiscount('+id+')">'+discountText('جزئیات','Details')+'</button>'+(row.canManage?'<button type="button" class="text-indigo-600" onclick="toggleTermDiscountEdit('+id+')">'+discountText('ویرایش','Edit')+'</button><button type="button" class="text-red-600" onclick="deleteTermDiscount('+id+')">'+discountText('حذف','Delete')+'</button>':'')+'</div>';
+}
+window.viewTermDiscount=function(id){
+ const row=termDiscountCatalog?.discounts.find(row=>row.id===id);if(!row)return;
+ const host=document.getElementById('modalContainer');host.innerHTML='<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"><div role="dialog" aria-modal="true" class="w-full max-w-lg rounded-3xl bg-white p-6 dark:bg-slate-900"><h2 class="mb-5 text-xl font-bold"></h2><dl class="space-y-4"></dl><button type="button" onclick="closeModal()" class="mt-5 rounded-xl border px-5 py-2"></button></div></div>';
+ const dialog=host.querySelector('[role=dialog]');dialog.querySelector('h2').textContent=discountText('جزئیات تخفیف','Discount details');dialog.querySelector('button').textContent=discountText('بستن','Close');
+ for(const [label,value]of [[discountText('عنوان','Title'),row.name],[discountText('نوع','Type'),row.type==='fixed'?discountText('مبلغ ثابت','Fixed amount'):discountText('درصدی','Percentage')],[discountText('مقدار','Value'),row.value],[discountText('سازمان','Organization'),row.organizationName],[discountText('تاریخ شروع','Start date'),row.startDate],[discountText('تاریخ پایان','End date'),row.endDate]]){const wrapper=document.createElement('div');wrapper.className='flex justify-between gap-4';const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=value??'?';wrapper.append(dt,dd);dialog.querySelector('dl').append(wrapper);}
 };
-window.saveNewTermDiscount = async function () {
-  const data = {
-    title: document.getElementById('newTermDiscountTitle').value.trim(),
-    type: document.getElementById('newTermDiscountType').value,
-    value: Number(document.getElementById('newTermDiscountValue').value || 0),
-  };
-  try {
-    const row = await termApi('/academy/admin/term-discounts', data),
-      state = window.pendingTermModal;
-    termDiscounts.push(row);
-    document.getElementById('modalContainer').innerHTML = state.html;
-    const select = termField(state.prefix, 'Discount');
-    if (select) {
-      select.insertAdjacentHTML('beforeend', `<option value="${row.id}">${row.name}</option>`);
-      select.value = String(row.id);
-    }
-    window.pendingTermModal = null;
-  } catch (e) {
-    alert(e.message);
-  }
+window.toggleTermDiscountEdit=function(id){editingTermDiscount=editingTermDiscount===id?null:id;renderTermDiscounts();};
+function renderDiscountInlineEditor(table){
+ const row=termDiscountCatalog?.discounts.find(row=>row.id===editingTermDiscount);if(!row?.canManage)return;
+ const target=table.querySelector('tbody tr[data-id="'+Number(row.id)+'"]');if(!target)return;
+ const tr=document.createElement('tr');tr.dataset.discountEditor=String(row.id);const td=document.createElement('td');td.colSpan=table.tHead.rows[0].cells.length;td.className='border-t p-5';
+ td.innerHTML='<form class="grid gap-4 sm:grid-cols-3"><label><span data-label="title"></span><input required maxlength="190" name="title" class="mt-2 w-full rounded-2xl border p-3"></label><label><span data-label="type"></span><select name="type" class="mt-2 w-full rounded-2xl border p-3"></select></label><label><span data-label="value"></span><input required name="value" type="number" min="0.01" step="0.01" class="mt-2 w-full rounded-2xl border p-3"></label><label><span data-label="organization"></span><select required name="organizationUserId" class="mt-2 w-full rounded-2xl border p-3"></select></label><div class="flex items-end gap-3"><button type="submit" class="rounded-xl bg-indigo-600 px-5 py-3 text-white"></button><button type="button" class="rounded-xl border px-5 py-3" onclick="toggleTermDiscountEdit('+Number(row.id)+')"></button></div></form>';
+ const form=td.querySelector('form');for(const[key,fa,en]of [['title','عنوان','Title'],['type','نوع','Type'],['value','مقدار','Value'],['organization','سازمان','Organization']])form.querySelector('[data-label='+key+']').textContent=discountText(fa,en);
+ form.elements.title.value=row.name;form.elements.value.value=row.value;form.elements.type.add(new Option(discountText('درصدی','Percentage'),'percentage'));form.elements.type.add(new Option(discountText('مبلغ ثابت','Fixed amount'),'fixed'));form.elements.type.value=row.type;
+ (termDiscountCatalog.organizations||[]).forEach(org=>form.elements.organizationUserId.add(new Option(org.name,org.user_id)));if(row.organizationUserId){form.elements.organizationUserId.value=String(row.organizationUserId);form.elements.organizationUserId.disabled=true;}
+ form.querySelector('[type=submit]').textContent=discountText('ذخیره','Save');form.querySelector('[type=button]').textContent=discountText('انصراف','Cancel');
+ form.onsubmit=async event=>{event.preventDefault();const button=form.querySelector('[type=submit]');if(button.disabled)return;button.disabled=true;try{await termApi('/academy/admin/term-discounts/'+row.id+'/update',{title:form.elements.title.value.trim(),type:form.elements.type.value,value:Number(form.elements.value.value),organizationUserId:Number(form.elements.organizationUserId.value)});editingTermDiscount=null;await loadTermDiscountCatalog();}catch(error){alert(error.message);}finally{if(button.isConnected)button.disabled=false;}};
+ tr.append(td);target.after(tr);
+}
+window.deleteTermDiscount=async function(id){
+ const row=termDiscountCatalog?.discounts.find(row=>row.id===id);if(!row?.canManage)return;
+ if(!(await AppDialog.confirmDelete(termDiscountCatalog.discounts,id,discountText('تخفیف','discount'))))return;
+ try{await termApi('/academy/admin/term-discounts/'+id+'/delete',{});if(editingTermDiscount===id)editingTermDiscount=null;await loadTermDiscountCatalog();}catch(error){alert(error.message);}
+};
+window.openAddTermDiscountModal=async function(prefix){
+ try{
+  if(!termDiscountCatalog)await loadTermDiscountCatalog();
+  if(!termDiscountCatalog.ready)throw Error(discountText('ابتدا به‌روزرسانی دیتابیس تخفیف‌ها را اجرا کنید.','Run the discount organization migration first.'));
+  const host=document.getElementById('modalContainer');window.pendingTermModal=prefix?{html:host.innerHTML,prefix}:null;
+  host.innerHTML='<div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"><div role="dialog" aria-modal="true" aria-labelledby="newTermDiscountHeading" class="w-full max-w-lg rounded-3xl bg-white p-7 dark:bg-slate-900"><h2 id="newTermDiscountHeading" class="mb-5 text-xl font-bold"></h2><form id="newTermDiscountForm" class="space-y-4"><label class="block" data-discount-label="organization"><select id="newTermDiscountOrganization" required class="mt-2 w-full rounded-2xl border p-4"></select></label><label class="block" data-discount-label="title"><input id="newTermDiscountTitle" required maxlength="190" class="mt-2 w-full rounded-2xl border p-4"></label><label class="block" data-discount-label="type"><select id="newTermDiscountType" class="mt-2 w-full rounded-2xl border p-4"></select></label><label class="block" data-discount-label="value"><input id="newTermDiscountValue" type="number" required min="0.01" step="0.01" class="mt-2 w-full rounded-2xl border p-4"></label><div class="flex gap-3"><button id="saveTermDiscountButton" type="submit" class="flex-1 rounded-2xl bg-indigo-600 p-3 text-white disabled:opacity-50"></button><button id="cancelTermDiscountButton" type="button" onclick="restoreTermModal()" class="flex-1 rounded-2xl border p-3"></button></div></form></div></div>';
+  document.getElementById('newTermDiscountHeading').textContent=discountText('افزودن تخفیف جدید','Add discount');
+  for(const[key,fa,en]of [['organization','سازمان','Organization'],['title','عنوان تخفیف','Title'],['type','نوع','Type'],['value','مقدار','Value']])document.querySelector('[data-discount-label="'+key+'"]').prepend(document.createTextNode(discountText(fa,en)));
+  const org=document.getElementById('newTermDiscountOrganization');(termDiscountCatalog.organizations||[]).forEach(row=>org.add(new Option(row.name,row.user_id)));
+  const selectedOrganization=(termDiscountCatalog.organizations||[]).find(row=>termDiscountOrganization==='academy'?row.kind==='academy':row.kind==='branch'&&String(row.id)===termDiscountOrganization);
+  if(prefix&&termField(prefix,'Branch')?.value)org.value=termField(prefix,'Branch').value;else if(selectedOrganization)org.value=String(selectedOrganization.user_id);
+  const type=document.getElementById('newTermDiscountType');type.add(new Option(discountText('درصدی','Percentage'),'percentage'));type.add(new Option(discountText('مبلغ ثابت','Fixed amount'),'fixed'));
+  document.getElementById('saveTermDiscountButton').textContent=discountText('ذخیره','Save');document.getElementById('cancelTermDiscountButton').textContent=discountText('انصراف','Cancel');
+  document.getElementById('newTermDiscountForm').onsubmit=event=>{event.preventDefault();saveNewTermDiscount();};
+ }catch(error){alert(error.message);}
+};
+window.restoreTermModal=function(){if(window.pendingTermModal){document.getElementById('modalContainer').innerHTML=window.pendingTermModal.html;window.pendingTermModal=null;}else closeModal();};
+window.saveNewTermDiscount=async function(){
+ if(savingTermDiscount)return;const form=document.getElementById('newTermDiscountForm');if(!form?.reportValidity())return;
+ const button=document.getElementById('saveTermDiscountButton');savingTermDiscount=true;button.disabled=true;
+ try{
+  const data={title:document.getElementById('newTermDiscountTitle').value.trim(),type:document.getElementById('newTermDiscountType').value,value:Number(document.getElementById('newTermDiscountValue').value),organizationUserId:Number(document.getElementById('newTermDiscountOrganization').value)};
+  const row=await termApi('/academy/admin/term-discounts',data),state=window.pendingTermModal;
+  restoreTermModal();await loadTermDiscountCatalog();
+  if(state){const select=termField(state.prefix,'Discount');if(select){select.add(new Option(row.name,row.id));select.value=String(row.id);}}
+ }catch(error){alert(error.message);}finally{savingTermDiscount=false;if(button.isConnected)button.disabled=false;}
 };
 
-// ==================== CRUD ====================
 window.openAddTermModal = async function () {
   if (!document.getElementById('modalContainer')) {
     alert('خطا: المان modalContainer در صفحه اصلی وجود ندارد!');

@@ -6,7 +6,7 @@ use PDO;
 
 class DatabaseChangeNotifier
 {
-    private const IGNORED_TABLES = ['user_messages', 'translations'];
+    private const IGNORED_TABLES = ['user_messages', 'translations', 'f_financial_system_discount_organizations'];
 
     public static function record(PDO $pdo, string $table, string $operation, array $data = [], ?int $entityId = null): void
     {
@@ -38,6 +38,9 @@ class DatabaseChangeNotifier
             $translatedMessage = $description['message'];
             $translation->execute(['user_messages', $notificationId, 'title', $locale, $translatedTitle, $actor, $actor]);
             $translation->execute(['user_messages', $notificationId, 'message', $locale, $translatedMessage, $actor, $actor]);
+            foreach (['event_operation' => $operation, 'priority' => NotificationMetadata::priority($table, $operation)] as $field => $value) {
+                $translation->execute(['user_messages', $notificationId, $field, $locale, $value, $actor, $actor]);
+            }
         }
     }
 

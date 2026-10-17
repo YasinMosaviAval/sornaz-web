@@ -124,6 +124,12 @@ foreach ($result as $key => &$contract) {
     $contract['organizationFilter'] = in_array($key, ['users', 'members', 'students', 'lessons', 'courses', 'terms', 'classrooms', 'availabilities', 'member-schedules', 'availability-exceptions', 'scheduling-rules', 'schedules', 'finance', 'points', 'messages', 'notifications', ...$profiles], true);
 }
 unset($contract);
+foreach (['organization-holidays' => 'سازمان', 'employee-leaves' => 'کارمند'] as $key => $label) {
+    $result[$key] = $result['availability-exceptions'];
+    $result[$key]['filters'] = $filters[$key] ?? [];
+    foreach ($result[$key]['columns'] as &$column) if ($column['key'] === 'name') $column['label'] = $label;
+    unset($column);
+}
 $result['my-points']['views']['rules'] = $result['points'];
 $result['my-points']['views']['rules']['rowActions'] = [];
 $result['my-points']['views']['rules']['showActions'] = false;

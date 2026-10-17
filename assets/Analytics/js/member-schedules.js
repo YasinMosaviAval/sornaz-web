@@ -312,7 +312,7 @@
     const status = range.status || 'فعال',
       statuses = ['فعال', 'غیرفعال', 'پر شده', 'در انتظار تأیید'];
     return (
-      '<div class="ms-range grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end rounded-2xl border bg-white p-4"><label class="text-sm">ساعت شروع<select class="ms-range-start mt-2 w-full border rounded-xl py-3 px-3" onchange="refreshMemberScheduleConflicts(\'\')">' +
+      '<div class="ms-range grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end"><label class="text-sm">ساعت شروع<select class="ms-range-start mt-2 w-full border rounded-xl py-3 px-3" onchange="refreshMemberScheduleConflicts(\'\')">' +
       memberScheduleTimeOptions(range.start, false) +
       '</select></label><label class="text-sm">ساعت پایان<select class="ms-range-end mt-2 w-full border rounded-xl py-3 px-3">' +
       memberScheduleTimeOptions(range.end, true) +
@@ -322,7 +322,7 @@
           return '<option ' + (value === status ? 'selected' : '') + '>' + value + '</option>';
         })
         .join('') +
-      '</select></label><button type="button" onclick="removeMemberScheduleRange(this)" class="mb-3 text-red-500">×</button></div>'
+      '</select></label><button type="button" onclick="removeMemberScheduleRange(this)" class="mb-3 text-red-500" aria-label="' + (document.documentElement.lang.startsWith('en') ? 'Remove time range' : 'حذف بازه زمانی') + '"><i class="fas fa-trash-alt" aria-hidden="true"></i></button></div>'
     );
   }
   window.addMemberScheduleRange = function (button) {

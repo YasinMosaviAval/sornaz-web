@@ -329,7 +329,7 @@
 
   function renderRangeEditor(range) {
     return (
-      '<div class="bs-range grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end rounded-2xl border border-gray-200 bg-white p-4">' +
+      '<div class="bs-range grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end">' +
       '<label class="text-sm">ساعت شروع<select class="bs-range-start mt-2 w-full border rounded-xl py-3 px-3" onchange="refreshBranchScheduleRanges(this.closest(\'.bs-ranges\'))"></select></label>' +
       '<label class="text-sm">ساعت پایان<select class="bs-range-end mt-2 w-full border rounded-xl py-3 px-3 disabled:bg-gray-100" data-value="' +
       (range.end || '') +
@@ -339,7 +339,7 @@
       '>فعال</option><option ' +
       (range.status === 'غیرفعال' ? 'selected' : '') +
       '>غیرفعال</option></select></label>' +
-      '<button type="button" title="حذف بازه" onclick="removeBranchScheduleRange(this)" class="bs-range-remove mb-2 text-red-500 px-2">×</button>' +
+      '<button type="button" title="حذف بازه" onclick="removeBranchScheduleRange(this)" class="bs-range-remove mb-2 text-red-500 px-2" aria-label="' + (document.documentElement.lang.startsWith('en') ? 'Remove time range' : 'حذف بازه زمانی') + '"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>' +
       '<input type="hidden" class="bs-range-initial-start" value="' +
       (range.start || '') +
       '"></div>'

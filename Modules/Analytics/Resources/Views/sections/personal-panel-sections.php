@@ -117,6 +117,7 @@ component('panel-table-template', $panelTable0); unset($panelTable0); ?></div>
     </div>
 </section>
 <section id="member-schedules" class="section hidden space-y-5" data-personal-section="1">
+    <?php component('staff-page-tabs', ['active' => 'member-schedules', 'personal' => true]); ?>
     <h1 class="hidden"><?= e($personalLabel('برنامه زمانی', 'Schedule')) ?></h1>
     <div class="flex flex-wrap gap-3"><button type="button" data-personal-open="schedule" class="rounded-2xl bg-indigo-600 px-5 py-3 text-white"><?= e($personalLabel('افزودن زمان‌بندی', 'Add schedule')) ?></button><button type="button" data-personal-export="member-schedules" class="rounded-2xl border px-5 py-3"><i class="fas fa-file-excel text-green-600"></i> <?= e($personalLabel('خروجی اکسل', 'Export Excel')) ?></button><button type="button" data-personal-print="member-schedules" class="rounded-2xl border px-5 py-3"><i class="fas fa-file-pdf text-red-600"></i> <?= e($personalLabel('خروجی PDF', 'Export PDF')) ?></button></div>
     <form id="personalScheduleForm" class="hidden grid gap-4 rounded-2xl bg-white p-5 shadow-sm dark:bg-slate-900 md:grid-cols-3">

@@ -1,5 +1,30 @@
 (function () {
   'use strict';
+  window.holidayLeaveMode = 'organization';
+  window.getHolidayLeaveTypes = () => window.holidayLeaveTypeList.filter(type =>
+    window.holidayLeaveMode === 'organization' ? type.value !== 'vacation' : !['holiday', 'closed'].includes(type.value)).map(type => ({...type, label: document.documentElement.lang.startsWith('en') ? ({holiday:'Public holiday',closed:'Closed',unavailable:'Unavailable',busy:'Busy',vacation:'Leave',blocked:'Blocked'}[type.value] || type.label) : type.label}));
+  window.setHolidayLeaveMode = function (mode) {
+    window.holidayLeaveMode = mode === 'member' ? 'member' : 'organization';
+    editingHolidayLeaveRowId = null;
+    const root = document.getElementById('availability-exceptions');
+    if (!root) return;
+    const english = document.documentElement.lang.startsWith('en');
+    root.querySelectorAll('[data-exception-nav]').forEach(nav => nav.classList.toggle('hidden', nav.dataset.exceptionNav !== window.holidayLeaveMode));
+    const title = window.holidayLeaveMode === 'member' ? (english ? 'Leaves' : 'مرخصی‌ها') : (english ? 'Holidays' : 'تعطیلات');
+    root.querySelector('h1').textContent = title;
+    const description = root.querySelector('h1').nextElementSibling;
+    if (description) description.textContent = window.holidayLeaveMode === 'member' ? (english ? 'Manage employee leaves' : 'مدیریت مرخصی کارکنان') : (english ? 'Manage organization holidays' : 'مدیریت تعطیلات آموزشگاه و شعبه‌ها');
+    const add = root.querySelector('button[onclick="openAddHolidayLeaveModal()"]');
+    if (add) add.textContent = (english ? 'Add ' : 'افزودن ') + title;
+    const nameHeader = root.querySelector('button[onclick="sortHolidayLeavesBy(\'name\')"]');
+    if (nameHeader?.firstChild) nameHeader.firstChild.textContent = window.holidayLeaveMode === 'member' ? (english ? 'Employee ' : 'کارمند ') : (english ? 'Organization ' : 'سازمان ');
+    const search = document.getElementById('holidayLeaveSearch');
+    if (search) search.placeholder = english ? 'Search...' : 'جستجو...';
+    const filter = document.getElementById('filterHolidayLeaveType');
+    if (filter) filter.replaceChildren(new Option(english ? 'All types' : 'همه انواع', ''), ...window.getHolidayLeaveTypes().map(type => new Option(type.label, type.value)));
+    document.getElementById('academyNationalHolidaySettings')?.classList.toggle('hidden', window.holidayLeaveMode === 'member');
+    window.filterHolidayLeaves();
+  };
   // ==================== تعطیلات و مرخصی‌ها (ایزوله) ====================
   window.holidayLeaveStatusesList = ['فعال', 'غیرفعال', 'در انتظار تأیید'];
   window.holidayLeaveTimezoneList = [
@@ -95,33 +120,21 @@
           targetType: 'member',
         };
       });
-    return organizations.concat(members);
+    return window.holidayLeaveMode === 'organization' ? organizations : (organizationUserId ? members : []);
   };
   window.refreshHolidayLeaveMembers = function (prefix, selected) {
     const f = (n) => document.getElementById(prefix ? prefix + n : 'hl' + n),
       org = f('Branch')?.value,
       select = f('Member');
     if (!select) return;
+    select.disabled = !org;
     const options = window.getHolidayLeaveMemberOptions(org),
       selectedValue = selected
         ? String(selected).includes(':')
           ? selected
           : 'member:' + selected
         : '';
-    select.innerHTML =
-      '<option value="">انتخاب شخص یا سازمان</option>' +
-      options
-        .map(
-          (m) =>
-            '<option value="' +
-            m.value +
-            '" ' +
-            (String(m.value) === String(selectedValue) ? 'selected' : '') +
-            '>' +
-            m.label +
-            '</option>'
-        )
-        .join('');
+    select.replaceChildren(new Option(document.documentElement.lang.startsWith('en') ? 'Select employee' : 'انتخاب کارمند', ''), ...options.map(m => new Option(m.label, m.value, false, String(m.value) === String(selectedValue))));
     window.refreshHolidayLeaveConflicts(prefix);
   };
   window.toggleHolidayLeaveAllDay = function (prefix) {
@@ -192,11 +205,11 @@
   }
   function hlRenderRange(range) {
     return (
-      '<div class="hl-range grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-end rounded-2xl border bg-white p-4"><label class="text-sm">ساعت شروع<select class="hl-range-start mt-2 w-full border rounded-xl py-3 px-3" onchange="refreshHolidayLeaveConflicts(\'\')">' +
+      '<div class="hl-range grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-end"><label class="text-sm">ساعت شروع<select class="hl-range-start mt-2 w-full border rounded-xl py-3 px-3" onchange="refreshHolidayLeaveConflicts(\'\')">' +
       hlTimeOptions(range.start, false) +
       '</select></label><label class="text-sm">ساعت پایان<select class="hl-range-end mt-2 w-full border rounded-xl py-3 px-3">' +
       hlTimeOptions(range.end, true) +
-      '</select></label><button type="button" onclick="removeHolidayLeaveRange(this)" class="mb-3 text-red-500">×</button></div>'
+      '</select></label><button type="button" onclick="removeHolidayLeaveRange(this)" class="mb-3 text-red-500" aria-label="' + (document.documentElement.lang.startsWith('en') ? 'Remove time range' : 'حذف بازه زمانی') + '"><i class="fas fa-trash-alt" aria-hidden="true"></i></button></div>'
     );
   }
   window.buildHolidayLeaveTimeSlotsHTML = function (_, branchId, selectedSlots) {
@@ -289,7 +302,7 @@
     filteredHolidayLeaves = allHolidayLeaves.slice();
     holidayLeaveRealtimeVersion = data.version;
     window.renderHolidayLeavesBranchTabs();
-    window.filterHolidayLeaves();
+    window.setHolidayLeaveMode(window.holidayLeaveMode);
     window.dispatchEvent(
       new CustomEvent('sornaz:data-changed', { detail: { resource: 'availability_exceptions' } })
     );
@@ -407,7 +420,8 @@
       const matchStatus = !status || s.status === status;
       const matchTz = !timezone || s.timezone === timezone;
       const matchType = !type || s.type === type;
-      return matchBranch && matchSearch && matchStatus && matchTz && matchType;
+      const organizationTarget = String(s.targetValue || '').startsWith('organization:') || (!s.membershipId && !!s.organizationUserId);
+      return (window.holidayLeaveMode === 'organization' ? organizationTarget : !organizationTarget) && matchBranch && matchSearch && matchStatus && matchTz && matchType;
     });
 
     holidayLeavesCurrentPage = 1;
@@ -534,7 +548,7 @@
       return String(b.id) === String(branchId);
     });
     const memberSel = f('Member');
-    const targetValue = memberSel && memberSel.value;
+    const targetValue = window.holidayLeaveMode === 'organization' ? 'organization:' + branchId : memberSel && memberSel.value;
     const targetParts = String(targetValue || '').split(':');
     const targetType = targetParts[0] === 'organization' ? 'organization' : 'member';
     const memberId = targetType === 'member' ? Number(targetParts[1] || 0) : 0;

@@ -490,6 +490,12 @@ class AcademyCourseService
         }
     }
 
+    public function organizationCatalog(int $actor): array
+    {
+        $manageable = $this->organizations($actor);
+        return ['manageable' => $manageable, 'visible' => $this->organizationsForDisplay($manageable)];
+    }
+
     private function organizations(int $actor): array
     {
         $user = DB::table('users')->where('user_id', $actor)->whereNull('deleted_at')->first();

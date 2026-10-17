@@ -61,6 +61,15 @@
     return envelope.data ?? envelope;
   }
 
+  function updateNotificationFilterOptions(id, valueFor, placeholder) {
+    const select = document.getElementById(id);
+    if (!select) return;
+    const selected = select.value;
+    select.replaceChildren(new Option(placeholder, ''));
+    [...new Set(allNotifications.map(valueFor).filter(Boolean))].sort((a, b) => a.localeCompare(b)).forEach(value => select.add(new Option(value, value)));
+    select.value = [...select.options].some(option => option.value === selected) ? selected : '';
+  }
+
   window.loadAdminNotifications = async function (notify = false) {
     const data = await notificationApi('/analytics/admin-notifications');
     const incoming = data.notifications || [];
@@ -68,6 +77,8 @@
       return item.id > lastNotificationId && item.readStatus === 'خوانده‌نشده';
     });
     allNotifications = incoming;
+    updateNotificationFilterOptions('filterNotificationActivity', item => item.activityTitle || item.title, document.documentElement.lang.startsWith('en') ? 'All activity titles' : 'همه عنوان‌های فعالیت');
+    updateNotificationFilterOptions('filterNotificationAudience', item => item.audience, document.documentElement.lang.startsWith('en') ? 'All recipients' : 'همه مخاطبان');
     filteredNotifications = allNotifications.slice();
     window.filterNotifications(false);
     if (notify && fresh) showIncomingNotificationToast(fresh);
@@ -122,7 +133,7 @@
   }
 
   window.updateNotificationSortIcons = async function () {
-    ['title', 'branchName', 'audience', 'priority', 'date', 'status', 'readStatus'].forEach(
+    ['title', 'recipientUsername', 'branchName', 'audience', 'priority', 'date', 'status', 'readStatus'].forEach(
       function (f) {
         const icon = document.getElementById('notifSortIcon-' + f);
         if (!icon) return;
@@ -132,6 +143,8 @@
   };
 
   window.sortNotificationsBy = async function (field) {
+    const table = document.getElementById('notificationsTable');
+    if (table) table.dataset.adminIdentityActive = '0';
     if (notifSortField === field)
       notifSortDirection = notifSortDirection === 'asc' ? 'desc' : 'asc';
     else {
@@ -185,6 +198,7 @@
         document.getElementById('filterNotificationAudience').value) ||
       '';
 
+    const activity = document.getElementById('filterNotificationActivity')?.value || '';
     filteredNotifications = allNotifications.filter(function (n) {
       const matchBranch = window.matchesOrganizationFilter(n, currentNotificationBranch);
       const matchSearch =
@@ -194,7 +208,7 @@
       const matchStatus = !status || n.status === status;
       const matchPriority = !priority || n.priority === priority;
       const matchAudience = !audience || n.audience === audience;
-      return matchBranch && matchSearch && matchStatus && matchPriority && matchAudience;
+      return matchBranch && matchSearch && matchStatus && matchPriority && matchAudience && (!activity || (n.activityTitle || n.title) === activity);
     });
 
     if (resetPage) notificationsCurrentPage = 1;

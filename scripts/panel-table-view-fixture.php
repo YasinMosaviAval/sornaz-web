@@ -20,7 +20,7 @@ function locale(): string { return $GLOBALS['argv'][2] ?? 'fa'; }
 function csrf_token(): string { return 'fixture'; }
 function auth(): object { return new class {
     public function id(): int { return 10; }
-    public function user(): array { return ['user_id' => 10, 'type' => 'academy']; }
+    public function user(): array { return ['user_id' => (int)($GLOBALS['argv'][4] ?? 10), 'type' => 'academy']; }
 }; }
 function component(string $name, array $data = []): void {
     if (!preg_match('/^[a-z-]+$/D', $name)) throw new RuntimeException('Invalid fixture view');

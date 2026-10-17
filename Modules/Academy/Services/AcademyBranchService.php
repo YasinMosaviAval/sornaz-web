@@ -398,6 +398,19 @@ class AcademyBranchService
         return ['members' => $members, 'staff_catalog' => $catalog['staff_catalog'], 'exceptions' => $items, 'version' => sha1(json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))];
     }
 
+    public function targetAvailabilityExceptions(int $actor, string $target, int $id = 0, bool $siteAdmin = false): array
+    {
+        if (!in_array($target, ['organization', 'member'], true)) throw new RuntimeException('نوع برنامه معتبر نیست.', 404);
+        $data = $this->availabilityExceptions($actor, $siteAdmin);
+        $data['exceptions'] = array_values(array_filter($data['exceptions'], static fn ($row) => ($target === 'organization') === ((int) $row['membershipId'] === 0)));
+        if ($id) {
+            $found = array_filter($data['exceptions'], static fn ($row) => (int) $row['id'] === $id && empty($row['readOnly']));
+            if (!$found) throw new RuntimeException('این مورد در بخش انتخاب‌شده قابل تغییر نیست.', 403);
+        }
+        $data['version'] = sha1(json_encode($data['exceptions'], JSON_UNESCAPED_UNICODE));
+        return $data;
+    }
+
     public function saveAvailabilityException(int $actor, array $d, int $id = 0, bool $siteAdmin = false): array
     {
         if ($id) {
@@ -438,10 +451,7 @@ class AcademyBranchService
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !strtotime($date)) {
             throw new RuntimeException('تاریخ معتبر الزامی است.');
         }
-        $type = (string) ($d['type'] ?? '');
-        if (!in_array($type, ['holiday', 'closed', 'unavailable', 'busy', 'vacation', 'blocked'], true)) {
-            throw new RuntimeException('نوع عدم دسترسی معتبر نیست.');
-        }
+        $type = $this->validateExceptionTarget($d, $member, $organization);
         $allDay = !empty($d['allDay']);
         $ranges = $allDay ? [['start' => null, 'end' => null]] : array_values((array) ($d['ranges'] ?? []));
         if (!$ranges) {
@@ -477,6 +487,21 @@ class AcademyBranchService
                 $saved[] = $savedId;
             }return ['ids' => $saved];
         });
+    }
+
+    private function validateExceptionTarget(array $d, ?array $member, ?array $organization): string
+    {
+        if ($member && isset($d['organizationUserId']) && (int) $d['organizationUserId'] !== (int) ($member['organizationUserId'] ?? 0)) {
+            throw new RuntimeException('کارمند انتخاب‌شده متعلق به سازمان انتخاب‌شده نیست.', 403);
+        }
+        $type = (string) ($d['type'] ?? '');
+        if (!in_array($type, ['holiday', 'closed', 'unavailable', 'busy', 'vacation', 'blocked'], true)) {
+            throw new RuntimeException('نوع عدم دسترسی معتبر نیست.');
+        }
+        if (($organization && $type === 'vacation') || ($member && in_array($type, ['holiday', 'closed'], true))) {
+            throw new RuntimeException('نوع انتخاب‌شده برای تعطیلات سازمان یا مرخصی کارمند معتبر نیست.');
+        }
+        return $type;
     }
 
     public function deleteAvailabilityException(int $actor, int $id, bool $siteAdmin = false): void
@@ -545,15 +570,7 @@ class AcademyBranchService
         foreach (DB::table('levels')->where('type', 'learning')->where('is_active', 1)->whereNull('deleted_at')->orderBy('sort_order')->get() as $l) {
             $levels[] = ['id' => (int) $l['level_id'], 'name' => $this->tr('levels', (int) $l['level_id'], 'title', 'سطح')];
         }
-        $currencyLocale = locale() === 'en' ? 'en' : 'fa';
-        $currencies = [];
-        foreach (DB::table('financial_system_currency')->get() as $c) {
-            $code = strtoupper((string) ($c['code'] ?? ''));
-            $fallback = match ($code) {
-                'IRR','IRT','TMN' => $currencyLocale === 'en' ? 'Toman' : 'تومان','USD' => $currencyLocale === 'en' ? 'US Dollar' : 'دلار','EUR' => $currencyLocale === 'en' ? 'Euro' : 'یورو','GBP','PND' => $currencyLocale === 'en' ? 'British Pound' : 'پوند',default => $code
-            };
-            $currencies[] = ['id' => (int) $c['currency_id'], 'name' => $this->ftr('financial_system_currency', (int) $c['currency_id'], 'title', $currencyLocale, $fallback)];
-        }
+        $currencies = CurrencyCatalog::all();
         $lessons = [];
         foreach ((new LessonUsageService())->offeredRows($organizations) as $ul) {
             $lessons[] = ['organization_user_id' => (int) $ul['user_id'], 'lesson_id' => (int) $ul['lesson_id'], 'level_ids' => (new LessonUsageService())->teachingLevelIds((int) $ul['user_id'], (int) $ul['lesson_id']), 'name' => $this->tr('lessons', (int) $ul['lesson_id'], 'title', 'درس')];

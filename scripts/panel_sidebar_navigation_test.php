@@ -43,7 +43,7 @@ namespace {
     $navigation = new \Modules\Analytics\Services\MobilePanelNavigation();
     $access = new \Modules\Analytics\Services\MobilePanelAccess();
     $personal = ['dashboard', 'account', 'gallery', 'lessons', 'member-schedules', 'finance', 'settings'];
-    $academy = ['dashboard', 'account', 'gallery', 'branches', 'lessons', 'classrooms', 'teachers', 'terms', 'students', 'member-schedules', 'finance', 'settings'];
+    $academy = ['dashboard', 'account', 'gallery', 'branches', 'lessons', 'classrooms', 'teachers', 'terms', 'students', 'schedules', 'finance', 'settings'];
     $cases = [
         ['ordinary', 'human', [], $personal],
         ['student', 'human', ['academy_branch_members' => ['member_id' => 8], 'enrollment' => ['enrollment_id' => 9]], ['dashboard', 'account', 'my-classrooms', 'my-courses', 'my-terms', 'gallery', 'lessons', 'member-schedules', 'finance', 'settings']],
@@ -65,6 +65,8 @@ namespace {
         if (in_array($name, ['academy', 'branch', 'manager', 'contract'], true)) {
             expectMenu(in_array('waiting-approvals', $index['dashboard']['links'], true), $name . ': approval workflow disappeared from dashboard');
             expectMenu($index['lessons']['links'] === ['course-levels', 'courses'], $name . ': lesson tab destinations disappeared');
+            expectMenu($index['teachers']['links'] === ['users', 'member-schedules', 'employee-leaves'], $name . ': employee schedule tabs missing');
+            if (isset($index['branches'])) expectMenu($index['branches']['links'] === ['availabilities', 'scheduling-rules', 'organization-holidays'], $name . ': organization schedule tabs missing');
         }
         expectMenu($index['settings']['section'] === 'my-settings', $name . ': non-admin settings must remain personal');
         expectMenu($index['gallery']['section'] === (in_array($name, ['ordinary', 'student', 'owner-human'], true) ? 'my-gallery' : 'gallery'), $name . ': gallery points at the wrong owner scope');

@@ -6,6 +6,15 @@
             to { opacity: 1; transform: translateY(0); }
         }
     </style>
+    <?php component('panel-page-tabs', [
+        'active'=>'terms', 'onSelect'=>'showTermTab', 'label'=>locale()==='en' ? 'Term pages' : 'صفحه‌های ترم',
+        'tabs'=>[
+            'terms'=>['labels'=>['مدیریت ترم‌ها','Term management'],'attributes'=>'data-term-tab="terms"'],
+            'discounts'=>['labels'=>['تخفیف‌ها','Discounts'],'attributes'=>'data-term-tab="discounts"'],
+        ],
+    ]); ?>
+    <div data-panel-content data-term-panel="terms">
+
 
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
@@ -130,4 +139,6 @@
             <div class="flex items-center gap-2" id="termsPaginationButtons"></div>
         </div>
     </div>
+    </div>
+    <?php component('term-discounts'); ?>
 </div>

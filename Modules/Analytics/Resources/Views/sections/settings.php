@@ -1,5 +1,6 @@
 <div id="settings" class="section hidden" data-site-admin="<?= (int) auth()->id() === 1 ? '1' : '0' ?>">
     <style>
+      #settings > .admin-ui-header { justify-content: flex-start; text-align: start; }
       #settings .theme-mode-switch { position: relative; display: inline-block; width: 48px; height: 28px; flex: none; border-radius: 999px; background: #cbd5e1; transition: background-color .2s ease; }
       #settings .theme-mode-switch::after { content: ''; position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px #0003; transition: transform .2s ease; }
       #settings #siteThemeMode:checked + .theme-mode-switch { background: var(--theme-500, #6366f1); }

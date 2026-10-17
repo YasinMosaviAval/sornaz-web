@@ -35,6 +35,7 @@ window.academyOrganizationTabHandlers = {
   holidayLeavesBranchTabs: 'filterHolidayLeavesByBranch',
   pointsBranchTabs: 'filterPointsByBranch',
   termsBranchTabs: 'filterTermsByBranch',
+  termDiscountsBranchTabs: 'filterTermDiscountsByBranch',
   approvalsBranchTabs: 'filterApprovalsByBranch',
   badgesBranchTabs: 'filterBadgesByBranch',
   eventsBranchTabs: 'filterEventsByBranch',

@@ -1,4 +1,5 @@
 <div id="branches" class="section hidden" data-branches-root data-csrf="<?= e(csrf_token()) ?>">
+    <?php component('organization-page-tabs', ['active' => 'branches']); ?>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
             <h1 class="text-3xl font-bold">مدیریت شعبه‌ها</h1>

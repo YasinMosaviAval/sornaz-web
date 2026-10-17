@@ -181,7 +181,7 @@ class AcademyTermService
         }
         $statuses = ['pending' => 'در انتظار', 'open' => 'باز', 'ongoing' => 'در حال برگزاری', 'finished' => 'پایان‌یافته'];
         $classroomOptions = $this->classroomOptions($rooms, $tr);
-        return ['branches' => array_map(fn ($r) => ['id' => (int) $r['branch_id'], 'name' => $bmap[(int) $r['branch_id']]], $branches), 'courses' => array_map(fn ($r) => ['id' => (int) $r['course_id'], 'branchId' => (int) $r['branch_id'], 'lessonId' => (int) $r['lesson_id'], 'name' => $tr['academy_branch_courses'][(int) $r['course_id']]['title'] ?? ('دوره ' . $r['course_id']), 'teacher_capacity' => (int) $r['teacher_capacity'], 'student_capacity' => (int) $r['student_capacity']], $courses), 'classrooms' => $classroomOptions, 'currencies' => $this->currencies(), 'discounts' => $this->discounts(), 'members' => $members, 'terms' => array_map(function ($r) use ($cmap, $bmap, $tr, $people, $sessions, $skips, $invoices, $statuses) {
+        return ['branches' => array_map(fn ($r) => ['id' => (int) $r['branch_id'], 'name' => $bmap[(int) $r['branch_id']]], $branches), 'courses' => array_map(fn ($r) => ['id' => (int) $r['course_id'], 'branchId' => (int) $r['branch_id'], 'lessonId' => (int) $r['lesson_id'], 'name' => $tr['academy_branch_courses'][(int) $r['course_id']]['title'] ?? ('دوره ' . $r['course_id']), 'teacher_capacity' => (int) $r['teacher_capacity'], 'student_capacity' => (int) $r['student_capacity']], $courses), 'classrooms' => $classroomOptions, 'currencies' => $this->currencies(), 'discounts' => $this->discounts($actor), 'members' => $members, 'terms' => array_map(function ($r) use ($cmap, $bmap, $tr, $people, $sessions, $skips, $invoices, $statuses) {
             $id = (int) $r['term_id'];
             $c = $cmap[(int) $r['course_id']];
             $p = $people[$id] ?? [];
@@ -221,6 +221,7 @@ class AcademyTermService
         if (!$course) {
             throw new RuntimeException('دوره متعلق به شعبه نیست.');
         }
+        (new AcademyDiscountService())->assertAvailable($actor, (int) ($d['discountId'] ?? 0), (int) $branch['user_id']);
         $room = DB::table('academy_branch_classrooms')->where('classroom_id', (int) ($d['classroomId'] ?? 0))->where('branch_id', (int) $branch['branch_id'])->whereNull('deleted_at')->first();
         if (!$room) {
             throw new RuntimeException('کلاس متعلق به شعبه نیست.');
@@ -444,17 +445,23 @@ class AcademyTermService
         }
     }
 
+    public function discountOrganizationCatalog(int $actor): array
+    {
+        $branches = $this->branches($actor);
+        $ids = array_map('intval', array_column($branches,'user_id'));
+        array_push($ids, ...array_map('intval',array_column(ClassroomOrganizationScope::academies($actor),'user_id')));
+        $catalog = (new AcademyCourseService())->organizationCatalog($actor);
+        $manageable = array_values(array_filter($catalog['manageable'], static fn ($row) => in_array((int)$row['user_id'],$ids,true)));
+        foreach ($branches as $branch) {
+            $academy=DB::table('academies')->where('academy_id',(int)$branch['academy_id'])->whereNull('deleted_at')->first();
+            if ($academy) $ids[]=(int)$academy['user_id'];
+        }
+        return ['manageable'=>$manageable,'visible'=>array_values(array_filter($catalog['visible'],static fn ($row)=>in_array((int)$row['user_id'],$ids,true)))];
+    }
+
     public function saveDiscount(int $actor, array $d): array
     {
-        $title = trim((string) ($d['title'] ?? ''));
-        $type = ($d['type'] ?? 'percentage') === 'fixed' ? 'fixed' : 'percentage';
-        $value = max(0, (float) ($d['value'] ?? 0));
-        if (!$title || $value <= 0) {
-            throw new RuntimeException('عنوان و مقدار تخفیف الزامی است.');
-        }
-        $id = DB::table('financial_system_discounts')->insertGetId(['code' => 'ADMIN-' . strtoupper(bin2hex(random_bytes(4))), 'type' => $type, 'value' => $value, 'status' => 'active', 'start_date' => date('Y-m-d'), 'created_by' => $actor, 'updated_by' => $actor]);
-        $this->setGenericTexts('financial_system_discounts', $id, ['title' => $title, 'summary' => 'تخفیف قابل استفاده برای شهریه ترم'], $actor);
-        return ['id' => $id, 'name' => $title, 'type' => $type, 'value' => $value];
+        return (new AcademyDiscountService())->save($actor, $d);
     }
 
     public function saveAcademyTerm(int $actor, array $d, int $id = 0): array
@@ -475,6 +482,7 @@ class AcademyTermService
         if ((int) $branch['academy_id'] !== (int) $course['academy_id']) {
             throw new RuntimeException('کلاس انتخاب‌شده متعلق به شعب این آموزشگاه نیست.');
         }
+        (new AcademyDiscountService())->assertAvailable($actor, (int) ($d['discountId'] ?? 0), (int) $branch['user_id']);
         $room = ClassroomOrganizationScope::find((int) ($d['classroomId'] ?? 0), (int) $branch['branch_id'], (int) $course['academy_id']);
         if (!$room) {
             throw new RuntimeException('کلاس متعلق به شعب این آموزشگاه نیست.');
@@ -1209,16 +1217,12 @@ class AcademyTermService
 
     private function currencies(): array
     {
-        $rows = DB::table('financial_system_currency')->get();
-        $tr = $this->texts(['financial_system_currency' => array_column($rows, 'currency_id')]);
-        return array_map(fn ($r) => ['id' => (int) $r['currency_id'], 'name' => $tr['financial_system_currency'][(int) $r['currency_id']]['title'] ?? $r['code']], $rows);
+        return CurrencyCatalog::all();
     }
 
-    private function discounts(): array
+    private function discounts(int $actor): array
     {
-        $rows = DB::table('financial_system_discounts')->whereNull('deleted_at')->get();
-        $tr = $this->texts(['financial_system_discounts' => array_column($rows, 'discount_id')]);
-        return array_map(fn ($r) => ['id' => (int) $r['discount_id'], 'name' => $tr['financial_system_discounts'][(int) $r['discount_id']]['title'] ?? $r['code'], 'type' => $r['type'], 'value' => (float) $r['value']], $rows);
+        return array_values(array_filter((new AcademyDiscountService())->bootstrap($actor)['discounts'], static fn ($discount) => $discount['status']==='active'));
     }
 
     private function installmentCount(int $id): int

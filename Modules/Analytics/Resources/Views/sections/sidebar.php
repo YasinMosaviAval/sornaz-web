@@ -160,17 +160,17 @@ if ($sidebarFullName === '') $sidebarFullName = $sidebarUsername;
             <?php if ((int) ($panelUser['user_id'] ?? 0) === 1): ?>
             <li>
                 <button type="button" onclick="toggleSidebarSubmenu('branchesSubmenu',this)" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800">
-                    <span class="flex gap-3"><i class="fas fa-building w-5"></i>شعبه‌ها</span>
+                    <span class="flex gap-3"><i class="fas fa-building w-5"></i>سازمان</span>
                     <i class="fas fa-chevron-down text-xs submenu-chevron"></i>
                 </button><ul id="branchesSubmenu" class="mt-1 mr-4 space-y-1 hidden border-r border-indigo-700/60 pr-2">
-                    <li><a href="#" onclick="showSection('branches')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm"><i class="fas fa-building w-4"></i>شعبه‌ها</a></li>
+                    <li><a href="#" onclick="showSection('branches')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm"><i class="fas fa-building w-4"></i>سازمان</a></li>
                     <?php if($isSiteAdmin):?>
                         <li><a href="#" onclick="showSection('branch-types')" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-indigo-800 text-sm"><i class="fas fa-layer-group w-4"></i>انواع آموزشی</a></li>
                     <?php endif;?>
                     </ul>
                 </li>
             <?php else: ?>
-            <li><a href="#" onclick="showSection('branches')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-building w-5 text-center"></i>شعبه‌ها</a></li>
+            <li><a href="#" onclick="showSection('branches')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-building w-5 text-center"></i>سازمان</a></li>
             <?php endif; ?>
             <?php endif; ?>
             <?php if ($isSiteAdmin): ?>
@@ -213,13 +213,13 @@ if ($sidebarFullName === '') $sidebarFullName = $sidebarUsername;
             <!-- <li><a href="#" onclick="showSection('instruments')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-guitar w-5 text-center"></i> سازها</a></li> -->
             <li><a href="#" onclick="showSection('terms')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-calendar-check w-5 text-center"></i> ترم‌ها</a></li>
             <li><a href="#" onclick="showSection('students')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-users w-5 text-center"></i> هنرجویان</a></li>
-            <li><a href="#" onclick="showSection('member-schedules')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-calendar-alt w-5 text-center"></i> برنامه زمانی</a></li>
+            <li><a href="#" onclick="showSection('schedules')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-calendar-alt w-5 text-center"></i> تقویم کلاس‌ها</a></li>
             <li><a href="#" onclick="showSection('finance')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-money-bill-wave w-5 text-center"></i> امور مالی</a></li>
             <?php endif; ?>
             <?php if (!$hasAcademyPanelAccess): ?>
             <li><a href="#" onclick="showSection('gallery')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-images w-5 text-center"></i> گالری</a></li>
             <li><a href="#" onclick="showSection('lessons')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-book w-5 text-center"></i> درس‌ها</a></li>
-            <li><a href="#" onclick="showSection('member-schedules')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-calendar-alt w-5 text-center"></i> برنامه زمانی</a></li>
+            <li><a href="#" onclick="showSection('member-schedules')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-calendar-alt w-5 text-center"></i> کارمندها</a></li>
             <li><a href="#" onclick="showSection('finance')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-money-bill-wave w-5 text-center"></i> امور مالی</a></li>
             <?php endif; ?>
             <li><a href="#settings" onclick="showSection('settings')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-cog w-5 text-center"></i> تنظیمات</a></li>

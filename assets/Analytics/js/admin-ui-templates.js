@@ -558,12 +558,13 @@
       section.hasAttribute('data-admin-ui-native')
     )
       return;
-    normalizeHeader(section);
-    normalizeTabs(section);
-    normalizeFilters(section);
-    Array.from(section.querySelectorAll('table')).forEach((table) =>
-      normalizeTable(table, section)
-    );
+    const panels = [...section.querySelectorAll(':scope > [data-panel-content]')];
+    (panels.length ? panels : [section]).forEach(scope => {
+      normalizeHeader(scope);
+      normalizeTabs(scope);
+      normalizeFilters(scope);
+      Array.from(scope.querySelectorAll('table')).forEach(table => normalizeTable(table, scope));
+    });
     applySharedAppearance(section);
     section.dataset.adminUiNormalized = '1';
     section.dispatchEvent(new CustomEvent('admin-ui:ready', { bubbles: true }));

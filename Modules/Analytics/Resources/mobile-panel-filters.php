@@ -837,6 +837,16 @@ return json_decode(<<<'JSON'
     ],
     "notifications": [
         {
+            "key": "filterNotificationActivity",
+            "webId": "filterNotificationActivity",
+            "label": "همه عنوان‌های فعالیت",
+            "type": "select",
+            "rowPath": "activityTitle",
+            "options": {},
+            "optionSource": null,
+            "distinct": true
+        },
+        {
             "key": "filterNotificationStatus",
             "webId": "filterNotificationStatus",
             "label": "همه وضعیت‌ها",
@@ -1090,6 +1100,117 @@ return json_decode(<<<'JSON'
             "rowPath": "action",
             "distinct": true,
             "options": {}
+        }
+    ],
+    "organization-holidays": [
+        {
+            "key": "filterHolidayLeaveTimezone",
+            "webId": "filterHolidayLeaveTimezone",
+            "label": "همه مناطق زمانی",
+            "type": "select",
+            "rowPath": "timezone",
+            "options": {
+                "Asia\/Tehran": "تهران",
+                "Asia\/Dubai": "دبی",
+                "Asia\/Istanbul": "استانبول",
+                "Europe\/London": "لندن",
+                "Europe\/Paris": "پاریس",
+                "Europe\/Berlin": "برلین",
+                "Europe\/Rome": "رم",
+                "Europe\/Amsterdam": "آمستردام",
+                "America\/New_York": "نیویورک",
+                "America\/Chicago": "شیکاگو",
+                "America\/Los_Angeles": "لس‌آنجلس",
+                "America\/Toronto": "تورنتو",
+                "UTC": "UTC"
+            },
+            "optionSource": null,
+            "distinct": false
+        },
+        {
+            "key": "filterHolidayLeaveStatus",
+            "webId": "filterHolidayLeaveStatus",
+            "label": "همه وضعیت‌ها",
+            "type": "select",
+            "rowPath": "status",
+            "options": {
+                "فعال": "فعال",
+                "غیرفعال": "غیرفعال",
+                "در انتظار تأیید": "در انتظار تأیید"
+            },
+            "optionSource": null,
+            "distinct": false
+        },
+        {
+            "key": "filterHolidayLeaveType",
+            "webId": "filterHolidayLeaveType",
+            "label": "همه انواع",
+            "type": "select",
+            "rowPath": "type",
+            "options": {
+                "holiday": "تعطیل رسمی",
+                "closed": "تعطیل",
+                "unavailable": "عدم دسترسی",
+                "busy": "مشغول",
+                "blocked": "مسدود"
+            },
+            "optionSource": null,
+            "distinct": false
+        }
+    ],
+    "employee-leaves": [
+        {
+            "key": "filterHolidayLeaveTimezone",
+            "webId": "filterHolidayLeaveTimezone",
+            "label": "همه مناطق زمانی",
+            "type": "select",
+            "rowPath": "timezone",
+            "options": {
+                "Asia\/Tehran": "تهران",
+                "Asia\/Dubai": "دبی",
+                "Asia\/Istanbul": "استانبول",
+                "Europe\/London": "لندن",
+                "Europe\/Paris": "پاریس",
+                "Europe\/Berlin": "برلین",
+                "Europe\/Rome": "رم",
+                "Europe\/Amsterdam": "آمستردام",
+                "America\/New_York": "نیویورک",
+                "America\/Chicago": "شیکاگو",
+                "America\/Los_Angeles": "لس‌آنجلس",
+                "America\/Toronto": "تورنتو",
+                "UTC": "UTC"
+            },
+            "optionSource": null,
+            "distinct": false
+        },
+        {
+            "key": "filterHolidayLeaveStatus",
+            "webId": "filterHolidayLeaveStatus",
+            "label": "همه وضعیت‌ها",
+            "type": "select",
+            "rowPath": "status",
+            "options": {
+                "فعال": "فعال",
+                "غیرفعال": "غیرفعال",
+                "در انتظار تأیید": "در انتظار تأیید"
+            },
+            "optionSource": null,
+            "distinct": false
+        },
+        {
+            "key": "filterHolidayLeaveType",
+            "webId": "filterHolidayLeaveType",
+            "label": "همه انواع",
+            "type": "select",
+            "rowPath": "type",
+            "options": {
+                "unavailable": "عدم دسترسی",
+                "busy": "مشغول",
+                "vacation": "مرخصی",
+                "blocked": "مسدود"
+            },
+            "optionSource": null,
+            "distinct": false
         }
     ]
 }

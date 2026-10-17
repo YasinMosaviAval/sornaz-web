@@ -13,6 +13,7 @@ $paths = [
  'classroomTypeStatusFilter' => 'status', 'classroomTypeCategoryFilter' => 'type',
  'accessUserStatus' => 'status', 'accessRoleScope' => 'scope', 'accessRoleLevel' => 'level', 'accessPermissionScope' => 'scope', 'accessPermissionRisk' => 'risk',
  'filterPointType' => 'type', 'filterPointCategory' => 'category', 'filterPointStatus' => 'status',
+ 'filterNotificationActivity' => 'activityTitle',
  'mediaType' => 'type', 'mediaMonth' => 'month',
  'postTypeFilter' => 'type', 'postVisibilityFilter' => 'visibility', 'commentPostFilter' => 'postId',
 ];
@@ -46,6 +47,7 @@ foreach ($files as $key => $file) {
    if ($value === '') $label = $text; else $values[$value] = $text;
   }
   $field = $paths[$id] ?? lcfirst(preg_replace('/^filter(?:BranchSchedule|MemberSchedule|HolidayLeave|Notification|Schedule|Finance|Message|Rule|Post|Comment)/', '', $id));
+  if ($id === 'filterNotificationActivity') $label = 'همه عنوان‌های فعالیت';
   $filters[] = ['key' => $id, 'webId' => $id, 'label' => $label ?: 'فیلتر', 'type' => 'select', 'rowPath' => $field, 'options' => $values ?: new stdClass(), 'optionSource' => $sources[$id] ?? null, 'distinct' => !$values];
  }
  $result[$key] = $filters;
@@ -69,6 +71,12 @@ $result['my-points'] = [
 ];
 foreach ($result['classroom-types'] as &$filter) $filter['permission'] = $filter['rowPath'] === 'status' ? 'showStatus' : 'showCategory';
 unset($filter);
+$exceptionTypes = ['organization-holidays' => ['vacation'], 'employee-leaves' => ['holiday', 'closed']];
+foreach ($exceptionTypes as $key => $excluded) {
+ $result[$key] = $result['availability-exceptions'];
+ foreach ($result[$key] as &$filter) if ($filter['webId'] === 'filterHolidayLeaveType') $filter['options'] = array_diff_key((array) $filter['options'], array_flip($excluded));
+ unset($filter);
+}
 $json = json_encode($result, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
 file_put_contents("$root/Modules/Analytics/Resources/mobile-panel-filters.php", "<?php\n// Generated from active web controls by scripts/generate_mobile_panel_filters.php.\nreturn json_decode(<<<'JSON'\n$json\nJSON, true, 512, JSON_THROW_ON_ERROR);\n");
 echo 'Generated web filters for ' . count($result) . " sections.\n";

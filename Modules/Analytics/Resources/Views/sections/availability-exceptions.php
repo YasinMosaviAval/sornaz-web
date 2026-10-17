@@ -1,4 +1,6 @@
 <div id="availability-exceptions" class="section hidden">
+    <div data-exception-nav="organization"><?php component('organization-page-tabs', ['active' => 'organization-holidays']); ?></div>
+    <div data-exception-nav="member" class="hidden"><?php component('staff-page-tabs', ['active' => 'employee-leaves']); ?></div>
     <div id="academyNationalHolidaySettings" class="mb-6"></div>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>

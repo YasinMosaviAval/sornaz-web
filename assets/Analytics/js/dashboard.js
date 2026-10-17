@@ -159,7 +159,6 @@
       'upcomingHolidaysList',
       window.getDashboardHolidaysHTML?.(dashboardData.upcomingHolidays) || ''
     );
-    setList('dashboardQuickLinks', window.getDashboardQuickLinksHTML?.() || '');
   };
 
   window.refreshDashboard = async function () {
