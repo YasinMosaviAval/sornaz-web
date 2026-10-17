@@ -38,7 +38,7 @@
   };
 
   window.getReportDetailsModalHTML = function (item) {
-    const m = item.metrics || {};
+    const metrics = Array.isArray(item.metrics) ? item.metrics : [];
     return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-2xl my-8 shadow-2xl" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-start rounded-t-3xl gap-4">
@@ -69,20 +69,9 @@
                         <div class="bg-gray-50 border border-gray-100 rounded-2xl p-5 text-sm text-gray-700 leading-relaxed">${escapeHtml(item.summary || 'بدون خلاصه')}</div>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-indigo-700 mb-3">شاخص‌های نمونه</h3>
+                        <h3 class="font-semibold text-indigo-700 mb-3">شاخص‌های گزارش</h3>
                         <div class="grid grid-cols-3 gap-4">
-                            <div class="bg-indigo-50 rounded-2xl p-4 text-center">
-                                <p class="text-xs text-gray-500">کل موارد</p>
-                                <p class="text-2xl font-bold text-indigo-700 mt-1">${m.total != null ? m.total : '—'}</p>
-                            </div>
-                            <div class="bg-green-50 rounded-2xl p-4 text-center">
-                                <p class="text-xs text-gray-500">موفق / تکمیل</p>
-                                <p class="text-2xl font-bold text-green-700 mt-1">${m.success != null ? m.success : '—'}</p>
-                            </div>
-                            <div class="bg-amber-50 rounded-2xl p-4 text-center">
-                                <p class="text-xs text-gray-500">در انتظار</p>
-                                <p class="text-2xl font-bold text-amber-700 mt-1">${m.pending != null ? m.pending : '—'}</p>
-                            </div>
+                            ${metrics.map(metric => `<div class="bg-indigo-50 rounded-2xl p-4 text-center"><p class="text-xs text-gray-500">${escapeHtml(metric.label)}</p><p class="text-2xl font-bold text-indigo-700 mt-1">${escapeHtml(metric.value ?? '—')}</p></div>`).join('')}
                         </div>
                     </div>
                     <div class="flex justify-end pt-2">

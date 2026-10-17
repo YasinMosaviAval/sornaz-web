@@ -46,6 +46,7 @@ $isAcademyManager = $panelUserId && (bool)\Core\database\DB::table('academy_bran
     ->where('academy_branch_members.user_id',$panelUserId)
     ->whereRaw("(access_system_roles.name LIKE 'academy_%manager%' AND access_system_roles.name NOT LIKE '%branch%')")
     ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->first();
+$hasAcademyPanelAccess = $hasAcademyPanelAccess || (bool) $ownsAcademy;
 $canCreateClassroomType = $isSiteAdmin || $ownsAcademy || $isAcademyManager
     || ($panelUserId && (new \Modules\System\Services\AccessControl())->allows($panelUserId, \Modules\Academy\Services\AcademyClassroomService::CREATE_TYPE_PERMISSION));
 }

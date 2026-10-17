@@ -3,7 +3,7 @@ require __DIR__ . '/mobile_panel_parity_test.php';
 expectParity(!isset($sections['course-levels']['presentation']), 'Legacy clients must retain their presentation');
 $sections = (new \Modules\Analytics\Services\MobilePanelCatalog())->sections(true);
 $levels = $sections['course-levels']['presentation'];
-expectParity(array_column($levels['columns'], 'key') === ['id', 'name', 'summary'], 'Lesson-level columns differ from website');
+expectParity(array_column($levels['columns'], 'key') === ['name', 'summary'], 'Lesson-level columns differ from website');
 expectParity($levels['rowActions'] === ['details'], 'Lesson levels expose unsupported row mutations');
 expectParity(array_column($levels['detailFields'], 'key') === ['name', 'summary', 'description'], 'Level details differ from website');
 expectParity(!in_array('status', array_column($sections['students']['presentation']['columns'], 'key'), true), 'Students expose a status column absent from website');

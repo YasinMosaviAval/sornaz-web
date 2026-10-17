@@ -8,6 +8,39 @@ use RuntimeException;
 
 class AdminDashboardService
 {
+    public function reports(int $actor, array $filters = []): array
+    {
+        $dashboard = $this->data($actor, $filters);
+        $branchId = max(0, (int) ($filters['branchId'] ?? 0));
+        $branchName = 'همه شعبه‌های مجاز';
+        foreach ($dashboard['branches'] as $branch) {
+            if ((int) $branch['id'] === $branchId) $branchName = (string) $branch['name'];
+        }
+        return ['branches' => $dashboard['branches'], 'reports' => self::reportSnapshot($dashboard['stats'], date('Y-m-d'), $branchId, $branchName)];
+    }
+
+    /** Current, scoped summaries; never a fabricated historical report archive. */
+    public static function reportSnapshot(array $stats, string $today, int $branchId, string $branchName): array
+    {
+        $definitions = [
+            ['حضور و غیاب ماه جاری', 'حضور و غیاب', 'monthly', substr($today, 0, 8) . '01', ['attendanceRate' => 'درصد حضور']],
+            ['درآمد ماه جاری', 'مالی', 'monthly', substr($today, 0, 8) . '01', ['monthlyIncome' => 'درآمد ماه']],
+            ['ثبت‌نام‌های هفت روز اخیر', 'ثبت‌نام', 'weekly', date('Y-m-d', strtotime($today . ' -6 days')), ['newStudentsWeek' => 'ثبت‌نام‌های هفته']],
+            ['خلاصه وضعیت جاری', 'عملکرد', 'current', $today, ['activeStudents' => 'هنرجویان فعال', 'todayClasses' => 'کلاس‌های امروز', 'pendingPayments' => 'اقساط معوق']],
+        ];
+        $rows = [];
+        foreach ($definitions as $index => [$title, $type, $period, $from, $fields]) {
+            $metrics = [];
+            foreach ($fields as $key => $label) $metrics[] = ['label' => $label, 'value' => $stats[$key] ?? null];
+            $rows[] = ['id' => $index + 1, 'title' => $title, 'branchId' => $branchId ?: null, 'branchName' => $branchName,
+                'type' => $type, 'period' => $period, 'periodLabel' => ['monthly' => 'ماه جاری', 'weekly' => 'هفت روز اخیر', 'current' => 'وضعیت جاری'][$period],
+                'periodFrom' => $from, 'periodTo' => $today, 'dateISO' => $today, 'date' => $today, 'status' => 'آماده',
+                'summary' => 'خلاصهٔ زنده از اطلاعات ثبت‌شده در دیتابیس، در محدودهٔ شعبه‌های مجاز. این فهرست آرشیو گزارش‌های تاریخی نیست.',
+                'metrics' => $metrics];
+        }
+        return $rows;
+    }
+
     public function data(int $actor, array $filters = []): array
     {
         $branchId = max(0, (int) ($filters['branchId'] ?? 0));

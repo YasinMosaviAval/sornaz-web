@@ -170,7 +170,7 @@ final class MobilePanelCatalog
         $sections['schedules']['actions']['attendance']['fields'] = [$f('attendance', 'حضور و غیاب', 'rows', [$f('memberId', 'عضو', 'select', ['source' => 'attendance']), $f('status', 'وضعیت', 'select', ['present' => 'حاضر', 'absent' => 'غایب', 'late' => 'تأخیر', 'leave' => 'مرخصی', 'excused_absence' => 'غیبت موجه', 'online' => 'آنلاین']), $f('note', 'توضیح')])];
         $sections['settings'] = $s('settings', 'تنظیمات سایت', 'Site settings', '/analytics/site-settings', '', [], 'management', false);
         $sections['settings']['actions']['save'] = $a('/analytics/admin-settings', 'ویرایش تنظیمات', 'POST', [$f('primaryFont', 'قلم'), $f('fontScale', 'اندازه متن', 'number'), $f('language', 'زبان', 'select', ['fa' => 'فارسی', 'en' => 'English']), $f('themeMode', 'ظاهر', 'select', ['dark' => 'تیره', 'light' => 'روشن']), $f('colorTheme', 'تم رنگی', 'select', ['indigo' => 'نیلی', 'emerald' => 'زمردی', 'rose' => 'رز', 'amber' => 'کهربایی'])], false);
-        $sections['reports'] = $s('reports', 'گزارش‌ها و نمودارها', 'Reports and charts', '/analytics/admin-dashboard', '', [], 'management', false);
+        $sections['reports'] = $s('reports', 'گزارش‌ها و نمودارها', 'Reports and charts', '/analytics/admin-reports', 'reports', [], 'management', false);
         $sections['guides'] = $s('guides', 'راهنمای عملکردها', 'Guides', '/analytics/admin-guides', 'items', [], 'founder', false);
         $guideFields = [$f('fa', 'فارسی', 'object', [$f('title', 'عنوان'), $f('content', 'متن', 'multiline')]), $f('en', 'English', 'object', [$f('title', 'Title'), $f('content', 'Content', 'multiline')])];
         $sections['guides']['actions']['update'] = $a('/analytics/admin-guides', 'ویرایش راهنما', 'POST', $guideFields);

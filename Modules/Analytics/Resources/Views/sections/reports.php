@@ -48,6 +48,7 @@
                 <option value="weekly">هفتگی</option>
                 <option value="monthly">ماهانه</option>
                 <option value="yearly">سالانه</option>
+                <option value="current">وضعیت جاری</option>
                 <option value="custom">زمان انتخابی</option>
             </select>
             <div id="reportCustomDateFromWrap" class="hidden">

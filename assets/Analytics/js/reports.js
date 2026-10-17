@@ -13,77 +13,38 @@
 
   window.getReportBranches = function () {
     if (typeof allBranches !== 'undefined' && allBranches.length) return allBranches;
-    return [
-      { id: 1, name: 'شعبه مرکزی' },
-      { id: 2, name: 'شعبه ونک' },
-      { id: 3, name: 'شعبه سعادت‌آباد' },
-      { id: 4, name: 'شعبه کرج' },
-    ];
+    return [];
   };
 
-  const reportTitleTemplates = [
-    { title: 'گزارش حضور و غیاب', type: 'حضور و غیاب', period: 'monthly' },
-    { title: 'گزارش درآمد', type: 'مالی', period: 'monthly' },
-    { title: 'آمار ثبت‌نام هنرجویان جدید', type: 'ثبت‌نام', period: 'weekly' },
-    { title: 'گزارش عملکرد اساتید', type: 'آموزشی', period: 'monthly' },
-    { title: 'گزارش بدهی هنرجویان', type: 'مالی', period: 'monthly' },
-    { title: 'آمار کلاس‌های برگزار شده', type: 'آموزشی', period: 'weekly' },
-    { title: 'گزارش رضایت هنرجویان', type: 'نظرسنجی', period: 'yearly' },
-    { title: 'خلاصه عملکرد شعبه', type: 'عملکرد', period: 'monthly' },
-    { title: 'گزارش شهریه‌های وصول‌شده', type: 'مالی', period: 'weekly' },
-    { title: 'آمار جلسات لغو شده', type: 'حضور و غیاب', period: 'weekly' },
-    { title: 'گزارش سالانه مالی', type: 'مالی', period: 'yearly' },
-    { title: 'آمار ارتقای سطح هنرجویان', type: 'آموزشی', period: 'yearly' },
-  ];
-
   let allReports = [];
-  (function buildSample() {
-    const branches = window.getReportBranches();
-    let id = 1;
-    for (let i = 0; i < 80; i++) {
-      const tpl = reportTitleTemplates[i % reportTitleTemplates.length];
-      const branch = branches[i % branches.length];
-      const d = new Date();
-      d.setDate(d.getDate() - Math.floor(Math.random() * 120));
-      const dateISO = d.toISOString().split('T')[0];
-      const period = tpl.period;
-      let periodFrom = dateISO,
-        periodTo = dateISO;
-      if (period === 'weekly') {
-        const from = new Date(d);
-        from.setDate(from.getDate() - 6);
-        periodFrom = from.toISOString().split('T')[0];
-        periodTo = dateISO;
-      } else if (period === 'monthly') {
-        periodFrom = dateISO.slice(0, 8) + '01';
-        periodTo = dateISO;
-      } else if (period === 'yearly') {
-        periodFrom = dateISO.slice(0, 4) + '-01-01';
-        periodTo = dateISO;
-      }
-      allReports.push({
-        id: id++,
-        title: tpl.title + ' — ' + branch.name,
-        branchId: branch.id,
-        branchName: branch.name,
-        type: tpl.type,
-        period: period,
-        periodLabel: window.reportPeriodLabels[period] || period,
-        periodFrom: periodFrom,
-        periodTo: periodTo,
-        date: d.toLocaleDateString('fa-IR'),
-        dateISO: dateISO,
-        status: Math.random() > 0.25 ? 'آماده' : 'در حال تهیه',
-        summary:
-          'این گزارش به‌صورت خودکار توسط سیستم تولید شده و شامل خلاصه آماری بازه زمانی مشخص است.',
-        metrics: {
-          total: 40 + Math.floor(Math.random() * 200),
-          success: 30 + Math.floor(Math.random() * 150),
-          pending: Math.floor(Math.random() * 30),
-        },
-      });
+  let reportBranches = [];
+  let reportRequest = 0;
+  async function loadReports() {
+    const request = ++reportRequest;
+    allReports = [];
+    window.filterReports();
+    try {
+      const query = new URLSearchParams();
+      if (currentReportBranch === 'academy') return;
+      if (/^\d+$/.test(String(currentReportBranch))) query.set('branchId', currentReportBranch);
+      const response = await fetch('/analytics/admin-reports?' + query, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+      const payload = await response.json();
+      if (!response.ok || payload.success !== true || !Array.isArray(payload.data?.reports)) throw new Error(payload.message || 'دریافت گزارش‌ها انجام نشد.');
+      if (request !== reportRequest) return;
+      allReports = payload.data.reports.map(report => ({ ...report,
+        date: document.documentElement.lang === 'en' ? report.dateISO : new Date(report.dateISO + 'T12:00:00').toLocaleDateString('fa-IR'),
+      }));
+      reportBranches = payload.data.branches || [];
+      window.renderReportsBranchTabs();
+      window.filterReports();
+    } catch (error) {
+      if (request !== reportRequest) return;
+      allReports = [];
+      window.filterReports();
+      const tbody = document.querySelector('#reportsTable tbody');
+      if (tbody) { tbody.textContent = ''; const row = tbody.insertRow(); const cell = row.insertCell(); cell.colSpan = 7; cell.textContent = error.message; }
     }
-  })();
+  }
 
   let currentReportBranch = 'all';
   let reportsCurrentPage = 1;
@@ -154,7 +115,7 @@
   };
 
   window.renderReportsBranchTabs = function () {
-    window.renderPanelOrganizationTabs?.('reportsBranchTabs', currentReportBranch, window.filterReportsByBranch, { tabClass: 'report-branch-tab' });
+    window.renderPanelOrganizationTabs?.('reportsBranchTabs', currentReportBranch, window.filterReportsByBranch, { tabClass: 'report-branch-tab', branches: reportBranches, showAcademy: false });
   };
 
   window.filterReportsByBranch = function (branchId) {
@@ -169,7 +130,7 @@
         tab.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
       } else tab.classList.remove('border-gray-200');
     });
-    window.filterReports();
+    loadReports();
   };
 
   window.filterReports = function () {
@@ -203,7 +164,7 @@
     const todayISO = now.toISOString().split('T')[0];
 
     filteredReports = allReports.filter(function (r) {
-      const matchBranch = window.matchesOrganizationFilter(r, currentReportBranch);
+      const matchBranch = true; // The server enforces the selected branch scope.
       const matchSearch =
         !search ||
         (r.title || '').toLowerCase().includes(search) ||
@@ -212,7 +173,7 @@
       const matchStatus = !status || r.status === status;
 
       let matchPeriod = true;
-      if (period === 'weekly' || period === 'monthly' || period === 'yearly') {
+      if (period === 'weekly' || period === 'monthly' || period === 'yearly' || period === 'current') {
         matchPeriod = r.period === period;
       } else if (period === 'custom') {
         if (dateFrom && r.dateISO < dateFrom) matchPeriod = false;
@@ -322,7 +283,7 @@
   };
 
   window.exportReportsToExcel = function () {
-    const data = filteredReports.length ? filteredReports : allReports;
+    const data = filteredReports;
     let csv = '\uFEFFردیف,عنوان,شعبه,نوع,بازه زمانی,از تاریخ,تا تاریخ,تاریخ تولید,وضعیت\n';
     data.forEach(function (r, i) {
       csv +=
@@ -404,7 +365,7 @@
     });
     if (!selectedColumns.length) return alert('حداقل یک ستون انتخاب کنید.');
     const date = new Date().toLocaleDateString('fa-IR');
-    const data = filteredReports.length ? filteredReports : allReports;
+    const data = filteredReports;
     const rowsPerPage = orientation === 'portrait' ? 18 : 15;
     const totalPages = Math.max(1, Math.ceil(data.length / rowsPerPage));
     const canvasPages = [];
@@ -456,7 +417,7 @@
   setTimeout(function () {
     if (document.getElementById('reportsTable')) {
       window.renderReportsBranchTabs();
-      window.filterReports();
+      loadReports();
     }
   }, 200);
 })();

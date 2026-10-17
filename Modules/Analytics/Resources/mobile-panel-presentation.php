@@ -1,6 +1,7 @@
 <?php
 /** Native presentation of the active Analytics tables. Permissions remain server enforced. */
 $definitions = [
+    'reports' => 'title:عنوان|branchName:شعبه|type:نوع|periodLabel:بازه زمانی|date:تاریخ|status:وضعیت',
     'course-levels' => 'name:عنوان|summary:خلاصه',
     'members' => 'name:نام|typeLabel:نوع قرارداد|contractTitle:عنوان قرارداد|branch:سازمان|lessonName:درس|startDate:تاریخ شروع|endDate:تاریخ خاتمه|price:مبلغ قرارداد|status:وضعیت',
     'students' => 'name:نام هنرجو|instrument:ترم آموزشی|level:سطح|teacher:استاد|branch:سازمان',
@@ -50,7 +51,7 @@ $definitions = [
 $profiles = ['awards', 'badges', 'experiences', 'certificates', 'educations', 'events', 'polls', 'publications'];
 $result = [];
 foreach ($definitions as $key => $definition) {
-    $columns = [['key' => 'id', 'label' => 'شناسه']];
+    $columns = $key === 'my-points' ? [['key' => '_index', 'label' => 'ردیف']] : [];
     foreach (explode('|', $definition) as $pair) {
         [$field, $label] = explode(':', $pair, 2);
         $column = ['key' => $field, 'label' => $label];
@@ -155,4 +156,25 @@ foreach ($result as $key => &$contract) {
 unset($contract);
 $result['my-points']['views']['rules']['rowActions'] = [];
 $result['my-points']['views']['rules']['showActions'] = false;
+$result['reports']['rowActions'] = ['details'];
+$result['reports']['detailTitle'] = 'جزئیات گزارش';
+$result['reports']['columns'][5]['type'] = 'badge';
+$result['reports']['detailFields'] = [
+    ['key' => 'title', 'label' => 'عنوان'], ['key' => 'branchName', 'label' => 'شعبه'],
+    ['key' => 'type', 'label' => 'نوع'], ['key' => 'periodLabel', 'label' => 'بازه زمانی'],
+    ['key' => 'date', 'label' => 'تاریخ تولید'], ['key' => 'periodFrom', 'label' => 'از تاریخ'],
+    ['key' => 'periodTo', 'label' => 'تا تاریخ'], ['key' => 'status', 'label' => 'وضعیت'],
+    ['key' => 'summary', 'label' => 'خلاصه گزارش'],
+    ['key' => 'metrics', 'label' => 'شاخص‌ها', 'type' => 'rows', 'options' => [
+        ['key' => 'label', 'label' => 'شاخص'], ['key' => 'value', 'label' => 'مقدار'],
+    ]],
+];
+$result['reports']['filters'] = [
+    ['key' => 'branchId', 'queryKey' => 'branchId', 'label' => 'همه شعبه‌ها', 'type' => 'select', 'options' => ['source' => 'branches']],
+    ['key' => 'type', 'rowPath' => 'type', 'label' => 'همه انواع گزارش', 'type' => 'select', 'options' => ['حضور و غیاب' => 'حضور و غیاب', 'مالی' => 'مالی', 'ثبت‌نام' => 'ثبت‌نام', 'عملکرد' => 'عملکرد']],
+    ['key' => 'status', 'rowPath' => 'status', 'label' => 'همه وضعیت‌ها', 'type' => 'select', 'options' => ['آماده' => 'آماده', 'در حال تهیه' => 'در حال تهیه']],
+    ['key' => 'period', 'rowPath' => 'period', 'label' => 'همه بازه‌ها', 'type' => 'select', 'options' => ['weekly' => 'هفت روز اخیر', 'monthly' => 'ماه جاری', 'current' => 'وضعیت جاری']],
+    ['key' => 'from', 'rowPath' => 'dateISO', 'operator' => 'gte', 'label' => 'از تاریخ', 'type' => 'date'],
+    ['key' => 'to', 'rowPath' => 'dateISO', 'operator' => 'lte', 'label' => 'تا تاریخ', 'type' => 'date'],
+];
 return $result;

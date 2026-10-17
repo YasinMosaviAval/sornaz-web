@@ -20,6 +20,15 @@ class AdminDashboardController
         }
     }
 
+    public function reports()
+    {
+        try {
+            return ResponseFactory::json(['success' => true, 'data' => $this->service->reports((int) auth()->id(), $_GET)]);
+        } catch (\Throwable $exception) {
+            return ResponseFactory::json(['success' => false, 'message' => 'دریافت گزارش‌ها ممکن نیست. دسترسی و اتصال را بررسی کنید.'], 422);
+        }
+    }
+
     public function approveWaiting(int $id)
     {
         try {

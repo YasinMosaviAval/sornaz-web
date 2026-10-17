@@ -51,7 +51,7 @@ namespace {
         ['branch', 'branch', [], array_values(array_diff($academy, ['branches']))],
         ['manager', 'human', ['management-role' => ['role_id' => 3]], $academy],
         ['contract', 'human', ['management-contract' => ['contract_id' => 3]], $academy],
-        ['owner-human', 'human', ['academies' => ['academy_id' => 5]], $personal],
+        ['owner-human', 'human', ['academies' => ['academy_id' => 5]], $academy],
     ];
     foreach ($cases as [$name, $type, $state, $expected]) {
         $GLOBALS['actor'] = ['user_id' => 17, 'type' => $type, 'username' => 'fixture'];
@@ -62,14 +62,14 @@ namespace {
         expectMenu(array_column($items, 'key') === $expected, $name . ': website menu differs: ' . json_encode(array_column($items, 'key')));
         expectMenu(!array_intersect(['my-gallery', 'my-lessons', 'my-settings', 'my-finance', 'my-waiting'], array_column($items, 'key')), $name . ': API-only entry leaked');
         $index = array_column($items, null, 'key');
-        if (in_array($name, ['academy', 'branch', 'manager', 'contract'], true)) {
+        if (in_array($name, ['academy', 'branch', 'manager', 'contract', 'owner-human'], true)) {
             expectMenu(in_array('waiting-approvals', $index['dashboard']['links'], true), $name . ': approval workflow disappeared from dashboard');
             expectMenu($index['lessons']['links'] === ['course-levels', 'courses'], $name . ': lesson tab destinations disappeared');
             expectMenu($index['teachers']['links'] === ['users', 'member-schedules', 'employee-leaves'], $name . ': employee schedule tabs missing');
             if (isset($index['branches'])) expectMenu($index['branches']['links'] === ['availabilities', 'scheduling-rules', 'organization-holidays'], $name . ': organization schedule tabs missing');
         }
         expectMenu($index['settings']['section'] === 'my-settings', $name . ': non-admin settings must remain personal');
-        expectMenu($index['gallery']['section'] === (in_array($name, ['ordinary', 'student', 'owner-human'], true) ? 'my-gallery' : 'gallery'), $name . ': gallery points at the wrong owner scope');
+        expectMenu($index['gallery']['section'] === (in_array($name, ['ordinary', 'student'], true) ? 'my-gallery' : 'gallery'), $name . ': gallery points at the wrong owner scope');
     }
     $GLOBALS['actor'] = ['user_id' => 1, 'type' => 'human', 'username' => '<script>fixture</script>'];
     \Core\database\DB::$state = [];
