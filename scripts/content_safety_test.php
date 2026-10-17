@@ -100,6 +100,8 @@ check($pages->content('home', 'fa')[0]['value'] === 'سلام', 'Failed bilingua
 function auth(): object { return new class { public function id(): int { return $GLOBALS['guideActor'] ?? 1; } }; }
 function locale(): string { return 'fa'; }
 $guide = ['page' => 'panel-classrooms', 'fa' => ['title' => 'راهنما', 'body' => 'متن فارسی'], 'en' => ['title' => 'Guide', 'body' => 'English text']];
+check(str_contains($pages->panelGuides()['terms']['body']['fa'], 'بدون هنرجو'), 'Website template guidance missing before any database override');
+check($pages->panelGuides()['lessons']['title']['en'] === 'The first step in managing your academy and branches', 'Default guidance must be bilingual');
 $pages->savePanelGuide(1, $guide);
 check($pages->panelGuides()['classrooms']['body']['en'] === 'English text', 'Saved panel guidance not published bilingually');
 $GLOBALS['guideActor'] = 2;

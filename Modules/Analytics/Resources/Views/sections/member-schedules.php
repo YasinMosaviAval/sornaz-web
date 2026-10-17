@@ -18,10 +18,7 @@
         </div>
     </div>
 
-    <?php component('panel-page-guide', [
-        'title' => locale() === 'en' ? 'Teacher availability and terms are separate steps' : 'برنامهٔ مدرس و ترم دو مرحلهٔ جدا هستند',
-        'paragraphs' => [locale() === 'en' ? 'Record the available days and times for each teacher here. Then create an open term for each available slot without a student or date, specifying the teacher, classroom, session count and time pattern. Set the first session date after agreeing with the student.' : 'روزها و ساعت‌های ممکن هر استاد را اینجا ثبت کنید. سپس در «مدیریت ترم‌ها» برای هر زمان قابل ارائه، ترم بازی بدون هنرجو و بدون تاریخ با مدرس، کلاس برگزاری، تعداد جلسات و الگوی ساعت بسازید. تاریخ جلسهٔ اول پس از توافق با هنرجو تعیین می‌شود.'],
-    ]); ?>
+    <?php component('panel-page-guide', ['page' => 'member-schedules']); ?>
 
     <!-- تاپ‌بار شعبه‌ها -->
     <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">

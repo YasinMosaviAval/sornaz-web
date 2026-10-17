@@ -423,6 +423,7 @@ final class MobilePanelCatalog
         $sections = $this->completePanelContracts($sections, $webDialogs);
         $this->scopedExceptionContracts($sections);
         if ($webDialogs) $sections['availability-exceptions']['hidden'] = true;
+        $this->financeAndGuidanceContracts($sections);
         $sections = $this->authorizedActions($sections);
         if ($webDialogs) {
             $presentation = require dirname(__DIR__) . '/Resources/mobile-panel-presentation.php';
@@ -440,6 +441,23 @@ final class MobilePanelCatalog
         }
         $sections['pages']['detail'] = $sections['page-content'];
         return $sections;
+    }
+
+    private function financeAndGuidanceContracts(array &$sections): void
+    {
+        $sections['page-guidance'] = $this->s('page-guidance', 'توضیحات صفحات', 'Page guidance', '/analytics/panel-guides', '', [], 'common', false);
+        $sections['page-guidance']['actions']['save'] = $this->a('/analytics/admin-panel-guide', 'ذخیره توضیحات', 'POST', [], false) + ['access' => 'founder'];
+        $sections['finance']['actions']['subscriptions'] = $this->a('/academy/admin/subscriptions', 'اشتراک‌ها', 'GET', [], false) + ['hidden' => true];
+        $sections['finance']['actions']['subscription-pay'] = $this->a('/academy/admin/subscriptions/{id}/zarinpal', 'خرید اشتراک', 'POST', [$this->f('months', 'مدت اشتراک', 'number', null, true)]) + ['hidden' => true];
+        $fields = [
+            $this->f('organizationUserId', 'سازمان', 'select', ['source' => 'organizations', 'id' => 'user_id'], true) + ['defaultFirstOption' => true],
+            $this->f('title', 'عنوان تخفیف', 'text', null, true) + ['initial' => 'name', 'maxLength' => 190],
+            $this->f('type', 'نوع', 'select', ['percentage' => 'درصدی', 'fixed' => 'مبلغ ثابت'], true) + ['default' => 'percentage'],
+            $this->f('value', 'مقدار', 'number', null, true) + ['min' => 0.01, 'max' => 999999999999],
+        ];
+        $sections['term-discounts'] = $this->s('term-discounts', 'تخفیف‌ها', 'Discounts', '/academy/admin/term-discounts', 'discounts', $fields);
+        foreach (['create', 'update'] as $operation) $sections['term-discounts']['actions'][$operation]['formContractVersion'] = 2;
+        foreach (['discounts', 'discount'] as $operation) $sections['terms']['actions'][$operation]['hidden'] = true;
     }
 
     private function completePanelContracts(array $sections, bool $webDialogs = false): array

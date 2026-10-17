@@ -18,7 +18,13 @@ class SitePageContentService
                 if (in_array($field, ['title', 'body'], true)) $out[substr($page, 6)][$field] = ['fa' => $item['fa'] ?? '', 'en' => $item['en'] ?? ''];
             }
         }
-        return $out;
+        $guideFile = dirname(__DIR__) . '/Resources/panel-page-guidance.php';
+        $defaults = is_file($guideFile) ? require $guideFile : [];
+        foreach ($out as $page => $guide) {
+            $texts = [...array_values($guide['title'] ?? []), ...array_values($guide['body'] ?? [])];
+            if (array_filter($texts, static fn ($text) => trim((string) $text) !== '')) $defaults[$page] = $guide;
+        }
+        return $defaults;
     }
 
     private function requireGuideEditor(int $actor): void

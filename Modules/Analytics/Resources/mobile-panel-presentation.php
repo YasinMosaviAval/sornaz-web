@@ -130,7 +130,29 @@ foreach (['organization-holidays' => 'سازمان', 'employee-leaves' => 'کا�
     foreach ($result[$key]['columns'] as &$column) if ($column['key'] === 'name') $column['label'] = $label;
     unset($column);
 }
+$result['term-discounts'] = [
+    'version' => 2, 'organizationFilter' => true, 'organizationMode' => 'branch',
+    'columns' => [
+        ['key' => 'name', 'label' => 'عنوان تخفیف'], ['key' => 'typeLabel', 'label' => 'نوع'],
+        ['key' => 'valueLabel', 'label' => 'مقدار'], ['key' => 'organizationName', 'label' => 'سازمان'],
+    ],
+    'rowActions' => ['details', 'update', 'delete'],
+    'detailTitle' => 'جزئیات تخفیف',
+    'detailFields' => [
+        ['key' => 'name', 'label' => 'عنوان'], ['key' => 'typeLabel', 'label' => 'نوع'],
+        ['key' => 'value', 'label' => 'مقدار'], ['key' => 'organizationName', 'label' => 'سازمان'],
+        ['key' => 'startDate', 'label' => 'تاریخ شروع'], ['key' => 'endDate', 'label' => 'تاریخ پایان'],
+    ],
+    'filters' => [['key' => 'termDiscountTypeFilter', 'webId' => 'termDiscountTypeFilter', 'label' => 'همه انواع تخفیف', 'type' => 'select', 'rowPath' => 'type', 'options' => ['percentage' => 'درصدی', 'fixed' => 'مبلغ ثابت']]],
+];
 $result['my-points']['views']['rules'] = $result['points'];
+$guideFile = __DIR__ . '/panel-page-guidance.php';
+$guidance = is_file($guideFile) ? require $guideFile : [];
+foreach ($result as $key => &$contract) {
+    $guideKey = $key === 'members' ? 'teachers' : $key;
+    if (isset($guidance[$guideKey])) $contract['guidance'] = $guidance[$guideKey];
+}
+unset($contract);
 $result['my-points']['views']['rules']['rowActions'] = [];
 $result['my-points']['views']['rules']['showActions'] = false;
 return $result;

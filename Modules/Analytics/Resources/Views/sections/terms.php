@@ -37,10 +37,7 @@
         </div>
     </div>
 
-    <?php component('panel-page-guide', [
-        'title' => locale() === 'en' ? 'Prepare terms before accepting enrollment requests' : 'ترم‌ها را پیش از درخواست ثبت‌نام آماده کنید',
-        'paragraphs' => [locale() === 'en' ? 'Create an open term for each available teaching slot without a student or date. Specify the teacher, physical or online classroom, number of sessions, recurrence and time pattern. Once agreed with the student, select the first session date during activation.' : 'برای ساعت‌های قابل ارائهٔ هر مدرس، ترم «باز» را بدون هنرجو و بدون تاریخ بسازید. مدرس، کلاس حضوری یا آنلاین، تعداد جلسات، دورهٔ تکرار و یک الگوی ساعت را مشخص کنید. پس از توافق با هنرجو، تاریخ جلسهٔ اول را هنگام فعال‌سازی انتخاب کنید.'],
-    ]); ?>
+    <?php component('panel-page-guide', ['page' => 'terms']); ?>
 
     <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
         <div class="flex gap-2 min-w-max" id="termsBranchTabs">

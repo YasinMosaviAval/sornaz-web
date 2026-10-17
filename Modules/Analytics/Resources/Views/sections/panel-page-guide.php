@@ -2,6 +2,13 @@
 /** Shared collapsible page guidance. Both inputs contain plain text only. */
 $guideTitle = (string) ($title ?? '');
 $guideParagraphs = (array) ($paragraphs ?? []);
+if (isset($page)) {
+    $guideFile = dirname(__DIR__, 2) . '/panel-page-guidance.php';
+    $defaults = is_file($guideFile) ? require $guideFile : [];
+    $guide = $defaults[$page] ?? [];
+    $guideTitle = $guide['title'][locale()] ?? $guide['title']['fa'] ?? '';
+    $guideParagraphs = preg_split('/\n\s*\n/', $guide['body'][locale()] ?? $guide['body']['fa'] ?? '') ?: [];
+}
 ?>
 <?php if (!empty($asTemplate)): ?><template id="panelPageGuideTemplate"><?php endif; ?>
 <details class="panel-page-guide group mb-6 rounded-2xl border border-indigo-200 bg-indigo-50 text-sm leading-7 text-indigo-900 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-100">

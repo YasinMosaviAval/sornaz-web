@@ -18,8 +18,5 @@ $panelTable0CellAttributes = ' colspan="6" class="p-12 text-center text-gray-400
 $panelTable0Row['cells'][] = ['html' => 'در حال دریافت برگه‌ها...', 'attributes' => $panelTable0CellAttributes, 'tag' => 'td'];
 $panelTable0['rows'][] = $panelTable0Row;
 component('panel-table-template', $panelTable0); unset($panelTable0); ?></div></div>
-    <?php component('panel-page-guide', [
-        'title' => locale() === 'en' ? 'How to edit' : 'روش ویرایش:',
-        'paragraphs' => [locale() === 'en' ? 'Select Edit content to open the actual page in a new tab. Click any text, image or icon and save its new value. Changes are saved directly to the database and shown to visitors.' : 'روی «ویرایش محتوا» بزنید؛ صفحه واقعی در تب جدید باز می‌شود. سپس روی هر متن، تصویر یا آیکن کلیک کنید و مقدار جدید را ثبت کنید. تغییرات مستقیماً در دیتابیس ذخیره و برای بازدیدکنندگان اعمال می‌شوند.'],
-    ]); ?>
+    <?php component('panel-page-guide', ['page' => 'pages']); ?>
 </div>

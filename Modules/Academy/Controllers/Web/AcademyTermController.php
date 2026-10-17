@@ -38,7 +38,18 @@ class AcademyTermController
 
     public function invoices()
     {
-        return $this->run(fn () => ['success' => true, 'data' => $this->service->invoiceBootstrap((int) auth()->id())]);
+        return $this->run(function () {
+            $actor = (int) auth()->id();
+            $data = $this->service->invoiceBootstrap($actor);
+            if (($_SERVER['HTTP_X_SORNAZ_PANEL_FEATURES'] ?? '') === '3') {
+                try {
+                    $data['subscriptions'] = (new \Modules\Academy\Services\AcademySubscriptionService())->index($actor);
+                } catch (Throwable $error) {
+                    $data['subscriptionUnavailable'] = true;
+                }
+            }
+            return ['success' => true, 'data' => $data];
+        });
     }
 
     public function realtimeVersion()

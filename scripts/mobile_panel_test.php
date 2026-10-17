@@ -78,6 +78,9 @@ namespace {
  check(field($panel->index(),'status')===401,'Invalid bearer accepted');
  $_SERVER['HTTP_AUTHORIZATION']='Bearer '.$tokens->issue($users->rows[7]);$_SERVER['HTTP_ACCEPT_LANGUAGE']='en';$_SERVER['REQUEST_METHOD']='GET';$_SERVER['REQUEST_URI']='/api/sornaz/v1/panel/dashboard/list';$_SESSION=$originalSession=['_auth_user'=>1,'_auth_password_fingerprint'=>substr(hash('sha256','admin-hash'),0,24),'sentinel'=>'preserved'];
  $data=field($panel->index(),'data');$keys=array_column($data['sections'],'key');
+ $ordinary = array_column($data['sections'], null, 'key');
+ check(!isset($ordinary['page-guidance']['actions']['save']) && $ordinary['account']['pageGuidance']['canEdit'] === false, 'Ordinary user received guidance editor permission');
+ $_SERVER['REQUEST_METHOD']='POST';check(field($panel->execute('page-guidance','save'),'status')===403,'Ordinary user invoked guidance mutation');$_SERVER['REQUEST_METHOD']='GET';
  check(in_array('account',$keys,true)&&in_array('my-classrooms',$keys,true)&&in_array('chat',$keys,true),'Common destinations missing');
  check(in_array('messages',$keys,true)&&in_array('notifications',$keys,true),'Ordinary user inbox missing');
  foreach (field($panel->index(),'data')['sections'] as $section) {
@@ -121,7 +124,10 @@ namespace {
  unset($_SERVER['HTTP_X_SORNAZ_PANEL_FORMS']);
  $legacy=array_column(field($panel->index(),'data')['sections'],null,'key');
  check(!isset($legacy['members']['actions']['create']['formContractVersion']),'New dialog schema leaked to old clients');
- foreach($sections as$section)foreach($section['actions']as$action){check(!str_contains($action['path'],'admin-panel')&&!str_contains($action['path'],'_test'),'HTML or development action exposed');check(\Core\router\Router::dispatch($action['method'],preg_replace('/\{\w+\}/','1',$action['path']))!==null,'Unregistered action');}
+ foreach($sections as$section)foreach($section['actions']as$action){check((!str_contains($action['path'],'admin-panel')||$action['path']==='/analytics/admin-panel-guide')&&!str_contains($action['path'],'_test'),'HTML or development action exposed');check(\Core\router\Router::dispatch($action['method'],preg_replace('/\{\w+\}/','1',$action['path']))!==null,'Unregistered action');}
+ check(isset($modern['page-guidance']['actions']['save']) && $modern['finance']['pageGuidance']['canEdit'] === true, 'Founder guidance editor missing');
+ check($modern['page-guidance']['actions']['save']['access'] === 'founder', 'Guidance mutation must remain founder-only');
+ check(isset($modern['finance']['actions']['subscriptions'], $modern['finance']['actions']['subscription-pay'], $modern['term-discounts']['actions']['update']), 'Finance and discount operations missing');
  $_SERVER['REQUEST_METHOD']='POST';$_GET=[];$input=['name'=>'Piano','organizationUserId'=>12,'lesson_id'=>3,'teacher_capacity'=>1,'student_capacity'=>5,'user_id'=>999,'sessions'=>[['date'=>'2026-09-12']]];
  $_POST=['payload_b64'=>base64_encode(json_encode($input))];$_REQUEST=$_POST;$previous=$_POST;
  check(field($panel->execute('courses','create'),'status')===200,'Native create failed');

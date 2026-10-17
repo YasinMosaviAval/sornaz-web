@@ -29,10 +29,7 @@
         </div>
     </div>
 
-    <?php component('panel-page-guide', [
-        'title' => locale() === 'en' ? 'Before accepting students for a new teacher' : 'پیش از پذیرش هنرجو برای مدرس جدید',
-        'paragraphs' => [locale() === 'en' ? 'After registering a teacher, enter all available teaching days and times in Member schedules. Then create an open term for each available slot without a student or date, specifying the teacher, classroom, session count and time pattern. Set the first session date when activating enrollment.' : 'پس از ثبت استاد، همهٔ روزها و ساعت‌های قابل تدریس او را در «زمان‌بندی اعضا» ثبت کنید. سپس در «مدیریت ترم‌ها» برای هر ساعت قابل ارائه، ترم بازی بدون هنرجو و تاریخ با مدرس، کلاس برگزاری، تعداد جلسات و الگوی ساعت بسازید. تاریخ جلسهٔ اول هنگام فعال‌سازی ثبت‌نام تعیین می‌شود.'],
-    ]); ?>
+    <?php component('panel-page-guide', ['page' => 'teachers']); ?>
 
     <div class="bg-white rounded-3xl p-3 mb-6 shadow-sm overflow-x-auto">
         <div class="flex gap-2 min-w-max" id="staffBranchTabs">

@@ -97,6 +97,7 @@ final class MobilePanelNavigation
             $webKey === 'lessons' && $key === 'lessons' => ['course-levels', 'courses'],
             $webKey === 'teachers' => ['users', 'member-schedules', 'employee-leaves'],
             $webKey === 'branches' => ['availabilities', 'scheduling-rules', 'organization-holidays'],
+            $webKey === 'terms' => ['term-discounts'],
             default => null,
         };
         return $links === null ? null : array_values(array_filter($links, fn ($link) => isset($sections[$link]) && empty($sections[$link]['hidden'])));
