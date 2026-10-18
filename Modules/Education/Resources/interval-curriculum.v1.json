@@ -1,0 +1,2933 @@
+{
+  "version": 1,
+  "branches": {
+    "western": {
+      "1": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          14,
+          24
+        ]
+      },
+      "2": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          14,
+          24
+        ]
+      },
+      "3": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          14,
+          24
+        ]
+      },
+      "4": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          14,
+          24
+        ]
+      },
+      "5": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          6,
+          8
+        ]
+      },
+      "6": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          6,
+          8
+        ]
+      },
+      "7": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          6,
+          8
+        ]
+      },
+      "8": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          6,
+          8
+        ]
+      },
+      "9": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          6,
+          8,
+          14,
+          24
+        ]
+      },
+      "10": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          6,
+          8,
+          14,
+          24
+        ]
+      },
+      "11": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          6,
+          8,
+          14,
+          24
+        ]
+      },
+      "12": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          6,
+          8,
+          14,
+          24
+        ]
+      },
+      "13": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          4,
+          10
+        ]
+      },
+      "14": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          4,
+          10
+        ]
+      },
+      "15": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          4,
+          10
+        ]
+      },
+      "16": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          4,
+          10
+        ]
+      },
+      "17": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          4,
+          6,
+          8,
+          10,
+          14,
+          24
+        ]
+      },
+      "18": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          4,
+          6,
+          8,
+          10,
+          14,
+          24
+        ]
+      },
+      "19": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          4,
+          6,
+          8,
+          10,
+          14,
+          24
+        ]
+      },
+      "20": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          4,
+          6,
+          8,
+          10,
+          14,
+          24
+        ]
+      },
+      "21": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          18,
+          22
+        ]
+      },
+      "22": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          18,
+          22
+        ]
+      },
+      "23": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          18,
+          22
+        ]
+      },
+      "24": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          18,
+          22
+        ]
+      },
+      "25": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          4,
+          6,
+          8,
+          10,
+          14,
+          18,
+          22,
+          24
+        ]
+      },
+      "26": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          4,
+          6,
+          8,
+          10,
+          14,
+          18,
+          22,
+          24
+        ]
+      },
+      "27": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          4,
+          6,
+          8,
+          10,
+          14,
+          18,
+          22,
+          24
+        ]
+      },
+      "28": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          4,
+          6,
+          8,
+          10,
+          14,
+          18,
+          22,
+          24
+        ]
+      },
+      "29": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          2,
+          20
+        ]
+      },
+      "30": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          2,
+          20
+        ]
+      },
+      "31": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          2,
+          20
+        ]
+      },
+      "32": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          2,
+          20
+        ]
+      },
+      "33": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          2,
+          4,
+          6,
+          8,
+          10,
+          14,
+          18,
+          20,
+          22,
+          24
+        ]
+      },
+      "34": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          2,
+          4,
+          6,
+          8,
+          10,
+          14,
+          18,
+          20,
+          22,
+          24
+        ]
+      },
+      "35": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          2,
+          4,
+          6,
+          8,
+          10,
+          14,
+          18,
+          20,
+          22,
+          24
+        ]
+      },
+      "36": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          2,
+          4,
+          6,
+          8,
+          10,
+          14,
+          18,
+          20,
+          22,
+          24
+        ]
+      },
+      "37": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          12,
+          16
+        ]
+      },
+      "38": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          12,
+          16
+        ]
+      },
+      "39": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          12,
+          16
+        ]
+      },
+      "40": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          12,
+          16
+        ]
+      },
+      "41": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          2,
+          4,
+          6,
+          8,
+          10,
+          12,
+          14,
+          16,
+          18,
+          20,
+          22,
+          24
+        ]
+      },
+      "42": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          2,
+          4,
+          6,
+          8,
+          10,
+          12,
+          14,
+          16,
+          18,
+          20,
+          22,
+          24
+        ]
+      },
+      "43": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          2,
+          4,
+          6,
+          8,
+          10,
+          12,
+          14,
+          16,
+          18,
+          20,
+          22,
+          24
+        ]
+      },
+      "44": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          2,
+          4,
+          6,
+          8,
+          10,
+          12,
+          14,
+          16,
+          18,
+          20,
+          22,
+          24
+        ]
+      }
+    },
+    "iranian": {
+      "1": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2
+        ]
+      },
+      "2": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2
+        ]
+      },
+      "3": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2
+        ]
+      },
+      "4": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2
+        ]
+      },
+      "5": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          2,
+          3
+        ]
+      },
+      "6": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          2,
+          3
+        ]
+      },
+      "7": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          2,
+          3
+        ]
+      },
+      "8": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          2,
+          3
+        ]
+      },
+      "9": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3
+        ]
+      },
+      "10": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3
+        ]
+      },
+      "11": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3
+        ]
+      },
+      "12": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3
+        ]
+      },
+      "13": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          3,
+          4
+        ]
+      },
+      "14": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          3,
+          4
+        ]
+      },
+      "15": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          3,
+          4
+        ]
+      },
+      "16": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          3,
+          4
+        ]
+      },
+      "17": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "18": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "19": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "20": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "21": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          4,
+          5
+        ]
+      },
+      "22": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          4,
+          5
+        ]
+      },
+      "23": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          4,
+          5
+        ]
+      },
+      "24": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          4,
+          5
+        ]
+      },
+      "25": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "26": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "27": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "28": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "29": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          5,
+          6
+        ]
+      },
+      "30": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          5,
+          6
+        ]
+      },
+      "31": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          5,
+          6
+        ]
+      },
+      "32": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          5,
+          6
+        ]
+      },
+      "33": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "34": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "35": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "36": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "37": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          6,
+          7
+        ]
+      },
+      "38": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          6,
+          7
+        ]
+      },
+      "39": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          6,
+          7
+        ]
+      },
+      "40": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          6,
+          7
+        ]
+      },
+      "41": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      "42": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      "43": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      "44": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      "45": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          7,
+          8
+        ]
+      },
+      "46": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          7,
+          8
+        ]
+      },
+      "47": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          7,
+          8
+        ]
+      },
+      "48": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          7,
+          8
+        ]
+      },
+      "49": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "50": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "51": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "52": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "53": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          8,
+          9
+        ]
+      },
+      "54": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          8,
+          9
+        ]
+      },
+      "55": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          8,
+          9
+        ]
+      },
+      "56": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          8,
+          9
+        ]
+      },
+      "57": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ]
+      },
+      "58": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ]
+      },
+      "59": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ]
+      },
+      "60": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ]
+      },
+      "61": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          9,
+          10
+        ]
+      },
+      "62": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          9,
+          10
+        ]
+      },
+      "63": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          9,
+          10
+        ]
+      },
+      "64": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          9,
+          10
+        ]
+      },
+      "65": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ]
+      },
+      "66": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ]
+      },
+      "67": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ]
+      },
+      "68": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ]
+      },
+      "69": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          10,
+          11
+        ]
+      },
+      "70": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          10,
+          11
+        ]
+      },
+      "71": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          10,
+          11
+        ]
+      },
+      "72": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          10,
+          11
+        ]
+      },
+      "73": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ]
+      },
+      "74": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ]
+      },
+      "75": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ]
+      },
+      "76": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ]
+      },
+      "77": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          11,
+          12
+        ]
+      },
+      "78": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          11,
+          12
+        ]
+      },
+      "79": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          11,
+          12
+        ]
+      },
+      "80": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          11,
+          12
+        ]
+      },
+      "81": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ]
+      },
+      "82": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ]
+      },
+      "83": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ]
+      },
+      "84": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ]
+      },
+      "85": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          12,
+          13
+        ]
+      },
+      "86": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          12,
+          13
+        ]
+      },
+      "87": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          12,
+          13
+        ]
+      },
+      "88": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          12,
+          13
+        ]
+      },
+      "89": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ]
+      },
+      "90": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ]
+      },
+      "91": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ]
+      },
+      "92": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ]
+      },
+      "93": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          13,
+          14
+        ]
+      },
+      "94": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          13,
+          14
+        ]
+      },
+      "95": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          13,
+          14
+        ]
+      },
+      "96": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          13,
+          14
+        ]
+      },
+      "97": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ]
+      },
+      "98": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ]
+      },
+      "99": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ]
+      },
+      "100": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ]
+      },
+      "101": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          14,
+          15
+        ]
+      },
+      "102": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          14,
+          15
+        ]
+      },
+      "103": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          14,
+          15
+        ]
+      },
+      "104": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          14,
+          15
+        ]
+      },
+      "105": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ]
+      },
+      "106": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ]
+      },
+      "107": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ]
+      },
+      "108": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ]
+      },
+      "109": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          15,
+          16
+        ]
+      },
+      "110": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          15,
+          16
+        ]
+      },
+      "111": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          15,
+          16
+        ]
+      },
+      "112": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          15,
+          16
+        ]
+      },
+      "113": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ]
+      },
+      "114": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ]
+      },
+      "115": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ]
+      },
+      "116": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ]
+      },
+      "117": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          16,
+          17
+        ]
+      },
+      "118": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          16,
+          17
+        ]
+      },
+      "119": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          16,
+          17
+        ]
+      },
+      "120": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          16,
+          17
+        ]
+      },
+      "121": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17
+        ]
+      },
+      "122": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17
+        ]
+      },
+      "123": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17
+        ]
+      },
+      "124": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17
+        ]
+      },
+      "125": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          17,
+          18
+        ]
+      },
+      "126": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          17,
+          18
+        ]
+      },
+      "127": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          17,
+          18
+        ]
+      },
+      "128": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          17,
+          18
+        ]
+      },
+      "129": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18
+        ]
+      },
+      "130": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18
+        ]
+      },
+      "131": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18
+        ]
+      },
+      "132": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18
+        ]
+      },
+      "133": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          18,
+          19
+        ]
+      },
+      "134": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          18,
+          19
+        ]
+      },
+      "135": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          18,
+          19
+        ]
+      },
+      "136": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          18,
+          19
+        ]
+      },
+      "137": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ]
+      },
+      "138": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ]
+      },
+      "139": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ]
+      },
+      "140": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ]
+      },
+      "141": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          19,
+          20
+        ]
+      },
+      "142": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          19,
+          20
+        ]
+      },
+      "143": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          19,
+          20
+        ]
+      },
+      "144": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          19,
+          20
+        ]
+      },
+      "145": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20
+        ]
+      },
+      "146": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20
+        ]
+      },
+      "147": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20
+        ]
+      },
+      "148": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20
+        ]
+      },
+      "149": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          20,
+          21
+        ]
+      },
+      "150": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          20,
+          21
+        ]
+      },
+      "151": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          20,
+          21
+        ]
+      },
+      "152": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          20,
+          21
+        ]
+      },
+      "153": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21
+        ]
+      },
+      "154": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21
+        ]
+      },
+      "155": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21
+        ]
+      },
+      "156": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21
+        ]
+      },
+      "157": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          21,
+          22
+        ]
+      },
+      "158": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          21,
+          22
+        ]
+      },
+      "159": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          21,
+          22
+        ]
+      },
+      "160": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          21,
+          22
+        ]
+      },
+      "161": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22
+        ]
+      },
+      "162": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22
+        ]
+      },
+      "163": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22
+        ]
+      },
+      "164": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22
+        ]
+      },
+      "165": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          22,
+          23
+        ]
+      },
+      "166": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          22,
+          23
+        ]
+      },
+      "167": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          22,
+          23
+        ]
+      },
+      "168": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          22,
+          23
+        ]
+      },
+      "169": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23
+        ]
+      },
+      "170": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23
+        ]
+      },
+      "171": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23
+        ]
+      },
+      "172": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23
+        ]
+      },
+      "173": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          23,
+          24
+        ]
+      },
+      "174": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          23,
+          24
+        ]
+      },
+      "175": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          23,
+          24
+        ]
+      },
+      "176": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          23,
+          24
+        ]
+      },
+      "177": {
+        "direction": "ascending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24
+        ]
+      },
+      "178": {
+        "direction": "descending",
+        "variableRoot": false,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24
+        ]
+      },
+      "179": {
+        "direction": "ascending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24
+        ]
+      },
+      "180": {
+        "direction": "descending",
+        "variableRoot": true,
+        "quarterSteps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24
+        ]
+      }
+    }
+  }
+}
