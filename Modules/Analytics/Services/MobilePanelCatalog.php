@@ -41,6 +41,7 @@ final class MobilePanelCatalog
         }
         $sections['account'] = $s('account', 'حساب کاربری', 'Account', '/analytics/admin-account', '', [], 'common', false);
         $sections['account']['actions'] += [
+            'invite' => $a('/system/my-invite', 'لینک دعوت من', 'GET', [], false) + ['hidden' => true],
             'profile' => $a('/analytics/admin-account/profile', 'ویرایش مشخصات', 'POST', [$f('name', 'نام', 'text', null, true), $f('email', 'ایمیل', 'email'), $f('phone', 'شماره تماس', 'phone'), $f('founded', 'تاریخ تأسیس', 'date'), $f('address', 'نشانی', 'multiline')], false),
             'bio' => $a('/analytics/admin-account/bio', 'معرفی', 'POST', [$f('shortIntro', 'معرفی کوتاه', 'multiline'), $f('biography', 'درباره من', 'multiline')], false),
             'privacy' => $a('/analytics/admin-account/privacy', 'حریم خصوصی', 'POST', [$f('showPublicProfile', 'نمایش عمومی پروفایل', 'bool')], false),
@@ -472,7 +473,74 @@ final class MobilePanelCatalog
         $this->waitingApprovalContracts($sections);
         $this->waitingFinalizationContracts($sections);
         if ($webDialogs) $this->webDialogContracts($sections);
+        $this->recentPanelContracts($sections, $webDialogs);
         return $sections;
+    }
+
+    private function recentPanelContracts(array &$sections, bool $webDialogs): void
+    {
+        $english = ['username' => 'Username', 'register_method' => 'Registration method', 'email' => 'Email', 'password' => 'Password', 'password2' => 'Confirm password', 'terms' => 'I accept the registration terms', 'otp' => 'Verification code', 'registration' => 'Employee account registration', 'repeatType' => 'Repeat period', 'weekday' => 'Weekday', 'timezoneId' => 'Time zone', 'rangeStart' => 'Range start', 'rangeEnd' => 'Range end', 'durationMinutes' => 'Session duration (minutes)', 'requestKey' => 'Request identifier', 'classroomId' => 'Classroom'];
+        $f = fn (...$args) => $this->f(...$args) + ['en' => $english[$args[0]] ?? $args[1]];
+        $this->staffRegistrationContracts($sections, $webDialogs, $f);
+        $this->batchTermContracts($sections, $f);
+        $this->termAssignmentContracts($sections, $f);
+    }
+
+    private function staffRegistrationContracts(array &$sections, bool $webDialogs, callable $f): void
+    {
+        $sections['members']['actions']['registration-otp'] = $this->a('/academy/admin/members/registration-otp', 'ارسال کد تأیید', 'POST', [], false) + ['hidden' => true];
+        $registration = [
+            $f('username', 'نام کاربری', 'text', null, true),
+            $f('register_method', 'روش ثبت‌نام', 'select', ['phone' => 'موبایل', 'email' => 'ایمیل'], true) + ['default' => 'phone'],
+            $f('email', 'ایمیل', 'email') + ['visibleWhen' => ['_form.register_method' => 'email'], 'requiredWhen' => ['_form.register_method' => 'email']],
+            $f('password', 'رمز عبور', 'password', null, true), $f('password2', 'تکرار رمز عبور', 'password', null, true),
+            $f('terms', 'قوانین ثبت‌نام را می‌پذیرم', 'bool', null, true),
+            $f('otp', 'کد تأیید', 'text'),
+        ];
+        if ($webDialogs) {
+            $sections['members']['actions']['create']['fields'][] = $f('registration', 'ثبت‌نام حساب کارمند', 'object', $registration) + ['visibleWhen' => ['_form.type' => ['in' => ['manager', 'receptionist']]]];
+            $sections['members']['actions']['create']['formContractVersion'] = 2;
+        }
+    }
+
+    private function batchTermContracts(array &$sections, callable $f): void
+    {
+        $canonical = $sections;
+        $this->termDialogContracts($canonical);
+        $source = array_column($canonical['terms']['actions']['create']['fields'], null, 'key');
+        $fields = [];
+        foreach (['name', 'organizationUserId', 'courseId', 'teachers', 'classroomId', 'currencyId', 'cost', 'sessionCount', 'summary', 'description'] as $key) {
+            $field = $source[$key];
+            if ($key === 'classroomId') $field['required'] = false;
+            if ($key === 'teachers') { unset($field['maxItemsFrom']); $field['maxItems'] = 1; }
+            $fields[] = $field;
+        }
+        $fields = [...$fields, ...$this->batchScheduleFields($f)];
+        $sections['terms']['actions']['batch'] = $this->a('/academy/admin/terms/batch', 'افزودن گروهی ترم‌های استاد', 'POST', $fields, false) + ['en' => 'Create teacher terms in batch', 'formContractVersion' => 2];
+    }
+
+    private function batchScheduleFields(callable $f): array
+    {
+        return [
+            $f('repeatType', 'دوره تکرار', 'select', ['week' => 'هفتگی', '2-week' => 'دو هفته یک‌بار', '3-week' => 'سه هفته یک‌بار', '4-week' => 'چهار هفته یک‌بار'], true) + ['default' => 'week'],
+            $f('weekday', 'روز هفته', 'select', ['6' => 'شنبه', '0' => 'یکشنبه', '1' => 'دوشنبه', '2' => 'سه‌شنبه', '3' => 'چهارشنبه', '4' => 'پنجشنبه', '5' => 'جمعه'], true),
+            $f('timezoneId', 'منطقه زمانی', 'select', ['source' => 'timezones'], true) + ['defaultFirstOption' => true],
+            $f('rangeStart', 'شروع بازه', 'time', null, true) + ['default' => '10:00'],
+            $f('rangeEnd', 'پایان بازه', 'time', null, true) + ['default' => '18:00'],
+            $f('durationMinutes', 'مدت جلسه (دقیقه)', 'number', null, true) + ['default' => 30, 'min' => 5, 'max' => 1440, 'step' => 5],
+            $f('requestKey', 'شناسه درخواست', 'text', null, true) + ['hiddenWhen' => ['operation' => 'batch'], 'submitWhenHidden' => true],
+        ];
+    }
+
+    private function termAssignmentContracts(array &$sections, callable $f): void
+    {
+        $canonical = $sections;
+        $this->studentDialogContracts($canonical);
+        $studentFields = array_values(array_filter($canonical['students']['actions']['create']['fields'], fn ($field) => !in_array($field['key'], ['organizationUserId', 'termId', 'availabilities', 'availabilitySummary', 'availabilityDescription'], true)));
+        $sections['terms']['actions']['assign-student'] = $this->a('/academy/admin/terms/{id}/student', 'تعیین هنرجو', 'POST', $studentFields) + ['en' => 'Assign student', 'formContractVersion' => 2];
+        $sections['terms']['actions']['classroom'] = $this->a('/academy/admin/terms/{id}/classroom', 'تعیین کلاس برگزاری', 'POST', [
+            $f('classroomId', 'کلاس برگزاری', 'select', ['source' => 'classrooms', 'termRooms' => true], true),
+        ]) + ['en' => 'Assign classroom', 'formContractVersion' => 2];
     }
 
     /** Fields and dependencies of the active web forms (not the legacy demo templates). */
@@ -665,6 +733,14 @@ final class MobilePanelCatalog
             }
         }
         unset($field);
+        $teacherField = array_values(array_filter($fields, fn ($field) => $field['key'] === 'teachers'))[0];
+        $ordered = [];
+        foreach ($fields as $field) {
+            if ($field['key'] === 'teachers') continue;
+            $ordered[] = $field;
+            if ($field['key'] === 'courseId') $ordered[] = $teacherField;
+        }
+        $fields = $ordered;
         $this->setDialogFields($sections, 'terms', $fields);
     }
 

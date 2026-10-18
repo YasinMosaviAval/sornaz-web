@@ -1,5 +1,29 @@
 (function () {
   'use strict';
+  function initAccountSections() {
+    document.querySelectorAll('#account h3').forEach(heading => {
+      const card = heading.closest('.bg-white');
+      if (!card || card.dataset.accountCollapsible) return;
+      card.dataset.accountCollapsible = '1';
+      const details = document.createElement('details');
+      const summary = document.createElement('summary');
+      summary.className = 'flex cursor-pointer items-center justify-between gap-3 py-2 font-bold';
+      const icon = document.createElement('i');
+      icon.className = 'fas fa-plus text-indigo-500 text-sm';
+      heading.classList.remove('mb-5', 'mb-2');
+      summary.append(heading, icon);
+      const body = document.createElement('div');
+      body.className = 'pt-5';
+      while (card.firstChild) body.append(card.firstChild);
+      details.append(summary, body);
+      details.addEventListener('toggle', () => {
+        icon.classList.toggle('fa-plus', !details.open);
+        icon.classList.toggle('fa-minus', details.open);
+      });
+      card.append(details);
+    });
+  }
+  initAccountSections();
   // ==================== حساب کاربری آموزشگاه ====================
 
   let academyProfile = { privacy: {} };

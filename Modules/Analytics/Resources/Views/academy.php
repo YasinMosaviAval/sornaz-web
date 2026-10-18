@@ -66,15 +66,10 @@
                 </section>
 
                 <!-- دوره‌ها / کلاس‌ها -->
-                <section class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-bold">دوره‌ها و کلاس‌ها</h2>
-                    </div>
-                    <div id="apCourses" class="space-y-3">
-                        <p class="text-sm text-gray-400 text-center py-6">دوره‌ای ثبت نشده است</p>
-                    </div>
+                <section class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                    <button type="button" onclick="toggleAccordion(this)" aria-expanded="false" class="w-full flex items-center justify-between px-6 py-4 font-bold hover:bg-gray-50" style="text-align:start"><span><?= locale()==='en'?'Lessons and courses':'درس‌ها و دوره‌ها' ?></span><i class="fas fa-plus text-indigo-500 accordion-icon text-sm"></i></button>
+                    <div class="accordion-body px-6"><div id="apCourses" class="space-y-3 pb-5"></div></div>
                 </section>
-
                 <!-- اساتید -->
                 <section class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8">
                     <h2 class="text-lg font-bold mb-4">اساتید</h2>

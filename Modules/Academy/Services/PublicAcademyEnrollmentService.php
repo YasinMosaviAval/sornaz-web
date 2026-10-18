@@ -43,8 +43,8 @@ class PublicAcademyEnrollmentService
             if ($levels) $terms[] = ['id' => $termId, 'title' => trim(($courseTitle ?: ($locale === 'en' ? 'Course ' . $courseId : 'دوره ' . $courseId)) . ($termTitle ? ' — ' . $termTitle : '')), 'levels' => $levels];
         }
         $user = DB::table('users')->where('user_id', $userId)->whereNull('deleted_at')->first();
-        $address = DB::table('user_addresses')->where('user_id', $userId)->where('is_main', 1)->whereNull('deleted_at')->first();
-        return ['academy' => ['id' => $academyId, 'title' => $this->tr('academies', $academyId, 'title', $locale) ?: ($locale === 'en' ? 'Academy ' . $academyId : 'آموزشگاه ' . $academyId)], 'terms' => $terms, 'needsPhone' => (string) ($user['register_method'] ?? '') !== 'phone', 'profile' => ['name' => $this->tr('users', $userId, 'full_name', $locale) ?: (string) ($user['username'] ?? ''), 'national_id' => (string) ($user['national_code'] ?? ''), 'father_name' => $this->tr('users', $userId, 'father_name', $locale), 'birth_date' => (string) ($user['birthday'] ?? ''), 'phone' => (string) ($user['phone'] ?? ''), 'address' => $address ? $this->tr('user_addresses', (int) $address['address_id'], 'address', $locale) : '']];
+        $address = DB::table('user_addresses')->where('user_id', $userId)->whereNull('deleted_at')->orderBy('is_main', 'DESC')->orderBy('address_id')->first();
+        return ['addressDetails' => $address ?: [], 'provinces' => DB::table('world_iran_provinces')->get(), 'counties' => DB::table('world_iran_counties')->get(), 'academy' => ['id' => $academyId, 'title' => $this->tr('academies', $academyId, 'title', $locale) ?: ($locale === 'en' ? 'Academy ' . $academyId : 'آموزشگاه ' . $academyId)], 'terms' => $terms, 'needsPhone' => empty($user['phone']), 'profile' => ['name' => $this->tr('users', $userId, 'full_name', $locale), 'national_id' => (string) ($user['national_code'] ?? ''), 'father_name' => $this->tr('users', $userId, 'father_name', $locale), 'birth_date' => (string) ($user['birthday'] ?? ''), 'phone' => (string) ($user['phone'] ?? ''), 'address' => $address ? $this->tr('user_addresses', (int) $address['address_id'], 'address', $locale) : '']];
     }
 
     private function eligibleTermIds(array $termIds): array
@@ -68,6 +68,11 @@ class PublicAcademyEnrollmentService
     {
         return \Modules\System\Services\PaymentMutex::run(db(), 'waiting-join:' . $termId . ':' . $userId, fn () => transaction(function () use ($academyId, $userId, $termId, $levelId, $phone, $note, $locale, $profile) {
             $data = $this->formData($academyId, $userId, $locale);
+            foreach ($data['profile'] as $field => $value) {
+                if ($field !== 'address' && trim((string) $value) !== '') $profile[$field] = $value;
+            }
+            if (trim((string) ($profile['address'] ?? '')) === '') $profile['address'] = $data['profile']['address'];
+            $phone = (string) ($profile['phone'] ?? $phone);
             $term = null;
             foreach ($data['terms'] as $item) {
                 if ($item['id'] === $termId) {
@@ -116,11 +121,9 @@ class PublicAcademyEnrollmentService
                 throw new RuntimeException($locale === 'en' ? 'You are already on the waiting list for this term.' : 'شما قبلاً در فهرست انتظار این ترم ثبت شده‌اید.');
             }
             $lesson = DB::table('user_lessons')->where('user_id', $userId)->where('lesson_id', (int) $row['lesson_id'])->whereNull('deleted_at')->first();
-            $lessonValues = ['level_id' => $levelId, 'status' => 'active', 'updated_at' => $now, 'updated_by' => $userId];
-            if ($lesson) {
-                DB::table('user_lessons')->where('user_lesson_id', (int) $lesson['user_lesson_id'])->update($lessonValues);
-            } else {
-                DB::table('user_lessons')->insert(['user_id' => $userId, 'lesson_id' => (int) $row['lesson_id'], 'level_id' => $levelId, 'start_date' => date('Y-m-d'), 'status' => 'active', 'is_primary' => 0, 'created_at' => $now, 'created_by' => $userId, 'updated_at' => $now, 'updated_by' => $userId]);
+            // Preserve existing learning records until academy approval.
+            if (!$lesson) {
+                DB::table('user_lessons')->insert(['user_id' => $userId, 'lesson_id' => (int) $row['lesson_id'], 'level_id' => $levelId, 'start_date' => date('Y-m-d'), 'status' => 'pending', 'is_primary' => 0, 'created_at' => $now, 'created_by' => $userId, 'updated_at' => $now, 'updated_by' => $userId]);
             }
             $waitingId = DB::table('academy_branch_course_term_waiting_list')->insertGetId(['term_id' => $termId, 'member_id' => $memberId, 'created_at' => $now, 'created_by' => $userId, 'updated_at' => $now, 'updated_by' => $userId]);
             if (trim($note) !== '') {
@@ -130,6 +133,7 @@ class PublicAcademyEnrollmentService
                 throw new RuntimeException('اطلاعات هویتی و آدرس هنرجو را کامل کنید.');
             }
             (new \Modules\Analytics\Services\AdminDashboardService())->saveApplicantProfile($userId, array_merge($profile, ['phone' => $this->digits($phone), 'note' => $note]));
+            $this->saveAddressDetails($userId, $profile, $now);
             $conversationId = $this->createRegistrationConversation($academyId, $branchId, $userId, $termId, $waitingId, $now);
             $academy = DB::table('academies')->where('academy_id', $academyId)->whereNull('deleted_at')->first();
             $branch = $branchId ? DB::table('academy_branches')->where('branch_id', $branchId)->whereNull('deleted_at')->first() : null;
@@ -211,9 +215,33 @@ class PublicAcademyEnrollmentService
         return $row;
     }
 
+    private function saveAddressDetails(int $userId, array $profile, string $now): void
+    {
+        $values = ['updated_at' => $now, 'updated_by' => $userId];
+        $provinceId = (int) ($profile['province_id'] ?? 0);
+        $countyId = (int) ($profile['county_id'] ?? 0);
+        if ($provinceId && !DB::table('world_iran_provinces')->where('province_id', $provinceId)->first()) throw new RuntimeException('استان معتبر نیست.');
+        if ($countyId && !DB::table('world_iran_counties')->where('county_id', $countyId)->where('province_id', $provinceId)->first()) throw new RuntimeException('شهر معتبر نیست.');
+        foreach (['latitude' => 90, 'longitude' => 180] as $key => $limit) {
+            if (!array_key_exists($key, $profile)) continue;
+            $value = trim((string) $profile[$key]);
+            if ($value !== '' && (!is_numeric($value) || abs((float) $value) > $limit)) throw new RuntimeException('مختصات معتبر نیست.');
+            $values[$key] = $value === '' ? null : (float) $value;
+        }
+        if (array_key_exists('province_id', $profile)) $values['province_id'] = $provinceId ?: null;
+        if (array_key_exists('county_id', $profile) || array_key_exists('province_id', $profile)) $values['county_id'] = $countyId ?: null;
+        if (array_key_exists('postal_code', $profile)) {
+            $postal = $this->digits((string) $profile['postal_code']);
+            if ($postal !== '' && strlen($postal) !== 10) throw new RuntimeException('کد پستی باید ده رقم باشد.');
+            $values['postal_code'] = $postal ?: null;
+        }
+        DB::table('user_addresses')->where('user_id', $userId)->where('is_main', 1)->whereNull('deleted_at')->update($values);
+    }
+
     private function tr(string $table, int $id, string $field, string $locale): string
     {
         $r = DB::table('translations')->where('table_name', $table)->where('table_id', $id)->where('field', $field)->where('locale', $locale)->whereNull('deleted_at')->orderBy('translation_id', 'DESC')->first();
+        if (!$r && $locale !== 'fa') return $this->tr($table, $id, $field, 'fa');
         return (string) ($r['value'] ?? '');
     }
 

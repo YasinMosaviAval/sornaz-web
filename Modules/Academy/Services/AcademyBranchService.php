@@ -679,14 +679,16 @@ class AcademyBranchService
             }
         }
         $studentData = [];
+        $waitingMembers = [];
         foreach (DB::table('academy_branch_course_term_enrollments')->join('academy_branch_course_terms', 'academy_branch_course_terms.term_id', '=', 'academy_branch_course_term_enrollments.term_id')->whereIn('academy_branch_course_term_enrollments.member_id', $memberIds)->where('academy_branch_course_term_enrollments.type', 'student')->whereNull('academy_branch_course_term_enrollments.deleted_at')->orderBy('academy_branch_course_term_enrollments.term_enrollment_id', 'DESC')->get() as $e) {
             $mid = (int) $e['member_id'];
             if (isset($studentData[$mid])) {
                 continue;
             }
             $studentData[$mid] = ['termId' => (int) $e['term_id'], 'termName' => $this->tr('academy_branch_course_terms', (int) $e['term_id'], 'title', 'ترم ' . (int) $e['term_id'])];
-        }foreach (DB::table('academy_branch_course_term_waiting_list')->join('academy_branch_course_terms', 'academy_branch_course_terms.term_id', '=', 'academy_branch_course_term_waiting_list.term_id')->whereIn('academy_branch_course_term_waiting_list.member_id', $memberIds)->whereNull('academy_branch_course_term_waiting_list.deleted_at')->orderBy('academy_branch_course_term_waiting_list.term_waiting_list_id', 'DESC')->get() as $e) {
+        }foreach (DB::table('academy_branch_course_term_waiting_list')->select('academy_branch_course_term_waiting_list.*')->join('academy_branch_course_terms', 'academy_branch_course_terms.term_id', '=', 'academy_branch_course_term_waiting_list.term_id')->whereIn('academy_branch_course_term_waiting_list.member_id', $memberIds)->whereNull('academy_branch_course_term_waiting_list.deleted_at')->orderBy('academy_branch_course_term_waiting_list.term_waiting_list_id', 'DESC')->get() as $e) {
             $mid = (int) $e['member_id'];
+            if (empty($e['approved_at'])) { $waitingMembers[$mid] = true; continue; }
             if (!isset($studentData[$mid])) {
                 $studentData[$mid] = ['termId' => (int) $e['term_id'], 'termName' => $this->tr('academy_branch_course_terms', (int) $e['term_id'], 'title', 'ترم ' . (int) $e['term_id'])];
             }
@@ -705,11 +707,11 @@ class AcademyBranchService
             $county = $a['county_id'] ? DB::table('world_iran_counties')->where('county_id', (int) $a['county_id'])->first() : null;
             $addressMap[(int) $a['user_id']][] = ['province' => $province['province_name'] ?? '', 'city' => $county['county_name'] ?? '', 'address' => $this->tr('user_addresses', (int) $a['address_id'], 'address', ''), 'postal_code' => $a['postal_code'], 'lat' => $a['latitude'], 'lng' => $a['longitude'], 'is_main' => (bool) $a['is_main']];
         }
-        return array_map(function (array $r) use ($names, $branches, $lessonNames, $contractTexts, $memberRoles, $academyUsers, $branchUsers, $currencyNames, $studentData, $studentLessons, $fatherNames, $addressMap) {
-            $student = str_contains((string) $r['username'], '_student_') || isset($studentData[(int) $r['member_id']]);
+        return array_map(function (array $r) use ($names, $branches, $lessonNames, $contractTexts, $memberRoles, $academyUsers, $branchUsers, $currencyNames, $studentData, $studentLessons, $fatherNames, $addressMap, $waitingMembers) {
+            $student = isset($studentData[(int) $r['member_id']]) || (!isset($waitingMembers[(int) $r['member_id']]) && str_contains((string) $r['username'], '_student_'));
             return ['id' => (int) $r['member_id'], 'user_id' => (int) $r['user_id'], 'name' => $names[(int) $r['user_id']] ?? $r['username'], 'phone' => $r['phone'] ?: '',
                 'nationalId' => $r['national_code'] ?: '', 'gender' => $r['gender'] ?: 'other', 'birthDate' => $r['birthday'] ?: '', 'roleId' => $memberRoles[(int) $r['member_id']] ?? 0, 'organizationUserId' => $r['branch_id'] ? ($branchUsers[(int) $r['branch_id']] ?? 0) : ($academyUsers[(int) $r['academy_id']] ?? 0), 'branchId' => (int) $r['branch_id'], 'branch' => $r['branch_id'] ? ($branches[(int) $r['branch_id']] ?? ('شعبه ' . $r['branch_id'])) : 'آموزشگاه',
-                'type' => $student ? 'student' : ($r['contract_type'] ?: 'other'), 'typeLabel' => $student ? 'هنرجو' : match ($r['contract_type']) {
+                'type' => !$student && empty($r['contract_type']) && isset($waitingMembers[(int) $r['member_id']]) ? 'waiting' : ($student ? 'student' : ($r['contract_type'] ?: 'other')), 'typeLabel' => $student ? 'هنرجو' : match ($r['contract_type']) {
                     'teacher' => 'مدرس','receptionist' => 'پذیرش','manager' => 'مدیر',default => 'کارمند'
                 },
                 'contractTitle' => $student ? 'قرارداد آموزشی' : ($contractTexts[(int) $r['member_contract_id']]['title'] ?? 'قرارداد همکاری'), 'contractDescription' => $contractTexts[(int) $r['member_contract_id']]['description'] ?? '', 'startDate' => $r['start_date'] ?: $r['joined_at'], 'endDate' => $r['end_date'] ?: '',

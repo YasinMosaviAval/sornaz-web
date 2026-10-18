@@ -18,7 +18,7 @@ $newTables=[
 'user_contacts'=>"user_contact_id $auto,user_id INTEGER,mode VARCHAR(20),platform VARCHAR(20),priority VARCHAR(20),is_main INTEGER,status VARCHAR(20),created_by INTEGER,updated_by INTEGER,$audit",
 'world_iran_provinces'=>'province_id INTEGER PRIMARY KEY,province_name VARCHAR(100)',
 'world_iran_counties'=>'county_id INTEGER PRIMARY KEY,county_name VARCHAR(100)',
-'user_addresses'=>"user_address_id $auto,user_id INTEGER,country_id INTEGER,province_id INTEGER,county_id INTEGER,is_main INTEGER,latitude VARCHAR(30),longitude VARCHAR(30),postal_code VARCHAR(30),created_by INTEGER,updated_by INTEGER,$audit",
+'user_addresses'=>"address_id $auto,user_id INTEGER,country_id INTEGER,province_id INTEGER,county_id INTEGER,is_main INTEGER,latitude VARCHAR(30),longitude VARCHAR(30),postal_code VARCHAR(30),created_by INTEGER,updated_by INTEGER,$audit",
 'academy_branch_course_term_invoices'=>"term_invoice_id $auto,term_id INTEGER,member_id INTEGER,discount_id INTEGER,payable_amount DECIMAL(14,2),currency_id INTEGER,status VARCHAR(20),due_date DATE,issued_at TEXT,created_by INTEGER,updated_by INTEGER,deleted_at TEXT,$audit",
 'academy_branch_course_term_invoice_installments'=>"term_invoice_installment_id $auto,invoice_id INTEGER,installment_number INTEGER,amount DECIMAL(14,2),due_date DATE,status VARCHAR(20),created_by INTEGER,updated_by INTEGER,deleted_at TEXT,$audit"
 ];

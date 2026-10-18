@@ -748,10 +748,30 @@ function renderProfileTeachers(a) {
 
 window.goEnrollFromProfile = async function (termId) {
   const id = window._currentProfileAcademyId;
-  if (id != null)
-    location.href = `/academy/academy-enroll?academy=${encodeURIComponent(id)}${termId ? '&term=' + encodeURIComponent(termId) : ''}`;
+  if (id == null) return;
+  const en = document.documentElement.lang === 'en';
+  try {
+    const response = await fetch(`/academy/academy-enroll?academy=${encodeURIComponent(id)}&term=${encodeURIComponent(termId || '')}`, {credentials:'same-origin'});
+    if (!response.ok || response.redirected) throw Error(en ? 'Please sign in again.' : 'لطفاً دوباره وارد حساب شوید.');
+    const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+    const form = page.getElementById('siteEnrollmentForm');
+    const data = JSON.parse(page.getElementById('siteEnrollmentData').textContent);
+    if (!window.initSiteEnrollment) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = page.querySelector('script[src*="/assets/Page/js/enrollment.js"]').getAttribute('src');
+        script.onload = resolve; script.onerror = reject; document.head.append(script);
+      });
+    }
+    const content = document.createElement('div');
+    content.dir = en ? 'ltr' : 'rtl'; content.style.textAlign = 'start';
+    content.append(document.importNode(form, true));
+    window.initSiteEnrollment(content, data, true);
+    await Swal.fire({title: en ? 'Academy registration' : 'ثبت‌نام در آموزشگاه', html:content, width:640, showConfirmButton:false, showCloseButton:true});
+  } catch (error) {
+    Swal.fire({icon:'error', text:error.message || (en ? 'Unable to load registration.' : 'دریافت فرم ثبت‌نام انجام نشد.')});
+  }
 };
-
 // ========== کاربران ==========
 window.filterSiteUsers = async function (role) {
   if (typeof role === 'string') siteUserRole = role;

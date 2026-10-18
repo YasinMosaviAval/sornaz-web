@@ -3,9 +3,9 @@ const {spawnSync} = require('node:child_process');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const php = [
- 'table-prefix-test.php', 'mobile_finance_bootstrap_test.php',
+ 'table-prefix-test.php', 'mobile_finance_bootstrap_test.php', 'enrollment_dashboard_scope_test.php',
  'page_source_trace_test.php',
- 'sidebar_identity_render_test.php', 'panel_report_snapshot_test.php', 'practice_results_test.php',
+ 'sidebar_identity_render_test.php', 'panel_report_snapshot_test.php', 'practice_results_test.php', 'dashboard_layout_test.php',
  'scoped_backup_test.php', 'launch_hardening_test.php', 'content_safety_test.php', 'financial_records_test.php', 'personal_panel_data_test.php', 'personal_panel_api_test.php', 'mobile_contact_change_test.php', 'tenant_access_test.php', 'reliability_test.php', 'core_functionality_test.php', 'chat_media_revision_test.php',
  'account_security_test.php', 'account_session_test.php', 'shared_password_login_test.php', 'account_profile_test.php', 'contact_change_test.php',
  'public_directory_privacy_test.php', 'public_copy_test.php', 'registration_otp_policy_test.php',
@@ -21,6 +21,7 @@ suites.push([process.execPath,'term_student_assignment_test.cjs']);
 suites.push([process.execPath,'panel_report_source_test.cjs'],[process.execPath,'term_people_policy_test.cjs']);
 suites.push([process.execPath,'availability_target_policy_test.cjs'],[process.execPath,'csrf_fetch_test.cjs'],[process.execPath,'profile_render_security_test.cjs'],[process.execPath,'lesson_usage_test.cjs'],[process.execPath,'staff_role_policy_test.cjs'],[process.execPath,'panel_activity_text_test.cjs'],[process.execPath,'term_discount_policy_test.cjs']);
 if (process.argv.includes('--browser')) {
+ suites.push([process.execPath,'enrollment_dialog_browser_test.cjs']);
  suites.push([process.execPath,'staff_registration_browser_test.cjs']);
  suites.push([process.execPath,'term_batch_browser_test.cjs']);
  suites.push([process.execPath,'term_people_browser_test.cjs'],[process.execPath,'scheduling_tabs_browser_test.cjs'],[process.execPath,'panel_guides_browser_test.cjs'],[process.execPath,'staff_contract_forms_browser_test.cjs'],[process.execPath,'points_stability_browser_test.cjs'],[process.execPath,'personal_points_pagination_browser_test.cjs'],[process.execPath,'access_users_realtime_browser_test.cjs'],[process.execPath,'term_discounts_browser_test.cjs']);

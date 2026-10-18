@@ -36,10 +36,12 @@ window.toggleAccordion = function (btn) {
   const body = btn.nextElementSibling;
   const icon = btn.querySelector('.accordion-icon');
   const isOpen = body.classList.contains('open');
+  btn.setAttribute('aria-expanded', String(!isOpen));
 
   // بستن بقیه (اختیاری — مثل آکاردئون تک‌باز)
   document.querySelectorAll('.accordion-body.open').forEach((b) => {
     if (b !== body) {
+      b.previousElementSibling?.setAttribute('aria-expanded', 'false');
       b.style.setProperty('--accordion-height', `${b.scrollHeight}px`);
       b.classList.remove('open');
       const i = b.previousElementSibling?.querySelector('.accordion-icon');

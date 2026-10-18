@@ -72,6 +72,7 @@ namespace {
  check(substr_count($userPreviewHtml,'id="finance"')===1 && substr_count($userPreviewHtml,'id="dashboard"')===1,'Ordinary-user design preview duplicated section identifiers');
  }
  $tokens=new \Modules\System\Services\MobileAuthTokenService($users);
+ require base_path('Modules/System/Routes/web.php');
  $catalog=new \Modules\Analytics\Services\MobilePanelCatalog();
  $panel=new \Modules\Analytics\Controllers\Api\MobilePanelController($tokens,new \Modules\Analytics\Services\MobilePanelAccess(),$catalog);
  session()->start();$_SERVER['HTTP_AUTHORIZATION']='Bearer invalid';
@@ -79,6 +80,10 @@ namespace {
  $_SERVER['HTTP_AUTHORIZATION']='Bearer '.$tokens->issue($users->rows[7]);$_SERVER['HTTP_ACCEPT_LANGUAGE']='en';$_SERVER['REQUEST_METHOD']='GET';$_SERVER['REQUEST_URI']='/api/sornaz/v1/panel/dashboard/list';$_SESSION=$originalSession=['_auth_user'=>1,'_auth_password_fingerprint'=>substr(hash('sha256','admin-hash'),0,24),'sentinel'=>'preserved'];
  $data=field($panel->index(),'data');$keys=array_column($data['sections'],'key');
  $ordinary = array_column($data['sections'], null, 'key');
+ check(($ordinary['account']['actions']['invite']['method'] ?? '') === 'GET'
+   && ($ordinary['account']['actions']['invite']['hidden'] ?? false) === true
+   && !($ordinary['account']['actions']['invite']['row'] ?? true),
+   'Personal invitation endpoint must be authorized as a hidden non-row read action');
  check(!isset($ordinary['page-guidance']['actions']['save']) && $ordinary['account']['pageGuidance']['canEdit'] === false, 'Ordinary user received guidance editor permission');
  $_SERVER['REQUEST_METHOD']='POST';check(field($panel->execute('page-guidance','save'),'status')===403,'Ordinary user invoked guidance mutation');$_SERVER['REQUEST_METHOD']='GET';
  check(in_array('account',$keys,true)&&in_array('my-classrooms',$keys,true)&&in_array('chat',$keys,true),'Common destinations missing');
@@ -152,6 +157,12 @@ namespace {
  check(!array_diff(['method','payerName','reference','bankCardType','paymentDate','paymentTime'],$offlineKeys),'Payment form is missing required service fields');
  $mergeKeys=array_column($definitions['account']['actions']['merge']['fields'],'key');
  check(in_array('userId',$mergeKeys,true)&&in_array('memberId',$mergeKeys,true),'Merge form contract lost');
+ $authMethod=new \ReflectionMethod($panel,'authenticated');
+ $oldOtp=['web'=>'untouched'];$_SESSION['registration_otp']=$oldOtp;
+ $authMethod->invoke($panel,function(){check($_SESSION['registration_otp']===null,'Mobile staff inherited web registration OTP');$_SESSION['registration_otp']=['code_hash'=>'fixture','attempts'=>1];return true;},true);
+ check($_SESSION['registration_otp']===$oldOtp,'Mobile staff overwrote web OTP');
+ $authMethod->invoke($panel,function(){check($_SESSION['registration_otp']['attempts']===1,'Staff OTP lost between API requests');$_SESSION['registration_otp']['attempts']=2;return true;},true);
+ check($_SESSION['mobile_staff_otp'][1]['attempts']===2,'OTP attempt count was not retained');
  $users->rows[1]['password']='rotated';check(field($panel->index(),'status')===401,'Rotated bearer accepted');session_destroy();
  echo 'Native panel: '.count($sections)." sections; bearer isolation, roles, real-controller payloads and routing passed.\n";
 }

@@ -299,6 +299,10 @@ function toggleSidebar() {
 document.addEventListener('DOMContentLoaded', () => {
   const requestedSection = window.location.hash.replace('#', '');
   if (requestedSection && document.getElementById(requestedSection)) showSection(requestedSection);
+  const conversation = Number(new URLSearchParams(location.search).get('conversation'));
+  if (requestedSection === 'chat' && Number.isSafeInteger(conversation) && conversation > 0) {
+    window.reloadChat?.().then(() => window.openChat?.(conversation)).catch(error => console.error('Unable to open registration conversation', error));
+  }
 
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebarOverlay');

@@ -148,10 +148,6 @@
       window.getDashboardAbsencesHTML?.(dashboardData.todayAbsences) || ''
     );
     setList(
-      'unreadMessagesList',
-      window.getDashboardMessagesHTML?.(dashboardData.unreadMessages) || ''
-    );
-    setList(
       'recentRegistrationsList',
       window.getDashboardRegistrationsHTML?.(dashboardData.recentRegistrations) || ''
     );

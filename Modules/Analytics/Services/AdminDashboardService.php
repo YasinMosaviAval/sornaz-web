@@ -98,7 +98,7 @@ class AdminDashboardService
         $holidayConflicts = array_map(fn ($r) => ['type' => 'national_holiday_conflict', 'holidayId' => (int) $r['national_holiday_id'], 'holidayTitle' => $r['holiday_title'], 'holidayDescription' => $r['holiday_description'], 'termId' => (int) $r['term_id'], 'termName' => $r['term_name'], 'sessionId' => (int) $r['term_session_id'], 'sessionType' => $r['session_type'], 'date' => $r['requested_date'], 'startTime' => substr((string) $r['start_time'], 0, 5), 'branchId' => (int) $r['branch_id'], 'branchName' => $r['branch_name']], $holidayConflictRows);
         $pendingRows = $this->rows("SELECT s.term_session_id,s.term_id,b.requested_date,br.branch_id,COALESCE((SELECT value FROM translations WHERE table_name='academy_branch_course_terms' AND table_id=t.term_id AND field='title' AND locale='{$locale}' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1),CONCAT('ترم ',t.term_id)) term_name,COALESCE((SELECT value FROM translations WHERE table_name='academy_branches' AND table_id=br.branch_id AND field='name' AND locale='{$locale}' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1),CONCAT('شعبه ',br.branch_id)) branch_name FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id AND b.deleted_at IS NULL JOIN academy_branch_course_terms t ON t.term_id=s.term_id AND t.deleted_at IS NULL JOIN academy_branch_courses c ON c.course_id=t.course_id AND c.deleted_at IS NULL LEFT JOIN academy_branch_classrooms room ON room.classroom_id=s.classroom_id AND room.deleted_at IS NULL JOIN academy_branches br ON br.branch_id=COALESCE(c.branch_id,room.branch_id) AND br.deleted_at IS NULL WHERE s.deleted_at IS NULL AND s.cancellation_status='pending' AND br.branch_id IN ({$scopeSql}) ORDER BY s.cancellation_requested_at");
         $pendingCancellationActions = array_map(fn ($r) => ['type' => 'cancellation_pending', 'termId' => (int) $r['term_id'], 'termName' => $r['term_name'], 'sessionId' => (int) $r['term_session_id'], 'date' => $r['requested_date'], 'branchId' => (int) $r['branch_id'], 'branchName' => $r['branch_name']], $pendingRows);
-        $waitingRows = $this->rows("SELECT w.term_waiting_list_id,w.term_id,w.created_at,c.branch_id,COALESCE((SELECT value FROM translations WHERE table_name='users' AND table_id=m.user_id AND field='full_name' AND locale='{$locale}' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1),u.username) student_name,COALESCE((SELECT value FROM translations WHERE table_name='academy_branch_course_terms' AND table_id=w.term_id AND field='title' AND locale='{$locale}' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1),CONCAT('ترم ',w.term_id)) term_name,COALESCE((SELECT value FROM translations WHERE table_name='academy_branches' AND table_id=c.branch_id AND field='name' AND locale='{$locale}' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1),CONCAT('شعبه ',c.branch_id)) branch_name FROM academy_branch_course_term_waiting_list w JOIN academy_branch_members m ON m.member_id=w.member_id AND m.deleted_at IS NULL JOIN users u ON u.user_id=m.user_id AND u.deleted_at IS NULL JOIN academy_branch_course_terms t ON t.term_id=w.term_id AND t.deleted_at IS NULL JOIN academy_branch_courses c ON c.course_id=t.course_id AND c.deleted_at IS NULL WHERE w.deleted_at IS NULL AND c.branch_id IN ({$scopeSql}) AND NOT EXISTS (SELECT 1 FROM academy_branch_course_term_enrollments e WHERE e.term_id=w.term_id AND e.member_id=w.member_id AND e.type='student' AND e.deleted_at IS NULL) ORDER BY w.created_at DESC LIMIT 20");
+        $waitingRows = $this->rows("SELECT w.term_waiting_list_id,w.term_id,w.created_at,c.branch_id,COALESCE((SELECT value FROM translations WHERE table_name='users' AND table_id=m.user_id AND field='full_name' AND locale='{$locale}' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1),u.username) student_name,COALESCE((SELECT value FROM translations WHERE table_name='academy_branch_course_terms' AND table_id=w.term_id AND field='title' AND locale='{$locale}' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1),CONCAT('ترم ',w.term_id)) term_name,COALESCE((SELECT value FROM translations WHERE table_name='academy_branches' AND table_id=c.branch_id AND field='name' AND locale='{$locale}' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1),CONCAT('شعبه ',c.branch_id)) branch_name FROM academy_branch_course_term_waiting_list w JOIN academy_branch_members m ON m.member_id=w.member_id AND m.deleted_at IS NULL JOIN users u ON u.user_id=m.user_id AND u.deleted_at IS NULL JOIN academy_branch_course_terms t ON t.term_id=w.term_id AND t.deleted_at IS NULL JOIN academy_branch_courses c ON c.course_id=t.course_id AND c.deleted_at IS NULL WHERE w.deleted_at IS NULL AND c.branch_id IN ({$scopeSql}) AND w.approved_at IS NULL ORDER BY w.created_at DESC LIMIT 20");
         $academyWideIds = $this->allowedAcademyIds($actor);
         if ($academyWideIds && !$branchId) {
             $academyCourses = DB::table('academy_branch_courses')->whereIn('academy_id', $academyWideIds)->whereNull('branch_id')->whereNull('deleted_at')->get();
@@ -117,7 +117,7 @@ class AdminDashboardService
                 $wideTermName = DB::table('translations')->where('table_name', 'academy_branch_course_terms')->where('table_id', (int) $wideWaiting['term_id'])->where('field', 'title')->where('locale', $locale)->whereNull('deleted_at')->orderBy('translation_id', 'DESC')->first();
                 $wideRow = ['term_waiting_list_id' => (int) $wideWaiting['term_waiting_list_id'], 'term_id' => (int) $wideWaiting['term_id'], 'member_id' => (int) $wideWaiting['member_id'], 'user_id' => (int) $wideUser['user_id'], 'created_at' => $wideWaiting['created_at'], 'approved_at' => $wideWaiting['approved_at'], 'branch_id' => null, 'student_name' => (string) ($wideName['value'] ?? $wideUser['username']), 'term_name' => (string) ($wideTermName['value'] ?? ('ترم #' . $wideWaiting['term_id'])), 'branch_name' => 'آموزشگاه'];
                 $wideEnrollment = DB::table('academy_branch_course_term_enrollments')->where('term_id', (int) $wideWaiting['term_id'])->where('member_id', (int) $wideWaiting['member_id'])->where('type', 'student')->whereNull('deleted_at')->first();
-                if (empty($wideWaiting['approved_at']) && !$wideEnrollment) $waitingRows[] = $wideRow;
+                if (empty($wideWaiting['approved_at'])) $waitingRows[] = $wideRow;
                 if (!empty($wideWaiting['approved_at']) && $wideEnrollment && $wideEnrollment['status'] === 'pending') $academyPendingRows[] = $wideRow;
             }
         }
@@ -257,6 +257,7 @@ class AdminDashboardService
             $addressId = $oldAddress ? (int) $oldAddress['address_id'] : (int) DB::table('user_addresses')->insertGetId(['user_id' => $userId, 'country_id' => 1, 'is_main' => 1, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
             \Core\translation\TranslationService::manager()->set('user_addresses', $addressId, 'address', $address, 'fa');
             DB::table('academy_branch_members')->where('member_id', (int) $member['member_id'])->update(['status' => 'active', 'approved_at' => $now, 'approved_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
+            DB::table('user_lessons')->where('user_id', $userId)->where('lesson_id', (int) $term['lesson_id'])->where('status', 'pending')->whereNull('deleted_at')->update(['status' => 'active', 'approved_at' => $now, 'approved_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
             $existing = DB::table('academy_branch_course_term_enrollments')->where('term_id', (int) $waiting['term_id'])->where('member_id', (int) $member['member_id'])->where('type', 'student')->whereNull('deleted_at')->first();
             if (!$existing) {
                 DB::table('academy_branch_course_term_enrollments')->insert(['term_id' => (int) $waiting['term_id'], 'member_id' => (int) $member['member_id'], 'type' => 'student', 'status' => 'pending', 'joined_at' => $now, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
@@ -320,7 +321,7 @@ class AdminDashboardService
         $branchId = (int) ($course['branch_id'] ?? 0);
         $academy = DB::table('academies')->where('academy_id', (int) $course['academy_id'])->whereNull('deleted_at')->first();
         $user = DB::table('users')->where('user_id', $actor)->whereNull('deleted_at')->first();
-        $allowed = SiteAdminAccess::allows($user) || ($academy && ((int) $academy['user_id'] === $actor || (int) $academy['created_by'] === $actor));
+        $allowed = in_array((int) $course['academy_id'], $this->allowedAcademyIds($actor), true);
         if (!$allowed && $branchId) $allowed = in_array($branchId, $this->allowedBranchIds($actor), true);
         if (!$allowed) throw new RuntimeException('اجازه دسترسی به این درخواست را ندارید.');
         return ['conversationId' => (new \Modules\Academy\Services\PublicAcademyEnrollmentService())->ensureConversation($id)];
@@ -338,7 +339,7 @@ class AdminDashboardService
                 $branchId = (int) ($course['branch_id'] ?? 0);
                 $academy = DB::table('academies')->where('academy_id', (int) $course['academy_id'])->whereNull('deleted_at')->first();
                 $user = DB::table('users')->where('user_id', $actor)->whereNull('deleted_at')->first();
-                $allowed = SiteAdminAccess::allows($user) || ($academy && ((int) $academy['user_id'] === $actor || (int) $academy['created_by'] === $actor)) || ($branchId && in_array($branchId, $this->allowedBranchIds($actor), true));
+                $allowed = in_array((int) $course['academy_id'], $this->allowedAcademyIds($actor), true) || ($branchId && in_array($branchId, $this->allowedBranchIds($actor), true));
                 if (!$allowed) throw new RuntimeException('اجازه فعال‌سازی این کلاس را ندارید.');
                 $enrollment = DB::table('academy_branch_course_term_enrollments')->where('term_id', (int) $waiting['term_id'])->where('member_id', (int) $member['member_id'])->where('type', 'student')->whereNull('deleted_at')->first();
                 if (!$enrollment || $enrollment['status'] !== 'pending') throw new RuntimeException('وضعیت ثبت‌نام برای فعال‌سازی معتبر نیست.');
@@ -465,6 +466,16 @@ class AdminDashboardService
         if (SiteAdminAccess::allows($user)) {
             return array_values(array_map(fn ($academy) => (int) $academy['academy_id'], DB::table('academies')->whereNull('deleted_at')->get()));
         }
-        return array_values(array_map(fn ($academy) => (int) $academy['academy_id'], DB::table('academies')->where('user_id', $actor)->whereNull('deleted_at')->get()));
+        $ids = [];
+        foreach (DB::table('academies')->whereNull('deleted_at')->get() as $academy) {
+            if ((int) $academy['user_id'] === $actor || (int) $academy['created_by'] === $actor) $ids[] = (int) $academy['academy_id'];
+        }
+        foreach (DB::table('academy_branch_members')->where('user_id', $actor)->where('status', 'active')->whereNull('deleted_at')->get() as $member) {
+            $roles = DB::table('academy_branch_member_roles')->join('access_system_roles', 'access_system_roles.role_id', '=', 'academy_branch_member_roles.role_id')->where('academy_branch_member_roles.member_id', (int) $member['member_id'])->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->get();
+            foreach ($roles as $role) {
+                if (in_array(strtolower((string) $role['name']), ['academy_owner', 'academy_manager', 'academy_receptionist'], true)) $ids[] = (int) $member['academy_id'];
+            }
+        }
+        return array_values(array_unique($ids));
     }
 }

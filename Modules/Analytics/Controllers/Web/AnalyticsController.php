@@ -86,7 +86,7 @@ class AnalyticsController
             $result = $this->enrollments->joinWaitingList($academyId, (int) auth()->id(), (int) ($_POST['term_id'] ?? 0), (int) ($_POST['level_id'] ?? 0), (string) ($_POST['phone'] ?? ''), (string) ($_POST['note'] ?? ''), locale(), $_POST);
             $message = locale() === 'en' ? 'You were successfully added to the academy waiting list.' : 'با موفقیت در فهرست انتظار آموزشگاه قرار گرفتید.';
             session()->flash('auth_success', $message);
-            return ResponseFactory::json(['success' => true, 'message' => $message, 'redirect' => '/academy/academy?id=' . $academyId, 'data' => $result], 201);
+            return ResponseFactory::json(['success' => true, 'message' => $message, 'redirect' => '/analytics/admin-panel?conversation=' . (int) $result['conversationId'] . '#chat', 'data' => $result], 201);
         } catch (\Throwable$e) {
             return ResponseFactory::json(['success' => false, 'message' => $e instanceof \PDOException ? (locale() === 'en' ? 'Registration could not be saved. Please try again.' : 'ثبت درخواست انجام نشد. دوباره تلاش کنید.') : $e->getMessage()], 422);
         }

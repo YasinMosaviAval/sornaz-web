@@ -1,7 +1,7 @@
 const {spawnSync}=require('node:child_process');
 const base=require('./term_student_assignment_test.cjs');
 const extra=String.raw`
-$pdo->exec('ALTER TABLE academy_branch_course_term_sessions ADD booking_id INTEGER');$pdo->exec('ALTER TABLE user_lessons ADD start_date DATE');$pdo->exec('ALTER TABLE user_addresses ADD deleted_at TEXT');$pdo->exec('ALTER TABLE user_addresses ADD address_id INTEGER');
+$pdo->exec('ALTER TABLE academy_branch_course_term_sessions ADD booking_id INTEGER');$pdo->exec('ALTER TABLE user_lessons ADD start_date DATE');$pdo->exec('ALTER TABLE user_addresses ADD deleted_at TEXT');
 $tables=[
 'levels'=>"level_id $auto,type VARCHAR(20),is_active INTEGER,deleted_at TEXT",
 'academy_branch_bookings'=>"booking_id $auto,status VARCHAR(20),requested_date DATE,deleted_at TEXT",
@@ -19,6 +19,11 @@ $enrollments=new Modules\Academy\Services\PublicAcademyEnrollmentService();$term
 $profile=['name'=>'Applicant','national_id'=>'3000000001','father_name'=>'Father','birth_date'=>'1990-01-01','address'=>'Fixture address'];
 $joined=$enrollments->joinWaitingList(100,800,$termId,7,'09128880001','Fixture note','fa',$profile);
 check($joined['id']>0&&$joined['conversationId']>0,'Waiting list and conversation created');
+$applicantMember=$pdo->query('SELECT * FROM academy_branch_members WHERE user_id=800')->fetch();
+check($applicantMember['status']==='pending' && empty($applicantMember['approved_at']),'Website registration must wait for academy approval');
+check((int)$pdo->query("SELECT COUNT(*) FROM academy_branch_course_term_enrollments WHERE member_id=".$applicantMember['member_id']." AND type='student'")->fetchColumn()===0,'Waiting request must not create a student enrollment');
+check($pdo->query('SELECT status FROM user_lessons WHERE user_id=800')->fetchColumn()==='pending','Learning record is pending until approval');
+$saved=$enrollments->formData(100,800,'en');check($saved['profile']['name']==='Applicant' && $saved['profile']['address']==='Fixture address','Existing profile values fall back to their saved language');
 $message=$pdo->query('SELECT * FROM conversation_messages WHERE conversation_id='.$joined['conversationId'])->fetch();
 check($message && Core\translation\EntityText::get('conversation_messages',(int)$message['conversation_message_id'],'body')!=='','Initial message stored in translations without body column');
 check($enrollments->ensureConversation($joined['id'])===$joined['conversationId'],'Chat reused without duplicate message');
