@@ -132,7 +132,7 @@
     return `
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 ${
-                  window.studentIsBranchContext
+                  window.studentIsBranchContext || item.assignmentTermId
                     ? `<input id="${id('Organization')}" type="hidden" value="${escapeHtml(organizationUserId)}">`
                     : `<div>
                     <label class="block text-sm font-medium mb-2">سازمان *</label>
@@ -200,7 +200,7 @@
                 </div>
             </div>
 
-            <div class="border-t pt-6">
+            ${item.assignmentTermId ? '' : `<div class="border-t pt-6">
                 <h3 class="font-semibold mb-4 text-indigo-700">اطلاعات آموزشی</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     <div>
@@ -215,7 +215,7 @@
                     </div>
                 </div>
             </div>
-            <div id="${id('AvailabilityWrap')}" class="${selectedGroup?.status === 'ongoing' ? '' : 'hidden'} border border-indigo-200 bg-indigo-50/40 rounded-2xl p-5 space-y-4"><h3 class="font-semibold text-indigo-700">افزودن برنامه زمانی هنرجو</h3><div id="${id('AvailabilityRows')}" class="space-y-3">${(item.availabilities?.length ? item.availabilities : [{}]).map((x) => window.getStudentAvailabilityHTML(x, prefix)).join('')}</div><button type="button" onclick="addStudentAvailability('${prefix}')" class="text-sm text-indigo-600">+ افزودن بازه زمانی جدید</button><div><label class="block text-sm font-medium mb-2">خلاصه</label><input id="${id('AvailabilitySummary')}" class="${fieldClass}" value="${escapeHtml(item.availabilitySummary || '')}"></div><div><label class="block text-sm font-medium mb-2">توضیحات</label><textarea id="${id('AvailabilityDescription')}" class="${fieldClass}" rows="3">${escapeHtml(item.availabilityDescription || '')}</textarea></div></div>`;
+            <div id="${id('AvailabilityWrap')}" class="${selectedGroup?.status === 'ongoing' ? '' : 'hidden'} border border-indigo-200 bg-indigo-50/40 rounded-2xl p-5 space-y-4"><h3 class="font-semibold text-indigo-700">افزودن برنامه زمانی هنرجو</h3><div id="${id('AvailabilityRows')}" class="space-y-3">${(item.availabilities?.length ? item.availabilities : [{}]).map((x) => window.getStudentAvailabilityHTML(x, prefix)).join('')}</div><button type="button" onclick="addStudentAvailability('${prefix}')" class="text-sm text-indigo-600">+ افزودن بازه زمانی جدید</button><div><label class="block text-sm font-medium mb-2">خلاصه</label><input id="${id('AvailabilitySummary')}" class="${fieldClass}" value="${escapeHtml(item.availabilitySummary || '')}"></div><div><label class="block text-sm font-medium mb-2">توضیحات</label><textarea id="${id('AvailabilityDescription')}" class="${fieldClass}" rows="3">${escapeHtml(item.availabilityDescription || '')}</textarea></div></div>`}`;
   }
 
   window.getStudentRowHTML = function (item) {
@@ -248,15 +248,15 @@
         </div>`;
   };
 
-  window.getStudentAddModalHTML = function () {
-    return `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
+  window.getStudentAddModalHTML = function (context = {}) {
+    return `<div data-student-term-id="${Number(context.assignmentTermId || 0)}" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
             <div class="bg-white rounded-3xl w-full max-w-3xl my-8 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
                 <div class="px-8 py-5 border-b flex justify-between items-center">
-                    <h2 class="text-2xl font-bold">افزودن هنرجو جدید</h2>
+                    <h2 class="text-2xl font-bold">${context.assignmentTermId ? (document.documentElement.lang.startsWith('en') ? 'Assign student' : 'تعیین هنرجو') : 'افزودن هنرجو جدید'}</h2>
                     <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                 </div>
                 <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto">
-                    ${formFields({ registrationDate: todayISO() }, 'stu')}
+                    ${formFields({ registrationDate: todayISO(), ...context }, 'stu')}
                     <div class="flex gap-4 pt-4">
                         <button onclick="saveStudent()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-medium">ذخیره هنرجو</button>
                         <button onclick="closeModal()" class="flex-1 border border-gray-300 py-4 rounded-2xl hover:bg-gray-50">انصراف</button>

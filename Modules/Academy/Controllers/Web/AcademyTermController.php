@@ -57,6 +57,21 @@ class AcademyTermController
         return $this->run(fn () => ['success' => true, 'data' => $this->service->realtimeVersion((int) auth()->id())]);
     }
 
+    public function storeBatch()
+    {
+        return $this->run(fn () => ['success' => true, 'data' => $this->service->createBatch((int) auth()->id(), $this->payload())]);
+    }
+
+    public function assignStudent(int $id)
+    {
+        return $this->run(fn () => ['success' => true, 'data' => $this->service->assignStudent((int) auth()->id(), $id, $this->payload())]);
+    }
+
+    public function assignClassroom(int $id)
+    {
+        return $this->run(fn () => ['success' => true, 'data' => $this->service->assignDraftClassroom((int) auth()->id(), $id, (int) ($this->payload()['classroomId'] ?? 0))]);
+    }
+
     public function updateInvoice(int $id)
     {
         return $this->run(
@@ -206,18 +221,7 @@ class AcademyTermController
 
     private function isReceptionist(int $actor): bool
     {
-        $role = (bool) \Core\database\DB::table('academy_branch_members')
-            ->join('academy_branch_member_roles', 'academy_branch_member_roles.member_id', '=', 'academy_branch_members.member_id')
-            ->join('access_system_roles', 'access_system_roles.role_id', '=', 'academy_branch_member_roles.role_id')
-            ->where('academy_branch_members.user_id', $actor)->whereRaw("access_system_roles.name LIKE '%receptionist%'")
-            ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->first();
-        if ($role) {
-            return true;
-        }
-        return (bool) \Core\database\DB::table('academy_branch_members')
-            ->join('academy_branch_member_contracts', 'academy_branch_member_contracts.member_id', '=', 'academy_branch_members.member_id')
-            ->where('academy_branch_members.user_id', $actor)->where('academy_branch_member_contracts.type', 'receptionist')
-            ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_contracts.deleted_at')->first();
+        return $this->service->isReceptionist($actor);
     }
 
     private function isBranchContext(int $actor): bool

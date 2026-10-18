@@ -88,7 +88,7 @@ class AnalyticsController
             session()->flash('auth_success', $message);
             return ResponseFactory::json(['success' => true, 'message' => $message, 'redirect' => '/academy/academy?id=' . $academyId, 'data' => $result], 201);
         } catch (\Throwable$e) {
-            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
+            return ResponseFactory::json(['success' => false, 'message' => $e instanceof \PDOException ? (locale() === 'en' ? 'Registration could not be saved. Please try again.' : 'ثبت درخواست انجام نشد. دوباره تلاش کنید.') : $e->getMessage()], 422);
         }
     }
 

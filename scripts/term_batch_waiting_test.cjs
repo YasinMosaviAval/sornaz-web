@@ -1,0 +1,20 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const source = fs.readFileSync('assets/Analytics/js/dashboard.js', 'utf8');
+const start = source.indexOf('window.refreshWaitingTimes = async function');
+const end = source.indexOf('window.finalizeWaiting =', start);
+const item = {type:'student_pending_schedule',requestId:1,termId:1,needsFirstDate:true,durationMinutes:30,classroomId:5,branchId:0,organizationKind:'academy',organizationUserId:10,slotLocked:true,recurrence:{weekday:6},draftTime:'10:00'};
+const select = {dataset:{},isConnected:true};
+const nodes = {'waitingTeacher-1':{value:'2'},'waitingFirstDate-1':{value:'2030-01-05'},'waitingStart-1':select};
+const requests = [];
+const context = {window:{},dashboardData:{actionItems:[item]},document:{getElementById:id=>nodes[id]},URLSearchParams,fetch:async url=>{requests.push(url);return {ok:true,json:async()=>({success:true,data:{times:['09:30','10:00','10:30']}})};}};
+vm.createContext(context);vm.runInContext(source.slice(start,end),context);
+(async()=>{
+ await context.window.refreshWaitingTimes(1);
+ assert.equal(requests.length,1);assert.match(requests[0],/organizationKind=academy/);assert.match(requests[0],/organizationUserId=10/);
+ assert.match(select.innerHTML,/value="10:00"/);assert.doesNotMatch(select.innerHTML,/value="09:30"|value="10:30"/);assert.equal(select.disabled,false);
+ nodes['waitingFirstDate-1'].value='2030-01-06';await context.window.refreshWaitingTimes(1);assert.equal(requests.length,1);assert.equal(select.disabled,true);
+ nodes['waitingFirstDate-1'].value='2030-01-05';item.classroomId=0;await context.window.refreshWaitingTimes(1);assert.equal(requests.length,1);assert.equal(select.disabled,true);
+ console.log('Batch waiting schedule: academy availability, fixed slot, weekday and missing classroom checks passed.');
+})().catch(error=>{console.error(error);process.exitCode=1;});

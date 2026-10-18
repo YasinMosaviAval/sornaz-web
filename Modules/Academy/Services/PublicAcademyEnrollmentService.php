@@ -179,8 +179,7 @@ class PublicAcademyEnrollmentService
         foreach ($members as $memberId) {
             DB::table('conversation_members')->insert(['conversation_id' => $conversationId, 'user_id' => $memberId, 'role' => $memberId === $applicantId ? 'member' : 'admin', 'is_muted' => 0, 'joined_at' => $now, 'created_at' => $now, 'created_by' => $applicantId, 'updated_at' => $now, 'updated_by' => $applicantId]);
         }
-        $messageId = (int) DB::table('conversation_messages')->insertGetId(['conversation_id' => $conversationId, 'sender_id' => $applicantId, 'body' => 'درخواست ثبت‌نام برای ترم #' . $termId . ' ثبت شد. لطفاً ساعت و مدرس را در همین گفتگو هماهنگ کنید.', 'created_at' => $now, 'created_by' => $applicantId, 'updated_at' => $now, 'updated_by' => $applicantId]);
-        DB::table('conversations')->where('conversation_id', $conversationId)->update(['last_message_id' => $messageId]);
+        (new \Modules\Analytics\Services\ChatService())->send($applicantId, $conversationId, 'درخواست ثبت‌نام برای ترم #');
         DB::table('translations')->insert(['table_name' => 'academy_branch_course_term_waiting_list', 'table_id' => $waitingId, 'field' => 'conversation_id', 'locale' => 'fa', 'value' => (string) $conversationId, 'created_at' => $now, 'created_by' => $applicantId, 'updated_at' => $now, 'updated_by' => $applicantId]);
         return $conversationId;
     }

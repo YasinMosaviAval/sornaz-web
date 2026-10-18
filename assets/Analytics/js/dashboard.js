@@ -281,10 +281,13 @@
     const firstSession = daySessions[0];
     const duration = item.needsFirstDate ? Number(item.durationMinutes) : firstSession ? Math.max(5, (Number(firstSession.endTime?.slice(0, 2)) * 60 + Number(firstSession.endTime?.slice(3, 5))) - (Number(firstSession.startTime?.slice(0, 2)) * 60 + Number(firstSession.startTime?.slice(3, 5)))) : 0;
     const classroom = Number(firstSession?.classroomId || item.classroomId || 0);
-    if (!duration || !classroom || !item.branchId) return;
+    if (!classroom) { select.innerHTML = '<option value="">ابتدا در جدول ترم‌ها کلاس برگزاری را تعیین کنید</option>'; return; }
+    if (!duration || (!item.branchId && item.organizationKind !== 'academy')) return;
+    if (item.slotLocked && Number(new Date(date + 'T12:00:00').getDay()) !== Number(item.recurrence?.weekday)) { select.innerHTML = '<option value="">تاریخ باید با روز هفتهٔ ترم یکسان باشد</option>'; return; }
     select.innerHTML = '<option value="">در حال دریافت ساعت‌های مدرس...</option>';
     try {
       const query = new URLSearchParams({ branch: item.branchId, classroom, date, duration, teacher, term: item.termId, excludeTerm: item.termId, timezoneId: item.draftTimezoneId || 0 });
+      if (item.organizationKind) { query.set('organizationKind', item.organizationKind); query.set('organizationUserId', item.organizationUserId || 0); }
       const response = await fetch('/academy/admin/term-available-times?' + query, { credentials: 'same-origin', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
       const payload = await response.json();
       const envelope = payload.data ?? payload;
@@ -292,7 +295,7 @@
       const available = (envelope.data ?? envelope).times || [];
       if (!select.isConnected || select.dataset.serial !== serial) return;
       const options = item.needsFirstDate
-        ? available.map((time) => ({ value: time, label: time }))
+        ? available.filter(time => !item.slotLocked || time === item.draftTime).map((time) => ({ value: time, label: time }))
         : daySessions.filter((session) => available.includes(session.startTime)).map((session) => ({ value: String(session.id), label: `${session.startTime} تا ${session.endTime}` }));
       select.innerHTML = '<option value="">انتخاب ساعت</option>' + options.map((option) => `<option value="${option.value}">${option.label}</option>`).join('');
       if (!options.length) select.innerHTML = '<option value="">در این روز ساعت آزاد برای مدرس وجود ندارد</option>';

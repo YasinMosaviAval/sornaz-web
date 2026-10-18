@@ -47,6 +47,7 @@ expectParity($sections['my-waiting']['access'] === 'common' && $sections['my-wai
     }
     $routes = (new ReflectionProperty(\Core\router\Router::class, 'routes'))->getValue();
     $webOnly = [
+        'AcademyBranchController::memberRegistrationForm', 'AcademyBranchController::memberRegistrationOtp', 'AcademyTermController::assignStudent', 'AcademyTermController::storeBatch', 'AcademyTermController::assignClassroom', // Website batch workflow; legacy single-term API remains compatible.
         'AcademyTermController::updateDiscount', 'AcademyTermController::deleteDiscount', // Discount-row actions in the website's nested term tab.
         'AnalyticsController::adminPanel',
         'AdminGalleryController::realtimeVersion', 'AdminSchedulingRuleController::realtimeVersion',

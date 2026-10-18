@@ -728,13 +728,17 @@ window.generateStaffPDF = async function () {
 };
 
 // ==================== Modal افزودن کارمند ====================
+let pendingStaffRegistration = null;
+let savingStaff = false;
 window.openAddStaffModal = async function () {
+  pendingStaffRegistration = null;
   const modalHTML = window.getStaffAddModalHTML ? window.getStaffAddModalHTML() : '';
   document.getElementById('modalContainer').innerHTML = modalHTML;
   window.updateStaffOrganization?.('staff');
 };
 
 window.saveStaff = async function () {
+  if (savingStaff) return;
   const name = document.getElementById('staffName')?.value.trim();
   const phone = document.getElementById('staffPhone')?.value.trim();
   const contractTitle = document.getElementById('staffContractTitle')?.value.trim();
@@ -790,7 +794,23 @@ window.saveStaff = async function () {
   };
   if (!data.nationalId || !data.birthDate || !data.roleId)
     return alert('کد ملی، تاریخ تولد و نقش الزامی است.');
+  savingStaff = true;
   try {
+    const role = window.staffCatalog?.roles?.find(row => Number(row.id) === data.roleId);
+    if (['manager', 'receptionist'].includes(data.type) || /manager|receptionist/.test(role?.name || '')) {
+      const result = await branchRequest('/academy/admin/members/registration-form', {payload_b64: encodeBranchPayload(data)});
+      pendingStaffRegistration = data;
+      const host = document.getElementById('modalContainer');
+      host.innerHTML = '<div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"><div role="dialog" aria-modal="true" class="my-8 w-full max-w-md rounded-3xl bg-white dark:bg-slate-900"><div class="flex items-center justify-between px-6 pt-6"><h2 class="text-xl font-bold" data-staff-registration-title></h2><button type="button" onclick="cancelStaffRegistration()" aria-label="Close">×</button></div><div data-staff-registration-form></div><button type="button" onclick="cancelStaffRegistration()" class="mb-6 w-full text-sm" data-staff-registration-cancel></button></div></div>';
+      host.querySelector('[data-staff-registration-title]').textContent = document.documentElement.lang.startsWith('en') ? 'Register employee account' : 'ثبت‌نام کارمند';
+      host.querySelector('[data-staff-registration-cancel]').textContent = document.documentElement.lang.startsWith('en') ? 'Cancel' : 'انصراف';
+      host.querySelector('[data-staff-registration-form]').innerHTML = result.html;
+      const form = host.querySelector('#registerForm');
+      form.querySelector('[name=phone]').value = data.phone;
+      form.querySelector('[data-staff-registration-phone]').textContent = data.phone;
+      window.initializeRegistrationForm(form);
+      return;
+    }
     await branchRequest('/academy/admin/members', { payload_b64: encodeBranchPayload(data) });
     closeModal();
     await loadStaffData(true);
@@ -798,7 +818,41 @@ window.saveStaff = async function () {
     alert('✅ کارمند با موفقیت ثبت شد');
   } catch (error) {
     alert(error.message);
-  }
+  } finally { savingStaff = false; }
+};
+
+window.cancelStaffRegistration = function () {
+  if (document.getElementById('registerForm')?.dataset.busy === '1') return;
+  if (document.getElementById('registerForm')?.dataset.busy === '1') return;
+  pendingStaffRegistration = null;
+  window.showRegisterDetails?.();
+  closeModal();
+};
+
+window.staffRegistrationOtpRequest = function (form) {
+  if (!pendingStaffRegistration || !form.isConnected) return Promise.reject(new Error('فرم ثبت‌نام بسته شده است.'));
+  const data = {...pendingStaffRegistration, registration:Object.fromEntries(new FormData(form))};
+  return fetch('/academy/admin/members/registration-otp', {method:'POST',credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':window.adminCsrfToken || ''},body:new URLSearchParams({_token:window.adminCsrfToken || '',payload_b64:encodeBranchPayload(data)})});
+};
+
+window.submitStaffRegistration = function (form) {
+  if (!pendingStaffRegistration || form.dataset.busy === '1') return false;
+  if (window.handleRegisterSubmit(form)) window.completeStaffRegistration(form);
+  return false;
+};
+
+window.completeStaffRegistration = async function (form) {
+  if (!pendingStaffRegistration || !form.isConnected || form.dataset.busy === '1') return;
+  form.dataset.busy = '1';
+  const data = {...pendingStaffRegistration, registration:Object.fromEntries(new FormData(form))};
+  try {
+    await branchRequest('/academy/admin/members', {payload_b64:encodeBranchPayload(data)});
+    pendingStaffRegistration = null;
+    window.showRegisterDetails?.(); closeModal();
+    await loadStaffData(true); announceStaffChange();
+    alert('کارمند و حساب کاربری با موفقیت ثبت شدند.');
+  } catch (error) { window.showRegisterError?.(form.querySelector('#regOtpStep')?.classList.contains('hidden') ? 'regFormError' : 'regOtpError', error.message); }
+  finally { form.dataset.busy = ''; }
 };
 
 // ==================== نمایش جزئیات کارمند ====================

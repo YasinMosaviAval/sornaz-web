@@ -44,6 +44,8 @@ Router::post('/academy/admin/branches/{id}/update', [AcademyBranchController::cl
 Router::post('/academy/admin/branches/{id}/status', [AcademyBranchController::class, 'cycleStatus'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/branches/{id}/delete', [AcademyBranchController::class, 'destroy'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/members', [AcademyBranchController::class, 'storeMember'])->middleware(['academy-panel', 'csrf']);
+Router::post('/academy/admin/members/registration-form', [AcademyBranchController::class, 'memberRegistrationForm'])->middleware(['academy-panel', 'csrf']);
+Router::post('/academy/admin/members/registration-otp', [AcademyBranchController::class, 'memberRegistrationOtp'])->middleware(['academy-panel', 'csrf', 'auth-rate-limit']);
 Router::get('/academy/admin/members/realtime-version', [AcademyBranchController::class, 'staffRealtimeVersion'])->middleware('academy-panel');
 Router::get('/academy/admin/members/data', [AcademyBranchController::class, 'staffIndex'])->middleware('academy-panel');
 Router::post('/academy/admin/members/{id}/update', [AcademyBranchController::class, 'updateMember'])->middleware(['academy-panel', 'csrf']);
@@ -117,6 +119,9 @@ Router::get('/academy/admin/subscriptions', [AcademySubscriptionController::clas
 Router::post('/academy/admin/subscriptions/{id}/zarinpal', [AcademySubscriptionController::class, 'start'])->middleware(['academy-panel', 'csrf']);
 Router::get('/academy/subscriptions/zarinpal/callback', [AcademySubscriptionController::class, 'callback']);
 Router::post('/academy/admin/terms', [AcademyTermController::class, 'store'])->middleware(['academy-panel', 'csrf']);
+Router::post('/academy/admin/terms/batch', [AcademyTermController::class, 'storeBatch'])->middleware(['academy-panel', 'csrf']);
+Router::post('/academy/admin/terms/{id}/classroom', [AcademyTermController::class, 'assignClassroom'])->middleware(['academy-panel', 'csrf']);
+Router::post('/academy/admin/terms/{id}/student', [AcademyTermController::class, 'assignStudent'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/terms/{id}/update', [AcademyTermController::class, 'update'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/terms/{id}/status', [AcademyTermController::class, 'cycleStatus'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/terms/{id}/sessions/{sessionId}/cancel', [AcademyTermController::class, 'cancelSession'])->middleware(['academy-panel', 'csrf']);

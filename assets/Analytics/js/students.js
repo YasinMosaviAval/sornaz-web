@@ -717,12 +717,17 @@
       : '';
   };
 
+  let savingStudent = false;
   window.saveStudent = async function () {
+    if (savingStudent) return;
     clearStudentFieldErrors();
     const data = readStudentForm('stu');
+    const assignmentId = Number(document.querySelector('[data-student-term-id]')?.dataset.studentTermId || 0);
+    if (assignmentId) { data.termId = assignmentId; data.termKey = String(assignmentId); data.termStatus = 'open'; }
     if (!validateStudentData(data)) return;
+    savingStudent = true;
     try {
-      const saved = await branchRequest('/academy/admin/students', {
+      const saved = await branchRequest(assignmentId ? `/academy/admin/terms/${assignmentId}/student` : '/academy/admin/students', {
         payload_b64: encodeBranchPayload(data),
       });
       allStudents.unshift(
@@ -735,11 +740,12 @@
         })
       );
       window.filterStudents();
+      if (assignmentId) { studentFormOptionsPromise = null; await window.loadTerms?.(); }
       closeModal();
       alert('✅ هنرجو با موفقیت ثبت شد');
     } catch (error) {
       if (!showStudentFieldError(error)) alert(error.message || 'ثبت هنرجو ناموفق بود.');
-    }
+    } finally { savingStudent = false; }
   };
 
   window.viewStudent = async function (id) {

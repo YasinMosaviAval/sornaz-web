@@ -26,6 +26,10 @@
                     class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 transition">
                 <i class="fas fa-plus"></i> افزودن ترم جدید
             </button>
+            <button onclick="openTeacherTermBatchModal()"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 transition">
+                <i class="fas fa-plus"></i> <?= locale() === 'en' ? 'Define teacher terms' : 'تعریف ترم های اساتید' ?>
+            </button>
             <button onclick="exportTermsToExcel()"
                     class="border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl flex items-center gap-2">
                 <i class="fas fa-file-excel text-green-600"></i> خروجی اکسل

@@ -1346,7 +1346,7 @@ window.refreshTermCourse = function (prefix) {
     ).join('');
     refreshTermPeople(prefix, type);
   };
-  render('teacher', course.teacher_capacity);
+  render('teacher', document.querySelector('[data-term-batch]') && !prefix ? 1 : course.teacher_capacity);
   render('student', course.student_capacity);
   syncTermPeopleVisibility(prefix);
 };
@@ -1358,32 +1358,32 @@ window.refreshTermPeople = function (prefix, type) {
   if (!box || !course) return;
   const selects = [...box.querySelectorAll('select')],
     selected = selects.map((x) => x.value).filter(Boolean),
+    courseBranch = type === 'teacher' ? Number(course.branchId || (course.organizationKind === 'branch' ? course.organizationId : 0)) : branch,
     available = termMembers.filter(
       (x) =>
-        x.branchId === branch &&
-        (branch > 0 || Number(x.academyId) === Number(course.organizationId)) &&
+        (courseBranch > 0
+          ? Number(x.branchId) === courseBranch
+          : Number(x.academyId) === Number(course.organizationId) &&
+            (Number(x.branchId || 0) === branch || (type === 'teacher' && Number(x.branchId || 0) === 0))) &&
         x.type === type &&
-        (type !== 'teacher' || x.lessonId === course.lessonId)
+        (type !== 'teacher' || Number(x.lessonId) === Number(course.lessonId))
     );
   if (type === 'teacher') {
     const note = termField(prefix, 'TeacherAvailabilityNote');
     if (note) {
-      note.classList.toggle('hidden', !branch || available.length > 0);
-      note.textContent = 'برای این درس و شعبه مدرس واجد شرایط ثبت نشده است. ابتدا مدرس و درس او را در مدیریت پرسنل ثبت کنید.';
+      note.classList.toggle('hidden', available.length > 0);
+      note.textContent = document.documentElement.lang.startsWith('en') ? 'No eligible teacher is registered for this course. Check employee contracts and teaching lessons.' : 'برای این دوره مدرس واجد شرایط ثبت نشده است. قرارداد کارمندها و درس‌های تدریس آن‌ها را بررسی کنید.';
     }
   }
   selects.forEach((select, i) => {
     const value = select.value;
     select.disabled = i > 0 && !selects[i - 1].value;
-    select.innerHTML =
-      '<option value="">انتخاب کنید</option>' +
-      available
+    select.replaceChildren(
+      new Option(document.documentElement.lang.startsWith('en') ? 'Select' : 'انتخاب کنید', ''),
+      ...available
         .filter((x) => !selected.includes(String(x.id)) || String(x.id) === value)
-        .map(
-          (x) =>
-            `<option value="${x.id}" ${String(x.id) === value ? 'selected' : ''}>${x.name}</option>`
-        )
-        .join('');
+        .map((x) => new Option(x.name, x.id, false, String(x.id) === value))
+    );
   });
 };
 window.rebuildDbTermSessions = function (prefix) {
@@ -1487,6 +1487,10 @@ window.syncTermFinancialFields = function (prefix) {
   if (addDiscount) addDiscount.disabled = free;
 };
 window.syncTermPeopleVisibility = function (prefix) {
+  if (!prefix && document.querySelector('[data-term-batch]')) {
+    termField(prefix, 'TeachersField')?.classList.remove('hidden');
+    return;
+  }
   const status =
       termField(prefix, 'Status')?.value ||
       (window.termPermissions?.isReceptionist ? 'pending' : 'open'),
@@ -2056,13 +2060,117 @@ window.saveNewTermDiscount=async function(){
  }catch(error){alert(error.message);}finally{savingTermDiscount=false;if(button.isConnected)button.disabled=false;}
 };
 
+window.refreshTermBatchRangeOptions = async function () {
+  const form = document.querySelector('[data-term-batch]');
+  if (!form) return;
+  const start = termField('', 'RangeStart'), end = termField('', 'RangeEnd');
+  const organization = termBranches.find(row => Number(row.id) === Number(termField('', 'Branch')?.value));
+  const room = termClassrooms.find(row => Number(row.id) === Number(termField('', 'Classroom')?.value));
+  const serial = String(Number(form.dataset.rangeSerial || 0) + 1);
+  form.dataset.rangeSerial = serial;
+  const preferredStart = start.value || start.dataset.preferredStart, preferredEnd = end.value || end.dataset.preferredStart;
+  start.disabled = end.disabled = true;
+  window.refreshTermBatchPreview();
+  if (!organization) { start.replaceChildren(); end.replaceChildren(); window.refreshTermBatchPreview(); return; }
+  try {
+    const branch = Number(room?.branchId || (organization.kind === 'branch' ? organization.organizationId : 0));
+    const academy = Number(organization.kind === 'academy' ? organization.organizationId : organization.academyId);
+    const query = new URLSearchParams({branch, academy, weekday: termField('', 'RecurrenceWeekday').value, duration:5});
+    const data = await termApi('/academy/admin/term-available-times?' + query);
+    if (!form.isConnected || form.dataset.rangeSerial !== serial) return;
+    const times = data.times || [];
+    const ends = [...new Set(times.map(time => { const minute = Number(time.slice(0,2))*60+Number(time.slice(3))+5; return minute < 1440 ? String(Math.floor(minute/60)).padStart(2,'0')+':'+String(minute%60).padStart(2,'0') : ''; }).filter(Boolean))];
+    start.innerHTML = window.getTermTimeOptions(times, preferredStart);
+    end.innerHTML = window.getTermTimeOptions(ends, preferredEnd);
+    start.value = times.includes(preferredStart) ? preferredStart : times[0] || '';
+    end.value = ends.includes(preferredEnd) ? preferredEnd : ends.at(-1) || '';
+    start.disabled = !times.length; end.disabled = !ends.length;
+    if (data.timezoneId) termField('', 'Timezone').value = String(data.timezoneId);
+  } catch (error) {
+    if (!form.isConnected || form.dataset.rangeSerial !== serial) return;
+    start.replaceChildren(); end.replaceChildren();
+    form.querySelector('[data-batch-error]').textContent = error.message;
+  }
+  window.refreshTermBatchPreview();
+};
+
+window.refreshTermBatchPreview = function () {
+  const form = document.querySelector('[data-term-batch]');
+  if (!form) return 0;
+  const minutes = value => /^\d{2}:\d{2}$/.test(value) ? Number(value.slice(0, 2)) * 60 + Number(value.slice(3)) : NaN;
+  const duration = Number(termField('', 'DurationMinutes')?.value), span = minutes(termField('', 'RangeEnd')?.value || '') - minutes(termField('', 'RangeStart')?.value || '');
+  const valid = !termField('', 'RangeStart')?.disabled && !termField('', 'RangeEnd')?.disabled && Number.isInteger(duration) && duration >= 5 && duration % 5 === 0 && span > 0 && span % duration === 0;
+  const count = valid ? span / duration : 0;
+  const en = document.documentElement.lang.startsWith('en');
+  form.querySelector('[data-batch-preview]').textContent = valid ? (en ? `${count} separate terms will be created.` : `${count.toLocaleString('fa-IR')} ترم مستقل ایجاد می‌شود.`) : (en ? 'Choose a range divisible by the session duration.' : 'بازه‌ای انتخاب کنید که دقیقاً بر مدت هر جلسه تقسیم شود.');
+  if (form.dataset.busy !== '1') form.querySelector('[type=submit]').disabled = !valid;
+  return count;
+};
+
+window.saveTermBatch = async function () {
+  const form = document.querySelector('[data-term-batch]');
+  if (!form || form.dataset.busy === '1' || !form.reportValidity() || !window.refreshTermBatchPreview()) return;
+  const field = name => termField('', name)?.value || '';
+  const teachers = [...form.querySelectorAll('.term-teacher-select')].map(select => ({id: Number(select.value)})).filter(row => row.id);
+  const en = document.documentElement.lang.startsWith('en');
+  if (teachers.length !== 1) { form.querySelector('[data-batch-error]').textContent = en ? 'Select one teacher.' : 'یک استاد انتخاب کنید.'; return; }
+  const data = {name:field('Name').trim(), organizationUserId:Number(field('Branch')), courseId:Number(field('Course')), classroomId:Number(field('Classroom')), currencyId:Number(field('Currency')), cost:field('Cost'), sessionCount:Number(field('SessionCount')), repeatType:field('RepeatType'), weekday:field('RecurrenceWeekday'), timezoneId:Number(field('Timezone')), durationMinutes:Number(field('DurationMinutes')), rangeStart:field('RangeStart'), rangeEnd:field('RangeEnd'), teachers, summary:field('Summary').trim(), description:field('Description').trim(), requestKey:form.dataset.requestKey};
+  const button = form.querySelector('[type=submit]');
+  form.dataset.busy = '1'; button.disabled = true; form.querySelector('[data-batch-error]').textContent = '';
+  try {
+    const result = await termApi('/academy/admin/terms/batch', data);
+    await loadTerms(); closeModal();
+    alert(en ? `${result.count} terms created.` : `${Number(result.count).toLocaleString('fa-IR')} ترم ایجاد شد.`);
+  } catch (error) { form.querySelector('[data-batch-error]').textContent = error.message; }
+  finally { form.dataset.busy = ''; if (button.isConnected) window.refreshTermBatchPreview(); }
+};
+
+window.openTermStudentAssignment = async function (id) {
+  const item = allTerms.find(row => row.id === id), course = termCourses.find(row => row.id === item?.courseId);
+  if (!item || !course || item.status_code === 'ongoing' || item.students?.length) return;
+  try {
+    await window.ensureStudentFormOptions();
+    document.getElementById('modalContainer').innerHTML = window.getStudentAddModalHTML({assignmentTermId: id, organizationUserId: course.organizationUserId});
+    window.initLocalizedDateInputs?.(document.getElementById('modalContainer'));
+  } catch (error) { alert(error.message); }
+};
+
+window.openTermClassroomAssignment = function (id) {
+  const item = allTerms.find(row => row.id === id), course = termCourses.find(row => row.id === item?.courseId);
+  if (!item?.scheduleDraft || item.classroomId || !course) return;
+  const en = document.documentElement.lang.startsWith('en');
+  const host = document.getElementById('modalContainer');
+  host.innerHTML = '<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"><form data-assign-term-classroom role="dialog" aria-modal="true" class="w-full max-w-lg space-y-4 rounded-3xl bg-white p-6 dark:bg-slate-900"><h2 class="text-xl font-bold"></h2><select required class="w-full rounded-2xl border p-3 dark:bg-slate-800"></select><p role="alert" class="text-sm text-red-600"></p><button type="submit" class="rounded-2xl bg-indigo-600 px-6 py-3 text-white"></button><button type="button" onclick="closeModal()" class="rounded-2xl border px-6 py-3"></button></form></div>';
+  const form = host.querySelector('form'), select = form.querySelector('select');
+  form.querySelector('h2').textContent = en ? 'Assign classroom' : 'تعیین کلاس برگزاری';
+  select.add(new Option(en ? 'Select classroom' : 'انتخاب کلاس', ''));
+  termClassrooms.filter(room => course.organizationKind === 'branch' ? Number(room.branchId) === Number(course.organizationId) : Number(room.academyId) === Number(course.organizationId) || termBranches.some(org => org.kind === 'branch' && Number(org.organizationId) === Number(room.branchId) && Number(org.academyId) === Number(course.organizationId))).forEach(room => select.add(new Option(room.name, room.id)));
+  form.querySelector('[type=submit]').textContent = en ? 'Save' : 'ذخیره'; form.querySelector('[type=button]').textContent = en ? 'Cancel' : 'انصراف';
+  form.onsubmit = async event => {
+    event.preventDefault(); const button = form.querySelector('[type=submit]'); if (button.disabled) return; button.disabled = true;
+    try { await termApi(`/academy/admin/terms/${id}/classroom`, {classroomId:Number(select.value)}); await loadTerms(); closeModal(); }
+    catch (error) { form.querySelector('[role=alert]').textContent = error.message; }
+    finally { if (button.isConnected) button.disabled = false; }
+  };
+};
+
+window.openTeacherTermBatchModal = function () {
+  const host = document.getElementById('modalContainer');
+  if (!host || !window.getTermBatchAddModalHTML) return;
+  host.innerHTML = window.getTermBatchAddModalHTML();
+  const form = host.querySelector('[data-term-batch]');
+  form.dataset.requestKey = [...crypto.getRandomValues(new Uint8Array(16))].map(value => value.toString(16).padStart(2, '0')).join('');
+  refreshTermDependencies('');
+  window.refreshTermBatchRangeOptions();
+  window.refreshTermBatchPreview();
+};
+
 window.openAddTermModal = async function () {
   if (!document.getElementById('modalContainer')) {
     alert('خطا: المان modalContainer در صفحه اصلی وجود ندارد!');
     return;
   }
-  document.getElementById('modalContainer').innerHTML = window.getTermAddModalHTML
-    ? window.getTermAddModalHTML()
+  document.getElementById('modalContainer').innerHTML = window.getTermAddModalHTML ? window.getTermAddModalHTML()
     : '';
   window.initLocalizedDateInputs?.(document.getElementById('modalContainer'));
   window.syncNewTermRecurrence?.('');

@@ -1,4 +1,38 @@
 (function () {
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  window.getTermBatchAddModalHTML = function () {
+    const en = document.documentElement.lang.startsWith('en');
+    const t = (fa, english) => en ? english : fa;
+    const options = rows => rows.map(row => `<option value="${Number(row.id)}">${esc(row.name)}</option>`).join('');
+    const select = (name, label, rows, required = true, handler = '') => `<label class="block text-sm"><span class="mb-2 block font-medium">${label}</span><select id="term${name}" ${required ? 'required' : ''} onchange="${handler}" class="w-full rounded-2xl border px-4 py-3 dark:bg-slate-800">${options(rows)}</select></label>`;
+    const input = (name, label, type, value, extra = '') => `<label class="block text-sm"><span class="mb-2 block font-medium">${label}</span><input id="term${name}" required type="${type}" value="${value}" ${extra} class="w-full rounded-2xl border px-4 py-3 dark:bg-slate-800"></label>`;
+    const rangeSelect = (name, label, value) => `<label class="block text-sm"><span class="mb-2 block font-medium">${label}</span><select id="term${name}" required dir="ltr" data-preferred-start="${value}" class="term-session-start w-full rounded-xl border px-3 py-2.5 disabled:bg-gray-100">${window.getTermTimeOptions ? window.getTermTimeOptions([value], value) : '<option value="' + value + '">' + value + '</option>'}</select></label>`;
+    return `<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"><div role="dialog" aria-modal="true" aria-labelledby="termBatchTitle" class="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white text-gray-900 dark:bg-slate-900 dark:text-white"><div class="flex items-center justify-between border-b p-6"><h2 id="termBatchTitle" class="text-xl font-bold">${t('تعریف ترم های اساتید','Define teacher terms')}</h2><button type="button" onclick="closeModal()" aria-label="${t('بستن','Close')}">×</button></div>
+    <form data-term-batch onsubmit="event.preventDefault();saveTermBatch()" oninput="refreshTermBatchPreview()" onchange="refreshTermBatchPreview();if(['termBranch','termClassroom','termRecurrenceWeekday'].includes(event.target.id))refreshTermBatchRangeOptions()" class="space-y-5 overflow-y-auto p-6">
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    ${input('Name',t('نام کلی ترم','Term name'),'text','', 'maxlength="160"')}
+    ${select('Branch',t('سازمان','Organization'),window.termBranches || [],true,"refreshTermDependencies('')")}
+    ${select('Course',t('دوره مرتبط','Course'),[],true,"refreshTermCourse('')")}
+    <div id="termTeachersField" class="min-w-0"><label class="mb-2 block text-sm font-medium">${t('استاد','Teacher')}</label><div id="termTeachersContainer"><select required class="term-teacher-select w-full rounded-2xl border px-4 py-3"><option value="">${t('ابتدا دوره را انتخاب کنید','Select a course first')}</option></select></div><p id="termTeacherAvailabilityNote" class="hidden text-xs text-amber-700"></p></div>
+    ${select('Classroom',t('کلاس برگزاری (اختیاری)','Classroom (optional)'),[],false,"refreshTermPeople('','teacher')")}
+    ${select('Currency',t('نوع پول','Currency'),window.termCurrencies || [])}
+    ${input('Cost',t('هزینهٔ هر ترم','Tuition per term'),'number','15000000','min="1" step="1"')}
+    ${input('SessionCount',t('تعداد جلسات هر ترم','Sessions per term'),'number','8','min="1" max="100" step="1"')}
+    <label class="text-sm"><span class="mb-2 block font-medium">${t('دوره تکرار','Repeat')}</span><select id="termRepeatType" class="w-full rounded-2xl border px-4 py-3 dark:bg-slate-800">${[['week',t('هفتگی','Weekly')],['2-week',t('دو هفته یک‌بار','Every two weeks')],['3-week',t('سه هفته یک‌بار','Every three weeks')],['4-week',t('چهار هفته یک‌بار','Every four weeks')]].map(([value,label])=>`<option value="${value}">${label}</option>`).join('')}</select></label>
+    <label class="text-sm"><span class="mb-2 block font-medium">${t('روز هفته','Weekday')}</span><select required id="termRecurrenceWeekday" class="w-full rounded-2xl border px-4 py-3 dark:bg-slate-800">${[6,0,1,2,3,4,5].map(day=>`<option value="${day}">${t(['یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه','شنبه'][day],['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][day])}</option>`).join('')}</select></label>
+    ${select('Timezone',t('منطقه زمانی','Timezone'),window.termTimezones || [])}
+    ${input('DurationMinutes',t('مدت هر جلسه (دقیقه)','Session duration (minutes)'),'number','30','min="5" max="1435" step="5"')}
+    ${rangeSelect('RangeStart',t('شروع بازه','Range start'),'10:00')}
+    ${rangeSelect('RangeEnd',t('پایان بازه','Range end'),'18:00')}
+    </div><p data-batch-preview class="text-sm font-medium text-indigo-600 dark:text-indigo-300" aria-live="polite"></p>
+    <p class="text-sm text-gray-500">${window.termPermissions?.isReceptionist ? t('ترم‌ها در انتظار تأیید ثبت می‌شوند.','Terms will be saved pending approval.') : t('ترم‌ها با وضعیت باز ثبت می‌شوند.','Terms will be saved as open.')}</p>
+    <label class="block text-sm">${t('خلاصه ترم','Summary')}<input id="termSummary" maxlength="4000" class="mt-2 w-full rounded-2xl border p-3 dark:bg-slate-800"></label>
+    <label class="block text-sm">${t('شرح ترم','Description')}<textarea id="termDescription" maxlength="20000" rows="3" class="mt-2 w-full rounded-2xl border p-3 dark:bg-slate-800"></textarea></label>
+    <p data-batch-error role="alert" class="text-sm text-red-600"></p><div class="flex gap-3"><button type="submit" class="rounded-2xl bg-indigo-600 px-6 py-3 text-white">${t('ثبت ترم‌ها','Create terms')}</button><button type="button" onclick="closeModal()" class="rounded-2xl border px-6 py-3">${t('انصراف','Cancel')}</button></div></form></div></div>`;
+  };
+})();
+
+(function () {
   function escapeHtml(value) {
     return String(value ?? '')
       .replace(/&/g, '&amp;')
@@ -39,7 +73,7 @@
             .filter((s) => s.date)
             .map((s) => dayNames[new Date(s.date + 'T12:00:00').getDay()])
         ),
-      ].join('، ') || '—';
+        ].join('، ') || dayNames[Number(item.scheduleDraft?.recurrence?.weekday)] || '—';
     const times =
       [
         ...new Set(
@@ -47,12 +81,14 @@
             .filter((s) => s.startTime)
             .map((s) => s.startTime + (s.endTime ? ' تا ' + s.endTime : ''))
         ),
-      ].join('، ') || '—';
+        ].join('، ') || (item.scheduleDraft?.startTime ? item.scheduleDraft.startTime + ' تا ' + item.scheduleDraft.endTime : '—');
     return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.name)}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.course || '—')}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.start || '—')}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.end || '—')}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(days)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(times)}`, attributes: ` class="py-4 px-5"` }, { html: `
                 ${window.termPermissions?.isReceptionist ? `<span class="px-3 py-1 rounded-full text-xs ${statusClass || statusBadgeClass(item.status)}">${escapeHtml(item.status)}</span>` : `<button type="button" onclick="cycleTermStatus(${item.id})" class="px-3 py-1 rounded-full text-xs ${statusClass || statusBadgeClass(item.status)}">${escapeHtml(item.status)}</button>`}
             `, attributes: ` class="py-4 px-5"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewTerm(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
+                    ${!item.students?.length && item.status_code !== 'ongoing' ? `<button type="button" onclick="openTermStudentAssignment(${Number(item.id)})" class="text-indigo-600 hover:underline text-sm">${document.documentElement.lang.startsWith('en') ? 'Assign student' : 'تعیین هنرجو'}</button>` : ''}
+                    ${item.scheduleDraft && !item.classroomId ? `<button type="button" onclick="openTermClassroomAssignment(${Number(item.id)})" class="text-indigo-600 hover:underline text-sm">${document.documentElement.lang.startsWith('en') ? 'Assign classroom' : 'تعیین کلاس'}</button>` : ''}
                     <button type="button" data-term-action="inline-edit" data-term-id="${item.id}" onclick="toggleTermInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
                     <button type="button" data-term-action="inline-attendance" data-term-id="${item.id}" onclick="toggleTermInlineAttendance(${item.id})" class="text-emerald-600 hover:underline text-sm">حضور و غیاب</button>
                     <button onclick="deleteTerm(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>
@@ -812,6 +848,7 @@
       (window.termCourses || []).filter((x) => x.organizationUserId == branch),
       course
     )}</select></div>
+<div id="${id('TeachersField')}" class="min-w-0"><h3 class="mb-3 font-medium">استادها * (ظرفیت ${teacherCapacity})</h3><p class="mb-2 text-xs text-gray-500">برای ترم باز، دست‌کم یک مدرسِ همان شعبه و درس را انتخاب کنید.</p><div id="${id('TeachersContainer')}">${people(prefix, 'teacher', teacherCapacity, item.teachers || [])}</div><p id="${id('TeacherAvailabilityNote')}" class="mt-2 hidden text-xs text-amber-700"></p></div>
 <div><label class="mb-2 block text-sm font-medium">کلاس برگزاری *</label><select id="${id('Classroom')}" onchange="refreshTermPeople('${prefix}','teacher');refreshTermPeople('${prefix}','student');syncTermDateAvailability('${prefix}');refreshAllTermSessionAvailability('${prefix}')" ${branch ? '' : 'disabled'} class="w-full rounded-2xl border px-5 py-3.5 disabled:bg-gray-100"><option value="">انتخاب کلاس حضوری یا آنلاین</option>${opts(window.termClassrooms || [], classroom)}</select></div>
 <div><label class="mb-2 block text-sm font-medium">نوع پول *</label><select id="${id('Currency')}" class="w-full rounded-2xl border px-5 py-3.5">${opts(window.termCurrencies || [], item.currencyId || window.termCurrencies?.[0]?.id)}</select></div>
 <div><label class="mb-2 block text-sm font-medium">هزینه ترم</label><input id="${id('Cost')}" type="number" min="0" value="${cost}" oninput="syncTermFinancialFields('${prefix}')" class="w-full rounded-2xl border px-5 py-3.5"></div>
@@ -823,7 +860,6 @@ ${isReceptionist ? `<input id="${id('Status')}" type="hidden" value="pending">` 
 ${isNewOpen ? `<div id="${id('RecurrenceField')}" class="mt-4 grid gap-3 sm:grid-cols-2"><label data-recurrence-kind="week" class="text-sm">روز هفته<select id="${id('RecurrenceWeekday')}" class="mt-1 w-full rounded-xl border p-3"><option value="">انتخاب روز</option><option value="6">شنبه</option><option value="0">یکشنبه</option><option value="1">دوشنبه</option><option value="2">سه‌شنبه</option><option value="3">چهارشنبه</option><option value="4">پنجشنبه</option><option value="5">جمعه</option></select></label><label data-recurrence-kind="month" class="hidden text-sm">روز ماه شمسی<input id="${id('RecurrenceDay')}" type="number" min="1" max="31" placeholder="مثلاً ۱۰ یا ۲۳" class="mt-1 w-full rounded-xl border p-3"></label><label data-recurrence-kind="year" class="hidden text-sm">ماه شمسی<select id="${id('RecurrenceMonth')}" class="mt-1 w-full rounded-xl border p-3"><option value="">انتخاب ماه</option>${['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'].map((month, index) => `<option value="${index + 1}">${month}</option>`).join('')}</select></label><label data-recurrence-kind="exact" class="hidden text-sm">تاریخ دقیق شمسی<div class="localized-date-field mt-1"><input type="text" data-jdp data-jdp-target-value-input="#${id('RecurrenceExactDate')}" data-jdp-target-value-type="gregorian" placeholder="۱۴۰۵/۰۱/۱۱" class="w-full rounded-xl border p-3"><input id="${id('RecurrenceExactDate')}" type="hidden"></div></label></div>` : ''}
 <div class="mt-6 w-full"><label class="mb-2 block text-sm font-medium">${isNewOpen ? 'منطقه زمانی، ساعت شروع و مدت جلسه؛ تاریخ هنگام تأیید هنرجو تعیین می‌شود' : 'تاریخ، منطقه زمانی، ساعت شروع و مدت جلسه'}</label><div id="${id('SessionsContainer')}" data-term-id="${item.id || 0}" class="grid w-full grid-cols-1 gap-1" data-undated-template="${isNewOpen ? 1 : 0}">${sessionMarkup}</div></div>
 <div class="mt-6 grid gap-5"><input id="${id('Summary')}" value="${esc(item.summary || '')}" placeholder="خلاصه ترم" class="w-full rounded-2xl border px-5 py-3.5"><textarea id="${id('Description')}" rows="3" placeholder="شرح ترم" class="w-full rounded-2xl border px-5 py-3.5">${esc(item.description || '')}</textarea></div>
-<div id="${id('TeachersField')}" class="mt-6"><h3 class="mb-3 font-medium">استادها * (ظرفیت ${teacherCapacity})</h3><p class="mb-2 text-xs text-gray-500">برای ترم باز، دست‌کم یک مدرسِ همان شعبه و درس را انتخاب کنید.</p><div id="${id('TeachersContainer')}">${people(prefix, 'teacher', teacherCapacity, item.teachers || [])}</div><p id="${id('TeacherAvailabilityNote')}" class="mt-2 hidden text-xs text-amber-700"></p></div>
 <div id="${id('StudentsField')}" class="mt-6 ${status === 'open' || status === 'pending' ? 'hidden' : ''}"><h3 class="mb-3 font-medium">هنرجویان (ظرفیت ${studentCapacity})</h3><div id="${id('StudentsContainer')}">${people(prefix, 'student', studentCapacity, item.students || [])}</div></div>`;
   }
   window.getTermAddModalHTML = () =>

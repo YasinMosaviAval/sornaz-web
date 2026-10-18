@@ -750,79 +750,97 @@ class AcademyBranchService
 
     private const STUDENT_USERNAME_MARKER = 'test_branch_member_student_';
 
-    public function storeMember(int $actorId, array $data, bool $siteAdmin = false): array
+    public function prepareMember(int $actorId, array $data, bool $siteAdmin = false): array
     {
-        return transaction(function () use ($actorId, $data, $siteAdmin) {
-            $name = trim((string) ($data['name'] ?? ''));
-            $digits = ['۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3', '۴' => '4', '۵' => '5', '۶' => '6', '۷' => '7', '۸' => '8', '۹' => '9', '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4', '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9'];
-            $phone = preg_replace('/\D+/', '', strtr((string) ($data['phone'] ?? ''), $digits));
-            $national = preg_replace('/\D+/', '', strtr((string) ($data['nationalId'] ?? ''), $digits));
-            if ($name === '' || $phone === '' || $national === '') {
-                throw new RuntimeException('نام، شماره تلفن و کد ملی الزامی است.');
-            }
-            if (DB::table('users')->where('phone', $phone)->whereNull('deleted_at')->first()) {
-                throw new RuntimeException('این شماره تلفن قبلاً ثبت شده است.');
-            }
-            if (DB::table('users')->where('national_code', $national)->whereNull('deleted_at')->first()) {
-                throw new RuntimeException('این کد ملی قبلاً ثبت شده است.');
-            }
-            $gender = (string) ($data['gender'] ?? 'other');
-            if (!in_array($gender, ['male', 'female', 'other'], true)) {
-                $gender = 'other';
-            }
-            $birthday = (string) ($data['birthDate'] ?? '');
-            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $birthday)) {
-                throw new RuntimeException('تاریخ تولد معتبر نیست.');
-            }
-            $start = (string) ($data['startDate'] ?? '');
-            $end = (string) ($data['endDate'] ?? '');
-            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start) || ($end !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $end))) {
-                throw new RuntimeException('تاریخ قرارداد معتبر نیست.');
-            }
-            $staffAcademy = null;
-            if (!$siteAdmin) {
-                try {
-                    $staffAcademy = $this->academyForUser($actorId);
-                } catch (RuntimeException) {
-                    $membership = DB::table('academy_branch_members')->where('user_id', $actorId)->whereNull('deleted_at')->first();
-                    if ($membership) {
-                        $staffAcademy = DB::table('academies')->where('academy_id', (int) $membership['academy_id'])->whereNull('deleted_at')->first();
-                    }
-                }
-            }$catalog = $this->staffCatalog($actorId, $staffAcademy, $siteAdmin);
-            $organization = null;
-            foreach ($catalog['organizations'] as $o) {
-                if ((int) $o['user_id'] === (int) ($data['organizationUserId'] ?? 0)) {
-                    $organization = $o;
+        $identity = $this->memberIdentity($data);
+        $staffAcademy = null;
+        if (!$siteAdmin) {
+            try {
+                $staffAcademy = $this->academyForUser($actorId);
+            } catch (RuntimeException) {
+                $membership = DB::table('academy_branch_members')->where('user_id', $actorId)->whereNull('deleted_at')->first();
+                if ($membership) {
+                    $staffAcademy = DB::table('academies')->where('academy_id', (int) $membership['academy_id'])->whereNull('deleted_at')->first();
                 }
             }
-            if (!$organization && count($catalog['organizations']) === 1) {
-                $organization = $catalog['organizations'][0];
+        }$catalog = $this->staffCatalog($actorId, $staffAcademy, $siteAdmin);
+        $organization = null;
+        foreach ($catalog['organizations'] as $o) {
+            if ((int) $o['user_id'] === (int) ($data['organizationUserId'] ?? 0)) {
+                $organization = $o;
             }
-            if (!$organization) {
-                throw new RuntimeException('سازمان انتخاب‌شده معتبر نیست.');
-            }
-            $type = (string) ($data['type'] ?? 'other');
-            if (!in_array($type, ['teacher', 'receptionist', 'manager', 'other'], true)) {
-                $type = 'other';
-            }
-            $roleId = (int) ($data['roleId'] ?? 0);
-            $role = (new \Modules\Analytics\Services\AdminUserAccessService())->staffRole($actorId, $roleId);
-            if ($organization['branch_id'] !== null && !str_contains((string) $role['name'], 'branch')) {
-                throw new RuntimeException('برای پرسنل شعبه باید نقش شعبه انتخاب شود.');
-            }
-            if ($organization['branch_id'] === null && str_contains((string) $role['name'], 'branch')) {
-                throw new RuntimeException('برای پرسنل آموزشگاه باید نقش آموزشگاه انتخاب شود.');
-            }
-            if ($type !== 'other' && !str_contains((string) $role['name'], $type)) {
-                throw new RuntimeException('نقش با نوع قرارداد هماهنگ نیست.');
-            }
+        }
+        if (!$organization && count($catalog['organizations']) === 1) {
+            $organization = $catalog['organizations'][0];
+        }
+        if (!$organization) {
+            throw new RuntimeException('سازمان انتخاب‌شده معتبر نیست.');
+        }
+        $type = (string) ($data['type'] ?? 'other');
+        if (!in_array($type, ['teacher', 'receptionist', 'manager', 'other'], true)) {
+            $type = 'other';
+        }
+        $roleId = (int) ($data['roleId'] ?? 0);
+        $role = (new \Modules\Analytics\Services\AdminUserAccessService())->staffRole($actorId, $roleId);
+        if ($organization['branch_id'] !== null && !str_contains((string) $role['name'], 'branch')) {
+            throw new RuntimeException('برای پرسنل شعبه باید نقش شعبه انتخاب شود.');
+        }
+        if ($organization['branch_id'] === null && str_contains((string) $role['name'], 'branch')) {
+            throw new RuntimeException('برای پرسنل آموزشگاه باید نقش آموزشگاه انتخاب شود.');
+        }
+        if ($type !== 'other' && !str_contains((string) $role['name'], $type)) {
+            throw new RuntimeException('نقش با نوع قرارداد هماهنگ نیست.');
+        }
+        return $identity + compact('organization', 'type', 'roleId', 'role');
+    }
+
+    private function memberIdentity(array $data): array
+    {
+        $name = trim((string) ($data['name'] ?? ''));
+        $digits = ['۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3', '۴' => '4', '۵' => '5', '۶' => '6', '۷' => '7', '۸' => '8', '۹' => '9', '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4', '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9'];
+        $phone = preg_replace('/\D+/', '', strtr((string) ($data['phone'] ?? ''), $digits));
+        $national = preg_replace('/\D+/', '', strtr((string) ($data['nationalId'] ?? ''), $digits));
+        if ($name === '' || $phone === '' || $national === '') {
+            throw new RuntimeException('نام، شماره تلفن و کد ملی الزامی است.');
+        }
+        if (DB::table('users')->where('phone', $phone)->whereNull('deleted_at')->first()) {
+            throw new RuntimeException('این شماره تلفن قبلاً ثبت شده است.');
+        }
+        if (DB::table('users')->where('national_code', $national)->whereNull('deleted_at')->first()) {
+            throw new RuntimeException('این کد ملی قبلاً ثبت شده است.');
+        }
+        $gender = (string) ($data['gender'] ?? 'other');
+        if (!in_array($gender, ['male', 'female', 'other'], true)) {
+            $gender = 'other';
+        }
+        $birthday = (string) ($data['birthDate'] ?? '');
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $birthday)) {
+            throw new RuntimeException('تاریخ تولد معتبر نیست.');
+        }
+        $start = (string) ($data['startDate'] ?? '');
+        $end = (string) ($data['endDate'] ?? '');
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start) || ($end !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $end))) {
+            throw new RuntimeException('تاریخ قرارداد معتبر نیست.');
+        }
+        return compact('name', 'phone', 'national', 'gender', 'birthday', 'start', 'end');
+    }
+
+    public function storeMember(int $actorId, array $data, bool $siteAdmin = false, bool $requireRegistration = false): array
+    {
+        return transaction(function () use ($actorId, $data, $siteAdmin, $requireRegistration) {
+            extract($this->prepareMember($actorId, $data, $siteAdmin), EXTR_SKIP);
             $approved = $siteAdmin || $this->staffActorApproves($actorId);
             $userStatus = $approved ? 'approved' : 'pending';
             $memberStatus = $approved ? 'active' : 'pending';
             $now = date('Y-m-d H:i:s');
             $approval = ['approved_at' => $approved ? $now : null, 'approved_by' => $approved ? $actorId : null];
-            $userId = DB::table('users')->insertGetId(['username' => 'academy_staff_' . $phone . '_' . bin2hex(random_bytes(3)), 'phone' => $phone, 'national_code' => $national, 'gender' => $gender, 'type' => 'human', 'status' => $userStatus, 'locale' => 'fa', 'timezone' => 'Asia/Tehran', 'visibility' => in_array(($data['profileVisibility'] ?? ''), ['public', 'private', 'unlisted'], true) ? $data['profileVisibility'] : 'private', 'birthday' => $birthday, 'register_time' => $now, 'register_method' => 'academy', 'created_at' => $now, 'created_by' => $actorId, 'updated_at' => $now, 'updated_by' => $actorId] + $approval);
+            $needsRegistration = $requireRegistration && StaffRegistrationService::required($type, $role);
+            $userId = $needsRegistration ? app()->container()->make(StaffRegistrationService::class)->register($actorId, $data) : 0;
+            if (!$userId) {
+                $userId = DB::table('users')->insertGetId(['username' => 'academy_staff_' . $phone . '_' . bin2hex(random_bytes(3)), 'phone' => $phone, 'national_code' => $national, 'gender' => $gender, 'type' => 'human', 'status' => $userStatus, 'locale' => 'fa', 'timezone' => 'Asia/Tehran', 'visibility' => in_array(($data['profileVisibility'] ?? ''), ['public', 'private', 'unlisted'], true) ? $data['profileVisibility'] : 'private', 'birthday' => $birthday, 'register_time' => $now, 'register_method' => 'academy', 'created_at' => $now, 'created_by' => $actorId, 'updated_at' => $now, 'updated_by' => $actorId] + $approval);
+            } else {
+                DB::table('users')->where('user_id', $userId)->update(['phone' => $phone, 'national_code' => $national, 'gender' => $gender, 'birthday' => $birthday, 'visibility' => in_array(($data['profileVisibility'] ?? ''), ['public', 'private', 'unlisted'], true) ? $data['profileVisibility'] : 'private', 'updated_by' => $actorId]);
+            }
             TranslationService::manager()->set('users', $userId, 'full_name', $name, 'fa');
             DB::table('user_roles')->insert(['user_id' => $userId, 'role_id' => 14, 'is_main' => 1, 'created_at' => $now, 'created_by' => $actorId, 'updated_at' => $now, 'updated_by' => $actorId] + $approval);
             $memberId = DB::table('academy_branch_members')->insertGetId(['academy_id' => (int) $organization['academy_id'], 'branch_id' => $organization['branch_id'], 'user_id' => $userId, 'status' => $memberStatus, 'joined_at' => $start, 'created_at' => $now, 'created_by' => $actorId, 'updated_at' => $now, 'updated_by' => $actorId] + $approval);

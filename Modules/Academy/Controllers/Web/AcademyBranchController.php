@@ -172,7 +172,34 @@ class AcademyBranchController
 
     public function storeMember()
     {
-        return $this->run(fn () => $this->service->storeMember((int) auth()->id(), $this->payload(), SiteAdminAccess::allows(auth()->user())), 201);
+        return $this->run(function () {
+            $data = $this->payload();
+            $result = \Modules\System\Services\PaymentMutex::run(db(), 'staff-register', fn () => $this->service->storeMember((int) auth()->id(), $data, SiteAdminAccess::allows(auth()->user()), true));
+            if (isset($data['registration'])) app()->container()->make(\Modules\Academy\Services\StaffRegistrationService::class)->clear();
+            return $result;
+        }, 201);
+    }
+
+    public function memberRegistrationForm()
+    {
+        return $this->run(function () {
+            $context = $this->service->prepareMember((int) auth()->id(), $this->payload(), SiteAdminAccess::allows(auth()->user()));
+            if (!\Modules\Academy\Services\StaffRegistrationService::required($context['type'], $context['role'])) throw new RuntimeException('این نوع قرارداد به فرم ثبت‌نام نیاز ندارد.');
+            ob_start();
+            try { component('System::partials.registration-form', ['registrationContext' => ['staff' => true]]); return ['html' => ob_get_contents()]; }
+            finally { ob_end_clean(); }
+        });
+    }
+
+    public function memberRegistrationOtp()
+    {
+        return $this->run(function () {
+            $data = $this->payload();
+            $context = $this->service->prepareMember((int) auth()->id(), $data, SiteAdminAccess::allows(auth()->user()));
+            if (!\Modules\Academy\Services\StaffRegistrationService::required($context['type'], $context['role'])) throw new RuntimeException('این نوع قرارداد به ثبت‌نام نیاز ندارد.');
+            $result = app()->container()->make(\Modules\Academy\Services\StaffRegistrationService::class)->send((int) auth()->id(), $data);
+            return ['success' => $result['ok']] + $result;
+        });
     }
 
     public function cycleMemberStatus(int $id)
@@ -216,6 +243,10 @@ class AcademyBranchController
         try {
             return ResponseFactory::json(['success' => true, 'data' => $callback()], $status);
         } catch (Throwable $e) {
+            if ($e instanceof \Core\validation\ValidationException) {
+                $errors = $e->getErrors(); $first = reset($errors);
+                return ResponseFactory::json(['success' => false, 'message' => is_array($first) ? (string) reset($first) : (string) $first], 422);
+            }
             return ResponseFactory::json(['success' => false, 'message' => $e instanceof \PDOException ? 'ذخیره یا دریافت اطلاعات انجام نشد. دوباره تلاش کنید.' : $e->getMessage()], 422);
         }
     }

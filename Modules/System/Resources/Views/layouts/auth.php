@@ -50,6 +50,7 @@
     </footer>
     <?
         pushScript('home.js');
+        pushScript('registration.js');
         pushScript('auth.js');
 
         pushScript('main.js');

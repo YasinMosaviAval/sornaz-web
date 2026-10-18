@@ -215,9 +215,9 @@ class AcademyCourseService
         }, $terms))];
     }
 
-    public function storeStudent(int $actor, array $d): array
+    public function storeStudent(int $actor, array $d, bool $requireEmptyTerm = false): array
     {
-        return transaction(function () use ($actor, $d) {
+        return \Modules\System\Services\PaymentMutex::run(db(), 'schedule-write', fn () => transaction(function () use ($actor, $d, $requireEmptyTerm) {
             $name = trim((string) ($d['name'] ?? ''));
             $phone = $this->digits((string) ($d['phone'] ?? ''));
             $national = $this->digits((string) ($d['nationalId'] ?? ''));
@@ -242,18 +242,7 @@ class AcademyCourseService
                 }
                 $academyId = (int) $organizationBranch['academy_id'];
             }
-            $term = DB::table('academy_branch_course_terms')->join('academy_branch_courses', 'academy_branch_courses.course_id', '=', 'academy_branch_course_terms.course_id')->where('academy_branch_course_terms.term_id', $termId)->whereIn('academy_branch_course_terms.status', ['open', 'ongoing'])->whereNull('academy_branch_course_terms.deleted_at')->whereNull('academy_branch_courses.deleted_at')->first();
-            if (!$term) {
-                throw new RuntimeException('ترم آموزشی معتبر نیست.');
-            }
-            $termRecord = DB::table('academy_branch_course_terms')->where('term_id', $termId)->whereNull('deleted_at')->first();
-            if (!$termRecord) {
-                throw new RuntimeException('ترم آموزشی معتبر نیست.');
-            }
-            $term['status'] = $termRecord['status'];
-            $term['price'] = $termRecord['price'];
-            $term['currency_id'] = $termRecord['currency_id'];
-            $term['start_date'] = $termRecord['start_date'];
+            $term = $this->studentRegistrationTerm($termId, $requireEmptyTerm);
             $belongs = $organization['kind'] === 'academy' ? (int) $term['academy_id'] === (int) $organization['id'] : (int) $term['branch_id'] === (int) $organization['id'];
             if (!$belongs) {
                 throw new RuntimeException('ترم متعلق به سازمان انتخاب‌شده نیست.');
@@ -269,7 +258,7 @@ class AcademyCourseService
             }
             $userId = $this->createStudentUser($actor, $d, $approved, 'student');
             $this->saveStudentContactsAndAddresses($actor, $userId, $d, $approved);
-            $memberStatus = $approved ? ($term['status'] === 'open' ? 'active' : 'inactive') : 'pending';
+            $memberStatus = $approved ? ($requireEmptyTerm || $term['status'] === 'open' ? 'active' : 'inactive') : 'pending';
             $memberId = DB::table('academy_branch_members')->insertGetId(['academy_id' => $academyId, 'branch_id' => $organization['kind'] === 'branch' ? (int) $organization['id'] : null, 'user_id' => $userId, 'parent_user_id' => $parentId, 'status' => $memberStatus, 'joined_at' => ($d['registrationDate'] ?? date('Y-m-d')), 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
             $studentRole = DB::table('access_system_roles')->where('type', 'academy')->whereRaw("name LIKE '%student%'")->whereNull('deleted_at')->orderBy('role_id')->first();
             if ($studentRole) {
@@ -277,7 +266,7 @@ class AcademyCourseService
             }
             $organizationLesson = DB::table('user_lessons')->where('user_id', (int) $organization['user_id'])->where('lesson_id', (int) $term['lesson_id'])->whereNull('deleted_at')->first();
             DB::table('user_lessons')->insert(['user_id' => $userId, 'lesson_id' => (int) $term['lesson_id'], 'level_id' => $organizationLesson['level_id'] ?? null, 'status' => $approved ? 'active' : 'pending', 'is_primary' => 1, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
-            if ($term['status'] === 'open') {
+            if ($requireEmptyTerm || $term['status'] === 'open') {
                 DB::table('academy_branch_course_term_enrollments')->insert(['term_id' => $termId, 'member_id' => $memberId, 'type' => 'student', 'status' => $approved ? 'active' : 'pending', 'joined_at' => $now, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
             } else {
                 $availabilities = array_values($d['availabilities'] ?? []);
@@ -318,7 +307,33 @@ class AcademyCourseService
                 DB::table('academy_branch_course_term_invoice_installments')->insert(['invoice_id' => $invoiceId, 'installment_number' => (int) $p['installment_number'], 'amount' => $p['amount'], 'due_date' => $p['due_date'], 'status' => $approved ? 'approved' : 'pending', 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
             }
             return ['id' => $memberId, 'member_id' => $memberId, 'user_id' => $userId, 'status' => $memberStatus];
-        });
+        }));
+    }
+
+    private function studentRegistrationTerm(int $termId, bool $requireEmptyTerm): array
+    {
+        $term = DB::table('academy_branch_course_terms')->join('academy_branch_courses', 'academy_branch_courses.course_id', '=', 'academy_branch_course_terms.course_id')->where('academy_branch_course_terms.term_id', $termId)->whereIn('academy_branch_course_terms.status', $requireEmptyTerm ? ['pending', 'open', 'finished'] : ['open', 'ongoing'])->whereNull('academy_branch_course_terms.deleted_at')->whereNull('academy_branch_courses.deleted_at')->first();
+        if (!$term) {
+            throw new RuntimeException('ترم آموزشی معتبر نیست.');
+        }
+        if ($requireEmptyTerm && db()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'mysql') {
+            $statement = db()->prepare('SELECT * FROM academy_branch_course_terms WHERE term_id=? AND deleted_at IS NULL FOR UPDATE');
+            $statement->execute([$termId]);
+            $termRecord = $statement->fetch(\PDO::FETCH_ASSOC);
+        } else {
+            $termRecord = DB::table('academy_branch_course_terms')->where('term_id', $termId)->whereNull('deleted_at')->first();
+        }
+        if (!$termRecord) {
+            throw new RuntimeException('ترم آموزشی معتبر نیست.');
+        }
+        $term['status'] = $termRecord['status'];
+        $term['price'] = $termRecord['price'];
+        $term['currency_id'] = $termRecord['currency_id'];
+        $term['start_date'] = $termRecord['start_date'];
+        if ($requireEmptyTerm && ($term['status'] === 'ongoing' || DB::table('academy_branch_course_term_enrollments')->where('term_id', $termId)->where('type', 'student')->whereNull('deleted_at')->first())) {
+            throw new RuntimeException('این ترم در حال برگزاری است یا قبلاً هنرجو دارد.', 409);
+        }
+        return $term;
     }
 
     private function createStudentUser(int $actor, array $d, bool $approved, string $kind): int

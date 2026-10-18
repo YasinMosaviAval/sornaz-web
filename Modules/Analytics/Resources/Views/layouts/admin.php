@@ -3,6 +3,7 @@
 <head>
     <script>window.siteCsrfToken=<?= json_encode(csrf_token()) ?>;</script>
     <script src="/assets/theme/csrf.js?v=1"></script>
+    <script defer src="/assets/System/js/registration.js?v=<?= filemtime(base_path('assets/System/js/registration.js')) ?: 1 ?>"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e(trans('admin.meta.title','پنل کاربری سرناز')) ?></title>
