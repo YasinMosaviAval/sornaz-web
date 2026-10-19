@@ -22,18 +22,14 @@
     s = s || {};
     const cards = [
       { label: 'هنرجویان فعال', value: s.activeStudents, color: 'indigo', icon: 'fa-users' },
-      { label: 'کلاس‌های امروز', value: s.todayClasses, color: 'amber', icon: 'fa-calendar' },
       {
         label: 'درآمد ماهانه',
         value: s.monthlyIncome,
         color: 'emerald',
         icon: 'fa-money-bill-wave',
       },
-      { label: 'نرخ حضور', value: s.attendanceRate, color: 'rose', icon: 'fa-chart-pie' },
       { label: 'پرداخت‌های معوق', value: s.pendingPayments, color: 'orange', icon: 'fa-clock' },
-      { label: 'پیام‌های جدید', value: s.newMessages, color: 'violet', icon: 'fa-envelope' },
       { label: 'ثبت‌نام هفته', value: s.newStudentsWeek, color: 'teal', icon: 'fa-user-plus' },
-      { label: 'امتیازهای اهداشده', value: s.pointsAwarded, color: 'sky', icon: 'fa-star' },
     ];
     return cards
       .map(function (c) {

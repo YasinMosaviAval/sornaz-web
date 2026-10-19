@@ -4,9 +4,6 @@
             <h1 class="text-3xl font-bold">داشبورد مدیریت</h1>
             <p class="text-gray-500 mt-1">خلاصه فوری و مهم امروز</p>
         </div>
-        <button type="button" onclick="refreshDashboard()" class="border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl flex items-center gap-2 text-sm">
-            <i class="fas fa-sync-alt"></i> به‌روزرسانی
-        </button>
     </div>
 
     <!-- تاپ‌بار شعبه‌ها -->
@@ -26,20 +23,7 @@
         <div id="dashboardActionItems" class="grid gap-4 p-6 xl:grid-cols-2"></div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <!-- کلاس‌های امروز -->
-        <div class="bg-white rounded-3xl p-6 shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-semibold flex items-center gap-2">
-                    <i class="fas fa-calendar-day text-indigo-600"></i>
-                    کلاس‌های امروز
-                </h2>
-                <button type="button" onclick="goToSectionFromDashboard('schedules')" class="text-indigo-600 text-sm hover:underline">مشاهده همه</button>
-            </div>
-            <div class="space-y-3" id="todayClassesList"></div>
-        </div>
-
-        <!-- موارد فوری -->
+    <div class="mb-8">
         <div class="bg-white rounded-3xl p-6 shadow">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-semibold flex items-center gap-2">
@@ -53,33 +37,17 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <!-- آخرین پرداخت‌ها -->
         <div class="bg-white rounded-3xl p-6 shadow">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-semibold flex items-center gap-2">
-                    <i class="fas fa-money-check text-emerald-600"></i>
-                    آخرین پرداخت‌ها
+                    <i class="fas fa-calendar-day text-indigo-600"></i>
+                    کلاس‌های امروز
                 </h2>
-                <button type="button" onclick="goToSectionFromDashboard('reports')" class="text-indigo-600 text-sm hover:underline">مشاهده همه</button>
+                <button type="button" onclick="goToSectionFromDashboard('schedules')" class="text-indigo-600 text-sm hover:underline">مشاهده همه</button>
             </div>
-            <div class="space-y-3" id="recentPaymentsList"></div>
+            <div class="space-y-3" id="todayClassesList"></div>
         </div>
 
-        <!-- آخرین واریزها -->
-        <div class="bg-white rounded-3xl p-6 shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-semibold flex items-center gap-2">
-                    <i class="fas fa-university text-teal-600"></i>
-                    آخرین واریزها
-                </h2>
-                <button type="button" onclick="goToSectionFromDashboard('reports')" class="text-indigo-600 text-sm hover:underline">مشاهده همه</button>
-            </div>
-            <div class="space-y-3" id="recentDepositsList"></div>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <!-- غیبت‌های امروز -->
         <div class="bg-white rounded-3xl p-6 shadow">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-semibold flex items-center gap-2">
@@ -91,10 +59,6 @@
             <div class="space-y-3" id="todayAbsencesList"></div>
         </div>
 
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <!-- ثبت‌نام‌های اخیر -->
         <div class="bg-white rounded-3xl p-6 shadow">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-semibold flex items-center gap-2">
@@ -106,7 +70,6 @@
             <div class="space-y-3" id="recentRegistrationsList"></div>
         </div>
 
-        <!-- تعطیلات و مرخصی‌های نزدیک -->
         <div class="bg-white rounded-3xl p-6 shadow">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-semibold flex items-center gap-2">
@@ -117,6 +80,28 @@
             </div>
             <div class="space-y-3" id="upcomingHolidaysList"></div>
         </div>
-    </div>
 
+        <div class="bg-white rounded-3xl p-6 shadow">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold flex items-center gap-2">
+                    <i class="fas fa-money-check text-emerald-600"></i>
+                    آخرین پرداخت‌ها
+                </h2>
+                <button type="button" onclick="goToSectionFromDashboard('reports')" class="text-indigo-600 text-sm hover:underline">مشاهده همه</button>
+            </div>
+            <div class="space-y-3" id="recentPaymentsList"></div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-6 shadow">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold flex items-center gap-2">
+                    <i class="fas fa-university text-teal-600"></i>
+                    آخرین واریزها
+                </h2>
+                <button type="button" onclick="goToSectionFromDashboard('reports')" class="text-indigo-600 text-sm hover:underline">مشاهده همه</button>
+            </div>
+            <div class="space-y-3" id="recentDepositsList"></div>
+        </div>
+
+    </div>
 </div>

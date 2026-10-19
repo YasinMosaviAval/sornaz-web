@@ -14,6 +14,9 @@ const php = [
  'notation_instruments_test.php', 'personal_offerings_access_test.php', 'deployment_case_test.php', 'release_security_test.php'
 ];
 const suites = php.map(file => ['php',file]);
+suites.push(['php','national_holiday_branch_test.php']);
+suites.push([process.execPath,'panel_requested_ui_test.cjs']);
+suites.push([process.execPath,'dashboard_cards_revision_test.cjs']);
 suites.push([process.execPath,'staff_registration_test.cjs'],[process.execPath,'waiting_list_chat_test.cjs']);
 suites.push([process.execPath,'term_batch_policy_test.cjs']);
 suites.push([process.execPath,'term_batch_waiting_test.cjs']);

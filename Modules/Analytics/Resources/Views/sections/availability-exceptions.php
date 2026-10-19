@@ -90,7 +90,7 @@
                     ['html' => '<button onclick="sortHolidayLeavesBy(\'timeLabel\')" class="flex items-center gap-1">ساعت <span id="hlSortIcon-timeLabel">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '<button onclick="sortHolidayLeavesBy(\'typeLabel\')" class="flex items-center gap-1">نوع <span id="hlSortIcon-typeLabel">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '<button onclick="sortHolidayLeavesBy(\'timezone\')" class="flex items-center gap-1">منطقه زمانی <span id="hlSortIcon-timezone">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
-                    ['html' => '<button onclick="sortHolidayLeavesBy(\'branchName\')" class="flex items-center gap-1">شعبه <span id="hlSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortHolidayLeavesBy(\'branchName\')" class="flex items-center gap-1">سازمان <span id="hlSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '<button onclick="sortHolidayLeavesBy(\'status\')" class="flex items-center gap-1">وضعیت <span id="hlSortIcon-status">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '', 'attributes' => ' class="w-40 py-5 px-5"'],
                 ],

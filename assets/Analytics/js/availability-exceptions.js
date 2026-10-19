@@ -324,7 +324,7 @@
     { field: 'timeLabel', label: 'ساعت' },
     { field: 'typeLabel', label: 'نوع' },
     { field: 'timezone', label: 'منطقه زمانی' },
-    { field: 'branchName', label: 'شعبه' },
+    { field: 'branchName', label: 'سازمان' },
     { field: 'status', label: 'وضعیت' },
   ];
 
@@ -737,7 +737,7 @@
 
   window.exportHolidayLeavesToExcel = async function () {
     const data = filteredHolidayLeaves.length ? filteredHolidayLeaves : allHolidayLeaves;
-    let csv = '\uFEFFردیف,نام عضو,تاریخ,ساعت,منطقه زمانی,شعبه,وضعیت,خلاصه\n';
+    let csv = '\uFEFFردیف,نام عضو,تاریخ,ساعت,منطقه زمانی,سازمان,وضعیت,خلاصه\n';
     data.forEach(function (item, i) {
       csv +=
         i +

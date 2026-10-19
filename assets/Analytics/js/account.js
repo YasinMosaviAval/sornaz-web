@@ -147,7 +147,7 @@
     const nameEl = document.getElementById('academyName');
     if (nameEl) nameEl.textContent = academyProfile.name;
     const pageTitle = document.getElementById('accountPageTitle');
-    if (pageTitle) pageTitle.textContent = 'حساب کاربری ' + (academyProfile.entityLabel || '');
+    if (pageTitle) pageTitle.textContent = 'حساب کاربری';
     if (!document.getElementById('account')?.classList.contains('hidden')) {
       const panelTitle = document.getElementById('panelPageTitle');
       if (panelTitle && pageTitle) panelTitle.textContent = pageTitle.textContent;

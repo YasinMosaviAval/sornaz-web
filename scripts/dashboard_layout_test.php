@@ -11,4 +11,11 @@ if (str_contains($html, 'unreadMessagesList') || str_contains($html, 'پیام�
     throw new LogicException('Removed unread-message section is visible.');
 }
 if (substr_count($html, 'مشاهده همه') !== 7) throw new LogicException('Dashboard view-all actions changed.');
+$previous = -1;
+foreach (['todayClassesList', 'todayAbsencesList', 'recentRegistrationsList', 'upcomingHolidaysList', 'recentPaymentsList', 'recentDepositsList'] as $id) {
+    $position = strpos($html, 'id="' . $id . '"');
+    if ($position === false || $position <= $previous) throw new LogicException('Dashboard card order changed: ' . $id);
+    $previous = $position;
+}
+if (str_contains($html, 'onclick="refreshDashboard()"')) throw new LogicException('Dashboard refresh button is visible.');
 echo "Dashboard layout: isolated render retains section boxes and seven view-all actions without the unread-message section.\n";

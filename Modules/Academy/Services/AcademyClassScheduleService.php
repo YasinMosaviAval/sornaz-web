@@ -24,6 +24,10 @@ class AcademyClassScheduleService
         $scope = count($bids) === $allBranches ? '1=1' : 'c.branch_id IN (' . implode(',', array_map('intval', $bids)) . ')';
         $where = [$scope, 's.deleted_at IS NULL', 'b.deleted_at IS NULL', 't.deleted_at IS NULL', 'c.deleted_at IS NULL'];
         $bind = [];
+        if (!empty($f['termId'])) {
+            $where[] = 't.term_id=?';
+            $bind[] = (int) $f['termId'];
+        }
         if (!empty($f['branch'])) {
             $where[] = 'c.branch_id=?';
             $bind[] = (int) $f['branch'];

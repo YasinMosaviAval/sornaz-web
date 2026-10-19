@@ -606,6 +606,13 @@ window.deleteLesson = async function (id) {
   if (editingLessonRowId === id) editingLessonRowId = null;
   filterLessons();
 };
+
+window.viewLessonUsage = async function (id) {
+  try {
+    const usage = await lessonApi('/academy/admin/branch-offerings/lessons/' + Number(id) + '/usage', null, 'GET');
+    document.getElementById('modalContainer').innerHTML = window.getLessonDependenciesModalHTML(usage, true);
+  } catch (error) { alert(error.message); }
+};
 window.applyLessonDatabaseData = function (data) {
   if (!data || !Array.isArray(data.branches) || !Array.isArray(data.lessons))
     throw new Error('ساختار اطلاعات درس‌های شعب معتبر نیست.');

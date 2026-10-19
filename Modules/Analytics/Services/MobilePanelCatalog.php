@@ -463,6 +463,7 @@ final class MobilePanelCatalog
 
     private function completePanelContracts(array $sections, bool $webDialogs = false): array
     {
+        $sections['terms']['actions']['attendance'] = $this->a('/academy/admin/class-schedules', 'حضور و غیاب', 'GET') + ['en' => 'Attendance'];
         $sections['lessons']['actions']['usage'] = $this->a('/academy/admin/branch-offerings/lessons/{id}/usage', 'محل‌های استفاده از درس', 'GET') + ['en' => 'Lesson usage'];
         $this->profileAndOrganizationContracts($sections);
         $this->userAccessContracts($sections);
@@ -949,7 +950,7 @@ final class MobilePanelCatalog
             $this->f('teacher', 'شناسه عضویت مدرس', 'number'), $this->f('excludeTerm', 'ترم مستثنا', 'number') + ['initial' => 'id'],
             $this->f('organizationKind', 'نوع سازمان', 'select', ['branch' => 'شعبه', 'academy' => 'آموزشگاه']),
             $this->f('organizationUserId', 'شناسه حساب آموزشگاه', 'number'),
-        ]) + ['queryFields' => true, 'en' => 'Available session times'];
+        ]) + ['queryFields' => true, 'en' => 'Available session times', 'hidden' => true];
         $sections['schedules']['actions']['week-bounds'] = $this->a('/academy/admin/class-schedule-week-bounds', 'بازه هفتگی', 'GET', [$this->f('branch', 'شعبه', 'select', ['source' => 'branches'])], false) + ['queryFields' => true, 'en' => 'Weekly schedule bounds'];
     }
 

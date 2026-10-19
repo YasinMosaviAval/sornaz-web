@@ -23,6 +23,7 @@ final class NationalHolidayService
             'isSiteAdmin' => $siteAdmin,
             'holidays' => array_map(fn ($row) => ['id' => (int) $row['user_availability_id'], 'date' => $row['date'], 'title' => $this->text((int) $row['user_availability_id'], 'summary'), 'description' => $this->text((int) $row['user_availability_id'], 'description'), 'status' => $row['status'] === 'available' ? 'active' : 'inactive'], $holidays),
             'academies' => array_map(fn ($row) => ['id' => (int) $row['academy_id'], 'name' => $this->academyName((int) $row['academy_id']), 'allowClasses' => (bool) ($settings[(int) $row['academy_id']] ?? false)], $academies),
+            'organizations' => $this->organizationSettings($actor, $siteAdmin, $academies),
         ];
     }
 
@@ -78,9 +79,19 @@ final class NationalHolidayService
         return ['id' => $id, 'status' => $active ? 'inactive' : 'active'];
     }
 
-    public function saveAcademySetting(int $actor, int $academyId, bool $allow): array
+    public function saveAcademySetting(int $actor, int $academyId, bool $allow, int $branchId = 0): array
     {
         $siteAdmin = SiteAdminAccess::allows(DB::table('users')->where('user_id', $actor)->whereNull('deleted_at')->first());
+        if ($branchId > 0) {
+            foreach ($this->organizationSettings($actor, $siteAdmin, $this->manageableAcademies($actor, $siteAdmin)) as $organization) {
+                if ($organization['branchId'] === $branchId && $organization['academyId'] === $academyId) {
+                    NationalHolidayPolicy::saveBranch($organization['userId'], $allow, $actor);
+                    $this->refreshConflicts($actor);
+                    return ['academyId' => $academyId, 'branchId' => $branchId, 'allowClasses' => $allow];
+                }
+            }
+            throw new RuntimeException('اجازه تغییر تنظیم تعطیلات رسمی این شعبه را ندارید.', 403);
+        }
         $allowed = false;
         foreach ($this->manageableAcademies($actor, $siteAdmin) as $academy) {
             if ((int) $academy['academy_id'] === $academyId) {
@@ -99,10 +110,56 @@ final class NationalHolidayService
         } else {
             DB::table('academy_national_holiday_settings')->insert(['academy_id' => $academyId, 'created_at' => $now, 'created_by' => $actor] + $values);
         }
-        foreach (DB::table('user_availabilities')->where('unavailable_type', 'national_holiday')->whereNull('user_id')->where('status', 'available')->whereNull('deleted_at')->get() as $holiday) {
-            $this->syncConflictNotifications($actor, (int) $holiday['user_availability_id']);
-        }
+        $this->refreshConflicts($actor);
         return ['academyId' => $academyId, 'allowClasses' => $allow];
+    }
+
+    private function refreshConflicts(int $actor): void
+    {
+        foreach (DB::table('user_availabilities')->where('unavailable_type', 'national_holiday')->whereNull('user_id')->where('status', 'available')->whereNull('deleted_at')->get() as $holiday) $this->syncConflictNotifications($actor, (int) $holiday['user_availability_id']);
+    }
+
+    public function saveOrganizationSettings(int $actor, array $organizations): array
+    {
+        if (!$organizations || count($organizations) > 200) throw new RuntimeException('فهرست سازمان‌ها معتبر نیست.');
+        $pdo = db();
+        $pdo->beginTransaction();
+        try {
+            foreach ($organizations as $organization) {
+                if (!is_array($organization) || !array_key_exists('allowClasses', $organization) || !in_array($organization['allowClasses'], [true, false, 0, 1, '0', '1'], true)) throw new RuntimeException('تنظیم سازمان معتبر نیست.');
+                $this->saveAcademySetting($actor, (int) ($organization['academyId'] ?? 0), (bool) $organization['allowClasses'], max(0, (int) ($organization['branchId'] ?? 0)));
+            }
+            $pdo->commit();
+            return ['saved' => count($organizations)];
+        } catch (\Throwable $error) {
+            $pdo->rollBack();
+            throw $error;
+        }
+    }
+
+    private function organizationSettings(int $actor, bool $siteAdmin, array $academies): array
+    {
+        $result = [];
+        $academyIds = array_column($academies, 'academy_id');
+        foreach ($academies as $academy) {
+            $id = (int) $academy['academy_id'];
+            $result[] = ['academyId' => $id, 'branchId' => 0, 'userId' => (int) $academy['user_id'], 'name' => $this->academyName($id), 'allowClasses' => NationalHolidayPolicy::allows($id)];
+        }
+        $branches = $academyIds ? DB::table('academy_branches')->whereIn('academy_id', $academyIds)->whereNull('deleted_at')->get() : [];
+        $branches = array_merge($branches, DB::table('academy_branches')->where('user_id', $actor)->whereNull('deleted_at')->get());
+        $memberships = DB::table('academy_branch_members')->join('academy_branch_member_roles', 'academy_branch_member_roles.member_id', '=', 'academy_branch_members.member_id')->join('access_system_roles', 'access_system_roles.role_id', '=', 'academy_branch_member_roles.role_id')->where('academy_branch_members.user_id', $actor)->where('academy_branch_members.status', 'active')->whereIn('access_system_roles.name', ['branch_manager', 'branch_owner', 'academy_branch_manager', 'academy_branch_owner'])->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->get();
+        foreach ($memberships as $membership) {
+            if (!$membership['branch_id']) continue;
+            $branch = DB::table('academy_branches')->where('branch_id', (int) $membership['branch_id'])->whereNull('deleted_at')->first();
+            if ($branch) $branches[] = $branch;
+        }
+        $unique = [];
+        foreach ($branches as $branch) $unique[(int) $branch['branch_id']] = $branch;
+        foreach ($unique as $id => $branch) {
+            $name = DB::table('translations')->where('table_name', 'academy_branches')->where('table_id', $id)->where('field', 'name')->where('locale', locale())->whereNull('deleted_at')->orderBy('translation_id', 'DESC')->first();
+            $result[] = ['academyId' => (int) $branch['academy_id'], 'branchId' => $id, 'userId' => (int) $branch['user_id'], 'name' => (string) ($name['value'] ?? ('شعبه ' . $id)), 'allowClasses' => NationalHolidayPolicy::allows((int) $branch['academy_id'], $id)];
+        }
+        return $result;
     }
 
     private function syncConflictNotifications(int $actor, int $holidayId): void
@@ -115,7 +172,7 @@ final class NationalHolidayService
         }
         $holiday['holiday_date'] = $holiday['date'];
         $holiday['title'] = $this->text($holidayId, 'summary');
-        $sql = "SELECT s.term_session_id,s.term_id,br.branch_id,br.academy_id,br.user_id branch_user_id,a.user_id academy_user_id,COALESCE((SELECT value FROM translations WHERE table_name='academy_branch_course_terms' AND table_id=s.term_id AND field='title' AND locale='fa' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1),CONCAT('ترم ',s.term_id)) term_name FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id JOIN academy_branch_course_terms t ON t.term_id=s.term_id JOIN academy_branch_courses c ON c.course_id=t.course_id LEFT JOIN academy_branch_classrooms room ON room.classroom_id=s.classroom_id AND room.deleted_at IS NULL JOIN academy_branches br ON br.branch_id=COALESCE(c.branch_id,room.branch_id) JOIN academies a ON a.academy_id=br.academy_id LEFT JOIN academy_national_holiday_settings hs ON hs.academy_id=a.academy_id WHERE b.requested_date=? AND s.deleted_at IS NULL AND b.deleted_at IS NULL AND t.deleted_at IS NULL AND c.deleted_at IS NULL AND br.deleted_at IS NULL AND a.deleted_at IS NULL AND b.status NOT IN ('canceled','rejected') AND COALESCE(hs.allow_classes_on_national_holidays,0)=0";
+        $sql = "SELECT s.term_session_id,s.term_id,br.branch_id,br.academy_id,br.user_id branch_user_id,a.user_id academy_user_id,COALESCE((SELECT value FROM translations WHERE table_name='academy_branch_course_terms' AND table_id=s.term_id AND field='title' AND locale='fa' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1),CONCAT('ترم ',s.term_id)) term_name FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id JOIN academy_branch_course_terms t ON t.term_id=s.term_id JOIN academy_branch_courses c ON c.course_id=t.course_id LEFT JOIN academy_branch_classrooms room ON room.classroom_id=s.classroom_id AND room.deleted_at IS NULL JOIN academy_branches br ON br.branch_id=COALESCE(c.branch_id,room.branch_id) JOIN academies a ON a.academy_id=br.academy_id LEFT JOIN academy_national_holiday_settings hs ON hs.academy_id=a.academy_id WHERE b.requested_date=? AND s.deleted_at IS NULL AND b.deleted_at IS NULL AND t.deleted_at IS NULL AND c.deleted_at IS NULL AND br.deleted_at IS NULL AND a.deleted_at IS NULL AND b.status NOT IN ('canceled','rejected') AND COALESCE((SELECT nh.value FROM z_user_settings nh WHERE nh.user_id=br.user_id AND nh.`key`='allow_classes_on_national_holidays' AND nh.deleted_at IS NULL ORDER BY nh.user_setting_id DESC LIMIT 1),hs.allow_classes_on_national_holidays,0)=0";
         $statement = db()->prepare($sql);
         $statement->execute([$holiday['holiday_date']]);
         foreach ($statement->fetchAll() as $conflict) {
@@ -147,7 +204,7 @@ final class NationalHolidayService
             return DB::table('academies')->whereNull('deleted_at')->orderBy('academy_id')->get();
         }
         $rows = array_merge(DB::table('academies')->where('user_id', $actor)->whereNull('deleted_at')->get(), DB::table('academies')->where('created_by', $actor)->whereNull('deleted_at')->get());
-        $managed = DB::table('academy_branch_members')->join('academy_branch_member_roles', 'academy_branch_member_roles.member_id', '=', 'academy_branch_members.member_id')->join('access_system_roles', 'access_system_roles.role_id', '=', 'academy_branch_member_roles.role_id')->where('academy_branch_members.user_id', $actor)->whereRaw("(access_system_roles.name LIKE '%academy%manager%' OR access_system_roles.name LIKE '%academy%owner%')")->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->get();
+        $managed = DB::table('academy_branch_members')->join('academy_branch_member_roles', 'academy_branch_member_roles.member_id', '=', 'academy_branch_members.member_id')->join('access_system_roles', 'access_system_roles.role_id', '=', 'academy_branch_member_roles.role_id')->where('academy_branch_members.user_id', $actor)->where('academy_branch_members.status', 'active')->whereIn('access_system_roles.name', ['academy_manager', 'academy_owner'])->whereNull('academy_branch_members.branch_id')->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->get();
         foreach ($managed as $row) {
             if ($row['academy_id'] !== null) {
                 $academy = DB::table('academies')->where('academy_id', (int) $row['academy_id'])->whereNull('deleted_at')->first();

@@ -42,4 +42,34 @@
       alert(e.message);
     }
   };
+
+  window.exportCourseLevelsToExcel = function () {
+    const cell = value => '"' + String(value ?? '').replace(/^\s*[=+@\-]/, "'$&").replace(/"/g, '""') + '"';
+    const lines = [['عنوان', 'خلاصه'], ...(window.allCourseLevels || []).map(row => [row.name, row.summary])];
+    const url = URL.createObjectURL(new Blob(['\uFEFF' + lines.map(row => row.map(cell).join(',')).join('\r\n')], {type: 'text/csv;charset=utf-8;'}));
+    const link = document.createElement('a'); link.href = url; link.download = 'سطح درس‌ها.csv'; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  window.exportCourseLevelsToPDF = async function () {
+    if (!window.html2canvas || !window.jspdf?.jsPDF) return alert('ابزار PDF بارگذاری نشده است.');
+    const rows = window.allCourseLevels || [];
+    const doc = new window.jspdf.jsPDF({orientation: 'portrait', unit: 'pt', format: 'a4'});
+    const font = getComputedStyle(document.getElementById('course-levels')).fontFamily;
+    for (let offset = 0; offset < Math.max(1, rows.length); offset += 12) {
+      const content = document.createElement('div');
+      content.style.cssText = 'direction:rtl;position:fixed;left:-9999px;top:0;width:800px;padding:24px;background:white;color:#111';
+      content.style.fontFamily = font;
+      content.innerHTML = `<h1>سطح درس‌ها</h1><table style="width:100%;border-collapse:collapse"><thead><tr><th>عنوان</th><th>خلاصه</th></tr></thead><tbody>${rows.slice(offset, offset + 12).map(row => `<tr><td style="padding:12px;border-bottom:1px solid #ddd">${esc(row.name)}</td><td style="padding:12px;border-bottom:1px solid #ddd">${esc(row.summary)}</td></tr>`).join('')}</tbody></table>`;
+      document.body.appendChild(content);
+      try {
+        await document.fonts?.ready;
+        const canvas = await window.html2canvas(content, {scale: 2, backgroundColor: '#ffffff'});
+        if (offset) doc.addPage();
+        const width = doc.internal.pageSize.getWidth() - 40;
+        const height = Math.min(canvas.height * width / canvas.width, doc.internal.pageSize.getHeight() - 40);
+        doc.addImage(canvas.toDataURL('image/png'), 'PNG', 20, 20, width, height);
+      } finally { content.remove(); }
+    }
+    doc.save('سطح درس‌ها.pdf');
+  };
 })();

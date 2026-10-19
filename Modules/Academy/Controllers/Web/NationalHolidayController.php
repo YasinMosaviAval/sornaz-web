@@ -43,7 +43,10 @@ final class NationalHolidayController
     public function saveAcademySetting(int $academyId)
     {
         $data = $this->payload();
-        return $this->run(fn () => $this->service->saveAcademySetting((int) auth()->id(), $academyId, !empty($data['allowClasses'])));
+        if (isset($data['organizations'])) {
+            return $this->run(fn () => $this->service->saveOrganizationSettings((int) auth()->id(), $data['organizations']));
+        }
+        return $this->run(fn () => $this->service->saveAcademySetting((int) auth()->id(), $academyId, !empty($data['allowClasses']), max(0, (int) ($data['branchId'] ?? 0))));
     }
 
     private function payload(): array

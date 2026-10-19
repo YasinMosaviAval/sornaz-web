@@ -844,7 +844,7 @@ class AcademyTermService
         $this->assertAvailabilityDate($date);
         $branch = $this->organizationContext($actor, $branchId, $academyId);
         $academy = DB::table('academies')->where('academy_id', (int) $branch['academy_id'])->whereNull('deleted_at')->first();
-        if ($academy && ($holiday = $this->nationalHolidayForAcademy((int) $academy['academy_id'], $date))) {
+        if ($academy && ($holiday = $this->nationalHolidayForAcademy((int) $academy['academy_id'], $date, $branchId))) {
             return ['times' => [], 'closed' => true, 'closureType' => 'national_holiday', 'closureReason' => 'تعطیل رسمی کشور: ' . $holiday['title']];
         }
         $branchUserId = (int) $branch['user_id'];
@@ -919,7 +919,7 @@ class AcademyTermService
         $branch = $this->allowedBranch($actor, $branchId);
         $userId = (int) $branch['user_id'];
         $academy = DB::table('academies')->where('academy_id', (int) $branch['academy_id'])->whereNull('deleted_at')->first();
-        if ($academy && $this->nationalHolidayClosesAcademy((int) $academy['academy_id'], $date)) {
+        if ($academy && $this->nationalHolidayClosesAcademy((int) $academy['academy_id'], $date, $branchId)) {
             return true;
         }
         $organizationUserIds = array_values(array_unique(array_filter([$userId, (int) ($academy['user_id'] ?? 0)])));
@@ -945,19 +945,18 @@ class AcademyTermService
         return (bool) $stmt->fetchColumn();
     }
 
-    private function nationalHolidayForAcademy(int $academyId, string $date): ?array
+    private function nationalHolidayForAcademy(int $academyId, string $date, int $branchId = 0): ?array
     {
         $holiday = DB::table('user_availabilities')->where('unavailable_type', 'national_holiday')->whereNull('user_id')->where('date', $date)->where('status', 'available')->whereNull('deleted_at')->first();
         if (!$holiday) {
             return null;
         }
-        $setting = DB::table('academy_national_holiday_settings')->where('academy_id', $academyId)->first();
-        return (bool) ($setting['allow_classes_on_national_holidays'] ?? false) ? null : $holiday;
+        return NationalHolidayPolicy::allows($academyId, $branchId) ? null : $holiday;
     }
 
-    private function nationalHolidayClosesAcademy(int $academyId, string $date): bool
+    private function nationalHolidayClosesAcademy(int $academyId, string $date, int $branchId = 0): bool
     {
-        return (bool) $this->nationalHolidayForAcademy($academyId, $date);
+        return (bool) $this->nationalHolidayForAcademy($academyId, $date, $branchId);
     }
 
     public function cycleStatus(int $actor, int $id): array

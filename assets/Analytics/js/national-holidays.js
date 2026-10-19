@@ -77,9 +77,10 @@
             .join('')
         : window.AdminPanelTable.rowHTML([{ html: "تعطیل رسمی ثبت نشده است.", attributes: " colspan=\"4\" class=\"p-12 text-center text-gray-400\"" }], "");
     const settings = document.getElementById('academyNationalHolidaySettings');
+    const organizations = data.organizations || data.academies.map(row => ({...row, academyId: row.id, branchId: 0}));
     if (settings)
-      settings.innerHTML = data.academies.length
-        ? `<section class="rounded-3xl border border-amber-200 bg-amber-50 p-5"><h2 class="font-bold text-amber-900">برگزاری کلاس در تعطیلات رسمی کشور</h2><p class="mt-1 text-sm text-amber-700">در حالت پیش‌فرض، تعطیلات رسمی در تعیین خودکار تاریخ جلسات رد می‌شوند. فعال‌کردن این گزینه فقط تعطیلات کشوری را نادیده می‌گیرد و تعطیلات اختصاصی آموزشگاه و شعبه همچنان اعمال می‌شوند.</p><div class="mt-4 grid gap-3 md:grid-cols-2">${data.academies.map((academy) => `<label class="flex items-center justify-between rounded-2xl border border-amber-200 bg-white p-4"><span>${esc(academy.name)}</span><input type="checkbox" ${academy.allowClasses ? 'checked' : ''} onchange="saveNationalHolidaySetting(${academy.id},this.checked,this)" class="h-5 w-5 rounded text-indigo-600"></label>`).join('')}</div></section>`
+      settings.innerHTML = organizations.length
+        ? `<section class="rounded-3xl border border-amber-200 bg-amber-50 p-5"><h2 class="font-bold text-amber-900">برگزاری کلاس در تعطیلات رسمی کشور</h2><p class="mt-1 text-sm text-amber-700">در حالت پیش‌فرض، تعطیلات رسمی در تعیین خودکار تاریخ جلسات رد می‌شوند. فعال‌کردن این گزینه فقط تعطیلات کشوری را نادیده می‌گیرد و تعطیلات اختصاصی آموزشگاه و شعبه همچنان اعمال می‌شوند.</p><div class="mt-4 grid gap-3 md:grid-cols-2">${organizations.map((academy) => `<label class="flex items-center justify-between rounded-2xl border border-amber-200 bg-white p-4"><span>${esc(academy.name)}</span><input type="checkbox" ${academy.allowClasses ? 'checked' : ''} data-holiday-academy="${Number(academy.academyId)}" data-holiday-branch="${Number(academy.branchId || 0)}" class="h-5 w-5 rounded text-indigo-600"></label>`).join('')}</div><button type="button" onclick="saveNationalHolidayOrganizations(this)" class="mt-4 rounded-2xl bg-indigo-600 px-5 py-3 text-white">ذخیره اطلاعات</button></section>`
         : '';
   }
   window.openNationalHolidayModal = (id) => {
@@ -149,6 +150,24 @@
     } finally {
       input.disabled = false;
     }
+  };
+  window.saveNationalHolidayOrganizations = async (button) => {
+    const inputs = [...document.querySelectorAll('#academyNationalHolidaySettings input[data-holiday-academy]')];
+    if (!inputs.length || button.disabled) return;
+    button.disabled = true;
+    inputs.forEach(input => { input.disabled = true; });
+    try {
+      const organizations = inputs.map(input => ({academyId: Number(input.dataset.holidayAcademy), branchId: Number(input.dataset.holidayBranch), allowClasses: input.checked}));
+      if (data.organizations) {
+        await api(`/academy/admin/national-holiday-settings/${organizations[0].academyId}`, {organizations});
+      } else {
+        for (const row of organizations) await api(`/academy/admin/national-holiday-settings/${row.academyId}`, {allowClasses: row.allowClasses});
+      }
+      announceHolidayChange();
+      await load();
+      alert('تنظیمات تعطیلات رسمی ذخیره شد.');
+    } catch (error) { alert(error.message); }
+    finally { if (button.isConnected) button.disabled = false; inputs.forEach(input => { input.disabled = false; }); }
   };
   window.addEventListener('load', load);
   setTimeout(load, 350);

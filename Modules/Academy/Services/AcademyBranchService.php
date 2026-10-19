@@ -384,7 +384,8 @@ class AcademyBranchService
             }
             $organizationUserId = $organization ? (int) $organization['user_id'] : (int) ($m['organizationUserId'] ?? 0);
             $branchId = (int) ($organization['branch_id'] ?? $m['branch_id'] ?? $m['branchId'] ?? 0);
-            $branchName = (string) ($organization['name'] ?? $m['branchName'] ?? 'سازمان دیگر');
+            $organizationMeta = $organizationsByUser[$organizationUserId] ?? null;
+            $branchName = (string) ($organization['name'] ?? $organizationMeta['name'] ?? $m['branchName'] ?? $m['branch'] ?? '—');
             $start = $r['start_time'] ? substr((string) $r['start_time'], 0, 5) : '';
             $end = $r['end_time'] ? substr((string) $r['end_time'], 0, 5) : '';
             $slots = [];

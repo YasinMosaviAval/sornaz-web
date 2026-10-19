@@ -1,7 +1,7 @@
 <div id="account" class="section hidden">
-    <div class="mb-8">
+    <div class="mb-8 flex flex-wrap items-center justify-between gap-3">
         <h1 id="accountPageTitle" class="text-3xl font-bold">حساب کاربری</h1>
-        <p class="text-gray-500 mt-1">مدیریت پروفایل، امنیت، حریم خصوصی و پشتیبان‌گیری</p>
+        <p class="text-gray-500 ms-auto text-end">مدیریت پروفایل، امنیت، حریم خصوصی و پشتیبان‌گیری</p>
     </div>
 
     <!-- کاور پروفایل ۱۶:۹ (معادل ۱۹۲۰×۱۰۸۰) -->
