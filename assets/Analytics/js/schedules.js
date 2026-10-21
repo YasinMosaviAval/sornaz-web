@@ -625,7 +625,8 @@
       });
     });
     try {
-      await api(`/academy/admin/class-schedules/${id}/attendance`, { attendance });
+      const note = root?.querySelector('[data-teacher-note]');
+      await api(`/academy/admin/class-schedules/${id}/attendance`, { attendance, ...(note ? { teacherNote: note.value } : {}) });
       if (!inline) closeModal();
       else expanded = null;
       await (schedulesView === 'weekly' ? loadWeeklySchedules() : load(currentPage));
@@ -671,4 +672,5 @@
   setTimeout(() => {
     if (document.getElementById('schedulesTable')) load(1);
   }, 200);
+  window.addEventListener('panel-organizations-changed', () => { Promise.resolve((schedulesView === 'weekly' ? loadWeeklySchedules() : load(currentPage))).catch(console.error); });
 })();

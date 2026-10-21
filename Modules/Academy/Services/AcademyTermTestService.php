@@ -111,7 +111,9 @@ class AcademyTermTestService
     {
         $pdo = db();
         if ($type === 'teacher') {
-            $sql = "SELECT m.member_id FROM academy_branch_members m JOIN academy_branch_member_contracts c ON c.member_id=m.member_id AND c.type='teacher' AND c.deleted_at IS NULL JOIN user_lessons ul ON ul.user_lesson_id=c.user_lesson_id AND ul.lesson_id=$lesson AND ul.deleted_at IS NULL WHERE m.branch_id=$branch AND m.deleted_at IS NULL LIMIT $limit";
+            $teachingJoin = StaffTeachingLessons::ready() ? 'JOIN ' . StaffTeachingLessons::relation() . ' cl ON cl.member_contract_id=c.member_contract_id JOIN user_lessons ul ON ul.user_lesson_id=cl.user_lesson_id' : 'JOIN user_lessons ul ON ul.user_lesson_id=c.user_lesson_id';
+            $approval = StaffTeachingLessons::ready() ? ' AND (c.created_by IS NULL OR c.approved_at IS NOT NULL)' : '';
+            $sql = "SELECT DISTINCT m.member_id FROM academy_branch_members m JOIN academy_branch_member_contracts c ON c.member_id=m.member_id AND c.type='teacher' AND c.deleted_at IS NULL $teachingJoin WHERE ul.lesson_id=$lesson AND ul.deleted_at IS NULL AND m.branch_id=$branch AND m.deleted_at IS NULL $approval LIMIT $limit";
         } else {
             $sql = "SELECT m.member_id FROM academy_branch_members m JOIN users u ON u.user_id=m.user_id WHERE m.branch_id=$branch AND m.deleted_at IS NULL AND u.username LIKE '%student_%' LIMIT $limit";
         }

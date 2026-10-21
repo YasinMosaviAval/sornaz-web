@@ -66,18 +66,18 @@
                 <label class="block text-xs font-medium mb-1 text-gray-500">سطح درس *</label>
                 <select data-lesson-level class="w-full border border-gray-300 rounded-2xl py-3 px-4">${lessonLevelOptions(lesson.level)}</select>
             </div>
+            <button type="button" onclick="removeStaffLessonRow(this)" class="text-sm text-red-600 sm:col-span-2">${document.documentElement.lang.startsWith('en') ? 'Remove lesson' : 'حذف درس'}</button>
         </div>`;
   };
 
   function staffLessonsBlock(prefix, item, typeSelectId) {
     const isTeacher = (item && item.type === 'teacher') || false;
-    const lesson =
-      (item && item.lessons && item.lessons[0]) ||
-      (item ? { type: item.lessonId, level: item.levelId } : {});
-    const rows = window.getStaffLessonRowHTML(prefix, 0, lesson, true);
+    const lessons = item?.lessons?.length ? item.lessons : [{ type: item?.lessonId, level: item?.levelId }];
+    const rows = lessons.map((lesson, index) => window.getStaffLessonRowHTML(prefix, index, lesson, index === 0)).join('');
     return `<div id="${prefix}LessonsBox" class="${isTeacher ? '' : 'hidden'} space-y-3 border border-indigo-100 rounded-2xl p-4 bg-indigo-50/30">
             <p class="text-sm font-semibold text-indigo-700">درس و سطح تدریس (ویژه استاد)</p>
             <div id="${prefix}LessonsContainer" class="space-y-3">${rows}</div>
+            <button type="button" onclick="addStaffLessonRow('${prefix}')" class="text-sm text-indigo-600">${document.documentElement.lang.startsWith('en') ? 'Add another lesson' : '+ افزودن درس دیگر'}</button>
         </div>`;
   }
 
@@ -177,7 +177,7 @@
           item.gender
         )}</select></div>
         <div><label class="block text-sm font-medium mb-2">کد ملی *</label><input id="${p}NationalId" value="${escapeHtml(item.nationalId || '')}" class="w-full border rounded-2xl py-3.5 px-5"></div>
-        <div><label class="block text-sm font-medium mb-2">تاریخ تولد *</label><input id="${p}BirthDate" type="date" value="${escapeHtml(item.birthDate || '')}" class="w-full border rounded-2xl py-3.5 px-5"></div>
+        <div data-member-identity-field class="${item.birthDate ? 'hidden' : ''}"><label class="block text-sm font-medium mb-2">تاریخ تولد *</label><input id="${p}BirthDate" type="date" value="${escapeHtml(item.birthDate || '')}" class="w-full border rounded-2xl py-3.5 px-5"></div>
         <div><label class="block text-sm font-medium mb-2">شماره تماس *</label><input id="${p}Phone" value="${escapeHtml(item.phone)}" class="w-full border rounded-2xl py-3.5 px-5"></div>
         <div><label class="block text-sm font-medium mb-2">نمایش پروفایل</label><select id="${p}ProfileVisibility" class="w-full border rounded-2xl py-3.5 px-5">${profileVisibilityOptions(item.profileVisibility)}</select></div>
         <div class="${window.staffCatalog?.organization_selection === 'fixed' ? 'hidden' : ''}"><label class="block text-sm font-medium mb-2">سازمان *</label><select id="${p}Organization" onchange="updateStaffOrganization('${p}')" class="w-full border rounded-2xl py-3.5 px-5">${staffOrganizationOptions(item.organizationUserId)}</select></div>
@@ -361,7 +361,7 @@
                             </div>
                             <div><label class="block text-sm font-medium mb-2">جنسیت *</label><select id="staffGender" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"><option value="male">مرد</option><option value="female">زن</option><option value="other">سایر</option></select></div>
                             <div><label class="block text-sm font-medium mb-2">کد ملی *</label><input id="staffNationalId" type="text" inputmode="numeric" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"></div>
-                            <div><label class="block text-sm font-medium mb-2">تاریخ تولد *</label><input id="staffBirthDate" type="date" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"></div>
+                            <div data-member-identity-field><label class="block text-sm font-medium mb-2">تاریخ تولد *</label><input id="staffBirthDate" type="date" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"></div>
                             <div>
                                 <label class="block text-sm font-medium mb-2">شماره تماس *</label>
                                 <input id="staffPhone" type="tel" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
@@ -491,6 +491,8 @@
                         <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                     </div>
                     <div class="p-8 space-y-6 min-h-0 flex-1 overflow-y-auto">
+                        <input type="hidden" id="editStaffContractId" value="${Number(item.contractId || 0)}">
+                        ${item.contracts?.length > 1 ? `<label class="block text-sm">${document.documentElement.lang.startsWith('en') ? 'Contract to edit' : 'قرارداد مورد ویرایش'}<select class="mt-2 w-full rounded-2xl border px-4 py-3" onchange="editStaffContract(${Number(item.id)},this.value)">${item.contracts.map(contract => `<option value="${Number(contract.contractId)}" ${Number(contract.contractId) === Number(item.contractId) ? 'selected' : ''}>${escapeHtml(contract.typeLabel)} — ${escapeHtml(contract.contractTitle)}</option>`).join('')}</select></label>` : ''}
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                             <div>
                                 <label class="block text-sm font-medium mb-2">نام و نام خانوادگی *</label>
@@ -505,7 +507,7 @@
                               item.gender
                             )}</select></div>
                             <div><label class="block text-sm font-medium mb-2">کد ملی *</label><input id="editStaffNationalId" type="text" value="${escapeHtml(item.nationalId || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"></div>
-                            <div><label class="block text-sm font-medium mb-2">تاریخ تولد *</label><input id="editStaffBirthDate" type="date" value="${escapeHtml(item.birthDate || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"></div>
+                            <div data-member-identity-field class="${item.birthDate ? 'hidden' : ''}"><label class="block text-sm font-medium mb-2">تاریخ تولد *</label><input id="editStaffBirthDate" type="date" value="${escapeHtml(item.birthDate || '')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"></div>
                             <div>
                                 <label class="block text-sm font-medium mb-2">شماره تماس *</label>
                                 <input id="editStaffPhone" type="tel" value="${escapeHtml(item.phone)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">

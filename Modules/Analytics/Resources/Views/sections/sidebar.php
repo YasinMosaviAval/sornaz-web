@@ -1,5 +1,6 @@
 <?php
 $previewRole = $previewPanelMode ?? null;
+$hasTeachingEnrollment = false;
 if ($previewRole !== null) {
     $panelUser = ['user_id' => 0, 'type' => $previewRole];
     $isSiteAdmin = $previewRole === 'admin';
@@ -38,6 +39,7 @@ $hasLearningEnrollment = $panelUserId && (bool)\Core\database\DB::table('academy
     ->where('academy_branch_members.status', 'active')
     ->whereIn('academy_branch_course_term_enrollments.type', ['teacher','student'])
     ->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_course_term_enrollments.deleted_at')->first();
+$hasTeachingEnrollment = $panelUserId ? \Core\database\DB::table('academy_branch_members')->join('academy_branch_course_term_enrollments', 'academy_branch_course_term_enrollments.member_id', '=', 'academy_branch_members.member_id')->where('academy_branch_members.user_id', $panelUserId)->where('academy_branch_members.status', 'active')->where('academy_branch_course_term_enrollments.type', 'teacher')->where('academy_branch_course_term_enrollments.status', 'active')->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_course_term_enrollments.deleted_at')->first() : null;
 $ownsAcademy = $panelUserId && (\Core\database\DB::table('academies')->where('user_id',$panelUserId)->whereNull('deleted_at')->first()
     || \Core\database\DB::table('academies')->where('created_by',$panelUserId)->whereNull('deleted_at')->first());
 $isAcademyManager = $panelUserId && (bool)\Core\database\DB::table('academy_branch_members')
@@ -136,6 +138,9 @@ if ($sidebarFullName === '') $sidebarFullName = $sidebarUsername;
             <?php endif; ?>
             <?php endif; ?>
             <?php if(!$hasAcademyPanelAccess && $hasLearningEnrollment): ?>
+            <?php if ($hasTeachingEnrollment && ($hasTeachingEnrollment['type'] ?? '') === 'teacher'): ?>
+            <li><a href="#" onclick="showSection('schedules')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-calendar-alt w-5 text-center"></i> جلسه‌ها و یادداشت استاد</a></li>
+            <?php endif; ?>
             <li><a href="#" onclick="showSection('my-classrooms')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-chalkboard w-5 text-center"></i> کلاس‌های من</a></li>
             <li><a href="#" onclick="showSection('my-courses')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-book-open w-5 text-center"></i> دوره‌های من</a></li>
             <li><a href="#" onclick="showSection('my-terms')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-calendar-check w-5 text-center"></i> ترم‌های من</a></li>

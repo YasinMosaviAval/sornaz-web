@@ -100,7 +100,8 @@
   };
 
   let studentFormOptionsPromise = null;
-  window.ensureStudentFormOptions = function () {
+  window.ensureStudentFormOptions = function (refresh = false) {
+    if (refresh) studentFormOptionsPromise = null;
     if (studentFormOptionsPromise) return studentFormOptionsPromise;
     studentFormOptionsPromise = fetch('/academy/admin/courses/student-options', {
       credentials: 'same-origin',
@@ -119,6 +120,7 @@
         window.studentProvinces = data.provinces || [];
         window.studentCounties = data.counties || [];
         window.studentTimezones = data.timezones || [];
+        window.studentClassrooms = data.classrooms || [];
         window.studentTermGroups = (data.terms || []).map((term) => ({
           ...term,
           key: String(term.id),
@@ -152,6 +154,7 @@
         )
         .join('');
     if (!groups.some((x) => x.key === term.value)) term.value = '';
+    window.updateStudentTermFields(prefix);
   };
   window.updateStudentTermFields = function (prefix) {
     const term = window.studentTermGroups.find(
@@ -159,6 +162,7 @@
       ),
       wrap = document.getElementById(prefix + 'AvailabilityWrap');
     if (wrap) wrap.classList.toggle('hidden', term?.status !== 'ongoing');
+    window.renderStudentTermSchedule?.(prefix);
   };
   window.updateStudentCountySelect = function (select) {
     const block = select.closest('.student-address-block'),
@@ -585,6 +589,7 @@
   };
 
   function readStudentForm(prefix) {
+    const selectedUser = prefix === 'stu' ? window.getMemberUserSelection?.(prefix) : null;
     const g = function (id) {
       return document.getElementById(prefix + id);
     };
@@ -623,8 +628,10 @@
       }))
       .filter((x) => x.startTime && x.endTime);
     const birthDate = (g('BirthDate') && g('BirthDate').value) || '';
-    const under18 = window.isStudentUnder18(birthDate);
+    const under18 = selectedUser?.fields.birthDate ? selectedUser.under18 : window.isStudentUnder18(birthDate);
     const data = {
+      existingUserToken: selectedUser?.token || '',
+      studentSchedule: window.readStudentTermSchedule?.(prefix) || null,
       name: ((g('Name') && g('Name').value) || '').trim(),
       nationalId: ((g('NationalId') && g('NationalId').value) || '').trim(),
       fatherName: ((g('FatherName') && g('FatherName').value) || '').trim(),
@@ -670,7 +677,8 @@
   }
 
   function validateStudentData(data) {
-    if (!data.name || !data.phone || !data.nationalId || !data.fatherName || !data.birthDate) {
+    const selectedUser = data.existingUserToken ? window.getMemberUserSelection?.('stu') : null;
+    if (['name', 'phone', 'nationalId', 'fatherName', 'birthDate'].some(field => !data[field] && !selectedUser?.fields[field])) {
       alert('لطفاً نام، شماره تماس، کد ملی، نام پدر و تاریخ تولد را وارد کنید.');
       return false;
     }
@@ -690,7 +698,7 @@
       alert('برای قرارگیری در لیست انتظار، حداقل یک برنامه زمانی هنرجو ثبت کنید.');
       return false;
     }
-    if (window.isStudentUnder18(data.birthDate)) {
+    if (selectedUser?.fields.birthDate ? selectedUser.under18 : window.isStudentUnder18(data.birthDate)) {
       if (
         !data.parentName ||
         !data.parentNationalId ||
@@ -740,6 +748,7 @@
         })
       );
       window.filterStudents();
+      await refreshStudentsFromDatabase();
       if (assignmentId) { studentFormOptionsPromise = null; await window.loadTerms?.(); }
       closeModal();
       alert('✅ هنرجو با موفقیت ثبت شد');
@@ -773,22 +782,27 @@
       : '';
   };
 
-  window.saveEditedStudent = async function (id) {
-    const data = readStudentForm('editStu');
+  async function persistStudentEdit(id, prefix, inline) {
+    if (savingStudent) return;
+    const data = readStudentForm(prefix);
     if (!validateStudentData(data)) return;
-    const index = allStudents.findIndex(function (x) {
-      return x.id === id;
-    });
-    if (index === -1) return;
-    allStudents[index] = Object.assign({}, allStudents[index], data);
-    await branchRequest('/academy/admin/members/' + id + '/update', {
-      payload_b64: encodeBranchPayload(allStudents[index]),
-    });
-    window.filterStudents();
-    closeModal();
-    alert('✅ تغییرات با موفقیت ذخیره شد');
-  };
-
+    const index = allStudents.findIndex(item => item.id === id);
+    if (index < 0) return;
+    savingStudent = true;
+    try {
+      const payload = {...allStudents[index], ...data};
+      await branchRequest('/academy/admin/members/' + id + '/update', {payload_b64: encodeBranchPayload(payload)});
+      allStudents[index] = payload;
+      await refreshStudentsFromDatabase();
+      if (inline) editingStudentRowId = null;
+      window.filterStudents();
+      closeModal();
+      alert('✅ تغییرات با موفقیت ذخیره شد');
+    } catch (error) {
+      if (!showStudentFieldError(error)) alert(error.message || 'ذخیره تغییرات هنرجو ناموفق بود.');
+    } finally { savingStudent = false; }
+  }
+  window.saveEditedStudent = id => persistStudentEdit(id, 'editStu', false);
   window.toggleStudentInlineEdit = async function (id) {
     if (editingStudentRowId !== id)
       try {
@@ -800,21 +814,7 @@
     window.renderStudentsTable(filteredStudents);
   };
 
-  window.saveInlineStudent = async function (id) {
-    const data = readStudentForm('inlineStu' + id);
-    if (!validateStudentData(data)) return;
-    const index = allStudents.findIndex(function (x) {
-      return x.id === id;
-    });
-    if (index === -1) return;
-    allStudents[index] = Object.assign({}, allStudents[index], data);
-    await branchRequest('/academy/admin/members/' + id + '/update', {
-      payload_b64: encodeBranchPayload(allStudents[index]),
-    });
-    editingStudentRowId = null;
-    window.filterStudents();
-    alert('✅ تغییرات با موفقیت ذخیره شد');
-  };
+  window.saveInlineStudent = id => persistStudentEdit(id, 'inlineStu' + id, true);
 
   window.deleteStudent = async function (id) {
     if (!(await AppDialog.confirmDelete(allStudents, id, 'هنرجو'))) return;

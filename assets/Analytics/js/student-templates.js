@@ -122,7 +122,7 @@
       (x) => Number(x.organizationUserId) === organizationUserId
     );
     const selectedGroup =
-      groups.find((x) => x.key === item.termKey) || groups.find((x) => x.name === item.instrument);
+      groups.find((x) => Number(x.id) === Number(item.assignmentTermId)) || groups.find((x) => x.key === item.termKey) || groups.find((x) => x.name === item.instrument);
     const selectedTermKey = selectedGroup?.key || '';
     const under18 =
       typeof window.isStudentUnder18 === 'function' && window.isStudentUnder18(item.birthDate);
@@ -157,7 +157,7 @@
                     <label class="block text-sm font-medium mb-2">نام پدر *</label>
                     <input id="${id('FatherName')}" type="text" value="${escapeHtml(item.fatherName || '')}" class="${fieldClass}">
                 </div>
-                <div>
+                <div data-member-identity-field class="${item.birthDate ? 'hidden' : ''}">
                     <label class="block text-sm font-medium mb-2">تاریخ تولد *</label>
                     <input id="${birthId}" type="date" value="${escapeHtml(item.birthDate || '')}" class="${fieldClass}"
                            onchange="window.toggleStudentParentFields('${birthId}', '${parentWrapId}')">
@@ -200,7 +200,7 @@
                 </div>
             </div>
 
-            ${item.assignmentTermId ? '' : `<div class="border-t pt-6">
+            ${item.assignmentTermId ? (window.getStudentTermScheduleHTML?.(prefix, selectedGroup, item.studentSchedule) || '') : `<div class="border-t pt-6">
                 <h3 class="font-semibold mb-4 text-indigo-700">اطلاعات آموزشی</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     <div>
@@ -215,6 +215,7 @@
                     </div>
                 </div>
             </div>
+            ${window.getStudentTermScheduleHTML?.(prefix, selectedGroup, item.studentSchedule) || ''}
             <div id="${id('AvailabilityWrap')}" class="${selectedGroup?.status === 'ongoing' ? '' : 'hidden'} border border-indigo-200 bg-indigo-50/40 rounded-2xl p-5 space-y-4"><h3 class="font-semibold text-indigo-700">افزودن برنامه زمانی هنرجو</h3><div id="${id('AvailabilityRows')}" class="space-y-3">${(item.availabilities?.length ? item.availabilities : [{}]).map((x) => window.getStudentAvailabilityHTML(x, prefix)).join('')}</div><button type="button" onclick="addStudentAvailability('${prefix}')" class="text-sm text-indigo-600">+ افزودن بازه زمانی جدید</button><div><label class="block text-sm font-medium mb-2">خلاصه</label><input id="${id('AvailabilitySummary')}" class="${fieldClass}" value="${escapeHtml(item.availabilitySummary || '')}"></div><div><label class="block text-sm font-medium mb-2">توضیحات</label><textarea id="${id('AvailabilityDescription')}" class="${fieldClass}" rows="3">${escapeHtml(item.availabilityDescription || '')}</textarea></div></div>`}`;
   }
 
@@ -256,6 +257,7 @@
                     <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                 </div>
                 <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto">
+                    ${window.getMemberUserPickerHTML?.('stu') || ''}
                     ${formFields({ registrationDate: todayISO(), ...context }, 'stu')}
                     <div class="flex gap-4 pt-4">
                         <button onclick="saveStudent()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-medium">ذخیره هنرجو</button>
@@ -350,8 +352,7 @@
                     <div>
                         <h3 class="font-semibold text-indigo-700 mb-3 flex items-center gap-2"><i class="fas fa-sticky-note"></i> یادداشت‌های استاد</h3>
                         <div class="bg-amber-50 border border-amber-100 rounded-2xl p-4 text-sm text-gray-700 leading-relaxed">
-                            هنرجو پیشرفت خوبی در تکنیک داشته. پیشنهاد می‌شود قطعات کلاسیک بیشتری تمرین کند.
-                            <div class="text-xs text-gray-400 mt-2">آخرین به‌روزرسانی: ۲ روز پیش</div>
+                            ${(item.teacherNotes || []).map(note => `<p class="mb-2 whitespace-pre-wrap">${escapeHtml(note.text)}</p>`).join('')}
                         </div>
                     </div>
                 </div>

@@ -170,5 +170,6 @@
     finally { if (button.isConnected) button.disabled = false; inputs.forEach(input => { input.disabled = false; }); }
   };
   window.addEventListener('load', load);
+  window.addEventListener('academy-data-loaded', load);
   setTimeout(load, 350);
 })();

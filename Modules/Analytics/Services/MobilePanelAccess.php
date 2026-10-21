@@ -26,8 +26,10 @@ final class MobilePanelAccess
             ?: DB::table('academies')->where('created_by', $id)->whereNull('deleted_at')->first();
         $branch = DB::table('academy_branches')->where('user_id', $id)->whereNull('deleted_at')->first();
         $management = $admin || (bool) $role || (bool) $contract || (bool) $academy || (bool) $branch || in_array($user['type'] ?? '', ['academy', 'branch'], true);
+        $academyMembership = DB::table('academy_branch_members')->where('user_id', $id)->where('status', 'active')->whereNull('branch_id')->whereNull('deleted_at')->first();
         return ['common' => true, 'founder' => $id === 1, 'member' => (bool) $member || $management,
             'management' => $management,
+            'branchContext' => !$admin && !$academy && ((bool) $branch || (!$academyMembership && $member && ($member['branch_id'] ?? null) !== null)),
             'admin' => $admin];
     }
 }

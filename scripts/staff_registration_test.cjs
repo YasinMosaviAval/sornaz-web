@@ -50,4 +50,5 @@ $pdo->exec("INSERT INTO users(user_id,type) VALUES(1,'admin')");$registrationAct
 echo "Staff signup: no pre-registration rows, OTP/contract binding, ownership, credentials, wallet/referral, replay and atomic rollback passed.\n";
 `;
 const source=base.replace('echo "Term batch:',extra+'\necho "Term batch:');
-const result=spawnSync('php',[],{input:source,encoding:'utf8'});process.stdout.write(result.stdout||'');process.stderr.write(result.stderr||'');process.exitCode=result.status??1;
+module.exports=source;
+if(require.main===module){const result=spawnSync('php',[],{input:source,encoding:'utf8'});process.stdout.write(result.stdout||'');process.stderr.write(result.stderr||'');process.exitCode=result.status??1;}

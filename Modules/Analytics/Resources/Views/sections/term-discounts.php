@@ -3,13 +3,15 @@
         <button type="button" onclick="openAddTermDiscountModal()" class="flex items-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-white"><i class="fas fa-plus" aria-hidden="true"></i><?= e(locale()==='en' ? 'Add discount' : 'افزودن تخفیف جدید') ?></button>
     </div>
     <div class="mb-6 rounded-3xl bg-white p-3 shadow-sm"><div id="termDiscountsBranchTabs" class="flex gap-2 overflow-x-auto"></div></div>
-    <div class="mb-6 grid gap-4 rounded-3xl bg-white p-5 shadow-sm md:grid-cols-2">
-        <input id="termDiscountSearch" type="search" oninput="filterTermDiscounts()" aria-label="<?= e(locale()==='en' ? 'Search discounts' : 'جستجوی تخفیف‌ها') ?>" placeholder="<?= e(locale()==='en' ? 'Search discounts' : 'جستجوی تخفیف‌ها') ?>" class="w-full rounded-2xl border px-4 py-3">
-        <select id="termDiscountTypeFilter" onchange="filterTermDiscounts()" aria-label="<?= e(locale()==='en' ? 'Discount type' : 'نوع تخفیف') ?>" class="w-full rounded-2xl border px-4 py-3">
+    <div class="mb-6 rounded-3xl bg-white p-5 shadow-sm">
+        <div class="flex items-center gap-3">
+        <input id="termDiscountSearch" type="search" oninput="filterTermDiscounts()" aria-label="<?= e(locale()==='en' ? 'Search discounts' : 'جستجوی تخفیف‌ها') ?>" placeholder="<?= e(locale()==='en' ? 'Search discounts' : 'جستجوی تخفیف‌ها') ?>" class="min-w-0 flex-1 rounded-2xl border px-4 py-3">
+        <select id="termDiscountTypeFilter" onchange="filterTermDiscounts()" aria-label="<?= e(locale()==='en' ? 'Discount type' : 'نوع تخفیف') ?>" class="min-w-0 flex-1 rounded-2xl border px-4 py-3">
             <option value=""><?= e(locale()==='en' ? 'All discount types' : 'همه انواع تخفیف') ?></option>
             <option value="percentage"><?= e(locale()==='en' ? 'Percentage' : 'درصدی') ?></option>
             <option value="fixed"><?= e(locale()==='en' ? 'Fixed amount' : 'مبلغ ثابت') ?></option>
         </select>
+        </div>
     </div>
     <?php component('panel-table-template', [
         'attributes'=>'id="termDiscountsTable" class="w-full min-w-[700px]"',

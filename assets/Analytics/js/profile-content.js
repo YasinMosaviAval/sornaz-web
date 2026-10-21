@@ -232,6 +232,7 @@
         ...next,
       };
       render(root);
+      document.querySelectorAll('[data-profile-form][data-profile-entity="' + e + '"] [data-organization-select]').forEach(select => window.syncPanelOrganizationSelect?.(select, (states[e].organizations || []).filter(row => row.writable)));
       add.disabled = false;
     } catch (err) {
       root.querySelector('[data-profile-loading]').textContent = err.message;
@@ -430,7 +431,7 @@
     return `<label>سازمان<select name="${owner}" data-organization-select class="mt-2 w-full rounded-2xl border p-3" required>${writable.map((o) => `<option value="${o.id}" ${selected === o.id ? 'selected' : ''}>${esc(o.kind === 'branch' && o.academyName ? o.name + ' — ' + o.academyName : o.name)}</option>`).join('')}</select></label>`;
   }
   function editForm(e, x, s, inline = false) {
-    return `<form data-profile-form class="grid gap-4 md:grid-cols-2">${organizationField(e, x, s)}${defs[e].fields.map((f) => inputField(f, x, s)).join('')}<div class="md:col-span-2 flex gap-3"><button type="button" onclick="ProfileContent.${inline ? 'saveInline' : 'save'}('${e}',${x?.id || 0},this)" class="rounded-2xl bg-indigo-600 px-6 py-3 text-white">ذخیره تغییرات</button>${inline ? `<button type="button" onclick="ProfileContent.inline('${e}',${x.id})" class="rounded-2xl border px-6 py-3">انصراف</button>` : ''}</div></form>`;
+    return `<form data-profile-form data-profile-entity="${e}" class="grid gap-4 md:grid-cols-2">${organizationField(e, x, s)}${defs[e].fields.map((f) => inputField(f, x, s)).join('')}<div class="md:col-span-2 flex gap-3"><button type="button" onclick="ProfileContent.${inline ? 'saveInline' : 'save'}('${e}',${x?.id || 0},this)" class="rounded-2xl bg-indigo-600 px-6 py-3 text-white">ذخیره تغییرات</button>${inline ? `<button type="button" onclick="ProfileContent.inline('${e}',${x.id})" class="rounded-2xl border px-6 py-3">انصراف</button>` : ''}</div></form>`;
   }
   function openModal(html) {
     document.getElementById('modalContainer').innerHTML =
@@ -658,4 +659,5 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
+  window.addEventListener('panel-organizations-changed', () => { Promise.resolve(Promise.all([...document.querySelectorAll('[data-profile-content]')].map(root => load(root, true)))).catch(console.error); });
 })();

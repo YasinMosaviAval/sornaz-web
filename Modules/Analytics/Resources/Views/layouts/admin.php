@@ -64,7 +64,9 @@
     pushScript('messages.js');
     pushScript('notification-templates.js');
     pushScript('notifications.js');
+    pushScript('student-term-schedule.js');
     pushScript('student-templates.js');
+    pushScript('member-user-picker.js');
     pushScript('students.js');
     pushScript('teacher-templates.js');
     pushScript('teachers.js');

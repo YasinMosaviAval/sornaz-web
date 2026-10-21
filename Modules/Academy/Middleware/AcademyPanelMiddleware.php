@@ -23,6 +23,7 @@ class AcademyPanelMiddleware
             return redirect('/system/login');
         }
         $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '';
+        if ($this->isTeacherSessionPath($path, (int) $user['user_id'])) return $next($request);
         if ($this->isPersonalPanelPath($path)) {
             return $next($request);
         }
@@ -60,6 +61,15 @@ class AcademyPanelMiddleware
             abort(403, 'دسترسی لازم برای این بخش را ندارید.');
         }
         return $next($request);
+    }
+
+    private function isTeacherSessionPath(string $path, int $userId): bool
+    {
+        if ((($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && in_array($path, ['/academy/admin/class-schedules', '/academy/admin/class-schedule-week-bounds'], true)) || (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && preg_match('~^/academy/admin/class-schedules/[1-9][0-9]*/attendance$~D', $path))) {
+            return (new \Modules\Academy\Services\AcademyClassScheduleService())->hasTeacherSessions($userId);
+        }
+
+        return false;
     }
 
     private function expectsJson(): bool

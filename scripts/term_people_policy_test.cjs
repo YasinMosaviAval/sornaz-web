@@ -1,5 +1,6 @@
 const {spawnSync}=require('node:child_process');
 const source=String.raw`<?php
+require_once 'Modules/Academy/Services/StaffTeachingLessons.php';
 $map=require 'vendor/composer/autoload_classmap.php';spl_autoload_register(static function($class)use($map){if(isset($map[$class]))require_once $map[$class];});
 function db(){return $GLOBALS['pdo'];}
 function app(){return new class{function getLocale(){return 'fa';}};}

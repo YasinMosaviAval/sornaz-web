@@ -205,19 +205,44 @@ class AcademyCourseService
         }
         $terms = $ids ? DB::table('academy_branch_course_terms')->whereIn('course_id', $ids)->whereIn('status', ['open', 'ongoing'])->whereNull('deleted_at')->get() : [];
         $termIds = array_map(fn ($x) => (int) $x['term_id'], $terms);
-        $texts = $this->translations('academy_branch_course_terms', $termIds, ['title']);
+        $texts = $this->translations('academy_branch_course_terms', $termIds, ['title', 'schedule_draft']);
         $provinces = DB::table('world_iran_provinces')->get();
         $counties = DB::table('world_iran_counties')->get();
         $timezones = DB::table('f_timezone')->whereNull('deleted_at')->get();
-        return ['organizations' => $data['organizations'], 'permissions' => $data['permissions'], 'provinces' => $provinces, 'counties' => $counties, 'timezones' => $timezones, 'terms' => array_values(array_map(function ($t) use ($courseMap, $texts) {
+        $classrooms = $this->studentClassrooms($actor, $data['organizations']);
+        return ['classrooms' => $classrooms, 'organizations' => $data['organizations'], 'permissions' => $data['permissions'], 'provinces' => $provinces, 'counties' => $counties, 'timezones' => $timezones, 'terms' => array_values(array_map(function ($t) use ($courseMap, $texts) {
             $course = $courseMap[(int) $t['course_id']];
-            return ['id' => (int) $t['term_id'], 'name' => $texts[(int) $t['term_id']]['title'] ?? ('ترم ' . $t['term_id']), 'organizationUserId' => (int) $course['organizationUserId'], 'lessonId' => (int) ($course['lesson_id'] ?? 0), 'levelId' => (int) ($course['level_id'] ?? 0), 'level' => $course['level'] ?: 'تعریف نشده', 'status' => $t['status']];
+            return ['id' => (int) $t['term_id'], 'name' => $texts[(int) $t['term_id']]['title'] ?? ('ترم ' . $t['term_id']), 'organizationUserId' => (int) $course['organizationUserId'], 'lessonId' => (int) ($course['lesson_id'] ?? 0), 'levelId' => (int) ($course['level_id'] ?? 0), 'level' => $course['level'] ?: 'تعریف نشده', 'status' => $t['status'], 'sessionCount' => (int) $t['session_count'], 'repeatType' => $t['session_period'], 'scheduleDraft' => json_decode((string) ($texts[(int) $t['term_id']]['schedule_draft'] ?? ''), true), 'hasSessions' => (bool) DB::table('academy_branch_course_term_sessions')->where('term_id', (int) $t['term_id'])->whereNull('deleted_at')->first()];
         }, $terms))];
+    }
+
+    public function memberUserLookup(int $actor, array $data): array
+    {
+        $this->allowedOrganization($actor, (int) ($data['organizationUserId'] ?? 0));
+        return (new ExistingMemberUserService())->find($actor, (int) $data['organizationUserId'], (string) ($data['query'] ?? ''));
+    }
+
+    private function studentClassrooms(int $actor, array $organizations): array
+    {
+        $classrooms = (new AcademyTermService())->bootstrap($actor)['classrooms'] ?? [];
+        foreach ($classrooms as &$room) {
+            $room['organizationUserIds'] = [];
+            $branch = !empty($room['branchId']) ? DB::table('academy_branches')->where('branch_id', (int) $room['branchId'])->first() : null;
+            $academyId = (int) ($branch['academy_id'] ?? $room['academyId']);
+            foreach ($organizations as $organization) {
+                $matches = $organization['kind'] === 'branch' ? (int) $organization['id'] === (int) $room['branchId'] : (int) $organization['id'] === $academyId;
+                if ($matches) $room['organizationUserIds'][] = (int) $organization['user_id'];
+            }
+        }
+        unset($room);
+        return $classrooms;
     }
 
     public function storeStudent(int $actor, array $d, bool $requireEmptyTerm = false): array
     {
         return \Modules\System\Services\PaymentMutex::run(db(), 'schedule-write', fn () => transaction(function () use ($actor, $d, $requireEmptyTerm) {
+            $organization = $this->allowedOrganization($actor, (int) ($d['organizationUserId'] ?? 0));
+            $d = (new ExistingMemberUserService())->resolve($actor, $d);
             $name = trim((string) ($d['name'] ?? ''));
             $phone = $this->digits((string) ($d['phone'] ?? ''));
             $national = $this->digits((string) ($d['nationalId'] ?? ''));
@@ -225,13 +250,13 @@ class AcademyCourseService
             if ($name === '' || $phone === '' || $national === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $birthday)) {
                 throw new RuntimeException('نام، شماره تماس، کد ملی و تاریخ تولد معتبر الزامی است.');
             }
-            if (DB::table('users')->where('phone', $phone)->whereNull('deleted_at')->first()) {
+            if (empty($d['_existingUserId']) && DB::table('users')->where('phone', $phone)->whereNull('deleted_at')->first()) {
                 throw new RuntimeException('FIELD:stuPhone:این شماره تماس هنرجو قبلاً ثبت شده است.');
             }
-            if (DB::table('users')->where('national_code', $national)->whereNull('deleted_at')->first()) {
+            if (empty($d['_existingUserId']) && DB::table('users')->where('national_code', $national)->whereNull('deleted_at')->first()) {
                 throw new RuntimeException('FIELD:stuNationalId:این کد ملی هنرجو قبلاً ثبت شده است.');
             }
-            $organization = $this->allowedOrganization($actor, (int) ($d['organizationUserId'] ?? 0));
+
             $termId = (int) ($d['termId'] ?? 0);
             if ($organization['kind'] === 'academy') {
                 $academyId = (int) $organization['id'];
@@ -256,7 +281,14 @@ class AcademyCourseService
                 $parentId = $this->createStudentUser($actor, $parent, $approved, 'parent');
                 $this->saveStudentContactsAndAddresses($actor, $parentId, ['addresses' => $d['addresses'] ?? []], $approved);
             }
-            $userId = $this->createStudentUser($actor, $d, $approved, 'student');
+            $d['phone'] = $phone;
+            $d['nationalId'] = $national;
+            $userId = (new ExistingMemberUserService())->complete($actor, $d);
+            if ($userId) {
+                (new ExistingMemberUserService())->assertNotMember($userId, $academyId, $organization['kind'] === 'branch' ? (int) $organization['id'] : null);
+            } else {
+                $userId = $this->createStudentUser($actor, $d, $approved, 'student');
+            }
             $this->saveStudentContactsAndAddresses($actor, $userId, $d, $approved);
             $memberStatus = $approved ? ($requireEmptyTerm || $term['status'] === 'open' ? 'active' : 'inactive') : 'pending';
             $memberId = DB::table('academy_branch_members')->insertGetId(['academy_id' => $academyId, 'branch_id' => $organization['kind'] === 'branch' ? (int) $organization['id'] : null, 'user_id' => $userId, 'parent_user_id' => $parentId, 'status' => $memberStatus, 'joined_at' => ($d['registrationDate'] ?? date('Y-m-d')), 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
@@ -305,6 +337,10 @@ class AcademyCourseService
             }
             foreach ($parts as $p) {
                 DB::table('academy_branch_course_term_invoice_installments')->insert(['invoice_id' => $invoiceId, 'installment_number' => (int) $p['installment_number'], 'amount' => $p['amount'], 'due_date' => $p['due_date'], 'status' => $approved ? 'approved' : 'pending', 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
+            }
+            if (!empty($d['studentSchedule'])) {
+                if (!is_array($d['studentSchedule'])) throw new RuntimeException('اطلاعات زمان‌بندی هنرجو معتبر نیست.');
+                (new AcademyTermService())->saveStudentSchedule($actor, $termId, $memberId, $d['studentSchedule'], $approved);
             }
             return ['id' => $memberId, 'member_id' => $memberId, 'user_id' => $userId, 'status' => $memberStatus];
         }));

@@ -108,7 +108,7 @@ final class MobilePanelCatalog
         $sections['finance']['actions'] += ['update' => $a('/academy/admin/term-invoices/{id}/update', 'ویرایش صورتحساب', 'POST', $sections['finance']['fields']), 'pay' => $a('/academy/admin/term-invoices/{invoiceId}/installments/{installmentId}/zarinpal', 'پرداخت آنلاین'), 'offline' => $a('/academy/admin/term-invoices/{invoiceId}/installments/{installmentId}/offline', 'ثبت پرداخت', 'POST', [$f('amount', 'مبلغ', 'number'), $f('reference', 'شماره پیگیری'), $f('description', 'توضیح', 'multiline')])];
         $sections['subscriptions'] = $s('subscriptions', 'اشتراک آموزشگاه', 'Subscriptions', '/academy/admin/subscriptions', 'subscriptions', [], 'management', false);
         $sections['subscriptions']['actions']['pay'] = $a('/academy/admin/subscriptions/{id}/zarinpal', 'پرداخت اشتراک');
-        $sections['schedules'] = $s('schedules', 'برنامه کلاس‌ها و حضور و غیاب', 'Class schedule', '/academy/admin/class-schedules', 'sessions', [], 'management', false);
+        $sections['schedules'] = $s('schedules', 'برنامه کلاس‌ها و حضور و غیاب', 'Class schedule', '/academy/admin/class-schedules', 'sessions', [], 'member', false);
         $sections['schedules']['actions']['attendance'] = $a('/academy/admin/class-schedules/{id}/attendance', 'حضور و غیاب', 'POST', [$f('students', 'هنرجویان', 'rows', [$f('id', 'هنرجو', 'select', ['source' => 'students']), $f('status', 'وضعیت', 'select', ['present' => 'حاضر', 'absent' => 'غایب', 'late' => 'تأخیر']), $f('note', 'یادداشت')])]);
         $ranges = [$f('start', 'شروع', 'time'), $f('end', 'پایان', 'time'), $f('status', 'وضعیت', 'select', ['فعال' => 'فعال', 'غیرفعال' => 'غیرفعال'])];
         $sections['member-schedules'] = $s('member-schedules', 'زمان‌های حضور اعضا', 'Member availability', '/academy/admin/member-schedules', 'schedules', [$f('membershipId', 'عضو', 'select', ['source' => 'members']), $f('day', 'روز هفته', 'select', ['0' => 'شنبه', '1' => 'یکشنبه', '2' => 'دوشنبه', '3' => 'سه‌شنبه', '4' => 'چهارشنبه', '5' => 'پنجشنبه', '6' => 'جمعه']), $f('repeatDate', 'تاریخ', 'date'), $f('repeatPeriod', 'تکرار', 'select', ['none' => 'بدون تکرار', 'weekly' => 'هفتگی']), $f('timezone', 'منطقه زمانی', 'select', ['source' => 'staff_catalog.timezones']), $f('ranges', 'بازه‌های زمانی', 'rows', $ranges), ...$description]);
@@ -168,7 +168,7 @@ final class MobilePanelCatalog
         $sections['terms']['actions']['discounts'] = $a('/academy/admin/term-discounts', 'لیست تخفیف‌ها', 'GET', [], false);
         $sections['terms']['actions']['discount'] = $a('/academy/admin/term-discounts', 'افزودن تخفیف', 'POST', [$f('title', 'عنوان', 'text', null, true), $f('type', 'نوع', 'select', ['percentage' => 'درصدی', 'fixed' => 'مبلغ ثابت']), $f('value', 'مقدار', 'number', null, true)], false);
         $sections['schedules']['rows'] = 'schedules';
-        $sections['schedules']['actions']['attendance']['fields'] = [$f('attendance', 'حضور و غیاب', 'rows', [$f('memberId', 'عضو', 'select', ['source' => 'attendance']), $f('status', 'وضعیت', 'select', ['present' => 'حاضر', 'absent' => 'غایب', 'late' => 'تأخیر', 'leave' => 'مرخصی', 'excused_absence' => 'غیبت موجه', 'online' => 'آنلاین']), $f('note', 'توضیح')])];
+        $sections['schedules']['actions']['attendance']['fields'] = [$f('teacherNote', 'یادداشت استاد', 'multiline') + ['en' => 'Teacher note', 'visibleWhen' => ['canWriteTeacherNote' => true], 'maxLength' => 10000], $f('attendance', 'حضور و غیاب', 'rows', [$f('memberId', 'عضو', 'select', ['source' => 'attendance']), $f('status', 'وضعیت', 'select', ['present' => 'حاضر', 'absent' => 'غایب', 'late' => 'تأخیر', 'leave' => 'مرخصی', 'excused_absence' => 'غیبت موجه', 'online' => 'آنلاین']), $f('description', 'توضیح')])];
         $sections['settings'] = $s('settings', 'تنظیمات سایت', 'Site settings', '/analytics/site-settings', '', [], 'management', false);
         $sections['settings']['actions']['save'] = $a('/analytics/admin-settings', 'ویرایش تنظیمات', 'POST', [$f('primaryFont', 'قلم'), $f('fontScale', 'اندازه متن', 'number'), $f('language', 'زبان', 'select', ['fa' => 'فارسی', 'en' => 'English']), $f('themeMode', 'ظاهر', 'select', ['dark' => 'تیره', 'light' => 'روشن']), $f('colorTheme', 'تم رنگی', 'select', ['indigo' => 'نیلی', 'emerald' => 'زمردی', 'rose' => 'رز', 'amber' => 'کهربایی'])], false);
         $sections['reports'] = $s('reports', 'گزارش‌ها و نمودارها', 'Reports and charts', '/analytics/admin-reports', 'reports', [], 'management', false);
@@ -440,6 +440,7 @@ final class MobilePanelCatalog
                 $sections[$key]['presentation'] = $contract;
             }
         }
+        $sections['students']['presentation']['detailFields'][] = ['key' => 'teacherNotes', 'label' => 'یادداشت‌های استاد', 'en' => 'Teacher notes'];
         $sections['pages']['detail'] = $sections['page-content'];
         return $sections;
     }
@@ -510,7 +511,7 @@ final class MobilePanelCatalog
         $this->termDialogContracts($canonical);
         $source = array_column($canonical['terms']['actions']['create']['fields'], null, 'key');
         $fields = [];
-        foreach (['name', 'organizationUserId', 'courseId', 'teachers', 'classroomId', 'currencyId', 'cost', 'sessionCount', 'summary', 'description'] as $key) {
+        foreach (['name', 'organizationUserId', 'courseId', 'teachers', 'currencyId', 'cost', 'sessionCount', 'summary', 'description'] as $key) {
             $field = $source[$key];
             if ($key === 'classroomId') $field['required'] = false;
             if ($key === 'teachers') { unset($field['maxItemsFrom']); $field['maxItems'] = 1; }
@@ -538,6 +539,10 @@ final class MobilePanelCatalog
         $canonical = $sections;
         $this->studentDialogContracts($canonical);
         $studentFields = array_values(array_filter($canonical['students']['actions']['create']['fields'], fn ($field) => !in_array($field['key'], ['organizationUserId', 'termId', 'availabilities', 'availabilitySummary', 'availabilityDescription'], true)));
+        foreach ($studentFields as &$field) {
+            if ($field['key'] === 'studentSchedule') $field['visibleWhen'] = ['record.status_code' => 'open'];
+        }
+        unset($field);
         $sections['terms']['actions']['assign-student'] = $this->a('/academy/admin/terms/{id}/student', 'تعیین هنرجو', 'POST', $studentFields) + ['en' => 'Assign student', 'formContractVersion' => 2];
         $sections['terms']['actions']['classroom'] = $this->a('/academy/admin/terms/{id}/classroom', 'تعیین کلاس برگزاری', 'POST', [
             $f('classroomId', 'کلاس برگزاری', 'select', ['source' => 'classrooms', 'termRooms' => true], true),
@@ -684,6 +689,10 @@ final class MobilePanelCatalog
         ]) + ['maxItems' => 1];
         foreach (['parentName' => 'نام و نام خانوادگی والد', 'parentNationalId' => 'شماره ملی والد', 'parentFatherName' => 'نام پدر والد', 'parentBirthDate' => 'تاریخ تولد والد', 'parentPhone' => 'شماره تماس والد'] as $key => $label) $fields[] = $f($key, $label, $key === 'parentBirthDate' ? 'date' : ($key === 'parentPhone' ? 'phone' : 'text'), null, true) + $under18;
         $fields[] = $f('termId', 'ترم آموزشی', 'select', ['source' => 'terms', 'match' => ['organizationUserId' => 'organizationUserId'], 'requireMatch' => true], true) + ['dependsOn' => ['organizationUserId']];
+        $fields[] = $f('studentSchedule', 'زمان‌بندی جلسات ترم', 'object', [
+            $f('classroomId', 'کلاس برگزاری', 'select', ['source' => 'classrooms', 'termRooms' => true]),
+            $f('firstDate', 'تاریخ جلسه اول', 'date'),
+        ]) + ['visibleWhen' => ['_selected.termId.status' => 'open']];
         $days = ['saturday' => 'شنبه', 'sunday' => 'یکشنبه', 'monday' => 'دوشنبه', 'tuesday' => 'سه‌شنبه', 'wednesday' => 'چهارشنبه', 'thursday' => 'پنجشنبه', 'friday' => 'جمعه'];
         $fields[] = $f('availabilities', 'افزودن برنامه زمانی هنرجو', 'rows', [
             $f('day', 'روز', 'select', $days, true) + ['default' => 'saturday'],
@@ -715,19 +724,20 @@ final class MobilePanelCatalog
                 $f('day', 'روز ماه شمسی', 'number') + ['min' => 1, 'max' => 31, 'visibleWhen' => ['_root.repeatType' => ['in' => ['month', 'year']]]],
                 $f('month', 'ماه شمسی', 'select', array_combine(range(1, 12), ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'])) + ['visibleWhen' => ['_root.repeatType' => 'year']],
                 $f('exactDate', 'تاریخ دقیق', 'date') + ['visibleWhen' => ['_root.repeatType' => 'no-period']],
-            ]) + ['visibleWhen' => ['operation' => 'create', '_form.status' => 'open']],
+            ]) + ['visibleWhen' => ['operation' => 'create', '_form.status' => ['in' => ['open', 'pending']]]],
             $f('sessions', 'جلسه‌ها', 'rows', [
-                $f('date', 'تاریخ', 'date', null, true) + ['hiddenWhen' => ['operation' => 'create', '_root.status' => 'open']],
+                $f('date', 'تاریخ', 'date', null, true) + ['hiddenWhen' => ['operation' => 'create', '_root.status' => ['in' => ['open', 'pending']]]],
                 $f('timezoneId', 'منطقه زمانی', 'select', ['source' => 'timezones'], true) + ['defaultFirstOption' => true],
                 $f('startTime', 'ساعت شروع', 'time', null, true) + ['default' => '10:00'],
                 $f('durationMinutes', 'مدت جلسه (دقیقه)', 'number', null, true) + ['default' => 90, 'durationFrom' => ['startTime', 'endTime'], 'min' => 5, 'max' => 1440, 'step' => 5],
-            ], true) + ['rowsCountFrom' => 'sessionCount', 'singleWhen' => ['operation' => 'create', '_form.status' => 'open']],
+            ], true) + ['rowsCountFrom' => 'sessionCount', 'singleWhen' => ['operation' => 'create', '_form.status' => ['in' => ['open', 'pending']]]],
             $f('summary', 'خلاصه ترم'), $f('description', 'شرح ترم', 'multiline'),
             $f('teachers', 'استادها', 'multi', ['source' => 'members', 'where' => ['type' => 'teacher'], 'match' => ['organizationUserId' => 'organizationUserId', 'lessonId' => '_selected.courseId.lessonId'], 'requireMatch' => true], true) + ['initial' => 'teachers', 'dependsOn' => ['organizationUserId', 'courseId', 'classroomId'], 'maxItemsFrom' => '_selected.courseId.teacher_capacity'],
             $f('students', 'هنرجویان', 'multi', ['source' => 'members', 'where' => ['type' => 'student'], 'match' => ['organizationUserId' => 'organizationUserId']]) + ['initial' => 'students', 'dependsOn' => ['organizationUserId', 'courseId', 'classroomId'], 'hiddenWhen' => ['_form.status' => ['in' => ['open', 'pending']]], 'maxItemsFrom' => '_selected.courseId.student_capacity'],
         ];
         foreach ($fields as &$field) {
-            if ($field['key'] === 'classroomId') $field['options'] = ['source' => 'classrooms', 'termRooms' => true];
+            if ($field['key'] === 'status') $field['visibleWhen'] = ['operation' => ['not' => 'create']];
+            if ($field['key'] === 'classroomId') { $field['options'] = ['source' => 'classrooms', 'termRooms' => true]; $field['hiddenWhen'] = ['operation' => 'create']; }
             if (in_array($field['key'], ['teachers', 'students'], true)) {
                 $field['options']['termPeople'] = true;
                 unset($field['options']['match']['organizationUserId']);

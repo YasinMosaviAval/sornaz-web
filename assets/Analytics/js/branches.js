@@ -164,7 +164,7 @@ function syncBranchMainCheckbox(checkboxId, academyId, isEdit = false, branch = 
 }
 function hideMainBranchDeleteButtons() {
   allBranches
-    .filter((branch) => branch.is_main)
+    .filter((branch) => branch.is_main && !branch.canDeleteMain)
     .forEach((branch) =>
       document
         .querySelectorAll(`button[onclick="deleteBranch(${branch.id})"]`)
@@ -384,7 +384,7 @@ async function loadBranches() {
   try {
     const data = await branchRequest('/academy/admin/branches', null, 'GET');
     branchCsrfToken = data.csrf_token || branchCsrfToken;
-    allBranches = data.branches || [];
+    allBranches = (data.branches || []).map(branch => ({ ...branch, canDeleteMain: (data.main_delete_academy_ids || []).map(Number).includes(Number(branch.academy_id)) }));
     window.academyPanelBranches = allBranches.slice();
     filteredBranches = [...allBranches];
     allBranchTypes = data.types || [];
@@ -437,7 +437,7 @@ async function loadBranches() {
 }
 
 async function pollBranchesRealtime() {
-  if (branchRealtimeBusy || document.hidden || !document.querySelector('[data-branches-root]'))
+  if (branchRealtimeBusy || document.hidden)
     return;
   branchRealtimeBusy = true;
   try {
@@ -593,7 +593,7 @@ window.editBranchDialog = async function (id) {
 };
 window.deleteBranch = async function (id) {
   const branch = allBranches.find((item) => item.id === id);
-  if (branch?.is_main) return alert('حذف شعبه اصلی آموزشگاه امکان‌پذیر نیست.');
+  if (branch?.is_main && !branch.canDeleteMain) return;
   if (!(await AppDialog.confirmDelete(allBranches, id, 'شعبه'))) return;
   try {
     await branchRequest(`/academy/admin/branches/${id}/delete`);
@@ -622,6 +622,7 @@ window.handleAdminBranchCreated = function (branch) {
   const index = allBranches.findIndex((item) => item.id === branch.id);
   if (index >= 0) allBranches[index] = branch;
   else allBranches.unshift(branch);
+  void loadBranches();
   branchesCurrentPage = 1;
   window.filterBranches();
   branchRealtimeChannel?.postMessage({ resource: 'branches', version: `local-${Date.now()}` });

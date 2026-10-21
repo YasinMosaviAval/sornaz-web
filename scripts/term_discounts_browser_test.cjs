@@ -24,6 +24,20 @@ const assert=require('node:assert/strict');const {chromium}=require(process.env.
  assert.equal(await page.locator('[data-term-panel=discounts]').isHidden(),true);
  await page.locator('[data-term-tab=discounts]').click();await page.locator('#termDiscountsTable tbody tr[data-id]').first().waitFor();
  assert.equal(await page.locator('#termDiscountsTable tbody tr').count(),2);assert.equal(await page.locator('#termDiscountsTable img').count(),0);
+ await page.addScriptTag({path:'assets/vendor/tailwind/tailwindcss.js'});
+ for(const width of [390,1280]) {
+  await page.setViewportSize({width,height:800});
+  for(const dir of ['rtl','ltr']) {
+   await page.locator('html').evaluate((el,dir)=>el.dir=dir,dir);
+   await page.waitForFunction(()=>getComputedStyle(document.getElementById('termDiscountSearch').parentElement).display==='flex');
+   const search=await page.locator('#termDiscountSearch').boundingBox(),type=await page.locator('#termDiscountTypeFilter').boundingBox();
+   assert.ok(Math.abs(search.y-type.y)<2,'Discount search and type must share a row');
+   assert.ok(Math.abs(search.width-type.width)<2,'Discount search and type must have equal widths');
+   const row=await page.locator('#termDiscountSearch').evaluate(el=>{const rect=el.parentElement.getBoundingClientRect();return {left:rect.left,right:rect.right};});
+   assert.ok(Math.abs(Math.min(search.x,type.x)-row.left)<2&&Math.abs(Math.max(search.x+search.width,type.x+type.width)-row.right)<2,'Filters must fill their row');
+   assert.ok(search.width>0&&type.width>0&&Math.max(search.x+search.width,type.x+type.width)<=width,'Filters must fit the viewport');
+  }
+ }
  assert.equal(await page.locator('#termDiscountsBranchTabs button').count(),3);
  await page.selectOption('#termDiscountTypeFilter','percentage');assert.equal(await page.locator('#termDiscountsTable tbody tr[data-id]').count(),1);
  await page.selectOption('#termDiscountTypeFilter','');await page.locator('#termDiscountsBranchTabs [data-value="101"]').click();await page.waitForFunction(()=>document.querySelector('#termDiscountsTable tbody tr')?.dataset.id==='2');

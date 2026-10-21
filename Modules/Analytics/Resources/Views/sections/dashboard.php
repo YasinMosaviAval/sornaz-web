@@ -23,19 +23,6 @@
         <div id="dashboardActionItems" class="grid gap-4 p-6 xl:grid-cols-2"></div>
     </div>
 
-    <div class="mb-8">
-        <div class="bg-white rounded-3xl p-6 shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-semibold flex items-center gap-2">
-                    <i class="fas fa-exclamation-triangle text-amber-500"></i>
-                    موارد فوری
-                </h2>
-                <button type="button" onclick="goToSectionFromDashboard('notifications')" class="text-indigo-600 text-sm hover:underline">مشاهده همه</button>
-            </div>
-            <div class="space-y-3" id="urgentItemsList"></div>
-        </div>
-    </div>
-
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div class="bg-white rounded-3xl p-6 shadow">
             <div class="flex items-center justify-between mb-4">

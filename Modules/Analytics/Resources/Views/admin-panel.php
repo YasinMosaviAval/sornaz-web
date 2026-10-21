@@ -52,6 +52,7 @@ $canUsePanelMessageActions = $showAcademyPanelSections || (bool)\Core\database\D
             component('notifications', ['canUseNotificationActions' => $canUsePanelMessageActions, 'canCreateNotifications' => $showAcademyPanelSections]);
             if (!$showAcademyPanelSections) component('my-learning');
             if (!$showAcademyPanelSections) component('personal-panel-sections');
+            if (!$showAcademyPanelSections && (new \Modules\Academy\Services\AcademyClassScheduleService())->hasTeacherSessions((int) $panelUser['user_id'])) component('schedules');
             component('gallery');
             if ((int) ($panelUser['user_id'] ?? 0) === 1) {
                 component('awards');

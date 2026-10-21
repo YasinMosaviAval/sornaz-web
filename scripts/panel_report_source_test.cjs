@@ -5,7 +5,7 @@ const pending = [];
 let start;
 const tbody = { innerHTML: '', textContent: '', insertRow() { return { insertCell() { return {}; } }; } };
 const context = {
-  URLSearchParams, Date, console,
+  URLSearchParams, Date, console, addEventListener() {},
   setTimeout(callback) { start = callback; },
   document: { documentElement: { lang: 'fa' },
     getElementById(id) { return id === 'reportsTable' ? {} : null; },

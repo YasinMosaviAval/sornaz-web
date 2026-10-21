@@ -1,5 +1,6 @@
 const { spawnSync } = require('node:child_process');
 const source = String.raw`<?php
+require_once 'Modules/Academy/Services/StaffTeachingLessons.php';
 $map=require 'vendor/composer/autoload_classmap.php';
 spl_autoload_register(static function($class)use($map){if(isset($map[$class]))require_once $map[$class];});
 require_once 'Modules/Academy/Services/LessonUsageService.php';
@@ -80,6 +81,7 @@ if($mysql){
  $workerFile=tempnam(sys_get_temp_dir(),'sornaz_lesson_worker_');
  file_put_contents($workerFile, <<<'LESSONWORKER'
 <?php
+require_once 'Modules/Academy/Services/StaffTeachingLessons.php';
 $input=json_decode(stream_get_contents(STDIN),true,512,JSON_THROW_ON_ERROR);
 if(!preg_match('/^sornaz_lesson_fixture_[a-f0-9]{12}$/D',$input['database']??''))exit(2);
 $map=require getcwd().'/vendor/composer/autoload_classmap.php';

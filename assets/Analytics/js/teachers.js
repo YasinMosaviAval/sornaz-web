@@ -167,6 +167,7 @@ const staffRealtimeChannel =
 function applyStaffData(data, preservePage = false) {
   const previousPage = staffCurrentPage;
   window.staffCatalog = data.staff_catalog || {};
+  window.staffExistingUsers = (data.members || []).filter(item => item.type !== 'student' && item.type !== 'waiting');
   window.contractCurrencies = (window.staffCatalog.currencies || []).map((x) => ({
     id: x.id,
     label: x.name,
@@ -312,7 +313,7 @@ function readLessonsFromPrefix(prefix) {
     const typeSel = row.querySelector('[data-lesson-type]');
     const levelSel = row.querySelector('[data-lesson-level]');
     if (!typeSel || !levelSel) return;
-    if (Number(typeSel.value) > 0 && Number(levelSel.value) > 0)
+    if (typeSel.value || levelSel.value)
       list.push({ type: typeSel.value, level: levelSel.value });
   });
   return list;
@@ -333,10 +334,12 @@ window.addStaffLessonRow = async function (prefix) {
   const container = document.getElementById(prefix + 'LessonsContainer');
   if (!container || !window.getStaffLessonRowHTML) return;
   const idx = container.querySelectorAll('[data-lesson-row]').length;
+  if (idx >= 30) return alert(document.documentElement.lang.startsWith('en') ? 'Select up to 30 lessons.' : 'حداکثر ۳۰ درس قابل انتخاب است.');
   container.insertAdjacentHTML(
     'beforeend',
     window.getStaffLessonRowHTML(prefix, idx, null, idx === 0)
   );
+  window.updateStaffOrganization(prefix);
 };
 window.removeStaffLessonRow = async function (btn) {
   const row = btn.closest('[data-lesson-row]');
@@ -480,12 +483,12 @@ window.filterStaff = async function () {
       item.name.toLowerCase().includes(search) ||
       item.contractTitle.toLowerCase().includes(search) ||
       (item.phone && item.phone.includes(search));
-    const matchType = !type || item.type === type;
+    const matchType = !type || item.type === type || item.contracts?.some(contract => contract.type === type);
     const matchBranch =
       window.matchesOrganizationFilter(item, branch);
     const matchStatus = !status || item.status === status;
     const matchCurrency = !currency || item.currency === currency;
-    const matchLesson = !lesson || String(item.lessonId || '') === lesson;
+    const matchLesson = !lesson || (item.lessons || [{type: item.lessonId}]).some(row => String(row.type) === lesson);
     return matchSearch && matchType && matchBranch && matchStatus && matchCurrency && matchLesson;
   });
 
@@ -506,7 +509,7 @@ window.renderStaffLessonFilter = function () {
         item.lessonId &&
         window.matchesOrganizationFilter(item, currentStaffBranch)
     )
-    .forEach((item) => items.set(String(item.lessonId), item.lessonName || '—'));
+    .forEach(item => (item.lessons || [{type: item.lessonId}]).forEach(row => items.set(String(row.type), window.lessonTypes?.find(lesson => Number(lesson.value) === Number(row.type))?.label || item.lessonName || '—')));
   select.innerHTML =
     '<option value="">همه درس‌های شعبه‌ها</option>' +
     Array.from(items.entries())
@@ -734,11 +737,14 @@ window.openAddStaffModal = async function () {
   pendingStaffRegistration = null;
   const modalHTML = window.getStaffAddModalHTML ? window.getStaffAddModalHTML() : '';
   document.getElementById('modalContainer').innerHTML = modalHTML;
+  const staffName = document.getElementById('staffName');
+  if (staffName && window.getMemberUserPickerHTML) staffName.closest('.grid').insertAdjacentHTML('beforebegin', window.getMemberUserPickerHTML('staff'));
   window.updateStaffOrganization?.('staff');
 };
 
 window.saveStaff = async function () {
   if (savingStaff) return;
+  const selectedUser = window.getMemberUserSelection?.('staff');
   const name = document.getElementById('staffName')?.value.trim();
   const phone = document.getElementById('staffPhone')?.value.trim();
   const contractTitle = document.getElementById('staffContractTitle')?.value.trim();
@@ -747,7 +753,7 @@ window.saveStaff = async function () {
   const endDate = document.getElementById('staffEndDate')?.value;
   const price = parseFloat(document.getElementById('staffPrice')?.value || 0);
 
-  if (!name || !phone || !contractTitle || !startDate || !endDate || price <= 0) {
+  if ((!name && !selectedUser?.fields.name) || (!phone && !selectedUser?.fields.phone) || !contractTitle || !startDate || !endDate || price <= 0) {
     alert('لطفاً تمام فیلدهای الزامی قرارداد را پر کنید.');
     return;
   }
@@ -771,6 +777,7 @@ window.saveStaff = async function () {
 
   const lesson = lessons[0] || {};
   const data = {
+    existingUserToken: selectedUser?.token || '',
     name,
     phone,
     nationalId: document.getElementById('staffNationalId')?.value.trim(),
@@ -789,15 +796,16 @@ window.saveStaff = async function () {
     endDate,
     price,
     currencyId,
+    lessons,
     lessonId: Number(lesson.type || 0),
     levelId: Number(lesson.level || 0),
   };
-  if (!data.nationalId || !data.birthDate || !data.roleId)
+  if ((!data.nationalId && !selectedUser?.fields.nationalId) || (!data.birthDate && !selectedUser?.fields.birthDate) || !data.roleId)
     return alert('کد ملی، تاریخ تولد و نقش الزامی است.');
   savingStaff = true;
   try {
     const role = window.staffCatalog?.roles?.find(row => Number(row.id) === data.roleId);
-    if (['manager', 'receptionist'].includes(data.type) || /manager|receptionist/.test(role?.name || '')) {
+    if (!selectedUser && (['manager', 'receptionist'].includes(data.type) || /manager|receptionist/.test(role?.name || ''))) {
       const result = await branchRequest('/academy/admin/members/registration-form', {payload_b64: encodeBranchPayload(data)});
       pendingStaffRegistration = data;
       const host = document.getElementById('modalContainer');
@@ -878,6 +886,13 @@ window.editStaff = async function (id) {
   window.updateStaffOrganization?.('editStaff');
 };
 
+window.editStaffContract = function (id, contractId) {
+  const member = allStaff.find(row => row.id === id);
+  const contract = member?.contracts?.find(row => Number(row.contractId) === Number(contractId));
+  if (!contract) return;
+  document.getElementById('modalContainer').innerHTML = window.getStaffEditModalHTML({...contract, contracts: member.contracts});
+  window.updateStaffOrganization('editStaff');
+};
 window.saveEditedStaff = async function (id) {
   const name = document.getElementById('editStaffName')?.value.trim();
   const phone = document.getElementById('editStaffPhone')?.value.trim();
@@ -945,7 +960,8 @@ window.saveEditedStaff = async function (id) {
     currencyId: currencyId,
     currency: currency,
     profileVisibility: profileVisibility,
-    lessons: lessons,
+    contractId: Number(document.getElementById('editStaffContractId')?.value || 0),
+    lessons,
     lessonId: Number(lessons[0]?.type || 0),
     levelId: Number(lessons[0]?.level || 0),
   };

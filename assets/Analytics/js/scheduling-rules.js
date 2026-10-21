@@ -63,6 +63,9 @@
   async function loadSchedulingRules() {
     const data = await ruleApi('/analytics/admin-scheduling-rules');
     ruleBranches = data.organizations || [];
+    document.querySelectorAll('select[id$="Branch"]').forEach(select => {
+      if (/^(rule|editRule|inlineRule)/.test(select.id)) window.syncPanelOrganizationSelect?.(select, ruleBranches, 'key');
+    });
     ruleFilterOrganizations = data.filter_organizations || ruleBranches;
     ruleOrganizationSelection = data.organization_selection || 'select';
     ruleShowStatusField = data.show_status_field !== false;
@@ -629,4 +632,5 @@
       if (!document.hidden) pollRulesRealtime();
     });
   }
+  window.addEventListener('panel-organizations-changed', () => { Promise.resolve(loadSchedulingRules()).catch(console.error); });
 })();

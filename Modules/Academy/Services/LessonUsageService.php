@@ -103,7 +103,7 @@ final class LessonUsageService
         $params = [(int) $lesson['lesson_id']];
         if ($scope['kind'] === 'personal') {
             $courses = [];
-            $where = 'c.user_lesson_id=?';
+            $where = 'cl.user_lesson_id=?';
             $params = [(int) $lesson['user_lesson_id']];
         } else {
             $where = $scope['kind'] === 'branch' ? 'c.branch_id=?' : '((c.academy_id=? AND c.branch_id IS NULL) OR c.branch_id IN (SELECT branch_id FROM academy_branches WHERE academy_id=? AND deleted_at IS NULL))';
@@ -112,7 +112,7 @@ final class LessonUsageService
             $where = 'ul.lesson_id=? AND ' . ($scope['kind'] === 'branch' ? 'm.branch_id=?' : 'm.academy_id=?');
             $params[] = $scope['kind'] === 'branch' ? $scope['branch'] : $scope['academy'];
         }
-        $contracts = $this->query("SELECT c.member_contract_id,m.user_id,m.academy_id,m.branch_id FROM academy_branch_member_contracts c JOIN academy_branch_members m ON m.member_id=c.member_id JOIN user_lessons ul ON ul.user_lesson_id=c.user_lesson_id WHERE c.type='teacher' AND c.deleted_at IS NULL AND m.deleted_at IS NULL AND " . $where, $params);
+        $contracts = $this->query("SELECT DISTINCT c.member_contract_id,m.user_id,m.academy_id,m.branch_id FROM academy_branch_member_contracts c JOIN academy_branch_members m ON m.member_id=c.member_id JOIN " . StaffTeachingLessons::relation() . " cl ON cl.member_contract_id=c.member_contract_id JOIN user_lessons ul ON ul.user_lesson_id=cl.user_lesson_id WHERE c.type='teacher' AND c.deleted_at IS NULL AND m.deleted_at IS NULL AND " . $where, $params);
         return compact('courses', 'contracts');
     }
 

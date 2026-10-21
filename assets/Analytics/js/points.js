@@ -62,6 +62,7 @@
       const d = await api('/analytics/admin-points');
       rows = d.rules || [];
       orgs = d.organizations || [];
+      window.syncPanelOrganizationSelect?.(document.getElementById('pointRuleForm')?.elements.namedItem('branchId'), orgs);
       canManage = Boolean(d.canManage);
       const general = Number(d.balance?.general || 0),
         professional = Number(d.balance?.professional || 0);
@@ -248,4 +249,5 @@
       load(true),
     12000
   );
+  window.addEventListener('panel-organizations-changed', () => { Promise.resolve(load(true)).catch(console.error); });
 })();

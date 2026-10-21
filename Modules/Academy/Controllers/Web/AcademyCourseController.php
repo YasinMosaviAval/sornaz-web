@@ -58,6 +58,24 @@ class AcademyCourseController
         return $this->run(fn () => ['success' => true, 'data' => $this->s->storeStudent((int) auth()->id(), $this->payload())]);
     }
 
+    public function memberUserLookup()
+    {
+        try {
+            return ResponseFactory::json(['success' => true, 'data' => $this->s->memberUserLookup((int) auth()->id(), $this->payload())]);
+        } catch (\PDOException $error) {
+            return ResponseFactory::json(['success' => false, 'message' => 'جستجوی کاربر ناموفق بود.'], 500);
+        } catch (RuntimeException $error) {
+            return ResponseFactory::json(['success' => false, 'message' => $error->getMessage()], $error->getCode() === 403 ? 403 : 422);
+        } catch (Throwable $error) {
+            return ResponseFactory::json(['success' => false, 'message' => 'جستجوی کاربر ناموفق بود.'], 500);
+        }
+    }
+
+    public function studentSchedulePreview(int $id)
+    {
+        return $this->run(fn () => ['success' => true, 'data' => (new \Modules\Academy\Services\AcademyTermService())->previewStudentSchedule((int) auth()->id(), $id, $this->payload())]);
+    }
+
     public function storeLevel()
     {
         return $this->level();
@@ -103,7 +121,7 @@ class AcademyCourseController
         try {
             return ResponseFactory::json($f());
         } catch (Throwable $e) {
-            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
+            return ResponseFactory::json(['success' => false, 'message' => $e instanceof \PDOException ? 'ذخیره یا دریافت اطلاعات انجام نشد. دوباره تلاش کنید.' : $e->getMessage()], in_array($e->getCode(), [403, 404, 409], true) ? $e->getCode() : 422);
         }
     }
 }

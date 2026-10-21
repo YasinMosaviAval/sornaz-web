@@ -74,6 +74,7 @@
     try {
       const data = await request('/analytics/admin-gallery');
       owners = data.owners || [];
+      window.syncPanelOrganizationSelect?.(document.getElementById('galleryOwner'), owners, 'userId');
       items = data.items || [];
       hideFilters = !!data.hideOwnerFilters;
       Object.keys(categories).forEach((k) => {
@@ -367,4 +368,5 @@
   }
   document.addEventListener('DOMContentLoaded', initGallery);
   if (document.readyState !== 'loading') initGallery();
+  window.addEventListener('panel-organizations-changed', () => { Promise.resolve(load()).catch(console.error); });
 })();

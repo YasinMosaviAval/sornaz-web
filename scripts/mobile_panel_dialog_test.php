@@ -30,7 +30,7 @@ expectParity(dialogFields($sections, 'students')['availabilities']['visibleWhen'
 $term = dialogFields($sections, 'terms');
 $batch = dialogFields($sections, 'terms', 'batch');
 expectParity(isset($batch['requestKey'], $batch['rangeStart'], $batch['rangeEnd']) && $batch['teachers']['maxItems'] === 1, 'Batch retry identity, range or single-teacher restriction missing');
-expectParity(!array_intersect(['status', 'discountId', 'installmentCount'], array_keys($batch)) && $batch['classroomId']['required'] === false, 'Batch exposes website-hidden financial/status fields or requires a classroom');
+expectParity(!array_intersect(['status', 'discountId', 'installmentCount'], array_keys($batch)) && !isset($batch['classroomId']), 'Batch exposes website-hidden financial/status fields or requires a classroom');
 $assignment = dialogFields($sections, 'terms', 'assign-student');
 expectParity(!array_intersect(['organizationUserId', 'termId', 'availabilities'], array_keys($assignment)) && isset($assignment['addresses'], $assignment['parentName']), 'Term assignment must derive its organization and term while preserving student/parent/address fields');
 expectParity(isset($term['sessionCount'], $term['recurrence']), 'Term recurrence/session count absent');

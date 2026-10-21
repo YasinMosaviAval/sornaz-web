@@ -33,7 +33,7 @@ function showSection(id) {
     if (heading) {
       heading.classList.add('hidden');
       const description = heading.nextElementSibling;
-      if (description?.tagName === 'P') description.classList.add('hidden');
+      if (description?.tagName === 'P' && !description.hasAttribute('data-panel-description')) description.classList.add('hidden');
       const intro = heading.parentElement;
       if (intro && [...intro.children].every((child) => child.classList.contains('hidden'))) intro.classList.add('hidden');
     }

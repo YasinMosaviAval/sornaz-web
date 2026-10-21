@@ -54,6 +54,14 @@ window.academyOrganizationTabHandlers = {
 (function () {
   'use strict';
   const filters = new Map();
+  window.syncPanelOrganizationSelect = (select, rows, valueKey = 'id') => {
+    if (!select || !Array.isArray(rows)) return;
+    const selected = select.value;
+    const placeholder = select.options[0]?.value === '' ? select.options[0].textContent : null;
+    select.replaceChildren(...(placeholder === null ? [] : [new Option(placeholder, '')]), ...rows.map(row => new Option(row.name, row[valueKey])));
+    select.value = [...select.options].some(option => option.value === selected) ? selected : '';
+    if (select.value !== selected) select.dispatchEvent(new Event('change', { bubbles: true }));
+  };
   window.panelBranchFilterShell = (container) =>
     container.closest('.admin-ui-organization-tabs') ||
     (container.parentElement?.children.length === 1 ? container.parentElement : container);
@@ -70,6 +78,12 @@ window.academyOrganizationTabHandlers = {
     const options = [{ value: 'all', label: english ? 'All' : 'همه' },
       ...((config.showAcademy ?? !window.branchSiteAdmin) ? [{ value: 'academy', label: english ? 'Academy' : 'آموزشگاه' }] : []),
       ...(config.options || branches.map((branch) => ({ value: String(config.branchValue ? config.branchValue(branch) : branch.id), label: branch.name })))];
+    if (!options.some(option => String(option.value) === String(selected))) {
+      selected = 'all';
+      filters.set(id, { selected, onSelect, config });
+      container.dataset.selectedValue = selected;
+      Promise.resolve(onSelect(selected)).catch(console.error);
+    }
     container.classList.add('organization-filter-tabs', 'flex', 'gap-2');
     container.replaceChildren();
     new Map(options.map((option) => [option.value, option])).forEach(({ value, label }) => {
@@ -114,5 +128,45 @@ window.academyOrganizationTabHandlers = {
     });
     window.renderAllGallerySections?.();
     window.applyAcademyOrganizationTabs();
+  });
+  let previousOrganizations;
+  let refreshSequence = 0;
+  window.addEventListener('academy-data-loaded', async event => {
+    const signature = JSON.stringify([event.detail.branches, event.detail.academies, event.detail.organization_revision]);
+    const changed = previousOrganizations !== undefined && signature !== previousOrganizations;
+    previousOrganizations = signature;
+    if (!changed) return;
+    const sequence = ++refreshSequence;
+    const jobs = [
+      () => window.loadTerms?.(),
+      () => window.loadCourses?.(),
+      () => typeof loadClassrooms === 'function' && loadClassrooms(),
+      () => window.loadBranchOfferings?.(),
+      () => window.ensureStudentFormOptions?.(true),
+      () => document.getElementById('financeTable') && typeof loadFinanceInvoices === 'function' && loadFinanceInvoices(),
+      () => window.loadMemberSchedules?.(),
+      () => window.loadHolidayLeaves?.(),
+      () => window.loadAdminNotifications?.(),
+      () => window.refreshDashboard?.(),
+    ];
+    const results = await Promise.allSettled(jobs.map(job => Promise.resolve().then(job)));
+    results.forEach(result => { if (result.status === 'rejected') console.error(result.reason); });
+    if (sequence !== refreshSequence) return;
+    window.dispatchEvent(new CustomEvent('panel-organizations-changed'));
+    const sources = [
+      [/staff.*Organization/i, window.staffCatalog?.organizations],
+      [/student.*Organization/i, window.studentOrganizations],
+      [/classroom.*Organization/i, window.classroomOrganizations],
+      [/course.*Organization/i, window.courseOrganizations],
+      [/^(term|editTerm|inlineTerm).*Branch$/, window.termBranches],
+      [/^(ms|editMs|inlineMs).*Branch$/, window.getMemberScheduleBranches?.()],
+      [/^(hl|editHl|inlineHl).*Branch$/, window.getHolidayLeaveBranches?.()],
+    ];
+    document.querySelectorAll('select').forEach(select => {
+      const source = sources.find(([pattern, rows]) => pattern.test(select.id) && Array.isArray(rows))?.[1];
+      if (!source) return;
+      window.syncPanelOrganizationSelect(select, source.map(row => ({ id: row.user_id ?? row.id, name: row.name })));
+    });
+    document.querySelectorAll('#modalContainer select[name="organizationUserId"]').forEach(select => window.syncPanelOrganizationSelect(select, window.termBranches || []));
   });
 })();

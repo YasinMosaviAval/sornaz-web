@@ -420,4 +420,5 @@
       loadReports();
     }
   }, 200);
+  window.addEventListener('panel-organizations-changed', () => { Promise.resolve(loadReports()).catch(console.error); });
 })();

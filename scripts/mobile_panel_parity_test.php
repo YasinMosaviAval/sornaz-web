@@ -58,6 +58,8 @@ expectParity($sections['my-waiting']['access'] === 'common' && $sections['my-wai
         'AcademyRegistrationController::createAdminBranchDialog', 'AcademyRegistrationController::sendAdminBranchOtp', 'AcademyRegistrationController::storeAdminBranch',
         'AdminAccountController::sendContactCode', 'AdminAccountController::verifyContactCode',
         'SitePageContentController::savePanelGuide', // Founder-only editor in the website panel.
+        'AcademyCourseController::studentSchedulePreview', // Website-only student schedule preview.
+        'AcademyCourseController::memberUserLookup', // Website-only selection bound to the current session and organization.
     ];
     foreach ($routes as $method => $items) foreach ($items as $route) {
         if (!is_array($route->action) || !preg_match('~/((analytics|academy)/admin|analytics/personal)~', $route->uri)) continue;

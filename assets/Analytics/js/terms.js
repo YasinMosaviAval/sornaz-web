@@ -1066,7 +1066,7 @@ function readTermForm(prefix) {
     return {
       name: value('Name')?.value.trim() || '',
       organizationUserId: Number(value('Branch')?.value || 0),
-      branchId: Number(classroom?.branchId || 0),
+      branchId: Number(classroom?.branchId || window.termCourses.find(x => x.id === Number(course?.value))?.branchId || 0),
       courseId: Number(course?.value || 0),
       classroomId: Number(room?.value || 0),
       currencyId: Number(currency?.value || 0),
@@ -1075,14 +1075,14 @@ function readTermForm(prefix) {
       installments: Array.from({ length: installmentCount }, () => ({ amount: 1 })),
       discountId: Number(discount?.value || 0),
       repeatType: repeat?.value || '',
-      recurrence: !prefix && status?.value === 'open' ? {
+      recurrence: !prefix && ['open', 'pending'].includes(status?.value) ? {
         weekday: value('RecurrenceWeekday')?.value ?? '',
         day: value('RecurrenceDay')?.value ?? '',
         month: value('RecurrenceMonth')?.value ?? '',
         exactDate: value('RecurrenceExactDate')?.value ?? '',
       } : null,
       sessionCount: Math.max(1, Number(value('SessionCount')?.value || 1)),
-      undatedTemplate: !prefix && status?.value === 'open' && sessions?.dataset.undatedTemplate === '1',
+      undatedTemplate: !prefix && ['open', 'pending'].includes(status?.value) && sessions?.dataset.undatedTemplate === '1',
       status: status?.value || 'pending',
       summary: value('Summary')?.value.trim() || '',
       description: value('Description')?.value.trim() || '',
@@ -1366,7 +1366,7 @@ window.refreshTermPeople = function (prefix, type) {
           : Number(x.academyId) === Number(course.organizationId) &&
             (Number(x.branchId || 0) === branch || (type === 'teacher' && Number(x.branchId || 0) === 0))) &&
         x.type === type &&
-        (type !== 'teacher' || Number(x.lessonId) === Number(course.lessonId))
+        (type !== 'teacher' || (x.lessonIds || [x.lessonId]).some(id => Number(id) === Number(course.lessonId)))
     );
   if (type === 'teacher') {
     const note = termField(prefix, 'TeacherAvailabilityNote');
@@ -1400,7 +1400,7 @@ window.rebuildDbTermSessions = function (prefix) {
   if (count > 1 && repeat?.value === 'no-period') repeat.value = 'week';
   repeatField?.classList.toggle('hidden', !!prefix && count === 1);
   if (!prefix) window.syncNewTermRecurrence?.(prefix);
-  if (!prefix && termField(prefix, 'Status')?.value === 'open' && box) {
+  if (!prefix && ['open', 'pending'].includes(termField(prefix, 'Status')?.value) && box) {
     const previous = { startTime: starts[0], durationMinutes: Number(durations[0] || firstDuration), timezoneId: Number(box.querySelector('.term-session-timezone')?.value || 0) };
     box.innerHTML = window.getTermOpenSessionHTML(prefix, previous);
     box.dataset.undatedTemplate = '1';
@@ -1496,13 +1496,13 @@ window.syncTermPeopleVisibility = function (prefix) {
       (window.termPermissions?.isReceptionist ? 'pending' : 'open'),
     teachers = termField(prefix, 'TeachersField'),
     students = termField(prefix, 'StudentsField');
-  teachers?.classList.toggle('hidden', !['open', 'ongoing'].includes(status));
+  teachers?.classList.toggle('hidden', !['open', 'pending', 'ongoing'].includes(status));
   students?.classList.toggle('hidden', status !== 'ongoing');
 };
 window.syncNewTermStatus = function (prefix) {
   if (prefix) return;
   const box = termField(prefix, 'SessionsContainer');
-  const undated = termField(prefix, 'Status')?.value === 'open';
+  const undated = ['open', 'pending'].includes(termField(prefix, 'Status')?.value);
   if (!box || (box.dataset.undatedTemplate === '1') === undated) return;
   rebuildDbTermSessions(prefix);
   window.syncNewTermRecurrence?.(prefix);
@@ -1542,7 +1542,8 @@ window.refreshTermOpenAvailability = async function (prefix) {
   const weekly = ['week', '2-week', '3-week', '4-week'].includes(period);
   const weekday = termField(prefix, 'RecurrenceWeekday')?.value ?? '';
   const classroom = Number(termField(prefix, 'Classroom')?.value || 0);
-  const branch = Number(termClassrooms.find((room) => room.id === classroom)?.branchId || 0);
+  const organization = termBranches.find(row => Number(row.id) === Number(termField(prefix, 'Branch')?.value));
+  const branch = Number(termClassrooms.find((room) => room.id === classroom)?.branchId || (organization?.kind === 'branch' ? organization.organizationId : 0));
   const serial = String(Number(box.dataset.availabilitySerial || 0) + 1);
   box.dataset.availabilitySerial = serial;
   start.disabled = true;
@@ -1555,12 +1556,12 @@ window.refreshTermOpenAvailability = async function (prefix) {
     start.disabled = !times.length;
     return;
   }
-  if (weekday === '' || !branch || !classroom) {
-    start.innerHTML = `<option value="">${weekday === '' ? 'ابتدا روز هفته را انتخاب کنید' : 'ابتدا کلاس برگزاری را انتخاب کنید'}</option>`;
+  if (weekday === '' || !organization) {
+    start.innerHTML = '<option value="">ابتدا سازمان و روز هفته را انتخاب کنید</option>';
     return;
   }
   try {
-    const academy = Number(termClassrooms.find((room) => room.id === classroom)?.academyId || 0);
+    const academy = Number(termClassrooms.find((room) => room.id === classroom)?.academyId || (organization.kind === 'academy' ? organization.organizationId : organization.academyId));
     const query = new URLSearchParams({ branch, classroom, weekday, duration, academy });
     const data = await termApi('/academy/admin/term-available-times?' + query);
     if (box.dataset.availabilitySerial !== serial || !box.isConnected) return;

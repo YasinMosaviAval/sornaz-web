@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/notation-browser-check/package');
 (async () => {
  const browser = await chromium.launch({ channel: 'msedge', headless: true });
@@ -15,6 +16,9 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/not
     levels:[{id:3,name:'Basic'},{id:4,name:'Advanced'},{id:5,name:'Unrelated'}]};
   });
   await page.addScriptTag({path:'assets/Analytics/js/teacher-templates.js'});
+  const staffSource=fs.readFileSync('assets/Analytics/js/teachers.js','utf8');
+  await page.addScriptTag({content:staffSource.slice(staffSource.indexOf('function readLessonsFromPrefix('),staffSource.indexOf('// ==================== رندر جدول'))});
+  await page.evaluate(()=>window.alert=()=>{});
   for(const mode of ['add','edit','inline']){
    const prefix=mode==='add'?'staff':mode==='edit'?'editStaff':'inlineStaff7';
    await page.evaluate(({mode,prefix})=>{
@@ -40,6 +44,16 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/not
    await type.selectOption('1');
    assert.deepEqual(await level.locator('option').evaluateAll(xs=>xs.map(x=>x.value)),['','4']);
    assert.equal(await page.locator('[data-lesson-row]').evaluate(x=>x.classList.contains('border')),false);
+   await page.selectOption('#'+prefix+'Organization','10');
+   await type.selectOption('1');await level.selectOption('3');
+   await page.locator('#'+prefix+'LessonsBox > button').click();
+   assert.equal(await page.locator('[data-lesson-row]').count(),2);
+   await page.locator('[data-lesson-row]').nth(1).locator('[data-lesson-type]').selectOption('2');
+   await page.locator('[data-lesson-row]').nth(1).locator('[data-lesson-level]').selectOption('4');
+   assert.deepEqual(await page.evaluate(p=>readLessonsFromPrefix(p),prefix),[{type:'1',level:'3'},{type:'2',level:'4'}]);
+   await page.locator('[data-lesson-row]').nth(1).locator('button').click();
+   assert.equal(await page.locator('[data-lesson-row]').count(),1);
+   await page.locator('[data-lesson-row] button').click();assert.equal(await page.locator('[data-lesson-row]').count(),1);
   }
   await page.addScriptTag({path:'assets/Analytics/js/classroom-templates.js'});
   await page.evaluate(()=>document.querySelector('#fixture').innerHTML=getClassroomEquipmentFieldHTML());

@@ -24,7 +24,8 @@ const {chromium}=require(process.env.PLAYWRIGHT_CORE_PATH||'../storage/notation-
    await page.evaluate(prefix=>refreshTermCourse(prefix),prefix);
    const teacher=page.locator(field('TeachersContainer')+' select').first();
    await teacher.selectOption(courseId===1?'1':'2');
-   for(const room of (courseId===1?['2','4']:['2','1'])){
+   if(mode==='add')assert.equal(await page.locator(field('Classroom')).getAttribute('type'),'hidden');
+   for(const room of (mode==='add'?[]:courseId===1?['2','4']:['2','1'])){
     await page.locator(field('Classroom')).evaluate(el=>el.disabled=false);
     await page.selectOption(field('Classroom'),room);
     assert.equal(await teacher.inputValue(),courseId===1?'1':'2',`${mode}: room selection retains eligible teacher`);
@@ -33,7 +34,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_CORE_PATH||'../storage/notation-
     if(courseId===1)assert(!ids.includes('2')&&!ids.includes('3'));
    }
    assert.equal(await page.locator(field('TeachersContainer')+' img').count(),0);
-   if(courseId===2){
+   if(courseId===2 && mode!=='add'){
     await page.selectOption(field('Classroom'),'2');
     const second=page.locator(field('TeachersContainer')+' select').nth(1);
     await second.selectOption('1');

@@ -14,14 +14,16 @@ class AcademyClassScheduleService
     {
         $branches = $this->branches($actor);
         $bids = array_column($branches, 'branch_id');
+        $teacherIds = $this->teacherTermIds($actor);
         $allowedPer = [10, 20, 30, 50, 100];
-        $per = in_array((int) ($f['perPage'] ?? 10), $allowedPer, true) ? (int) $f['perPage'] : 10;
-        if (!$bids) {
+        $per = in_array((int) ($f['perPage'] ?? 10), $allowedPer, true) ? (int) ($f['perPage'] ?? 10) : 10;
+        if (!$bids && !$teacherIds) {
             return ['schedules' => [], 'branches' => [], 'terms' => [], 'classrooms' => [], 'timeRanges' => [], 'total' => 0, 'page' => 1, 'perPage' => $per];
         }
         $page = max(1, (int) ($f['page'] ?? 1));
         $allBranches = DB::table('academy_branches')->whereNull('deleted_at')->count();
-        $scope = count($bids) === $allBranches ? '1=1' : 'c.branch_id IN (' . implode(',', array_map('intval', $bids)) . ')';
+        $scope = $bids ? (count($bids) === $allBranches ? '1=1' : 'c.branch_id IN (' . implode(',', array_map('intval', $bids)) . ')') : '1=0';
+        if ($teacherIds) $scope = '(' . $scope . ' OR t.term_id IN (' . implode(',', $teacherIds) . '))';
         $where = [$scope, 's.deleted_at IS NULL', 'b.deleted_at IS NULL', 't.deleted_at IS NULL', 'c.deleted_at IS NULL'];
         $bind = [];
         if (!empty($f['termId'])) {
@@ -69,24 +71,39 @@ class AcademyClassScheduleService
             $row['session_number'] = $this->sessionNumber($row);
         }
         unset($row);
-        $items = $this->enrich($rows, $branches);
+        $items = $this->withTeacherNotes($this->enrich($rows, $branches), $actor);
         return ['schedules' => $items, 'branches' => $this->branchOptions($branches), 'classrooms' => $this->classroomOptions($bids), 'lessons' => $this->lessonOptions($bids), 'timeRanges' => $this->timeRangeOptions($bids), 'total' => (int) $count, 'page' => $page, 'perPage' => $per];
+    }
+
+    private function teacherTermIds(int $actor): array
+    {
+        $teacherTerms = DB::table('academy_branch_course_term_enrollments')->join('academy_branch_members', 'academy_branch_members.member_id', '=', 'academy_branch_course_term_enrollments.member_id')->where('academy_branch_members.user_id', $actor)->where('academy_branch_members.status', 'active')->where('academy_branch_course_term_enrollments.type', 'teacher')->where('academy_branch_course_term_enrollments.status', 'active')->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_course_term_enrollments.deleted_at')->select('academy_branch_course_term_enrollments.term_id')->get();
+        return array_map(fn ($row) => (int) $row['term_id'], $teacherTerms);
+    }
+
+    public function hasTeacherSessions(int $actor): bool
+    {
+        return $this->teacherTermIds($actor) !== [];
     }
 
     public function weeklyBounds(int $actor, int $branchId = 0): array
     {
         $branches = $this->branches($actor);
         $ids = array_map(fn ($b) => (int) $b['branch_id'], $branches);
+        $teacherIds = $this->teacherTermIds($actor);
         if ($branchId) {
             if (!in_array($branchId, $ids, true)) {
                 throw new RuntimeException('دسترسی به شعبه ندارید.');
             }
             $ids = [$branchId];
-        }if (!$ids) {
+        }if (!$ids && !$teacherIds) {
             return ['firstDate' => null, 'lastDate' => null];
         }
         $in = implode(',', $ids);
-        $sql = "SELECT MIN(b.requested_date) first_date,MAX(b.requested_date) last_date FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id JOIN academy_branch_course_terms t ON t.term_id=s.term_id JOIN academy_branch_courses c ON c.course_id=t.course_id WHERE c.branch_id IN ($in) AND s.deleted_at IS NULL AND b.deleted_at IS NULL AND t.deleted_at IS NULL AND c.deleted_at IS NULL";
+        $scope = $ids ? 'c.branch_id IN (' . $in . ')' : '1=0';
+        if ($teacherIds) $scope = '(' . $scope . ' OR t.term_id IN (' . implode(',', $teacherIds) . '))';
+        if ($branchId) $scope .= ' AND c.branch_id=' . $branchId;
+        $sql = "SELECT MIN(b.requested_date) first_date,MAX(b.requested_date) last_date FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id JOIN academy_branch_course_terms t ON t.term_id=s.term_id JOIN academy_branch_courses c ON c.course_id=t.course_id WHERE $scope AND s.deleted_at IS NULL AND b.deleted_at IS NULL AND t.deleted_at IS NULL AND c.deleted_at IS NULL";
         $r = db()->query($sql)->fetch();
         return ['firstDate' => $r['first_date'] ?? null, 'lastDate' => $r['last_date'] ?? null];
     }
@@ -168,7 +185,8 @@ class AcademyClassScheduleService
 
     private function attendanceLocked(int $actor, int $id, array $d): void
     {
-        $s = $this->session($actor, $id);
+        $s = DB::table('academy_branch_course_term_sessions')->where('term_session_id', $id)->whereNull('deleted_at')->first();
+        if (!$s || !$this->isTermTeacher($actor, (int) $s['term_id'])) $s = $this->session($actor, $id);
         $booking = DB::table('academy_branch_bookings')->where('booking_id', (int) $s['booking_id'])->whereNull('deleted_at')->first();
         if (!$booking || in_array((string) $booking['status'], ['pending', 'rejected', 'canceled'], true)) {
             throw new RuntimeException('برای جلسه لغوشده یا تأییدنشده امکان ثبت حضور و غیاب وجود ندارد.');
@@ -179,27 +197,35 @@ class AcademyClassScheduleService
             $emap[(int) $e['member_id']] = $e;
         }
         $allowed = ['present', 'absent', 'late', 'leave', 'excused_absence', 'online'];
+        if (array_key_exists('teacherNote', $d) && (!$this->isTermTeacher($actor, (int) $s['term_id']) || !is_string($d['teacherNote']) || mb_strlen($d['teacherNote']) > 10000)) {
+            throw new RuntimeException('ثبت یادداشت فقط برای مدرس همین ترم و حداکثر ۱۰۰۰۰ نویسه مجاز است.', 403);
+        }
         transaction(function () use ($actor, $id, $d, $emap, $allowed) {
-            foreach (($d['attendance'] ?? []) as $a) {
-                $mid = (int) ($a['memberId'] ?? 0);
-                if (!isset($emap[$mid])) {
-                    throw new RuntimeException('عضو انتخاب‌شده متعلق به این ترم نیست.');
-                }
-                $status = (string) ($a['status'] ?? '');
-                if (!in_array($status, $allowed, true)) {
-                    throw new RuntimeException('وضعیت حضور و غیاب معتبر نیست.');
-                }
-                $row = DB::table('academy_branch_course_term_session_attendances')->where('session_id', $id)->where('member_id', $mid)->whereNull('deleted_at')->first();
-                $vals = ['term_enrollment_id' => (int) $emap[$mid]['term_enrollment_id'], 'status' => $status, 'updated_by' => $actor];
-                if ($row) {
-                    $aid = (int) $row['session_attendance_id'];
-                    DB::table('academy_branch_course_term_session_attendances')->where('session_attendance_id', $aid)->update($vals);
-                } else {
-                    $aid = DB::table('academy_branch_course_term_session_attendances')->insertGetId(['session_id' => $id, 'member_id' => $mid, 'created_by' => $actor] + $vals);
-                }
-                $this->setText('academy_branch_course_term_session_attendances', $aid, 'description', trim((string) ($a['description'] ?? '')), $actor);
-            }
+            foreach (($d['attendance'] ?? []) as $a) $this->saveAttendanceRow($actor, $id, $a, $emap, $allowed);
+            if (array_key_exists('teacherNote', $d)) $this->setText('academy_branch_course_term_sessions', $id, 'teacher_note', trim($d['teacherNote']), $actor);
+
         });
+    }
+
+    private function saveAttendanceRow(int $actor, int $id, array $a, array $emap, array $allowed): void
+    {
+        $mid = (int) ($a['memberId'] ?? 0);
+        if (!isset($emap[$mid])) {
+            throw new RuntimeException('عضو انتخاب‌شده متعلق به این ترم نیست.');
+        }
+        $status = (string) ($a['status'] ?? '');
+        if (!in_array($status, $allowed, true)) {
+            throw new RuntimeException('وضعیت حضور و غیاب معتبر نیست.');
+        }
+        $row = DB::table('academy_branch_course_term_session_attendances')->where('session_id', $id)->where('member_id', $mid)->whereNull('deleted_at')->first();
+        $vals = ['term_enrollment_id' => (int) $emap[$mid]['term_enrollment_id'], 'status' => $status, 'updated_by' => $actor];
+        if ($row) {
+            $aid = (int) $row['session_attendance_id'];
+            DB::table('academy_branch_course_term_session_attendances')->where('session_attendance_id', $aid)->update($vals);
+        } else {
+            $aid = DB::table('academy_branch_course_term_session_attendances')->insertGetId(['session_id' => $id, 'member_id' => $mid, 'created_by' => $actor] + $vals);
+        }
+        $this->setText('academy_branch_course_term_session_attendances', $aid, 'description', trim((string) ($a['description'] ?? '')), $actor);
     }
 
     private function enrich(array $rows, array $branches): array
@@ -338,6 +364,16 @@ class AcademyClassScheduleService
         return array_values($unique);
     }
 
+    private function withTeacherNotes(array $items, int $actor): array
+    {
+        return array_map(fn ($item) => $item + ['teacherNote' => $this->tr('academy_branch_course_term_sessions', $item['id'], 'teacher_note'), 'canWriteTeacherNote' => $this->isTermTeacher($actor, $item['termId'])], $items);
+    }
+
+    private function isTermTeacher(int $actor, int $termId): bool
+    {
+        return (bool) DB::table('academy_branch_course_term_enrollments')->join('academy_branch_members', 'academy_branch_members.member_id', '=', 'academy_branch_course_term_enrollments.member_id')->where('academy_branch_course_term_enrollments.term_id', $termId)->where('academy_branch_course_term_enrollments.type', 'teacher')->where('academy_branch_course_term_enrollments.status', 'active')->where('academy_branch_members.user_id', $actor)->where('academy_branch_members.status', 'active')->whereNull('academy_branch_course_term_enrollments.deleted_at')->whereNull('academy_branch_members.deleted_at')->first();
+    }
+
     private function session(int $a, int $id): array
     {
         $s = DB::table('academy_branch_course_term_sessions')->where('term_session_id', $id)->whereNull('deleted_at')->first();
@@ -416,7 +452,7 @@ class AcademyClassScheduleService
 
     private function setText(string $t, int $id, string $f, string $v, int $a): void
     {
-        (new TranslationManager())->set($t, $id, $f, $v, 'fa');
+        \Core\translation\TranslationService::manager()->set($t, $id, $f, $v, 'fa');
     }
 
     private function query(string $sql, array $b = [], bool $scalar = false): mixed

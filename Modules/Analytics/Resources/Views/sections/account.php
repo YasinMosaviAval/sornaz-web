@@ -1,7 +1,13 @@
 <div id="account" class="section hidden">
-    <div class="mb-8 flex flex-wrap items-center justify-between gap-3">
-        <h1 id="accountPageTitle" class="text-3xl font-bold">حساب کاربری</h1>
-        <p class="text-gray-500 ms-auto text-end">مدیریت پروفایل، امنیت، حریم خصوصی و پشتیبان‌گیری</p>
+    <style>
+        #account > .admin-ui-header { justify-content: flex-start; text-align: start; }
+        #account > .admin-ui-header > [data-slot="heading"] { width: 100%; }
+    </style>
+    <div class="mb-8 flex flex-wrap items-center gap-3">
+        <div>
+            <h1 id="accountPageTitle" class="text-3xl font-bold">حساب کاربری</h1>
+            <p class="text-gray-500" data-panel-description>مدیریت پروفایل، امنیت، حریم خصوصی و پشتیبان‌گیری</p>
+        </div>
     </div>
 
     <!-- کاور پروفایل ۱۶:۹ (معادل ۱۹۲۰×۱۰۸۰) -->
