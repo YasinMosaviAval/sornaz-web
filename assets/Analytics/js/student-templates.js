@@ -119,7 +119,7 @@
       item.organizationUserId || inferredOrganization?.user_id || 0
     );
     const groups = (window.studentTermGroups || []).filter(
-      (x) => Number(x.organizationUserId) === organizationUserId
+      (x) => Number(x.organizationUserId) === organizationUserId && (prefix !== 'stu' || x.status === 'open' || Number(item.assignmentTermId) === Number(x.id))
     );
     const selectedGroup =
       groups.find((x) => Number(x.id) === Number(item.assignmentTermId)) || groups.find((x) => x.key === item.termKey) || groups.find((x) => x.name === item.instrument);

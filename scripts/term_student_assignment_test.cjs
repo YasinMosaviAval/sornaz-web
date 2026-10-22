@@ -37,7 +37,7 @@ denied(fn()=>$service->assignStudent(10,$result['ids'][1],$student));check($user
 $ongoing=$result['ids'][2];$pdo->exec("UPDATE academy_branch_course_terms SET status='ongoing' WHERE term_id=".$ongoing);denied(fn()=>$service->assignStudent(10,$ongoing,$student));
 $assigned=$service->assignStudent(30,$pending['ids'][1],$student);check($assigned['status']==='pending','Receptionist student remains pending');
 $student['phone']='09120000003';$student['nationalId']='1000000003';$student['birthDate']='2015-01-01';$before=$users();denied(fn()=>$service->assignStudent(10,$result['ids'][3],$student));check($users()===$before,'Minor without parent rolls back registration');
-$student['birthDate']='1990-01-01';$finished=$result['ids'][4];$pdo->exec("UPDATE academy_branch_course_terms SET status='finished' WHERE term_id=".$finished);$service->assignStudent(10,$finished,$student);check($pdo->query('SELECT status FROM academy_branch_course_terms WHERE term_id='.$finished)->fetchColumn()==='finished','Assignment preserves term status');
+$student['birthDate']='1990-01-01';$finished=$result['ids'][4];$pdo->exec("UPDATE academy_branch_course_terms SET status='finished' WHERE term_id=".$finished);denied(fn()=>$service->assignStudent(10,$finished,$student));check($pdo->query('SELECT status FROM academy_branch_course_terms WHERE term_id='.$finished)->fetchColumn()==='finished','Finished term rejects new enrollment and preserves its status');
 echo "Term assignment: ownership, forced context, invoice, enrollment, occupied/ongoing rejection, receptionist and minor validation passed.\n";
 `;
 const source=base.replace('echo "Term batch:',extra+'\necho "Term batch:');

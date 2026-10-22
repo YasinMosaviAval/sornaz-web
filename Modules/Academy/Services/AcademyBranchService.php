@@ -966,7 +966,11 @@ class AcademyBranchService
                 }
                 DB::table('academy_branch_members')->where('member_id', $memberId)->update(['academy_id' => (int) $organization['academy_id'], 'branch_id' => $organization['branch_id'], 'updated_at' => $now, 'updated_by' => $actorId] + $approval);
                 $enrollment = DB::table('academy_branch_course_term_enrollments')->where('term_id', $termId)->where('member_id', $memberId)->where('type', 'student')->first();
-                $values = ['status' => 'active', 'joined_at' => $data['registrationDate'] ?? date('Y-m-d'), 'updated_by' => $actorId, 'deleted_at' => null, 'deleted_by' => null] + $approval;
+                if (!$enrollment || !empty($enrollment['deleted_at'])) {
+                    if ($term['status'] !== 'open') throw new RuntimeException('افزودن هنرجو فقط برای ترم باز مجاز است.', 409);
+                    TermEnrollmentCapacity::assertStudentSlot($termId, $term, $memberId, ['open']);
+                }
+                $values = ['status' => $approved ? 'active' : 'pending', 'joined_at' => $data['registrationDate'] ?? date('Y-m-d'), 'updated_by' => $actorId, 'deleted_at' => null, 'deleted_by' => null] + $approval;
                 if ($enrollment) {
                     DB::table('academy_branch_course_term_enrollments')->where(array_key_exists('enrollment_id', $enrollment) ? 'enrollment_id' : 'term_enrollment_id', (int) ($enrollment['enrollment_id'] ?? $enrollment['term_enrollment_id']))->update($values);
                 } else {
@@ -976,6 +980,10 @@ class AcademyBranchService
                     if (!is_array($data['studentSchedule'])) throw new RuntimeException('اطلاعات زمان‌بندی هنرجو معتبر نیست.');
                     (new AcademyTermService())->saveStudentSchedule($actorId, $termId, $memberId, $data['studentSchedule'], $approved);
                     if (!$approved) DB::table('academy_branch_course_term_enrollments')->where('member_id', $memberId)->where('term_id', $termId)->where('type', 'student')->update(['status' => 'pending']);
+                }
+                if ($approved) {
+                    TermEnrollmentCapacity::checkScheduledMembers($termId);
+                    TermEnrollmentCapacity::synchronize($termId, $actorId);
                 }
                 return ['member_id' => $memberId];
             }
@@ -1209,10 +1217,10 @@ class AcademyBranchService
             $academyId = $globalBranch ? (int) $globalBranch['academy_id'] : (int) $this->academyForUser($ownerUserId)['academy_id'];
             $this->lockAcademy($academyId);
             $branch = $this->ownedRow($academyId, $branchId);
-            TermRecordGuard::assertNoHistory('academy_branch_courses', 'branch_id', $branchId);
             if ((bool) $branch['is_main'] && !in_array($academyId, $this->mainDeleteAcademyIds($ownerUserId), true)) {
                 throw new RuntimeException('فقط سازندهٔ آموزشگاه یا حساب آموزشگاه اجازه حذف شعبه اصلی را دارد.', 403);
             }
+            TermRecordGuard::assertNoHistory('academy_branch_courses', 'branch_id', $branchId);
             $now = date('Y-m-d H:i:s');
             DB::table('academy_branches')->where('branch_id', $branchId)->update(['deleted_at' => $now, 'deleted_by' => $ownerUserId, 'updated_by' => $ownerUserId]);
             $academy = DB::table('academies')->where('academy_id', $academyId)->first();

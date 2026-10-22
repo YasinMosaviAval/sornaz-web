@@ -57,8 +57,9 @@ window.academyOrganizationTabHandlers = {
   window.syncPanelOrganizationSelect = (select, rows, valueKey = 'id') => {
     if (!select || !Array.isArray(rows)) return;
     const selected = select.value;
-    const placeholder = select.options[0]?.value === '' ? select.options[0].textContent : null;
-    select.replaceChildren(...(placeholder === null ? [] : [new Option(placeholder, '')]), ...rows.map(row => new Option(row.name, row[valueKey])));
+    const first = select.options[0];
+    const placeholder = first && ['', 'all'].includes(first.value) ? new Option(first.textContent, first.value) : null;
+    select.replaceChildren(...(placeholder ? [placeholder] : []), ...rows.map(row => new Option(row.name, row[valueKey])));
     select.value = [...select.options].some(option => option.value === selected) ? selected : '';
     if (select.value !== selected) select.dispatchEvent(new Event('change', { bubbles: true }));
   };
@@ -141,32 +142,55 @@ window.academyOrganizationTabHandlers = {
       () => window.loadTerms?.(),
       () => window.loadCourses?.(),
       () => typeof loadClassrooms === 'function' && loadClassrooms(),
-      () => window.loadBranchOfferings?.(),
+      () => window.loadBranchOfferings?.(true),
       () => window.ensureStudentFormOptions?.(true),
+      () => (document.getElementById('termDiscountsTable') || document.getElementById('newTermDiscountOrganization')) && window.loadTermDiscountCatalog?.(),
       () => document.getElementById('financeTable') && typeof loadFinanceInvoices === 'function' && loadFinanceInvoices(),
       () => window.loadMemberSchedules?.(),
       () => window.loadHolidayLeaves?.(),
       () => window.loadAdminNotifications?.(),
       () => window.refreshDashboard?.(),
     ];
-    const results = await Promise.allSettled(jobs.map(job => Promise.resolve().then(job)));
-    results.forEach(result => { if (result.status === 'rejected') console.error(result.reason); });
-    if (sequence !== refreshSequence) return;
+    // Independent panels must not wait for an unrelated slow request.
     window.dispatchEvent(new CustomEvent('panel-organizations-changed'));
-    const sources = [
-      [/staff.*Organization/i, window.staffCatalog?.organizations],
-      [/student.*Organization/i, window.studentOrganizations],
-      [/classroom.*Organization/i, window.classroomOrganizations],
-      [/course.*Organization/i, window.courseOrganizations],
-      [/^(term|editTerm|inlineTerm).*Branch$/, window.termBranches],
-      [/^(ms|editMs|inlineMs).*Branch$/, window.getMemberScheduleBranches?.()],
-      [/^(hl|editHl|inlineHl).*Branch$/, window.getHolidayLeaveBranches?.()],
-    ];
-    document.querySelectorAll('select').forEach(select => {
-      const source = sources.find(([pattern, rows]) => pattern.test(select.id) && Array.isArray(rows))?.[1];
-      if (!source) return;
-      window.syncPanelOrganizationSelect(select, source.map(row => ({ id: row.user_id ?? row.id, name: row.name })));
-    });
-    document.querySelectorAll('#modalContainer select[name="organizationUserId"]').forEach(select => window.syncPanelOrganizationSelect(select, window.termBranches || []));
+    const syncOpenSelectors = () => {
+      if (sequence !== refreshSequence) return;
+      const sources = [
+        [/staff.*Organization/i, window.staffCatalog?.organizations],
+        [/^(?:stu|editStu|inlineStu|student).*Organization/i, window.studentOrganizations],
+        [/classroom.*Organization/i, window.classroomOrganizations],
+        [/course.*Organization/i, window.courseOrganizations],
+        [/^(term|editTerm|inlineTerm).*Branch$/, window.termBranches],
+        [/^(ms|editMs|inlineMs).*Branch$/, window.getMemberScheduleBranches?.()],
+        [/^(hl|editHl|inlineHl).*Branch$/, window.getHolidayLeaveBranches?.()],
+      ];
+      document.querySelectorAll('select').forEach(select => {
+        const catalogs = {
+          branches: () => window.academyPanelBranches,
+          workingHours: () => window.getBranchScheduleOrganizations?.(),
+          lessonOrganizations: () => window.branchOfferingData?.organizations?.filter(row => !row.read_only),
+          roles: () => window.getRoleBranches?.(),
+          permissions: () => window.getPermissionBranches?.(),
+          users: () => window.getUserBranches?.(),
+          academies: () => typeof allBranchAcademies !== 'undefined' ? allBranchAcademies : [],
+          discountOrganizations: () => window.termDiscountOrganizations,
+        };
+        const explicit = catalogs[select.dataset.panelOrganizationSource]?.();
+        if (Array.isArray(explicit)) {
+          window.syncPanelOrganizationSelect(select, explicit.map(row => ({id: ['lessonOrganizations', 'discountOrganizations'].includes(select.dataset.panelOrganizationSource) ? row.user_id : row.id, name: row.name})));
+          return;
+        }
+        const source = sources.find(([pattern, rows]) => pattern.test(select.id) && Array.isArray(rows))?.[1];
+        if (!source) return;
+        window.syncPanelOrganizationSelect(select, source.map(row => ({ id: row.user_id ?? row.id, name: row.name })));
+      });
+      document.querySelectorAll('#modalContainer select[name="organizationUserId"]:not([data-panel-organization-source])').forEach(select => window.syncPanelOrganizationSelect(select, window.termBranches || []));
+    };
+    syncOpenSelectors();
+    const results = await Promise.allSettled(jobs.map(async job => {
+      await job();
+      syncOpenSelectors();
+    }));
+    results.forEach(result => { if (result.status === 'rejected') console.error(result.reason); });
   });
 })();

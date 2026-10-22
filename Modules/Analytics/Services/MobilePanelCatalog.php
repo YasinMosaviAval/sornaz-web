@@ -540,7 +540,7 @@ final class MobilePanelCatalog
         $this->studentDialogContracts($canonical);
         $studentFields = array_values(array_filter($canonical['students']['actions']['create']['fields'], fn ($field) => !in_array($field['key'], ['organizationUserId', 'termId', 'availabilities', 'availabilitySummary', 'availabilityDescription'], true)));
         foreach ($studentFields as &$field) {
-            if ($field['key'] === 'studentSchedule') $field['visibleWhen'] = ['record.status_code' => 'open'];
+            if ($field['key'] === 'studentSchedule') $field['visibleWhen'] = ['record.status_code' => 'open', 'record.hasSessions' => ['not' => true]];
         }
         unset($field);
         $sections['terms']['actions']['assign-student'] = $this->a('/academy/admin/terms/{id}/student', 'تعیین هنرجو', 'POST', $studentFields) + ['en' => 'Assign student', 'formContractVersion' => 2];
@@ -688,11 +688,11 @@ final class MobilePanelCatalog
             $f('is_main', 'نشانی اصلی', 'bool') + ['default' => true],
         ]) + ['maxItems' => 1];
         foreach (['parentName' => 'نام و نام خانوادگی والد', 'parentNationalId' => 'شماره ملی والد', 'parentFatherName' => 'نام پدر والد', 'parentBirthDate' => 'تاریخ تولد والد', 'parentPhone' => 'شماره تماس والد'] as $key => $label) $fields[] = $f($key, $label, $key === 'parentBirthDate' ? 'date' : ($key === 'parentPhone' ? 'phone' : 'text'), null, true) + $under18;
-        $fields[] = $f('termId', 'ترم آموزشی', 'select', ['source' => 'terms', 'match' => ['organizationUserId' => 'organizationUserId'], 'requireMatch' => true], true) + ['dependsOn' => ['organizationUserId']];
+        $fields[] = $f('termId', 'ترم آموزشی', 'select', ['source' => 'terms', 'openTermsOnlyOnCreate' => true, 'match' => ['organizationUserId' => 'organizationUserId'], 'requireMatch' => true], true) + ['dependsOn' => ['organizationUserId']];
         $fields[] = $f('studentSchedule', 'زمان‌بندی جلسات ترم', 'object', [
             $f('classroomId', 'کلاس برگزاری', 'select', ['source' => 'classrooms', 'termRooms' => true]),
             $f('firstDate', 'تاریخ جلسه اول', 'date'),
-        ]) + ['visibleWhen' => ['_selected.termId.status' => 'open']];
+        ]) + ['visibleWhen' => ['_selected.termId.status' => 'open', '_selected.termId.hasSessions' => ['not' => true]]];
         $days = ['saturday' => 'شنبه', 'sunday' => 'یکشنبه', 'monday' => 'دوشنبه', 'tuesday' => 'سه‌شنبه', 'wednesday' => 'چهارشنبه', 'thursday' => 'پنجشنبه', 'friday' => 'جمعه'];
         $fields[] = $f('availabilities', 'افزودن برنامه زمانی هنرجو', 'rows', [
             $f('day', 'روز', 'select', $days, true) + ['default' => 'saturday'],

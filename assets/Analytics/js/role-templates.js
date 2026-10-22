@@ -56,7 +56,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div>
                     <label class="block text-sm font-medium mb-2">شعبه *</label>
-                    <select id="${id('Branch')}" class="${fieldClass}">${branchOptions(item.branchId)}</select>
+                    <select id="${id('Branch')}" data-panel-organization-source="roles" class="${fieldClass}">${branchOptions(item.branchId)}</select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">نام *</label>

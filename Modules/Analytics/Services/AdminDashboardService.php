@@ -375,6 +375,7 @@ class AdminDashboardService
                     \Modules\Academy\Services\InvoiceLedger::snapshot($invoiceId);
                 }
                 DB::table('academy_branch_course_term_enrollments')->where('term_enrollment_id', (int) $enrollment['term_enrollment_id'])->update(['status' => 'active', 'approved_at' => $now, 'approved_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
+                \Modules\Academy\Services\TermEnrollmentCapacity::synchronize((int) $waiting['term_id'], $actor);
                 foreach (['final_teacher_id' => $teacherId, 'final_session_id' => $sessionId] as $field => $value) \Core\translation\TranslationService::manager()->set('academy_branch_course_term_waiting_list', $id, $field, (string) $value, 'fa');
                 $chat = DB::table('translations')->where('table_name', 'academy_branch_course_term_waiting_list')->where('table_id', $id)->where('field', 'conversation_id')->whereNull('deleted_at')->orderBy('translation_id', 'DESC')->first();
                 if ($chat) {

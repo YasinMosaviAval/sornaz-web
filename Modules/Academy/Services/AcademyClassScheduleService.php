@@ -14,15 +14,15 @@ class AcademyClassScheduleService
     {
         $branches = $this->branches($actor);
         $bids = array_column($branches, 'branch_id');
+        $academyIds = array_column(ClassroomOrganizationScope::academies($actor), 'academy_id');
         $teacherIds = $this->teacherTermIds($actor);
         $allowedPer = [10, 20, 30, 50, 100];
         $per = in_array((int) ($f['perPage'] ?? 10), $allowedPer, true) ? (int) ($f['perPage'] ?? 10) : 10;
-        if (!$bids && !$teacherIds) {
+        if (!$bids && !$academyIds && !$teacherIds) {
             return ['schedules' => [], 'branches' => [], 'terms' => [], 'classrooms' => [], 'timeRanges' => [], 'total' => 0, 'page' => 1, 'perPage' => $per];
         }
         $page = max(1, (int) ($f['page'] ?? 1));
-        $allBranches = DB::table('academy_branches')->whereNull('deleted_at')->count();
-        $scope = $bids ? (count($bids) === $allBranches ? '1=1' : 'c.branch_id IN (' . implode(',', array_map('intval', $bids)) . ')') : '1=0';
+        $scope = $this->organizationScope($bids, $academyIds);
         if ($teacherIds) $scope = '(' . $scope . ' OR t.term_id IN (' . implode(',', $teacherIds) . '))';
         $where = [$scope, 's.deleted_at IS NULL', 'b.deleted_at IS NULL', 't.deleted_at IS NULL', 'c.deleted_at IS NULL'];
         $bind = [];
@@ -91,16 +91,16 @@ class AcademyClassScheduleService
         $branches = $this->branches($actor);
         $ids = array_map(fn ($b) => (int) $b['branch_id'], $branches);
         $teacherIds = $this->teacherTermIds($actor);
+        $academyIds = array_column(ClassroomOrganizationScope::academies($actor), 'academy_id');
         if ($branchId) {
             if (!in_array($branchId, $ids, true)) {
                 throw new RuntimeException('دسترسی به شعبه ندارید.');
             }
             $ids = [$branchId];
-        }if (!$ids && !$teacherIds) {
+        }if (!$ids && !$academyIds && !$teacherIds) {
             return ['firstDate' => null, 'lastDate' => null];
         }
-        $in = implode(',', $ids);
-        $scope = $ids ? 'c.branch_id IN (' . $in . ')' : '1=0';
+        $scope = $this->organizationScope($ids, $academyIds);
         if ($teacherIds) $scope = '(' . $scope . ' OR t.term_id IN (' . implode(',', $teacherIds) . '))';
         if ($branchId) $scope .= ' AND c.branch_id=' . $branchId;
         $sql = "SELECT MIN(b.requested_date) first_date,MAX(b.requested_date) last_date FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id JOIN academy_branch_course_terms t ON t.term_id=s.term_id JOIN academy_branch_courses c ON c.course_id=t.course_id WHERE $scope AND s.deleted_at IS NULL AND b.deleted_at IS NULL AND t.deleted_at IS NULL AND c.deleted_at IS NULL";
@@ -387,12 +387,21 @@ class AcademyClassScheduleService
     private function term(int $a, int $id): array
     {
         $bids = array_column($this->branches($a), 'branch_id');
-        $sql = 'SELECT t.*,c.branch_id FROM academy_branch_course_terms t JOIN academy_branch_courses c ON c.course_id=t.course_id WHERE t.term_id=? AND t.deleted_at IS NULL AND c.deleted_at IS NULL';
+        $academyIds = array_column(ClassroomOrganizationScope::academies($a), 'academy_id');
+        $sql = 'SELECT t.*,c.branch_id,c.academy_id FROM academy_branch_course_terms t JOIN academy_branch_courses c ON c.course_id=t.course_id WHERE t.term_id=? AND t.deleted_at IS NULL AND c.deleted_at IS NULL';
         $r = $this->query($sql, [$id])[0] ?? null;
-        if (!$r || !in_array((int) $r['branch_id'], $bids, true)) {
+        if (!$r || !($r['branch_id'] !== null ? in_array((int) $r['branch_id'], array_map('intval', $bids), true) : in_array((int) $r['academy_id'], array_map('intval', $academyIds), true))) {
             throw new RuntimeException('ترم معتبر نیست.');
         }
         return $r;
+    }
+
+    private function organizationScope(array $branches, array $academies): string
+    {
+        $conditions = [];
+        if ($branches) $conditions[] = 'c.branch_id IN (' . implode(',', array_map('intval', $branches)) . ')';
+        if ($academies) $conditions[] = '(c.branch_id IS NULL AND c.academy_id IN (' . implode(',', array_map('intval', $academies)) . '))';
+        return $conditions ? '(' . implode(' OR ', $conditions) . ')' : '1=0';
     }
 
     private function branchOptions(array $b): array

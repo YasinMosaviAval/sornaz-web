@@ -128,6 +128,8 @@ class AcademyTermService
         $term = $this->authorizeTerm($actor, $id);
         return \Modules\System\Services\PaymentMutex::run(db(), "term:$id", function () use ($actor, $d, $id, $term) {
             return transaction(function () use ($actor, $d, $id, $term) {
+                if (isset($d['teachers']) && !is_array($d['teachers'])) throw new RuntimeException('فهرست مدرسان معتبر نیست.', 422);
+                if (isset($d['teachers']) && $term['status'] === 'open') $this->completeOpenTeachers($actor, $term, $d['teachers']);
                 if (($d['metadataOnly'] ?? false) !== true) {
                     TermRecordGuard::assertUnchanged($term, $d);
                 }
@@ -136,9 +138,25 @@ class AcademyTermService
                     throw new RuntimeException('نام ترم الزامی است.', 422);
                 }
                 $this->setTexts($id, ['title' => $name, 'summary' => trim((string) ($d['summary'] ?? '')), 'description' => trim((string) ($d['description'] ?? ''))], $actor);
+                TermEnrollmentCapacity::synchronize($id, $actor);
                 return ['id' => $id];
             });
         });
+    }
+
+    private function completeOpenTeachers(int $actor, array $term, array $teachers): void
+    {
+        $id = (int) $term['term_id'];
+        $ids = array_values(array_unique(array_filter(array_map(fn ($item) => (int) (is_array($item) ? ($item['id'] ?? 0) : $item), $teachers))));
+        $stored = array_map('intval', array_column(DB::table('academy_branch_course_term_enrollments')->where('term_id', $id)->where('type', 'teacher')->whereNull('deleted_at')->get(), 'member_id'));
+        if (array_diff($stored, $ids)) throw new RuntimeException('حذف یا جایگزینی مدرس ثبت‌شده از ویرایش ترم مجاز نیست.', 409);
+        $added = array_diff($ids, $stored);
+        if (!$added) return;
+        $course = DB::table('academy_branch_courses')->where('course_id', (int) $term['course_id'])->whereNull('deleted_at')->first();
+        $this->validatePeople($teachers, 'teacher', (int) $course['branch_id'], (int) $course['lesson_id'], (int) $course['teacher_capacity'], (int) $course['academy_id']);
+        if ($added && $this->isReceptionist($actor)) throw new RuntimeException('تکمیل مدرسان ترم به تأیید مدیر نیاز دارد.', 403);
+        foreach ($added as $member) DB::table('academy_branch_course_term_enrollments')->insert(['term_id' => $id, 'member_id' => $member, 'type' => 'teacher', 'status' => 'active', 'joined_at' => date('Y-m-d H:i:s'), 'created_by' => $actor, 'updated_by' => $actor]);
+        if ($added) TermEnrollmentCapacity::checkScheduledMembers($id);
     }
 
     public function bootstrap(int $actor): array
@@ -167,7 +185,7 @@ class AcademyTermService
         }
         $people = [];
         if ($tids) {
-            foreach (DB::table('academy_branch_course_term_enrollments')->whereIn('term_id', $tids)->whereNull('deleted_at')->get() as $e) {
+            foreach (DB::table('academy_branch_course_term_enrollments')->whereIn('term_id', $tids)->whereIn('status', ['active', 'pending'])->whereNull('deleted_at')->get() as $e) {
                 $people[(int) $e['term_id']][] = ['id' => (int) $e['member_id'], 'name' => $mmap[(int) $e['member_id']]['name'] ?? ('عضو ' . $e['member_id']), 'type' => $e['type']];
             }
         }
@@ -188,7 +206,7 @@ class AcademyTermService
             $s = $sessions[$id] ?? [];
             $i = $invoices[$id] ?? null;
             $draft = json_decode((string) ($tr['academy_branch_course_terms'][$id]['schedule_draft'] ?? ''), true);
-            return ['id' => $id, 'name' => $tr['academy_branch_course_terms'][$id]['title'] ?? ('ترم ' . $id), 'summary' => $tr['academy_branch_course_terms'][$id]['summary'] ?? '', 'description' => $tr['academy_branch_course_terms'][$id]['description'] ?? '', 'branchId' => (int) $c['branch_id'], 'branchName' => $this->courseOrganizationName($c, $bmap), 'courseId' => (int) $r['course_id'], 'course' => $tr['academy_branch_courses'][(int) $r['course_id']]['title'] ?? ('دوره ' . $r['course_id']), 'classroomId' => (int) ($s[0]['classroomId'] ?? ($draft['classroomId'] ?? 0)), 'sessionCount' => (int) $r['session_count'], 'scheduleDraft' => is_array($draft) ? $draft : null, 'currencyId' => (int) ($i['currency_id'] ?? $r['currency_id']), 'cost' => (float) ($i['payable_amount'] ?? $r['price']), 'discountId' => (int) ($i['discount_id'] ?? ($draft['discountId'] ?? 0)), 'installmentCount' => $i ? $this->installmentCount((int) $i['term_invoice_id']) : (int) ($draft['installmentCount'] ?? 1), 'repeatType' => $r['session_period'], 'status_code' => $r['status'], 'status' => $statuses[$r['status']] ?? $r['status'], 'sessions' => $s, 'skippedDates' => $skips[$id] ?? [], 'teachers' => array_values(array_filter($p, fn ($x) => $x['type'] === 'teacher')), 'students' => array_values(array_filter($p, fn ($x) => $x['type'] === 'student')), 'start' => $r['start_date'], 'end' => $r['end_date']];
+            return ['id' => $id, 'name' => $tr['academy_branch_course_terms'][$id]['title'] ?? ('ترم ' . $id), 'summary' => $tr['academy_branch_course_terms'][$id]['summary'] ?? '', 'description' => $tr['academy_branch_course_terms'][$id]['description'] ?? '', 'branchId' => (int) $c['branch_id'], 'branchName' => $this->courseOrganizationName($c, $bmap), 'courseId' => (int) $r['course_id'], 'course' => $tr['academy_branch_courses'][(int) $r['course_id']]['title'] ?? ('دوره ' . $r['course_id']), 'classroomId' => (int) ($s[0]['classroomId'] ?? ($draft['classroomId'] ?? 0)), 'teacherCapacity' => (int) $c['teacher_capacity'], 'studentCapacity' => (int) $c['student_capacity'], 'canAssignStudent' => in_array($r['status'], ['open', 'pending'], true) && count(array_unique(array_column(array_filter($p, fn ($person) => $person['type'] === 'student'), 'id'))) < (int) $c['student_capacity'], 'hasSessions' => (bool) $s, 'sessionCount' => (int) $r['session_count'], 'scheduleDraft' => is_array($draft) ? $draft : null, 'currencyId' => (int) ($i['currency_id'] ?? $r['currency_id']), 'cost' => (float) ($i['payable_amount'] ?? $r['price']), 'discountId' => (int) ($i['discount_id'] ?? ($draft['discountId'] ?? 0)), 'installmentCount' => $i ? $this->installmentCount((int) $i['term_invoice_id']) : (int) ($draft['installmentCount'] ?? 1), 'repeatType' => $r['session_period'], 'status_code' => $r['status'], 'status' => $statuses[$r['status']] ?? $r['status'], 'sessions' => $s, 'skippedDates' => $skips[$id] ?? [], 'teachers' => array_values(array_filter($p, fn ($x) => $x['type'] === 'teacher')), 'students' => array_values(array_filter($p, fn ($x) => $x['type'] === 'student')), 'start' => $r['start_date'], 'end' => $r['end_date']];
         }, $terms)];
     }
 
@@ -243,6 +261,7 @@ class AcademyTermService
         $periods = ['week', '2-week', '3-week', '4-week', 'month', 'year', 'no-period'];
         $statuses = ['pending', 'open', 'ongoing', 'finished'];
         $values = ['course_id' => (int) $course['course_id'], 'start_date' => $sessions[0]['date'], 'end_date' => $sessions[count($sessions) - 1]['date'], 'session_count' => count($sessions), 'session_period' => in_array($d['repeatType'] ?? '', $periods, true) ? $d['repeatType'] : 'no-period', 'price' => 0, 'currency_id' => (int) ($d['currencyId'] ?? 1), 'status' => in_array($d['status'] ?? '', $statuses, true) ? $d['status'] : 'pending', 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
+        if ($values['status'] === 'ongoing' && !TermEnrollmentCapacity::ready($course, count($teachers), count($students))) $values['status'] = 'open';
         return transaction(function () use ($actor, $d, $id, $values, $name, $sessions, $teachers, $students, $room) {
             $id = DB::table('academy_branch_course_terms')->insertGetId(['created_by' => $actor] + $values);
             $this->setTexts($id, ['title' => $name, 'summary' => trim((string) ($d['summary'] ?? '')), 'description' => trim((string) ($d['description'] ?? ''))], $actor);
@@ -373,17 +392,36 @@ class AcademyTermService
     {
         return \Modules\System\Services\PaymentMutex::run(db(), 'schedule-write', fn () => transaction(function () use ($actor, $id, $classroomId) {
             $term = $this->authorizeTerm($actor, $id);
-            if (!in_array($term['status'], ['open', 'pending'], true) || DB::table('academy_branch_course_term_sessions')->where('term_id', $id)->whereNull('deleted_at')->first()) throw new RuntimeException('کلاس ترم دارای جلسه را از مدیریت جلسات تغییر دهید.', 409);
+            if (!in_array($term['status'], ['open', 'pending'], true)) throw new RuntimeException('تعیین کلاس فقط برای ترم باز یا در انتظار مجاز است.', 409);
             $texts = $this->texts(['academy_branch_course_terms' => [$id]])['academy_branch_course_terms'][$id] ?? [];
             $draft = json_decode($texts['schedule_draft'] ?? '', true);
-            if (!$draft || !empty($draft['classroomId'])) throw new RuntimeException('این ترم در انتظار تعیین کلاس نیست.', 409);
             $course = DB::table('academy_branch_courses')->where('course_id', (int) $term['course_id'])->whereNull('deleted_at')->first();
             $room = $this->draftClassroom($actor, $course, $classroomId);
             if (!$room['classroom_id']) throw new RuntimeException('کلاس برگزاری را انتخاب کنید.');
+            $sessions = DB::table('academy_branch_course_term_sessions')->where('term_id', $id)->whereNull('deleted_at')->get();
+            if ($sessions) $this->assignOpenSessionClassroom($actor, $sessions, $room);
+            if (!is_array($draft)) {
+                if (!$sessions) throw new RuntimeException('ابتدا روز و ساعت برگزاری این ترم قدیمی را از ویرایش ترم تعیین کنید.', 409);
+                return ['id' => $id, 'classroomId' => $classroomId];
+            }
             $draft['classroomId'] = $classroomId;
             $this->setTexts($id, ['schedule_draft' => json_encode($draft, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)], $actor);
             return ['id' => $id, 'classroomId' => $classroomId];
         }));
+    }
+
+    private function assignOpenSessionClassroom(int $actor, array $sessions, array $room): void
+    {
+        $texts = $this->texts(['academy_branch_classrooms' => [(int) $room['classroom_id']]])['academy_branch_classrooms'][(int) $room['classroom_id']] ?? [];
+        $mode = ($texts['delivery_mode'] ?? '') === 'online' ? 'online' : 'in_person';
+        if ($mode === 'online' && (!filter_var($texts['online_join_url'] ?? '', FILTER_VALIDATE_URL) || parse_url($texts['online_join_url'], PHP_URL_SCHEME) !== 'https')) throw new RuntimeException('لینک کلاس آنلاین معتبر نیست.');
+        foreach ($sessions as $session) {
+            if ((int) $session['classroom_id'] === (int) $room['classroom_id']) continue;
+            $sessionId = (int) $session['term_session_id'];
+            TermRecordGuard::assertSessionEditable($sessionId);
+            DB::table('academy_branch_course_term_sessions')->where('term_session_id', $sessionId)->update(['classroom_id' => (int) $room['classroom_id'], 'delivery_mode' => $mode, 'updated_by' => $actor]);
+            ScheduleGuard::session($sessionId);
+        }
     }
 
     private function saveUndatedTerm(int $actor, array $data, array $course, array $room, array $teachers, ?array $availability = null): array
@@ -461,7 +499,7 @@ class AcademyTermService
             $this->setTexts($termId, ['schedule_draft' => json_encode($draft, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)], $actor);
             $this->createSessions($termId, $actor, $sessions, $room, [$teacherId], [$studentId]);
             InvoiceLedger::create($termId, $actor, ['cost' => $term['price'], 'installmentCount' => (int) ($draft['installmentCount'] ?? 1), 'discountId' => (int) ($draft['discountId'] ?? 0), 'sessions' => $sessions], $firstDate, (int) $term['currency_id']);
-            DB::table('academy_branch_course_terms')->where('term_id', $termId)->update(['start_date' => $firstDate, 'end_date' => $sessions[$count - 1]['date'], 'status' => 'ongoing', 'updated_by' => $actor]);
+            DB::table('academy_branch_course_terms')->where('term_id', $termId)->update(['start_date' => $firstDate, 'end_date' => $sessions[$count - 1]['date'], 'updated_by' => $actor]);
             $created = DB::table('academy_branch_course_term_sessions')->where('term_id', $termId)->whereNull('deleted_at')->orderBy('term_session_id')->first();
             return (int) ($created['term_session_id'] ?? 0);
         }));
@@ -623,9 +661,10 @@ class AcademyTermService
         $studentIds = array_values(array_unique(array_merge([$memberId], array_map(static fn ($row) => (int) $row['member_id'], $students))));
         if (count($studentIds) > (int) $course['student_capacity']) throw new RuntimeException('ظرفیت هنرجوی ترم تکمیل است.');
         $this->createSessions($termId, $actor, $plan['sessions'], $plan['room'], $teacherIds, $studentIds);
-        DB::table('academy_branch_course_terms')->where('term_id', $termId)->update(['start_date' => $firstDate, 'end_date' => $plan['sessions'][count($plan['sessions']) - 1]['date'], 'status' => 'ongoing', 'updated_by' => $actor]);
+        DB::table('academy_branch_course_terms')->where('term_id', $termId)->update(['start_date' => $firstDate, 'end_date' => $plan['sessions'][count($plan['sessions']) - 1]['date'], 'updated_by' => $actor]);
         DB::table('academy_branch_members')->where('member_id', $memberId)->update(['status' => 'active', 'approved_at' => date('Y-m-d H:i:s'), 'approved_by' => $actor, 'updated_by' => $actor]);
         DB::table('academy_branch_course_term_enrollments')->where('term_id', $termId)->where('member_id', $memberId)->where('type', 'student')->whereNull('deleted_at')->update(['status' => 'active', 'approved_at' => date('Y-m-d H:i:s'), 'approved_by' => $actor, 'updated_by' => $actor]);
+        TermEnrollmentCapacity::synchronize($termId, $actor);
         $this->setMemberScheduleProposal($memberId, []);
     }
 
@@ -779,6 +818,7 @@ class AcademyTermService
         $periods = ['week', '2-week', '3-week', '4-week', 'month', 'year', 'no-period'];
         $statuses = ['pending', 'open', 'ongoing'];
         $values = ['course_id' => (int) $course['course_id'], 'start_date' => $sessions[0]['date'], 'end_date' => $sessions[count($sessions) - 1]['date'], 'session_count' => count($sessions), 'session_period' => in_array($d['repeatType'] ?? '', $periods, true) ? $d['repeatType'] : 'no-period', 'price' => 0, 'currency_id' => (int) ($d['currencyId'] ?? 1), 'status' => in_array($d['status'] ?? '', $statuses, true) ? $d['status'] : 'pending', 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
+        if ($values['status'] === 'ongoing' && !TermEnrollmentCapacity::ready($course, count($teachers), count($students))) $values['status'] = 'open';
         return transaction(function () use ($actor, $d, $id, $values, $name, $sessions, $teachers, $students, $room) {
             $id = DB::table('academy_branch_course_terms')->insertGetId(['created_by' => $actor] + $values);
             $this->setTexts($id, ['title' => $name, 'summary' => trim((string) ($d['summary'] ?? '')), 'description' => trim((string) ($d['description'] ?? ''))], $actor);
@@ -1105,12 +1145,18 @@ class AcademyTermService
 
     public function cycleStatus(int $actor, int $id): array
     {
+        return \Modules\System\Services\PaymentMutex::run(db(), 'schedule-write', fn () => transaction(fn () => $this->cycleStatusLocked($actor, $id)));
+    }
+
+    private function cycleStatusLocked(int $actor, int $id): array
+    {
         $row = $this->authorizeTerm($actor, $id);
         $next = match ((string) $row['status']) {
             'pending' => 'open','open' => 'ongoing','ongoing' => 'finished',default => 'pending'
         };
         $now = date('Y-m-d H:i:s');
         DB::table('academy_branch_course_terms')->where('term_id', $id)->update(['status' => $next, 'approved_at' => $next === 'pending' ? null : ($row['approved_at'] ?? $now), 'approved_by' => $next === 'pending' ? null : ($row['approved_by'] ?? $actor), 'updated_by' => $actor]);
+        if ($next === 'ongoing' && TermEnrollmentCapacity::synchronize($id, $actor) !== 'ongoing') throw new RuntimeException('ابتدا ظرفیت تمام هنرجویان و مدرسان و برنامه جلسات را تکمیل کنید.', 409);
         return ['id' => $id, 'status' => $next];
     }
 

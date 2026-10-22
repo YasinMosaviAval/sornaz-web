@@ -22,6 +22,7 @@ const context = {
   editingTermRowId: null, attendanceTermRowId: null,
 };
 vm.createContext(context);
+vm.runInContext(source.slice(source.indexOf('function readOpenTermTeachers('), source.indexOf('function restrictRecordedTermEditor(')), context);
 vm.runInContext(source.slice(start, end), context);
 (async () => {
   await context.window.editTerm(4);

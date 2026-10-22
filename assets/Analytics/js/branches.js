@@ -951,9 +951,16 @@ window.branchOfferingDelete = async function (type, id) {
     envelope = p.data ?? p;
   if (!r.ok || envelope.success === false) throw new Error(envelope.message || 'حذف ناموفق بود.');
 };
-window.loadBranchOfferings = function () {
+let branchOfferingRevision = 0;
+window.loadBranchOfferings = function (refresh = false) {
+  if (refresh) {
+    branchOfferingRevision++;
+    window.branchOfferingData = null;
+    window.branchOfferingLoadPromise = null;
+  }
   if (window.branchOfferingData) return Promise.resolve(window.branchOfferingData);
   if (window.branchOfferingLoadPromise) return window.branchOfferingLoadPromise;
+  const revision = branchOfferingRevision;
   window.branchOfferingLoadPromise = fetch('/academy/admin/branch-offerings', {
     credentials: 'same-origin',
     headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
@@ -972,13 +979,14 @@ window.loadBranchOfferings = function () {
       return envelope.data ?? envelope;
     })
     .then((d) => {
+      if (revision !== branchOfferingRevision) return d;
       window.branchOfferingData = d;
       window.branchOfferingBranches = d.branches || [];
       window.dispatchEvent(new CustomEvent('branch-offerings-loaded', { detail: d }));
       return d;
     })
     .finally(() => {
-      window.branchOfferingLoadPromise = null;
+      if (revision === branchOfferingRevision) window.branchOfferingLoadPromise = null;
     });
   return window.branchOfferingLoadPromise;
 };

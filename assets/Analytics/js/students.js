@@ -142,7 +142,7 @@
       term = document.getElementById(prefix + 'Instrument');
     if (!term) return;
     const groups = (window.studentTermGroups || []).filter(
-      (x) => Number(x.organizationUserId) === Number(organization?.value || 0)
+      (x) => Number(x.organizationUserId) === Number(organization?.value || 0) && (prefix !== 'stu' || x.status === 'open')
     );
     term.disabled = !organization?.value;
     term.innerHTML =
@@ -326,6 +326,7 @@
       window.filterStudents();
     }
   }
+  window.refreshStudentsFromDatabase = refreshStudentsFromDatabase;
   async function pollStudentsRealtime() {
     if (studentRealtimeBusy || document.hidden || !document.getElementById('studentsTable')) return;
     studentRealtimeBusy = true;

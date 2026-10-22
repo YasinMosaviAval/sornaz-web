@@ -13,6 +13,11 @@ spl_autoload_register(static function ($class) use ($map) {
 });
 $pdo = new \Core\database\PrefixedPDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 function db() { return $GLOBALS['pdo']; }
+function transaction($work) {
+    db()->beginTransaction();
+    try { $result = $work(); db()->commit(); return $result; }
+    catch (Throwable $error) { db()->rollBack(); throw $error; }
+}
 function base_path($path = '') { return dirname(__DIR__).'/'.$path; }
 function locale() { return 'fa'; }
 function auth() { return new class {
@@ -91,6 +96,11 @@ INSERT INTO academy_branch_members VALUES(12,12,101,100,'inactive',NULL);
 INSERT INTO access_system_roles VALUES(7,'branch_manager',NULL);
 INSERT INTO academy_branch_member_roles VALUES(12,7,NULL);");
 $terms = new Modules\Academy\Services\AcademyTermService;
+$pdo->exec("CREATE TABLE academy_branch_course_term_enrollments(term_id INTEGER,member_id INTEGER,type TEXT,status TEXT,deleted_at TEXT);
+CREATE TABLE academy_branch_course_term_sessions(term_id INTEGER,deleted_at TEXT);
+CREATE TABLE academy_branch_course_term_invoices(term_id INTEGER);
+INSERT INTO academy_branch_course_term_enrollments VALUES(1,901,'teacher','active',NULL),(1,902,'student','active',NULL);
+INSERT INTO academy_branch_course_term_sessions VALUES(1,NULL);");
 $before = $pdo->query('SELECT * FROM academy_branch_course_terms')->fetchAll();
 foreach ([2, 4, 999] as $id) {
     foreach (['save', 'saveAcademyTerm'] as $method) {
@@ -113,7 +123,6 @@ forbidden(fn () => $terms->cycleStatus(12, 1));
 $pdo->exec("UPDATE access_system_roles SET name='branch_manager' WHERE role_id=7");
 forbidden(fn () => $terms->cycleStatus(12, 2));
 check($terms->cycleStatus(1, 2)['status'] === 'open', 'Site administrator cannot manage another academy');
-$pdo->exec('CREATE TABLE academy_branch_course_term_enrollments(term_id INTEGER); CREATE TABLE academy_branch_course_term_sessions(term_id INTEGER); CREATE TABLE academy_branch_course_term_invoices(term_id INTEGER);');
 $terms->delete(10, 3);
 check((int) $pdo->query('SELECT deleted_by FROM academy_branch_course_terms WHERE term_id=3')->fetchColumn() === 10, 'Academy-wide term deletion failed');
 

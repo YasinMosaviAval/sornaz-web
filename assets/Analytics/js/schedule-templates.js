@@ -43,7 +43,7 @@
     excused_absence: 'غیبت موجه',
     online: 'حضور آنلاین',
   };
-  window.getScheduleAttendancePanelHTML = (item, inline) =>
+  window.getScheduleAttendancePanelHTML = (item, inline, termId = 0) =>
     `<div id="scheduleAttendancePanel-${item.id}" class="space-y-4"><h3 class="font-bold text-lg">حضور و غیاب — ${e(item.title)}</h3><div class="max-h-[55vh] overflow-y-auto">${
       (item.attendance || [])
         .map(
@@ -59,7 +59,7 @@
               )}</select><input class="schedule-att-description w-full border rounded-xl p-3" data-member="${a.id}" value="${e(a.description || '')}" placeholder="توضیحات حضور و غیاب"></div></div>`
         )
         .join('') || '<p class="text-gray-400">عضوی برای این ترم ثبت نشده است.</p>'
-    }</div>${item.canWriteTeacherNote ? `<label class="block text-sm">${document.documentElement.lang.startsWith('en') ? 'Teacher note' : 'یادداشت استاد'}<textarea data-teacher-note maxlength="10000" rows="3" class="mt-2 w-full rounded-xl border p-3">${e(item.teacherNote || '')}</textarea></label>` : ''}<div class="flex gap-3"><button onclick="saveScheduleAttendance(${item.id},${inline ? 'true' : 'false'})" class="bg-emerald-600 text-white px-6 py-3 rounded-2xl">ذخیره حضور و غیاب</button><button onclick="${inline ? `toggleScheduleInlineAttendance(${item.id})` : 'closeModal()'}" class="border px-6 py-3 rounded-2xl">بستن</button></div></div>`;
+    }</div>${item.canWriteTeacherNote ? `<label class="block text-sm">${document.documentElement.lang.startsWith('en') ? 'Teacher note' : 'یادداشت استاد'}<textarea data-teacher-note maxlength="10000" rows="3" class="mt-2 w-full rounded-xl border p-3">${e(item.teacherNote || '')}</textarea></label>` : ''}<div role="status" data-attendance-result></div><div class="flex gap-3"><button onclick="${termId ? `saveTermSessionAttendance(${Number(termId)},${Number(item.id)},this)` : `saveScheduleAttendance(${item.id},${inline ? 'true' : 'false'})`}" class="bg-emerald-600 text-white px-6 py-3 rounded-2xl">ذخیره حضور و غیاب</button>${termId ? '' : `<button onclick="${inline ? `toggleScheduleInlineAttendance(${item.id})` : 'closeModal()'}" class="border px-6 py-3 rounded-2xl">بستن</button>`}</div></div>`;
   window.getScheduleAttendanceModalHTML = (item) =>
     `<div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onclick="if(event.target===this)closeModal()"><div class="bg-white rounded-3xl w-full max-w-3xl p-8" onclick="event.stopPropagation()">${window.getScheduleAttendancePanelHTML(item, false)}</div></div>`;
 })();

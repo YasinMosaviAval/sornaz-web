@@ -342,13 +342,17 @@ class AcademyCourseService
                 if (!is_array($d['studentSchedule'])) throw new RuntimeException('اطلاعات زمان‌بندی هنرجو معتبر نیست.');
                 (new AcademyTermService())->saveStudentSchedule($actor, $termId, $memberId, $d['studentSchedule'], $approved);
             }
+            if ($approved) {
+                TermEnrollmentCapacity::checkScheduledMembers($termId);
+                TermEnrollmentCapacity::synchronize($termId, $actor);
+            }
             return ['id' => $memberId, 'member_id' => $memberId, 'user_id' => $userId, 'status' => $memberStatus];
         }));
     }
 
     private function studentRegistrationTerm(int $termId, bool $requireEmptyTerm): array
     {
-        $term = DB::table('academy_branch_course_terms')->join('academy_branch_courses', 'academy_branch_courses.course_id', '=', 'academy_branch_course_terms.course_id')->where('academy_branch_course_terms.term_id', $termId)->whereIn('academy_branch_course_terms.status', $requireEmptyTerm ? ['pending', 'open', 'finished'] : ['open', 'ongoing'])->whereNull('academy_branch_course_terms.deleted_at')->whereNull('academy_branch_courses.deleted_at')->first();
+        $term = DB::table('academy_branch_course_terms')->join('academy_branch_courses', 'academy_branch_courses.course_id', '=', 'academy_branch_course_terms.course_id')->where('academy_branch_course_terms.term_id', $termId)->whereIn('academy_branch_course_terms.status', $requireEmptyTerm ? ['pending', 'open'] : ['open'])->whereNull('academy_branch_course_terms.deleted_at')->whereNull('academy_branch_courses.deleted_at')->first();
         if (!$term) {
             throw new RuntimeException('ترم آموزشی معتبر نیست.');
         }
@@ -366,9 +370,8 @@ class AcademyCourseService
         $term['price'] = $termRecord['price'];
         $term['currency_id'] = $termRecord['currency_id'];
         $term['start_date'] = $termRecord['start_date'];
-        if ($requireEmptyTerm && ($term['status'] === 'ongoing' || DB::table('academy_branch_course_term_enrollments')->where('term_id', $termId)->where('type', 'student')->whereNull('deleted_at')->first())) {
-            throw new RuntimeException('این ترم در حال برگزاری است یا قبلاً هنرجو دارد.', 409);
-        }
+        if (!in_array($term['status'], $requireEmptyTerm ? ['pending', 'open'] : ['open'], true)) throw new RuntimeException('ثبت هنرجو فقط برای ترم باز مجاز است.', 409);
+        TermEnrollmentCapacity::assertStudentSlot($termId, $term, 0, $requireEmptyTerm ? ['pending', 'open'] : ['open']);
         return $term;
     }
 

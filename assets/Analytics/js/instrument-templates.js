@@ -70,7 +70,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div>
                     <label class="block text-sm font-medium mb-2">شعبه *</label>
-                    <select id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <select id="${id('Branch')}" data-panel-organization-source="branches" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                         ${renderOptions(branches, item.branchId)}
                     </select>
                 </div>

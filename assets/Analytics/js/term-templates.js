@@ -87,8 +87,8 @@
             `, attributes: ` class="py-4 px-5"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewTerm(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
-                    ${!item.students?.length && ['open', 'pending'].includes(item.status_code) ? `<button type="button" onclick="openTermStudentAssignment(${Number(item.id)})" class="text-indigo-600 hover:underline text-sm">${document.documentElement.lang.startsWith('en') ? 'Assign student' : 'تعیین هنرجو'}</button>` : ''}
-                    ${item.status_code === 'open' && !item.classroomId ? `<button type="button" onclick="openTermClassroomAssignment(${Number(item.id)})" class="text-indigo-600 hover:underline text-sm">${document.documentElement.lang.startsWith('en') ? 'Assign classroom' : 'تعیین کلاس'}</button>` : ''}
+                    ${(window.canAssignTermStudent ? window.canAssignTermStudent(item) : !item.students?.length && ['open', 'pending'].includes(item.status_code)) ? `<button type="button" onclick="openTermStudentAssignment(${Number(item.id)})" class="text-indigo-600 hover:underline text-sm">${document.documentElement.lang.startsWith('en') ? 'Assign student' : 'تعیین هنرجو'}</button>` : ''}
+                    ${item.status_code === 'open' ? `<button type="button" onclick="openTermClassroomAssignment(${Number(item.id)})" class="text-indigo-600 hover:underline text-sm">${document.documentElement.lang.startsWith('en') ? 'Assign classroom' : 'تعیین کلاس'}</button>` : ''}
                     <button type="button" data-term-action="inline-edit" data-term-id="${item.id}" onclick="toggleTermInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
                     <button type="button" data-term-action="inline-attendance" data-term-id="${item.id}" onclick="toggleTermInlineAttendance(${item.id})" class="text-emerald-600 hover:underline text-sm">حضور و غیاب</button>
                     <button onclick="deleteTerm(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>
@@ -531,84 +531,10 @@
   };
 
   window.getTermAttendancePanelHTML = function (item, isInline) {
-    const sessions = item.sessions || [];
-    const teachers = item.teachers || [];
-    const students = item.students || [];
-    const att = item.attendance || {};
-
-    if (!sessions.length) {
-      return '<p class="text-center text-gray-400 py-8">جلسه‌ای برای این ترم تعریف نشده است.</p>';
+    if (Array.isArray(item.attendanceSessions)) {
+      return `<div id="termAttendancePanel-${Number(item.id)}" class="space-y-6">${item.attendanceSessions.map(session => window.getScheduleAttendancePanelHTML(session, true, item.id)).join('') || '<p class="py-8 text-center">جلسه‌ای برای این ترم تعریف نشده است.</p>'}</div>`;
     }
-
-    const sessionBlocks = sessions
-      .map(function (s, si) {
-        const key = String(si);
-        const row = att[key] || { teachers: {}, students: {} };
-        const teacherRows =
-          teachers
-            .map(function (t) {
-              const tid = String(t.id || t.name);
-              const checked = row.teachers && row.teachers[tid] ? 'checked' : '';
-              return `<label class="flex items-center gap-2 text-sm py-1">
-                    <input type="checkbox" class="att-teacher" data-session="${si}" data-id="${escapeHtml(tid)}" ${checked}>
-                    <span>${escapeHtml(t.name || t)}</span>
-                    <span class="text-xs text-gray-400">(استاد)</span>
-                </label>`;
-            })
-            .join('') || '<p class="text-xs text-gray-400">استادی ثبت نشده</p>';
-
-        const studentRows =
-          students
-            .map(function (st) {
-              const sid = String(st.id || st.name);
-              const checked = row.students && row.students[sid] ? 'checked' : '';
-              return `<label class="flex items-center gap-2 text-sm py-1">
-                    <input type="checkbox" class="att-student" data-session="${si}" data-id="${escapeHtml(sid)}" ${checked}>
-                    <span>${escapeHtml(st.name || st)}</span>
-                    <span class="text-xs text-gray-400">(هنرجو)</span>
-                </label>`;
-            })
-            .join('') || '<p class="text-xs text-gray-400">هنرجویی ثبت نشده</p>';
-
-        return `
-                <div class="border border-gray-200 rounded-2xl p-4 mb-4">
-                    <div class="font-medium mb-3 flex justify-between">
-                        <span>جلسه ${si + 1}</span>
-                        <span class="text-sm text-gray-500">${escapeHtml(s.date ? window.formatLocalizedDate?.(s.date) || s.date : 'بدون تاریخ')}</span>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <div class="text-xs font-medium text-indigo-600 mb-2">اساتید</div>
-                            ${teacherRows}
-                        </div>
-                        <div>
-                            <div class="text-xs font-medium text-indigo-600 mb-2">هنرجویان</div>
-                            ${studentRows}
-                        </div>
-                    </div>
-                </div>`;
-      })
-      .join('');
-
-    const actions = isInline
-      ? `<div class="flex flex-col sm:flex-row gap-4 pt-2">
-                    <button onclick="saveTermAttendance(${item.id}, true)" class="w-full sm:w-auto min-w-[140px] bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-4 rounded-2xl font-medium">ذخیره حضور و غیاب</button>
-                    <button onclick="toggleTermInlineAttendance(${item.id})" class="w-full sm:w-auto min-w-[140px] border border-gray-300 px-5 py-4 rounded-2xl hover:bg-gray-50">انصراف</button>
-               </div>`
-      : `<div class="flex gap-4 pt-4">
-                    <button onclick="saveTermAttendance(${item.id}, false)" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-medium">ذخیره حضور و غیاب</button>
-                    <button onclick="closeModal()" class="flex-1 border border-gray-300 py-4 rounded-2xl hover:bg-gray-50">بستن</button>
-               </div>`;
-
-    return `
-            <div class="space-y-4" id="termAttendancePanel-${item.id}">
-                <div class="flex items-center justify-between">
-                    <h3 class="font-bold text-lg">حضور و غیاب — ${escapeHtml(item.name)}</h3>
-                </div>
-                ${attendanceStatsHTML(item)}
-                <div class="max-h-[50vh] overflow-y-auto pr-1">${sessionBlocks}</div>
-                ${actions}
-            </div>`;
+    return `<div id="termAttendancePanel-${Number(item.id)}" role="status" class="py-8 text-center">${document.documentElement.lang.startsWith('en') ? 'Loading sessions…' : 'در حال دریافت جلسات…'}</div>`;
   };
 
   window.getTermAttendanceModalHTML = function (item) {

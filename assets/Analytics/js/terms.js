@@ -1987,10 +1987,15 @@ window.showTermTab = function (selected) {
 };
 async function loadTermDiscountCatalog() {
   termDiscountCatalog=await termApi('/academy/admin/term-discounts');
+  window.termDiscountOrganizations = termDiscountCatalog.organizations || [];
+  const editor = document.querySelector('[data-discount-editor] form');
+  const entered = editor ? [...editor.elements].filter(field => field.name).map(field => [field.name, field.value]) : [];
   window.termDiscounts=(termDiscountCatalog.discounts||[]).filter(row=>row.status==='active');
   allTermDiscounts=window.termDiscounts;
   window.renderPanelOrganizationTabs?.('termDiscountsBranchTabs',termDiscountOrganization,window.filterTermDiscountsByBranch,{branches:()=>termDiscountCatalog.organizations||[],showAcademy:true});
   renderTermDiscounts();
+  const updatedEditor = document.querySelector('[data-discount-editor] form');
+  if (updatedEditor) entered.forEach(([name, value]) => { const field = updatedEditor.elements.namedItem(name); if (field && (field.tagName !== 'SELECT' || [...field.options].some(option => option.value === value))) field.value = value; });
 }
 window.filterTermDiscountsByBranch=function(value){termDiscountOrganization=String(value);termDiscountPage=1;loadTermDiscountCatalog().catch(error=>alert(error.message));};
 window.filterTermDiscounts=function(){termDiscountPage=1;renderTermDiscounts();};
@@ -2020,7 +2025,7 @@ function renderDiscountInlineEditor(table){
  const row=termDiscountCatalog?.discounts.find(row=>row.id===editingTermDiscount);if(!row?.canManage)return;
  const target=table.querySelector('tbody tr[data-id="'+Number(row.id)+'"]');if(!target)return;
  const tr=document.createElement('tr');tr.dataset.discountEditor=String(row.id);const td=document.createElement('td');td.colSpan=table.tHead.rows[0].cells.length;td.className='border-t p-5';
- td.innerHTML='<form class="grid gap-4 sm:grid-cols-3"><label><span data-label="title"></span><input required maxlength="190" name="title" class="mt-2 w-full rounded-2xl border p-3"></label><label><span data-label="type"></span><select name="type" class="mt-2 w-full rounded-2xl border p-3"></select></label><label><span data-label="value"></span><input required name="value" type="number" min="0.01" step="0.01" class="mt-2 w-full rounded-2xl border p-3"></label><label><span data-label="organization"></span><select required name="organizationUserId" class="mt-2 w-full rounded-2xl border p-3"></select></label><div class="flex items-end gap-3"><button type="submit" class="rounded-xl bg-indigo-600 px-5 py-3 text-white"></button><button type="button" class="rounded-xl border px-5 py-3" onclick="toggleTermDiscountEdit('+Number(row.id)+')"></button></div></form>';
+ td.innerHTML='<form class="grid gap-4 sm:grid-cols-3"><label><span data-label="title"></span><input required maxlength="190" name="title" class="mt-2 w-full rounded-2xl border p-3"></label><label><span data-label="type"></span><select name="type" class="mt-2 w-full rounded-2xl border p-3"></select></label><label><span data-label="value"></span><input required name="value" type="number" min="0.01" step="0.01" class="mt-2 w-full rounded-2xl border p-3"></label><label><span data-label="organization"></span><select data-panel-organization-source="discountOrganizations" required name="organizationUserId" class="mt-2 w-full rounded-2xl border p-3"></select></label><div class="flex items-end gap-3"><button type="submit" class="rounded-xl bg-indigo-600 px-5 py-3 text-white"></button><button type="button" class="rounded-xl border px-5 py-3" onclick="toggleTermDiscountEdit('+Number(row.id)+')"></button></div></form>';
  const form=td.querySelector('form');for(const[key,fa,en]of [['title','عنوان','Title'],['type','نوع','Type'],['value','مقدار','Value'],['organization','سازمان','Organization']])form.querySelector('[data-label='+key+']').textContent=discountText(fa,en);
  form.elements.title.value=row.name;form.elements.value.value=row.value;form.elements.type.add(new Option(discountText('درصدی','Percentage'),'percentage'));form.elements.type.add(new Option(discountText('مبلغ ثابت','Fixed amount'),'fixed'));form.elements.type.value=row.type;
  (termDiscountCatalog.organizations||[]).forEach(org=>form.elements.organizationUserId.add(new Option(org.name,org.user_id)));if(row.organizationUserId){form.elements.organizationUserId.value=String(row.organizationUserId);form.elements.organizationUserId.disabled=true;}
@@ -2038,7 +2043,7 @@ window.openAddTermDiscountModal=async function(prefix){
   if(!termDiscountCatalog)await loadTermDiscountCatalog();
   if(!termDiscountCatalog.ready)throw Error(discountText('ابتدا به‌روزرسانی دیتابیس تخفیف‌ها را اجرا کنید.','Run the discount organization migration first.'));
   const host=document.getElementById('modalContainer');window.pendingTermModal=prefix?{html:host.innerHTML,prefix}:null;
-  host.innerHTML='<div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"><div role="dialog" aria-modal="true" aria-labelledby="newTermDiscountHeading" class="w-full max-w-lg rounded-3xl bg-white p-7 dark:bg-slate-900"><h2 id="newTermDiscountHeading" class="mb-5 text-xl font-bold"></h2><form id="newTermDiscountForm" class="space-y-4"><label class="block" data-discount-label="organization"><select id="newTermDiscountOrganization" required class="mt-2 w-full rounded-2xl border p-4"></select></label><label class="block" data-discount-label="title"><input id="newTermDiscountTitle" required maxlength="190" class="mt-2 w-full rounded-2xl border p-4"></label><label class="block" data-discount-label="type"><select id="newTermDiscountType" class="mt-2 w-full rounded-2xl border p-4"></select></label><label class="block" data-discount-label="value"><input id="newTermDiscountValue" type="number" required min="0.01" step="0.01" class="mt-2 w-full rounded-2xl border p-4"></label><div class="flex gap-3"><button id="saveTermDiscountButton" type="submit" class="flex-1 rounded-2xl bg-indigo-600 p-3 text-white disabled:opacity-50"></button><button id="cancelTermDiscountButton" type="button" onclick="restoreTermModal()" class="flex-1 rounded-2xl border p-3"></button></div></form></div></div>';
+  host.innerHTML='<div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"><div role="dialog" aria-modal="true" aria-labelledby="newTermDiscountHeading" class="w-full max-w-lg rounded-3xl bg-white p-7 dark:bg-slate-900"><h2 id="newTermDiscountHeading" class="mb-5 text-xl font-bold"></h2><form id="newTermDiscountForm" class="space-y-4"><label class="block" data-discount-label="organization"><select data-panel-organization-source="discountOrganizations" id="newTermDiscountOrganization" required class="mt-2 w-full rounded-2xl border p-4"></select></label><label class="block" data-discount-label="title"><input id="newTermDiscountTitle" required maxlength="190" class="mt-2 w-full rounded-2xl border p-4"></label><label class="block" data-discount-label="type"><select id="newTermDiscountType" class="mt-2 w-full rounded-2xl border p-4"></select></label><label class="block" data-discount-label="value"><input id="newTermDiscountValue" type="number" required min="0.01" step="0.01" class="mt-2 w-full rounded-2xl border p-4"></label><div class="flex gap-3"><button id="saveTermDiscountButton" type="submit" class="flex-1 rounded-2xl bg-indigo-600 p-3 text-white disabled:opacity-50"></button><button id="cancelTermDiscountButton" type="button" onclick="restoreTermModal()" class="flex-1 rounded-2xl border p-3"></button></div></form></div></div>';
   document.getElementById('newTermDiscountHeading').textContent=discountText('افزودن تخفیف جدید','Add discount');
   for(const[key,fa,en]of [['organization','سازمان','Organization'],['title','عنوان تخفیف','Title'],['type','نوع','Type'],['value','مقدار','Value']])document.querySelector('[data-discount-label="'+key+'"]').prepend(document.createTextNode(discountText(fa,en)));
   const org=document.getElementById('newTermDiscountOrganization');(termDiscountCatalog.organizations||[]).forEach(row=>org.add(new Option(row.name,row.user_id)));
@@ -2126,9 +2131,15 @@ window.saveTermBatch = async function () {
   finally { form.dataset.busy = ''; if (button.isConnected) window.refreshTermBatchPreview(); }
 };
 
+window.canAssignTermStudent = function (item) {
+  if (!item || !['open', 'pending'].includes(item.status_code)) return false;
+  if (typeof item.canAssignStudent === 'boolean') return item.canAssignStudent;
+  const course = (window.termCourses || []).find(row => row.id === item.courseId);
+  return (item.students || []).length < Number(item.studentCapacity || course?.student_capacity || 1);
+};
 window.openTermStudentAssignment = async function (id) {
   const item = allTerms.find(row => row.id === id), course = termCourses.find(row => row.id === item?.courseId);
-  if (!item || !course || item.status_code === 'ongoing' || item.students?.length) return;
+  if (!course || !window.canAssignTermStudent(item)) return;
   try {
     await window.ensureStudentFormOptions();
     document.getElementById('modalContainer').innerHTML = window.getStudentAddModalHTML({assignmentTermId: id, organizationUserId: course.organizationUserId});
@@ -2138,7 +2149,7 @@ window.openTermStudentAssignment = async function (id) {
 
 window.openTermClassroomAssignment = function (id) {
   const item = allTerms.find(row => row.id === id), course = termCourses.find(row => row.id === item?.courseId);
-  if (!item?.scheduleDraft || item.classroomId || !course) return;
+  if (!item || !['open', 'pending'].includes(item.status_code) || !course) return;
   const en = document.documentElement.lang.startsWith('en');
   const host = document.getElementById('modalContainer');
   host.innerHTML = '<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"><form data-assign-term-classroom role="dialog" aria-modal="true" class="w-full max-w-lg space-y-4 rounded-3xl bg-white p-6 dark:bg-slate-900"><h2 class="text-xl font-bold"></h2><select required class="w-full rounded-2xl border p-3 dark:bg-slate-800"></select><p role="alert" class="text-sm text-red-600"></p><button type="submit" class="rounded-2xl bg-indigo-600 px-6 py-3 text-white"></button><button type="button" onclick="closeModal()" class="rounded-2xl border px-6 py-3"></button></form></div>';
@@ -2146,6 +2157,7 @@ window.openTermClassroomAssignment = function (id) {
   form.querySelector('h2').textContent = en ? 'Assign classroom' : 'تعیین کلاس برگزاری';
   select.add(new Option(en ? 'Select classroom' : 'انتخاب کلاس', ''));
   termClassrooms.filter(room => course.organizationKind === 'branch' ? Number(room.branchId) === Number(course.organizationId) : Number(room.academyId) === Number(course.organizationId) || termBranches.some(org => org.kind === 'branch' && Number(org.organizationId) === Number(room.branchId) && Number(org.academyId) === Number(course.organizationId))).forEach(room => select.add(new Option(room.name, room.id)));
+  select.value = String(item.classroomId || '');
   form.querySelector('[type=submit]').textContent = en ? 'Save' : 'ذخیره'; form.querySelector('[type=button]').textContent = en ? 'Cancel' : 'انصراف';
   form.onsubmit = async event => {
     event.preventDefault(); const button = form.querySelector('[type=submit]'); if (button.disabled) return; button.disabled = true;
@@ -2245,12 +2257,19 @@ window.viewTerm = async function (id) {
     : '';
 };
 
+function readOpenTermTeachers(prefix, id) {
+  const container = termField(prefix, 'TeachersContainer');
+  if (!container || allTerms.find(row => row.id === id)?.status_code !== 'open' || window.termPermissions?.isReceptionist) return {};
+  return {teachers: [...container.querySelectorAll('select')].filter(select => select.value).map(select => ({id: Number(select.value)}))};
+}
 function restrictRecordedTermEditor(prefix) {
   const root = document.querySelector(`[data-term-record-editor="${prefix}"]`);
   if (!root) return;
   const editable = new Set([prefix + 'Name', prefix + 'Summary', prefix + 'Description']);
+  const item = allTerms.find(row => row.id === Number(termField(prefix, 'SessionsContainer')?.dataset.termId));
+  const teachers = item?.status_code === 'open' && !window.termPermissions?.isReceptionist ? termField(prefix, 'TeachersContainer') : null;
   root.querySelectorAll('input, select, textarea, button').forEach((control) => {
-    if (!editable.has(control.id)) {
+    if (!editable.has(control.id) && !teachers?.contains(control)) {
       control.disabled = true;
       control.classList.add('opacity-60');
     }
@@ -2296,6 +2315,7 @@ window.saveEditedTerm = async function (id) {
     name: termField('editTerm', 'Name').value.trim(),
     summary: termField('editTerm', 'Summary').value,
     description: termField('editTerm', 'Description').value,
+    ...readOpenTermTeachers('editTerm', id),
   };
   if (!data.name) {
     termField('editTerm', 'Name').reportValidity();
@@ -2338,6 +2358,7 @@ window.saveInlineTerm = async function (id) {
     name: termField(prefix, 'Name')?.value.trim() || '',
     summary: termField(prefix, 'Summary')?.value || '',
     description: termField(prefix, 'Description')?.value || '',
+    ...readOpenTermTeachers(prefix, id),
   };
   if (!data.name) return termField(prefix, 'Name')?.reportValidity();
   const index = allTerms.findIndex(function (x) {
@@ -2371,6 +2392,7 @@ window.toggleTermInlineAttendance = async function (id) {
   editingTermRowId = null;
   attendanceTermRowId = attendanceTermRowId === id ? null : id;
   renderTermsTable(filteredTerms);
+  if (attendanceTermRowId === id) await loadTermAttendance(id);
 };
 
 window.openTermAttendanceModal = async function (id) {
@@ -2381,45 +2403,53 @@ window.openTermAttendanceModal = async function (id) {
   document.getElementById('modalContainer').innerHTML = window.getTermAttendanceModalHTML
     ? window.getTermAttendanceModalHTML(item)
     : '';
+  await loadTermAttendance(id);
 };
 
-window.saveTermAttendance = async function (id, isInline) {
-  const item = allTerms.find(function (x) {
-    return x.id === id;
-  });
+async function loadTermAttendance(id) {
+  const item = allTerms.find(row => row.id === id);
   if (!item) return;
-
-  const root = isInline
-    ? document.getElementById('termAttendancePanel-' + id)
-    : document.getElementById('modalContainer');
+  const root = document.getElementById('termAttendancePanel-' + id);
   if (!root) return;
-
-  const attendance = {};
-  (item.sessions || []).forEach(function (_, si) {
-    attendance[String(si)] = { teachers: {}, students: {} };
-  });
-
-  root.querySelectorAll('.att-teacher').forEach(function (cb) {
-    const si = cb.getAttribute('data-session');
-    const tid = cb.getAttribute('data-id');
-    if (!attendance[si]) attendance[si] = { teachers: {}, students: {} };
-    attendance[si].teachers[tid] = cb.checked;
-  });
-  root.querySelectorAll('.att-student').forEach(function (cb) {
-    const si = cb.getAttribute('data-session');
-    const sid = cb.getAttribute('data-id');
-    if (!attendance[si]) attendance[si] = { teachers: {}, students: {} };
-    attendance[si].students[sid] = cb.checked;
-  });
-
-  item.attendance = attendance;
-  if (isInline) {
-    attendanceTermRowId = null;
-    renderTermsTable(filteredTerms);
-  } else {
-    closeModal();
+  try {
+    const sessions = [];
+    let page = 1, total;
+    do {
+      const result = await termApi(`/academy/admin/class-schedules?termId=${Number(id)}&perPage=100&page=${page++}`);
+      const rows = result.schedules || [];
+      sessions.push(...rows);
+      total = Number(result.total || 0);
+      if (!rows.length) break;
+    } while (sessions.length < total);
+    item.attendanceSessions = sessions.sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.startTime).localeCompare(String(b.startTime)) || a.id - b.id);
+    if (root.isConnected) root.outerHTML = window.getTermAttendancePanelHTML(item, true);
+  } catch (error) {
+    if (root.isConnected) root.textContent = error.message;
   }
-  alert('✅ حضور و غیاب ذخیره شد');
+}
+
+window.saveTermSessionAttendance = async function (termId, sessionId, button) {
+  if (button.disabled) return;
+  const root = button.closest(`#scheduleAttendancePanel-${Number(sessionId)}`);
+  if (!root) return;
+  const attendance = [...root.querySelectorAll('.schedule-att-status')].map(select => ({
+    memberId: Number(select.dataset.member), status: select.value,
+    description: root.querySelector(`.schedule-att-description[data-member="${Number(select.dataset.member)}"]`)?.value || '',
+  }));
+  const note = root.querySelector('[data-teacher-note]');
+  const result = root.querySelector('[data-attendance-result]');
+  button.disabled = true;
+  try {
+    await termApi(`/academy/admin/class-schedules/${Number(sessionId)}/attendance`, {attendance, ...(note ? {teacherNote: note.value} : {})});
+    const session = allTerms.find(row => row.id === termId)?.attendanceSessions?.find(row => row.id === sessionId);
+    if (session) {
+      session.attendance = session.attendance.map(row => ({...row, ...attendance.find(value => value.memberId === Number(row.id))}));
+      if (note) session.teacherNote = note.value;
+    }
+    result.textContent = document.documentElement.lang.startsWith('en') ? 'Saved.' : 'ذخیره شد.';
+    await window.refreshStudentsFromDatabase?.();
+  } catch (error) { result.textContent = error.message; }
+  finally { button.disabled = false; }
 };
 
 // ==================== excel / pdf ====================
