@@ -9,6 +9,10 @@ $pdo->exec('CREATE TABLE academy_national_holiday_settings(academy_id INTEGER,al
 $pdo->exec("INSERT INTO user_availabilities(user_id,day_of_week,is_repeating,start_time,end_time,status,is_closed,timezone_id,priority) VALUES(1000,'saturday',1,'09:00:00','19:00:00','available',0,1,1)");
 $scheduleService=new Modules\Academy\Services\AcademyTermService();$tid=$result['ids'][6];
 $draftRow=$pdo->query("SELECT * FROM translations WHERE table_name='academy_branch_course_terms' AND table_id=".$tid." AND field='schedule_draft'")->fetch();
+$withoutRoom=$scheduleService->previewStudentSchedule(10,$tid,['firstDate'=>'2030-01-05']);
+check(count($withoutRoom['sessions'])===8,'Wizard step three previews dates before a classroom is chosen');
+$unchanged=json_decode($pdo->query("SELECT value FROM translations WHERE table_name='academy_branch_course_terms' AND table_id=".$tid." AND field='schedule_draft'")->fetchColumn(),true);
+check(empty($unchanged['classroomId']),'Date preview does not assign a classroom');
 $draft=json_decode($draftRow['value'],true);$draft['classroomId']=1001;
 $stmt=$pdo->prepare("UPDATE translations SET value=? WHERE table_name='academy_branch_course_terms' AND table_id=? AND field='schedule_draft'");$stmt->execute([json_encode($draft),$tid]);
 $preview=$scheduleService->previewStudentSchedule(10,$tid,['firstDate'=>'2030-01-05']);

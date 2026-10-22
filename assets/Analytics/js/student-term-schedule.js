@@ -29,7 +29,7 @@
     const box = document.getElementById(prefix + 'TermSchedule');
     if (!box || box.classList.contains('hidden')) return null;
     const firstDate = box.querySelector('[data-student-first-date]').value;
-    const classroomId = Number(box.querySelector('[data-student-classroom]')?.value || 0);
+    const classroomId = Number((box.querySelector('[data-student-classroom]') || document.querySelector('[data-assignment-classroom]'))?.value || 0);
     return firstDate || classroomId ? { firstDate, classroomId, dates: [...box.querySelectorAll('input.term-session-date:not([data-jdp])')].map(input => input.value) } : null;
   };
   window.previewStudentTermSchedule = async (prefix, regenerate) => {

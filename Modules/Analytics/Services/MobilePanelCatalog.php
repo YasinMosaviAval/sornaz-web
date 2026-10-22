@@ -570,6 +570,13 @@ final class MobilePanelCatalog
             if ($field['key'] === 'studentSchedule') $field['visibleWhen'] = ['record.status_code' => 'open', 'record.hasSessions' => ['not' => true]];
         }
         unset($field);
+        foreach ($studentFields as &$field) {
+            if ($field['key'] === 'studentSchedule') {
+                $field['options'] = array_values(array_filter($field['options'], fn ($child) => $child['key'] !== 'classroomId'));
+            }
+        }
+        unset($field);
+        $studentFields[] = $f('classroomId', 'کلاس برگزاری', 'select', ['source' => 'classrooms', 'termRooms' => true]);
         $sections['terms']['actions']['assign-student'] = $this->a('/academy/admin/terms/{id}/student', 'تعیین هنرجو', 'POST', $studentFields) + ['en' => 'Assign student', 'formContractVersion' => 2];
         $sections['terms']['actions']['classroom'] = $this->a('/academy/admin/terms/{id}/classroom', 'تعیین کلاس برگزاری', 'POST', [
             $f('classroomId', 'کلاس برگزاری', 'select', ['source' => 'classrooms', 'termRooms' => true], true),

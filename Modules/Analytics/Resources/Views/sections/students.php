@@ -10,11 +10,6 @@
             <p class="text-gray-500 mt-1">لیست کامل هنرجویان و وضعیت آموزشی آن‌ها</p>
         </div>
         <div class="flex flex-wrap gap-3">
-            <button onclick="openAddStudentModal()"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 transition">
-                <i class="fas fa-user-plus"></i>
-                افزودن هنرجو جدید
-            </button>
             <button onclick="exportStudentsToExcel()"
                     class="border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl flex items-center gap-2">
                 <i class="fas fa-file-excel text-green-600"></i>

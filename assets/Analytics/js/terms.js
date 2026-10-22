@@ -2160,6 +2160,7 @@ window.openTermStudentAssignment = async function (id) {
   try {
     await window.ensureStudentFormOptions();
     document.getElementById('modalContainer').innerHTML = window.getStudentAddModalHTML({assignmentTermId: id, organizationUserId: course.organizationUserId});
+    window.initTermStudentWizard(id);
     window.initLocalizedDateInputs?.(document.getElementById('modalContainer'));
   } catch (error) { alert(error.message); }
 };
@@ -2176,7 +2177,7 @@ window.openTermClassroomAssignment = function (id) {
   const host = document.getElementById('modalContainer');
   host.innerHTML = '<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"><form data-assign-term-classroom role="dialog" aria-modal="true" class="w-full max-w-lg space-y-4 rounded-3xl bg-white p-6 dark:bg-slate-900"><h2 class="text-xl font-bold"></h2><select required class="w-full rounded-2xl border p-3 dark:bg-slate-800"></select><p role="alert" class="text-sm text-red-600"></p><button type="submit" class="rounded-2xl bg-indigo-600 px-6 py-3 text-white"></button><button type="button" onclick="closeModal()" class="rounded-2xl border px-6 py-3"></button></form></div>';
   const form = host.querySelector('form'), select = form.querySelector('select');
-  form.querySelector('h2').textContent = en ? 'Assign classroom' : 'تعیین کلاس برگزاری';
+  form.querySelector('h2').textContent = item.classroomId ? (en ? 'Change classroom' : 'تغییر کلاس') : (en ? 'Assign classroom' : 'تعیین کلاس برگزاری');
   select.add(new Option(en ? 'Select classroom' : 'انتخاب کلاس', ''));
   termClassrooms.filter(room => course.organizationKind === 'branch' ? Number(room.branchId) === Number(course.organizationId) : Number(room.academyId) === Number(course.organizationId) || termBranches.some(org => org.kind === 'branch' && Number(org.organizationId) === Number(room.branchId) && Number(org.academyId) === Number(course.organizationId))).forEach(room => select.add(new Option(room.name, room.id)));
   select.value = String(item.classroomId || '');
@@ -2677,3 +2678,48 @@ window.addEventListener('sornaz:data-changed', async function (event) {
     }
   }, 200);
 })();
+
+// Assignment keeps all four steps mounted so identity and schedule selections survive navigation.
+window.initTermStudentWizard = function (id) {
+  const host = document.querySelector('[data-student-term-id]');
+  if (!host) return;
+  const en = document.documentElement.lang.startsWith('en');
+  const content = host.querySelector('.max-h-\\[75vh\\]');
+  const actions = content.lastElementChild;
+  const panels = Array.from({length:4}, () => document.createElement('section'));
+  const address = document.getElementById('stuAddresses')?.parentElement;
+  const schedule = document.getElementById('stuTermSchedule');
+  [...content.children].filter(node => node !== actions).forEach(node => panels[0].append(node));
+  if (address) panels[1].append(address);
+  if (schedule) panels[2].append(schedule);
+  const roomLabel = schedule?.querySelector('[data-student-classroom]')?.closest('label');
+  if (roomLabel) panels[3].append(roomLabel);
+  else {
+    const label = document.createElement('label'), select = document.createElement('select');
+    label.textContent = en ? 'Classroom' : 'کلاس برگزاری';
+    select.className = 'mt-2 w-full rounded-2xl border px-4 py-3';
+    select.add(new Option(en ? 'Choose later' : 'تعیین در آینده', ''));
+    const term = (window.studentTermGroups || []).find(row => Number(row.id) === id);
+    (window.studentClassrooms || []).filter(room => Number(room.organizationUserId) === Number(term?.organizationUserId) || (room.organizationUserIds || []).map(Number).includes(Number(term?.organizationUserId))).forEach(room => select.add(new Option(room.name, room.id)));
+    select.value = String(term?.scheduleDraft?.classroomId || '');
+    label.append(select); panels[3].append(label);
+  }
+  const room = panels[3].querySelector('select');
+  room.dataset.assignmentClassroom = '';
+  room.onchange = () => window.previewStudentTermSchedule?.('stu', false);
+  if (!schedule || schedule.classList.contains('hidden')) {
+    const note = document.createElement('p'); note.textContent = en ? 'The existing session dates will be retained.' : 'تاریخ جلسات ثبت‌شده حفظ می‌شود.'; panels[2].append(note);
+  }
+  const progress = document.createElement('ol'); progress.className = 'grid grid-cols-4 gap-2';
+  const labels = en ? ['Student', 'Address', 'Session dates', 'Classroom'] : ['هنرجو', 'آدرس', 'تاریخ جلسات', 'کلاس برگزاری'];
+  labels.forEach((label,index) => {const item=document.createElement('li'); item.className='rounded-2xl border p-3 text-center text-sm'; item.textContent=(index+1).toLocaleString(en?'en':'fa-IR')+' · '+label; progress.append(item);});
+  content.prepend(progress);
+  panels.forEach(panel => {panel.className='space-y-6'; content.insertBefore(panel,actions);});
+  const save = actions.querySelector('button'), back = document.createElement('button');
+  back.type='button'; back.className='flex-1 rounded-2xl border px-4 py-3'; back.textContent=en?'Previous':'قبلی'; actions.prepend(back);
+  let step=0;
+  const render=()=>{panels.forEach((panel,index)=>panel.hidden=index!==step); [...progress.children].forEach((item,index)=>{item.classList.toggle('bg-indigo-600',index===step); item.classList.toggle('text-white',index===step); if(index===step)item.setAttribute('aria-current','step');else item.removeAttribute('aria-current');});back.hidden=step===0;save.textContent=step===3?(en?'Save student':'ذخیره هنرجو'):(en?'Next':'بعدی');};
+  back.onclick=()=>{step--;render();};
+  save.onclick=()=>{if(step===3)return window.saveStudent(); if(step<2 && !window.validateTermStudentStep(step))return; step++;render();};
+  render();
+};

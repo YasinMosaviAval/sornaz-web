@@ -384,7 +384,13 @@ class AcademyTermService
             $course = DB::table('academy_branch_courses')->where('course_id', (int) $term['course_id'])->whereNull('deleted_at')->first();
             if (!$course) throw new RuntimeException('دوره معتبر نیست.');
             $organization = $this->organizationContext($actor, (int) $course['branch_id'], (int) $course['academy_id']);
-            return (new AcademyCourseService())->storeStudent($actor, array_replace($data, ['termId' => $id, 'organizationUserId' => (int) $organization['user_id']]), true);
+            return transaction(function () use ($actor, $id, $data, $organization) {
+                $classroomId = (int) ($data['classroomId'] ?? 0);
+                if ($classroomId && !empty($data['studentSchedule'])) $data['studentSchedule']['classroomId'] = $classroomId;
+                $result = (new AcademyCourseService())->storeStudent($actor, array_replace($data, ['termId' => $id, 'organizationUserId' => (int) $organization['user_id']]), true);
+                if ($classroomId && empty($data['studentSchedule'])) $this->assignDraftClassroom($actor, $id, $classroomId);
+                return $result;
+            });
         });
     }
 
@@ -509,7 +515,7 @@ class AcademyTermService
     private function planStudentSchedule(int $actor, array $term, array $course, array $context, int $teacherId, string $firstDate, string $selectedStart = '', array $dates = [], bool $preview = false, int $classroomId = 0): array
     {
         $termId = (int) $term['term_id'];
-        extract($this->studentScheduleDraft($actor, $term, $course, $firstDate, $selectedStart, $classroomId), EXTR_SKIP);
+        extract($this->studentScheduleDraft($actor, $term, $course, $firstDate, $selectedStart, $classroomId, $preview), EXTR_SKIP);
         $timing = $this->studentScheduleTiming($draft, $selectedStart);
         extract($timing, EXTR_SKIP);
         $dates = array_values($dates);
@@ -527,7 +533,7 @@ class AcademyTermService
         return compact('draft', 'room', 'count', 'recurrence', 'startTime', 'endTime', 'sessions');
     }
 
-    private function studentScheduleDraft(int $actor, array $term, array $course, string $firstDate, string $selectedStart, int $classroomId = 0): array
+    private function studentScheduleDraft(int $actor, array $term, array $course, string $firstDate, string $selectedStart, int $classroomId = 0, bool $preview = false): array
     {
         $termId = (int) $term['term_id'];
         $draftRow = DB::table('translations')->where('table_name', 'academy_branch_course_terms')->where('table_id', $termId)->where('field', 'schedule_draft')->where('locale', 'fa')->whereNull('deleted_at')->first();
@@ -538,8 +544,8 @@ class AcademyTermService
             if (!empty($draft['classroomId']) && (int) $draft['classroomId'] !== $classroomId) throw new RuntimeException('کلاس این ترم قبلاً تعیین شده است.', 409);
             $draft['classroomId'] = $classroomId;
         }
-        if (empty($draft['classroomId'])) throw new RuntimeException('ابتدا از جدول ترم‌ها، کلاس برگزاری این ترم را تعیین کنید.');
-        $room = $this->draftClassroom($actor, $course, (int) $draft['classroomId']);
+        if (empty($draft['classroomId']) && !$preview) throw new RuntimeException('کلاس برگزاری را در مرحله چهارم انتخاب کنید.');
+        $room = $this->draftClassroom($actor, $course, (int) ($draft['classroomId'] ?? 0));
         $count = (int) $term['session_count'];
         $period = (string) $term['session_period'];
         $recurrence = is_array($draft['recurrence'] ?? null) ? $draft['recurrence'] : [];

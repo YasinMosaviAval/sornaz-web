@@ -677,9 +677,9 @@
     return data;
   }
 
-  function validateStudentData(data) {
+  function validateStudentData(data, step = null) {
     const selectedUser = data.existingUserToken ? window.getMemberUserSelection?.('stu') : null;
-    if (['name', 'phone', 'nationalId', 'fatherName', 'birthDate'].some(field => !data[field] && !selectedUser?.fields[field])) {
+    if ((step === null || step === 0) && ['name', 'phone', 'nationalId', 'fatherName', 'birthDate'].some(field => !data[field] && !selectedUser?.fields[field])) {
       alert('لطفاً نام، شماره تماس، کد ملی، نام پدر و تاریخ تولد را وارد کنید.');
       return false;
     }
@@ -687,19 +687,19 @@
       alert('انتخاب سازمان الزامی است.');
       return false;
     }
-    if (!data.termKey) {
+    if (step === null && !data.termKey) {
       alert('انتخاب ترم آموزشی الزامی است.');
       return false;
     }
-    if (!data.addresses.length || !data.addresses.some((x) => x.province && x.city && x.address)) {
+    if ((step === null || step === 1) && (!data.addresses.length || !data.addresses.some((x) => x.province && x.city && x.address))) {
       alert('ثبت حداقل یک آدرس کامل الزامی است.');
       return false;
     }
-    if (data.termStatus === 'ongoing' && !data.availabilities.length) {
+    if (step === null && data.termStatus === 'ongoing' && !data.availabilities.length) {
       alert('برای قرارگیری در لیست انتظار، حداقل یک برنامه زمانی هنرجو ثبت کنید.');
       return false;
     }
-    if (selectedUser?.fields.birthDate ? selectedUser.under18 : window.isStudentUnder18(data.birthDate)) {
+    if ((step === null || step === 0) && (selectedUser?.fields.birthDate ? selectedUser.under18 : window.isStudentUnder18(data.birthDate))) {
       if (
         !data.parentName ||
         !data.parentNationalId ||
@@ -713,6 +713,8 @@
     }
     return true;
   }
+
+  window.validateTermStudentStep = step => validateStudentData(readStudentForm('stu'), step);
 
   window.openAddStudentModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
@@ -733,6 +735,7 @@
     const data = readStudentForm('stu');
     const assignmentId = Number(document.querySelector('[data-student-term-id]')?.dataset.studentTermId || 0);
     if (assignmentId) { data.termId = assignmentId; data.termKey = String(assignmentId); data.termStatus = 'open'; }
+    data.classroomId = Number(document.querySelector('[data-assignment-classroom]')?.value || 0);
     if (!validateStudentData(data)) return;
     savingStudent = true;
     try {
@@ -752,8 +755,7 @@
       await refreshStudentsFromDatabase();
       if (assignmentId) { studentFormOptionsPromise = null; await window.loadTerms?.(); }
       closeModal();
-      if (assignmentId) window.openTermClassroomAssignment?.(Number(assignmentId));
-      else alert('✅ هنرجو با موفقیت ثبت شد');
+      if (!assignmentId) alert('✅ هنرجو با موفقیت ثبت شد');
     } catch (error) {
       if (!showStudentFieldError(error)) alert(error.message || 'ثبت هنرجو ناموفق بود.');
     } finally { savingStudent = false; }
