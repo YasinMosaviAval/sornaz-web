@@ -326,7 +326,7 @@ if (!function_exists('styles')) {
         $html = '';
         foreach (View::styles() as $style) {
             $url = AssetManager::publish($style['module'], 'css', $style['file']);
-            $version = filemtime(base_path(ltrim($url, '/'))) ?: 1;
+            $version = AssetManager::version($url);
             $html .= '<link rel="stylesheet" href="' . $url . '?v=' . $version . '">' . "\n";
         }
         return $html;
@@ -339,7 +339,7 @@ if (!function_exists('scripts')) {
         $html = '';
         foreach (View::scripts() as $script) {
             $url = AssetManager::publish($script['module'], 'js', $script['file']);
-            $version = filemtime(base_path(ltrim($url, '/'))) ?: 1;
+            $version = AssetManager::version($url);
             $html .= '<script src="' . $url . '?v=' . $version . '"></script>' . "\n";
         }
         return $html;

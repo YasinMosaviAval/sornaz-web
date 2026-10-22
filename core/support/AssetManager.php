@@ -9,6 +9,16 @@ class AssetManager
 
     protected static array $published = [];
 
+    public static function version(string $url): string
+    {
+        $path = base_path(ltrim($url, '/'));
+        if (!is_file($path) || !is_readable($path)) return '1';
+        // Upload tools can preserve both timestamps and file sizes.
+        // Read content rather than caching a version by those attributes.
+        $hash = hash_file('sha256', $path);
+        return $hash !== false ? substr($hash, 0, 16) : '1';
+    }
+
     public static function publish(string $module, string $type, string $file): string
     {
         $source = base_path("assets/{$module}/{$type}/{$file}");

@@ -136,7 +136,7 @@
                     ? `<input id="${id('Organization')}" type="hidden" value="${escapeHtml(organizationUserId)}">`
                     : `<div>
                     <label class="block text-sm font-medium mb-2">سازمان *</label>
-                    <select id="${id('Organization')}" onchange="refreshStudentTerms('${prefix}')" class="${fieldClass}">
+                    <select data-panel-organization-field id="${id('Organization')}" onchange="refreshStudentTerms('${prefix}')" class="${fieldClass}">
                         <option value="">انتخاب سازمان</option>
                         ${renderOptions(
                           organizations.map((o) => ({ value: o.user_id, label: o.name })),

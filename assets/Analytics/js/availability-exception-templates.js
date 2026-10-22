@@ -60,7 +60,7 @@
                 <input id="${id('RecordId')}" type="hidden" value="${escapeHtml(item.id || '')}">
                 <div>
                     <label class="block text-sm font-medium mb-2">سازمان *</label>
-                    <select id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
+                    <select data-panel-organization-field id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
                             onchange="window.refreshHolidayLeaveMembers('${prefix}');window.refreshHolidayLeaveTimeSlots('${id('TimeSlots')}', this.value, [])">
                         <option value="">${english ? 'Select organization' : 'انتخاب سازمان'}</option>${renderOptions(branches, branchId)}
                     </select>

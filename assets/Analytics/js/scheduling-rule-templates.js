@@ -53,7 +53,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div class="${fixedOrganization ? 'hidden' : ''}">
                     <label class="block text-sm font-medium mb-2">سازمان *</label>
-                    <select id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <select data-panel-organization-field id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                         ${renderOptions(branches, item.organizationKey || (branches[0] && branches[0].value))}
                     </select>
                 </div>

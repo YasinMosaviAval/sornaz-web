@@ -209,7 +209,7 @@ window.renderInstrumentsTable = async function (list) {
   if (instrumentsCurrentPage > totalPages) instrumentsCurrentPage = totalPages;
   const start = (instrumentsCurrentPage - 1) * instrumentsPerPage;
   const end = start + instrumentsPerPage;
-  const pageItems = window.AdminPanelTable.page?.('#instrumentsTable', list, start, end, () => window.renderInstrumentsTable(list)) ?? list.slice(start, end);
+  const pageItems = window.AdminPanelTable.page?.('#instrumentsTable', list, start, end, () => window.renderInstrumentsTable(list), undefined, row => window.getInstrumentRowHTML(row, getLevelTitle(row.level_id))) ?? list.slice(start, end);
   tbody.innerHTML = '';
   if (!pageItems.length) {
     tbody.innerHTML = window.getInstrumentEmptyRowHTML ? window.getInstrumentEmptyRowHTML() : '';

@@ -14,6 +14,67 @@
   // HTML/attribute fragments are escaped by the page's existing trusted cell renderer.
   // Plain `value` is always escaped here. No rendered DOM is read back into a data model.
   const tableSources = new WeakMap();
+  const compareValues = (a, b, direction) => {
+    const clean = value => String(value ?? '').trim().replace(/[۰-۹٠-٩]/g, c => String(c.charCodeAt(0) % 16)).replace(/[٬,]/g, '').replace(/٫/g, '.');
+    const av = clean(a), bv = clean(b);
+    if (!av || !bv) return av === bv ? 0 : !av ? 1 : -1;
+    const number = value => /^[+-]?\d+(?:\.\d+)?[%٪]?$/.test(value) ? Number(value.replace(/[%٪]$/, '')) : NaN;
+    const an = number(av), bn = number(bv);
+    return (Number.isFinite(an) && Number.isFinite(bn) ? an - bn : av.localeCompare(bv, document.documentElement.lang || undefined, { numeric: true })) * (direction === 'desc' ? -1 : 1);
+  };
+  function projectedValues(project, row) {
+    const cells = project(row);
+    if (Array.isArray(cells)) return cells.map(cell => {
+      if (cell?.sortValue != null || cell?.value != null) return cell.sortValue ?? cell.value;
+      if (cell?.html != null) {
+        const template = document.createElement('template'); template.innerHTML = cell.html;
+        return template.content.textContent;
+      }
+      return cell;
+    });
+    // Parse a detached, trusted row template, never the displayed/paginated rows.
+    const template = document.createElement('template');
+    template.innerHTML = '<table><tbody>' + (/^\s*<tr[ >]/i.test(cells) ? cells : '<tr>' + cells + '</tr>') + '</tbody></table>';
+    return [...template.content.querySelector('tr').cells].map(cell => cell.dataset.sortValue ?? cell.textContent);
+  }
+  function enhanceSortHeaders(table) {
+    const headings = table.tHead?.rows[table.tHead.rows.length - 1];
+    if (!headings || table.closest('[data-admin-ui-native],#schedulesWeeklyTables')) return;
+    let column = 0;
+    [...headings.cells].forEach(heading => {
+      if (heading.hasAttribute('data-admin-identity-column')) return;
+      const index = column++;
+      if (heading.querySelector('button,input,select') || heading.hasAttribute('data-panel-no-sort') || heading.colSpan > 1) return;
+      const label = heading.textContent.trim();
+      if (!label || /^(Actions?|Operations?|عملیات|اقدامات)$/i.test(label)) return;
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'flex items-center gap-2';
+      button.dataset.panelAutoSort = String(index);
+      button.append(...heading.childNodes);
+      const icon = document.createElement('span'); icon.dataset.panelAutoSortIcon = ''; icon.textContent = '↕';
+      button.append(icon); heading.append(button); heading.setAttribute('aria-sort', 'none');
+      button.onclick = () => {
+        const direction = table.dataset.adminSortColumn === String(index) && table.dataset.adminSortDirection === 'asc' ? 'desc' : 'asc';
+        table.dataset.adminSortColumn = String(index); table.dataset.adminSortDirection = direction; table.dataset.adminIdentityActive = '0';
+        table.querySelectorAll('[data-panel-auto-sort]').forEach(other => {
+          const active = other === button;
+          other.closest('th').setAttribute('aria-sort', active ? (direction === 'asc' ? 'ascending' : 'descending') : 'none');
+          other.querySelector('[data-panel-auto-sort-icon]').textContent = active ? (direction === 'asc' ? '↑' : '↓') : '↕';
+        });
+        const source = tableSources.get(table);
+        if (source) { source.render(); return; }
+        // Non-paginated tables keep expanded rows attached to their parent.
+        const groups = [];
+        [...table.tBodies[0].rows].forEach(row => {
+          if (row.cells.length === 1 && row.cells[0].colSpan > 1 && groups.length) groups[groups.length - 1].push(row);
+          else groups.push([row]);
+        });
+        const offset = headings.querySelector('[data-admin-identity-column]') ? 1 : 0;
+        groups.sort((a,b) => compareValues(a[0].cells[index + offset]?.textContent, b[0].cells[index + offset]?.textContent, direction));
+        groups.forEach(group => group.forEach(row => table.tBodies[0].append(row)));
+      };
+    });
+  }
   window.AdminPanelTable = {
     renderPagination(footer, config) {
       if (!footer) return;
@@ -104,18 +165,24 @@
         applySharedAppearance(section);
       }
       enhanceIdentityColumn(table);
+      enhanceSortHeaders(table);
     },
     // Sort the complete filtered dataset before taking the requested page.
     // Keep page renderers as the source of truth; never collect data from DOM rows.
-    page(table, rows, start, end, render, identity = (row) => row.id ?? row.user_id) {
+    page(table, rows, start, end, render, identity = (row) => row.id ?? row.user_id, project = row => row.cells || []) {
       if (typeof table === 'string') table = document.querySelector(table);
       if (!table) return rows.slice(start, end);
       tableSources.set(table, { render });
+      enhanceSortHeaders(table);
       table.dataset.adminPageOffset = String(start);
       table.dataset.adminIdentityActive ??= '1';
       table.dataset.adminIdentityDirection ||= 'asc';
       let ordered = rows;
-      if (table.dataset.adminIdentityActive === '1') {
+      if (table.dataset.adminSortColumn != null && table.dataset.adminIdentityActive === '0') {
+        const column = Number(table.dataset.adminSortColumn);
+        const values = new Map(rows.map(row => [row, projectedValues(project, row)[column]]));
+        ordered = rows.slice().sort((a,b) => compareValues(values.get(a), values.get(b), table.dataset.adminSortDirection));
+      } else if (table.dataset.adminIdentityActive === '1') {
         const factor = table.dataset.adminIdentityDirection === 'desc' ? -1 : 1;
         ordered = rows.slice().sort((a, b) => {
           const av = identity(a), bv = identity(b);
@@ -500,6 +567,8 @@
       injectedHeading.querySelector('button').onclick = () => {
         const next = table.dataset.adminIdentityDirection === 'asc' ? 'desc' : 'asc';
         table.dataset.adminIdentityActive = '1';
+        delete table.dataset.adminSortColumn;
+        table.querySelectorAll('[data-panel-auto-sort]').forEach(button => { button.closest('th').setAttribute('aria-sort','none'); button.querySelector('[data-panel-auto-sort-icon]').textContent = '↕'; });
         table.dataset.adminIdentityDirection = next;
         const source = tableSources.get(table);
         if (source) {
@@ -528,7 +597,7 @@
   function enhanceAllIdentityColumns() {
     document
       .querySelectorAll('#mainContent > .section:not([data-admin-ui-native]) table')
-      .forEach(enhanceIdentityColumn);
+      .forEach(table => { enhanceIdentityColumn(table); enhanceSortHeaders(table); });
   }
 
   function wrapTableRenderers() {
@@ -591,7 +660,14 @@
     // Deactivate identity sorting BEFORE a page's native column handler renders.
     document.addEventListener('click', (event) => {
       const heading = event.target.closest?.('#mainContent th:not([data-admin-identity-column])');
-      if (heading) heading.closest('table').dataset.adminIdentityActive = '0';
+      if (heading) {
+        const table = heading.closest('table');
+        table.dataset.adminIdentityActive = '0';
+        if (!event.target.closest('[data-panel-auto-sort]')) {
+          delete table.dataset.adminSortColumn;
+          table.querySelectorAll('[data-panel-auto-sort]').forEach(button => { button.closest('th').setAttribute('aria-sort','none'); button.querySelector('[data-panel-auto-sort-icon]').textContent = '↕'; });
+        }
+      }
     }, true);
     // رویداد در فاز bubble اجرا می‌شود؛ بنابراین handler خود صفحه ابتدا جدول را
     // بازسازی می‌کند و ستون مشترک پیش از repaint همان فریم برمی‌گردد.

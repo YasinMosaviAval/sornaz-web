@@ -226,7 +226,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">شعبه *</label>
-                    <select id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <select data-panel-organization-field id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                         ${renderOptions(branches, item.branchId)}
                     </select>
                 </div>
@@ -769,7 +769,7 @@
     const sessionMarkup = isNewOpen ? window.getTermOpenSessionHTML(prefix, sessions[0]) : sessions.map((s, i) => `<div class="w-full border-b border-gray-100 py-2 last:border-b-0"><label class="mb-1 block text-xs font-medium text-gray-500">جلسه ${i + 1}</label><div class="grid grid-cols-1 gap-2 sm:grid-cols-4">${termDateInput(prefix, i, s.date || '', !course || !classroom || (i && repeatType !== 'no-period'))}<select class="term-session-timezone w-full rounded-xl border px-3 py-2.5" onchange="termTimezoneChanged('${prefix}',${i},this)" aria-label="منطقه زمانی">${opts(window.termTimezones || [], s.timezoneId || window.termTimezones?.find((x) => x.name === 'Asia/Tehran')?.id || window.termTimezones?.[0]?.id)}</select><select disabled class="term-session-start w-full rounded-xl border px-3 py-2.5 disabled:bg-gray-100" ${i === 0 ? `onchange="syncTermSessionTimes('${prefix}')"` : ''} aria-label="ساعت شروع">${window.getTermTimeOptions(s.startTime ? [s.startTime] : [], s.startTime || '')}</select><div class="relative"><input disabled type="number" min="5" max="1440" step="5" value="${duration(s)}" class="term-session-duration w-full rounded-xl border px-3 py-2.5 pl-14 disabled:bg-gray-100" oninput="termDurationChanged('${prefix}',${i})" onchange="termDurationChanged('${prefix}',${i})" aria-label="مدت جلسه"><span class="pointer-events-none absolute left-3 top-3 text-xs text-gray-400">دقیقه</span></div></div><p class="term-session-note mt-2 hidden text-xs text-amber-700"></p></div>`).join('');
     return `<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
 <div><label class="mb-2 block text-sm font-medium">نام ترم *</label><input id="${id('Name')}" value="${esc(item.name || '')}" class="w-full rounded-2xl border px-5 py-3.5"></div>
-<div class="${isBranchContext ? 'hidden' : ''}"><label class="mb-2 block text-sm font-medium">سازمان *</label><select id="${id('Branch')}" onchange="refreshTermDependencies('${prefix}')" class="w-full rounded-2xl border px-5 py-3.5">${opts(window.termBranches || [], branch)}</select></div>
+<div class="${isBranchContext ? 'hidden' : ''}"><label class="mb-2 block text-sm font-medium">سازمان *</label><select data-panel-organization-field id="${id('Branch')}" onchange="refreshTermDependencies('${prefix}')" class="w-full rounded-2xl border px-5 py-3.5">${opts(window.termBranches || [], branch)}</select></div>
 <div><label class="mb-2 block text-sm font-medium">دوره مرتبط *</label><select id="${id('Course')}" onchange="refreshTermCourse('${prefix}')" ${branch ? '' : 'disabled'} class="w-full rounded-2xl border px-5 py-3.5 disabled:bg-gray-100"><option value="">انتخاب دوره</option>${opts(
       (window.termCourses || []).filter((x) => x.organizationUserId == branch),
       course

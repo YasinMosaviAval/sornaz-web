@@ -112,7 +112,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">شعبه *</label>
-                    <select id="${id('Branch')}" class="${fieldClass}">
+                    <select data-panel-organization-field data-panel-organization-value="branch" id="${id('Branch')}" class="${fieldClass}">
                         ${renderOptions(branches, item.branchId)}
                     </select>
                 </div>

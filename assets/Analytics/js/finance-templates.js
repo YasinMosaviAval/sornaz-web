@@ -130,7 +130,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                     <label class="block text-sm font-medium mb-2">شعبه *</label>
-                    <select id="${id('Branch')}" data-panel-organization-source="branches" ${isInvoiceEdit ? 'disabled' : ''} class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+                    <select data-panel-organization-field data-panel-organization-value="branch" id="${id('Branch')}" data-panel-organization-source="branches" ${isInvoiceEdit ? 'disabled' : ''} class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
                         ${renderOptions(branches, item.branchId)}
                     </select>
                 </div>

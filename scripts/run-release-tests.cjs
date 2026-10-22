@@ -3,6 +3,7 @@ const {spawnSync} = require('node:child_process');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const php = [
+ 'asset_version_test.php',
  'table-prefix-test.php', 'mobile_finance_bootstrap_test.php', 'enrollment_dashboard_scope_test.php',
  'page_source_trace_test.php',
  'sidebar_identity_render_test.php', 'panel_report_snapshot_test.php', 'practice_results_test.php', 'dashboard_layout_test.php',
@@ -27,6 +28,9 @@ suites.push([process.execPath,'term_student_assignment_test.cjs']);
 suites.push([process.execPath,'panel_report_source_test.cjs'],[process.execPath,'term_people_policy_test.cjs']);
 suites.push([process.execPath,'availability_target_policy_test.cjs'],[process.execPath,'csrf_fetch_test.cjs'],[process.execPath,'profile_render_security_test.cjs'],[process.execPath,'lesson_usage_test.cjs'],[process.execPath,'staff_role_policy_test.cjs'],[process.execPath,'panel_activity_text_test.cjs'],[process.execPath,'term_discount_policy_test.cjs']);
 if (process.argv.includes('--browser')) {
+ suites.push([process.execPath,'branch_dialog_scope_browser_test.cjs']);
+ suites.push([process.execPath,'term_schedule_sort_browser_test.cjs']);
+ suites.push([process.execPath,'panel_auto_sort_browser_test.cjs']);
  suites.push([process.execPath,'enrollment_dialog_browser_test.cjs']);
  suites.push([process.execPath,'member_user_picker_browser_test.cjs']);
  suites.push([process.execPath,'organization_catalog_browser_test.cjs']);

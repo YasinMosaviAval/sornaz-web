@@ -180,7 +180,7 @@
         <div data-member-identity-field class="${item.birthDate ? 'hidden' : ''}"><label class="block text-sm font-medium mb-2">تاریخ تولد *</label><input id="${p}BirthDate" type="date" value="${escapeHtml(item.birthDate || '')}" class="w-full border rounded-2xl py-3.5 px-5"></div>
         <div><label class="block text-sm font-medium mb-2">شماره تماس *</label><input id="${p}Phone" value="${escapeHtml(item.phone)}" class="w-full border rounded-2xl py-3.5 px-5"></div>
         <div><label class="block text-sm font-medium mb-2">نمایش پروفایل</label><select id="${p}ProfileVisibility" class="w-full border rounded-2xl py-3.5 px-5">${profileVisibilityOptions(item.profileVisibility)}</select></div>
-        <div class="${window.staffCatalog?.organization_selection === 'fixed' ? 'hidden' : ''}"><label class="block text-sm font-medium mb-2">سازمان *</label><select id="${p}Organization" onchange="updateStaffOrganization('${p}')" class="w-full border rounded-2xl py-3.5 px-5">${staffOrganizationOptions(item.organizationUserId)}</select></div>
+        <div class="${window.staffCatalog?.organization_selection === 'fixed' ? 'hidden' : ''}"><label class="block text-sm font-medium mb-2">سازمان *</label><select data-panel-organization-field id="${p}Organization" onchange="updateStaffOrganization('${p}')" class="w-full border rounded-2xl py-3.5 px-5">${staffOrganizationOptions(item.organizationUserId)}</select></div>
 <div><label class="block text-sm font-medium mb-2">نوع قرارداد *</label><select id="${p}Type" onchange="toggleStaffLessonFields('${p}Type','${p}LessonsBox')" class="w-full border rounded-2xl py-3.5 px-5">${renderOptions(staffTypes, item.type)}</select></div>
         <div><label class="block text-sm font-medium mb-2">نقش *</label><select id="${p}Role" class="w-full border rounded-2xl py-3.5 px-5">${staffRoleOptions(item.roleId)}</select></div>
 
@@ -367,7 +367,7 @@
                                 <input id="staffPhone" type="tel" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                             </div>
                             <div><label class="block text-sm font-medium mb-2">نمایش پروفایل</label><select id="staffProfileVisibility" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${profileVisibilityOptions('public')}</select></div>
-                            <div class="${window.staffCatalog?.organization_selection === 'fixed' ? 'hidden' : ''}"><label class="block text-sm font-medium mb-2">سازمان *</label><select id="staffOrganization" onchange="updateStaffOrganization('staff')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${staffOrganizationOptions()}</select></div>
+                            <div class="${window.staffCatalog?.organization_selection === 'fixed' ? 'hidden' : ''}"><label class="block text-sm font-medium mb-2">سازمان *</label><select data-panel-organization-field id="staffOrganization" onchange="updateStaffOrganization('staff')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${staffOrganizationOptions()}</select></div>
 <div>
                                 <label class="block text-sm font-medium mb-2">نوع قرارداد *</label>
                                 <select id="staffType" onchange="toggleStaffLessonFields('staffType', 'staffLessonsBox')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
@@ -513,7 +513,7 @@
                                 <input id="editStaffPhone" type="tel" value="${escapeHtml(item.phone)}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                             </div>
                             <div><label class="block text-sm font-medium mb-2">نمایش پروفایل</label><select id="editStaffProfileVisibility" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${profileVisibilityOptions(item.profileVisibility)}</select></div>
-                            <div class="${window.staffCatalog?.organization_selection === 'fixed' ? 'hidden' : ''}"><label class="block text-sm font-medium mb-2">سازمان *</label><select id="editStaffOrganization" onchange="updateStaffOrganization('editStaff')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${staffOrganizationOptions(item.organizationUserId)}</select></div>
+                            <div class="${window.staffCatalog?.organization_selection === 'fixed' ? 'hidden' : ''}"><label class="block text-sm font-medium mb-2">سازمان *</label><select data-panel-organization-field id="editStaffOrganization" onchange="updateStaffOrganization('editStaff')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">${staffOrganizationOptions(item.organizationUserId)}</select></div>
 <div>
                                 <label class="block text-sm font-medium mb-2">نوع قرارداد *</label>
                                 <select id="editStaffType" onchange="toggleStaffLessonFields('editStaffType', 'editStaffLessonsBox')" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">

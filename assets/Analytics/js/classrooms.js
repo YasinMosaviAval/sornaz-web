@@ -324,7 +324,7 @@ window.renderClassroomsTable = async function (list = filteredClassrooms) {
 
   const start = (classroomCurrentPage - 1) * classroomPerPage;
   const end = start + classroomPerPage;
-  const pageItems = window.AdminPanelTable.page?.('#classroomsTable', list, start, end, () => window.renderClassroomsTable(list)) ?? list.slice(start, end);
+  const pageItems = window.AdminPanelTable.page?.('#classroomsTable', list, start, end, () => window.renderClassroomsTable(list), undefined, row => window.getClassroomRowHTML(row)) ?? list.slice(start, end);
 
   tbody.innerHTML = '';
 

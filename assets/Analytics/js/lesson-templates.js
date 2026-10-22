@@ -147,7 +147,7 @@
                     ? ''
                     : `<div>
                     <label class="block text-sm font-medium mb-2">سازمان *</label>
-                    <select id="${id('Organization')}" data-panel-organization-source="lessonOrganizations" onchange="updateLessonPrimaryAvailability('${id('Organization')}','${id('Primary')}',${item.id || 0})" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <select data-panel-organization-field id="${id('Organization')}" data-panel-organization-source="lessonOrganizations" onchange="updateLessonPrimaryAvailability('${id('Organization')}','${id('Primary')}',${item.id || 0})" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                         ${renderOptions(organizations, selectedOrganizationUserId)}
                     </select>
                 </div>`

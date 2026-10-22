@@ -129,7 +129,7 @@
     page = Math.min(Math.max(1, page), pages);
     const start = (page - 1) * perPage;
     body.innerHTML =
-      (window.AdminPanelTable.page?.('#messagesTable', filteredMessages, start, start + perPage, () => window.renderMessagesTable()) ?? filteredMessages.slice(start, start + perPage))
+      (window.AdminPanelTable.page?.('#messagesTable', filteredMessages, start, start + perPage, () => window.renderMessagesTable(), undefined, row => getMessageRowHTML(row)) ?? filteredMessages.slice(start, start + perPage))
         .map((m) => window.AdminPanelTable.rowHTML([{ fragment: getMessageRowHTML(m) }], 'class="hover:bg-gray-50"'))
         .join('') || getMessageEmptyRowHTML();
     const pager = document.getElementById('messagesPagination');

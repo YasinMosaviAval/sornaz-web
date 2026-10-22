@@ -5,6 +5,7 @@ $classroomTypeAdmin=\Modules\System\Services\SiteAdminAccess::allows($classroomT
 $classroomTypeAcademyOwner=$classroomTypeUserId&&(\Core\database\DB::table('academies')->where('user_id',$classroomTypeUserId)->whereNull('deleted_at')->first()||\Core\database\DB::table('academies')->where('created_by',$classroomTypeUserId)->whereNull('deleted_at')->first());
 $classroomTypeAcademyManager=$classroomTypeUserId&&(bool)\Core\database\DB::table('academy_branch_members')->join('academy_branch_member_roles','academy_branch_member_roles.member_id','=','academy_branch_members.member_id')->join('access_system_roles','access_system_roles.role_id','=','academy_branch_member_roles.role_id')->where('academy_branch_members.user_id',$classroomTypeUserId)->whereRaw("access_system_roles.name LIKE 'academy_%manager%' AND access_system_roles.name NOT LIKE '%branch%'")->whereNull('academy_branch_members.deleted_at')->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->first();
 $canViewClassroomTypes=$classroomTypeAdmin||$classroomTypeAcademyOwner||$classroomTypeAcademyManager||($classroomTypeUserId&&(new \Modules\System\Services\AccessControl())->allows($classroomTypeUserId,\Modules\Academy\Services\AcademyClassroomService::CREATE_TYPE_PERMISSION));
+$canViewClassroomTypes = $canViewClassroomTypes || (new \Modules\Analytics\Services\MobilePanelAccess())->capabilities($classroomTypeUser)['branchContext'];
 if(!$canViewClassroomTypes)return;
 ?>
 <section id="classroom-types" class="section hidden">

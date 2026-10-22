@@ -228,7 +228,7 @@
 
     const start = (rulesCurrentPage - 1) * rulesPerPage;
     const end = start + rulesPerPage;
-    const pageItems = window.AdminPanelTable.page?.('#rulesTable', list, start, end, () => window.renderRulesTable(list)) ?? list.slice(start, end);
+    const pageItems = window.AdminPanelTable.page?.('#rulesTable', list, start, end, () => window.renderRulesTable(list), undefined, row => window.getRuleRowHTML(row)) ?? list.slice(start, end);
 
     tbody.innerHTML = '';
     if (!pageItems.length) {

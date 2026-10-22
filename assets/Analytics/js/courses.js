@@ -222,7 +222,7 @@ window.renderCoursesTable = async function (list = filteredCourses) {
 
   const start = (coursesCurrentPage - 1) * coursesPerPage;
   const end = start + coursesPerPage;
-  const pageItems = window.AdminPanelTable.page?.('#coursesTable', list, start, end, () => window.renderCoursesTable(list)) ?? list.slice(start, end);
+  const pageItems = window.AdminPanelTable.page?.('#coursesTable', list, start, end, () => window.renderCoursesTable(list), undefined, row => window.getCourseRowHTML(row)) ?? list.slice(start, end);
 
   tbody.innerHTML = '';
 

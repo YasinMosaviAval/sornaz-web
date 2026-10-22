@@ -6,12 +6,14 @@ namespace Core\database {
         public static function table(string $table): object { return new class($table) {
             private array $joins = [];
             private bool $manager = false;
+            private bool $teacherOnly = false;
             public function __construct(private string $table) {}
             public function __call(string $name, array $args): mixed {
                 if ($name === 'join') $this->joins[] = $args[0];
                 if ($name === 'whereRaw') $this->manager = true;
+                if ($name === 'where' && ($args[0] ?? '') === 'academy_branch_course_term_enrollments.type' && ($args[1] ?? '') === 'teacher') $this->teacherOnly = true;
                 if ($name !== 'first') return $this;
-                if (in_array('academy_branch_course_term_enrollments', $this->joins, true)) return DB::$state['enrollment'] ?? null;
+                if (in_array('academy_branch_course_term_enrollments', $this->joins, true)) return DB::$state[$this->teacherOnly ? 'teaching-enrollment' : 'enrollment'] ?? null;
                 if (in_array('access_system_roles', $this->joins, true)) return DB::$state[$this->manager ? 'academy-manager' : 'management-role'] ?? null;
                 if (in_array('academy_branch_member_contracts', $this->joins, true)) return DB::$state['management-contract'] ?? null;
                 return DB::$state[$this->table] ?? null;
@@ -47,6 +49,7 @@ namespace {
     $cases = [
         ['ordinary', 'human', [], $personal],
         ['student', 'human', ['academy_branch_members' => ['member_id' => 8], 'enrollment' => ['enrollment_id' => 9]], ['dashboard', 'account', 'my-classrooms', 'my-courses', 'my-terms', 'gallery', 'lessons', 'member-schedules', 'finance', 'settings']],
+        ['teacher', 'human', ['academy_branch_members' => ['member_id' => 8], 'enrollment' => ['enrollment_id' => 9], 'teaching-enrollment' => ['enrollment_id' => 9, 'type' => 'teacher']], ['dashboard', 'account', 'schedules', 'my-classrooms', 'my-courses', 'my-terms', 'gallery', 'lessons', 'member-schedules', 'finance', 'settings']],
         ['academy', 'academy', [], $academy],
         ['branch', 'branch', [], array_values(array_diff($academy, ['branches']))],
         ['manager', 'human', ['management-role' => ['role_id' => 3]], $academy],
@@ -69,7 +72,7 @@ namespace {
             if (isset($index['branches'])) expectMenu($index['branches']['links'] === ['availabilities', 'scheduling-rules', 'organization-holidays'], $name . ': organization schedule tabs missing');
         }
         expectMenu($index['settings']['section'] === 'my-settings', $name . ': non-admin settings must remain personal');
-        expectMenu($index['gallery']['section'] === (in_array($name, ['ordinary', 'student'], true) ? 'my-gallery' : 'gallery'), $name . ': gallery points at the wrong owner scope');
+        expectMenu($index['gallery']['section'] === (in_array($name, ['ordinary', 'student', 'teacher'], true) ? 'my-gallery' : 'gallery'), $name . ': gallery points at the wrong owner scope');
     }
     $GLOBALS['actor'] = ['user_id' => 1, 'type' => 'human', 'username' => '<script>fixture</script>'];
     \Core\database\DB::$state = [];

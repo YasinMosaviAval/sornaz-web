@@ -39,6 +39,15 @@ const assert=require('node:assert/strict');const {chromium}=require(process.env.
   }
  }
  assert.equal(await page.locator('#termDiscountsBranchTabs button').count(),3);
+ assert.equal(await page.locator('#termDiscountsTable [data-panel-auto-sort]').count(),4,'All four discount columns are sortable through shared template');
+ for(const column of [0,1,2,3]){
+  const heading=page.locator('#termDiscountsTable [data-panel-auto-sort="'+column+'"]');
+  await heading.click();assert.equal(await heading.locator('..').getAttribute('aria-sort'),'ascending');
+  if(column===2)assert.deepEqual(await page.locator('#termDiscountsTable tbody tr[data-id]').evaluateAll(rows=>rows.map(row=>Number(row.dataset.id))),[1,2],'Discount value sorts numerically');
+  await heading.click();assert.equal(await heading.locator('..').getAttribute('aria-sort'),'descending');
+  if(column===2)assert.deepEqual(await page.locator('#termDiscountsTable tbody tr[data-id]').evaluateAll(rows=>rows.map(row=>Number(row.dataset.id))),[2,1]);
+ }
+
  await page.selectOption('#termDiscountTypeFilter','percentage');assert.equal(await page.locator('#termDiscountsTable tbody tr[data-id]').count(),1);
  await page.selectOption('#termDiscountTypeFilter','');await page.locator('#termDiscountsBranchTabs [data-value="101"]').click();await page.waitForFunction(()=>document.querySelector('#termDiscountsTable tbody tr')?.dataset.id==='2');
  await page.locator('#termDiscountSearch').fill('not found');assert.equal(await page.locator('#termDiscountsTable tbody tr[data-id]').count(),0);await page.locator('#termDiscountSearch').fill('');

@@ -1,5 +1,6 @@
 <?php
 $panelUser = auth()->user();
+$panelBranchContext = (new \Modules\Analytics\Services\MobilePanelAccess())->capabilities($panelUser)['branchContext'];
 $isSiteAdminPanel = \Modules\System\Services\SiteAdminAccess::allows($panelUser);
 $hasMemberManagementRole = $panelUser && (bool)\Core\database\DB::table('academy_branch_members')
     ->join('academy_branch_member_roles', 'academy_branch_member_roles.member_id', '=', 'academy_branch_members.member_id')
@@ -18,6 +19,7 @@ $showAcademyPanelSections = $isSiteAdminPanel || $hasMemberManagementRole || $ha
 $canUsePanelMessageActions = $showAcademyPanelSections || (bool)\Core\database\DB::table('academy_branch_members')->where('user_id', (int) $panelUser['user_id'])->whereNull('deleted_at')->first();
 ?>
 <div class="relative h-screen overflow-hidden">
+    <script>window.panelBranchContext=<?= json_encode($panelBranchContext) ?>;</script>
     <script>window.adminCsrfToken=<?= json_encode(csrf_token()) ?>;window.adminMemberSchedulesData=<?= json_encode($scheduleFixtures['schedules']??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;window.adminAvailabilityExceptionsData=<?= json_encode($scheduleFixtures['exceptions']??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;window.adminInlineTranslations=<?= json_encode($inlineTranslationCatalog??[],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;</script>
     <div id="sidebarOverlay" class="hidden fixed inset-0 z-30 bg-black/40 lg:hidden"></div>
     <div class="flex h-full">

@@ -231,7 +231,7 @@ window.renderBranches = async function (list = filteredBranches) {
   branchesCurrentPage = Math.min(branchesCurrentPage, pages);
   const start = (branchesCurrentPage - 1) * branchesPageSize;
   const sourceRows = list;
-  list = window.AdminPanelTable.page?.(document.getElementById('branchesTableBody')?.closest('table'), list, start, start + branchesPageSize, () => window.renderBranches(sourceRows)) ?? list.slice(start, start + branchesPageSize);
+  list = window.AdminPanelTable.page?.(document.getElementById('branchesTableBody')?.closest('table'), list, start, start + branchesPageSize, () => window.renderBranches(sourceRows), undefined, row => window.getBranchTableRowHTML(row)) ?? list.slice(start, start + branchesPageSize);
   const box = document.getElementById('branchesCards'),
     body = document.getElementById('branchesTableBody');
   if (box)

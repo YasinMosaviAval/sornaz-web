@@ -112,7 +112,7 @@
                     ? `<input id="${id('Organization')}" type="hidden" value="${escapeHtml(organizationUserId)}">`
                     : `<div>
                     <label class="block text-sm font-medium mb-2">سازمان *</label>
-                    <select id="${id('Organization')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
+                    <select data-panel-organization-field id="${id('Organization')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5">
                         <option value="">سازمان را انتخاب کنید</option>${organizationOptions}
                     </select>
                 </div>`

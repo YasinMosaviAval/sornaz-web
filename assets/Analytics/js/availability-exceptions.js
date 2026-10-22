@@ -439,7 +439,7 @@
 
     const start = (holidayLeavesCurrentPage - 1) * holidayLeavesPerPage;
     const end = start + holidayLeavesPerPage;
-    const pageItems = window.AdminPanelTable.page?.('#holidayLeavesTable', list, start, end, () => window.renderHolidayLeavesTable(list)) ?? list.slice(start, end);
+    const pageItems = window.AdminPanelTable.page?.('#holidayLeavesTable', list, start, end, () => window.renderHolidayLeavesTable(list), undefined, row => window.getHolidayLeaveRowHTML(row)) ?? list.slice(start, end);
 
     tbody.innerHTML = '';
     if (!pageItems.length) {

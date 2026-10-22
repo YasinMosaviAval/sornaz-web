@@ -198,7 +198,7 @@
 
     const start = (reportsCurrentPage - 1) * reportsPerPage;
     const end = start + reportsPerPage;
-    const pageItems = window.AdminPanelTable.page?.('#reportsTable', list, start, end, () => window.renderReportsTable(list)) ?? list.slice(start, end);
+    const pageItems = window.AdminPanelTable.page?.('#reportsTable', list, start, end, () => window.renderReportsTable(list), undefined, row => window.getReportRowHTML(row)) ?? list.slice(start, end);
 
     tbody.innerHTML = '';
     if (!pageItems.length) {

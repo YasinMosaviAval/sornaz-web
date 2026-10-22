@@ -85,7 +85,7 @@
                 <input id="${id('RecordId')}" type="hidden" value="${escapeHtml(item.id || '')}">
                 <div class="${fixedOrganization ? 'hidden' : ''}">
                     <label class="block text-sm font-medium mb-2">سازمان *</label>
-                    <select id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
+                    <select data-panel-organization-field id="${id('Branch')}" class="w-full border border-gray-300 rounded-2xl py-3.5 px-5"
                             onchange="window.refreshMemberScheduleMembers('${prefix}');window.refreshMemberScheduleTimeSlots('${id('TimeSlots')}', this.value, [])">
                         ${renderOptions(branches, selectedOrganization || item.branchId)}
                     </select>

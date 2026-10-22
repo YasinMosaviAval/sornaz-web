@@ -54,6 +54,57 @@ window.academyOrganizationTabHandlers = {
 (function () {
   'use strict';
   const filters = new Map();
+  // Organization controls remain in the form for its existing submission contract.
+  // The trusted page capability also covers employees whose branch bootstrap is delayed.
+  window.applyPanelOrganizationFormScope = function (root = document) {
+    const fixed = !window.branchSiteAdmin && (window.panelBranchContext === true || window.branchAccount === true);
+    const fields = root.matches?.('[data-panel-organization-field]') ? [root] : [];
+    fields.push(...root.querySelectorAll('[data-panel-organization-field]'));
+    fields.forEach(select => {
+      const shell = select.closest('label') || select.parentElement;
+      if (!shell) return;
+      if (!fixed) {
+        if (shell.dataset.panelFixedOrganization === '1') {
+          shell.hidden = false;
+          shell.style.removeProperty('display');
+          shell.removeAttribute('aria-hidden');
+          delete shell.dataset.panelFixedOrganization;
+        }
+        return;
+      }
+      shell.dataset.panelFixedOrganization = '1';
+      shell.hidden = true;
+      shell.style.setProperty('display', 'none', 'important');
+      shell.setAttribute('aria-hidden', 'true');
+      const choices = [...select.options].filter(option => option.value && !['all', 'academy'].includes(option.value) && !option.disabled);
+      const branch = window.branchAccount && window.academyPanelBranches?.length === 1 ? window.academyPanelBranches[0] : null;
+      const ownValue = select.dataset.panelOrganizationValue === 'branch' ? branch?.id : branch?.user_id;
+      const ownChoice = ownValue != null ? choices.find(option => option.value === String(ownValue)) : null;
+      // Keep branch IDs distinct from organization account IDs; never submit a placeholder.
+      const fixedChoice = ownChoice || (choices.length === 1 ? choices[0] : null);
+      if (fixedChoice && select.value !== fixedChoice.value) {
+        select.value = fixedChoice.value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+  };
+  const observeOrganizationForms = () => {
+    window.applyPanelOrganizationFormScope();
+    new MutationObserver(records => {
+      records.forEach(record => {
+        if (record.target.closest?.('[data-panel-organization-field]')) {
+          window.applyPanelOrganizationFormScope(record.target.closest('[data-panel-organization-field]'));
+        }
+        record.addedNodes.forEach(node => {
+          if (node.nodeType === 1) window.applyPanelOrganizationFormScope(node);
+        });
+      });
+    }).observe(document.body, { childList: true, subtree: true });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', observeOrganizationForms);
+  else observeOrganizationForms();
+  window.addEventListener('academy-data-loaded', () => window.applyPanelOrganizationFormScope());
+
   window.syncPanelOrganizationSelect = (select, rows, valueKey = 'id') => {
     if (!select || !Array.isArray(rows)) return;
     const selected = select.value;

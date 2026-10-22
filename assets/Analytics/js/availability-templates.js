@@ -80,7 +80,7 @@
                     ? ''
                     : `<div class="${fixedOrganization ? 'hidden' : ''}">
                     <label class="block text-sm font-medium mb-2">سازمان *</label>
-                    <select id="${id('Branch')}" data-panel-organization-source="workingHours" ${editing ? 'disabled' : ''} class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                    <select data-panel-organization-field id="${id('Branch')}" data-panel-organization-source="workingHours" ${editing ? 'disabled' : ''} class="w-full border border-gray-300 rounded-2xl py-3.5 px-5 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
                             onchange="window.loadExistingBranchScheduleDay('${prefix}',false)">
                         ${renderOptions(branches, item.user_id || item.organizationUserId || item.branchId)}
                     </select>

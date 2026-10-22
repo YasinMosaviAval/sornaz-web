@@ -506,7 +506,7 @@
 
     const start = (studentsCurrentPage - 1) * studentsPerPage;
     const end = start + studentsPerPage;
-    const pageItems = window.AdminPanelTable.page?.('#studentsTable', list, start, end, () => window.renderStudentsTable(list)) ?? list.slice(start, end);
+    const pageItems = window.AdminPanelTable.page?.('#studentsTable', list, start, end, () => window.renderStudentsTable(list), undefined, row => window.getStudentRowHTML(row)) ?? list.slice(start, end);
 
     tbody.innerHTML = '';
     if (!pageItems.length) {

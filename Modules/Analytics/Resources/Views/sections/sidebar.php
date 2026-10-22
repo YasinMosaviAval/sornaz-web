@@ -137,10 +137,10 @@ if ($sidebarFullName === '') $sidebarFullName = $sidebarUsername;
             <li><a href="#" onclick="showSection('gallery')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-images w-5 text-center"></i> گالری</a></li>
             <?php endif; ?>
             <?php endif; ?>
-            <?php if(!$hasAcademyPanelAccess && $hasLearningEnrollment): ?>
-            <?php if ($hasTeachingEnrollment && ($hasTeachingEnrollment['type'] ?? '') === 'teacher'): ?>
+            <?php if (!$hasAcademyPanelAccess && $hasTeachingEnrollment): ?>
             <li><a href="#" onclick="showSection('schedules')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-calendar-alt w-5 text-center"></i> جلسه‌ها و یادداشت استاد</a></li>
             <?php endif; ?>
+            <?php if(!$hasAcademyPanelAccess && $hasLearningEnrollment): ?>
             <li><a href="#" onclick="showSection('my-classrooms')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-chalkboard w-5 text-center"></i> کلاس‌های من</a></li>
             <li><a href="#" onclick="showSection('my-courses')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-book-open w-5 text-center"></i> دوره‌های من</a></li>
             <li><a href="#" onclick="showSection('my-terms')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-calendar-check w-5 text-center"></i> ترم‌های من</a></li>

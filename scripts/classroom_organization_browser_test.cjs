@@ -33,6 +33,16 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/not
     await page.selectOption('#editClassroomOrganization', '11');
     await page.evaluate(() => saveEditedClassroom(1));
     assert.deepEqual(await page.evaluate(() => [submittedRoom.organizationUserId, submittedRoom.branchId]), [11, 101]);
+    await page.evaluate(() => {
+      window.panelBranchContext = true;
+      window.classroomOrganizations = [{ id: 101, user_id: 11, kind: 'branch', name: 'Own branch' }];
+      openAddClassroomModal();
+    });
+    await page.waitForFunction(() => document.getElementById('classroomOrganization').value === '11');
+    assert.equal(await page.locator('#classroomOrganization').isVisible(), false);
+    await page.locator('#classroomName').fill('Scoped classroom');
+    await page.evaluate(() => saveClassroom());
+    assert.deepEqual(await page.evaluate(() => [submittedRoom.organizationUserId, submittedRoom.branchId]), [11, 101], 'Hidden organization submits the authorized branch, not academy');
     assert.deepEqual(errors, []);
     console.log('Classroom forms: academy/branch organization selection and add/edit payloads passed.');
   } finally { await browser.close(); }
