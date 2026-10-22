@@ -2,6 +2,8 @@
 require __DIR__ . '/mobile_panel_parity_test.php';
 expectParity(!isset($sections['course-levels']['presentation']), 'Legacy clients must retain their presentation');
 $sections = (new \Modules\Analytics\Services\MobilePanelCatalog())->sections(true);
+$classroomColumns = array_column($sections['classrooms']['presentation']['columns'], null, 'key');
+expectParity($classroomColumns['branchName']['label'] === 'سازمان', 'Classroom ownership column must be labeled Organization');
 $levels = $sections['course-levels']['presentation'];
 expectParity(array_column($levels['columns'], 'key') === ['name', 'summary'], 'Lesson-level columns differ from website');
 expectParity($levels['rowActions'] === ['details'], 'Lesson levels expose unsupported row mutations');

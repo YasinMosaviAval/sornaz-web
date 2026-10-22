@@ -30,9 +30,14 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/not
       return editClassroom(1);
     });
     assert.equal(await page.locator('#editClassroomOrganization').inputValue(), '10');
+    assert.equal(await page.locator('#editClassroomOrganization option[value="10"]').isEnabled(), true);
     await page.selectOption('#editClassroomOrganization', '11');
     await page.evaluate(() => saveEditedClassroom(1));
     assert.deepEqual(await page.evaluate(() => [submittedRoom.organizationUserId, submittedRoom.branchId]), [11, 101]);
+    await page.evaluate(() => editClassroom(1));
+    await page.selectOption('#editClassroomOrganization', '10');
+    await page.evaluate(() => saveEditedClassroom(1));
+    assert.deepEqual(await page.evaluate(() => [submittedRoom.organizationUserId, submittedRoom.branchId]), [10, 0], 'Editing supports returning classroom ownership to the academy');
     await page.evaluate(() => {
       window.panelBranchContext = true;
       window.classroomOrganizations = [{ id: 101, user_id: 11, kind: 'branch', name: 'Own branch' }];

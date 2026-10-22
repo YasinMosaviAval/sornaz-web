@@ -71,7 +71,7 @@
                 'columns' => [
                     ['html' => '<button onclick="sortClassroomsBy(\'name\')" class="flex items-center gap-1">نام کلاس <span id="classroomSortIcon-name">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '<button onclick="sortClassroomsBy(\'typeLabel\')" class="flex items-center gap-1">نوع کلاس <span id="classroomSortIcon-typeLabel">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
-                    ['html' => '<button onclick="sortClassroomsBy(\'branchName\')" class="flex items-center gap-1">شعبه <span id="classroomSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
+                    ['html' => '<button onclick="sortClassroomsBy(\'branchName\')" class="flex items-center gap-1">سازمان <span id="classroomSortIcon-branchName">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '<button onclick="sortClassroomsBy(\'capacity\')" class="flex items-center gap-1">ظرفیت <span id="classroomSortIcon-capacity">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '<button onclick="sortClassroomsBy(\'equipment\')" class="flex items-center gap-1">تجهیزات <span id="classroomSortIcon-equipment">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
                     ['html' => '<button onclick="sortClassroomsBy(\'status\')" class="flex items-center gap-1">وضعیت <span id="classroomSortIcon-status">↕</span></button>', 'attributes' => ' class="text-right py-5 px-5 font-medium"'],
