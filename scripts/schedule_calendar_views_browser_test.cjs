@@ -18,6 +18,11 @@ const {renderPanelView, tableRuntime} = require('./panel-table-fixture.cjs');
       await page.addScriptTag({path:'assets/Analytics/js/schedule-templates.js'});
       await page.addScriptTag({path:'assets/Analytics/js/schedules.js'});
       await page.waitForFunction(()=>document.querySelector('#schedulesTable tbody').textContent.includes('Fixture lesson'));
+      assert.equal(await page.locator('[data-schedule-view="weekly"]').getAttribute('aria-current'),'page');
+      assert.equal(await page.locator('#schedulesWeeklyView').isVisible(),true);
+      assert.equal(await page.locator('#schedulesListView').isVisible(),false);
+      assert.equal(await page.locator('[data-schedule-view="list"]').textContent(),language==='fa'?'نمایش جدولی':'Table view');
+      assert.equal(await page.locator('[data-schedule-view="weekly"]').textContent(),language==='fa'?'نمایش برنامه هفتگی':'Weekly schedule view');
       for (const view of ['weekly','list','weekly','list']) {
         await page.locator(`[data-schedule-view="${view}"]`).click();
         assert.equal(await page.locator('#schedules > nav button[aria-current="page"]').count(),1);

@@ -117,6 +117,7 @@ Router::post('/academy/admin/term-invoices/{id}/update', [AcademyTermController:
 Router::post('/academy/admin/term-invoices/{invoiceId}/installments/{installmentId}/zarinpal', [ZarinpalPaymentController::class, 'start'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/term-invoices/{invoiceId}/installments/{installmentId}/offline', [ZarinpalPaymentController::class, 'offline'])->middleware(['academy-panel', 'csrf']);
 Router::get('/academy/payments/zarinpal/callback', [ZarinpalPaymentController::class, 'callback']);
+Router::get('/academy/payments/zarinpal/continue', [ZarinpalPaymentController::class, 'continuePayment']);
 Router::get('/academy/admin/subscriptions', [AcademySubscriptionController::class, 'index'])->middleware('academy-panel');
 Router::post('/academy/admin/subscriptions/{id}/zarinpal', [AcademySubscriptionController::class, 'start'])->middleware(['academy-panel', 'csrf']);
 Router::get('/academy/subscriptions/zarinpal/callback', [AcademySubscriptionController::class, 'callback']);

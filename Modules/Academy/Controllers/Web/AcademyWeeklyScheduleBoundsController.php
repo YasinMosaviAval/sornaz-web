@@ -14,7 +14,8 @@ class AcademyWeeklyScheduleBoundsController
     public function index()
     {
         try {
-            $data = $this->service->weeklyBounds((int) auth()->id(), (int) ($_GET['branch'] ?? 0));
+            $branch = (string) ($_GET['branch'] ?? '');
+            $data = $this->service->weeklyBounds((int) auth()->id(), $branch === 'academy' ? 'academy' : (int) $branch);
             return ResponseFactory::json(['success' => true, 'data' => $data]);
         } catch (Throwable $e) {
             return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);

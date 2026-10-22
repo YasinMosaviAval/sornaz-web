@@ -30,7 +30,9 @@ class AcademyClassScheduleService
             $where[] = 't.term_id=?';
             $bind[] = (int) $f['termId'];
         }
-        if (!empty($f['branch'])) {
+        if (($f['branch'] ?? '') === 'academy') {
+            $where[] = 'c.branch_id IS NULL';
+        } elseif (!empty($f['branch'])) {
             $where[] = 'c.branch_id=?';
             $bind[] = (int) $f['branch'];
         }if (!empty($f['status'])) {
@@ -86,12 +88,14 @@ class AcademyClassScheduleService
         return $this->teacherTermIds($actor) !== [];
     }
 
-    public function weeklyBounds(int $actor, int $branchId = 0): array
+    public function weeklyBounds(int $actor, int|string $branchId = 0): array
     {
         $branches = $this->branches($actor);
         $ids = array_map(fn ($b) => (int) $b['branch_id'], $branches);
         $teacherIds = $this->teacherTermIds($actor);
         $academyIds = array_column(ClassroomOrganizationScope::academies($actor), 'academy_id');
+        $academyOnly = $branchId === 'academy';
+        $branchId = $academyOnly ? 0 : (int) $branchId;
         if ($branchId) {
             if (!in_array($branchId, $ids, true)) {
                 throw new RuntimeException('دسترسی به شعبه ندارید.');
@@ -103,7 +107,8 @@ class AcademyClassScheduleService
         $scope = $this->organizationScope($ids, $academyIds);
         if ($teacherIds) $scope = '(' . $scope . ' OR t.term_id IN (' . implode(',', $teacherIds) . '))';
         if ($branchId) $scope .= ' AND c.branch_id=' . $branchId;
-        $sql = "SELECT MIN(b.requested_date) first_date,MAX(b.requested_date) last_date FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id JOIN academy_branch_course_terms t ON t.term_id=s.term_id JOIN academy_branch_courses c ON c.course_id=t.course_id WHERE $scope AND s.deleted_at IS NULL AND b.deleted_at IS NULL AND t.deleted_at IS NULL AND c.deleted_at IS NULL";
+        if ($academyOnly) $scope .= ' AND c.branch_id IS NULL';
+        $sql = "SELECT MIN(b.requested_date) first_date,MAX(b.requested_date) last_date FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id JOIN academy_branch_course_terms t ON t.term_id=s.term_id JOIN academy_branch_courses c ON c.course_id=t.course_id WHERE $scope AND s.classroom_id > 0 AND s.deleted_at IS NULL AND b.deleted_at IS NULL AND t.deleted_at IS NULL AND c.deleted_at IS NULL";
         $r = db()->query($sql)->fetch();
         return ['firstDate' => $r['first_date'] ?? null, 'lastDate' => $r['last_date'] ?? null];
     }

@@ -21,6 +21,20 @@ class ZarinpalPaymentController
         }
     }
 
+    public function continuePayment()
+    {
+        header('Cache-Control: no-store, private');
+        header('Referrer-Policy: origin');
+        header('X-Robots-Tag: noindex, nofollow');
+        header("Content-Security-Policy: default-src 'none'; script-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'");
+        try {
+            $gatewayUrl = $this->s->checkoutGateway((string) ($_GET['kind'] ?? ''), (string) ($_GET['token'] ?? ''));
+            return ResponseFactory::view('Academy::payments.continue', ['gatewayUrl' => $gatewayUrl]);
+        } catch (RuntimeException $error) {
+            return new \Core\http\Response('پیوند پرداخت معتبر یا قابل استفاده نیست. از بخش امور مالی دوباره اقدام کنید.', 422);
+        }
+    }
+
     public function offline(int $invoiceId, int $installmentId)
     {
         try {

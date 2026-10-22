@@ -18,11 +18,11 @@
         }
     </style>
     <?php component('panel-page-tabs', [
-        'active' => 'list', 'onSelect' => 'setSchedulesView',
+        'active' => 'weekly', 'onSelect' => 'setSchedulesView',
         'label' => locale() === 'en' ? 'Class calendar views' : 'نمای تقویم کلاس‌ها',
         'tabs' => [
-            'list' => ['labels' => ['نمایش لیستی', 'List view'], 'attributes' => 'id="schedulesListViewButton" data-schedule-view="list"'],
-            'weekly' => ['labels' => ['برنامه هفتگی', 'Weekly schedule'], 'attributes' => 'id="schedulesWeeklyViewButton" data-schedule-view="weekly"'],
+            'list' => ['labels' => ['نمایش جدولی', 'Table view'], 'attributes' => 'id="schedulesListViewButton" data-schedule-view="list"'],
+            'weekly' => ['labels' => ['نمایش برنامه هفتگی', 'Weekly schedule view'], 'attributes' => 'id="schedulesWeeklyViewButton" data-schedule-view="weekly"'],
         ],
     ]); ?>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
@@ -103,7 +103,7 @@
     </div>
 
     <!-- جدول -->
-    <div id="schedulesListView" class="bg-white rounded-3xl shadow overflow-hidden">
+    <div id="schedulesListView" class="hidden bg-white rounded-3xl shadow overflow-hidden">
         <div class="overflow-x-auto">
             <?php component('panel-table-template', [
                 'attributes' => ' class="w-full min-w-[1300px]" id="schedulesTable"',
@@ -137,7 +137,7 @@
         </div>
     </div>
 
-    <div id="schedulesWeeklyView" class="hidden space-y-5">
+    <div id="schedulesWeeklyView" class="space-y-5">
         <div class="flex flex-col gap-3 rounded-3xl bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h2 class="font-bold">برنامه هفتگی کلاس‌ها</h2>

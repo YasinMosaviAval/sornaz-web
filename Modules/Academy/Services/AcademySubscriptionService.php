@@ -88,7 +88,7 @@ class AcademySubscriptionService
             $result = $this->callbackLocked($old['callback_token'], $old['authority'], 'OK');
             return ['redirectUrl' => '/analytics/admin-panel?' . http_build_query(['subscription_payment' => !empty($result['requiresReview']) ? 'review' : 'success', 'ref' => $result['referenceId'] ?? '']) . '#finance'];
         }, fn ($old) => DB::table('academy_subscription_payments')->where('subscription_payment_id', (int) $old['subscription_payment_id'])->where('status', '<>', 'paid')->update(['status' => 'failed']))) {
-            return $resume;
+            return ZarinpalPaymentService::checkoutRedirect($resume, 'subscription', (string) $pending['callback_token']);
         }
         $end = (new \DateTimeImmutable($period['period_start']))->modify('+' . $months . ' months')->format('Y-m-d');
         $token = bin2hex(random_bytes(32));
@@ -105,7 +105,7 @@ class AcademySubscriptionService
             }
             DB::table('academy_subscription_payments')->where('subscription_payment_id', $pid)->update(['authority' => $authority, 'status' => 'pending', 'gateway_code' => $code, 'requested_at' => $now, 'updated_at' => $now]);
             $sandbox = filter_var(env('ZARINPAL_SANDBOX', false), FILTER_VALIDATE_BOOL);
-            return ['redirectUrl' => ($sandbox ? 'https://sandbox.zarinpal.com' : 'https://www.zarinpal.com') . '/pg/StartPay/' . $authority];
+            return ZarinpalPaymentService::checkoutRedirect(['redirectUrl' => ($sandbox ? 'https://sandbox.zarinpal.com' : 'https://www.zarinpal.com') . '/pg/StartPay/' . $authority], 'subscription', $token);
         } catch (\Throwable$e) {
             DB::table('academy_subscription_payments')->where('subscription_payment_id', $pid)->update(['status' => 'failed', 'gateway_message' => mb_substr($e->getMessage(), 0, 500), 'updated_at' => $now]);
             throw $e;

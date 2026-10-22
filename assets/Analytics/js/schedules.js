@@ -10,7 +10,7 @@
     currentBranch = 'all',
     expanded = null,
     searchTimer = null,
-    schedulesView = 'list',
+    schedulesView = 'weekly',
     weekStart = null,
     firstScheduleWeek = null,
     lastScheduleWeek = null;
@@ -665,8 +665,11 @@
       canCancel: scheduleCancellationAllowed(item),
       canRestore: scheduleRestoreAllowed(item),
     });
-  setTimeout(() => {
-    if (document.getElementById('schedulesTable')) load(1);
+  setTimeout(async () => {
+    if (document.getElementById('schedulesTable')) {
+      await load(1);
+      window.setSchedulesView(schedulesView);
+    }
   }, 200);
   window.addEventListener('panel-organizations-changed', () => { Promise.resolve((schedulesView === 'weekly' ? loadWeeklySchedules() : load(currentPage))).catch(console.error); });
 })();

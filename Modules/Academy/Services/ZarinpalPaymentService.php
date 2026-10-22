@@ -28,7 +28,7 @@ class ZarinpalPaymentService
             $result = $this->callbackLocked($old['callback_token'], $old['authority'], 'OK');
             return ['redirectUrl' => '/analytics/admin-panel?' . http_build_query(['payment' => !empty($result['requiresReview']) ? 'review' : 'success', 'ref' => $result['referenceId'] ?? '']) . '#finance'];
         }, fn ($old) => AcademyPaymentStore::query()->where('payment_id', (int) $old['payment_id'])->where('status', '<>', 'paid')->update(['status' => 'failed']))) {
-            return $resume;
+            return self::checkoutRedirect($resume, 'invoice', (string) $pending['callback_token']);
         }
         $token = bin2hex(random_bytes(32));
         $now = date('Y-m-d H:i:s');
@@ -43,7 +43,7 @@ class ZarinpalPaymentService
             }
             AcademyPaymentStore::query()->where('payment_id', $paymentId)->update(['authority' => $authority, 'status' => 'pending', 'gateway_code' => $code, 'requested_at' => $now, 'updated_at' => $now]);
             $sandbox = filter_var(env('ZARINPAL_SANDBOX', false), FILTER_VALIDATE_BOOL);
-            return ['redirectUrl' => ($sandbox ? 'https://sandbox.zarinpal.com' : 'https://www.zarinpal.com') . '/pg/StartPay/' . $authority];
+            return self::checkoutRedirect(['redirectUrl' => ($sandbox ? 'https://sandbox.zarinpal.com' : 'https://www.zarinpal.com') . '/pg/StartPay/' . $authority], 'invoice', $token);
         } catch (\Throwable$e) {
             AcademyPaymentStore::query()->where('payment_id', $paymentId)->update(['status' => 'failed', 'gateway_message' => mb_substr($e->getMessage(), 0, 500), 'updated_at' => date('Y-m-d H:i:s')]);
             throw $e;
@@ -54,6 +54,36 @@ class ZarinpalPaymentService
     {
         $currency = DB::table('financial_system_currency')->where('currency_id', (int) ($invoice['currency_id'] ?? 0))->first();
         return self::currencyCode((string) ($currency['code'] ?? ''));
+    }
+
+    /** Start browser navigation on the same merchant domain as the callback. */
+    public static function checkoutRedirect(array $response, string $kind, string $token): array
+    {
+        $host = parse_url((string) ($response['redirectUrl'] ?? ''), PHP_URL_HOST);
+        if (!in_array($host, ['www.zarinpal.com', 'sandbox.zarinpal.com'], true)) return $response;
+        $base = rtrim((string) env('APP_URL', ''), '/');
+        if (!filter_var($base, FILTER_VALIDATE_URL) || !in_array(parse_url($base, PHP_URL_SCHEME), ['https', 'http'], true)) {
+            throw new RuntimeException('دامنه اصلی سایت برای شروع پرداخت تنظیم نشده است.', 422);
+        }
+        $response['redirectUrl'] = $base . '/academy/payments/zarinpal/continue?' . http_build_query(['kind' => $kind, 'token' => $token]);
+        return $response;
+    }
+
+    /** Read-only handoff; its unguessable token grants no settlement capability. */
+    public function checkoutGateway(string $kind, string $token): string
+    {
+        if (!in_array($kind, ['invoice', 'subscription'], true) || !preg_match('/^[a-f0-9]{64}$/D', $token)) {
+            throw new RuntimeException('پیوند پرداخت معتبر نیست.', 422);
+        }
+        $query = $kind === 'invoice' ? AcademyPaymentStore::query() : DB::table('academy_subscription_payments');
+        $payment = $query->where('callback_token', $token)->whereNull('deleted_at')->first();
+        if (!$payment || !in_array($payment['status'], ['pending', 'failed', 'canceled'], true)
+            || ($kind === 'invoice' && ($payment['gateway'] ?? '') !== 'zarinpal')
+            || !preg_match('/^[A-Za-z0-9_-]{1,256}$/D', (string) ($payment['authority'] ?? ''))) {
+            throw new RuntimeException('این پرداخت در انتظار انتقال به درگاه نیست. از بخش امور مالی دوباره اقدام کنید.', 422);
+        }
+        $host = filter_var(env('ZARINPAL_SANDBOX', false), FILTER_VALIDATE_BOOL) ? 'https://sandbox.zarinpal.com' : 'https://www.zarinpal.com';
+        return $host . '/pg/StartPay/' . rawurlencode($payment['authority']);
     }
 
     private static function currencyCode(string $code): string
