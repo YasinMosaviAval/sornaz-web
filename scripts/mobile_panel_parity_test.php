@@ -16,6 +16,7 @@ foreach ($sections as $section) {
         expectParity(\Core\router\Router::dispatch($action['method'], preg_replace('/\{\w+\}/', '1', $action['path'])) !== null, 'Unregistered mobile action: ' . $action['path']);
     }
 }
+expectParity(isset($sections['students']['actions']['user-lookup'], $sections['members']['actions']['user-lookup'], $sections['terms']['actions']['schedule-preview'], $sections['branches']['actions']['register-account'], $sections['branches']['actions']['registration-otp']), 'Recent web workflows are missing from mobile API');
 foreach (['roles', 'permissions'] as $section) {
     foreach (['create', 'update'] as $operation) {
         expectParity(in_array('panelVisible', array_column($sections[$section]['actions'][$operation]['fields'], 'key'), true), 'Missing panel visibility');
@@ -47,19 +48,15 @@ expectParity($sections['my-waiting']['access'] === 'common' && $sections['my-wai
     }
     $routes = (new ReflectionProperty(\Core\router\Router::class, 'routes'))->getValue();
     $webOnly = [
-        'AcademyBranchController::memberRegistrationForm', 'AcademyBranchController::memberRegistrationOtp', 'AcademyTermController::assignStudent', 'AcademyTermController::storeBatch', 'AcademyTermController::assignClassroom', // Website batch workflow; legacy single-term API remains compatible.
-        'AcademyTermController::updateDiscount', 'AcademyTermController::deleteDiscount', // Discount-row actions in the website's nested term tab.
+        'AcademyBranchController::memberRegistrationForm', // HTML form; native fields come from the catalog.
         'AnalyticsController::adminPanel',
         'AdminGalleryController::realtimeVersion', 'AdminSchedulingRuleController::realtimeVersion',
         'AcademyBranchController::realtimeVersion', 'AcademyBranchController::staffRealtimeVersion',
         'AcademyClassroomController::classroomsRealtimeVersion', 'AcademyClassroomController::realtimeVersion',
         'AcademyBranchOfferingController::lessonsRealtimeVersion', 'AcademyBranchOfferingController::schedulesRealtimeVersion',
         'AcademyCourseController::realtimeVersion', 'AcademyTermController::realtimeVersion',
-        'AcademyRegistrationController::createAdminBranchDialog', 'AcademyRegistrationController::sendAdminBranchOtp', 'AcademyRegistrationController::storeAdminBranch',
+        'AcademyRegistrationController::createAdminBranchDialog',
         'AdminAccountController::sendContactCode', 'AdminAccountController::verifyContactCode',
-        'SitePageContentController::savePanelGuide', // Founder-only editor in the website panel.
-        'AcademyCourseController::studentSchedulePreview', // Website-only student schedule preview.
-        'AcademyCourseController::memberUserLookup', // Website-only selection bound to the current session and organization.
     ];
     foreach ($routes as $method => $items) foreach ($items as $route) {
         if (!is_array($route->action) || !preg_match('~/((analytics|academy)/admin|analytics/personal)~', $route->uri)) continue;

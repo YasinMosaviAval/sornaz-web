@@ -522,18 +522,14 @@
     document
       .getElementById('schedulesWeeklyView')
       ?.classList.toggle('hidden', schedulesView !== 'weekly');
-    document
-      .getElementById('schedulesListViewButton')
-      ?.classList.toggle('bg-indigo-600', schedulesView === 'list');
-    document
-      .getElementById('schedulesListViewButton')
-      ?.classList.toggle('text-white', schedulesView === 'list');
-    document
-      .getElementById('schedulesWeeklyViewButton')
-      ?.classList.toggle('bg-indigo-600', schedulesView === 'weekly');
-    document
-      .getElementById('schedulesWeeklyViewButton')
-      ?.classList.toggle('text-white', schedulesView === 'weekly');
+    document.querySelectorAll('#schedules [data-schedule-view]').forEach((button) => {
+      const active = button.dataset.scheduleView === schedulesView;
+      if (active) button.setAttribute('aria-current', 'page');
+      else button.removeAttribute('aria-current');
+      ['bg-indigo-600', 'text-white'].forEach((name) => button.classList.toggle(name, active));
+      ['bg-white', 'text-gray-700', 'hover:bg-indigo-50', 'dark:bg-slate-800', 'dark:text-white']
+        .forEach((name) => button.classList.toggle(name, !active));
+    });
     if (schedulesView === 'weekly') loadWeeklySchedules();
   };
   window.changeSchedulesWeek = (offset) => {

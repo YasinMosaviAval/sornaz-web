@@ -181,6 +181,14 @@ class AdminDashboardService
             $mergeActions = array_map(fn ($r) => ['type' => 'user_merge_pending', 'requestId' => (int) $r['user_merge_id'], 'sourceUserId' => (int) $r['from_user_id'], 'targetUserId' => (int) $r['to_user_id'], 'memberId' => (int) $r['member_id'], 'targetName' => $r['target_name'], 'reason' => $r['reason'] ?: 'بدون توضیح', 'date' => $r['created_at'], 'branchId' => null], $mergeRows);
         }
 
+        $classroomActions = [];
+        $unassigned = $this->rows("SELECT t.term_id id,c.branch_id branchId,(SELECT value FROM translations WHERE table_name='academy_branch_course_terms' AND table_id=t.term_id AND field='title' AND locale='{$locale}' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1) termName,(SELECT value FROM translations WHERE table_name='academy_branch_course_terms' AND table_id=t.term_id AND field='schedule_draft' AND locale='fa' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1) draft FROM academy_branch_course_terms t JOIN academy_branch_courses c ON c.course_id=t.course_id AND c.deleted_at IS NULL WHERE t.deleted_at IS NULL AND t.status='ongoing'{$branch} AND NOT EXISTS(SELECT 1 FROM academy_branch_course_term_sessions s WHERE s.term_id=t.term_id AND s.deleted_at IS NULL AND s.classroom_id>0)");
+        foreach ($unassigned as $row) {
+            $draft = json_decode((string) ($row['draft'] ?? ''), true);
+            if (!empty($draft['classroomId'])) continue;
+            $name = $row['termName'] ?: ('ترم ' . $row['id']);
+            $classroomActions[] = ['id' => 'term-classroom-' . $row['id'], 'termId' => (int) $row['id'], 'type' => 'term_missing_classroom', 'termName' => $name, 'title' => $name, 'text' => $locale === 'en' ? 'Assign classroom: ' . $name : 'تعیین کلاس برگزاری: ' . $name, 'section' => 'terms', 'branchId' => (int) $row['branchId']];
+        }
         $absencesToday = count($todayAbsences);
         $urgent = [];
         if ($pendingPayments) {
@@ -197,7 +205,7 @@ class AdminDashboardService
             $urgent[] = ['type' => 'اعلان', 'text' => $highNotifications . ' اعلان سیستمی مهم وجود دارد', 'color' => 'red', 'section' => 'notifications', 'branchId' => null];
         }
 
-        return ['branches' => $branches, 'stats' => ['activeStudents' => $activeStudents, 'todayClasses' => $todayClasses, 'monthlyIncome' => $this->amount($monthlyIncome), 'attendanceRate' => $attendanceTotal ? round($attendancePresent * 100 / $attendanceTotal) . '%' : '۰٪', 'pendingPayments' => $pendingPayments, 'absencesToday' => $absencesToday, 'newMessages' => $newMessages, 'urgentAlerts' => count($urgent) + count($holidayConflicts) + count($pendingCancellationActions) + count($mergeActions) + count($waitingActions) + count($pendingScheduleActions), 'newStudentsWeek' => $newStudentsWeek, 'pointsAwarded' => $pointsAwarded], 'todayClasses' => $todayClassesList, 'actionItems' => array_merge($waitingActions, $pendingScheduleActions, $mergeActions, $holidayConflicts, $pendingCancellationActions), 'urgentItems' => $urgent, 'recentPayments' => $recentPayments, 'recentDeposits' => $recentDeposits, 'todayAbsences' => $todayAbsences, 'unreadMessages' => $unreadMessages, 'recentRegistrations' => $recentRegistrations, 'upcomingHolidays' => $upcomingHolidays];
+        return ['branches' => $branches, 'stats' => ['activeStudents' => $activeStudents, 'todayClasses' => $todayClasses, 'monthlyIncome' => $this->amount($monthlyIncome), 'attendanceRate' => $attendanceTotal ? round($attendancePresent * 100 / $attendanceTotal) . '%' : '۰٪', 'pendingPayments' => $pendingPayments, 'absencesToday' => $absencesToday, 'newMessages' => $newMessages, 'urgentAlerts' => count($classroomActions) + count($urgent) + count($holidayConflicts) + count($pendingCancellationActions) + count($mergeActions) + count($waitingActions) + count($pendingScheduleActions), 'newStudentsWeek' => $newStudentsWeek, 'pointsAwarded' => $pointsAwarded], 'todayClasses' => $todayClassesList, 'actionItems' => array_merge($classroomActions, $waitingActions, $pendingScheduleActions, $mergeActions, $holidayConflicts, $pendingCancellationActions), 'urgentItems' => $urgent, 'recentPayments' => $recentPayments, 'recentDeposits' => $recentDeposits, 'todayAbsences' => $todayAbsences, 'unreadMessages' => $unreadMessages, 'recentRegistrations' => $recentRegistrations, 'upcomingHolidays' => $upcomingHolidays];
     }
 
     public function approveWaiting(int $actor, int $id, array $input): array

@@ -18,17 +18,18 @@ class ZarinpalPaymentService
             throw new RuntimeException('شناسه پذیرنده زرین‌پال در تنظیمات سیستم ثبت نشده است.');
         }
         [$invoice,$installment] = $this->payable($actor, $invoiceId, $installmentId);
-        $this->validateCurrency($invoice);
+        $invoiceCurrency = $this->invoiceCurrency($invoice);
+        $currency = self::currencyCode((string) env('ZARINPAL_CURRENCY', 'IRT'));
         InvoiceLedger::snapshot($invoiceId);
-        $amount = InvoiceLedger::paymentAmount($installment['amount']);
+        $amount = self::convertAmount($installment['amount'], $invoiceCurrency, $currency);
         $pending = AcademyPaymentStore::query()->where('installment_id', $installmentId)->whereRaw("(status IN ('created','pending') OR (status IN ('failed','canceled') AND authority IS NOT NULL))")->whereNull('deleted_at')->orderBy('payment_id', 'DESC')->first();
-        if ($resume = \Modules\System\Services\PaymentMutex::reconcile($pending, $amount, fn ($authority) => $this->request('/pg/v4/payment/inquiry.json', ['merchant_id' => (string) env('ZARINPAL_MERCHANT_ID', ''), 'authority' => $authority]), function ($old) {
+        $pendingAmount = $pending ? self::convertAmount($installment['amount'], $invoiceCurrency, (string) $pending['currency']) : $amount;
+        if ($resume = \Modules\System\Services\PaymentMutex::reconcile($pending, $pendingAmount, fn ($authority) => $this->request('/pg/v4/payment/inquiry.json', ['merchant_id' => (string) env('ZARINPAL_MERCHANT_ID', ''), 'authority' => $authority]), function ($old) {
             $result = $this->callbackLocked($old['callback_token'], $old['authority'], 'OK');
             return ['redirectUrl' => '/analytics/admin-panel?' . http_build_query(['payment' => !empty($result['requiresReview']) ? 'review' : 'success', 'ref' => $result['referenceId'] ?? '']) . '#finance'];
         }, fn ($old) => AcademyPaymentStore::query()->where('payment_id', (int) $old['payment_id'])->where('status', '<>', 'paid')->update(['status' => 'failed']))) {
             return $resume;
         }
-        $currency = strtoupper((string) env('ZARINPAL_CURRENCY', 'IRT')) === 'IRR' ? 'IRR' : 'IRT';
         $token = bin2hex(random_bytes(32));
         $now = date('Y-m-d H:i:s');
         $paymentId = (int) AcademyPaymentStore::create(['invoice_id' => $invoiceId, 'installment_id' => $installmentId, 'user_id' => $actor, 'amount' => $amount, 'currency' => $currency, 'callback_token' => $token, 'status' => 'created', 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor]);
@@ -49,14 +50,33 @@ class ZarinpalPaymentService
         }
     }
 
-    private function validateCurrency(array $invoice): void
+    private function invoiceCurrency(array $invoice): string
     {
         $currency = DB::table('financial_system_currency')->where('currency_id', (int) ($invoice['currency_id'] ?? 0))->first();
-        $code = strtoupper((string) ($currency['code'] ?? ''));
-        $gateway = strtoupper((string) env('ZARINPAL_CURRENCY', 'IRT'));
-        if (!in_array($code, ['IRR', 'IRT'], true) || $code !== $gateway) {
-            throw new RuntimeException('واحد پول فاکتور با درگاه یکسان نیست؛ پرداخت ایجاد نشد.', 422);
+        return self::currencyCode((string) ($currency['code'] ?? ''));
+    }
+
+    private static function currencyCode(string $code): string
+    {
+        return match (strtoupper(trim($code))) {
+            'IRR', 'RIAL', 'ریال' => 'IRR',
+            'IRT', 'TMN', 'TOMAN', 'تومان' => 'IRT',
+            default => throw new RuntimeException('پرداخت زرین‌پال فقط برای فاکتور ریالی یا تومانی ممکن است.', 422),
+        };
+    }
+
+    /** Exact integer conversion: never round a payable amount up or down. */
+    public static function convertAmount(mixed $amount, string $from, string $to): int
+    {
+        $from = self::currencyCode($from);
+        $to = self::currencyCode($to);
+        $cents = InvoiceLedger::cents($amount);
+        $numerator = $cents * ($from === 'IRT' && $to === 'IRR' ? 10 : 1);
+        $denominator = $from === 'IRR' && $to === 'IRT' ? 1000 : 100;
+        if ($numerator < $denominator || $numerator % $denominator !== 0) {
+            throw new RuntimeException('مبلغ قسط در واحد پول درگاه باید عدد صحیح مثبت باشد؛ تبدیل بدون گردکردن ممکن نیست.', 422);
         }
+        return intdiv($numerator, $denominator);
     }
 
     public function callback(string $token, string $authority, string $status): array
@@ -81,7 +101,8 @@ class ZarinpalPaymentService
             $this->fail((int) $payment['payment_id'], 'پرداخت توسط کاربر لغو شد.');
             return ['success' => false, 'message' => 'پرداخت انجام نشد یا توسط کاربر لغو شد.'];
         }$merchant = trim((string) env('ZARINPAL_MERCHANT_ID', ''));
-        $result = $this->request('/pg/v4/payment/verify.json', ['merchant_id' => $merchant, 'amount' => (int) $payment['amount'], 'authority' => $authority]);
+        $verifyAmount = self::convertAmount($payment['amount'], (string) $payment['currency'], 'IRR');
+        $result = $this->request('/pg/v4/payment/verify.json', ['merchant_id' => $merchant, 'amount' => $verifyAmount, 'authority' => $authority]);
         $code = (int) ($result['data']['code'] ?? 0);
         if (!in_array($code, [100, 101], true) || empty($result['data']['ref_id'])) {
             $message = $this->error($result, 'تأیید پرداخت زرین‌پال ناموفق بود.');
@@ -103,7 +124,13 @@ class ZarinpalPaymentService
             } catch (RuntimeException $error) {
                 $review = true;
             }
-            if ($review || !$installment || !$invoice || (int) $installment['invoice_id'] !== (int) $payment['invoice_id'] || $installment['status'] === 'paid' || in_array($invoice['status'], ['canceled', 'cancelled', 'void'], true) || InvoiceLedger::cents($installment['amount']) !== (int) $payment['amount'] * 100) {
+            $amountMatches = false;
+            if ($installment && $invoice) {
+                try {
+                    $amountMatches = self::convertAmount($installment['amount'], $this->invoiceCurrency($invoice), (string) $payment['currency']) === (int) $payment['amount'];
+                } catch (RuntimeException $error) { $review = true; }
+            }
+            if ($review || !$installment || !$invoice || (int) $installment['invoice_id'] !== (int) $payment['invoice_id'] || $installment['status'] === 'paid' || in_array($invoice['status'], ['canceled', 'cancelled', 'void'], true) || !$amountMatches) {
                 $review = true;
                 AcademyPaymentStore::query()->where('payment_id', (int) $payment['payment_id'])->update(['gateway_message' => 'Verified payment requires manual reconciliation']);
                 return;

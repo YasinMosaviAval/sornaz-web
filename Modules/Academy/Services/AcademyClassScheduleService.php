@@ -24,7 +24,7 @@ class AcademyClassScheduleService
         $page = max(1, (int) ($f['page'] ?? 1));
         $scope = $this->organizationScope($bids, $academyIds);
         if ($teacherIds) $scope = '(' . $scope . ' OR t.term_id IN (' . implode(',', $teacherIds) . '))';
-        $where = [$scope, 's.deleted_at IS NULL', 'b.deleted_at IS NULL', 't.deleted_at IS NULL', 'c.deleted_at IS NULL'];
+        $where = [$scope, 's.classroom_id > 0', 's.deleted_at IS NULL', 'b.deleted_at IS NULL', 't.deleted_at IS NULL', 'c.deleted_at IS NULL'];
         $bind = [];
         if (!empty($f['termId'])) {
             $where[] = 't.term_id=?';

@@ -447,6 +447,15 @@ final class MobilePanelCatalog
 
     private function financeAndGuidanceContracts(array &$sections): void
     {
+        $statuses = ['draft' => 'پیش‌نویس', 'issued' => 'صادرشده', 'partial' => 'پرداخت جزئی', 'paid' => 'پرداخت‌شده', 'pending' => 'در انتظار پرداخت', 'canceled' => 'لغوشده'];
+        foreach (['finance', 'my-finance'] as $key) {
+            foreach ($sections[$key]['actions']['update']['fields'] as &$field) {
+                if ($field['key'] === 'statusCode') {
+                    $field = array_replace($field, ['type' => 'select', 'options' => $statuses, 'readOnly' => true]);
+                }
+            }
+            unset($field);
+        }
         $sections['page-guidance'] = $this->s('page-guidance', 'توضیحات صفحات', 'Page guidance', '/analytics/panel-guides', '', [], 'common', false);
         $sections['page-guidance']['actions']['save'] = $this->a('/analytics/admin-panel-guide', 'ذخیره توضیحات', 'POST', [], false) + ['access' => 'founder'];
         $sections['finance']['actions']['subscriptions'] = $this->a('/academy/admin/subscriptions', 'اشتراک‌ها', 'GET', [], false) + ['hidden' => true];
@@ -476,6 +485,24 @@ final class MobilePanelCatalog
         $this->waitingFinalizationContracts($sections);
         if ($webDialogs) $this->webDialogContracts($sections);
         $this->recentPanelContracts($sections, $webDialogs);
+        foreach (['students', 'members'] as $key) {
+            $sections[$key]['actions']['user-lookup'] = $this->a('/academy/admin/member-users/lookup', 'جستجوی کاربر موجود', 'POST', [], false) + ['en' => 'Find existing user', 'hidden' => true];
+        }
+        $sections['terms']['actions']['schedule-preview'] = $this->a('/academy/admin/terms/{id}/student-schedule-preview', 'پیش‌نمایش جلسات هنرجو', 'POST', [], true) + ['en' => 'Preview student sessions', 'hidden' => true];
+        $registrationFields = [
+            $this->f('academy_id', 'آموزشگاه', 'select', ['source' => 'academies'], true) + ['en' => 'Academy'],
+            $this->f('academy_name', 'نام شعبه', 'text', null, true) + ['en' => 'Branch name'],
+            $this->f('username', 'نام کاربری', 'text', null, true) + ['en' => 'Username'],
+            $this->f('register_method', 'روش ثبت‌نام', 'select', ['email' => 'Email', 'phone' => 'Mobile'], true) + ['en' => 'Registration method', 'default' => 'email'],
+            $this->f('email', 'ایمیل', 'email') + ['en' => 'Email', 'requiredWhen' => ['_form.register_method' => 'email']],
+            $this->f('phone', 'موبایل', 'phone') + ['en' => 'Mobile', 'requiredWhen' => ['_form.register_method' => 'phone']],
+            $this->f('password', 'رمز عبور', 'password', null, true) + ['en' => 'Password'],
+            $this->f('password2', 'تکرار رمز عبور', 'password', null, true) + ['en' => 'Confirm password'],
+            $this->f('terms', 'قوانین را می‌پذیرم', 'bool', null, true) + ['en' => 'I accept the terms'],
+            $this->f('otp', 'کد تأیید', 'text') + ['en' => 'Verification code'],
+        ];
+        $sections['branches']['actions']['register-account'] = $this->a('/academy/admin/branches/registration', 'ثبت حساب شعبه', 'POST', $registrationFields, false) + ['en' => 'Register branch account', 'formContractVersion' => 2];
+        $sections['branches']['actions']['registration-otp'] = $this->a('/academy/admin/branches/registration/send-otp', 'ارسال کد تأیید شعبه', 'POST', [], false) + ['en' => 'Send branch verification code', 'hidden' => true];
         return $sections;
     }
 
@@ -962,6 +989,11 @@ final class MobilePanelCatalog
             $this->f('organizationUserId', 'شناسه حساب آموزشگاه', 'number'),
         ]) + ['queryFields' => true, 'en' => 'Available session times', 'hidden' => true];
         $sections['schedules']['actions']['week-bounds'] = $this->a('/academy/admin/class-schedule-week-bounds', 'بازه هفتگی', 'GET', [$this->f('branch', 'شعبه', 'select', ['source' => 'branches'])], false) + ['queryFields' => true, 'en' => 'Weekly schedule bounds'];
+        $sections['schedules']['actions']['week-bounds']['hidden'] = true;
+        $sections['schedules']['actions']['cancel'] = $this->a('/academy/admin/terms/{termId}/sessions/{id}/cancel', 'لغو و جبرانی', 'POST', $sections['terms']['actions']['cancel']['fields']) + ['en' => 'Cancel and reschedule'];
+        $sections['schedules']['actions']['term-context'] = $this->a('/academy/admin/terms', 'اطلاعات ترم', 'GET', [], false) + ['hidden' => true];
+        $sections['schedules']['actions']['available-times'] = $sections['terms']['actions']['available-times'];
+        $sections['schedules']['actions']['available-times']['row'] = false;
     }
 
     private function holidayContracts(array &$sections): void

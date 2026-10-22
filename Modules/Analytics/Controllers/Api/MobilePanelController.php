@@ -103,10 +103,10 @@ final class MobilePanelController
                 $_POST = $originalPost;
                 $_REQUEST = $originalRequest;
             }
-        }, $section === 'members' && in_array($operation, ['create', 'registration-otp'], true));
+        }, $section === 'members' && in_array($operation, ['create', 'registration-otp'], true), $section === 'branches' && in_array($operation, ['register-account', 'registration-otp'], true), (in_array($section, ['members', 'students'], true) && in_array($operation, ['create', 'user-lookup'], true)) || ($section === 'terms' && $operation === 'assign-student'));
     }
 
-    private function authenticated(callable $callback, bool $staffRegistration = false)
+    private function authenticated(callable $callback, bool $staffRegistration = false, bool $branchRegistration = false, bool $memberSelection = false)
     {
         header('Cache-Control: no-store, private');
         $user = $this->tokens->userFromRequest();
@@ -114,7 +114,9 @@ final class MobilePanelController
             return $this->error(401);
         }
         $previous = $_SESSION;
+        if ($memberSelection) $_SESSION['member_user_selections'] = $previous['mobile_member_user_selections'][(int) $user['user_id']] ?? [];
         if ($staffRegistration) $_SESSION['registration_otp'] = $previous['mobile_staff_otp'][(int) $user['user_id']] ?? null;
+        if ($branchRegistration) $_SESSION['registration_otp'] = $previous['mobile_branch_otp'][(int) $user['user_id']] ?? null;
         $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
         $previousLocale = app()->getLocale();
         $_SESSION['_auth_user'] = (int) $user['user_id'];
@@ -127,7 +129,9 @@ final class MobilePanelController
         } catch (\Throwable $error) {
             return $this->error(500);
         } finally {
+            if ($memberSelection) $previous['mobile_member_user_selections'][(int) $user['user_id']] = $_SESSION['member_user_selections'] ?? [];
             if ($staffRegistration) $previous['mobile_staff_otp'][(int) $user['user_id']] = $_SESSION['registration_otp'] ?? null;
+            if ($branchRegistration) $previous['mobile_branch_otp'][(int) $user['user_id']] = $_SESSION['registration_otp'] ?? null;
             $_SESSION = $previous;
             $_SERVER['HTTP_ACCEPT'] = $accept;
             app()->setLocale($previousLocale);

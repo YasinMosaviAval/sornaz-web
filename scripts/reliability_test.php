@@ -7,7 +7,7 @@ $root=__DIR__.'/../storage/reliability-test-'.bin2hex(random_bytes(6));mkdir($ro
 function storage_path($path){return $GLOBALS['root'].'/'.$path;}
 register_shutdown_function(static function()use($root){foreach(glob($root.'/payment-locks/*.lock')as$file)unlink($file);if(is_dir($root.'/payment-locks'))rmdir($root.'/payment-locks');rmdir($root);});
 function db(){return $GLOBALS['pdo'];}
-function env($key,$default=null){return ['ZARINPAL_MERCHANT_ID'=>'fixture','APP_URL'=>'https://fixture.test','ZARINPAL_SANDBOX'=>true][$key]??$default;}
+function env($key,$default=null){return ['ZARINPAL_MERCHANT_ID'=>'fixture','APP_URL'=>'https://fixture.test','ZARINPAL_SANDBOX'=>true,'ZARINPAL_CURRENCY'=>$GLOBALS['gatewayCurrency']??'IRT'][$key]??$default;}
 function session(){return new class {public function get($key,$default=null){return $key==='suppress_database_notifications'?true:$default;}};}
 function transaction($work){db()->beginTransaction();try{$result=$work();db()->commit();return $result;}catch(Throwable$e){db()->rollBack();throw $e;}}
 function check($ok,$label){if(!$ok)throw new RuntimeException($label);$GLOBALS['checks']++;}
@@ -73,20 +73,26 @@ INSERT INTO academy_branch_course_term_invoice_installments VALUES(1,1,1,100,'pe
 CREATE TABLE financial_system_payments(payment_id INTEGER PRIMARY KEY,invoice_id INTEGER,installment_id INTEGER,payer_id INTEGER,record_type TEXT DEFAULT 'academy_term',method TEXT,paid_at TEXT,reference_code TEXT,gateway TEXT,amount INTEGER,currency TEXT,currency_id INTEGER,callback_token TEXT,status TEXT,created_at TEXT,created_by INTEGER,updated_at TEXT,updated_by INTEGER,authority TEXT,gateway_code INTEGER,requested_at TEXT,gateway_message TEXT,reference_id TEXT,card_pan TEXT,card_hash TEXT,verified_at TEXT,deleted_at TEXT);");
 $pdo->exec("ALTER TABLE academy_branch_course_term_invoices ADD COLUMN currency_id INTEGER DEFAULT 1; CREATE TABLE financial_system_currency(currency_id INTEGER,code TEXT); INSERT INTO financial_system_currency VALUES(1,'IRT');");
 $invoiceGateway=new class extends Modules\Academy\Services\ZarinpalPaymentService {
- public int $calls=0;public bool $missingRef=false;
+ public int $calls=0;public bool $missingRef=false;public array $payloads=[];
  protected function payable(int$a,int$i,int$s):array{return [DB::table('academy_branch_course_term_invoices')->where('term_invoice_id',$i)->first(),DB::table('academy_branch_course_term_invoice_installments')->where('term_invoice_installment_id',$s)->first()];}
- protected function request(string$path,array$data):array{if(str_contains($path,'inquiry'))return ['data'=>['code'=>100,'status'=>'IN_BANK']];if(str_contains($path,'request'))return ['data'=>['code'=>100,'authority'=>'INVOICE_AUTH_'.++$this->calls]];return ['data'=>['code'=>100,'ref_id'=>$this->missingRef?'':54321]];}
+ protected function request(string$path,array$data):array{$this->payloads[$path]=$data;if(str_contains($path,'inquiry'))return ['data'=>['code'=>100,'status'=>'IN_BANK']];if(str_contains($path,'request'))return ['data'=>['code'=>100,'authority'=>'INVOICE_AUTH_'.++$this->calls]];return ['data'=>['code'=>100,'ref_id'=>$this->missingRef?'':54321]];}
 };
-$pdo->exec("UPDATE financial_system_currency SET code='IRR'");
-denied(fn()=>$invoiceGateway->start(7,1,1));check($invoiceGateway->calls===0,'Currency mismatch reached gateway');
+$pdo->exec("UPDATE financial_system_currency SET code='USD'");
+denied(fn()=>$invoiceGateway->start(7,1,1));check($invoiceGateway->calls===0,'Unsupported currency reached gateway');
 $pdo->exec("UPDATE financial_system_currency SET code='IRT'");
-$url=$invoiceGateway->start(7,1,1);check($invoiceGateway->start(7,1,1)===$url&&$invoiceGateway->calls===1,'Duplicate invoice request');
+$gatewayCurrency='IRR';
+$url=$invoiceGateway->start(7,1,1);$gatewayCurrency='IRT';check($invoiceGateway->start(7,1,1)===$url&&$invoiceGateway->calls===1,'Duplicate invoice request after currency setting changed');
 $payment=DB::table('financial_system_payments')->where('payment_id',1)->first();
+check((int)$payment['amount']===1000&&$payment['currency']==='IRR','Toman invoice not converted to Rial payment');
 check($invoiceGateway->callback($payment['callback_token'],$payment['authority'],'OK')['success'],'Invoice verification');
 check(DB::table('academy_branch_course_term_invoices')->first()['status']==='partial','Partial invoice status');
 check($invoiceGateway->callback($payment['callback_token'],$payment['authority'],'NOK')['success'],'Invoice cancellation downgraded paid payment');
 $invoiceGateway->start(7,1,2);$payment=DB::table('financial_system_payments')->where('payment_id',2)->first();
 $invoiceGateway->callback($payment['callback_token'],$payment['authority'],'OK');check(DB::table('academy_branch_course_term_invoices')->first()['status']==='paid','Fully settled invoice status');
+check($invoiceGateway->payloads['/pg/v4/payment/verify.json']['amount']===1000,'Toman payment verification was not converted to Rial');
+check(Modules\Academy\Services\ZarinpalPaymentService::convertAmount('1000','IRR','IRT')===100,'Rial to Toman conversion');
+check(Modules\Academy\Services\ZarinpalPaymentService::convertAmount('1.5','IRT','IRR')===15,'Exact fractional Toman conversion');
+denied(fn()=>Modules\Academy\Services\ZarinpalPaymentService::convertAmount('15','IRR','IRT'));
 $pdo->exec("UPDATE financial_system_payments SET status='pending' WHERE payment_id=2");
 check($invoiceGateway->callback($payment['callback_token'],$payment['authority'],'OK')['requiresReview'],'Duplicate verified funds not flagged');
 check($invoiceGateway->callback($payment['callback_token'],$payment['authority'],'OK')['requiresReview'],'Replay lost reconciliation state');
@@ -148,4 +154,12 @@ check($invoiceGateway->callback($tuition['callback_token'],$tuition['authority']
 $settled=Modules\Academy\Services\AcademyPaymentStore::query()->where('payment_id',(int)$tuition['payment_id'])->first();
 check($settled['payer_id']===7 && $settled['currency_id']===1 && $settled['paid_at']!==null && $settled['reference_code']===$settled['reference_id'],'Generic receipt fields not populated');
 check(DB::table('financial_system_payments')->where('record_type','legacy')->first()['status']==='pending','Tuition callback mutated unrelated payment');
+$pdo->exec("INSERT INTO financial_system_currency VALUES(2,'IRR');
+INSERT INTO academy_branch_course_term_invoices(term_invoice_id,status,payable_amount,currency_id) VALUES(5,'issued',1000,2);
+INSERT INTO academy_branch_course_term_invoice_installments(term_invoice_installment_id,invoice_id,installment_number,amount,status) VALUES(7,5,1,1000,'pending');");
+$invoiceGateway->start(7,5,7);
+$rialPayment=Modules\Academy\Services\AcademyPaymentStore::query()->where('invoice_id',5)->first();
+check((int)$rialPayment['amount']===100&&$rialPayment['currency']==='IRT','Rial invoice request not converted to Toman');
+check($invoiceGateway->callback($rialPayment['callback_token'],$rialPayment['authority'],'OK')['success'],'Rial invoice reconciliation failed');
+check(DB::table('academy_branch_course_term_invoices')->where('term_invoice_id',5)->first()['status']==='paid','Rial invoice ledger not settled');
 echo "Reliability: $checks checks passed.\n";

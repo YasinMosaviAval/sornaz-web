@@ -752,7 +752,8 @@
       await refreshStudentsFromDatabase();
       if (assignmentId) { studentFormOptionsPromise = null; await window.loadTerms?.(); }
       closeModal();
-      alert('✅ هنرجو با موفقیت ثبت شد');
+      if (assignmentId) window.openTermClassroomAssignment?.(Number(assignmentId));
+      else alert('✅ هنرجو با موفقیت ثبت شد');
     } catch (error) {
       if (!showStudentFieldError(error)) alert(error.message || 'ثبت هنرجو ناموفق بود.');
     } finally { savingStudent = false; }

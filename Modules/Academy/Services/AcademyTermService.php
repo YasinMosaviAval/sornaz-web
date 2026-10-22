@@ -392,7 +392,8 @@ class AcademyTermService
     {
         return \Modules\System\Services\PaymentMutex::run(db(), 'schedule-write', fn () => transaction(function () use ($actor, $id, $classroomId) {
             $term = $this->authorizeTerm($actor, $id);
-            if (!in_array($term['status'], ['open', 'pending'], true)) throw new RuntimeException('تعیین کلاس فقط برای ترم باز یا در انتظار مجاز است.', 409);
+            if (!in_array($term['status'], ['open', 'pending', 'ongoing'], true)) throw new RuntimeException('تعیین کلاس برای این وضعیت ترم مجاز نیست.', 409);
+
             $texts = $this->texts(['academy_branch_course_terms' => [$id]])['academy_branch_course_terms'][$id] ?? [];
             $draft = json_decode($texts['schedule_draft'] ?? '', true);
             $course = DB::table('academy_branch_courses')->where('course_id', (int) $term['course_id'])->whereNull('deleted_at')->first();
@@ -592,7 +593,7 @@ class AcademyTermService
     private function studentScheduleContext(int $actor, int $termId): array
     {
         $term = $this->authorizeTerm($actor, $termId);
-        if ($term['status'] !== 'open') throw new RuntimeException('زمان‌بندی فقط برای ترم بازِ بدون جلسه ممکن است.');
+        if (!in_array($term['status'], ['open', 'ongoing'], true)) throw new RuntimeException('زمان‌بندی فقط برای ترم بدون جلسه ممکن است.');
         if (DB::table('academy_branch_course_term_sessions')->where('term_id', $termId)->whereNull('deleted_at')->first()) throw new RuntimeException('جلسات این ترم قبلاً زمان‌بندی شده‌اند.');
         $course = DB::table('academy_branch_courses')->where('course_id', (int) $term['course_id'])->whereNull('deleted_at')->first();
         if (!$course) throw new RuntimeException('دوره معتبر نیست.');

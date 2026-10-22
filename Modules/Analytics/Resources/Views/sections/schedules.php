@@ -17,20 +17,20 @@
             min-width: 0 !important;
         }
     </style>
+    <?php component('panel-page-tabs', [
+        'active' => 'list', 'onSelect' => 'setSchedulesView',
+        'label' => locale() === 'en' ? 'Class calendar views' : 'نمای تقویم کلاس‌ها',
+        'tabs' => [
+            'list' => ['labels' => ['نمایش لیستی', 'List view'], 'attributes' => 'id="schedulesListViewButton" data-schedule-view="list"'],
+            'weekly' => ['labels' => ['برنامه هفتگی', 'Weekly schedule'], 'attributes' => 'id="schedulesWeeklyViewButton" data-schedule-view="weekly"'],
+        ],
+    ]); ?>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-3xl font-bold">تقویم کلاس‌ها</h1>
             <p class="text-gray-500 mt-1">جلسات حضوری و آنلاین ترم‌های آموزشگاه</p>
         </div>
         <div class="flex flex-wrap gap-3">
-            <button id="schedulesListViewButton" onclick="setSchedulesView('list')"
-                    class="rounded-xl border bg-indigo-600 px-4 py-2 text-sm text-white">
-                <i class="fas fa-table ml-1"></i> نمایش لیستی
-            </button>
-            <button id="schedulesWeeklyViewButton" onclick="setSchedulesView('weekly')"
-                    class="rounded-xl border px-4 py-2 text-sm">
-                <i class="fas fa-calendar-week ml-1"></i> برنامه هفتگی
-            </button>
             <button onclick="exportSchedulesToExcel()"
                     class="border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl flex items-center gap-2">
                 <i class="fas fa-file-excel text-green-600"></i> خروجی اکسل

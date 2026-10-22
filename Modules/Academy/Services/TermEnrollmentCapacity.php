@@ -45,8 +45,8 @@ final class TermEnrollmentCapacity
         if (!$term || !in_array($term['status'], ['open', 'ongoing'], true)) return (string) ($term['status'] ?? '');
         $course = DB::table('academy_branch_courses')->where('course_id', (int) $term['course_id'])->whereNull('deleted_at')->first();
         $counts = self::counts($termId);
-        $scheduled = DB::table('academy_branch_course_term_sessions')->where('term_id', $termId)->whereNull('deleted_at')->first();
-        $status = $course && $scheduled && self::ready($course, $counts['teacher'], $counts['student']) ? 'ongoing' : 'open';
+        // Administrative enrollment status is independent of calendar readiness.
+        $status = $course && self::ready($course, $counts['teacher'], $counts['student']) ? 'ongoing' : 'open';
         if ($status !== $term['status']) DB::table('academy_branch_course_terms')->where('term_id', $termId)->update(['status' => $status, 'updated_by' => $actor]);
         return $status;
     }

@@ -88,9 +88,9 @@
                 <div class="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <button onclick="viewTerm(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
                     ${(window.canAssignTermStudent ? window.canAssignTermStudent(item) : !item.students?.length && ['open', 'pending'].includes(item.status_code)) ? `<button type="button" onclick="openTermStudentAssignment(${Number(item.id)})" class="text-indigo-600 hover:underline text-sm">${document.documentElement.lang.startsWith('en') ? 'Assign student' : 'تعیین هنرجو'}</button>` : ''}
-                    ${item.status_code === 'open' ? `<button type="button" onclick="openTermClassroomAssignment(${Number(item.id)})" class="text-indigo-600 hover:underline text-sm">${document.documentElement.lang.startsWith('en') ? 'Assign classroom' : 'تعیین کلاس'}</button>` : ''}
+                    ${item.students?.length && ['open', 'pending', 'ongoing'].includes(item.status_code) ? `<button type="button" onclick="openTermClassroomAssignment(${Number(item.id)})" class="text-indigo-600 hover:underline text-sm">${document.documentElement.lang.startsWith('en') ? 'Assign classroom' : 'تعیین کلاس'}</button>` : ''}
                     <button type="button" data-term-action="inline-edit" data-term-id="${item.id}" onclick="toggleTermInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
-                    <button type="button" data-term-action="inline-attendance" data-term-id="${item.id}" onclick="toggleTermInlineAttendance(${item.id})" class="text-emerald-600 hover:underline text-sm">حضور و غیاب</button>
+                    ${item.students?.length ? `<button type="button" data-term-action="inline-attendance" data-term-id="${item.id}" onclick="toggleTermInlineAttendance(${item.id})" class="text-emerald-600 hover:underline text-sm">حضور و غیاب</button>` : ''}
                     <button onclick="deleteTerm(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>
                 </div>
             `, attributes: ` class="py-4 px-5 text-left"` }]);
@@ -491,7 +491,7 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <button onclick="editTerm(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm">ویرایش</button>
-                            <button onclick="openTermAttendanceModal(${item.id})" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-sm">حضور و غیاب</button>
+                            ${item.students?.length ? `<button onclick="openTermAttendanceModal(${item.id})" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-sm">حضور و غیاب</button>` : ''}
                             <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                         </div>
                     </div>

@@ -163,6 +163,12 @@ namespace {
  check($_SESSION['registration_otp']===$oldOtp,'Mobile staff overwrote web OTP');
  $authMethod->invoke($panel,function(){check($_SESSION['registration_otp']['attempts']===1,'Staff OTP lost between API requests');$_SESSION['registration_otp']['attempts']=2;return true;},true);
  check($_SESSION['mobile_staff_otp'][1]['attempts']===2,'OTP attempt count was not retained');
+ $browserSelections=['browser'=>'untouched'];$_SESSION['member_user_selections']=$browserSelections;
+ $authMethod->invoke($panel,function(){check($_SESSION['member_user_selections']===[],'Mobile selection inherited browser selection');$_SESSION['member_user_selections']=['fixture'=>['actor'=>1,'organization'=>10,'user'=>7,'expires'=>time()+60]];return true;},false,false,true);
+ check($_SESSION['member_user_selections']===$browserSelections,'Mobile lookup overwrote browser selections');
+ $authMethod->invoke($panel,function(){check(isset($_SESSION['member_user_selections']['fixture']),'Mobile selection lost before enrollment');return true;},false,false,true);
+ $authMethod->invoke($panel,function(){check($_SESSION['registration_otp']===null,'Branch OTP inherited browser or staff state');$_SESSION['registration_otp']=['branch'=>'fixture'];return true;},false,true);
+ check($_SESSION['registration_otp']===$oldOtp && $_SESSION['mobile_branch_otp'][1]===['branch'=>'fixture'],'Branch OTP isolation failed');
  $users->rows[1]['password']='rotated';check(field($panel->index(),'status')===401,'Rotated bearer accepted');session_destroy();
  echo 'Native panel: '.count($sections)." sections; bearer isolation, roles, real-controller payloads and routing passed.\n";
 }

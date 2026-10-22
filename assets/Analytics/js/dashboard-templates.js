@@ -90,6 +90,10 @@
     if (!list || !list.length) return emptyState('موردی نیازمند بررسی نیست');
     return list
       .map(function (item) {
+        if (item.type === 'term_missing_classroom') {
+          const en = document.documentElement.lang.startsWith('en');
+          return `<div class="border-b p-4"><p>${escapeHtml(item.text)}</p><button type="button" class="text-indigo-600" onclick="openDashboardTermClassroom(${Number(item.termId)})">${en ? 'Assign classroom' : 'تعیین کلاس برگزاری'}</button></div>`;
+        }
         if (item.type === 'student_pending_schedule') {
           const teachers = (item.teachers || []).map((teacher) => `<option value="${Number(teacher.id)}">${escapeHtml(teacher.name)}</option>`).join('');
           const dayNames = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'];

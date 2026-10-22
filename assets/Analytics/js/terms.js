@@ -2164,9 +2164,14 @@ window.openTermStudentAssignment = async function (id) {
   } catch (error) { alert(error.message); }
 };
 
+window.openDashboardTermClassroom = async function (id) {
+  window.showSection?.('terms');
+  await window.loadTerms?.();
+  window.openTermClassroomAssignment(Number(id));
+};
 window.openTermClassroomAssignment = function (id) {
   const item = allTerms.find(row => row.id === id), course = termCourses.find(row => row.id === item?.courseId);
-  if (!item || !['open', 'pending'].includes(item.status_code) || !course) return;
+  if (!item || !item.students?.length || !['open', 'pending', 'ongoing'].includes(item.status_code) || !course) return;
   const en = document.documentElement.lang.startsWith('en');
   const host = document.getElementById('modalContainer');
   host.innerHTML = '<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"><form data-assign-term-classroom role="dialog" aria-modal="true" class="w-full max-w-lg space-y-4 rounded-3xl bg-white p-6 dark:bg-slate-900"><h2 class="text-xl font-bold"></h2><select required class="w-full rounded-2xl border p-3 dark:bg-slate-800"></select><p role="alert" class="text-sm text-red-600"></p><button type="submit" class="rounded-2xl bg-indigo-600 px-6 py-3 text-white"></button><button type="button" onclick="closeModal()" class="rounded-2xl border px-6 py-3"></button></form></div>';
@@ -2175,10 +2180,10 @@ window.openTermClassroomAssignment = function (id) {
   select.add(new Option(en ? 'Select classroom' : 'انتخاب کلاس', ''));
   termClassrooms.filter(room => course.organizationKind === 'branch' ? Number(room.branchId) === Number(course.organizationId) : Number(room.academyId) === Number(course.organizationId) || termBranches.some(org => org.kind === 'branch' && Number(org.organizationId) === Number(room.branchId) && Number(org.academyId) === Number(course.organizationId))).forEach(room => select.add(new Option(room.name, room.id)));
   select.value = String(item.classroomId || '');
-  form.querySelector('[type=submit]').textContent = en ? 'Save' : 'ذخیره'; form.querySelector('[type=button]').textContent = en ? 'Cancel' : 'انصراف';
+  form.querySelector('[type=submit]').textContent = en ? 'Save' : 'ذخیره'; form.querySelector('[type=button]').textContent = en ? 'Skip for now' : 'فعلاً رد کردن';
   form.onsubmit = async event => {
     event.preventDefault(); const button = form.querySelector('[type=submit]'); if (button.disabled) return; button.disabled = true;
-    try { await termApi(`/academy/admin/terms/${id}/classroom`, {classroomId:Number(select.value)}); await loadTerms(); closeModal(); }
+    try { await termApi(`/academy/admin/terms/${id}/classroom`, {classroomId:Number(select.value)}); await loadTerms(); closeModal(); window.refreshDashboard?.(); }
     catch (error) { form.querySelector('[role=alert]').textContent = error.message; }
     finally { if (button.isConnected) button.disabled = false; }
   };
