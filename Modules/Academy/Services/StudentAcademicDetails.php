@@ -11,12 +11,28 @@ final class StudentAcademicDetails
     {
         $tr = TranslationService::manager();
         $terms = [];
+        $students = array_values(array_filter($members, fn ($member) => ($member['type'] ?? '') === 'student'));
+        $ids = array_values(array_filter(array_unique(array_map(fn ($member) => (int) ($member['id'] ?? 0), $students))));
+        $registrations = [];
+        foreach ($ids ? DB::table('academy_branch_course_term_enrollments')->select('academy_branch_course_term_enrollments.*')->join('academy_branch_course_terms', 'academy_branch_course_terms.term_id', '=', 'academy_branch_course_term_enrollments.term_id')->whereIn('academy_branch_course_term_enrollments.member_id', $ids)->where('academy_branch_course_term_enrollments.type', 'student')->whereNull('academy_branch_course_term_enrollments.deleted_at')->whereNull('academy_branch_course_terms.deleted_at')->get() : [] as $enrollment) {
+            $registrations[(int) $enrollment['member_id']][(int) $enrollment['term_id']] = $enrollment;
+        }
         foreach ($members as &$member) {
             if (($member['type'] ?? '') !== 'student') continue;
             $termId = (int) ($member['termId'] ?? 0);
             if ($termId && !isset($terms[$termId])) $terms[$termId] = $this->term($termId);
             $details = $terms[$termId] ?? ['level' => '', 'teacher' => '', 'teacherNotes' => []];
             $member = array_replace($member, $details);
+            $member['termRegistrations'] = [];
+            foreach ($registrations[(int) ($member['id'] ?? 0)] ?? [] as $registeredTermId => $enrollment) {
+                if (!isset($terms[$registeredTermId])) $terms[$registeredTermId] = $this->term($registeredTermId);
+                $name = $tr->get('academy_branch_course_terms', $registeredTermId, 'title', 'fa') ?: ('#' . $registeredTermId);
+                $member['termRegistrations'][] = array_replace($terms[$registeredTermId], [
+                    'termId' => $registeredTermId, 'termKey' => (string) $registeredTermId,
+                    'termName' => $name, 'instrument' => $name,
+                    'enrollmentId' => (int) ($enrollment['term_enrollment_id'] ?? $enrollment['enrollment_id'] ?? 0),
+                ]);
+            }
             if (!(int) ($member['branchId'] ?? 0)) {
                 $academy = DB::table('academies')->where('user_id', (int) ($member['organizationUserId'] ?? 0))->whereNull('deleted_at')->first();
                 if ($academy) $member['branch'] = $tr->get('academies', (int) $academy['academy_id'], 'title', 'fa') ?: $tr->get('users', (int) $academy['user_id'], 'full_name', 'fa') ?: ('آموزشگاه ' . $academy['academy_id']);

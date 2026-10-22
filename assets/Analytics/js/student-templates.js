@@ -222,8 +222,8 @@
   window.getStudentRowHTML = function (item) {
     return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.name)}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `${escapeHtml(item.instrument)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.level)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.teacher)}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.branch)}`, attributes: ` class="py-4 px-5"` }, { html: `
                 <div class="inline-flex flex-nowrap items-center gap-3 whitespace-nowrap">
-                    <button onclick="viewStudent(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
-                    <button onclick="toggleStudentInlineEdit(${item.id})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
+                    <button onclick="viewStudent(${item.id},${Number(item.termId || 0)})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
+                    <button onclick="toggleStudentInlineEdit(${item.id},${Number(item.termId || 0)})" class="text-gray-500 hover:text-indigo-600 text-sm">ویرایش</button>
                     <button onclick="deleteStudent(${item.id})" class="text-red-500 hover:text-red-700 text-sm">حذف</button>
                 </div>
             `, attributes: ` class="py-4 px-5 text-left"` }]);
@@ -241,10 +241,10 @@
 
   window.getStudentInlineEditRowHTML = function (item) {
     return `<div class="space-y-6">
-            ${formFields(item, 'inlineStu' + item.id)}
+            ${formFields(item, 'inlineStu' + (window.studentRowSuffix ? window.studentRowSuffix(item) : item.id))}
             <div class="flex flex-col sm:flex-row gap-4 pt-2">
-                <button onclick="saveInlineStudent(${item.id})" class="w-full sm:w-auto min-w-[140px] bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-4 rounded-2xl font-medium">ذخیره</button>
-                <button onclick="toggleStudentInlineEdit(${item.id})" class="w-full sm:w-auto min-w-[140px] border border-gray-300 px-5 py-4 rounded-2xl hover:bg-gray-50">انصراف</button>
+                <button onclick="saveInlineStudent(${item.id},${Number(item.termId || 0)})" class="w-full sm:w-auto min-w-[140px] bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-4 rounded-2xl font-medium">ذخیره</button>
+                <button onclick="toggleStudentInlineEdit(${item.id},${Number(item.termId || 0)})" class="w-full sm:w-auto min-w-[140px] border border-gray-300 px-5 py-4 rounded-2xl hover:bg-gray-50">انصراف</button>
             </div>
         </div>`;
   };
@@ -278,7 +278,7 @@
                 <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto">
                     ${formFields(item, 'editStu')}
                     <div class="flex gap-4 pt-4">
-                        <button onclick="saveEditedStudent(${item.id})" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-medium">ذخیره تغییرات</button>
+                        <button onclick="saveEditedStudent(${item.id},${Number(item.termId || 0)})" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-medium">ذخیره تغییرات</button>
                         <button onclick="closeModal()" class="flex-1 border border-gray-300 py-4 rounded-2xl hover:bg-gray-50">انصراف</button>
                     </div>
                 </div>
@@ -306,7 +306,7 @@
                         <p class="text-sm text-gray-500 mt-1">کد هنرجو: #${item.id}</p>
                     </div>
                     <div class="flex items-center gap-3">
-                        <button onclick="editStudent(${item.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm">ویرایش</button>
+                        <button onclick="editStudent(${item.id},${Number(item.termId || 0)})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm">ویرایش</button>
                         <button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-gray-500">×</button>
                     </div>
                 </div>

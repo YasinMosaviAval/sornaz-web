@@ -10,7 +10,8 @@ class AdminNotificationService
     public function all(int $recipientId): array
     {
         $rows = DB::table('user_messages')->where('receiver_user_id', $recipientId)->where('type', 'notification')->whereNull('deleted_at')->orderBy('user_message_id', 'DESC')->limit(1000)->get();
-        return array_map(fn (array $row) => $this->map($row), $rows);
+        $technical = \Modules\System\Services\SiteAdminAccess::allows(auth()->user());
+        return array_map(fn (array $row) => $this->map($row, $technical), $rows);
     }
 
     public function create(int $actor, array $data): int
@@ -115,13 +116,14 @@ class AdminNotificationService
         return (string) ($name['value'] ?? $user['username'] ?? '');
     }
 
-    private function map(array $row): array
+    private function map(array $row, bool $technical = false): array
     {
         $texts = [];
         foreach (DB::table('translations')->where('table_name', 'user_messages')->where('table_id', (int) $row['user_message_id'])->where('locale', locale())->whereIn('field', ['title', 'message', 'audience', 'priority', 'event_operation'])->whereNull('deleted_at')->get() as $translation) {
             $texts[(string) $translation['field']] = (string) $translation['value'];
         }
-        $description = \Core\database\ActivityText::legacy(db(), $row, $texts['title'] ?? '', $texts['message'] ?? '', locale());
+        $row['event_operation'] = $texts['event_operation'] ?? '';
+        $description = \Core\database\ActivityText::legacy(db(), $row, $texts['title'] ?? '', $texts['message'] ?? '', locale(), $technical);
         $sender = $this->senderName((int) ($row['sender_id'] ?? 0));
         $recipient = DB::table('users')->where('user_id', (int) ($row['receiver_user_id'] ?? 0))->whereNull('deleted_at')->first();
         $event = $this->eventContext($row, $texts, $recipient, $description);
@@ -131,7 +133,7 @@ class AdminNotificationService
             'branchId' => 0, 'branchName' => $sender, ...$event,
             'statusCode' => $status, 'status' => $this->statusLabel($status), 'readStatus' => $row['is_read'] ? 'خوانده‌شده' : 'خوانده‌نشده',
             'date' => date('Y/m/d', strtotime($row['created_at'])), 'dateISO' => date('Y-m-d', strtotime($row['created_at'])),
-            'source' => 'سیستم', 'type' => $row['type'], 'entityType' => $row['related_entity_type'], 'entityId' => $row['related_entity_id'],
+            'source' => 'سیستم', 'type' => $row['type'], 'entityType' => $technical ? $row['related_entity_type'] : '', 'entityId' => $technical ? $row['related_entity_id'] : null,
         ];
     }
 
@@ -143,8 +145,7 @@ class AdminNotificationService
         if (!in_array($priorityCode, ['high', 'normal', 'low'], true)) $priorityCode = \Core\database\NotificationMetadata::priority((string) ($row['related_entity_type'] ?? ''), $operation);
         $priority = ['high' => 'بالا', 'normal' => 'متوسط', 'low' => 'کم'][$priorityCode];
         $audience = $recipient ? $this->senderName((int) $row['receiver_user_id']) : (locale() === 'en' ? 'Recipient' : 'کاربر دریافت‌کننده');
-        $activity = $operation && ($row['related_entity_type'] ?? '') !== 'admin_notification'
-            ? \Core\database\ActivityText::describe((string) $row['related_entity_type'], $operation, [], locale())['title'] : $description['title'];
+        $activity = $description['title'];
         return ['audience' => $audience, 'audienceGroup' => $texts['audience'] ?? '', 'activityTitle' => $activity, 'priorityCode' => $priorityCode, 'priority' => $priority];
     }
 

@@ -415,7 +415,8 @@
           'py-3',
           'transition'
         );
-        if (index === 0) button.classList.add('admin-ui-primary-action');
+        const isExport = /^\s*export/i.test(button.getAttribute('onclick') || '');
+        button.classList.toggle('admin-ui-primary-action', index === 0 && !isExport);
       });
     section
       .querySelectorAll('.admin-ui-organization-tabs button')

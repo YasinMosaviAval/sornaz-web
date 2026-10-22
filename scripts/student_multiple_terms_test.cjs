@@ -31,6 +31,13 @@ $before=(int)$pdo->query('SELECT COUNT(*) FROM academy_branch_course_term_invoic
 denied(fn()=>$scheduleService->assignStudent(10,$third,$repeat));check((int)$pdo->query('SELECT COUNT(*) FROM academy_branch_course_term_invoices')->fetchColumn()===$before,'Same-term duplicate creates no invoice');
 denied(fn()=>$scheduleService->assignStudent(20,$result['ids'][11],$repeat));
 $forged=$repeat;$forged['existingUserToken']='invalid';denied(fn()=>$scheduleService->assignStudent(10,$result['ids'][11],$forged));
+
+$academicView=(new Modules\Academy\Services\StudentAcademicDetails())->enrich([['id'=>$mid,'type'=>'student','termId'=>$third,'organizationUserId'=>10,'branchId'=>0]])[0];
+$visibleTermIds=array_column($academicView['termRegistrations'],'termId');
+check(in_array($first,$visibleTermIds,true)&&in_array($second,$visibleTermIds,true)&&in_array($third,$visibleTermIds,true),'Student payload retains each registered term instead of only the latest');
+check(count($visibleTermIds)===count(array_unique($visibleTermIds)),'One registration entry per student and term');
+check($academicView['termId']===$third,'Legacy member term stays backward compatible');
+
 echo "Student multiple terms: membership/role/lesson reuse, repeated enrollments, student-only overlap, adjacent sessions, invoice rollback, duplicate and tenant/token guards passed.\n";
 `;
 const result=spawnSync('php',[],{input:base.replace('echo "Student scheduling:',extra+'\necho "Student scheduling:'),encoding:'utf8'});

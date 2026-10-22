@@ -815,6 +815,8 @@ window.renderTermsTable = async function (list) {
           'در حال برگزاری': 'bg-gray-100 text-gray-700',
           'پایان یافته': 'bg-red-100 text-red-700',
           'در انتظار تأیید': 'bg-yellow-100 text-yellow-700',
+          'لغو شده': 'bg-red-100 text-red-700',
+          'تعلیق شده': 'bg-amber-100 text-amber-700',
         }[item.status] || 'bg-gray-100 text-gray-600';
 
       const tr = window.AdminPanelTable.createRow();
@@ -1273,6 +1275,7 @@ window.loadTerms = async function () {
   window.termDiscounts = data.discounts || [];
   window.termMembers = data.members || [];
   window.termPermissions = data.permissions || {};
+  window.termStatusOptions = data.statusOptions || window.termStatusOptions;
   window.allBranches = termBranches;
   allTermCurrencies = termCurrencies;
   allTermCourseOptions = termCourses;
@@ -2365,13 +2368,26 @@ window.toggleTermInlineEdit = async function (id) {
   renderTermsTable(filteredTerms);
 };
 window.cycleTermStatus = async function (id) {
+  const item = allTerms.find(row => row.id === id);
+  if (!item || window.termPermissions?.isReceptionist) return;
   closeTermInlineEdit();
+  const en = document.documentElement.lang.startsWith('en');
+  const labels = en ? {pending:'Pending approval',open:'Open',ongoing:'Ongoing',finished:'Finished',canceled:'Canceled',suspended:'Suspended'} : (window.termStatusOptions || {pending:'در انتظار تأیید',open:'باز',ongoing:'در حال برگزاری',finished:'پایان یافته',canceled:'لغو شده',suspended:'تعلیق شده'});
+  const terminal = ['finished','canceled'].includes(item.status_code);
+  const options = Object.entries(labels).filter(([status]) => !terminal || status === item.status_code).map(([value,label]) => `<option value="${value}" ${value === item.status_code ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('');
+  document.getElementById('modalContainer').innerHTML = `<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"><div role="dialog" aria-modal="true" class="w-full max-w-lg rounded-3xl bg-white p-6 dark:bg-slate-900"><h2 class="text-xl font-bold">${en ? 'Change term status' : 'تغییر وضعیت ترم'}</h2><p class="my-4 text-sm text-gray-500">${en ? 'Cancellation ends an unfinished term. Suspension pauses it until classes can resume. Existing records and invoices are preserved.' : 'لغو، ترم ناتمام را متوقف می‌کند. تعلیق برای توقف موقت تا زمان ادامهٔ برگزاری است. سوابق جلسات و فاکتورها حفظ می‌شوند.'}</p><select id="termStatusChoice" class="w-full rounded-xl border p-3">${options}</select><div class="mt-5 flex gap-3"><button type="button" onclick="saveTermStatus(${Number(id)},this)" class="rounded-xl bg-indigo-600 px-5 py-3 text-white">${en ? 'Save status' : 'ثبت وضعیت'}</button><button type="button" onclick="closeModal()" class="rounded-xl border px-5 py-3">${en ? 'Close' : 'بستن'}</button></div><p data-term-status-error role="alert" class="mt-3 text-sm text-red-600"></p></div></div>`;
+};
+window.saveTermStatus = async function (id, button) {
+  const item = allTerms.find(row => row.id === id), status = document.getElementById('termStatusChoice')?.value;
+  if (!item || !status || button.disabled) return;
+  button.disabled = true;
   try {
-    await termApi('/academy/admin/terms/' + id + '/status', {});
+    await termApi('/academy/admin/terms/' + id + '/set-status', {status, fromStatus:item.status_code});
     await loadTerms();
-  } catch (e) {
-    alert(e.message);
-  }
+    closeModal();
+  } catch (error) {
+    document.querySelector('[data-term-status-error]').textContent = error.message;
+  } finally { button.disabled = false; }
 };
 
 window.saveInlineTerm = async function (id) {

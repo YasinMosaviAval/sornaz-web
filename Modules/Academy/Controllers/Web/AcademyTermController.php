@@ -17,7 +17,7 @@ class AcademyTermController
         return $this->run(function () {
             $actor = (int) auth()->id();
             $data = $this->service->bootstrap($actor);
-            $statusLabels = ['pending' => 'در انتظار تأیید', 'open' => 'باز', 'ongoing' => 'در حال برگزاری', 'finished' => 'پایان یافته'];
+            $statusLabels = AcademyTermService::STATUS_LABELS;
             foreach ($data['terms'] as &$term) {
                 $term['status'] = $statusLabels[$term['status_code'] ?? ''] ?? $term['status'];
             }
@@ -130,6 +130,14 @@ class AcademyTermController
         });
     }
 
+    public function setStatus(int $id)
+    {
+        return $this->run(function () use ($id) {
+            $payload = $this->payload();
+            return ['success' => true, 'data' => $this->service->changeStatus((int) auth()->id(), $id, (string) ($payload['status'] ?? ''), isset($payload['fromStatus']) ? (string) $payload['fromStatus'] : null)];
+        });
+    }
+
     public function cycleStatus(int $id)
     {
         return $this->run(function () use ($id) {
@@ -137,7 +145,9 @@ class AcademyTermController
             if ($this->isReceptionist($actor)) {
                 throw new RuntimeException('کاربر پذیرش مجوز تغییر وضعیت ترم را ندارد.');
             }
-            return ['success' => true, 'data' => $this->service->cycleStatus($actor, $id)];
+            $payload = request()->input('payload_b64', '') !== '' ? $this->payload() : [];
+            $result = array_key_exists('status', $payload) ? $this->service->changeStatus($actor, $id, (string) $payload['status'], isset($payload['fromStatus']) ? (string) $payload['fromStatus'] : null) : $this->service->cycleStatus($actor, $id);
+            return ['success' => true, 'data' => $result];
         });
     }
 

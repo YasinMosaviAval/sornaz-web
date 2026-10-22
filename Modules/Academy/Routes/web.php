@@ -127,6 +127,7 @@ Router::post('/academy/admin/terms/{id}/classroom', [AcademyTermController::clas
 Router::post('/academy/admin/terms/{id}/student', [AcademyTermController::class, 'assignStudent'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/terms/{id}/update', [AcademyTermController::class, 'update'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/terms/{id}/status', [AcademyTermController::class, 'cycleStatus'])->middleware(['academy-panel', 'csrf']);
+Router::post('/academy/admin/terms/{id}/set-status', [AcademyTermController::class, 'setStatus'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/terms/{id}/sessions/{sessionId}/cancel', [AcademyTermController::class, 'cancelSession'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/terms/{id}/sessions/{sessionId}/cancel/approve', [AcademyTermController::class, 'approveSessionCancellation'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/terms/{id}/sessions/{sessionId}/cancel/reject', [AcademyTermController::class, 'rejectSessionCancellation'])->middleware(['academy-panel', 'csrf']);

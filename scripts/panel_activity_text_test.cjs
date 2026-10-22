@@ -35,6 +35,28 @@ check(Core\database\NotificationMetadata::priority('lessons','delete')==='high',
 check(Core\database\NotificationMetadata::operation('', 'lessons', 'Removed lesson')==='delete','Legacy descriptions recover real operations');
 check($pdo->query("SELECT value FROM translations WHERE field='event_operation' LIMIT 1")->fetchColumn()==='insert','Operation snapshot stored');
 check($pdo->query("SELECT value FROM translations WHERE field='priority' LIMIT 1")->fetchColumn()==='low','Priority snapshot stored');
+check(Core\database\ActivityText::describe('f_media_files','insert',['collection'=>'cover'],'fa')['title']==='ایجاد عکس کاور','Physical media tables resolve to specific cover actions');
+check(Core\database\ActivityText::describe('users','insert',['type'=>'branch'],'en')['title']==='Created branch account','Branch account creation stays explicit');
+check(Core\database\ActivityText::describe('users','update',['avatar_file_id'=>9],'en')['title']==='Updated profile photo','Profile photo changes are explicit');
+check(Core\database\ActivityText::action('user_sessions.insert','en')==='Signed in to the site','Session creation describes sign-in');
+check(Core\database\ActivityText::point(['action'=>'media_files.insert','metadata'=>json_encode(['activity'=>['en'=>['title'=>'Created cover photo']]])],'en')==='Created cover photo','Points preserve historical media context');
+$pdo->exec("INSERT INTO user_messages(user_message_id,sender_id,receiver_user_id,type,status,related_entity_type,related_entity_id,is_read,created_at) VALUES(100,2,2,'notification','published','users',2,0,'2026-10-22 18:00:00')");
+$legacyTexts=['fa'=>['title'=>'ویرایش اطلاعات در users','message'=>'UPDATE users SET avatar_file_id=9, updated_by=2'], 'en'=>['title'=>'Data update in users','message'=>'UPDATE users SET avatar_file_id=9, updated_by=2']];
+$insertLegacy=$pdo->prepare("INSERT INTO translations(table_name,table_id,field,locale,value) VALUES('user_messages',100,?,?,?)");
+foreach($legacyTexts as $lang=>$fields)foreach($fields as $field=>$value)$insertLegacy->execute([$field,$lang,$value]);
+foreach(['fa','en'] as $lang){
+ $GLOBALS['language']=$lang;$GLOBALS['actor']=2;
+ $publicNotice=$service->all(2)[0];
+ check(!str_contains($publicNotice['body'],'avatar_file_id')&&!str_contains($publicNotice['body'],'UPDATE users')&&!str_contains($publicNotice['body'],'updated_by'),'Ordinary recipients never receive database descriptions');
+ check(str_contains($publicNotice['body'],'2026/10/22 18:00'),'Public description includes the original event time');
+ check($publicNotice['entityType']===''&&$publicNotice['entityId']===null,'Technical identifiers omitted from ordinary API response');
+ check($publicNotice['title']===$publicNotice['activityTitle'],'Table action retains the specific notification title');
+ $GLOBALS['actor']=1;$adminNotice=$service->all(2)[0];
+ check(str_contains($adminNotice['body'],'UPDATE users SET avatar_file_id=9, updated_by=2')&&str_contains($adminNotice['body'],'2026/10/22 18:00'),'Site admin receives readable history and original technical details');
+ check($adminNotice['entityType']==='users','Site admin retains technical identifiers');
+}
+$GLOBALS['actor']=2;$GLOBALS['language']='fa';
+$pdo->exec('DELETE FROM translations WHERE table_id=100');$pdo->exec('DELETE FROM user_messages WHERE user_message_id=100');
 $GLOBALS['language']='en';check($service->all(2)[0]['title']==='Created 2% discount for educational terms','English activity description');
 $legacy=Core\database\ActivityText::legacy($pdo,['related_entity_type'=>'financial_system_discounts'],'Data insert in financial_system_discounts','old','en');
 check($legacy['title']==='Created discount for educational terms','Old descriptions are readable without inventing historical values');

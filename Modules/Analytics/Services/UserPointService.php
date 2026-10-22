@@ -30,10 +30,13 @@ final class UserPointService
 
     private function pointHistory(PDO $pdo, int $actor, bool $fullHistory): array
     {
-        $query = $pdo->prepare("SELECT user_point_id,type,points,action,rule_id,reference_type,reference_id,created_at,updated_at FROM user_points WHERE user_id=? AND deleted_at IS NULL ORDER BY user_point_id DESC" . ($fullHistory ? '' : ' LIMIT 15'));
+        $query = $pdo->prepare("SELECT * FROM user_points WHERE user_id=? AND deleted_at IS NULL ORDER BY user_point_id DESC" . ($fullHistory ? '' : ' LIMIT 15'));
         $query->execute([$actor]);
         $history = $query->fetchAll(PDO::FETCH_ASSOC);
-        if ($fullHistory) foreach ($history as &$point) $point['action'] = \Core\database\ActivityText::action((string) $point['action'], locale());
+        if ($fullHistory) foreach ($history as &$point) $point['action'] = \Core\database\ActivityText::point($point, locale());
+        unset($point);
+        $publicFields = array_flip(['user_point_id','type','points','action','rule_id','reference_type','reference_id','created_at','updated_at']);
+        foreach ($history as &$point) $point = array_intersect_key($point, $publicFields);
         unset($point);
         return $history;
     }
@@ -102,7 +105,7 @@ final class UserPointService
             return;
         }
         $recipient = self::recipient($pdo, $data, $actor);
-        self::award($pdo, $recipient, 'database', $table . '.' . $operation, $table, $entityId, (string) ($entityId ?? ''));
+        self::award($pdo, $recipient, 'database', $table . '.' . $operation, $table, $entityId, (string) ($entityId ?? ''), ['fa' => \Core\database\ActivityText::describe($table, $operation, $data, 'fa'), 'en' => \Core\database\ActivityText::describe($table, $operation, $data, 'en')]);
     }
 
     public static function recordTrackingEvents(PDO $pdo, ?int $userId, array $events, int $pageViewId): void
@@ -131,7 +134,7 @@ final class UserPointService
         self::award($pdo, $userId, 'database', $action, $referenceType, $referenceId, $eventKey ?: $referenceType . ':' . $referenceId);
     }
 
-    private static function award(PDO $pdo, int $userId, string $source, string $action, string $referenceType, ?int $referenceId, string $eventKey): void
+    private static function award(PDO $pdo, int $userId, string $source, string $action, string $referenceType, ?int $referenceId, string $eventKey, array $activity = []): void
     {
         $scope = self::userScope($pdo, $userId);
         $sql = "SELECT * FROM user_point_rules WHERE source=? AND action=? AND status='active' AND deleted_at IS NULL AND (academy_id IS NULL OR academy_id=?) AND (branch_id IS NULL OR branch_id=?)";
@@ -158,7 +161,7 @@ final class UserPointService
             }$bucket = $r['repeat_mode'] === 'once' ? 'once' : ($r['repeat_mode'] === 'daily' ? $today : ($eventKey ?: uniqid('', true)));
             $key = hash('sha256', implode('|', [$rid, $userId, $bucket, $referenceType, $referenceId]));
             $ins = $pdo->prepare("INSERT IGNORE INTO user_points (user_id,type,points,action,reference_type,reference_id,rule_id,award_key,metadata,created_at,created_by,updated_at,updated_by,approved_at,approved_by) VALUES (?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?,NOW(),?)");
-            $ins->execute([$userId, $r['point_type'], (int) $r['points'], $r['action'], $referenceType, $referenceId, $rid, $key, json_encode(['source' => $source, 'event_key' => $eventKey], JSON_UNESCAPED_UNICODE), $userId, $userId, $userId]);
+            $ins->execute([$userId, $r['point_type'], (int) $r['points'], $r['action'], $referenceType, $referenceId, $rid, $key, json_encode(['source' => $source, 'event_key' => $eventKey, 'activity' => $activity], JSON_UNESCAPED_UNICODE), $userId, $userId, $userId]);
         }
     }
 

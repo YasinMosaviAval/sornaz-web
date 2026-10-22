@@ -5,6 +5,7 @@
     <script src="/assets/theme/csrf.js?v=1"></script>
     <script defer src="/assets/System/js/registration.js?v=<?= filemtime(base_path('assets/System/js/registration.js')) ?: 1 ?>"></script>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/jpeg" href="/assets/images/logo/cropped-favicon_512x512.jpg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e(trans('admin.meta.title','پنل کاربری سرناز')) ?></title>
     <script>(function(){const r=document.documentElement;r.dataset.theme=localStorage.getItem('sornaz.theme')||'indigo';r.dataset.mode=localStorage.getItem('sornaz.mode')||'light';})();</script>

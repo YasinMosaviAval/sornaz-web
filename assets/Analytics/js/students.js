@@ -231,7 +231,14 @@
     return year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
   }
 
+  window.studentRowKey = item => String(item.id) + ':' + String(item.termId || 0);
+  window.studentRowSuffix = item => String(item.id) + (item.termId ? '_' + item.termId : '');
+  window.expandStudentRegistrations = members => [...new Map(members.filter(item => item.type === 'student').flatMap(item => {
+    const registrations = item.termRegistrations || [];
+    return registrations.length ? registrations.map(registration => ({...item, ...registration, id: item.id})) : [item];
+  }).map(item => [window.studentRowKey(item), item])).values()];
   let allStudents = [];
+  const findStudent = (id, termId) => allStudents.find(item => item.id === id && (termId == null || Number(item.termId || 0) === Number(termId)));
   /* Legacy random fixtures removed: students are hydrated from academy-data-loaded. */
   (function buildSample() {
     return;
@@ -285,9 +292,7 @@
     }
   })();
   window.addEventListener('academy-data-loaded', function (event) {
-    allStudents = (event.detail.members || []).filter(function (item) {
-      return item.type === 'student';
-    });
+    allStudents = window.expandStudentRegistrations(event.detail.members || []);
     filteredStudents = allStudents.slice();
     if (document.getElementById('studentsTable')) {
       window.renderStudentBranchTabs();
@@ -319,7 +324,7 @@
   async function refreshStudentsFromDatabase() {
     const data = await fetchStudentRealtime('/academy/admin/members/data');
     editingStudentRowId = null;
-    allStudents = (data.members || []).filter((item) => item.type === 'student');
+    allStudents = window.expandStudentRegistrations(data.members || []);
     filteredStudents = allStudents.slice();
     if (document.getElementById('studentsTable')) {
       window.renderStudentBranchTabs();
@@ -517,7 +522,7 @@
         tr.className = 'hover:bg-gray-50 transition';
         tr.innerHTML = window.getStudentRowHTML ? window.getStudentRowHTML(item) : '';
         tbody.appendChild(tr);
-        if (editingStudentRowId === item.id) {
+        if (editingStudentRowId === window.studentRowKey(item)) {
           const expand = window.AdminPanelTable.createRow();
           expand.className = 'bg-gray-50 student-inline-expand';
           expand.innerHTML = window.getStudentInlineExpandRowHTML
@@ -761,20 +766,16 @@
     } finally { savingStudent = false; }
   };
 
-  window.viewStudent = async function (id) {
-    const item = allStudents.find(function (x) {
-      return x.id === id;
-    });
+  window.viewStudent = async function (id, termId) {
+    const item = findStudent(id, termId);
     if (!item) return;
     document.getElementById('modalContainer').innerHTML = window.getStudentDetailsModalHTML
       ? window.getStudentDetailsModalHTML(item)
       : '';
   };
 
-  window.editStudent = async function (id) {
-    const item = allStudents.find(function (x) {
-      return x.id === id;
-    });
+  window.editStudent = async function (id, termId) {
+    const item = findStudent(id, termId);
     if (!item) return;
     try {
       await window.ensureStudentFormOptions();
@@ -786,11 +787,11 @@
       : '';
   };
 
-  async function persistStudentEdit(id, prefix, inline) {
+  async function persistStudentEdit(id, prefix, inline, termId) {
     if (savingStudent) return;
     const data = readStudentForm(prefix);
     if (!validateStudentData(data)) return;
-    const index = allStudents.findIndex(item => item.id === id);
+    const index = allStudents.indexOf(findStudent(id, termId));
     if (index < 0) return;
     savingStudent = true;
     try {
@@ -806,19 +807,22 @@
       if (!showStudentFieldError(error)) alert(error.message || 'ذخیره تغییرات هنرجو ناموفق بود.');
     } finally { savingStudent = false; }
   }
-  window.saveEditedStudent = id => persistStudentEdit(id, 'editStu', false);
-  window.toggleStudentInlineEdit = async function (id) {
-    if (editingStudentRowId !== id)
+  window.saveEditedStudent = (id, termId) => persistStudentEdit(id, 'editStu', false, termId);
+  window.toggleStudentInlineEdit = async function (id, termId) {
+    const item = findStudent(id, termId);
+    if (!item) return;
+    const key = window.studentRowKey(item);
+    if (editingStudentRowId !== key)
       try {
         await window.ensureStudentFormOptions();
       } catch (e) {
         return alert('دریافت اطلاعات ترم‌ها ناموفق بود.');
       }
-    editingStudentRowId = editingStudentRowId === id ? null : id;
+    editingStudentRowId = editingStudentRowId === key ? null : key;
     window.renderStudentsTable(filteredStudents);
   };
 
-  window.saveInlineStudent = id => persistStudentEdit(id, 'inlineStu' + id, true);
+  window.saveInlineStudent = (id, termId) => { const item = findStudent(id, termId); if (item) return persistStudentEdit(id, 'inlineStu' + window.studentRowSuffix(item), true, termId); };
 
   window.deleteStudent = async function (id) {
     if (!(await AppDialog.confirmDelete(allStudents, id, 'هنرجو'))) return;

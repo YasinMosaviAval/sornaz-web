@@ -8,6 +8,46 @@
   const titleNode = guide => guide?.querySelector('[data-guide-title],summary > span');
   const bodyNode = guide => guide?.querySelector('[data-guide-paragraphs],summary + div');
 
+  const guideAnimations = new WeakMap();
+  document.addEventListener('click', event => {
+    const summary = event.target.closest?.('.panel-page-guide > summary');
+    if (!summary || event.defaultPrevented) return;
+    const guide = summary.parentElement, body = bodyNode(guide);
+    if (!body) return;
+    if (!guide.animate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      summary.setAttribute('aria-expanded', String(!guide.open));
+      return;
+    }
+    event.preventDefault();
+    const previous = guideAnimations.get(guide);
+    const opening = !(previous ? previous.opening : guide.open);
+    const start = guide.getBoundingClientRect().height;
+    previous?.height.cancel();
+    previous?.content.cancel();
+    guide.open = true;
+    const end = opening ? guide.getBoundingClientRect().height : summary.getBoundingClientRect().height +
+      parseFloat(getComputedStyle(guide).borderTopWidth || 0) + parseFloat(getComputedStyle(guide).borderBottomWidth || 0);
+    guide.style.overflow = 'hidden';
+    const height = guide.animate([{height: start + 'px', boxSizing: 'border-box'}, {height: end + 'px', boxSizing: 'border-box'}], {
+      duration: 290, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'both'
+    });
+    const content = body.animate([
+      {opacity: opening ? 0 : 1, transform: opening ? 'translateY(-6px)' : 'translateY(0)'},
+      {opacity: opening ? 1 : 0, transform: opening ? 'translateY(0)' : 'translateY(-6px)'}
+    ], {duration: 225, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'both'});
+    const state = {opening, height, content};
+    guideAnimations.set(guide, state);
+    summary.setAttribute('aria-expanded', String(opening));
+    height.finished.then(() => {
+      if (guideAnimations.get(guide) !== state) return;
+      guide.open = opening;
+      height.cancel();
+      content.cancel();
+      guide.style.removeProperty('overflow');
+      guideAnimations.delete(guide);
+    }).catch(() => {});
+  });
+
   async function request(url, data) {
     const options = { credentials: 'same-origin', headers: { Accept: 'application/json' } };
     if (data) {

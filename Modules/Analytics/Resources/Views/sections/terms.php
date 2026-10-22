@@ -67,6 +67,8 @@
                 <option value="در انتظار تأیید">در انتظار تأیید</option>
                 <option value="پایان یافته">پایان یافته</option>
                 <option value="باز">باز</option>
+                <option value="لغو شده">لغو شده</option>
+                <option value="تعلیق شده">تعلیق شده</option>
                 </select>
             </div>
             <div>

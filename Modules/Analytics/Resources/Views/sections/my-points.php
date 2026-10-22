@@ -12,7 +12,7 @@ foreach ($personalPoints as $index => $point) {
     $cells = [['value' => (string) ($index + 1), 'attributes' => 'class="py-4 px-5"']];
     foreach ($pointFields as $field => $labels) {
         $value = (string) ($point[$field] ?? '—');
-        if ($field === 'action') $value = \Core\database\ActivityText::action($value, locale());
+        if ($field === 'action') $value = \Core\database\ActivityText::point($point, locale());
         if ($field === 'type') $value = $pointText(
             in_array($value, ['professional','specialized'], true) ? 'حرفه‌ای' : 'عمومی',
             in_array($value, ['professional','specialized'], true) ? 'Professional' : 'General');

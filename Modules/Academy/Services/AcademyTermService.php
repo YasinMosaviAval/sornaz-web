@@ -7,6 +7,7 @@ use RuntimeException;
 
 class AcademyTermService
 {
+    public const STATUS_LABELS = ['pending' => 'در انتظار تأیید', 'open' => 'باز', 'ongoing' => 'در حال برگزاری', 'finished' => 'پایان یافته', 'canceled' => 'لغو شده', 'suspended' => 'تعلیق شده'];
     private function scopedCourses(int $actor, array $branches): array
     {
         $branchIds = array_column($branches, 'branch_id');
@@ -197,9 +198,9 @@ class AcademyTermService
                 $invoices[(int) $i['term_id']] = $i;
             }
         }
-        $statuses = ['pending' => 'در انتظار', 'open' => 'باز', 'ongoing' => 'در حال برگزاری', 'finished' => 'پایان‌یافته'];
+        $statuses = self::STATUS_LABELS;
         $classroomOptions = $this->classroomOptions($rooms, $tr);
-        return ['branches' => array_map(fn ($r) => ['id' => (int) $r['branch_id'], 'name' => $bmap[(int) $r['branch_id']]], $branches), 'courses' => array_map(fn ($r) => ['id' => (int) $r['course_id'], 'branchId' => (int) $r['branch_id'], 'lessonId' => (int) $r['lesson_id'], 'name' => $tr['academy_branch_courses'][(int) $r['course_id']]['title'] ?? ('دوره ' . $r['course_id']), 'teacher_capacity' => (int) $r['teacher_capacity'], 'student_capacity' => (int) $r['student_capacity']], $courses), 'classrooms' => $classroomOptions, 'currencies' => $this->currencies(), 'discounts' => $this->discounts($actor), 'members' => $members, 'terms' => array_map(function ($r) use ($cmap, $bmap, $tr, $people, $sessions, $skips, $invoices, $statuses) {
+        return ['statusOptions' => self::STATUS_LABELS, 'branches' => array_map(fn ($r) => ['id' => (int) $r['branch_id'], 'name' => $bmap[(int) $r['branch_id']]], $branches), 'courses' => array_map(fn ($r) => ['id' => (int) $r['course_id'], 'branchId' => (int) $r['branch_id'], 'lessonId' => (int) $r['lesson_id'], 'name' => $tr['academy_branch_courses'][(int) $r['course_id']]['title'] ?? ('دوره ' . $r['course_id']), 'teacher_capacity' => (int) $r['teacher_capacity'], 'student_capacity' => (int) $r['student_capacity']], $courses), 'classrooms' => $classroomOptions, 'currencies' => $this->currencies(), 'discounts' => $this->discounts($actor), 'members' => $members, 'terms' => array_map(function ($r) use ($cmap, $bmap, $tr, $people, $sessions, $skips, $invoices, $statuses) {
             $id = (int) $r['term_id'];
             $c = $cmap[(int) $r['course_id']];
             $p = $people[$id] ?? [];
@@ -1150,6 +1151,26 @@ class AcademyTermService
         return (bool) $this->nationalHolidayForAcademy($academyId, $date, $branchId);
     }
 
+    public function changeStatus(int $actor, int $id, string $status, ?string $expected = null): array
+    {
+        return \Modules\System\Services\PaymentMutex::run(db(), 'schedule-write', fn () => transaction(function () use ($actor, $id, $status, $expected) {
+            $term = $this->authorizeTerm($actor, $id);
+            if ($this->isReceptionist($actor)) throw new RuntimeException('کاربر پذیرش مجوز تغییر وضعیت ترم را ندارد.', 403);
+            if (!isset(self::STATUS_LABELS[$status])) throw new RuntimeException('وضعیت ترم معتبر نیست.', 422);
+            if ($term['status'] === $status) return ['id' => $id, 'status' => $status];
+            if ($expected !== null && $expected !== $term['status']) throw new RuntimeException('وضعیت ترم تغییر کرده است؛ دوباره بررسی کنید.', 409);
+            if (in_array($term['status'], ['finished', 'canceled'], true)) throw new RuntimeException('ترم پایان‌یافته یا لغوشده قابل تغییر وضعیت نیست.', 409);
+            if (in_array($status, ['canceled', 'suspended'], true) && db()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'mysql') {
+                $column = db()->query("SHOW COLUMNS FROM academy_branch_course_terms LIKE 'status'")->fetch(\PDO::FETCH_ASSOC);
+                $type = strtolower((string) ($column['Type'] ?? $column['type'] ?? ''));
+                if (str_starts_with($type, 'enum(') && !str_contains($type, "'" . $status . "'")) throw new RuntimeException('وضعیت جدید هنوز در این سایت فعال نشده است.', 409);
+            }
+            $now = date('Y-m-d H:i:s');
+            DB::table('academy_branch_course_terms')->where('term_id', $id)->update(['status' => $status, 'approved_at' => $status === 'pending' ? null : ($term['approved_at'] ?? (in_array($status, ['open', 'ongoing', 'finished'], true) ? $now : null)), 'approved_by' => $status === 'pending' ? null : ($term['approved_by'] ?? (in_array($status, ['open', 'ongoing', 'finished'], true) ? $actor : null)), 'updated_by' => $actor, 'updated_at' => $now]);
+            if ($status === 'ongoing' && TermEnrollmentCapacity::synchronize($id, $actor) !== 'ongoing') throw new RuntimeException('ابتدا ظرفیت تمام هنرجویان و مدرسان و برنامه جلسات را تکمیل کنید.', 409);
+            return ['id' => $id, 'status' => $status];
+        }));
+    }
     public function cycleStatus(int $actor, int $id): array
     {
         return \Modules\System\Services\PaymentMutex::run(db(), 'schedule-write', fn () => transaction(fn () => $this->cycleStatusLocked($actor, $id)));
@@ -1158,6 +1179,7 @@ class AcademyTermService
     private function cycleStatusLocked(int $actor, int $id): array
     {
         $row = $this->authorizeTerm($actor, $id);
+        if (in_array($row['status'], ['canceled', 'suspended'], true)) throw new RuntimeException('وضعیت ترم را از بخش انتخاب وضعیت تعیین کنید.', 409);
         $next = match ((string) $row['status']) {
             'pending' => 'open','open' => 'ongoing','ongoing' => 'finished',default => 'pending'
         };

@@ -21,6 +21,8 @@ suites.push([process.execPath,'dashboard_cards_revision_test.cjs']);
 suites.push([process.execPath,'existing_member_user_test.cjs'],[process.execPath,'student_term_schedule_test.cjs']);
 suites.push([process.execPath,'organization_teaching_revision_test.cjs']);
 suites.push([process.execPath,'term_capacity_test.cjs']);
+suites.push([process.execPath,'term_lifecycle_test.cjs']);
+suites.push([process.execPath,'student_multiple_terms_test.cjs']);
 suites.push([process.execPath,'staff_registration_test.cjs'],[process.execPath,'waiting_list_chat_test.cjs']);
 suites.push([process.execPath,'term_batch_policy_test.cjs']);
 suites.push([process.execPath,'term_batch_waiting_test.cjs']);
@@ -30,12 +32,14 @@ suites.push([process.execPath,'availability_target_policy_test.cjs'],[process.ex
 if (process.argv.includes('--browser')) {
  suites.push([process.execPath,'branch_dialog_scope_browser_test.cjs']);
  suites.push([process.execPath,'term_schedule_sort_browser_test.cjs']);
+ suites.push([process.execPath,'term_lifecycle_browser_test.cjs']);
  suites.push([process.execPath,'panel_auto_sort_browser_test.cjs']);
  suites.push([process.execPath,'enrollment_dialog_browser_test.cjs']);
  suites.push([process.execPath,'member_user_picker_browser_test.cjs']);
  suites.push([process.execPath,'organization_catalog_browser_test.cjs']);
  suites.push([process.execPath,'term_attendance_persistence_browser_test.cjs']);
  suites.push([process.execPath,'student_open_terms_browser_test.cjs']);
+ suites.push([process.execPath,'student_term_rows_browser_test.cjs']);
  suites.push([process.execPath,'staff_registration_browser_test.cjs']);
  suites.push([process.execPath,'term_batch_browser_test.cjs']);
  suites.push([process.execPath,'term_people_browser_test.cjs'],[process.execPath,'scheduling_tabs_browser_test.cjs'],[process.execPath,'panel_guides_browser_test.cjs'],[process.execPath,'staff_contract_forms_browser_test.cjs'],[process.execPath,'points_stability_browser_test.cjs'],[process.execPath,'personal_points_pagination_browser_test.cjs'],[process.execPath,'access_users_realtime_browser_test.cjs'],[process.execPath,'term_discounts_browser_test.cjs']);

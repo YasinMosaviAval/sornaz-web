@@ -16,4 +16,11 @@ $recent = $method->invoke($service, $pdo, 10, false);
 if (count($full) !== 20 || count($recent) !== 15 || $full[0]['user_point_id'] !== 20) throw new RuntimeException('History pagination, ownership or deleted-record scope failed');
 if ($full[0]['rule_id'] !== 7 || $full[0]['updated_at'] !== '2026-10-02') throw new RuntimeException('Website history columns are missing');
 if (str_contains($full[0]['action'], 'lessons')) throw new RuntimeException('Technical activity identifier exposed');
+$pdo->exec('ALTER TABLE user_points ADD COLUMN metadata TEXT');
+$pdo->exec('ALTER TABLE user_points ADD COLUMN award_key TEXT');
+$snapshot=json_encode(['activity'=>['fa'=>['title'=>'Saved cover action']]]);
+$pdo->prepare('UPDATE user_points SET metadata=?,award_key=? WHERE user_point_id=20')->execute([$snapshot,'PRIVATE_AWARD_KEY']);
+$withMetadata=$method->invoke($service,$pdo,10,true);
+if($withMetadata[0]['action']!=='Saved cover action'||isset($withMetadata[0]['metadata'])||isset($withMetadata[0]['award_key'])||isset($withMetadata[0]['user_id']))throw new RuntimeException('Activity snapshot or private history fields leaked');
+
 echo "Point history: complete own history, recent compatibility, deleted rows and human labels passed.\n";

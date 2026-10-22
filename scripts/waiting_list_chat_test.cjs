@@ -11,7 +11,7 @@ $tables=[
 // Intentionally no body column: this is the production schema after text migration.
 'conversation_messages'=>"conversation_message_id $auto,conversation_id INTEGER,sender_id INTEGER,message_kind VARCHAR(20),created_by INTEGER,updated_by INTEGER,created_at TEXT,updated_at TEXT,deleted_at TEXT",
 'f_translations'=>"translation_id $auto,table_name VARCHAR(100),table_id INTEGER,field VARCHAR(100),locale VARCHAR(10),value TEXT,version INTEGER,created_at TEXT,updated_at TEXT,created_by INTEGER,updated_by INTEGER,deleted_at TEXT",
-'user_messages'=>"user_message_id $auto,sender_id INTEGER,receiver_user_id INTEGER,type VARCHAR(20),audience VARCHAR(20),priority VARCHAR(20),status VARCHAR(20),related_entity_type VARCHAR(100),related_entity_id INTEGER,is_read INTEGER,created_by INTEGER,updated_by INTEGER,created_at TEXT,updated_at TEXT"
+'user_messages'=>"user_message_id $auto,sender_id INTEGER,receiver_user_id INTEGER,type VARCHAR(20),audience VARCHAR(20),priority VARCHAR(20),status VARCHAR(20),related_entity_type VARCHAR(100),related_entity_id INTEGER,is_read INTEGER,created_by INTEGER,updated_by INTEGER,created_at TEXT,updated_at TEXT,deleted_at TEXT"
 ];foreach($tables as$table=>$list)$pdo->exec('CREATE TABLE '.$table.'('.$list.')'.($mysql?' ENGINE=InnoDB':''));
 $pdo->exec("INSERT INTO levels(level_id,type,is_active) VALUES(7,'learning',1)");$pdo->exec("INSERT INTO user_lessons(user_id,lesson_id,level_id,status) VALUES(10,5,7,'active')");
 $pdo->exec("INSERT INTO users(user_id,username,type,register_method,phone) VALUES(800,'applicant','human','phone','09128880001'),(801,'rollback','human','phone','09128880002')");
@@ -32,6 +32,34 @@ $memberIds=array_map('intval',$pdo->query('SELECT user_id FROM conversation_memb
 $counts=fn()=>array_map(fn($t)=>(int)$pdo->query('SELECT COUNT(*) FROM '.$t)->fetchColumn(),['academy_branch_course_term_waiting_list','conversations','conversation_members','conversation_messages','f_translations','academy_branch_members']);$before=$counts();
 $trigger=$mysql?"CREATE TRIGGER fail_waiting_text BEFORE INSERT ON f_translations FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Fixture failure'":"CREATE TRIGGER fail_waiting_text BEFORE INSERT ON f_translations BEGIN SELECT RAISE(ABORT,'Fixture failure'); END";$pdo->exec($trigger);
 $profile['national_id']='3000000002';denied(fn()=>$enrollments->joinWaitingList(100,801,$result['ids'][6],7,'09128880002','','fa',$profile));check($counts()===$before,'Translation error rolls back waiting record and entire chat');$pdo->exec('DROP TRIGGER fail_waiting_text');
+
+$messageService=new Modules\Analytics\Services\AdminMessageService();
+$messageScope=new ReflectionMethod($messageService,'messageQuery');
+$visibleMessages=fn($actor)=>$messageScope->invoke($messageService,$actor)->orderBy('user_message_id')->get();
+$registrationNotice=$pdo->query("SELECT * FROM user_messages WHERE related_entity_type='academy_term_waiting_list' AND receiver_user_id=10 ORDER BY user_message_id DESC")->fetch();
+check((bool)$registrationNotice,'Public enrollment creates a registration notice for the selected academy');
+$noticeId=(int)$registrationNotice['user_message_id'];
+check(in_array($noticeId,array_map('intval',array_column($visibleMessages(10),'user_message_id')),true),'Existing registration notice appears in the message management scope without duplication');
+check(!in_array($noticeId,array_map('intval',array_column($visibleMessages(20),'user_message_id')),true),'Another academy cannot see the registration message');
+check(!in_array($noticeId,array_map('intval',array_column($visibleMessages(800),'user_message_id')),true),'The applicant cannot access staff copies of registration notifications');
+$pdo->exec('ALTER TABLE user_messages ADD read_at TEXT');
+$messageService->markRead(10,$noticeId,true);
+check((int)$pdo->query('SELECT is_read FROM user_messages WHERE user_message_id='.$noticeId)->fetchColumn()===1,'Registration message read state is shared with its existing notification');
+$messageService->markRead(10,$noticeId,false);
+try{$messageService->markRead(20,$noticeId,true);throw new LogicException('Foreign registration message was writable');}catch(RuntimeException $e){}
+check((int)$pdo->query('SELECT is_read FROM user_messages WHERE user_message_id='.$noticeId)->fetchColumn()===0,'Denied access does not change the registration message');
+$pdo->exec("INSERT INTO user_messages(sender_id,receiver_user_id,type,status,related_entity_type,is_read) VALUES(800,10,'notification','published','admin_notification',0)");
+$unrelatedNotice=(int)$pdo->lastInsertId();
+check(!in_array($unrelatedNotice,array_map('intval',array_column($visibleMessages(10),'user_message_id')),true),'Unrelated notifications remain outside message management');
+$pdo->exec("INSERT INTO user_messages(sender_id,receiver_user_id,type,status,is_read) VALUES(10,20,'message','published',0)");
+$normalMessage=(int)$pdo->lastInsertId();
+check(in_array($normalMessage,array_map('intval',array_column($visibleMessages(10),'user_message_id')),true)&&in_array($normalMessage,array_map('intval',array_column($visibleMessages(20),'user_message_id')),true),'Normal sender and recipient inboxes remain intact');
+$pdo->exec("UPDATE user_messages SET updated_at='2099-01-01 00:00:00' WHERE user_message_id=".$noticeId);
+$versionMethod=new ReflectionMethod($messageService,'version');
+check($versionMethod->invoke($messageService,10)==='2099-01-01 00:00:00','Message refresh version includes registration updates');
+$pdo->exec("UPDATE user_messages SET deleted_at='2026-10-22' WHERE user_message_id=".$noticeId);
+check(!in_array($noticeId,array_map('intval',array_column($visibleMessages(10),'user_message_id')),true),'Deleted registration notices stay hidden');
+
 echo "Waiting list chat: real registration without body column, translated text, reuse, duplicate rejection, tenant members and atomic rollback passed.\n";
 `;
 const source=base.replace('echo "Term batch:',extra+'\necho "Term batch:');

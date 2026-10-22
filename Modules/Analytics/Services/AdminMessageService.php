@@ -11,13 +11,13 @@ class AdminMessageService
     public function index(int $actor): array
     {
         $academyIds = $this->academyIds($actor);
-        $query = DB::table('user_messages')->where('type', 'message')->whereNull('deleted_at')->whereRaw('(sender_id = ? OR receiver_user_id = ?)', [$actor, $actor]);
+        $query = $this->messageQuery($actor);
         $rows = $query->orderBy('user_message_id', 'DESC')->limit(1000)->get();
         $messages = [];
         foreach ($rows as $row) {
             $messages[] = $this->map($row, $actor);
         }
-        $messageUnread = (int) DB::table('user_messages')->where('receiver_user_id', $actor)->where('type', 'message')->where('is_read', 0)->whereNull('deleted_at')->count();
+        $messageUnread = (int) $this->messageQuery($actor)->where('receiver_user_id', $actor)->where('is_read', 0)->count();
         $notificationUnread = (int) DB::table('user_messages')->where('receiver_user_id', $actor)->where('type', 'notification')->where('is_read', 0)->whereNull('deleted_at')->count();
         return ['messages' => $messages, 'recipients' => $this->recipients($actor, $academyIds), 'unread' => ['messages' => $messageUnread, 'notifications' => $notificationUnread], 'version' => $this->version($actor)];
     }
@@ -42,7 +42,7 @@ class AdminMessageService
 
     public function markRead(int $actor, int $id, bool $read): void
     {
-        $row = DB::table('user_messages')->where('user_message_id', $id)->whereNull('deleted_at')->first();
+        $row = $this->messageQuery($actor)->where('user_message_id', $id)->first();
         if (!$row || (int) $row['receiver_user_id'] !== $actor) {
             throw new RuntimeException('پیام موردنظر در دسترس نیست.');
         }
@@ -56,6 +56,14 @@ class AdminMessageService
             throw new RuntimeException('پیام موردنظر در دسترس نیست.');
         }
         DB::table('user_messages')->where('user_message_id', $id)->update(['deleted_at' => date('Y-m-d H:i:s'), 'deleted_by' => $actor, 'updated_by' => $actor]);
+    }
+
+    private function messageQuery(int $actor)
+    {
+        return DB::table('user_messages')->whereNull('deleted_at')->whereRaw(
+            "((type = 'message' AND (sender_id = ? OR receiver_user_id = ?)) OR (type = 'notification' AND related_entity_type = 'academy_term_waiting_list' AND receiver_user_id = ?))",
+            [$actor, $actor, $actor]
+        );
     }
 
     private function academyIds(int $actor): array
@@ -196,7 +204,7 @@ class AdminMessageService
 
     private function version(int $actor): string
     {
-        $row = DB::table('user_messages')->where('type', 'message')->whereRaw('(sender_id = ? OR receiver_user_id = ?)', [$actor, $actor])->whereNull('deleted_at')->orderBy('updated_at', 'DESC')->first();
+        $row = $this->messageQuery($actor)->orderBy('updated_at', 'DESC')->first();
         return (string) ($row['updated_at'] ?? '');
     }
 }

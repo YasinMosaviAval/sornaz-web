@@ -59,6 +59,8 @@
         باز: 'bg-green-100 text-green-700',
         'در حال برگزاری': 'bg-gray-100 text-gray-700',
         'پایان یافته': 'bg-red-100 text-red-700',
+        'لغو شده': 'bg-red-100 text-red-700',
+        'تعلیق شده': 'bg-amber-100 text-amber-700',
         'در انتظار تأیید': 'bg-yellow-100 text-yellow-700',
       }[status] || 'bg-gray-100 text-gray-600'
     );
