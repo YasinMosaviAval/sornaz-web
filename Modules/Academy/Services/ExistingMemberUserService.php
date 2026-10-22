@@ -93,6 +93,14 @@ final class ExistingMemberUserService
         if ($query->first()) throw new RuntimeException('این کاربر قبلاً عضو سازمان انتخاب‌شده است.');
     }
 
+    public function studentMembership(int $user, int $academy, ?int $branch): ?array
+    {
+        $query = DB::table('academy_branch_members')->where('user_id', $user)->where('academy_id', $academy)->whereNull('deleted_at');
+        $member = ($branch === null ? $query->whereNull('branch_id') : $query->where('branch_id', $branch))->first();
+        if ($member && !in_array($member['status'], ['active', 'pending'], true)) throw new RuntimeException('عضویت این هنرجو فعال نیست.');
+        return $member ?: null;
+    }
+
     public function staffMembership(int $user, int $academy, ?int $branch, string $type): ?array
     {
         $query = DB::table('academy_branch_members')->where('user_id', $user)->where('academy_id', $academy)->whereNull('deleted_at');

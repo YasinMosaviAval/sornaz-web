@@ -275,8 +275,16 @@ class AcademyCourseService
             $approved = !$this->isReceptionist($actor);
             $now = $this->now();
             $approval = ['approved_at' => $approved ? $now : null, 'approved_by' => $approved ? $actor : null];
-            $parentId = null;
-            if ($this->age($birthday) < 18) {
+            $existingMember = !empty($d['_existingUserId']) ? (new ExistingMemberUserService())->studentMembership((int) $d['_existingUserId'], $academyId, $organization['kind'] === 'branch' ? (int) $organization['id'] : null) : null;
+            if ($existingMember) {
+                $existingId = (int) $existingMember['member_id'];
+                if (DB::table('academy_branch_course_term_enrollments')->where('term_id', $termId)->where('member_id', $existingId)->where('type', 'student')->whereNull('deleted_at')->first()
+                    || DB::table('academy_branch_course_term_waiting_list')->where('term_id', $termId)->where('member_id', $existingId)->whereNull('deleted_at')->first()) {
+                    throw new RuntimeException('این هنرجو قبلاً در همین ترم ثبت‌نام کرده است.', 409);
+                }
+            }
+            $parentId = $existingMember['parent_user_id'] ?? null;
+            if ($this->age($birthday) < 18 && !$parentId) {
                 $parent = $d['parent'] ?? [];
                 $parentId = $this->createStudentUser($actor, $parent, $approved, 'parent');
                 $this->saveStudentContactsAndAddresses($actor, $parentId, ['addresses' => $d['addresses'] ?? []], $approved);
@@ -284,20 +292,23 @@ class AcademyCourseService
             $d['phone'] = $phone;
             $d['nationalId'] = $national;
             $userId = (new ExistingMemberUserService())->complete($actor, $d);
-            if ($userId) {
-                (new ExistingMemberUserService())->assertNotMember($userId, $academyId, $organization['kind'] === 'branch' ? (int) $organization['id'] : null);
-            } else {
+            if (!$userId) {
                 $userId = $this->createStudentUser($actor, $d, $approved, 'student');
             }
             $this->saveStudentContactsAndAddresses($actor, $userId, $d, $approved);
-            $memberStatus = $approved ? ($requireEmptyTerm || $term['status'] === 'open' ? 'active' : 'inactive') : 'pending';
-            $memberId = DB::table('academy_branch_members')->insertGetId(['academy_id' => $academyId, 'branch_id' => $organization['kind'] === 'branch' ? (int) $organization['id'] : null, 'user_id' => $userId, 'parent_user_id' => $parentId, 'status' => $memberStatus, 'joined_at' => ($d['registrationDate'] ?? date('Y-m-d')), 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
+            $memberStatus = $existingMember['status'] ?? ($approved ? ($requireEmptyTerm || $term['status'] === 'open' ? 'active' : 'inactive') : 'pending');
+            $memberId = $existingMember ? (int) $existingMember['member_id'] : DB::table('academy_branch_members')->insertGetId(['academy_id' => $academyId, 'branch_id' => $organization['kind'] === 'branch' ? (int) $organization['id'] : null, 'user_id' => $userId, 'parent_user_id' => $parentId, 'status' => $memberStatus, 'joined_at' => ($d['registrationDate'] ?? date('Y-m-d')), 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
+            if ($existingMember && empty($existingMember['parent_user_id']) && $parentId) {
+                DB::table('academy_branch_members')->where('member_id', $memberId)->update(['parent_user_id' => $parentId, 'updated_by' => $actor]);
+            }
             $studentRole = DB::table('access_system_roles')->where('type', 'academy')->whereRaw("name LIKE '%student%'")->whereNull('deleted_at')->orderBy('role_id')->first();
-            if ($studentRole) {
+            if ($studentRole && !DB::table('academy_branch_member_roles')->where('member_id', $memberId)->where('role_id', (int) $studentRole['role_id'])->whereNull('deleted_at')->first()) {
                 DB::table('academy_branch_member_roles')->insert(['member_id' => $memberId, 'role_id' => (int) $studentRole['role_id'], 'is_main' => 1, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
             }
             $organizationLesson = DB::table('user_lessons')->where('user_id', (int) $organization['user_id'])->where('lesson_id', (int) $term['lesson_id'])->whereNull('deleted_at')->first();
-            DB::table('user_lessons')->insert(['user_id' => $userId, 'lesson_id' => (int) $term['lesson_id'], 'level_id' => $organizationLesson['level_id'] ?? null, 'status' => $approved ? 'active' : 'pending', 'is_primary' => 1, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
+            if (!DB::table('user_lessons')->where('user_id', $userId)->where('lesson_id', (int) $term['lesson_id'])->whereNull('deleted_at')->first()) {
+                DB::table('user_lessons')->insert(['user_id' => $userId, 'lesson_id' => (int) $term['lesson_id'], 'level_id' => $organizationLesson['level_id'] ?? null, 'status' => $approved ? 'active' : 'pending', 'is_primary' => 1, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
+            }
             if ($requireEmptyTerm || $term['status'] === 'open') {
                 DB::table('academy_branch_course_term_enrollments')->insert(['term_id' => $termId, 'member_id' => $memberId, 'type' => 'student', 'status' => $approved ? 'active' : 'pending', 'joined_at' => $now, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
             } else {
