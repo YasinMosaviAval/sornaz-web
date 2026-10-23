@@ -95,11 +95,9 @@ if ($sidebarFullName === '') $sidebarFullName = $sidebarUsername;
                 <?php endif; ?>
             <?php if ($isSiteAdmin && ($previewRole === 'admin' || env('APP_ENV', 'production') === 'local')) { ?>
                 <?php if ($previewRole === null): ?>
-                <li><a href="#tests" onclick="showSection('tests')" class="nav-link flex items-center gap-3 rounded-xl bg-indigo-950/40 px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-vials w-5 text-center"></i> مرکز تست‌ها</a></li>
                 <li>--------------------------------</li>
                 <?php endif; ?>
                 <li><a href="#" onclick="showSection('posts')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-file-alt w-5 text-center"></i> نوشته‌ها</a></li>
-                <li><a href="#" onclick="showSection('post-categories')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-folder-open w-5 text-center"></i> دسته‌بندی نوشته‌ها</a></li>
                 <li><a href="#" onclick="showSection('pages')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-copy w-5 text-center"></i> برگه‌ها</a></li>
                 <li><a href="#" onclick="showSection('media')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-photo-video w-5 text-center"></i> رسانه‌ها</a></li>
                 <li><a href="#" onclick="showSection('comments')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-comments w-5 text-center"></i> دیدگاه‌ها</a></li>

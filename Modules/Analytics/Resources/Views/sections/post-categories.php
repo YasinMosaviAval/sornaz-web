@@ -1,4 +1,11 @@
 <div id="post-categories" class="section hidden">
+    <?php component('panel-page-tabs', [
+        'active'=>'post-categories', 'label'=>locale()==='en' ? 'Posts' : 'نوشته‌ها',
+        'tabs'=>[
+            'posts'=>['labels'=>['نوشته‌ها','Posts']],
+            'post-categories'=>['labels'=>['دسته‌بندی نوشته‌ها','Post categories']],
+        ],
+    ]); ?>
     <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div><h1 class="text-3xl font-bold">دسته‌بندی نوشته‌ها</h1><p class="mt-1 text-gray-500">مدیریت دسته‌بندی‌های قابل استفاده برای نوشته‌ها و مقاله‌های آموزشی</p></div>
         <button type="button" onclick="openPostCategoryForm()" class="flex items-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700"><i class="fas fa-plus"></i> افزودن دسته‌بندی</button>

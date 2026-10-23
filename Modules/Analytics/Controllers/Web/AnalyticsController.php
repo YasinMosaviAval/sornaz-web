@@ -94,12 +94,8 @@ class AnalyticsController
 
     public function adminPanel()
     {
-        $testStats = SiteAdminAccess::allows(auth()->user()) && env('APP_ENV', 'production') === 'local'
-            ? $this->adminTests->statistics()
-            : [];
-        $scheduleFixtures = env('APP_ENV', 'production') === 'local' ? $this->adminTests->scheduleFixtures() : ['schedules' => [], 'exceptions' => []];
         $guides = (int) auth()->id() === 1 ? $this->guides->all(locale()) : [];
         $guideDocuments = (int) auth()->id() === 1 ? $this->guides->documents() : [];
-        return ResponseFactory::view('Analytics::admin-panel', ['testStats' => $testStats, 'scheduleFixtures' => $scheduleFixtures, 'guides' => $guides, 'guideDocuments' => $guideDocuments, 'adminUiMap' => $this->adminTests->adminUiMap(locale()), 'inlineTranslationCatalog' => $this->adminTests->inlineTranslationCatalog()])->layout('admin')->title('سُرناز | پنل کاربری');
+        return ResponseFactory::view('Analytics::admin-panel', ['guides' => $guides, 'guideDocuments' => $guideDocuments, 'adminUiMap' => $this->adminTests->adminUiMap(locale()), 'inlineTranslationCatalog' => $this->adminTests->inlineTranslationCatalog()])->layout('admin')->title('سُرناز | پنل کاربری');
     }
 }

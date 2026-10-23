@@ -11,13 +11,14 @@ function showStaffPage(id) {
   } else showSection(id);
 }
 function panelPageHeading(section) {
-  if (!section || section.id === 'chat' || section.id === 'tests') return null;
+  if (!section || section.id === 'chat') return null;
   if (section.id === 'availability-exceptions') return section.querySelector('h1');
   const firstContent = [...section.children].find((child) => !['STYLE', 'SCRIPT', 'NAV'].includes(child.tagName));
   return firstContent?.matches('h1') ? firstContent : firstContent?.querySelector('h1') || null;
 }
 
 function showSection(id) {
+  if (!document.getElementById(id)) id = 'dashboard';
   const section = id;
 
   document.querySelectorAll('.section').forEach((s) => s.classList.add('hidden'));

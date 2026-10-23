@@ -87,6 +87,7 @@ namespace {
     expectMenu(!isset($index['reports'], $index['chart-gallery']), 'Local-only website demos leaked in production');
     $GLOBALS['environment'] = 'local';
     $local = array_column($navigation->forCurrentUser($allowed, $caps), null, 'key');
+    expectMenu(isset($local['posts']) && !isset($local['post-categories'], $local['tests']), 'Posts must have one menu entry; test center must be absent');
     expectMenu(isset($local['reports'], $local['chart-gallery']), 'Local website destinations silently removed');
     expectMenu($local['chart-gallery']['destination'] === 'website-example', 'Chart demonstration must not pretend to have a native data API');
     $GLOBALS['environment'] = 'production';

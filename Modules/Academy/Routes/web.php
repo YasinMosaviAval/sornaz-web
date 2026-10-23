@@ -27,10 +27,6 @@ Router::get('/academy/registration-complete', [AcademyRegistrationController::cl
 Router::post('/academy/registration-complete/without-branch', [AcademyRegistrationController::class, 'finishWithoutBranch'])->middleware('csrf');
 Router::post('/academy/register-main-branch', [AcademyRegistrationController::class, 'storeMainBranch'])->middleware(['csrf', 'auth-rate-limit']);
 Router::post('/academy/register-main-branch/send-otp', [AcademyRegistrationController::class, 'sendMainBranchOtp'])->middleware(['csrf', 'auth-rate-limit']);
-Router::post('/academy/_test/seed-sample-academies', [AcademyRegistrationController::class, 'seedSamples'])->middleware(['site-admin', 'csrf']);
-Router::post('/academy/_test/delete-sample-academies', [AcademyRegistrationController::class, 'deleteSamples'])->middleware(['site-admin', 'csrf']);
-Router::post('/academy/_test/seed-branch-network', [AcademyRegistrationController::class, 'seedBranchNetwork'])->middleware(['site-admin', 'csrf']);
-Router::post('/academy/_test/delete-branch-network', [AcademyRegistrationController::class, 'deleteBranchNetwork'])->middleware(['site-admin', 'csrf']);
 Router::get('/academy/admin/branches', [AcademyBranchController::class, 'index'])->middleware('academy-panel');
 Router::get('/academy/admin/branches/realtime-version', [AcademyBranchController::class, 'realtimeVersion'])->middleware('academy-panel');
 Router::get('/academy/admin/branches/registration-form', [AcademyRegistrationController::class, 'createAdminBranchDialog'])->middleware('academy-panel');

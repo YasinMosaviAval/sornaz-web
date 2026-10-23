@@ -125,7 +125,10 @@ window.academyOrganizationTabHandlers = {
     container.dataset.selectedValue = String(selected);
     const source = typeof config.branches === 'function' ? config.branches() :
       (config.branches || window.academyPanelBranches || []);
-    const branches = source.filter((branch) => branch.kind !== 'academy');
+    const branches = source.filter((branch) => branch.kind !== 'academy').sort((a, b) => {
+      const first = a.createdAt || a.created_at, second = b.createdAt || b.created_at;
+      return first && second && first !== second ? String(first).localeCompare(String(second)) : Number(a.branch_id ?? a.branchId ?? a.id) - Number(b.branch_id ?? b.branchId ?? b.id);
+    });
     const english = document.documentElement.lang === 'en';
     const options = [{ value: 'all', label: english ? 'All' : 'همه' },
       ...((config.showAcademy ?? !window.branchSiteAdmin) ? [{ value: 'academy', label: english ? 'Academy' : 'آموزشگاه' }] : []),

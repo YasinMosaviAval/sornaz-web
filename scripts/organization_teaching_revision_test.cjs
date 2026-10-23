@@ -25,6 +25,14 @@ if(!$mysql)$pdo->sqliteCreateFunction('TIME_FORMAT',fn($value,$format)=>substr((
 $foreignTerm=Core\database\DB::table('academy_branch_course_terms')->insertGetId(['course_id'=>600,'status'=>'open','session_count'=>1,'session_period'=>'week','currency_id'=>1]);
 $foreignBooking=Core\database\DB::table('academy_branch_bookings')->insertGetId(['status'=>'approved','requested_date'=>'2031-01-01','start_time'=>'09:00:00','end_time'=>'09:30:00','timezone_id'=>1]);
 $foreignSession=Core\database\DB::table('academy_branch_course_term_sessions')->insertGetId(['term_id'=>$foreignTerm,'booking_id'=>$foreignBooking,'classroom_id'=>2001]);
+$catalog=$classService->index(10,['termId'=>$tid]);
+check(count(array_filter($catalog['organizations'],fn($o)=>($o['kind']??'')==='academy' && $o['academyId']===100))===1,'Authorized academy included in calendar organizations');
+check(!array_filter($catalog['organizations'],fn($o)=>($o['academyId']??0)===200),'Foreign academy excluded from calendar organizations');
+$firstDate=$catalog['schedules'][0]['date'];
+$range=$classService->index(10,['termId'=>$tid,'dateFrom'=>$firstDate,'dateTo'=>$firstDate]);
+check(count($range['schedules'])===1 && $range['schedules'][0]['date']===$firstDate,'Inclusive range fetch returns only requested dates');
+check($classService->index(20,['termId'=>$tid,'dateFrom'=>$firstDate,'dateTo'=>$firstDate])['schedules']===[],'Range filter retains tenant isolation');
+denied(fn()=>$classService->index(10,['dateFrom'=>'2030-02-31']));
 check(count($classService->index(10,['termId'=>$tid])['schedules'])===8,'Academy owner sees academy-owned sessions even when venue is a branch');
 check($classService->index(10,['termId'=>$foreignTerm])['schedules']===[],'Owning every existing branch does not expose another academy course');
 denied(fn()=>$classService->attendance(10,$foreignSession,['attendance'=>[]]));

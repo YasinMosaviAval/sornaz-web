@@ -14,7 +14,8 @@ class AcademyClassScheduleService
     {
         $branches = $this->branches($actor);
         $bids = array_column($branches, 'branch_id');
-        $academyIds = array_column(ClassroomOrganizationScope::academies($actor), 'academy_id');
+        $academies = ClassroomOrganizationScope::academies($actor);
+        $academyIds = array_column($academies, 'academy_id');
         $teacherIds = $this->teacherTermIds($actor);
         $allowedPer = [10, 20, 30, 50, 100];
         $per = in_array((int) ($f['perPage'] ?? 10), $allowedPer, true) ? (int) ($f['perPage'] ?? 10) : 10;
@@ -50,7 +51,17 @@ class AcademyClassScheduleService
         }if (!empty($f['date'])) {
             $where[] = 'b.requested_date=?';
             $bind[] = $f['date'];
-        }if (isset($f['day']) && $f['day'] !== '') {
+        }
+        foreach (['dateFrom' => '>=', 'dateTo' => '<='] as $field => $operator) {
+            if (!empty($f[$field])) {
+                $date = (string) $f[$field];
+                $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+                if (!$parsed || $parsed->format('Y-m-d') !== $date) throw new RuntimeException('Invalid schedule date.', 422);
+                $where[] = "b.requested_date $operator ?";
+                $bind[] = $date;
+            }
+        }
+        if (isset($f['day']) && $f['day'] !== '') {
             $where[] = 'WEEKDAY(b.requested_date)=?';
             $bind[] = (int) $f['day'];
         }if (!empty($f['timeFrom'])) {
@@ -67,14 +78,14 @@ class AcademyClassScheduleService
         }$w = implode(' AND ', $where);
         $count = $this->query("SELECT COUNT(1) FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id JOIN academy_branch_course_terms t ON t.term_id=s.term_id JOIN academy_branch_courses c ON c.course_id=t.course_id WHERE $w", $bind, true);
         $offset = ($page - 1) * $per;
-        $sql = "SELECT s.*,b.requested_date,b.start_time,b.end_time,b.status booking_status,t.course_id,c.branch_id,c.lesson_id,(SELECT value FROM translations WHERE table_name='academy_branch_course_terms' AND table_id=t.term_id AND locale='fa' AND field='title' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1) term_name,(SELECT value FROM translations WHERE table_name='lessons' AND table_id=c.lesson_id AND locale='fa' AND field='title' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1) lesson_name,(SELECT value FROM translations WHERE table_name='academy_branch_classrooms' AND table_id=s.classroom_id AND locale='fa' AND field='title' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1) classroom_name FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id JOIN academy_branch_course_terms t ON t.term_id=s.term_id JOIN academy_branch_courses c ON c.course_id=t.course_id WHERE $w ORDER BY b.requested_date DESC,b.start_time DESC,s.term_session_id DESC LIMIT $offset,$per";
+        $sql = "SELECT s.*,b.requested_date,b.start_time,b.end_time,b.status booking_status,t.course_id,c.branch_id,c.academy_id,c.lesson_id,(SELECT value FROM translations WHERE table_name='academy_branch_course_terms' AND table_id=t.term_id AND locale='fa' AND field='title' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1) term_name,(SELECT value FROM translations WHERE table_name='lessons' AND table_id=c.lesson_id AND locale='fa' AND field='title' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1) lesson_name,(SELECT value FROM translations WHERE table_name='academy_branch_classrooms' AND table_id=s.classroom_id AND locale='fa' AND field='title' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1) classroom_name FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id JOIN academy_branch_course_terms t ON t.term_id=s.term_id JOIN academy_branch_courses c ON c.course_id=t.course_id WHERE $w ORDER BY b.requested_date DESC,b.start_time DESC,s.term_session_id DESC LIMIT $offset,$per";
         $rows = $this->query($sql, $bind);
         foreach ($rows as &$row) {
             $row['session_number'] = $this->sessionNumber($row);
         }
         unset($row);
         $items = $this->withTeacherNotes($this->enrich($rows, $branches), $actor);
-        return ['schedules' => $items, 'branches' => $this->branchOptions($branches), 'classrooms' => $this->classroomOptions($bids), 'lessons' => $this->lessonOptions($bids), 'timeRanges' => $this->timeRangeOptions($bids), 'total' => (int) $count, 'page' => $page, 'perPage' => $per];
+        return ['schedules' => $items, 'branches' => $this->branchOptions($branches), 'organizations' => array_merge(array_map(fn ($a) => ['id' => 0, 'academyId' => (int) $a['academy_id'], 'kind' => 'academy', 'name' => $this->tr('academies', (int) $a['academy_id'], 'title') ?: 'Academy'], $academies), $this->branchOptions($branches)), 'classrooms' => $this->classroomOptions($bids, $academyIds), 'lessons' => $this->lessonOptions($bids, $academyIds), 'timeRanges' => $this->timeRangeOptions($bids, $academyIds), 'total' => (int) $count, 'page' => $page, 'perPage' => $per];
     }
 
     private function teacherTermIds(int $actor): array
@@ -293,7 +304,7 @@ class AcademyClassScheduleService
             $cancellation = (string) ($r['cancellation_status'] ?? 'none');
             $booking = (string) ($r['booking_status'] ?? '');
             $canCancel = !$makeup && in_array($cancellation, ['none', 'rejected'], true) && !in_array($booking, ['canceled', 'rejected', 'completed', 'held'], true);
-            return ['id' => $sid, 'termId' => (int) $r['term_id'], 'sessionNumber' => $number, 'sessionType' => $r['session_type'] ?? 'regular', 'cancellationStatus' => $cancellation, 'bookingStatus' => $booking, 'canCancel' => $canCancel, 'title' => $title, 'summary' => $studentLabel . '، ' . $teacherLabel, 'description' => $description, 'date' => $r['requested_date'], 'day' => $this->day($r['requested_date']), 'startTime' => substr((string) $r['start_time'], 0, 5), 'endTime' => substr((string) $r['end_time'], 0, 5), 'time' => substr((string) $r['start_time'], 0, 5) . '-' . substr((string) $r['end_time'], 0, 5), 'student' => $studentLabel, 'teacher' => $teacherLabel, 'students' => $students, 'teachers' => $teachers, 'lesson' => $r['lesson_name'] ?: 'درس ' . $r['lesson_id'], 'classroomId' => (int) $r['classroom_id'], 'classroom' => $r['delivery_mode'] === 'online' ? 'کلاس آنلاین' : ($r['classroom_name'] ?: 'کلاس ' . $r['classroom_id']), 'branchId' => (int) $r['branch_id'], 'branchName' => $bmap[(int) $r['branch_id']] ?? '—', 'type' => $r['delivery_mode'] === 'online' ? 'آنلاین' : 'حضوری', 'mode' => $r['delivery_mode'], 'status' => $status['label'], 'statusCode' => $status['code'], 'attendance' => array_merge($teachers, $students)];
+            return ['id' => $sid, 'termId' => (int) $r['term_id'], 'sessionNumber' => $number, 'sessionType' => $r['session_type'] ?? 'regular', 'cancellationStatus' => $cancellation, 'bookingStatus' => $booking, 'canCancel' => $canCancel, 'title' => $title, 'summary' => $studentLabel . '، ' . $teacherLabel, 'description' => $description, 'date' => $r['requested_date'], 'day' => $this->day($r['requested_date']), 'startTime' => substr((string) $r['start_time'], 0, 5), 'endTime' => substr((string) $r['end_time'], 0, 5), 'time' => substr((string) $r['start_time'], 0, 5) . '-' . substr((string) $r['end_time'], 0, 5), 'student' => $studentLabel, 'teacher' => $teacherLabel, 'students' => $students, 'teachers' => $teachers, 'lesson' => $r['lesson_name'] ?: 'درس ' . $r['lesson_id'], 'classroomId' => (int) $r['classroom_id'], 'classroom' => $r['delivery_mode'] === 'online' ? 'کلاس آنلاین' : ($r['classroom_name'] ?: 'کلاس ' . $r['classroom_id']), 'academyId' => (int) ($r['academy_id'] ?? 0), 'lessonId' => (int) $r['lesson_id'], 'branchId' => (int) $r['branch_id'], 'branchName' => $bmap[(int) $r['branch_id']] ?? '—', 'type' => $r['delivery_mode'] === 'online' ? 'آنلاین' : 'حضوری', 'mode' => $r['delivery_mode'], 'status' => $status['label'], 'statusCode' => $status['code'], 'attendance' => array_merge($teachers, $students)];
         }, $rows);
     }
 
@@ -429,33 +440,39 @@ class AcademyClassScheduleService
         return array_map(fn ($x) => ['id' => (int) $x['id'], 'courseId' => (int) $x['course_id'], 'branchId' => (int) $x['branch_id'], 'name' => $x['name']], db()->query($sql)->fetchAll());
     }
 
-    private function classroomOptions(array $b): array
+    private function classroomOptions(array $b, array $academies = []): array
     {
         $ids = implode(',', array_map('intval', $b));
-        if (!$ids) {
+        if (!$ids && !$academies) {
             return [];
         }
-        $sql = "SELECT r.classroom_id id,r.branch_id,COALESCE((SELECT value FROM translations WHERE table_name='academy_branch_classrooms' AND table_id=r.classroom_id AND locale='fa' AND field='title' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1),CONCAT('کلاس ',r.classroom_id)) name FROM academy_branch_classrooms r WHERE r.branch_id IN ($ids) AND r.deleted_at IS NULL ORDER BY r.classroom_id";
+        $scope = $ids ? "r.branch_id IN ($ids)" : '0=1';
+        if ($academies && ClassroomOrganizationScope::supportsAcademies()) $scope .= ' OR (r.branch_id IS NULL AND r.academy_id IN (' . implode(',', array_map('intval', $academies)) . '))';
+        $sql = "SELECT r.classroom_id id,r.branch_id,COALESCE((SELECT value FROM translations WHERE table_name='academy_branch_classrooms' AND table_id=r.classroom_id AND locale='fa' AND field='title' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1),CONCAT('کلاس ',r.classroom_id)) name FROM academy_branch_classrooms r WHERE ($scope) AND r.deleted_at IS NULL ORDER BY r.classroom_id";
         return array_map(fn ($x) => ['id' => (int) $x['id'], 'branchId' => (int) $x['branch_id'], 'name' => $x['name']], db()->query($sql)->fetchAll());
     }
 
-    private function lessonOptions(array $b): array
+    private function lessonOptions(array $b, array $academies = []): array
     {
         $ids = implode(',', array_map('intval', $b));
-        if (!$ids) {
+        if (!$ids && !$academies) {
             return [];
         }
-        $sql = "SELECT DISTINCT l.lesson_id id,COALESCE((SELECT value FROM translations WHERE table_name='lessons' AND table_id=l.lesson_id AND locale='fa' AND field='title' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1),CONCAT('درس ',l.lesson_id)) name FROM academy_branch_courses c JOIN lessons l ON l.lesson_id=c.lesson_id WHERE c.branch_id IN ($ids) AND c.deleted_at IS NULL AND l.deleted_at IS NULL ORDER BY l.lesson_id";
+        $scope = $ids ? "c.branch_id IN ($ids)" : '0=1';
+        if ($academies) $scope .= ' OR (c.branch_id IS NULL AND c.academy_id IN (' . implode(',', array_map('intval', $academies)) . '))';
+        $sql = "SELECT DISTINCT l.lesson_id id,COALESCE((SELECT value FROM translations WHERE table_name='lessons' AND table_id=l.lesson_id AND locale='fa' AND field='title' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1),CONCAT('درس ',l.lesson_id)) name FROM academy_branch_courses c JOIN lessons l ON l.lesson_id=c.lesson_id WHERE ($scope) AND c.deleted_at IS NULL AND l.deleted_at IS NULL ORDER BY l.lesson_id";
         return array_map(fn ($x) => ['id' => (int) $x['id'], 'name' => $x['name']], db()->query($sql)->fetchAll());
     }
 
-    private function timeRangeOptions(array $b): array
+    private function timeRangeOptions(array $b, array $academies = []): array
     {
         $ids = implode(',', array_map('intval', $b));
-        if (!$ids) {
+        if (!$ids && !$academies) {
             return [];
         }
-        $sql = "SELECT DISTINCT TIME_FORMAT(b.start_time,'%H:%i') start_time,TIME_FORMAT(b.end_time,'%H:%i') end_time FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id JOIN academy_branch_course_terms t ON t.term_id=s.term_id JOIN academy_branch_courses c ON c.course_id=t.course_id WHERE c.branch_id IN ($ids) AND s.deleted_at IS NULL AND b.deleted_at IS NULL AND t.deleted_at IS NULL AND c.deleted_at IS NULL AND b.start_time IS NOT NULL AND b.end_time IS NOT NULL ORDER BY b.start_time,b.end_time";
+        $scope = $ids ? "c.branch_id IN ($ids)" : '0=1';
+        if ($academies) $scope .= ' OR (c.branch_id IS NULL AND c.academy_id IN (' . implode(',', array_map('intval', $academies)) . '))';
+        $sql = "SELECT DISTINCT TIME_FORMAT(b.start_time,'%H:%i') start_time,TIME_FORMAT(b.end_time,'%H:%i') end_time FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id JOIN academy_branch_course_terms t ON t.term_id=s.term_id JOIN academy_branch_courses c ON c.course_id=t.course_id WHERE ($scope) AND s.deleted_at IS NULL AND b.deleted_at IS NULL AND t.deleted_at IS NULL AND c.deleted_at IS NULL AND b.start_time IS NOT NULL AND b.end_time IS NOT NULL ORDER BY b.start_time,b.end_time";
         return array_map(fn ($x) => ['start' => $x['start_time'], 'end' => $x['end_time']], db()->query($sql)->fetchAll());
     }
 

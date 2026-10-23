@@ -37,6 +37,15 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/not
     assert.deepEqual(await page.locator('#memberSchedulesBranchTabs button').allTextContents(), ['همه', 'آموزشگاه', 'شعبه واقعی']);
     await page.evaluate(() => { window.branchAccount = true; window.applyAcademyOrganizationTabs(); });
     assert.equal(await page.locator('#dashboardTabsShell.hidden, #scheduleTabsShell.hidden').count(), 2);
+    await page.evaluate(() => {
+      window.branchAccount = false;
+      window.renderPanelOrganizationTabs('dashboardBranchTabs', 'all', () => {}, {branches:[
+        {id:30,name:'Third',createdAt:'2026-03-01'},
+        {id:10,name:'First',createdAt:'2026-01-01'},
+        {id:20,name:'Second',createdAt:'2026-02-01'}
+      ]});
+    });
+    assert.deepEqual(await page.locator('#dashboardBranchTabs button').allTextContents().then(v=>v.slice(-3)),['First','Second','Third']);
     assert.deepEqual(errors, []);
     const legacy = await browser.newPage();
     legacy.on('pageerror', (error) => errors.push(error.message));

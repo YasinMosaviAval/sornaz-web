@@ -1,4 +1,11 @@
 <div id="posts" class="section hidden">
+    <?php component('panel-page-tabs', [
+        'active'=>'posts', 'label'=>locale()==='en' ? 'Posts' : 'نوشته‌ها',
+        'tabs'=>[
+            'posts'=>['labels'=>['نوشته‌ها','Posts']],
+            'post-categories'=>['labels'=>['دسته‌بندی نوشته‌ها','Post categories']],
+        ],
+    ]); ?>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-3xl font-bold">نوشته‌ها</h1>

@@ -143,11 +143,7 @@
                 <h2 class="font-bold">برنامه هفتگی کلاس‌ها</h2>
                 <p id="schedulesWeekRange" class="mt-1 text-sm text-gray-500"></p>
             </div>
-            <div class="flex gap-2">
-                <button onclick="changeSchedulesWeek(-1)" class="rounded-xl border px-4 py-2 text-sm">هفته قبل</button>
-                <button onclick="goToCurrentSchedulesWeek()" class="rounded-xl border px-4 py-2 text-sm">هفته جاری</button>
-                <button onclick="changeSchedulesWeek(1)" class="rounded-xl border px-4 py-2 text-sm">هفته بعد</button>
-            </div>
+
         </div>
         <div id="schedulesWeeklyTables" class="space-y-6"></div>
     </div>

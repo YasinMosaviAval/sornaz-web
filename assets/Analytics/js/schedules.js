@@ -9,7 +9,6 @@
     perPage = 10,
     currentBranch = 'all',
     expanded = null,
-    searchTimer = null,
     schedulesView = 'weekly',
     weekStart = null,
     firstScheduleWeek = null,
@@ -19,6 +18,31 @@
     showEmptyWeeklyDays = new Set(),
     showEmptyWeeklyTimes = new Set(),
     weeklyLayoutByBranch = new Map();
+  let weeklySource = [], weekKey = '', listKey = '', weeklyRequest = 0, listRequest = 0;
+  const responseCache = new Map();
+  function invalidateScheduleCache() { responseCache.clear(); weekKey = ''; listKey = ''; }
+  function visibleOrganizations() {
+    return branches.filter(branch => currentBranch === 'all' ||
+      (currentBranch === 'academy' ? Number(branch.id) === 0 : String(branch.id) === String(currentBranch)));
+  }
+  function applyWeeklyFilters() {
+    const f = params(1);
+    weeklySchedules = weeklySource.filter(row => {
+      if (weeklyDates.length && (row.date < weeklyDates[0] || row.date > weeklyDates[6])) return false;
+      if (currentBranch !== 'all' && String(row.branchId) !== (currentBranch === 'academy' ? '0' : String(currentBranch))) return false;
+      if (f.get('mode') && row.mode !== f.get('mode')) return false;
+      if (f.get('status') && (row.bookingStatus || row.statusCode) !== f.get('status')) return false;
+      if (f.get('classroom') && String(row.classroomId) !== f.get('classroom')) return false;
+      if (f.get('lesson') && String(row.lessonId) !== f.get('lesson')) return false;
+      if (f.get('timeFrom') && row.endTime < f.get('timeFrom')) return false;
+      if (f.get('timeTo') && row.startTime > f.get('timeTo')) return false;
+      if (f.has('day') && f.get('day') !== '' && (new Date(row.date + 'T12:00:00').getDay()+6)%7 !== Number(f.get('day'))) return false;
+      if (f.get('search') && ![row.title,row.lesson,row.student,row.teacher,row.summary].join(' ').toLocaleLowerCase().includes(f.get('search').trim().toLocaleLowerCase())) return false;
+      return true;
+    });
+    renderWeeklySchedules(weeklyDates);
+    renderWeeklyControls();
+  }
   let branches = [],
     lessons = [];
   let scheduleCalendarDisplay = 'default';
@@ -47,7 +71,7 @@
       : 'default';
     if (schedulesView === 'weekly' && weeklyDates.length) {
       renderWeeklySchedules(weeklyDates);
-      renderBranchWeekPaginations();
+      renderWeeklyControls();
     } else render();
   };
   const enc = (d) =>
@@ -56,6 +80,10 @@
       .replace(/\//g, '_')
       .replace(/=+$/, '');
   async function api(url, data = null) {
+    const cacheable = data === null && url.startsWith('/academy/admin/class-schedule');
+    const cached = responseCache.get(url);
+    if (cacheable && cached && cached.expires > Date.now()) return cached.value;
+    if (data !== null) invalidateScheduleCache();
     const token = window.adminCsrfToken || '',
       o = {
         method: data === null ? 'GET' : 'POST',
@@ -77,7 +105,12 @@
     }
     const x = p.data ?? p;
     if (!r.ok || x.success === false) throw new Error(x.message || 'عملیات جلسه ناموفق بود.');
-    return x.data ?? x;
+    const result = x.data ?? x;
+    if (cacheable) {
+      if (responseCache.size >= 100) responseCache.delete(responseCache.keys().next().value);
+      responseCache.set(url, {value: result, expires: Date.now()+30000});
+    }
+    return result;
   }
   function params(page) {
     const p = new URLSearchParams({ page, perPage });
@@ -96,17 +129,20 @@
       if (v) p.set(key, v);
     });
     const day = document.getElementById('filterScheduleDay')?.value;
-    if (day !== '') p.set('day', day);
+    if (day != null && day !== '') p.set('day', day);
     return p;
   }
   async function load(page = 1) {
+    const request = ++listRequest, query = params(page).toString();
     try {
-      const d = await api('/academy/admin/class-schedules?' + params(page));
+      const d = await api('/academy/admin/class-schedules?' + query);
+      if (request !== listRequest) return;
+      listKey = query;
       allSchedules = d.schedules || [];
       totalSchedules = Number(d.total || 0);
       currentPage = Number(d.page || 1);
       perPage = Number(d.perPage || perPage);
-      branches = d.branches || branches;
+      branches = d.organizations || d.branches || branches;
       window.scheduleClassrooms = d.classrooms || window.scheduleClassrooms;
       lessons = d.lessons || lessons;
       weeklyTimeRanges = d.timeRanges || weeklyTimeRanges;
@@ -208,14 +244,12 @@
   window.filterSchedulesByBranch = (id) => {
     currentBranch = id;
     expanded = null;
-    schedulesView === 'weekly' ? loadWeeklySchedules() : load(1);
+    renderTabs();
+    schedulesView === 'weekly' ? (weekKey ? applyWeeklyFilters() : loadWeeklySchedules()) : load(1);
   };
   window.filterSchedules = () => {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => {
-      expanded = null;
-      schedulesView === 'weekly' ? loadWeeklySchedules() : load(1);
-    }, 250);
+    expanded = null;
+    schedulesView === 'weekly' ? (weekKey ? applyWeeklyFilters() : loadWeeklySchedules()) : load(1);
   };
   window.changeSchedulesPage = (p) => {
     const pages = Math.max(1, Math.ceil(totalSchedules / perPage));
@@ -252,6 +286,7 @@
     if (typeof window.restoreTermSession !== 'function')
       return alert('امکان بازگردانی جلسه در دسترس نیست.');
     await window.restoreTermSession(termId, sessionId);
+    invalidateScheduleCache();
     await (schedulesView === 'weekly' ? loadWeeklySchedules() : load(currentPage));
   };
 
@@ -276,54 +311,42 @@
     d.setDate(d.getDate() - offset);
     return d;
   }
-  function weeklyParams(date, page) {
-    const p = params(page);
-    p.set('date', date);
-    p.set('perPage', '100');
-    p.delete('day');
-    return p;
-  }
-  async function fetchScheduleDay(date) {
-    let page = 1,
-      rows = [];
-    do {
-      const data = await api('/academy/admin/class-schedules?' + weeklyParams(date, page));
-      rows = rows.concat(data.schedules || []);
-      if (rows.length >= Number(data.total || 0)) break;
-      page++;
-    } while (page < 100);
-    return rows;
-  }
   async function loadWeeklySchedules() {
     const host = document.getElementById('schedulesWeeklyTables');
     if (!host) return;
-    host.innerHTML =
-      '<div class="rounded-3xl bg-white p-12 text-center text-gray-400">در حال دریافت برنامه هفتگی...</div>';
+    const request = ++weeklyRequest;
     try {
-      const boundParams = new URLSearchParams();
-      if (currentBranch !== 'all') boundParams.set('branch', currentBranch);
-      const bounds = await api('/academy/admin/class-schedule-week-bounds?' + boundParams);
-      firstScheduleWeek = bounds.firstDate
-        ? currentSaturday(new Date(bounds.firstDate + 'T12:00:00'))
-        : null;
-      lastScheduleWeek = bounds.lastDate
-        ? currentSaturday(new Date(bounds.lastDate + 'T12:00:00'))
-        : null;
+      const bounds = await api('/academy/admin/class-schedule-week-bounds?');
+      if (request !== weeklyRequest) return;
+      firstScheduleWeek = bounds.firstDate ? currentSaturday(new Date(bounds.firstDate + 'T12:00:00')) : null;
+      lastScheduleWeek = bounds.lastDate ? currentSaturday(new Date(bounds.lastDate + 'T12:00:00')) : null;
       if (!weekStart) weekStart = currentSaturday();
-      if (firstScheduleWeek && weekStart < firstScheduleWeek)
-        weekStart = new Date(firstScheduleWeek);
+      if (firstScheduleWeek && weekStart < firstScheduleWeek) weekStart = new Date(firstScheduleWeek);
       if (lastScheduleWeek && weekStart > lastScheduleWeek) weekStart = new Date(lastScheduleWeek);
-      weeklyDates = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(weekStart);
-        d.setDate(d.getDate() + i);
-        return localISO(d);
+      const dates = Array.from({length:7}, (_,i) => {
+        const day = new Date(weekStart); day.setDate(day.getDate()+i); return localISO(day);
       });
-      weeklySchedules = (await Promise.all(weeklyDates.map(fetchScheduleDay))).flat();
-      renderTimeFilters(weeklySchedules);
-      renderWeeklySchedules(weeklyDates);
-      renderBranchWeekPaginations();
+      const key = dates[0];
+      if (weekKey !== key) {
+        let page = 1, rows = [], data;
+        do {
+          data = await api('/academy/admin/class-schedules?' + new URLSearchParams({dateFrom:dates[0],dateTo:dates[6],page,perPage:100}));
+          if (request !== weeklyRequest) return;
+          rows.push(...(data.schedules || []));
+          if (!(data.schedules || []).length) break;
+          page++;
+        } while (rows.length < Number(data.total || 0));
+        weeklySource = [...new Map(rows.map(row => [row.id,row])).values()];
+        branches = data.organizations || data.branches || branches;
+        window.scheduleClassrooms = data.classrooms || window.scheduleClassrooms || [];
+        lessons = data.lessons || lessons;
+        weeklyTimeRanges = data.timeRanges || weeklyTimeRanges;
+        weeklyDates = dates; weekKey = key;
+        renderTabs(); renderFilters(); renderTimeFilters(weeklySource);
+      }
+      applyWeeklyFilters();
     } catch (e) {
-      host.innerHTML = `<div class="rounded-3xl bg-white p-10 text-center text-red-500">${scheduleEscape(e.message)}</div>`;
+      if (request === weeklyRequest) host.textContent = e.message;
     }
   }
   function weeklyRoomMatches(session, room) {
@@ -344,18 +367,18 @@
   }
   function weeklyMatrix(branch, dates) {
     const dayNames = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه'],
-      sessions = weeklySchedules.filter((s) => s.branchId === branch.id),
+      sessions = weeklySchedules.filter((s) => Number(s.branchId) === Number(branch.id) && (!branch.academyId || Number(s.academyId) === Number(branch.academyId))),
       physical = (window.scheduleClassrooms || []).filter((r) => r.branchId === branch.id),
       hasOnline = sessions.some((s) => s.mode === 'online');
     let rooms = physical
         .map((r) => ({ id: r.id, name: r.name, online: false, kind: 'class' }))
         .concat(hasOnline ? [{ id: 0, name: 'کلاس آنلاین', online: true, kind: 'class' }] : []),
       days = dates.map((date, i) => ({ id: date, name: dayNames[i], kind: 'day' }));
-    if (!showEmptyWeeklyBranches.has(branch.id))
+    if (!showEmptyWeeklyBranches.has('all'))
       rooms = rooms.filter((room) => sessions.some((s) => weeklyRoomMatches(s, room)));
-    if (!showEmptyWeeklyDays.has(branch.id))
+    if (!showEmptyWeeklyDays.has('all'))
       days = days.filter((day) => sessions.some((s) => s.date === day.id));
-    const sourceTimes = showEmptyWeeklyTimes.has(branch.id)
+    const sourceTimes = showEmptyWeeklyTimes.has('all')
         ? weeklyTimeRanges
         : sessions.map((s) => ({ start: s.startTime, end: s.endTime })),
       times = [
@@ -372,8 +395,8 @@
           ])
         ).values(),
       ].sort((a, b) => a.start.localeCompare(b.start) || a.end.localeCompare(b.end)),
-      layout = weeklyLayoutByBranch.get(branch.id) || 'class-day',
-      swapped = swappedWeeklyBranches.has(branch.id);
+      layout = weeklyLayoutByBranch.get('all') || 'class-day',
+      swapped = swappedWeeklyBranches.has('all');
     let rows, columns, corner, match, cellCard;
     if (layout === 'class-time') {
       rows = rooms;
@@ -424,13 +447,9 @@
       rows: body.length ? body : [{ cells: [{ value: 'جلسه‌ای برای این چیدمان وجود ندارد.', attributes: `colspan="${columns.length + 1}" class="p-10 text-center text-gray-400"` }] }],
     });
   }
-  function renderBranchWeekPaginations() {
+  function renderWeeklyControls() {
     const host = document.getElementById('schedulesWeeklyTables');
     if (!host || !weekStart) return;
-    const visibleBranches =
-      currentBranch === 'all'
-        ? branches
-        : branches.filter((b) => String(b.id) === String(currentBranch));
     let windowStart = new Date(weekStart);
     windowStart.setDate(windowStart.getDate() - 14);
     if (firstScheduleWeek && windowStart < firstScheduleWeek)
@@ -448,61 +467,67 @@
       date.setDate(date.getDate() + i * 7);
       return date;
     });
-    host.querySelectorAll('section').forEach((section, index) => {
-      const branch = visibleBranches[index];
-      if (!branch) return;
-      section.dataset.branchId = branch.id;
-      const atFirst = firstScheduleWeek && weekStart <= firstScheduleWeek,
-        atLast = lastScheduleWeek && weekStart >= lastScheduleWeek,
-        showClasses = showEmptyWeeklyBranches.has(branch.id),
-        showDays = showEmptyWeeklyDays.has(branch.id),
-        showTimes = showEmptyWeeklyTimes.has(branch.id),
-        layout = weeklyLayoutByBranch.get(branch.id) || 'class-day',
-        activeClass =
-          'rounded-lg border border-green-600 bg-green-600 px-3 py-2 text-white hover:bg-green-700',
-        idleClass =
-          'rounded-lg border border-emerald-200 px-3 py-2 text-emerald-700 hover:bg-emerald-50',
-        layoutButton = (mode) =>
-          `rounded-lg border px-3 py-2 ${layout === mode ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50'}`,
-        classFilter = `<button onclick="toggleWeeklyEmptyClasses(${branch.id})" class="${showClasses ? activeClass : idleClass}"><i class="fas fa-door-open ml-1"></i> ${showClasses ? 'پنهان‌کردن کلاس‌های خالی' : 'نمایش کلاس‌های خالی'}</button>`,
-        dayFilter = `<button onclick="toggleWeeklyEmptyDays(${branch.id})" class="${showDays ? activeClass : idleClass}"><i class="fas fa-calendar-day ml-1"></i> ${showDays ? 'پنهان‌کردن روزهای خالی' : 'نمایش روزهای خالی'}</button>`,
-        timeFilter = `<button onclick="toggleWeeklyEmptyTimes(${branch.id})" class="${showTimes ? activeClass : idleClass}"><i class="fas fa-clock ml-1"></i> ${showTimes ? 'پنهان‌کردن بازه‌های زمانی خالی' : 'نمایش بازه‌های زمانی خالی'}</button>`,
-        axisFilters =
-          layout === 'class-time'
-            ? classFilter + timeFilter
-            : layout === 'day-time'
-              ? dayFilter + timeFilter
-              : classFilter + dayFilter,
-        html = `<div class="space-y-3"><div class="flex flex-wrap items-center gap-2 text-sm"><button onclick="goToFirstSchedulesWeek()" ${atFirst ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">اول</button><button onclick="changeSchedulesWeek(-1)" ${atFirst ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">قبلی</button>${weeks
-          .map((date) => {
-            const iso = localISO(date),
-              active = iso === localISO(weekStart),
-              outside =
-                (firstScheduleWeek && date < firstScheduleWeek) ||
-                (lastScheduleWeek && date > lastScheduleWeek);
-            return `<button onclick="selectSchedulesWeek('${iso}')" ${outside ? 'disabled' : ''} class="rounded-lg px-3 py-2 disabled:opacity-40 ${active ? 'bg-indigo-600 text-white' : 'border'}">${scheduleEscape(window.formatScheduleDate(iso))}</button>`;
-          })
-          .join(
-            ''
-          )}<button onclick="changeSchedulesWeek(1)" ${atLast ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">بعدی</button><button onclick="goToLastSchedulesWeek()" ${atLast ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">آخر</button></div><div class="flex flex-wrap items-center gap-2 text-sm"><span class="text-xs font-medium text-gray-500">نوع چیدمان:</span><button onclick="setWeeklyScheduleLayout(${branch.id},'class-day')" class="${layoutButton('class-day')}">کلاس × روز</button><button onclick="setWeeklyScheduleLayout(${branch.id},'class-time')" class="${layoutButton('class-time')}">کلاس × بازه زمانی</button><button onclick="setWeeklyScheduleLayout(${branch.id},'day-time')" class="${layoutButton('day-time')}">روز هفته × بازه زمانی</button>${axisFilters}<button onclick="toggleWeeklyScheduleAxes(${branch.id})" class="rounded-lg border border-indigo-200 px-3 py-2 text-indigo-600 hover:bg-indigo-50"><i class="fas fa-exchange-alt ml-1"></i> جابه‌جایی سطر و ستون</button></div></div>`;
-      const header = section.querySelector(':scope > div:first-child');
-      header.classList.add(
-        'flex',
-        'flex-col',
-        'gap-3',
-        'xl:flex-row',
-        'xl:items-start',
-        'xl:justify-between'
-      );
-      header.insertAdjacentHTML('beforeend', html);
+    const branch = {id: 0};
+    const atFirst = firstScheduleWeek && weekStart <= firstScheduleWeek,
+      atLast = lastScheduleWeek && weekStart >= lastScheduleWeek,
+      showClasses = showEmptyWeeklyBranches.has('all'),
+      showDays = showEmptyWeeklyDays.has('all'),
+      showTimes = showEmptyWeeklyTimes.has('all'),
+      layout = weeklyLayoutByBranch.get('all') || 'class-day',
+      activeClass =
+        'rounded-lg border border-green-600 bg-green-600 px-3 py-2 text-white hover:bg-green-700',
+      idleClass =
+        'rounded-lg border border-emerald-200 px-3 py-2 text-emerald-700 hover:bg-emerald-50',
+      layoutButton = (mode) =>
+        `rounded-lg border px-3 py-2 ${layout === mode ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50'}`,
+      classFilter = `<button onclick="toggleWeeklyEmptyClasses(${branch.id})" class="${showClasses ? activeClass : idleClass}"><i class="fas fa-door-open ml-1"></i> ${showClasses ? 'پنهان‌کردن کلاس‌های خالی' : 'نمایش کلاس‌های خالی'}</button>`,
+      dayFilter = `<button onclick="toggleWeeklyEmptyDays(${branch.id})" class="${showDays ? activeClass : idleClass}"><i class="fas fa-calendar-day ml-1"></i> ${showDays ? 'پنهان‌کردن روزهای خالی' : 'نمایش روزهای خالی'}</button>`,
+      timeFilter = `<button onclick="toggleWeeklyEmptyTimes(${branch.id})" class="${showTimes ? activeClass : idleClass}"><i class="fas fa-clock ml-1"></i> ${showTimes ? 'پنهان‌کردن بازه‌های زمانی خالی' : 'نمایش بازه‌های زمانی خالی'}</button>`,
+      axisFilters =
+        layout === 'class-time'
+          ? classFilter + timeFilter
+          : layout === 'day-time'
+            ? dayFilter + timeFilter
+            : classFilter + dayFilter,
+      html = `<div class="space-y-3"><div class="flex flex-wrap items-center gap-2 text-sm"><button onclick="goToCurrentSchedulesWeek()" class="rounded-lg border px-3 py-2">هفته جاری</button><button onclick="goToFirstSchedulesWeek()" ${atFirst ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">اول</button><button onclick="changeSchedulesWeek(-1)" ${atFirst ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">قبلی</button>${weeks
+        .map((date) => {
+          const iso = localISO(date),
+            active = iso === localISO(weekStart),
+            outside =
+              (firstScheduleWeek && date < firstScheduleWeek) ||
+              (lastScheduleWeek && date > lastScheduleWeek);
+          return `<button onclick="selectSchedulesWeek('${iso}')" ${outside ? 'disabled' : ''} class="rounded-lg px-3 py-2 disabled:opacity-40 ${active ? 'bg-indigo-600 text-white' : 'border'}">${scheduleEscape(window.formatScheduleDate(iso))}</button>`;
+        })
+        .join(
+          ''
+        )}<button onclick="changeSchedulesWeek(1)" ${atLast ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">بعدی</button><button onclick="goToLastSchedulesWeek()" ${atLast ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">آخر</button></div><div class="flex flex-wrap items-center gap-2 text-sm"><span class="text-xs font-medium text-gray-500">نوع چیدمان:</span><button onclick="setWeeklyScheduleLayout(${branch.id},'class-day')" class="${layoutButton('class-day')}">کلاس × روز</button><button onclick="setWeeklyScheduleLayout(${branch.id},'class-time')" class="${layoutButton('class-time')}">کلاس × بازه زمانی</button><button onclick="setWeeklyScheduleLayout(${branch.id},'day-time')" class="${layoutButton('day-time')}">روز هفته × بازه زمانی</button>${axisFilters}<button onclick="toggleWeeklyScheduleAxes(${branch.id})" class="rounded-lg border border-indigo-200 px-3 py-2 text-indigo-600 hover:bg-indigo-50"><i class="fas fa-exchange-alt ml-1"></i> جابه‌جایی سطر و ستون</button></div></div>`;
+    let controls = document.getElementById('schedulesWeeklyControls');
+    if (!controls) {
+      controls = document.createElement('div');
+      controls.id = 'schedulesWeeklyControls';
+      controls.className = 'space-y-3';
+      host.before(controls);
+    }
+    controls.innerHTML = html;
+    const wrapper = controls.firstElementChild;
+    const dates = wrapper.children[0], options = wrapper.children[1];
+    const layoutRow = document.createElement('div'), emptyRow = document.createElement('div'), axesRow = document.createElement('div');
+    [dates, layoutRow, emptyRow, axesRow].forEach(row => {
+      row.className = 'flex flex-nowrap items-center gap-2 overflow-x-auto whitespace-nowrap text-sm pb-1';
+      row.dataset.calendarControlRow = '';
     });
+    [...options.children].forEach(node => {
+      const action = node.getAttribute('onclick') || '';
+      (action.includes('toggleWeeklyEmpty') ? emptyRow : action.includes('toggleWeeklyScheduleAxes') ? axesRow : layoutRow).append(node);
+    });
+    wrapper.replaceChildren(dates, layoutRow, emptyRow, axesRow);
+    controls.querySelectorAll('button').forEach(button => button.classList.add('shrink-0'));
   }
+
   function renderWeeklySchedules(dates) {
     const host = document.getElementById('schedulesWeeklyTables'),
       visibleBranches =
-        currentBranch === 'all'
-          ? branches
-          : branches.filter((b) => String(b.id) === String(currentBranch));
+        visibleOrganizations();
     document.getElementById('schedulesWeekRange').textContent =
       `${window.formatScheduleDate(dates[0])} تا ${window.formatScheduleDate(dates[6])}`;
     host.innerHTML =
@@ -530,7 +555,9 @@
       ['bg-white', 'text-gray-700', 'hover:bg-indigo-50', 'dark:bg-slate-800', 'dark:text-white']
         .forEach((name) => button.classList.toggle(name, !active));
     });
-    if (schedulesView === 'weekly') loadWeeklySchedules();
+    if (schedulesView === 'weekly') {
+      if (weekKey) applyWeeklyFilters(); else loadWeeklySchedules();
+    } else if (listKey !== params(currentPage).toString()) load(currentPage);
   };
   window.changeSchedulesWeek = (offset) => {
     if (!weekStart) weekStart = currentSaturday();
@@ -558,40 +585,45 @@
     loadWeeklySchedules();
   };
   window.setWeeklyScheduleLayout = (branchId, layout) => {
+    branchId = 'all';
     weeklyLayoutByBranch.set(
       branchId,
       ['class-day', 'class-time', 'day-time'].includes(layout) ? layout : 'class-day'
     );
     renderWeeklySchedules(weeklyDates);
-    renderBranchWeekPaginations();
+    renderWeeklyControls();
   };
   window.toggleWeeklyEmptyClasses = (branchId) => {
+    branchId = 'all';
     showEmptyWeeklyBranches.has(branchId)
       ? showEmptyWeeklyBranches.delete(branchId)
       : showEmptyWeeklyBranches.add(branchId);
     renderWeeklySchedules(weeklyDates);
-    renderBranchWeekPaginations();
+    renderWeeklyControls();
   };
   window.toggleWeeklyEmptyDays = (branchId) => {
+    branchId = 'all';
     showEmptyWeeklyDays.has(branchId)
       ? showEmptyWeeklyDays.delete(branchId)
       : showEmptyWeeklyDays.add(branchId);
     renderWeeklySchedules(weeklyDates);
-    renderBranchWeekPaginations();
+    renderWeeklyControls();
   };
   window.toggleWeeklyEmptyTimes = (branchId) => {
+    branchId = 'all';
     showEmptyWeeklyTimes.has(branchId)
       ? showEmptyWeeklyTimes.delete(branchId)
       : showEmptyWeeklyTimes.add(branchId);
     renderWeeklySchedules(weeklyDates);
-    renderBranchWeekPaginations();
+    renderWeeklyControls();
   };
   window.toggleWeeklyScheduleAxes = (branchId) => {
+    branchId = 'all';
     swappedWeeklyBranches.has(branchId)
       ? swappedWeeklyBranches.delete(branchId)
       : swappedWeeklyBranches.add(branchId);
     renderWeeklySchedules(weeklyDates);
-    renderBranchWeekPaginations();
+    renderWeeklyControls();
   };
   window.toggleScheduleInlineAttendance = (id) => {
     expanded =
@@ -665,11 +697,11 @@
       canCancel: scheduleCancellationAllowed(item),
       canRestore: scheduleRestoreAllowed(item),
     });
-  setTimeout(async () => {
+  setTimeout(() => {
     if (document.getElementById('schedulesTable')) {
-      await load(1);
+      load(1);
       window.setSchedulesView(schedulesView);
     }
-  }, 200);
-  window.addEventListener('panel-organizations-changed', () => { Promise.resolve((schedulesView === 'weekly' ? loadWeeklySchedules() : load(currentPage))).catch(console.error); });
+  }, 0);
+  window.addEventListener('panel-organizations-changed', () => { invalidateScheduleCache(); Promise.resolve((schedulesView === 'weekly' ? loadWeeklySchedules() : load(currentPage))).catch(console.error); });
 })();
