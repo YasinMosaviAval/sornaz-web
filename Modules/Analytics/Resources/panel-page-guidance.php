@@ -28,10 +28,6 @@ foreach (['fa', 'en'] as $language) {
         'title' => $language === 'en' ? 'Prepare terms before accepting enrollment requests' : 'ترم‌ها را پیش از درخواست ثبت‌نام آماده کنید',
         'paragraphs' => [$language === 'en' ? 'Create an open term for each available teaching slot without a student or date. Specify the teacher, physical or online classroom, number of sessions, recurrence and time pattern. Once agreed with the student, select the first session date during activation.' : 'برای ساعت‌های قابل ارائهٔ هر مدرس، ترم «باز» را بدون هنرجو و بدون تاریخ بسازید. مدرس، کلاس حضوری یا آنلاین، تعداد جلسات، دورهٔ تکرار و یک الگوی ساعت را مشخص کنید. پس از توافق با هنرجو، تاریخ جلسهٔ اول را هنگام فعال‌سازی انتخاب کنید.'],
     ],
-        'pages' => [
-        'title' => $language === 'en' ? 'How to edit' : 'روش ویرایش:',
-        'paragraphs' => [$language === 'en' ? 'Select Edit content to open the actual page in a new tab. Click any text, image or icon and save its new value. Changes are saved directly to the database and shown to visitors.' : 'روی «ویرایش محتوا» بزنید؛ صفحه واقعی در تب جدید باز می‌شود. سپس روی هر متن، تصویر یا آیکن کلیک کنید و مقدار جدید را ثبت کنید. تغییرات مستقیماً در دیتابیس ذخیره و برای بازدیدکنندگان اعمال می‌شوند.'],
-    ],
     ];
     foreach ($pages as $key => $guide) {
         $result[$key]['title'][$language] = $guide['title'];

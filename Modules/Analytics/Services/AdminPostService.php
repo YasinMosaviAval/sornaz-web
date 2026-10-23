@@ -17,6 +17,9 @@ class AdminPostService
     public function index(array $filters): array
     {
         SiteAdminAccess::requireCurrentUser();
+        if (($filters['editorOptions'] ?? '') === '1') {
+            return ['posts' => $this->query("SELECT p.post_id id, COALESCE((SELECT value FROM translations WHERE table_name='posts' AND table_id=p.post_id AND locale='fa' AND field='title' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1), p.slug) title FROM posts p WHERE p.deleted_at IS NULL AND p.type <> 'page' AND p.status <> 'trash' ORDER BY p.post_id DESC")];
+        }
         $this->ensurePageType();
         $page = max(1, (int) ($filters['page'] ?? 1));
         $perPage = in_array((int) ($filters['perPage'] ?? 20), [10, 20, 30, 50, 100], true) ? (int) $filters['perPage'] : 20;
@@ -45,8 +48,33 @@ class AdminPostService
             FROM posts p LEFT JOIN users u ON u.user_id=p.author_id
             WHERE $whereSql ORDER BY p.post_id DESC LIMIT $offset,$perPage", $bindings);
         $posts = array_map(fn (array $row) => $this->map($row), $rows);
+        $posts = $this->withCategoryNames($posts);
         $counts = $this->statusCounts($filters);
         return ['posts' => $posts, 'total' => (int) $count, 'page' => $page, 'perPage' => $perPage, 'statusCounts' => $counts];
+    }
+
+    private function withCategoryNames(array $posts): array
+    {
+        $categoryIds = [];
+        foreach ($posts as $post) {
+            foreach (explode(',', (string) $post['categories']) as $value) {
+                if (ctype_digit(trim($value))) $categoryIds[] = (int) trim($value);
+            }
+        }
+        $categoryNames = [];
+        if ($categoryIds) {
+            $ids = array_values(array_unique($categoryIds));
+            $locale = locale() === 'en' ? 'en' : 'fa';
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            foreach ($this->query("SELECT c.category_id, COALESCE((SELECT t.value FROM translations t WHERE t.table_name='categories' AND t.table_id=c.category_id AND t.field='title' AND t.locale=? AND t.deleted_at IS NULL ORDER BY t.translation_id DESC LIMIT 1), (SELECT t.value FROM translations t WHERE t.table_name='categories' AND t.table_id=c.category_id AND t.field='title' AND t.locale='fa' AND t.deleted_at IS NULL ORDER BY t.translation_id DESC LIMIT 1), c.name) title FROM categories c WHERE c.deleted_at IS NULL AND c.category_id IN ($placeholders)", [$locale, ...$ids]) as $category) {
+                $categoryNames[(int) $category['category_id']] = $category['title'];
+            }
+        }
+        foreach ($posts as &$post) {
+            $post['category_names'] = array_values(array_filter(array_map(static fn ($id) => $categoryNames[(int) trim($id)] ?? null, explode(',', (string) $post['categories']))));
+        }
+        unset($post);
+        return $posts;
     }
 
     private function statusCounts(array $filters): array
@@ -107,6 +135,19 @@ class AdminPostService
         SiteAdminAccess::requireCurrentUser($actor);
         $this->find($id);
         DB::table('posts')->where('post_id', $id)->update(['status' => 'trash', 'updated_by' => $actor]);
+    }
+
+    public function status(int $actor, int $id, string $status): void
+    {
+        SiteAdminAccess::requireCurrentUser($actor);
+        if (!in_array($status, self::STATUSES, true)) throw new RuntimeException('وضعیت نوشته معتبر نیست.');
+        $this->find($id);
+        $values = ['status' => $status, 'updated_by' => $actor, 'updated_at' => date('Y-m-d H:i:s')];
+        if ($status === 'published') {
+            $row = DB::table('posts')->where('post_id', $id)->first();
+            if (empty($row['published_at'])) $values['published_at'] = date('Y-m-d H:i:s');
+        }
+        DB::table('posts')->where('post_id', $id)->whereNull('deleted_at')->update($values);
     }
 
     public function restore(int $actor, int $id): void

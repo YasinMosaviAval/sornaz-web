@@ -411,7 +411,6 @@ Router::group(
 // Router::post('/analytics/admin-permissions', [AdminAccessCatalogController::class, 'savePermission'])->middleware(['site-admin','csrf']);
 // Router::post('/analytics/admin-permissions/{id}', [AdminAccessCatalogController::class, 'savePermission'])->middleware(['site-admin','csrf']);
 // Router::post('/analytics/admin-permissions/{id}/delete', [AdminAccessCatalogController::class, 'deletePermission'])->middleware(['site-admin','csrf']);
-// Router::get('/analytics/admin-site-pages', [SitePageContentController::class, 'pages'])->middleware('academy-panel');
 // Router::get('/analytics/site-page-content', [SitePageContentController::class, 'content']);
 // Router::post('/analytics/admin-site-page-content', [SitePageContentController::class, 'save'])->middleware(['site-admin','csrf']);
 // Router::post('/analytics/_test/seed-academy-managers', [AdminTestController::class, 'seedAcademyManagers'])->middleware(['site-admin', 'csrf']);

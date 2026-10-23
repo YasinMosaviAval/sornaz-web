@@ -30,7 +30,7 @@
   let posts = [],
     total = 0,
     page = 1,
-    perPage = 20,
+    perPage = 10,
     status = 'all',
     editingId = null,
     searchTimer = null,
@@ -47,7 +47,26 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  const cache = new Map(), pending = new Map();
+  window.cyclePostStatus = async (id, button) => {
+    if (button?.disabled) return;
+    const post = posts.find(item => Number(item.id) === Number(id));
+    if (!post) return;
+    const statuses = ['draft', 'published', 'pending', 'private'];
+    const next = statuses[(statuses.indexOf(post.status) + 1) % statuses.length];
+    if (button) button.disabled = true;
+    try {
+      await api(`/analytics/admin-posts/${id}/status`, {status: next});
+      await load(page);
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      if (button?.isConnected) button.disabled = false;
+    }
+  };
+  let generation = 0, requestVersion = 0, rendered = '';
   async function api(url, data = null) {
+    if (data !== null) { cache.clear(); generation++; }
     const options = {
       method: data === null ? 'GET' : 'POST',
       credentials: 'same-origin',
@@ -88,11 +107,30 @@
   async function load(nextPage = 1) {
     page = nextPage;
     try {
-      const data = await api('/analytics/admin-posts?' + query());
+      const key = query().toString(), version = ++requestVersion, requestedGeneration = generation;
+      const cached = cache.get(key);
+      let data;
+      if (cached && Date.now() - cached.at < 15000) data = cached.data;
+      else {
+        const pendingKey = generation + ':' + key;
+        if (!pending.has(pendingKey)) {
+          const epoch = generation;
+          const request = api('/analytics/admin-posts?' + key).then(data => {
+            if (epoch === generation) {
+              if (cache.size >= 20) cache.delete(cache.keys().next().value);
+              cache.set(key, { data, at: Date.now() });
+            }
+            return data;
+          }).finally(() => pending.delete(pendingKey));
+          pending.set(pendingKey, request);
+        }
+        data = await pending.get(pendingKey);
+      }
+      if (version !== requestVersion || requestedGeneration !== generation) return;
       posts = data.posts || [];
       total = Number(data.total || 0);
       page = Number(data.page || 1);
-      perPage = Number(data.perPage || 20);
+      perPage = 10;
       render(data.statusCounts || {});
     } catch (error) {
       alert(error.message);
@@ -101,14 +139,17 @@
   function render(counts) {
     const tbody = document.querySelector('#postsTable tbody');
     if (!tbody) return;
-    tbody.innerHTML = posts.length
+    const signature = JSON.stringify([posts, counts, page, perPage, total]);
+    if (rendered === signature && tbody.rows.length) return;
+    rendered = signature;
+    const rows = posts.length
       ? posts
           .map(
             (post) =>
-              window.AdminPanelTable.rowHTML([{ html: `<div class="font-medium">${esc(post.title)}</div><div class="mt-0.5 text-xs text-gray-400">${esc(post.slug)}</div>`, attributes: ` class="py-4 px-5"` }, { html: `${esc(post.author_name || '#' + post.author_id)}`, attributes: ` class="py-4 px-5"` }, { html: `${esc(post.categories || '—')}`, attributes: ` class="py-4 px-5 text-xs text-gray-500"` }, { html: `<span class="rounded-lg bg-indigo-50 px-2 py-1 text-xs text-indigo-700">${esc(typeLabels[post.type] || post.type)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `<span class="rounded-full px-3 py-1 text-xs ${statusColors[post.status] || 'bg-gray-100 text-gray-600'}">${esc(statusLabels[post.status] || post.status)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `${post.views_count || 0}`, attributes: ` class="py-4 px-5"` }, { html: `${esc(post.published_at || post.created_at || '—')}`, attributes: ` class="py-4 px-5 text-xs"` }, { html: `<button onclick="previewPost(${post.id})" class="ml-2 text-sm text-emerald-600">پیش‌نمایش</button><button onclick="viewPost(${post.id})" class="ml-2 text-sm text-indigo-600">جزئیات</button><button onclick="editPost(${post.id})" class="ml-2 text-sm text-indigo-600">ویرایش</button>${post.status === 'trash' ? `<button onclick="restorePost(${post.id})" class="ml-2 text-sm text-green-600">بازیابی</button>` : ''}<button onclick="deletePost(${post.id})" class="text-sm text-red-500">${post.status === 'trash' ? 'حذف دائمی' : 'زباله‌دان'}</button>`, attributes: ` class="py-4 px-5 text-left whitespace-nowrap"` }], ` class="hover:bg-gray-50"`)
+              ({ cells: [{ html: `<div class="font-medium">${esc(post.title)}</div><div class="mt-0.5 text-xs text-gray-400">${esc(post.slug)}</div>`, attributes: ` class="py-4 px-5"` }, { html: `${esc(post.author_name || '#' + post.author_id)}`, attributes: ` class="py-4 px-5"` }, { html: `${esc((post.category_names || []).join(', ') || '—')}`, attributes: ` class="py-4 px-5 text-xs text-gray-500"` }, { html: `<span class="rounded-lg bg-indigo-50 px-2 py-1 text-xs text-indigo-700">${esc(typeLabels[post.type] || post.type)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `<button type="button" onclick="cyclePostStatus(${Number(post.id)},this)" class="rounded-full px-3 py-1 text-xs ${statusColors[post.status] || 'bg-gray-100 text-gray-600'}">${esc(statusLabels[post.status] || post.status)}</button>`, attributes: ` class="py-4 px-5"` }, { html: `${post.views_count || 0}`, attributes: ` class="py-4 px-5"` }, { html: `${esc(post.published_at || post.created_at || '—')}`, attributes: ` class="py-4 px-5 text-xs"` }, { html: `<button onclick="previewPost(${post.id})" class="ml-2 text-sm text-emerald-600">پیش‌نمایش</button><button onclick="viewPost(${post.id})" class="ml-2 text-sm text-indigo-600">جزئیات</button><button onclick="editPost(${post.id})" class="ml-2 text-sm text-indigo-600">ویرایش</button>${post.status === 'trash' ? `<button onclick="restorePost(${post.id})" class="ml-2 text-sm text-green-600">بازیابی</button>` : ''}<button onclick="deletePost(${post.id})" class="text-sm text-red-500">${post.status === 'trash' ? 'حذف دائمی' : 'زباله‌دان'}</button>`, attributes: ` class="py-4 px-5 text-left whitespace-nowrap"` }], attributes: ` class="hover:bg-gray-50"` })
           )
-          .join('')
-      : window.AdminPanelTable.rowHTML([{ html: "نوشته‌ای یافت نشد", attributes: " colspan=\"8\" class=\"py-12 text-center text-gray-400\"" }], "");
+      : [{ cells: [{ html: "نوشته‌ای یافت نشد", attributes: " colspan=\"8\" class=\"py-12 text-center text-gray-400\"" }], attributes: "" }];
+    window.AdminPanelTable.setRows(tbody.closest('table'), rows);
     document.querySelectorAll('[data-post-status-count]').forEach((element) => {
       const key = element.dataset.postStatusCount;
       element.textContent =
@@ -116,20 +157,7 @@
           ? Object.values(counts).reduce((sum, n) => sum + Number(n), 0)
           : Number(counts[key] || 0);
     });
-    const pages = Math.max(1, Math.ceil(total / perPage)),
-      start = (page - 1) * perPage;
-    document.getElementById('postsPaginationInfo').textContent =
-      `نمایش ${total ? start + 1 : 0} تا ${Math.min(start + perPage, total)} از ${total} نوشته`;
-    document.getElementById('postsPerPage').value = String(perPage);
-    let buttons = `<button onclick="changePostsPage(${page - 1})" ${page === 1 ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">قبلی</button>`;
-    for (
-      let i = Math.max(1, page - 2), end = Math.min(pages, Math.max(1, page - 2) + 4);
-      i <= end;
-      i++
-    )
-      buttons += `<button onclick="changePostsPage(${i})" class="rounded-lg px-3 py-2 ${i === page ? 'bg-indigo-600 text-white' : 'border'}">${i}</button>`;
-    buttons += `<button onclick="changePostsPage(${page + 1})" ${page === pages ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">بعدی</button>`;
-    document.getElementById('postsPaginationButtons').innerHTML = buttons;
+    window.AdminPanelTable.renderPagination(document.getElementById('postsPagination'), { total, perPage: 10, page, onChange: next => load(next) });
   }
   window.filterPosts = () => {
     clearTimeout(searchTimer);
@@ -139,24 +167,72 @@
     status = next;
     document.querySelectorAll('.post-status-tab').forEach((button) => {
       const active = button.dataset.status === next;
-      button.classList.toggle('bg-gray-900', active);
+      button.classList.remove('bg-gray-900');
+      button.classList.toggle('bg-indigo-600', active);
+      button.classList.toggle('hover:bg-gray-50', !active);
+      button.classList.toggle('border-gray-200', !active);
+      button.setAttribute('aria-pressed', String(active));
       button.classList.toggle('text-white', active);
       button.classList.toggle('border', !active);
     });
     load(1);
   };
+  window.changePostsPerPage = () => load(1); // Compatibility with an already-served legacy template.
   window.changePostsPage = (next) => {
     const pages = Math.max(1, Math.ceil(total / perPage));
     if (next >= 1 && next <= pages) load(next);
-  };
-  window.changePostsPerPage = (value) => {
-    perPage = [10, 20, 30, 50, 100].includes(Number(value)) ? Number(value) : 20;
-    load(1);
   };
   function setValue(id, value) {
     const element = document.getElementById(id);
     if (element) element.value = value ?? '';
   }
+  const editorSelection = { categories: new Set(), related: new Set() };
+  let editorOptionsVersion = 0, editorCoverMediaId = null, editorCoverUrl = '', editorCoverUpload = null, editorSaving = false;
+  let relatedOptions = [], relatedSearch = '';
+  const editorText = (fa, en) => document.documentElement.lang.startsWith('en') ? en : fa;
+  const splitSelection = value => new Set(String(value || '').split(/[,،]/).map(value => value.trim()).filter(Boolean));
+  function renderEditorChoices(containerId, options, selected, search = '') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const known = new Set(options.map(item => String(item.id)));
+    const choices = [...options, ...[...selected].filter(id => !known.has(id)).map(id => ({ id, title: containerId === 'peCategories' && !/^\d+$/.test(id) ? id : editorText('مورد قبلی در دسترس نیست', 'Previously selected item unavailable') }))];
+    container.replaceChildren();
+    for (const item of choices) {
+      if (search && !String(item.title).toLocaleLowerCase().includes(search.toLocaleLowerCase())) continue;
+      const label = document.createElement('label'); label.className = 'flex items-center gap-2 text-sm';
+      const input = document.createElement('input'); input.type = 'checkbox'; input.value = String(item.id);
+      input.checked = selected.has(input.value); input.className = 'accent-indigo-600';
+      input.addEventListener('change', () => input.checked ? selected.add(input.value) : selected.delete(input.value));
+      const text = document.createElement('span'); text.textContent = item.title;
+      label.append(input, text); container.append(label);
+    }
+    if (!container.children.length) container.textContent = editorText('موردی یافت نشد', 'No items found');
+  }
+  window.filterPostEditorRelated = value => {
+    relatedSearch = value;
+    renderEditorChoices('peRelated', relatedOptions, editorSelection.related, value);
+  };
+  window.loadPostEditorSelections = async () => {
+    const version = ++editorOptionsVersion;
+    const results = await Promise.allSettled([api('/analytics/admin-post-categories'), api('/analytics/admin-posts?editorOptions=1')]);
+    if (version !== editorOptionsVersion) return;
+    if (results[0].status === 'fulfilled') {
+      const options = results[0].value.map(item => ({ id: item.id, title: editorText(item.title_fa || item.slug, item.title_en || item.title_fa || item.slug) }));
+      renderEditorChoices('peCategories', options, editorSelection.categories);
+    }
+    if (results[1].status === 'fulfilled') {
+      relatedOptions = (results[1].value.posts || []).filter(item => String(item.id) !== String(editingId));
+      renderEditorChoices('peRelated', relatedOptions, editorSelection.related, relatedSearch);
+    }
+    results.forEach((result, index) => {
+      if (result.status !== 'rejected') return;
+      const message = document.createElement('button'); message.type = 'button';
+      message.className = 'block text-sm text-indigo-600';
+      message.textContent = editorText('بارگیری ناموفق بود؛ تلاش دوباره', 'Loading failed; retry');
+      message.onclick = window.loadPostEditorSelections;
+      document.getElementById(index === 0 ? 'peCategories' : 'peRelated')?.append(message);
+    });
+  };
   function editorData() {
     const title = document.getElementById('peTitle').value.trim();
     if (!title) {
@@ -175,10 +251,10 @@
       published_at: document.getElementById('pePublishedAt').value || null,
       password: document.getElementById('pePassword').value,
       type: document.getElementById('peType').value,
-      categories: document.getElementById('peCategories').value.trim(),
-      cover: document.getElementById('peCover').value.trim(),
-      cover_media_id: Number(document.getElementById('peCoverMediaId').value) || null,
-      related_posts_id: document.getElementById('peRelated').value.trim(),
+      categories: [...editorSelection.categories].join(','),
+      cover: editorCoverUrl,
+      cover_media_id: editorCoverMediaId,
+      related_posts_id: [...editorSelection.related].join(','),
       guid: document.getElementById('peGuid').value.trim(),
     };
   }
@@ -189,6 +265,11 @@
     document.getElementById('peVisualContent').innerHTML = post.content || '';
     setValue('peSummary', post.summary);
     setValue('peDescription', post.description);
+    const statusField = document.getElementById('peStatus');
+    if (post.status && ![...statusField.options].some(option => option.value === post.status)) {
+      const option = document.createElement('option'); option.value = post.status;
+      option.textContent = statusLabels[post.status] || post.status; statusField.append(option);
+    }
     setValue('peStatus', post.status || 'draft');
     setValue('peVisibility', post.visibility || 'public');
     setValue(
@@ -197,22 +278,25 @@
     );
     setValue('pePassword', post.password);
     setValue('peType', post.type || 'post');
-    setValue('peCategories', post.categories);
-    setValue('peCover', post.cover);
-    setValue('peCoverMediaId', post.cover_media_id);
-    setValue('peRelated', post.related_posts_id);
+    editorSelection.categories = splitSelection(post.categories);
+    editorSelection.related = splitSelection(post.related_posts_id);
+    relatedOptions = []; relatedSearch = '';
+    setValue('peRelatedSearch', '');
+    renderEditorChoices('peCategories', [], editorSelection.categories);
+    renderEditorChoices('peRelated', [], editorSelection.related);
+    window.loadPostEditorSelections();
+    setValue('peCover', '');
+    document.getElementById('peCover').disabled = false;
+    editorCoverUpload = null;
+    editorCoverMediaId = post.cover_media_id || null;
+    editorCoverUrl = post.cover || '';
+
     setValue('peGuid', post.guid);
     document.getElementById('peViewsCount').textContent = post.views_count || 0;
     document.getElementById('peCommentCount').textContent = post.comment_count || 0;
     document.getElementById('pePostId').textContent = post.id || '—';
-    document.getElementById('postEditorPageTitle').textContent = post.id
-      ? 'ویرایش نوشته'
-      : 'افزودن نوشته';
-    if (!document.getElementById('post-editor')?.classList.contains('hidden')) {
-      const panelTitle = document.getElementById('panelPageTitle');
-      if (panelTitle) panelTitle.textContent = document.getElementById('postEditorPageTitle').textContent;
-    }
-    document.getElementById('peTrashBtn').classList.toggle('hidden', !post.id);
+    const panelTitle = document.getElementById('panelPageTitle');
+    if (panelTitle) panelTitle.textContent = editorText('نوشته ها', 'Posts');
     peSetEditorMode('visual');
     peUpdateWordCount();
     updateCoverPreview();
@@ -234,11 +318,18 @@
       alert(error.message);
     }
   };
+  window.closePostEditor = () => { editorOptionsVersion++; showSection('posts'); };
   window.savePostEditor = async (action) => {
+    if (editorSaving) return;
+    if (editorCoverUpload) {
+      try { await editorCoverUpload; } catch (_) { return; }
+      if (editorSaving) return;
+    }
     const data = editorData();
     if (!data) return;
     if (action === 'draft') data.status = 'draft';
-    if (action === 'publish') data.status = 'published';
+    editorSaving = true;
+
     try {
       if (editingId) await api(`/analytics/admin-posts/${editingId}/update`, data);
       else {
@@ -250,7 +341,7 @@
       await load(1);
     } catch (error) {
       alert(error.message);
-    }
+    } finally { editorSaving = false; }
   };
   window.movePostToTrash = async () => {
     if (!editingId) return;
@@ -303,9 +394,14 @@
       alert(error.message);
     }
   };
-  window.previewPost = async (id) => {
+  window.previewPostEditor = async () => {
+    if (editorCoverUpload) { try { await editorCoverUpload; } catch (_) { return; } }
+    const data = editorData();
+    if (data) return window.previewPost(null, data);
+  };
+  window.previewPost = async (id, draft = null) => {
     try {
-      const post = await api('/analytics/admin-posts/' + id),
+      const post = draft || await api('/analytics/admin-posts/' + id),
         categories = String(post.categories || '')
           .split(',')
           .map((item) => item.trim())
@@ -318,13 +414,49 @@
       alert(error.message);
     }
   };
-  window.updateCoverPreview = () => {
-    const url = document.getElementById('peCover')?.value.trim(),
+  window.selectPostCover = async input => {
+    const file = input.files?.[0];
+    if (!file) return;
+    const allowed = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' };
+    const extension = file.name.split('.').pop().toLowerCase();
+    if (!allowed[extension] || (file.type && file.type !== allowed[extension]) || !file.size || file.size > 50 * 1024 * 1024) {
+      input.value = '';
+      alert(editorText('فقط تصویر PNG، JPG یا WebP تا حجم ۵۰ مگابایت مجاز است.', 'Select a PNG, JPG or WebP image up to 50 MB.'));
+      return;
+    }
+    const version = editorOptionsVersion;
+    const preview = URL.createObjectURL(file);
+    updateCoverPreview(preview);
+    input.disabled = true;
+    const form = new FormData();
+    form.append('file', file); form.append('_token', window.adminCsrfToken || '');
+    const pending = (async () => {
+      const response = await fetch('/analytics/admin-media/upload-post-cover', {
+        method: 'POST', credentials: 'same-origin', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': window.adminCsrfToken || '' }, body: form,
+      });
+      const payload = await response.json(), body = payload.data ?? payload;
+      if (!response.ok || payload.success === false || !body.url || !body.id) throw new Error(editorText('بارگذاری تصویر ناموفق بود.', 'Image upload failed.'));
+      if (version !== editorOptionsVersion) throw new Error('Editor changed');
+      editorCoverUrl = body.url; editorCoverMediaId = Number(body.id);
+      updateCoverPreview();
+    })();
+    editorCoverUpload = pending;
+    try { await pending; }
+    catch (error) { if (version === editorOptionsVersion) { updateCoverPreview(); input.value = ''; alert(error.message); } }
+    finally {
+      URL.revokeObjectURL(preview);
+      if (editorCoverUpload === pending) editorCoverUpload = null;
+      if (version === editorOptionsVersion) input.disabled = false;
+    }
+  };
+  window.updateCoverPreview = (previewUrl = editorCoverUrl) => {
+    const url = previewUrl,
       box = document.getElementById('peCoverPreview'),
       image = document.getElementById('peCoverImg');
     if (!box || !image) return;
-    box.classList.toggle('hidden', !url);
+    image.classList.toggle('hidden', !url);
     if (url) image.src = url;
+    else image.removeAttribute('src');
   };
   function peSyncToCode() {
     const visual = document.getElementById('peVisualContent'),
@@ -416,9 +548,18 @@
   window.peFormat = window.peExec;
   window.peInsertHeading = () => peExec('formatBlock', 'h2');
   window.peInsertList = () => peExec('insertUnorderedList');
+  window.loadPosts = () => load(page);
+  window.addEventListener('sornaz:data-mutated', event => {
+    if (/\/analytics\/admin-post(?:s|s-categories)(?:[/?]|$)/.test(event.detail?.url || '')) { cache.clear(); generation++; }
+  });
+  window.addEventListener('sornaz:remote-mutation', event => {
+    if (!/\/analytics\/admin-post(?:s|s-categories)(?:[/?]|$)/.test(event.detail?.url || '')) return;
+    cache.clear(); generation++;
+    if (!document.getElementById('posts')?.classList.contains('hidden')) load(page);
+  });
   window.renderPostsBranchTabs = () => {};
   window.filterPostsByBranch = () => load(1);
   setTimeout(() => {
-    if (document.querySelector('#postsTable tbody')) load(1);
+    if (document.querySelector('#posts:not(.hidden) #postsTable tbody')) load(1);
   }, 200);
 })();

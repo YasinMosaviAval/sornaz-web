@@ -1,5 +1,9 @@
 <?php
-$tabs = [
+$tabs = [];
+if (\Modules\System\Services\SiteAdminAccess::allows(auth()->user())) {
+    $tabs['branch-types'] = ['labels' => ['انواع آموزشی', 'Education types']];
+}
+$tabs += [
     'branches' => ['labels' => ['مدیریت شعبه‌ها', 'Branch management']],
     'availabilities' => ['labels' => ['برنامه زمانی سازمان', 'Organization schedule']],
     'scheduling-rules' => ['labels' => ['قوانین زمانبندی سازمان', 'Organization scheduling rules']],

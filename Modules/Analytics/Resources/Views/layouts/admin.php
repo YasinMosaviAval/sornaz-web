@@ -17,6 +17,15 @@
     <link rel="stylesheet" href="/assets/theme/theme.css?v=<?= filemtime(base_path('assets/theme/theme.css')) ?: 1 ?>">
     <style>
         body { font-family: Vazirmatn, Tahoma, sans-serif; }
+        .panel-page-toolbar { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; }
+        .panel-page-toolbar-tabs { flex:1 1 20rem; min-width:0; }
+        .panel-page-toolbar-tabs .panel-page-tabs { margin-bottom:0; }
+        .panel-page-toolbar-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:.75rem; margin-inline-start:auto; }
+        .panel-page-toolbar-actions:empty { display:none; }
+        #mainContent > .section h1:not(:is([role="dialog"],[id$="Modal"],[contenteditable],article,.prose) h1),
+        #mainContent > .section h1:not(:is([role="dialog"],[id$="Modal"],[contenteditable],article,.prose) h1) + p,
+        #mainContent > .section [data-panel-description],
+        #mainContent > .section .admin-ui-header [data-slot="heading"] { display:none; }
         .branch-detail-select,.branch-detail-select option { background:#fff!important;color:#111827!important; }
         .sidebar { transition: all 0.3s; }
         .card-hover:hover { transform: translateY(-5px); transition: all 0.3s; }
@@ -129,7 +138,6 @@
 
     pushScript('posts.js');
     pushScript('post-categories.js');
-    pushScript('pages.js');
     pushScript('comments.js');
     pushScript('media.js');
     pushScript('settings.js');

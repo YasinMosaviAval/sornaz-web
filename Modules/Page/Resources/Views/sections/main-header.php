@@ -25,18 +25,13 @@
                     <span class="font-bold text-lg hidden xl:block"><?= e(trans('public.brand', 'برنامه موسیقی سُرناز')) ?></span>
                 </a>
 
-                <nav class="flex items-center gap-1 text-sm">
-                <a href="/course-market" class="px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(locale() === 'en' ? 'Courses' : 'دوره‌های آموزشی') ?></a>
+                <nav class="flex min-w-0 flex-1 items-center justify-between gap-2 whitespace-nowrap text-sm">
                 <!-- <a href="/page/home" data-page="home" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">خانه</a> -->
                 <a href="/analytics/articles" data-page="articles" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.articles', 'مقاله‌های آموزشی')) ?></a>
                 <a href="/academy/academies" data-page="academies" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.academies', 'آموزشگاه‌ها')) ?></a>
                 <!-- <a href="/users" data-page="users" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.users', 'کاربران')) ?></a> -->
-                <a href="/community" data-page="community" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= locale()==='en'?'Community':'جامعه سُرناز' ?></a>
                 <?php if ($hasAdminPanel): ?>
                     <a href="/analytics/admin-panel" data-page="contact" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.user_panel', 'پنل کاربری')) ?></a>
-                <?php endif; ?>
-                <?php if ((int) auth()->id() === 1): ?>
-                    <a href="/analytics/public-ui-preview" class="px-3 py-2 rounded-lg hover:bg-gray-50">نمایش عمومی بخش های غیرعمومی</a>
                 <?php endif; ?>
 
                 <a href="/page/about-us" data-page="about" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.about', 'درباره ما')) ?></a>
@@ -84,14 +79,9 @@
             <!-- <a href="/page/home" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">خانه</a> -->
             <a href="/analytics/articles" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.articles', 'مقاله‌های آموزشی')) ?></a>
             <a href="/academy/academies" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.academies', 'آموزشگاه‌ها')) ?></a>
-            <a href="/course-market" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(locale() === 'en' ? 'Courses' : 'دوره‌های آموزشی') ?></a>
-            <!-- <a href="/users" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.users', 'کاربران')) ?></a> -->
-            <a href="/community" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= locale()==='en'?'Community':'جامعه سُرناز' ?></a>
+            <!-- <a href="/users" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?//= e(trans('public.nav.users', 'کاربران')) ?></a> -->
             <?php if ($hasAdminPanel): ?>
                 <a href="/analytics/admin-panel" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.user_panel', 'پنل کاربری')) ?></a>
-            <?php endif; ?>
-            <?php if ((int) auth()->id() === 1): ?>
-                <a href="/analytics/public-ui-preview" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">نمایش عمومی بخش های غیرعمومی</a>
             <?php endif; ?>
             <a href="/page/about-us" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.about', 'درباره ما')) ?></a>
             <a href="/page/contact-us" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.contact', 'تماس با ما')) ?></a>

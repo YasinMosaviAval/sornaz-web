@@ -3,10 +3,8 @@
 $current = current_url();
 $menu = [
     ['title'=>'خانه', 'url'=>'/'],
-    ['title'=>locale()==='en'?'Community':'جامعه سُرناز', 'url'=>'/community'],
     ['title'=>'آموزشگاه ها', 'url'=>'/academy'],
     ['title'=>'اساتید', 'url'=>'/teacher'],
-    ['title'=>'دوره ها', 'url'=>'/course'],
     ['title'=>locale()==='en'?'Music Sheets':'نت‌نویسی', 'url'=>'/music-sheets'],
     ['title'=>'مقالات', 'url'=>'/blog'],
     ['title'=>'درباره ما', 'url'=>'/about'],

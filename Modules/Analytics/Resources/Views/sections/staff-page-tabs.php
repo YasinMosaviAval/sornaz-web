@@ -1,4 +1,8 @@
 <?php
+if (empty($personal) && \Modules\System\Services\SiteAdminAccess::allows(auth()->user())) {
+    component('access-page-tabs', ['active' => $active ?? 'teachers']);
+    return;
+}
 $pageTabs = array_map(static fn (array $labels): array => ['labels' => $labels], ['teachers' => ['قراردادها', 'Contracts'], 'users' => ['نقش‌ها و دسترسی‌ها', 'Roles and permissions'], 'member-schedules' => ['برنامه زمانی اعضا', 'Member schedules'], 'employee-leaves' => ['مرخصی‌ها', 'Leaves']]);
 if (!empty($personal)) $pageTabs = array_intersect_key($pageTabs, ['member-schedules' => true]);
 component('panel-page-tabs', [

@@ -1,0 +1,29 @@
+<?php
+$fixtureRoot = getenv('SORNAZ_POST_MEDIA_FIXTURE_ROOT');
+$projectRoot = getenv('SORNAZ_POST_MEDIA_PROJECT_ROOT');
+if (!$fixtureRoot || !is_dir($fixtureRoot) || !str_starts_with(basename($fixtureRoot), 'sornaz-post-media-') || !$projectRoot) { http_response_code(500); exit; }
+$map = require $projectRoot . '/vendor/composer/autoload_classmap.php';
+spl_autoload_register(static function ($class) use ($map) { if (isset($map[$class])) require_once $map[$class]; });
+$pdo = new Core\database\PrefixedPDO('sqlite:' . $fixtureRoot . '/fixture.sqlite', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+$pdo->sqliteCreateFunction('DATE_FORMAT', fn ($date, $format) => substr((string) $date, 0, 7));
+function db() { return $GLOBALS['pdo']; }
+function base_path($path = '') { return $GLOBALS['fixtureRoot'] . '/' . $path; }
+function locale() { return 'en'; }
+function env($key, $fallback = null) { return $key === 'APP_URL' ? 'http://fixture.test' : $fallback; }
+function session() { return new class { public function get($key, $default = null) { return $key === 'suppress_database_notifications' ? true : $default; } }; }
+function auth() { return new class {
+ public function id() { return ($_SERVER['HTTP_X_FIXTURE_ROLE'] ?? '') === 'admin' ? 1 : 8; }
+ public function user() { return ['user_id' => $this->id(), 'type' => 'human']; }
+}; }
+$pdo->exec("CREATE TABLE IF NOT EXISTS users(user_id INTEGER PRIMARY KEY,username TEXT);
+CREATE TABLE IF NOT EXISTS posts(post_id INTEGER PRIMARY KEY,cover TEXT,cover_media_id INTEGER,type TEXT,deleted_at TEXT);
+CREATE TABLE IF NOT EXISTS translations(translation_id INTEGER PRIMARY KEY AUTOINCREMENT,table_name TEXT,table_id INTEGER,locale TEXT,field TEXT,value TEXT,version INTEGER,created_at TEXT,created_by INTEGER,updated_at TEXT,updated_by INTEGER,deleted_at TEXT,deleted_by INTEGER);
+CREATE TABLE IF NOT EXISTS media_files(media_file_id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,disk TEXT,directory TEXT,filename TEXT,extension TEXT,mime_type TEXT,type TEXT,collection TEXT,path TEXT,thumbnail_path TEXT,original_filename TEXT,fileable_type TEXT,fileable_id INTEGER,sort_order INTEGER,size INTEGER,duration INTEGER,width INTEGER,height INTEGER,checksum TEXT,visibility TEXT,created_at TEXT,created_by INTEGER,updated_at TEXT,updated_by INTEGER,deleted_at TEXT,deleted_by INTEGER);");
+header('Content-Type: application/json');
+try {
+ if (parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) === '/state') { echo json_encode(['count' => db()->query('SELECT COUNT(*) FROM media_files')->fetchColumn()]); exit; }
+ if (($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '') !== 'fixture') { http_response_code(403); echo '{"success":false}'; exit; }
+ $service = new Modules\Analytics\Services\AdminMediaService();
+ if ($_SERVER['REQUEST_METHOD'] === 'GET') { echo json_encode(['success' => true, 'data' => $service->index($_GET)]); exit; }
+ echo json_encode(['success' => true, 'data' => $service->uploadPostCover((int) auth()->id(), $_FILES['file'] ?? [])]);
+} catch (Throwable $error) { http_response_code($error->getCode() === 403 ? 403 : 422); echo json_encode(['success' => false, 'message' => $error->getMessage()]); }

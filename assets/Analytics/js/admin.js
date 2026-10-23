@@ -11,15 +11,100 @@ function showStaffPage(id) {
   } else showSection(id);
 }
 function panelPageHeading(section) {
-  if (!section || section.id === 'chat') return null;
-  if (section.id === 'availability-exceptions') return section.querySelector('h1');
-  const firstContent = [...section.children].find((child) => !['STYLE', 'SCRIPT', 'NAV'].includes(child.tagName));
-  return firstContent?.matches('h1') ? firstContent : firstContent?.querySelector('h1') || null;
+  return section?.querySelector('h1:not(:is([role="dialog"],[id$="Modal"],[contenteditable],article,.prose) h1)') || null;
+}
+
+function hidePanelIntroduction(section) {
+  if (!section) return;
+  const heading = panelPageHeading(section);
+  const elements = [...section.querySelectorAll('[data-panel-description]')];
+  if (heading) {
+    elements.push(heading);
+    if (heading.nextElementSibling?.tagName === 'P') elements.push(heading.nextElementSibling);
+  }
+  elements.forEach(element => element.classList.add('hidden'));
+  elements.forEach(element => {
+    let parent = element.parentElement;
+    while (parent && parent !== section && !parent.matches('nav,aside,form')) {
+      if (![...parent.children].every(child => child.classList.contains('hidden') || ['STYLE', 'SCRIPT'].includes(child.tagName))) break;
+      parent.classList.add('hidden');
+      parent = parent.parentElement;
+    }
+  });
+  section.querySelectorAll('.admin-ui-header').forEach(header => {
+    if (!header.querySelector('[data-slot="actions"] :is(button,a,input,select)')) header.classList.add('hidden');
+  });
+}
+
+function panelWorkspaceTitle(id) {
+  const english = document.documentElement.lang.startsWith('en');
+  const staffAccessPage = ['teachers', 'member-schedules'].includes(id) || (id === 'availability-exceptions' && window.holidayLeaveMode === 'member');
+  if (staffAccessPage && document.getElementById(id)?.querySelector('.panel-page-tabs button[onclick*="roles"]')) {
+    return english ? 'Roles and permissions' : 'نقش ها و دسترسی ها';
+  }
+  const groups = [
+    [['users', 'roles', 'permissions'], ['نقش ها و دسترسی ها', 'Roles and permissions']],
+    [['posts', 'post-categories', 'media', 'comments', 'post-editor'], ['نوشته ها', 'Posts']],
+    [['awards', 'badges', 'experiences', 'certificates', 'educations', 'events', 'polls', 'publications'], ['سوابق و دستاوردها', 'Records and achievements']],
+    [['gallery', 'gallery-cover', 'gallery-logo', 'gallery-intro-video', 'gallery-collection'], ['گالری', 'Gallery']],
+    [['branches', 'branch-types', 'availabilities', 'scheduling-rules', ...(window.holidayLeaveMode !== 'member' ? ['availability-exceptions'] : [])], ['سازمان', 'Organization']],
+  ];
+  return groups.find(([ids]) => ids.includes(id))?.[1][english ? 1 : 0] || '';
+}
+
+function updatePanelHeaderActions() {
+  const slot = document.getElementById('panelPageActions');
+  if (!slot) return;
+  slot.classList.add('hidden');
+  slot.classList.remove('flex');
+}
+
+function alignPanelPageActions(page) {
+  if (!page) return;
+  const tabs = [...page.querySelectorAll('.panel-page-tabs')];
+  if (!tabs.length) return;
+  let toolbar = page.querySelector(':scope > [data-panel-page-toolbar]');
+  if (!toolbar) {
+    toolbar = document.createElement('div');
+    toolbar.dataset.panelPageToolbar = '1';
+    toolbar.className = 'panel-page-toolbar';
+    const navigation = document.createElement('div');
+    navigation.className = 'panel-page-toolbar-tabs';
+    const actions = document.createElement('div');
+    actions.dataset.panelPageActions = '1';
+    actions.className = 'panel-page-toolbar-actions';
+    const hosts = [...new Set(tabs.map(tab => {
+      let host = tab;
+      while (host.parentElement !== page) host = host.parentElement;
+      return host;
+    }))];
+    page.insertBefore(toolbar, hosts[0]);
+    toolbar.append(navigation, actions);
+    hosts.forEach(host => navigation.append(host));
+  }
+  const actions = toolbar.querySelector('[data-panel-page-actions]');
+  page.querySelectorAll('button,a').forEach(button => {
+    if (button.closest('[data-panel-page-toolbar],form,table,nav,[role="dialog"],[id$="Modal"],.fixed,[contenteditable]')) return;
+    const handler = button.getAttribute('onclick') || '', label = button.textContent.trim();
+    const add = button.hasAttribute('data-panel-page-action') || button.hasAttribute('data-profile-add') || /^openAdd\w*\s*\(/.test(handler) || /^(?:افزودن|add\b|new\b|create\b|\+\s*)/i.test(label) || (/^open\w*\s*\(/.test(handler) && /جدید\s*$/.test(label));
+    const exportFile = /^export\w*(?:Excel|PDF)\w*\s*\(/i.test(handler) || /(?:خروجی\s*(?:اکسل|پی[\s‌]*دی[\s‌]*اف|excel|pdf)|export\s*(?:excel|pdf))/i.test(label);
+    if (!add && !exportFile) return;
+    const previous = button.parentElement;
+    actions.append(button);
+    let container = previous;
+    while (container && container !== page && container !== toolbar && !container.matches('nav,form,aside')) {
+      if ([...container.children].some(child => !child.classList.contains('hidden') && !['STYLE','SCRIPT'].includes(child.tagName))) break;
+      container.classList.add('hidden');
+      container = container.parentElement;
+    }
+  });
 }
 
 function showSection(id) {
+  if (id === 'gallery' && !document.getElementById(id)) id = 'gallery-cover';
   if (!document.getElementById(id)) id = 'dashboard';
   const section = id;
+  updatePanelHeaderActions(section);
 
   document.querySelectorAll('.section').forEach((s) => s.classList.add('hidden'));
 
@@ -27,17 +112,12 @@ function showSection(id) {
   if (target) {
     target.classList.remove('hidden');
     const heading = panelPageHeading(target);
-    const title = heading?.textContent?.trim() ||
+    const title = panelWorkspaceTitle(section) || heading?.textContent?.trim() ||
       [...document.querySelectorAll('#sidebar a[onclick]')].find((link) => link.getAttribute('onclick') === `showSection('${section}')`)?.textContent?.trim() || section;
     const panelTitle = document.getElementById('panelPageTitle');
     if (panelTitle) panelTitle.textContent = title;
-    if (heading) {
-      heading.classList.add('hidden');
-      const description = heading.nextElementSibling;
-      if (description?.tagName === 'P' && !description.hasAttribute('data-panel-description')) description.classList.add('hidden');
-      const intro = heading.parentElement;
-      if (intro && [...intro.children].every((child) => child.classList.contains('hidden'))) intro.classList.add('hidden');
-    }
+    hidePanelIntroduction(target);
+    alignPanelPageActions(target);
   }
 
   document.getElementById(id).classList.remove('hidden');
@@ -204,16 +284,10 @@ function showSection(id) {
       if (typeof filterRatingSummariesByBranch === 'function') filterRatingSummariesByBranch('all');
     }, 100);
   }
-  if (section === 'posts') {
-    setTimeout(() => {
-      if (typeof renderPostsBranchTabs === 'function') renderPostsBranchTabs();
-      if (typeof filterPostsByBranch === 'function') filterPostsByBranch('all');
-      if (typeof filterPostsByStatus === 'function') filterPostsByStatus('all');
-    }, 100);
-  }
-  if (section === 'post-categories' && typeof loadPostCategories === 'function') {
-    setTimeout(() => loadPostCategories(), 100);
-  }
+  if (section === 'media') window.loadAdminMedia?.(1);
+  if (section === 'comments') window.loadAdminComments?.();
+  if (section === 'posts') window.loadPosts?.();
+  if (section === 'post-categories') window.loadPostCategories?.();
   if (section === 'about-us') {
     setTimeout(() => {
       if (typeof renderAboutUs === 'function') renderAboutUs();
@@ -298,6 +372,10 @@ function toggleSidebar() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('#mainContent > .section').forEach(hidePanelIntroduction);
+  document.querySelectorAll('#mainContent > .section').forEach(alignPanelPageActions);
+  const activeSection = document.querySelector('#mainContent > .section:not(.hidden)');
+  if (activeSection) updatePanelHeaderActions(activeSection.id);
   const requestedSection = window.location.hash.replace('#', '');
   if (requestedSection && document.getElementById(requestedSection)) showSection(requestedSection);
   const conversation = Number(new URLSearchParams(location.search).get('conversation'));
@@ -337,6 +415,13 @@ document.addEventListener('DOMContentLoaded', () => {
     overlay?.classList.add('hidden');
     document.body.classList.remove('overflow-hidden');
   });
+});
+
+document.addEventListener('admin-ui:ready', event => {
+  const section = event.target.closest?.('.section');
+  if (section) hidePanelIntroduction(section);
+  if (section) alignPanelPageActions(section);
+  if (section && !section.classList.contains('hidden')) updatePanelHeaderActions(section.id);
 });
 
 // این تابع را در main.js یا یک فایل مشترک بگذار

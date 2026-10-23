@@ -66,7 +66,7 @@ const { tableRuntime, renderPanelView } = require('./panel-table-fixture.cjs');
     assert.deepEqual(await ids(), descending(5, 5), 'Native sort survives page change');
     await page.locator('#lessonsTable [data-admin-identity-column] button').click();
     assert.deepEqual(await ids(), ['21', '22', '23', '24', '25'], 'Ascending ID sort also uses all rows');
-    for (const name of ['lessons', 'terms', 'teachers', 'member-schedules', 'pages']) {
+    for (const name of ['lessons', 'terms', 'teachers', 'member-schedules']) {
       for (const language of ['fa', 'en']) {
         await page.setContent(renderPanelView(name, language));
         await page.locator('.section').evaluate(element => element.classList.remove('hidden'));

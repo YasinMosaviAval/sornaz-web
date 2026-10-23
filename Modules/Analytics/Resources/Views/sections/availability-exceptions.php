@@ -3,10 +3,7 @@
     <div data-exception-nav="member" class="hidden"><?php component('staff-page-tabs', ['active' => 'employee-leaves']); ?></div>
     <div id="academyNationalHolidaySettings" class="mb-6"></div>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-3xl font-bold">تعطیلات و مرخصی‌ها</h1>
-            <p class="text-gray-500 mt-1">ثبت تعطیلات شعبه‌ها و مرخصی اعضا</p>
-        </div>
+
         <div class="flex flex-wrap gap-3">
             <button onclick="openAddHolidayLeaveModal()"
                     class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">

@@ -1,4 +1,4 @@
-<div id="post-editor" class="section hidden">
+<div id="post-editor" class="section hidden" data-admin-ui-native>
     <style>
         #post-editor .pe-tool { display:inline-flex; min-width:2rem; height:2rem; align-items:center; justify-content:center; border-radius:.5rem; padding:0 .5rem; font-size:.875rem; color:#374151; }
         #post-editor .pe-tool:hover { background:#fff; color:#4f46e5; box-shadow:0 1px 2px rgb(0 0 0 / .08); }
@@ -10,29 +10,7 @@
         #peVisualContent th, #peVisualContent td { border:1px solid #d1d5db; padding:.5rem; }
         #peVisualContent blockquote { border-right:4px solid #6366f1; margin:1rem 0; padding:.75rem 1rem; color:#4b5563; background:#f9fafb; }
     </style>
-    <!-- نوار بالا -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div class="flex items-center gap-4">
-            <button onclick="closePostEditor()" class="text-gray-500 hover:text-indigo-600 flex items-center gap-2 text-sm">
-                <i class="fas fa-arrow-right"></i> بازگشت به لیست
-            </button>
-            <div>
-                <h1 class="text-2xl font-bold" id="postEditorPageTitle">ویرایش نوشته</h1>
-                <p class="text-gray-400 text-sm mt-0.5" id="postEditorSubtitle">پیش‌نویس</p>
-            </div>
-        </div>
-        <div class="flex flex-wrap gap-2">
-            <button onclick="previewPostEditor()" class="border border-gray-300 hover:bg-gray-50 px-5 py-2.5 rounded-2xl text-sm">
-                <i class="fas fa-eye ml-1"></i> پیش‌نمایش
-            </button>
-            <button onclick="savePostEditor('draft')" class="border border-indigo-300 text-indigo-600 hover:bg-indigo-50 px-5 py-2.5 rounded-2xl text-sm">
-                ذخیره پیش‌نویس
-            </button>
-            <button onclick="savePostEditor('publish')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-2xl text-sm font-medium">
-                <i class="fas fa-check ml-1"></i> انتشار
-            </button>
-        </div>
-    </div>
+    <button type="button" onclick="closePostEditor()" class="mb-6 flex items-center gap-2 text-sm text-gray-500 hover:text-indigo-600"><i class="fas fa-arrow-right"></i> بازگشت به لیست</button>
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <!-- ستون اصلی (۲/۳) -->
@@ -82,12 +60,12 @@
             <!-- خلاصه و توضیحات -->
             <div class="bg-white rounded-3xl shadow-sm p-6 space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-2">خلاصه (Excerpt)</label>
-                    <textarea id="peSummary" rows="2" class="w-full border border-gray-200 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-400" placeholder="خلاصه کوتاه برای لیست و سئو"></textarea>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">خلاصه </label>
+                    <textarea id="peSummary" rows="5" class="w-full border border-gray-200 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-400" placeholder="خلاصه کوتاه برای لیست و سئو"></textarea>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-2">توضیحات</label>
-                    <textarea id="peDescription" rows="2" class="w-full border border-gray-200 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-400" placeholder="توضیح تکمیلی"></textarea>
+                    <textarea id="peDescription" rows="10" class="w-full border border-gray-200 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-400" placeholder="توضیح تکمیلی"></textarea>
                 </div>
             </div>
         </div>
@@ -129,9 +107,9 @@
                     </div>
                     <div class="flex gap-2 pt-2">
                         <button onclick="savePostEditor('draft')" class="flex-1 border py-2.5 rounded-xl text-sm hover:bg-gray-50">پیش‌نویس</button>
-                        <button onclick="savePostEditor('publish')" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm hover:bg-indigo-700">انتشار</button>
+                        <button onclick="savePostEditor('status')" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm hover:bg-indigo-700"><?= e(locale()==='en' ? 'Save publication status' : 'ثبت وضعیت انتشار') ?></button>
                     </div>
-                    <button onclick="movePostToTrash()" id="peTrashBtn" class="w-full text-red-500 text-sm py-2 hover:underline">انتقال به زباله‌دان</button>
+                    <button type="button" onclick="previewPostEditor()" class="w-full border border-gray-300 py-2.5 rounded-xl text-sm hover:bg-gray-50"><i class="fas fa-eye ml-1"></i> پیش‌نمایش</button>
                 </div>
             </div>
 
@@ -151,9 +129,7 @@
             <div class="bg-white rounded-3xl shadow-sm overflow-hidden">
                 <div class="px-5 py-3 border-b font-semibold text-sm bg-gray-50">دسته‌ها</div>
                 <div class="p-5 space-y-2">
-                    <input type="text" id="peCategories" placeholder="آموزش, پیانو, خبر"
-                           class="w-full border border-gray-200 rounded-xl py-2.5 px-3 text-sm">
-                    <p class="text-xs text-gray-400">دسته‌ها را با کاما جدا کنید</p>
+                    <div id="peCategories" class="max-h-64 overflow-y-auto space-y-2" aria-live="polite"></div>
                 </div>
             </div>
 
@@ -161,25 +137,22 @@
             <div class="bg-white rounded-3xl shadow-sm overflow-hidden">
                 <div class="px-5 py-3 border-b font-semibold text-sm bg-gray-50">تصویر شاخص</div>
                 <div class="p-5 space-y-3">
-                    <div id="peCoverPreview" class="hidden rounded-2xl overflow-hidden bg-gray-100 aspect-video flex items-center justify-center text-gray-400 text-sm">
-                        <img id="peCoverImg" src="" alt="" class="w-full h-full object-cover">
+                    <div id="peCoverPreview" style="aspect-ratio:16/9" class="rounded-2xl overflow-hidden bg-gray-100 aspect-video flex items-center justify-center text-gray-400 text-sm">
+                        <img id="peCoverImg" alt="" class="hidden w-full h-full object-contain">
                     </div>
-                    <input type="text" id="peCover" placeholder="آدرس تصویر یا URL"
-                           onchange="updateCoverPreview()"
-                           class="w-full border border-gray-200 rounded-xl py-2.5 px-3 text-sm">
-                    <input type="number" id="peCoverMediaId" placeholder="cover_media_id"
-                           class="w-full border border-gray-200 rounded-xl py-2.5 px-3 text-sm">
+                    <input type="file" id="peCover" accept=".png,.jpg,.webp" onchange="selectPostCover(this)" aria-label="<?= e(locale()==='en' ? 'Featured image' : 'تصویر شاخص') ?>" class="w-full border border-gray-200 rounded-xl py-2.5 px-3 text-sm">
                 </div>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-sm overflow-hidden">
+                <div class="px-5 py-3 border-b font-semibold text-sm bg-gray-50"><?= e(locale()==='en' ? 'Related posts' : 'نوشته‌های مرتبط') ?></div>
+                <div class="p-5"><input type="search" id="peRelatedSearch" oninput="filterPostEditorRelated(this.value)" aria-label="جستجوی نوشته" placeholder="جستجوی عنوان..." class="mb-3 w-full rounded-xl border px-3 py-2"><div id="peRelated" class="max-h-64 overflow-y-auto space-y-2" aria-live="polite"></div></div>
             </div>
 
             <!-- پیشرفته -->
             <div class="bg-white rounded-3xl shadow-sm overflow-hidden">
                 <div class="px-5 py-3 border-b font-semibold text-sm bg-gray-50">پیشرفته</div>
                 <div class="p-5 space-y-3 text-sm">
-                    <div>
-                        <label class="text-gray-500 block mb-1">نوشته‌های مرتبط (IDها)</label>
-                        <input type="text" id="peRelated" class="w-full border border-gray-200 rounded-xl py-2 px-3">
-                    </div>
                     <div>
                         <label class="text-gray-500 block mb-1">GUID / لینک دائمی</label>
                         <input type="text" id="peGuid" class="w-full border border-gray-200 rounded-xl py-2 px-3">

@@ -175,7 +175,6 @@ final class MobilePanelCatalog
         $sections['guides'] = $s('guides', 'راهنمای عملکردها', 'Guides', '/analytics/admin-guides', 'items', [], 'founder', false);
         $guideFields = [$f('fa', 'فارسی', 'object', [$f('title', 'عنوان'), $f('content', 'متن', 'multiline')]), $f('en', 'English', 'object', [$f('title', 'Title'), $f('content', 'Content', 'multiline')])];
         $sections['guides']['actions']['update'] = $a('/analytics/admin-guides', 'ویرایش راهنما', 'POST', $guideFields);
-        $sections['pages'] = $s('pages', 'برگه‌ها', 'Pages', '/analytics/admin-site-pages', 'pages', [], 'admin', false);
         $sections['page-content'] = $s('page-content', 'محتوای برگه', 'Page content', '/analytics/site-page-content', 'items', [], 'admin', false);
         $sections['page-content']['hidden'] = true;
         $sections['page-content']['actions']['update'] = $a('/analytics/admin-site-page-content', 'ویرایش محتوا', 'POST', [$f('fa', 'متن فارسی', 'multiline'), $f('en', 'English text', 'multiline'), $f('value', 'تصویر یا آیکن')]);
@@ -295,7 +294,7 @@ final class MobilePanelCatalog
         $sections['reports']['filters'] = $sections['dashboard']['filters'];
         $sections['schedules']['filters'] = [$f('branch', 'شعبه', 'select', ['source' => 'branches']), $f('classroom', 'کلاس', 'select', ['source' => 'classrooms']), $f('lesson', 'درس', 'select', ['source' => 'lessons']), $f('date', 'تاریخ', 'date'), $f('timeFrom', 'از ساعت', 'time'), $f('timeTo', 'تا ساعت', 'time'), $f('status', 'وضعیت', 'select', ['approved' => 'تأییدشده', 'pending' => 'در انتظار', 'cancelled' => 'لغوشده']), $f('mode', 'نوع برگزاری', 'select', ['in-person' => 'حضوری', 'online' => 'آنلاین'])];
         $sections['posts']['filters'] = [$f('status', 'وضعیت', 'select', ['draft' => 'پیش‌نویس', 'published' => 'منتشرشده', 'pending' => 'در انتظار', 'trash' => 'زباله‌دان']), $f('type', 'نوع', 'select', ['post' => 'نوشته', 'page' => 'برگه', 'article' => 'مقاله']), $f('visibility', 'نمایش', 'select', ['public' => 'عمومی', 'private' => 'خصوصی'])];
-        $sections['comments']['filters'] = [$f('post', 'نوشته', 'select', ['source' => 'posts']), $f('status', 'وضعیت', 'select', ['pending' => 'در انتظار', 'approved' => 'تأییدشده', 'rejected' => 'ردشده'])];
+        $sections['comments']['filters'] = [$f('status', 'وضعیت', 'select', ['pending' => 'در انتظار', 'approved' => 'تأییدشده', 'rejected' => 'ردشده'])];
         foreach ($sections['comments']['actions']['update']['fields'] as &$field) {
             if ($field['key'] === 'status') {
                 $field['options'] = ['pending' => 'در انتظار', 'approved' => 'تأییدشده', 'rejected' => 'ردشده'];
@@ -441,7 +440,6 @@ final class MobilePanelCatalog
             }
         }
         $sections['students']['presentation']['detailFields'][] = ['key' => 'teacherNotes', 'label' => 'یادداشت‌های استاد', 'en' => 'Teacher notes'];
-        $sections['pages']['detail'] = $sections['page-content'];
         return $sections;
     }
 
@@ -1070,7 +1068,7 @@ final class MobilePanelCatalog
                 }
             }unset($action);
         } unset($section);
-        foreach (['posts', 'post-categories', 'comments', 'media', 'pages', 'page-content', 'settings'] as $key) {
+        foreach (['posts', 'post-categories', 'comments', 'media', 'page-content', 'settings'] as $key) {
             $sections[$key]['access'] = 'admin';
         }
         return $sections;

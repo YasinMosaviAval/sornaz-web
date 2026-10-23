@@ -1,14 +1,8 @@
 <div id="post-categories" class="section hidden">
-    <?php component('panel-page-tabs', [
-        'active'=>'post-categories', 'label'=>locale()==='en' ? 'Posts' : 'نوشته‌ها',
-        'tabs'=>[
-            'posts'=>['labels'=>['نوشته‌ها','Posts']],
-            'post-categories'=>['labels'=>['دسته‌بندی نوشته‌ها','Post categories']],
-        ],
-    ]); ?>
+    <?php component('posts-page-tabs', ['active'=>'post-categories']); ?>
     <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div><h1 class="text-3xl font-bold">دسته‌بندی نوشته‌ها</h1><p class="mt-1 text-gray-500">مدیریت دسته‌بندی‌های قابل استفاده برای نوشته‌ها و مقاله‌های آموزشی</p></div>
-        <button type="button" onclick="openPostCategoryForm()" class="flex items-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700"><i class="fas fa-plus"></i> افزودن دسته‌بندی</button>
+
+        <button type="button" data-panel-page-action="post-categories" onclick="openPostCategoryForm()" class="flex items-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700"><i class="fas fa-plus"></i> افزودن دسته‌بندی</button>
     </div>
     <div class="mb-6 rounded-3xl bg-white p-4 shadow-sm">
         <input id="postCategorySearch" type="search" oninput="filterPostCategories()" placeholder="جستجو در عنوان، نامک یا گروه..." class="w-full rounded-2xl border border-gray-300 px-4 py-3 focus:border-indigo-500 focus:outline-none">
@@ -31,6 +25,6 @@ $panelTable0CellAttributes = ' colspan="6" class="px-5 py-12 text-center text-gr
 $panelTable0Row['cells'][] = ['html' => 'در حال دریافت دسته‌بندی‌ها...', 'attributes' => $panelTable0CellAttributes, 'tag' => 'td'];
 $panelTable0['rows'][] = $panelTable0Row;
 component('panel-table-template', $panelTable0); unset($panelTable0); ?></div>
-        <div id="postCategoriesCount" class="border-t p-4 text-sm text-gray-500">۰ دسته‌بندی</div>
+        <?php component('panel-table-pagination', ['id'=>'postCategoriesPagination']); ?>
     </div>
 </div>

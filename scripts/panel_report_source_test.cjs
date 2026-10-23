@@ -12,7 +12,7 @@ const context = {
     querySelector() { return tbody; }, querySelectorAll() { return []; },
   },
   fetch(url, options) { return new Promise(resolve => pending.push({ url, options, resolve })); },
-  AdminPanelTable: {},
+  AdminPanelTable: { setRows(table, rows) { tbody.textContent = rows[0]?.cells[0]?.value || ''; } },
 };
 context.window = context;
 vm.createContext(context);

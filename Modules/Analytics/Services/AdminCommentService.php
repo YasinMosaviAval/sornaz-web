@@ -33,7 +33,7 @@ class AdminCommentService
         foreach ($this->query('SELECT status,COUNT(*) total FROM comments WHERE deleted_at IS NULL GROUP BY status') as $r) {
             $counts[$r['status']] = (int) $r['total'];
         }
-        $posts = $this->postOptions();
+        $posts = ($f['includePostOptions'] ?? '') === '0' ? [] : $this->postOptions();
         return ['comments' => array_map(fn ($r) => $this->map($r), $rows), 'posts' => $posts, 'total' => (int) $total, 'page' => $page, 'perPage' => $per, 'statusCounts' => $counts];
     }
 

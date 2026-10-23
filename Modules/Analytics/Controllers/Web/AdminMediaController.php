@@ -20,8 +20,13 @@ class AdminMediaController
     {
         return $this->run(function () {
             $id = $this->s->upload((int) auth()->id(), $_FILES['file'] ?? [], $_POST);
-            return ['success' => true, 'data' => ['id' => $id]];
+            return ['success' => true, 'data' => $this->s->uploadedMedia($id)];
         });
+    }
+
+    public function uploadPostCover()
+    {
+        return $this->run(fn () => ['success' => true, 'data' => $this->s->uploadPostCover((int) auth()->id(), $_FILES['file'] ?? [])]);
     }
 
     public function update(int $id)

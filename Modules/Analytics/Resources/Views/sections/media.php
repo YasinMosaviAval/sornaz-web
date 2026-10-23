@@ -1,9 +1,17 @@
 <div id="media" class="section hidden">
- <div class="mb-6 flex flex-wrap items-center justify-between gap-4"><div><h1 class="text-3xl font-bold">کتابخانه رسانه</h1><p class="mt-1 text-gray-500">مدیریت تصاویر، ویدیوها، صوت‌ها و اسناد سایت</p></div><button onclick="openMediaUpload()" class="rounded-xl bg-indigo-600 px-5 py-3 text-white"><i class="fas fa-plus ml-2"></i>افزودن رسانه</button></div>
- <div class="mb-5 flex flex-wrap gap-3 rounded-3xl bg-white p-4 shadow-sm"><div class="flex rounded-xl border p-1"><button id="mediaGridButton" onclick="setMediaView('grid')" class="rounded-lg bg-gray-900 px-3 py-2 text-white"><i class="fas fa-th"></i></button><button id="mediaListButton" onclick="setMediaView('list')" class="rounded-lg px-3 py-2"><i class="fas fa-list"></i></button></div><select id="mediaType" onchange="loadAdminMedia(1)" class="rounded-xl border px-4"><option value="">همه رسانه‌ها</option><option value="image">تصویر</option><option value="video">ویدیو</option><option value="audio">صوت</option><option value="document">سند</option><option value="archive">فایل فشرده</option></select><select id="mediaMonth" onchange="loadAdminMedia(1)" class="rounded-xl border px-4"><option value="">همه تاریخ‌ها</option></select><input id="mediaSearch" oninput="searchAdminMedia()" class="min-w-64 flex-1 rounded-xl border px-4 py-3" placeholder="جستجوی رسانه‌ها..."></div>
+    <?php component('posts-page-tabs', ['active'=>'media']); ?>
+ <div class="mb-6 flex flex-wrap items-center justify-between gap-4"><button data-panel-page-action="media" onclick="openMediaUpload()" class="rounded-xl bg-indigo-600 px-5 py-3 text-white"><i class="fas fa-plus ml-2"></i>افزودن رسانه</button></div>
+ <?php
+ $viewModeTableId='mediaListButton'; $viewModeCardsId='mediaGridButton';
+ $viewModeTableAttributes='onclick="setMediaView(\'list\')"'; $viewModeCardsAttributes='onclick="setMediaView(\'grid\')"';
+ require __DIR__.'/view-mode-toggle.php'; ?>
+ <div class="bg-white rounded-3xl p-4 mb-6 shadow-sm"><div data-panel-filter-row class="grid grid-cols-1 md:grid-cols-2 gap-4">
+ <input id="mediaSearch" oninput="searchAdminMedia()" class="w-full border border-gray-300 rounded-2xl px-4 py-3" placeholder="<?= e(locale()==='en' ? 'Search images...' : 'جستجوی تصاویر...') ?>">
+ <select id="mediaMonth" onchange="loadAdminMedia(1)" class="w-full border border-gray-300 rounded-2xl px-4 py-3"><option value=""><?= e(locale()==='en' ? 'All dates' : 'همه تاریخ‌ها') ?></option></select>
+ </div></div>
  <div id="mediaGrid" class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6"></div>
  <div id="mediaList" class="hidden overflow-hidden rounded-3xl bg-white shadow"><div class="overflow-x-auto"><?php component('panel-table-template', [
-                'attributes' => ' class="w-full min-w-[850px]"',
+                'attributes' => ' id="mediaTable" class="w-full min-w-[850px]"',
                 'headAttributes' => ' class="bg-gray-50"',
                 'headerRowAttributes' => '',
                 'bodyAttributes' => ' id="mediaListBody" class="divide-y"',
@@ -16,6 +24,6 @@
                 ],
                 'rows' => [],
             ]); ?></div></div>
- <div class="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white p-4"><div class="flex items-center gap-3"><span id="mediaPageInfo" class="text-sm text-gray-500"></span><select id="mediaPerPage" onchange="changeMediaPerPage(this.value)" class="rounded-xl border px-3 py-2"><option>10</option><option selected>20</option><option>30</option><option>50</option><option>100</option></select></div><div id="mediaPagination" class="flex gap-2"></div></div>
- <input id="mediaFileInput" type="file" multiple hidden accept="image/*,video/*,audio/*,.pdf,.txt,.docx,.zip" onchange="uploadMediaFiles(this.files)">
+ <?php component('panel-table-pagination', ['id'=>'mediaPagination']); ?>
+ <input id="mediaFileInput" type="file" multiple hidden accept="image/png,image/jpeg,image/webp,image/gif" onchange="uploadMediaFiles(this.files)">
 </div>

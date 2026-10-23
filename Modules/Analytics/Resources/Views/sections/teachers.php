@@ -7,7 +7,7 @@
     <?php component('staff-page-tabs', ['active' => 'teachers']); ?>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
-            <p class="text-gray-500 mt-1">لیست کارمندها، قراردادها و اطلاعات مرتبط با هر قرارداد</p>
+            <p data-panel-description class="text-gray-500 mt-1">لیست کارمندها، قراردادها و اطلاعات مرتبط با هر قرارداد</p>
         </div>
 
         <div class="flex flex-wrap gap-3">

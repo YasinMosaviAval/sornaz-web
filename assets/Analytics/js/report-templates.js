@@ -27,11 +27,13 @@
     return map[type] || 'bg-gray-100 text-gray-600';
   }
 
-  window.getReportRowHTML = function (item) {
-    return window.AdminPanelTable.cellsHTML([{ html: `${escapeHtml(item.title)}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-2.5 py-1 rounded-full text-xs ${typeBadge(item.type)}">${escapeHtml(item.type)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.periodLabel || '—')}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.date)}`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-3 py-1 rounded-full text-xs ${statusBadge(item.status)}">${escapeHtml(item.status)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `
+  window.getReportRowCells = function (item) {
+    return [{ html: `${escapeHtml(item.title)}`, attributes: ` class="py-4 px-5 font-medium"` }, { html: `${escapeHtml(item.branchName)}`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-2.5 py-1 rounded-full text-xs ${typeBadge(item.type)}">${escapeHtml(item.type)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.periodLabel || '—')}`, attributes: ` class="py-4 px-5"` }, { html: `${escapeHtml(item.date)}`, attributes: ` class="py-4 px-5"` }, { html: `<span class="px-3 py-1 rounded-full text-xs ${statusBadge(item.status)}">${escapeHtml(item.status)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `
                 <button onclick="viewReport(${item.id})" class="text-indigo-600 hover:underline text-sm">جزئیات</button>
-            `, attributes: ` class="py-4 px-5 text-left"` }]);
+            `, attributes: ` class="py-4 px-5 text-left"` }];
   };
+
+  window.getReportRowHTML = item => window.AdminPanelTable.cellsHTML(window.getReportRowCells(item));
 
   window.getReportEmptyRowHTML = function () {
     return window.AdminPanelTable.rowHTML([{ html: "گزارشی یافت نشد", attributes: " colspan=\"7\" class=\"py-12 text-center text-gray-400\"" }], "");

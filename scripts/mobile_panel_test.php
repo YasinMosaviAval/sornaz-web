@@ -111,7 +111,7 @@ namespace {
  check(in_array('notifications',$keys,true)&&!in_array('roles',$keys,true)&&!in_array('branches',$keys,true),'Member boundaries lost');
  \Core\database\DB::$rows['management-role']=['role_id'=>7];$keys=array_column(field($panel->index(),'data')['sections'],'key');
  check(in_array('branches',$keys,true)&&!in_array('roles',$keys,true),'Manager boundaries lost');
- foreach(['posts','post-categories','comments','media','pages','settings'] as $key){
+ foreach(['posts','post-categories','comments','media','settings'] as $key){
   check(!in_array($key,$keys,true),'Manager received site content section');
   check(field($panel->execute($key,'list'),'status')===403,'Manager invoked global content through mobile API');
  }

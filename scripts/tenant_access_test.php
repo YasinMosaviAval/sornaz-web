@@ -40,9 +40,9 @@ $currentUser = ['user_id' => 10, 'type' => 'academy'];
 
 // Denial must happen before SQL, input validation, filesystem access or DDL.
 $operations = [
-    [new Modules\Analytics\Services\AdminPostService, ['index' => [[]], 'find' => [1], 'create' => [10, []], 'update' => [10, 1, []], 'trash' => [10, 1], 'restore' => [10, 1], 'destroy' => [10, 1]]],
+    [new Modules\Analytics\Services\AdminPostService, ['index' => [[]], 'find' => [1], 'create' => [10, []], 'update' => [10, 1, []], 'status' => [10, 1, 'published'], 'trash' => [10, 1], 'restore' => [10, 1], 'destroy' => [10, 1]]],
     [new Modules\Analytics\Services\AdminCommentService, ['index' => [[]], 'update' => [10, 1, []], 'reply' => [10, 1, []], 'delete' => [10, 1]]],
-    [new Modules\Analytics\Services\AdminMediaService, ['index' => [[]], 'upload' => [10, [], []], 'update' => [10, 1, []], 'delete' => [10, 1]]],
+    [new Modules\Analytics\Services\AdminMediaService, ['index' => [[]], 'upload' => [10, [], []], 'uploadPostCover' => [10, []], 'uploadedMedia' => [1], 'update' => [10, 1, []], 'delete' => [10, 1]]],
     [new Modules\Analytics\Services\AdminPostCategoryService, ['index' => [], 'create' => [10, []], 'update' => [10, 1, []], 'delete' => [10, 1]]],
     [new Modules\Analytics\Services\AdminSettingService, ['save' => [10, []]]],
 ];
@@ -63,11 +63,12 @@ foreach (['posts', 'post-categories', 'comments', 'media'] as $name) {
     check(in_array('site-admin', $route['middlewares'], true), 'Global content route lacks admin middleware');
 }
 $catalog = (new Modules\Analytics\Services\MobilePanelCatalog)->sections();
-foreach (['posts', 'post-categories', 'comments', 'media', 'pages', 'page-content', 'settings'] as $key) {
+foreach (['posts', 'post-categories', 'comments', 'media', 'page-content', 'settings'] as $key) {
     check($catalog[$key]['access'] === 'admin', 'Mobile content section is not restricted');
 }
+check(!isset($catalog['pages']), 'Retired pages section must not be exposed');
 check($catalog['gallery']['access'] === 'management', 'Academy gallery was unnecessarily disabled');
-foreach (['posts' => ['update', 'trash', 'restore', 'delete'], 'post-categories' => ['update', 'delete'], 'comments' => ['update', 'reply', 'delete'], 'media' => ['update', 'delete']] as $section => $actions) {
+foreach (['posts' => ['update', 'status', 'trash', 'restore', 'delete'], 'post-categories' => ['update', 'delete'], 'comments' => ['update', 'reply', 'delete'], 'media' => ['update', 'delete']] as $section => $actions) {
     foreach ($actions as $action) {
         $route = Core\router\Router::dispatch('POST', '/analytics/admin-'.$section.'/1/'.$action);
         check(in_array('site-admin', $route['middlewares'], true) && in_array('csrf', $route['middlewares'], true), 'Mutation lacks admin or CSRF protection');

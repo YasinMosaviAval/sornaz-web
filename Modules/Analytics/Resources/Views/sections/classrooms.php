@@ -9,7 +9,7 @@
 
     <h1 class="hidden"><?= e(locale() === 'en' ? 'Class management' : 'مدیریت کلاس') ?></h1>
     <?php component('classroom-page-tabs', ['active' => 'classrooms']); ?>
-    <p class="mb-6 text-gray-500">لیست کلاس‌ها، نوع، تجهیزات و وضعیت هر شعبه</p>
+    <p data-panel-description class="mb-6 text-gray-500">لیست کلاس‌ها، نوع، تجهیزات و وضعیت هر شعبه</p>
     <div class="mb-6 flex flex-wrap justify-end gap-3">
             <button onclick="openAddClassroomModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 transition">
                 <i class="fas fa-plus"></i> افزودن کلاس جدید

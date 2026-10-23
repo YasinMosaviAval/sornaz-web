@@ -35,7 +35,6 @@ $definitions = [
     'my-terms' => 'term_title:ترم|course_title:دوره|enrollment_type:نقش|start_date:شروع|end_date:پایان',
     'my-classrooms' => 'course_title:دوره|term_title:ترم|classroom_title:کلاس|enrollment_type:نقش|requested_date:تاریخ|start_time:شروع|end_time:پایان|branch_title:شعبه',
     'guides' => 'title:عنوان|content:متن راهنما',
-    'pages' => 'title:عنوان|texts:متن‌های ویرایش‌شده|images:تصاویر|icons:آیکن‌ها|status:وضعیت',
     'waiting-approvals' => 'studentName:هنرجو|termName:ترم',
     'waiting-schedules' => 'studentName:هنرجو|termName:ترم',
     'my-waiting' => 'studentName:هنرجو|termName:ترم|status:وضعیت',
@@ -61,7 +60,7 @@ foreach ($definitions as $key => $definition) {
             $column['permission'] = $field === 'status' ? 'showStatus' : 'showCategory';
         }
         if ($key === 'points' && in_array($field, ['source', 'branchName', 'status'], true)) $column['dataPermission'] = 'canManage';
-        if ($field === 'status' && !in_array($key, [...$profiles, 'my-lessons', 'my-schedule', 'my-finance', 'posts', 'comments', 'finance', 'schedules', 'users', 'pages', 'my-waiting'], true)) $column['action'] = 'status';
+        if ($field === 'status' && !in_array($key, [...$profiles, 'my-lessons', 'my-schedule', 'my-finance', 'posts', 'comments', 'finance', 'schedules', 'users', 'my-waiting'], true)) $column['action'] = 'status';
         $columns[] = $column;
     }
     if (in_array($key, $profiles, true)) {

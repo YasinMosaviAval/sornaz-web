@@ -54,23 +54,6 @@ class SitePageContentService
     private const PAGES = [
         ['id' => 'home', 'title' => 'خانه', 'route' => '/'], ['id' => 'articles', 'title' => 'مقاله‌های آموزشی', 'route' => '/analytics/articles'], ['id' => 'article-details', 'title' => 'نمایش مقاله', 'route' => '/analytics/article-details'], ['id' => 'academies', 'title' => 'آموزشگاه‌ها', 'route' => '/academy/academies'], ['id' => 'users', 'title' => 'کاربران', 'route' => '/users'], ['id' => 'about-us', 'title' => 'درباره ما', 'route' => '/page/about-us'], ['id' => 'contact-us', 'title' => 'تماس با ما', 'route' => '/page/contact-us'], ['id' => 'login', 'title' => 'ورود', 'route' => '/system/login'], ['id' => 'register', 'title' => 'ثبت‌نام', 'route' => '/system/register'], ['id' => 'forgot-password', 'title' => 'فراموشی رمز عبور', 'route' => '/system/forgot-password']];
 
-    public function pages(): array
-    {
-        $rows = DB::table('f_settings')->where('table_name', 'site_page_content')->whereNull('deleted_at')->get();
-        $counts = [];
-        foreach ($rows as $r) {
-            $p = (string) $r['page'];
-            $kind = (string) ($r['status'] ?? 'text');
-            $counts[$p][$kind] = ($counts[$p][$kind] ?? 0) + 1;
-        }$firstPost = DB::table('posts')->where('status', 'published')->whereNull('deleted_at')->orderBy('post_id', 'ASC')->first();
-        return array_map(function ($p) use ($counts, $firstPost) {
-            if ($p['id'] === 'article-details') {
-                $p['route'] = $firstPost ? '/analytics/article-details?id=' . (int) $firstPost['post_id'] : '/analytics/articles';
-            }
-            return $p + ['texts' => $counts[$p['id']]['text'] ?? 0, 'images' => $counts[$p['id']]['image'] ?? 0, 'icons' => $counts[$p['id']]['icon'] ?? 0];
-        }, self::PAGES);
-    }
-
     public function content(string $page, string $locale): array
     {
         $page = $this->validPage($page);

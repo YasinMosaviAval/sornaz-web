@@ -27,6 +27,7 @@ $headerPanelUser = $previewRole === null ? auth()->user() : ['user_id' => 0, 'us
                 <i class="fas fa-bell text-xl md:text-2xl text-gray-600"></i>
                 <span id="headerUnreadNotifications" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full min-w-4 h-4 md:min-w-5 md:h-5 px-1 flex items-center justify-center">0</span>
             </button>
+            <div id="panelPageActions" class="hidden items-center gap-2"></div>
             <a href="/" class="flex shrink-0 items-center gap-1 rounded-xl border border-gray-200 px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 sm:px-3 sm:text-sm" title="<?= e(locale() === 'en' ? 'Back to site' : 'برگشت به سایت') ?>">
                 <i class="fas fa-arrow-left" aria-hidden="true"></i><span><?= e(locale() === 'en' ? 'Back to site' : 'برگشت به سایت') ?></span>
             </a>

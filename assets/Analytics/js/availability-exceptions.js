@@ -11,8 +11,9 @@
     const english = document.documentElement.lang.startsWith('en');
     root.querySelectorAll('[data-exception-nav]').forEach(nav => nav.classList.toggle('hidden', nav.dataset.exceptionNav !== window.holidayLeaveMode));
     const title = window.holidayLeaveMode === 'member' ? (english ? 'Leaves' : 'مرخصی‌ها') : (english ? 'Holidays' : 'تعطیلات');
-    root.querySelector('h1').textContent = title;
-    const description = root.querySelector('h1').nextElementSibling;
+    const heading = root.querySelector('h1');
+    if (heading) heading.textContent = title;
+    const description = heading?.nextElementSibling;
     if (description) description.textContent = window.holidayLeaveMode === 'member' ? (english ? 'Manage employee leaves' : 'مدیریت مرخصی کارکنان') : (english ? 'Manage organization holidays' : 'مدیریت تعطیلات آموزشگاه و شعبه‌ها');
     const add = root.querySelector('button[onclick="openAddHolidayLeaveModal()"]');
     if (add) add.textContent = (english ? 'Add ' : 'افزودن ') + title;

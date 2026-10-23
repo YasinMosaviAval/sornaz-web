@@ -80,10 +80,12 @@ namespace {
     $allowed = array_filter($catalog, fn ($section) => empty($section['hidden']) && !empty($caps[$section['access']]));
     $items = $navigation->forCurrentUser($allowed, $caps);
     $index = array_column($items, null, 'key');
-    expectMenu(isset($index['profileAchievementsSubmenu'], $index['profilesSubmenu'], $index['notation']), 'Founder-only sections missing');
-    expectMenu(count($index['profileAchievementsSubmenu']['children']) === 8, 'Achievement submenu incomplete');
-    expectMenu(count($index['gallerySubmenu']['children']) === 4, 'Gallery categories incomplete');
-    expectMenu($index['gallerySubmenu']['children'][2]['initialParams'] === ['collection' => 'intro_video'], 'Gallery category lost');
+    expectMenu(isset($index['awards'], $index['users'], $index['notation']), 'Founder-only sections missing');
+    expectMenu(count($index['awards']['links']) === 7, 'Achievement page links incomplete');
+    expectMenu($index['users']['links'] === ['roles', 'permissions', 'members', 'member-schedules', 'employee-leaves'], 'Access page links incomplete');
+    expectMenu($index['branches']['links'][0] === 'branch-types', 'Education types must be the first organization link');
+    expectMenu($index['gallery']['section'] === 'gallery' && !isset($index['gallery']['where']), 'Gallery menu must retain access to every collection');
+    expectMenu(!isset($index['profileAchievementsSubmenu'], $index['profilesSubmenu'], $index['gallerySubmenu'], $index['branchesSubmenu']), 'Tabbed pages must not have sidebar submenus');
     expectMenu(!isset($index['reports'], $index['chart-gallery']), 'Local-only website demos leaked in production');
     $GLOBALS['environment'] = 'local';
     $local = array_column($navigation->forCurrentUser($allowed, $caps), null, 'key');

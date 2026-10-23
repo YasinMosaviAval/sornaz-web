@@ -3,6 +3,8 @@ const {spawnSync} = require('node:child_process');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const php = [
+ 'post_table_status_test.php',
+ 'post_editor_options_test.php',
  'asset_version_test.php',
  'table-prefix-test.php', 'mobile_finance_bootstrap_test.php', 'enrollment_dashboard_scope_test.php',
  'page_source_trace_test.php',
@@ -30,6 +32,13 @@ suites.push([process.execPath,'term_student_assignment_test.cjs']);
 suites.push([process.execPath,'panel_report_source_test.cjs'],[process.execPath,'term_people_policy_test.cjs']);
 suites.push([process.execPath,'availability_target_policy_test.cjs'],[process.execPath,'csrf_fetch_test.cjs'],[process.execPath,'profile_render_security_test.cjs'],[process.execPath,'lesson_usage_test.cjs'],[process.execPath,'staff_role_policy_test.cjs'],[process.execPath,'panel_activity_text_test.cjs'],[process.execPath,'term_discount_policy_test.cjs']);
 if (process.argv.includes('--browser')) {
+ suites.push([process.execPath,'panel_introductions_browser_test.cjs']);
+ suites.push([process.execPath,'panel_workspace_tabs_browser_test.cjs']);
+ suites.push([process.execPath,'posts_workspace_pagination_browser_test.cjs']);
+ suites.push([process.execPath,'post_editor_browser_test.cjs']);
+ suites.push([process.execPath,'post_media_upload_test.cjs']);
+ suites.push([process.execPath,'posts_panel_performance_browser_test.cjs']);
+ suites.push([process.execPath,'panel_content_tables_browser_test.cjs']);
  suites.push([process.execPath,'branch_dialog_scope_browser_test.cjs']);
  suites.push([process.execPath,'term_schedule_sort_browser_test.cjs']);
  suites.push([process.execPath,'term_lifecycle_browser_test.cjs']);

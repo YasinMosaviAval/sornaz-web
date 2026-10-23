@@ -42,7 +42,7 @@
       allReports = [];
       window.filterReports();
       const tbody = document.querySelector('#reportsTable tbody');
-      if (tbody) { tbody.textContent = ''; const row = tbody.insertRow(); const cell = row.insertCell(); cell.colSpan = 7; cell.textContent = error.message; }
+      if (tbody) window.AdminPanelTable.setRows('#reportsTable', [{ cells: [{ value: error.message, attributes: 'colspan="7" class="py-12 text-center text-gray-400"' }] }]);
     }
   }
 
@@ -200,69 +200,16 @@
     const end = start + reportsPerPage;
     const pageItems = window.AdminPanelTable.page?.('#reportsTable', list, start, end, () => window.renderReportsTable(list), undefined, row => window.getReportRowHTML(row)) ?? list.slice(start, end);
 
-    tbody.innerHTML = '';
-    if (!pageItems.length) {
-      tbody.innerHTML = window.getReportEmptyRowHTML ? window.getReportEmptyRowHTML() : '';
-    } else {
-      pageItems.forEach(function (item) {
-        const tr = window.AdminPanelTable.createRow();
-        tr.className = 'hover:bg-gray-50 transition';
-        tr.innerHTML = window.getReportRowHTML ? window.getReportRowHTML(item) : '';
-        tbody.appendChild(tr);
-      });
-    }
+    const rows = pageItems.length
+      ? pageItems.map(item => ({ cells: window.getReportRowCells(item), attributes: ' class="hover:bg-gray-50 transition" data-id="' + Number(item.id) + '"' }))
+      : [{ cells: [{ value: document.documentElement.lang.startsWith('en') ? 'No reports found' : 'گزارشی یافت نشد', attributes: 'colspan="7" class="py-12 text-center text-gray-400"' }] }];
+    window.AdminPanelTable.setRows('#reportsTable', rows, { pageOffset: start });
     updateReportsPagination(list.length, start, end, totalPages);
     window.updateReportSortIcons();
   };
 
-  function updateReportsPagination(total, start, end, totalPages) {
-    const info = document.getElementById('reportsPaginationInfo');
-    if (info) {
-      info.textContent =
-        'نمایش ' +
-        (total === 0 ? 0 : start + 1) +
-        ' تا ' +
-        Math.min(end, total) +
-        ' از ' +
-        total +
-        ' گزارش';
-    }
-    const pagination = document.getElementById('reportsPaginationButtons');
-    if (!pagination) return;
-    let html =
-      '<button onclick="changeReportsPage(1)" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' +
-      (reportsCurrentPage === 1 ? 'disabled' : '') +
-      '>اول</button>' +
-      '<button onclick="changeReportsPage(' +
-      (reportsCurrentPage - 1) +
-      ')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' +
-      (reportsCurrentPage === 1 ? 'disabled' : '') +
-      '>قبلی</button>';
-    let sp = Math.max(1, reportsCurrentPage - 2),
-      ep = Math.min(totalPages, sp + 4);
-    if (ep - sp < 4) sp = Math.max(1, ep - 4);
-    for (let i = sp; i <= ep; i++) {
-      html +=
-        '<button onclick="changeReportsPage(' +
-        i +
-        ')" class="px-3 py-1.5 rounded-lg ' +
-        (i === reportsCurrentPage ? 'bg-indigo-600 text-white' : 'border hover:bg-gray-50') +
-        '">' +
-        i +
-        '</button>';
-    }
-    html +=
-      '<button onclick="changeReportsPage(' +
-      (reportsCurrentPage + 1) +
-      ')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' +
-      (reportsCurrentPage === totalPages ? 'disabled' : '') +
-      '>بعدی</button>' +
-      '<button onclick="changeReportsPage(' +
-      totalPages +
-      ')" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50 disabled:opacity-40" ' +
-      (reportsCurrentPage === totalPages ? 'disabled' : '') +
-      '>آخر</button>';
-    pagination.innerHTML = html;
+  function updateReportsPagination(total) {
+    window.AdminPanelTable.renderPagination(document.getElementById('reportsPagination'), { total, perPage: 10, page: reportsCurrentPage, onChange: next => window.changeReportsPage(next) });
   }
 
   window.changeReportsPage = function (page) {

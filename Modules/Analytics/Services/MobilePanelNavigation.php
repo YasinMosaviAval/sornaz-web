@@ -78,7 +78,7 @@ final class MobilePanelNavigation
         $links = $this->pageLinks($webKey, $key, $sections, $capabilities);
         if ($links !== null) $item['links'] = $links;
         $english = ['account' => 'Account', 'settings' => 'Settings', 'teachers' => 'Staff',
-            'branches' => 'Organization', 'schedules' => 'Class calendar', 'gallery' => 'Gallery', 'lessons' => 'Lessons', 'member-schedules' => 'Employees', 'finance' => 'Finance'];
+            'branches' => 'Organization', 'users' => 'Roles and permissions', 'awards' => 'Records and achievements', 'schedules' => 'Class calendar', 'gallery' => 'Gallery', 'lessons' => 'Lessons', 'member-schedules' => 'Employees', 'finance' => 'Finance'];
         $item['en'] = $english[$webKey] ?? $item['en'];
         $category = ['gallery-cover' => 'cover', 'gallery-logo' => 'logo', 'gallery-intro-video' => 'intro_video',
             'gallery-collection' => 'gallery'][$webKey] ?? null;
@@ -96,7 +96,9 @@ final class MobilePanelNavigation
         $links = match (true) {
             $webKey === 'lessons' && $key === 'lessons' => ['course-levels', 'courses'],
             $webKey === 'teachers' => ['users', 'member-schedules', 'employee-leaves'],
-            $webKey === 'branches' => ['availabilities', 'scheduling-rules', 'organization-holidays'],
+            $webKey === 'branches' => ['branch-types', 'availabilities', 'scheduling-rules', 'organization-holidays'],
+            $webKey === 'users' => ['roles', 'permissions', 'members', 'member-schedules', 'employee-leaves'],
+            $webKey === 'awards' => ['badges', 'experiences', 'certificates', 'educations', 'events', 'polls', 'publications'],
             $webKey === 'terms' => ['term-discounts'],
             default => null,
         };

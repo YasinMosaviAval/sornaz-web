@@ -11,11 +11,6 @@ class SitePageContentController
     {
     }
 
-    public function pages()
-    {
-        return $this->run(fn () => ['success' => true, 'data' => ['pages' => $this->s->pages()]]);
-    }
-
     public function panelGuides()
     {
         return $this->run(fn () => ['success' => true, 'data' => $this->s->panelGuides()]);

@@ -42,7 +42,6 @@
 <?php if ((int) auth()->id() !== 1): ?>
 <div id="gallery" class="section hidden">
     <div class="mb-6 flex flex-wrap items-center justify-end gap-4">
-        <h1 class="text-3xl font-bold">گالری</h1>
         <button type="button" onclick="openAddGalleryModal()" class="rounded-2xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700"><i class="fas fa-plus ml-2"></i>افزودن رسانه</button>
     </div>
     <div class="mb-6 overflow-x-auto rounded-3xl bg-white p-3 shadow-sm"><div id="galleryBranchTabs" class="flex min-w-max gap-2"><button type="button" data-value="all" class="rounded-2xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white">همه</button></div></div>
@@ -55,11 +54,9 @@
 </div>
 <?php endif; ?>
 <div id="gallery-cover" class="section hidden" data-gallery-category="cover">
+    <?php component('gallery-page-tabs', ['active' => 'gallery-cover']); ?>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-3xl font-bold">کاور</h1>
-            <p class="text-gray-500 mt-1">تصاویر کاور آموزشگاه و شعبه‌ها — کراپ ۱۶×۹</p>
-        </div>
+
         <button onclick="openAddGalleryModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
             <i class="fas fa-plus"></i> افزودن آیتم جدید
         </button>
@@ -71,11 +68,9 @@
 </div>
 
 <div id="gallery-logo" class="section hidden" data-gallery-category="logo">
+    <?php component('gallery-page-tabs', ['active' => 'gallery-logo']); ?>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-3xl font-bold">لوگو</h1>
-            <p class="text-gray-500 mt-1">لوگو و هویت بصری — کراپ ۱×۱ دایره‌ای</p>
-        </div>
+
         <button onclick="openAddGalleryModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
             <i class="fas fa-plus"></i> افزودن آیتم جدید
         </button>
@@ -87,11 +82,9 @@
 </div>
 
 <div id="gallery-intro-video" class="section hidden" data-gallery-category="intro_video">
+    <?php component('gallery-page-tabs', ['active' => 'gallery-intro-video']); ?>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-3xl font-bold">ویدیو معرفی</h1>
-            <p class="text-gray-500 mt-1">ویدیوهای معرفی آموزشگاه و شعبه‌ها</p>
-        </div>
+
         <button onclick="openAddGalleryModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
             <i class="fas fa-plus"></i> افزودن آیتم جدید
         </button>
@@ -103,11 +96,9 @@
 </div>
 
 <div id="gallery-collection" class="section hidden" data-gallery-category="gallery">
+    <?php component('gallery-page-tabs', ['active' => 'gallery-collection']); ?>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-3xl font-bold">مجموعه عکس‌ها و ویدیوها</h1>
-            <p class="text-gray-500 mt-1">گالری تصاویر و ویدیوها — کراپ برای تصاویر</p>
-        </div>
+
         <button onclick="openAddGalleryModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">
             <i class="fas fa-plus"></i> افزودن آیتم جدید
         </button>

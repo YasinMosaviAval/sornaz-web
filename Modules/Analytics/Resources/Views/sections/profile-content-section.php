@@ -1,5 +1,6 @@
 <div id="<?=e($profileContentEntity)?>" class="section hidden" data-profile-content="<?=e($profileContentEntity)?>">
- <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"><div><h1 class="text-3xl font-bold"><?=e($profileContentTitle)?></h1><p class="mt-1 text-gray-500"><?=e($profileContentDescription)?></p></div><button type="button" data-profile-add class="flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-white transition hover:bg-indigo-700"><i class="fas fa-plus"></i> افزودن مورد جدید</button></div>
+ <?php component('achievement-page-tabs', ['active' => $profileContentEntity]); ?>
+ <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"><button type="button" data-profile-add class="flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-white transition hover:bg-indigo-700"><i class="fas fa-plus"></i> افزودن مورد جدید</button></div>
  <div class="mb-5 overflow-x-auto rounded-3xl bg-white p-3 shadow-sm"><div data-profile-organization-tabs class="flex min-w-max gap-2"></div></div>
  <?php
  $viewModeTableAttributes='data-profile-view="table"';

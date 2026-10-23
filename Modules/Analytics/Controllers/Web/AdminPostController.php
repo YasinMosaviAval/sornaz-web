@@ -43,6 +43,14 @@ class AdminPostController
         });
     }
 
+    public function status(int $id)
+    {
+        return $this->run(function () use ($id) {
+            $this->service->status((int) auth()->id(), $id, (string) ($this->payload()['status'] ?? ''));
+            return ['success' => true];
+        });
+    }
+
     public function restore(int $id)
     {
         return $this->run(function () use ($id) {

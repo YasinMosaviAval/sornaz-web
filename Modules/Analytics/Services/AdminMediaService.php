@@ -21,9 +21,11 @@ class AdminMediaService
         SiteAdminAccess::requireCurrentUser();
         $page = max(1, (int) ($filters['page'] ?? 1));
         $allowed = [10, 20, 30, 50, 100];
-        $per = in_array((int) ($filters['perPage'] ?? 20), $allowed, true) ? (int) $filters['perPage'] : 20;
-        $where = ['m.deleted_at IS NULL'];
-        $bind = [];
+        $per = in_array((int) ($filters['perPage'] ?? 20), $allowed, true) ? (int) ($filters['perPage'] ?? 20) : 20;
+        [$postScope, $scopeBindings] = $this->postImageScope();
+        $scope = "m.deleted_at IS NULL AND m.type='image' AND (m.fileable_type IS NULL OR m.fileable_type IN ('posts','post')) AND (m.collection IS NULL OR m.collection IN ('posts','post-cover','post-content')) AND ($postScope)";
+        $where = [$scope];
+        $bind = $scopeBindings;
         if (!empty($filters['type'])) {
             $where[] = 'm.type=?';
             $bind[] = $filters['type'];
@@ -41,8 +43,58 @@ class AdminMediaService
         $total = (int) $this->query("SELECT COUNT(*) FROM media_files m WHERE $w", $bind, true);
         $offset = ($page - 1) * $per;
         $rows = $this->query("SELECT m.*,u.username FROM media_files m LEFT JOIN users u ON u.user_id=m.user_id WHERE $w ORDER BY m.media_file_id DESC LIMIT $offset,$per", $bind);
-        $months = $this->query("SELECT DATE_FORMAT(created_at,'%Y-%m') value,COUNT(*) total FROM media_files WHERE deleted_at IS NULL GROUP BY value ORDER BY value DESC");
+        $months = $this->query("SELECT DATE_FORMAT(m.created_at,'%Y-%m') value,COUNT(*) total FROM media_files m WHERE $scope GROUP BY value ORDER BY value DESC", $scopeBindings);
         return ['items' => array_map(fn ($r) => $this->map($r), $rows), 'total' => $total, 'page' => $page, 'perPage' => $per, 'months' => $months];
+    }
+
+    private function postImageScope(): array
+    {
+        $ids = $paths = [];
+        $siteHost = parse_url((string) (function_exists('env') ? env('APP_URL', '') : ''), PHP_URL_HOST) ?: ($_SERVER['HTTP_HOST'] ?? '');
+        $addPath = static function (string $url) use (&$paths, $siteHost): void {
+            $url = trim($url);
+            if ($url === '' || preg_match('~^(?:data|blob|javascript):~i', $url)) return;
+            $host = parse_url($url, PHP_URL_HOST);
+            if ($host) $paths[$url] = true;
+            if ($host && strcasecmp($host, explode(':', $siteHost)[0]) !== 0) {
+                $paths[$url] = true;
+                return;
+            }
+            $path = parse_url($url, PHP_URL_PATH);
+            if (is_string($path) && $path !== '') $paths[ltrim(rawurldecode($path), '/')] = true;
+        };
+        foreach ($this->query("SELECT post_id,cover,cover_media_id FROM posts WHERE deleted_at IS NULL AND type <> 'page'") as $post) {
+            if (!empty($post['cover_media_id'])) $ids[(int) $post['cover_media_id']] = true;
+            $addPath((string) ($post['cover'] ?? ''));
+        }
+        $contents = $this->query("SELECT t.value FROM translations t JOIN posts p ON p.post_id=t.table_id WHERE t.table_name='posts' AND t.field='content' AND t.deleted_at IS NULL AND p.deleted_at IS NULL AND p.type <> 'page' AND t.translation_id=(SELECT MAX(tx.translation_id) FROM translations tx WHERE tx.table_name=t.table_name AND tx.table_id=t.table_id AND tx.field=t.field AND tx.locale=t.locale AND tx.deleted_at IS NULL)");
+        foreach ($this->contentImageUrls($contents) as $url) $addPath($url);
+        $clauses = $bindings = [];
+        foreach (['m.media_file_id' => array_keys($ids), 'm.path' => array_keys($paths)] as $column => $values) {
+            if (!$values) continue;
+            $clauses[] = $column . ' IN (' . implode(',', array_fill(0, count($values), '?')) . ')';
+            array_push($bindings, ...$values);
+        }
+        return [implode(' OR ', $clauses) ?: '1=0', $bindings];
+    }
+
+    private function contentImageUrls(array $contents): array
+    {
+        $urls = [];
+        $previous = libxml_use_internal_errors(true);
+        try {
+            foreach ($contents as $content) {
+                $dom = new \DOMDocument();
+                if (!$dom->loadHTML('<?xml encoding="UTF-8">' . (string) $content['value'], LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING)) continue;
+                foreach ($dom->getElementsByTagName('img') as $image) $urls[] = $image->getAttribute('src');
+                foreach (['img', 'source'] as $tag) foreach ($dom->getElementsByTagName($tag) as $image) {
+                    foreach (explode(',', $image->getAttribute('srcset')) as $candidate) {
+                        $urls[] = preg_split('/\s+/', trim($candidate))[0] ?? '';
+                    }
+                }
+            }
+        } finally { libxml_clear_errors(); libxml_use_internal_errors($previous); }
+        return $urls;
     }
 
     public function upload(int $actor, array $file, array $data): int
@@ -82,7 +134,22 @@ class AdminMediaService
         }
     }
 
-    private function validatedMime(array $file): string
+    public function uploadPostCover(int $actor, array $file): array
+    {
+        SiteAdminAccess::requireCurrentUser($actor);
+        $this->validatedMime($file, true);
+        $id = $this->upload($actor, $file, []);
+        return $this->uploadedMedia($id);
+    }
+
+    public function uploadedMedia(int $id): array
+    {
+        SiteAdminAccess::requireCurrentUser();
+        $row = $this->find($id);
+        return ['id' => $id, 'url' => '/' . ltrim((string) $row['path'], '/')];
+    }
+
+    private function validatedMime(array $file, bool $postCover = false): string
     {
         if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
             throw new RuntimeException('بارگذاری فایل کامل نشد.');
@@ -94,6 +161,14 @@ class AdminMediaService
         $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($tmp);
         if (!isset(self::MIME[$mime])) {
             throw new RuntimeException('نوع این فایل مجاز نیست.');
+        }
+        if ($postCover) {
+            $allowed = ['png' => 'image/png', 'jpg' => 'image/jpeg', 'webp' => 'image/webp'];
+            $extension = strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION));
+            $image = @getimagesize($tmp);
+            if (($allowed[$extension] ?? null) !== $mime || !$image || ($image['mime'] ?? '') !== $mime) {
+                throw new RuntimeException(locale() === 'en' ? 'Select a valid PNG, JPG or WebP image.' : 'یک تصویر معتبر PNG، JPG یا WebP انتخاب کنید.');
+            }
         }
         return $mime;
     }

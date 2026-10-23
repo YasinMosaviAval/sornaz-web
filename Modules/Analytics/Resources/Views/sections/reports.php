@@ -1,9 +1,6 @@
 <div id="reports" class="section hidden">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-3xl font-bold">گزارش‌های آموزشگاه</h1>
-            <p class="text-gray-500 mt-1">گزارش‌های آماری و عملکردی شعبه‌ها (تولید خودکار سیستم)</p>
-        </div>
+
         <div class="flex flex-wrap gap-3">
             <button onclick="exportReportsToExcel()" class="border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl flex items-center gap-2">
                 <i class="fas fa-file-excel text-green-600"></i> خروجی اکسل
@@ -82,9 +79,6 @@
                 'rows' => [],
             ]); ?>
         </div>
-        <div class="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
-            <span id="reportsPaginationInfo">نمایش ۱ تا ۱۰ از ۰ گزارش</span>
-            <div class="flex items-center gap-2" id="reportsPaginationButtons"></div>
-        </div>
+        <?php component('panel-table-pagination', ['id'=>'reportsPagination']); ?>
     </div>
 </div>

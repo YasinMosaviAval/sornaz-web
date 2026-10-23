@@ -11,7 +11,7 @@ if(!$canViewClassroomTypes)return;
 <section id="classroom-types" class="section hidden">
     <h1 class="hidden">انواع کلاس</h1>
     <?php component('classroom-page-tabs', ['active' => 'classroom-types']); ?>
-    <p class="mb-6 text-gray-500">مدیریت انواع کلاس‌های فیزیکی</p>
+    <p data-panel-description class="mb-6 text-gray-500">مدیریت انواع کلاس‌های فیزیکی</p>
     <div class="mb-6 flex justify-end"><button id="addClassroomTypeButton" onclick="openClassroomTypeAdmin()" class="rounded-xl bg-indigo-600 px-5 py-2 text-white">+ نوع جدید</button></div>
     <div class="mb-6 overflow-x-auto rounded-3xl bg-white p-3 shadow-sm"><div id="classroomTypesBranchTabs" class="flex min-w-max gap-2"><button type="button" data-value="all" class="rounded-2xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white">همه</button></div></div>
     <div class="mb-6 rounded-3xl bg-white p-5 shadow-sm">

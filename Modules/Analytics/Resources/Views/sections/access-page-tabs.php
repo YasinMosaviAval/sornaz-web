@@ -1,0 +1,13 @@
+<?php
+$tabs = [];
+if (\Modules\System\Services\SiteAdminAccess::allows(auth()->user())) {
+    $tabs['roles'] = ['labels' => ['نقش‌ها', 'Roles']];
+    $tabs['permissions'] = ['labels' => ['دسترسی‌ها', 'Permissions']];
+}
+$tabs['users'] = ['labels' => ['کاربران', 'Users']];
+$tabs += [
+    'teachers' => ['labels' => ['قراردادها', 'Contracts']],
+    'member-schedules' => ['labels' => ['برنامه زمانی اعضا', 'Member schedules']],
+    'employee-leaves' => ['labels' => ['مرخصی‌ها', 'Leaves']],
+];
+component('panel-page-tabs', ['active' => $active ?? 'users', 'tabs' => $tabs, 'onSelect' => 'showStaffPage', 'label' => locale() === 'en' ? 'Roles and permissions' : 'نقش‌ها و دسترسی‌ها']);

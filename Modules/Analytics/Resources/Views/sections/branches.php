@@ -1,10 +1,7 @@
 <div id="branches" class="section hidden" data-branches-root data-csrf="<?= e(csrf_token()) ?>">
     <?php component('organization-page-tabs', ['active' => 'branches']); ?>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-            <h1 class="text-3xl font-bold">مدیریت شعبه‌ها</h1>
-            <p id="branchesScopeDescription" class="text-gray-500 mt-1">شعبه‌های مختلف آموزشگاه و اطلاعات آن‌ها</p>
-        </div>
+
         <div class="flex flex-wrap gap-3">
             <button id="addBranchButton" onclick="openAddBranchModal()"
                     class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2">

@@ -3,7 +3,7 @@
   let items = [],
     total = 0,
     page = 1,
-    perPage = 20,
+    perPage = 10,
     view = localStorage.getItem('adminMediaView') || 'grid',
     timer;
   const esc = (v) =>
@@ -89,34 +89,29 @@
           )
           .join('')
       : '<div class="col-span-full rounded-3xl bg-white p-14 text-center text-gray-400">رسانه‌ای یافت نشد</div>';
-    document.getElementById('mediaListBody').innerHTML = items.length
+    const tableRows = items.length
       ? items
           .map(
             (x) =>
-              window.AdminPanelTable.rowHTML([{ html: `<button onclick="openMediaDetails(${x.id})" class="flex items-center gap-3 text-right"><span class="block h-14 w-14 overflow-hidden rounded-lg">${preview(x)}</span><span><strong>${esc(x.title)}</strong><small class="block text-gray-400">${esc(x.filename)}</small></span></button>`, attributes: ` class="p-4"` }, { html: `${esc(x.mime)}`, attributes: ` class="p-4"` }, { html: `${size(x.size)}`, attributes: ` class="p-4"` }, { html: `${esc(x.createdAt)}`, attributes: ` class="p-4"` }, { html: `<button onclick="openMediaDetails(${x.id})" class="text-indigo-600">ویرایش</button>`, attributes: ` class="p-4 text-left"` }], ``)
+              ({cells: [{ html: `<button onclick="openMediaDetails(${x.id})" class="flex items-center gap-3 text-right"><span class="block h-14 w-14 overflow-hidden rounded-lg">${preview(x)}</span><span><strong>${esc(x.title)}</strong><small class="block text-gray-400">${esc(x.filename)}</small></span></button>`, attributes: ` class="p-4"` }, { html: `${esc(x.mime)}`, attributes: ` class="p-4"` }, { html: `${size(x.size)}`, attributes: ` class="p-4"` }, { html: `${esc(x.createdAt)}`, attributes: ` class="p-4"` }, { html: `<button onclick="openMediaDetails(${x.id})" class="text-indigo-600">ویرایش</button>`, attributes: ` class="p-4 text-left"` }], attributes: ``})
           )
-          .join('')
-      : window.AdminPanelTable.rowHTML([{ html: "رسانه‌ای یافت نشد", attributes: " colspan=\"5\" class=\"p-12 text-center text-gray-400\"" }], "");
-    const pages = Math.max(1, Math.ceil(total / perPage)),
-      start = (page - 1) * perPage;
-    document.getElementById('mediaPageInfo').textContent =
-      `نمایش ${total ? start + 1 : 0} تا ${Math.min(start + perPage, total)} از ${total}`;
-    document.getElementById('mediaPerPage').value = perPage;
-    document.getElementById('mediaPagination').innerHTML =
-      `<button onclick="changeMediaPage(${page - 1})" ${page === 1 ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">قبلی</button><span class="px-3 py-2">${page} / ${pages}</span><button onclick="changeMediaPage(${page + 1})" ${page === pages ? 'disabled' : ''} class="rounded-lg border px-3 py-2 disabled:opacity-40">بعدی</button>`;
+      : [{cells: [{ html: "رسانه‌ای یافت نشد", attributes: " colspan=\"5\" class=\"p-12 text-center text-gray-400\"" }], attributes: ""}];
+    window.AdminPanelTable.setRows(document.getElementById('mediaTable') || document.getElementById('mediaListBody')?.closest('table'), tableRows, {pageOffset: (page - 1) * 10});
+    window.AdminPanelTable.renderPagination(document.getElementById('mediaPagination'), { total, perPage: 10, page, onChange: next => loadAdminMedia(next) });
     applyView();
   }
   function applyView() {
     const grid = view === 'grid';
     document.getElementById('mediaGrid').classList.toggle('hidden', !grid);
     document.getElementById('mediaList').classList.toggle('hidden', grid);
-    ['mediaGridButton', 'mediaListButton'].forEach((id, i) => {
-      const active = (i === 0) === grid,
-        el = document.getElementById(id);
-      el.classList.toggle('bg-gray-900', active);
-      el.classList.toggle('text-white', active);
-    });
-  }
+    for (const [id, active] of [['mediaListButton', !grid], ['mediaGridButton', grid]]) {
+      const button = document.getElementById(id);
+      for (const name of ['border-indigo-600', 'bg-indigo-600', 'text-white']) button.classList.toggle(name, active);
+      for (const name of ['border-gray-200', 'bg-white', 'text-gray-700']) button.classList.toggle(name, !active);
+      button.setAttribute('aria-pressed', String(active));
+    }
+  };
+
   window.setMediaView = (v) => {
     view = v;
     localStorage.setItem('adminMediaView', v);
@@ -126,16 +121,14 @@
     clearTimeout(timer);
     timer = setTimeout(() => loadAdminMedia(1), 250);
   };
-  window.changeMediaPerPage = (v) => {
-    perPage = [10, 20, 30, 50, 100].includes(Number(v)) ? Number(v) : 20;
-    loadAdminMedia(1);
-  };
+  window.changeMediaPerPage = () => loadAdminMedia(1);
   window.changeMediaPage = (p) => {
     if (p >= 1 && p <= Math.max(1, Math.ceil(total / perPage))) loadAdminMedia(p);
   };
   window.openMediaUpload = () => document.getElementById('mediaFileInput').click();
   window.uploadMediaFiles = async (files) => {
     if (!files.length) return;
+    const uploaded = [];
     for (const file of files) {
       const form = new FormData();
       form.append('_token', window.adminCsrfToken || '');
@@ -155,9 +148,14 @@
           b = p.data ?? p;
         if (!r.ok || b.success === false)
           throw new Error(b.message || `بارگذاری ${file.name} ناموفق بود.`);
+        if (b.url) uploaded.push({ name: file.name, url: b.url });
       } catch (e) {
         alert(e.message);
       }
+    }
+    if (uploaded.length) {
+      const english = document.documentElement.lang.startsWith('en');
+      document.getElementById('modalContainer').innerHTML = '<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"><div class="w-full max-w-xl rounded-3xl bg-white p-6 space-y-4"><p>' + (english ? 'Copy an image URL to insert it into a post. Images appear in this list after the post is saved.' : 'نشانی تصویر را برای درج در نوشته کپی کنید. تصویر پس از ذخیره نوشته در فهرست رسانه‌ها نمایش داده می‌شود.') + '</p>' + uploaded.map(item => '<label class="block text-sm">' + esc(item.name) + '<input readonly dir="ltr" onclick="this.select()" class="mt-2 w-full rounded-xl border p-3" value="' + esc(item.url) + '"></label>').join('') + '<button onclick="closeModal()" class="rounded-xl bg-indigo-600 px-4 py-2 text-white">' + (english ? 'Close' : 'بستن') + '</button></div></div>';
     }
     document.getElementById('mediaFileInput').value = '';
     loadAdminMedia(1);
@@ -197,7 +195,8 @@
       alert(e.message);
     }
   };
+  if (document.getElementById('mediaGrid')) applyView();
   setTimeout(() => {
-    if (document.getElementById('media')) loadAdminMedia(1);
+    if (document.querySelector('#media:not(.hidden)')) loadAdminMedia(1);
   }, 300);
 })();

@@ -595,9 +595,13 @@
     updateIdentityCells(table, kind);
   }
 
-  function enhanceAllIdentityColumns() {
-    document
-      .querySelectorAll('#mainContent > .section:not([data-admin-ui-native]) table')
+  window.AdminPanelTable.enhance = (table) => {
+    if (table) { enhanceIdentityColumn(table); enhanceSortHeaders(table); }
+  };
+
+  function enhanceAllIdentityColumns(scope = document) {
+    scope
+      .querySelectorAll(scope === document ? '#mainContent > .section:not([data-admin-ui-native]) table' : 'table')
       .forEach(table => { enhanceIdentityColumn(table); enhanceSortHeaders(table); });
   }
 
@@ -674,7 +678,8 @@
     // بازسازی می‌کند و ستون مشترک پیش از repaint همان فریم برمی‌گردد.
     const refresh = (event) => {
       if (!event.target.closest?.('#mainContent')) return;
-      enhanceAllIdentityColumns();
+      const section = event.target.closest('.section');
+      if (section && !section.hasAttribute('data-admin-ui-native')) enhanceAllIdentityColumns(section);
     };
     document.addEventListener('click', refresh);
     document.addEventListener('change', refresh);

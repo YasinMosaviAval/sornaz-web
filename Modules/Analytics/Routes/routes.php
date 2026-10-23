@@ -112,6 +112,7 @@ Router::get('/analytics/admin-posts', [AdminPostController::class, 'index'])->mi
 Router::get('/analytics/admin-posts/{id}', [AdminPostController::class, 'show'])->middleware('site-admin');
 Router::post('/analytics/admin-posts', [AdminPostController::class, 'store'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-posts/{id}/update', [AdminPostController::class, 'update'])->middleware(['site-admin', 'csrf']);
+Router::post('/analytics/admin-posts/{id}/status', [AdminPostController::class, 'status'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-posts/{id}/trash', [AdminPostController::class, 'trash'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-posts/{id}/restore', [AdminPostController::class, 'restore'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-posts/{id}/delete', [AdminPostController::class, 'destroy'])->middleware(['site-admin', 'csrf']);
@@ -124,6 +125,7 @@ Router::post('/analytics/admin-comments/{id}/update', [AdminCommentController::c
 Router::post('/analytics/admin-comments/{id}/reply', [AdminCommentController::class, 'reply'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-comments/{id}/delete', [AdminCommentController::class, 'delete'])->middleware(['site-admin', 'csrf']);
 Router::get('/analytics/admin-media', [AdminMediaController::class, 'index'])->middleware('site-admin');
+Router::post('/analytics/admin-media/upload-post-cover', [AdminMediaController::class, 'uploadPostCover'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-media/upload', [AdminMediaController::class, 'upload'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-media/{id}/update', [AdminMediaController::class, 'update'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-media/{id}/delete', [AdminMediaController::class, 'delete'])->middleware(['site-admin', 'csrf']);
@@ -155,7 +157,6 @@ Router::post('/analytics/admin-roles/{id}/delete', [AdminAccessCatalogController
 Router::post('/analytics/admin-permissions', [AdminAccessCatalogController::class, 'savePermission'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-permissions/{id}', [AdminAccessCatalogController::class, 'savePermission'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-permissions/{id}/delete', [AdminAccessCatalogController::class, 'deletePermission'])->middleware(['site-admin', 'csrf']);
-Router::get('/analytics/admin-site-pages', [SitePageContentController::class, 'pages'])->middleware('academy-panel');
 Router::get('/analytics/site-page-content', [SitePageContentController::class, 'content']);
 Router::post('/analytics/admin-site-page-content', [SitePageContentController::class, 'save'])->middleware(['site-admin', 'csrf']);
 Router::get('/analytics/panel-guides', [SitePageContentController::class, 'panelGuides'])->middleware('auth');

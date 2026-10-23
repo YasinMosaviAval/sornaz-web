@@ -15,7 +15,10 @@
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+$/, '');
+  const cache = new Map(), pending = new Map();
+  let generation = 0, requestVersion = 0;
   async function api(url, data = null) {
+    if (data !== null) { cache.clear(); generation++; }
     const options = {
       method: data === null ? 'GET' : 'POST',
       credentials: 'same-origin',
@@ -39,25 +42,45 @@
   async function load() {
     const search = document.getElementById('postCategorySearch')?.value.trim() || '';
     try {
-      items = await api('/analytics/admin-post-categories?search=' + encodeURIComponent(search));
+      const version = ++requestVersion, epoch = generation;
+      const cached = cache.get(search);
+      const key = epoch + ':' + search;
+      let data;
+      if (cached && Date.now() - cached.at < 15000) data = cached.data;
+      else {
+        if (!pending.has(key)) pending.set(key,
+          api('/analytics/admin-post-categories?search=' + encodeURIComponent(search)).then(data => {
+            if (epoch === generation) {
+              if (cache.size >= 20) cache.delete(cache.keys().next().value);
+              cache.set(search, { data, at: Date.now() });
+            }
+            return data;
+          }).finally(() => pending.delete(key)));
+        data = await pending.get(key);
+      }
+      if (version !== requestVersion || epoch !== generation) return;
+      if (search !== lastSearch) categoryPage = 1;
+      lastSearch = search;
+      items = data;
       render();
     } catch (error) {
       alert(error.message);
     }
   }
+  let rendered = '', categoryPage = 1, lastSearch = '';
+  const categoryCells = item => [{ html: `${esc(item.title_fa || '—')}`, attributes: ` class="px-5 py-4 font-medium"` }, { html: `${esc(item.title_en || '—')}`, attributes: ` class="px-5 py-4" dir="ltr"` }, { html: `${esc(item.slug)}`, attributes: ` class="px-5 py-4 text-gray-500" dir="ltr"` }, { html: `${esc(item.group)}`, attributes: ` class="px-5 py-4"` }, { html: `<span class="rounded-full bg-indigo-50 px-3 py-1 text-indigo-700">${Number(item.posts_count || 0).toLocaleString('fa-IR')}</span>`, attributes: ` class="px-5 py-4"` }, { html: `<button onclick="editPostCategory(${item.id})" class="ml-4 text-indigo-600">ویرایش</button><button onclick="deletePostCategory(${item.id})" class="text-red-500 ${item.posts_count ? 'opacity-40' : ''}" ${item.posts_count ? 'title="دسته‌بندی دارای نوشته است"' : ''}>حذف</button>`, attributes: ` class="whitespace-nowrap px-5 py-4 text-left"` }];
   function render() {
     const tbody = document.querySelector('#postCategoriesTable tbody');
     if (!tbody) return;
-    tbody.innerHTML = items.length
-      ? items
-          .map(
-            (item) =>
-              window.AdminPanelTable.rowHTML([{ html: `${esc(item.title_fa || '—')}`, attributes: ` class="px-5 py-4 font-medium"` }, { html: `${esc(item.title_en || '—')}`, attributes: ` class="px-5 py-4" dir="ltr"` }, { html: `${esc(item.slug)}`, attributes: ` class="px-5 py-4 text-gray-500" dir="ltr"` }, { html: `${esc(item.group)}`, attributes: ` class="px-5 py-4"` }, { html: `<span class="rounded-full bg-indigo-50 px-3 py-1 text-indigo-700">${Number(item.posts_count || 0).toLocaleString('fa-IR')}</span>`, attributes: ` class="px-5 py-4"` }, { html: `<button onclick="editPostCategory(${item.id})" class="ml-4 text-indigo-600">ویرایش</button><button onclick="deletePostCategory(${item.id})" class="text-red-500 ${item.posts_count ? 'opacity-40' : ''}" ${item.posts_count ? 'title="دسته‌بندی دارای نوشته است"' : ''}>حذف</button>`, attributes: ` class="whitespace-nowrap px-5 py-4 text-left"` }], ` class="hover:bg-gray-50"`)
-          )
-          .join('')
-      : window.AdminPanelTable.rowHTML([{ html: "دسته‌بندی‌ای یافت نشد", attributes: " colspan=\"6\" class=\"px-5 py-12 text-center text-gray-400\"" }], "");
-    document.getElementById('postCategoriesCount').textContent =
-      `${items.length.toLocaleString('fa-IR')} دسته‌بندی`;
+    categoryPage = Math.max(1, Math.min(categoryPage, Math.ceil(items.length / 10) || 1));
+    const start = (categoryPage - 1) * 10;
+    const visible = window.AdminPanelTable.page(tbody.closest('table'), items, start, start + 10, () => render(), item => item.id, categoryCells);
+    const signature = JSON.stringify([visible, categoryPage, items.length]);
+    if (rendered === signature && tbody.rows.length) return;
+    rendered = signature;
+    const rows = visible.length ? visible.map(item => ({cells: categoryCells(item), attributes: 'data-id="' + Number(item.id) + '"'})) : [{cells:[{value: document.documentElement.lang.startsWith('en') ? 'No categories found' : 'دسته‌بندی‌ای یافت نشد', attributes:'colspan="6" class="px-5 py-12 text-center text-gray-400"'}]}];
+    window.AdminPanelTable.setRows(tbody.closest('table'), rows, {pageOffset: start});
+    window.AdminPanelTable.renderPagination(document.getElementById('postCategoriesPagination'), {total:items.length, perPage:10, page:categoryPage, onChange: next => {categoryPage = next; render();}});
   }
   function form(item = {}) {
     editingId = item.id || null;
@@ -115,4 +138,11 @@
     timer = setTimeout(load, 250);
   };
   window.loadPostCategories = load;
+  window.addEventListener('sornaz:data-mutated', event => {
+    if (/\/analytics\/admin-post(?:s|s-categories)(?:[/?]|$)/.test(event.detail?.url || '')) { cache.clear(); generation++; }
+  });
+  window.addEventListener('sornaz:remote-mutation', event => {
+    if (!/\/analytics\/admin-post(?:s|s-categories)(?:[/?]|$)/.test(event.detail?.url || '')) return;
+    cache.clear(); generation++;
+  });
 })();

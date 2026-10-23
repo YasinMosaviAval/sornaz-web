@@ -27,7 +27,7 @@ $previewRole = $previewRole ?? 'admin';
                 <div id="sornazPreviewBody"></div>
                 <div id="sornazPreviewOriginal">
                     <?php
-                    $previewComponents = ['dashboard', 'account', 'notation', 'chat', 'gallery', 'awards', 'certificates', 'experiences', 'educations', 'events', 'polls', 'publications', 'badges', 'reports', 'chart-gallery', 'students', 'teachers', 'branches', 'classrooms', 'courses', 'course-levels', 'terms', 'finance', 'scheduling-rules', 'schedules', 'instruments', 'lessons', 'member-schedules', 'availabilities', 'availability-exceptions', 'users', 'tracking', 'roles', 'permissions', 'posts', 'post-categories', 'post-editor', 'pages', 'comments', 'media', 'contact-us', 'academy-enroll', 'academy-requests'];
+                    $previewComponents = ['dashboard', 'account', 'notation', 'chat', 'gallery', 'awards', 'certificates', 'experiences', 'educations', 'events', 'polls', 'publications', 'badges', 'reports', 'chart-gallery', 'students', 'teachers', 'branches', 'classrooms', 'courses', 'course-levels', 'terms', 'finance', 'scheduling-rules', 'schedules', 'instruments', 'lessons', 'member-schedules', 'availabilities', 'availability-exceptions', 'users', 'tracking', 'roles', 'permissions', 'posts', 'post-categories', 'post-editor', 'comments', 'media', 'contact-us', 'academy-enroll', 'academy-requests'];
                     if ($previewRole === 'user') {
                         $previewComponents = array_values(array_diff($previewComponents, ['dashboard', 'gallery', 'finance', 'lessons', 'member-schedules']));
                     }
