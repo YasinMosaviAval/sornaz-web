@@ -76,6 +76,7 @@ class AcademyClassScheduleService
             $bind[] = $q;
             $bind[] = $q;
         }$w = implode(' AND ', $where);
+        if (($f['summary'] ?? '') === 'heatmap') return $this->heatmap($w, $bind);
         $count = $this->query("SELECT COUNT(1) FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id JOIN academy_branch_course_terms t ON t.term_id=s.term_id JOIN academy_branch_courses c ON c.course_id=t.course_id WHERE $w", $bind, true);
         $offset = ($page - 1) * $per;
         $sql = "SELECT s.*,b.requested_date,b.start_time,b.end_time,b.status booking_status,t.course_id,c.branch_id,c.academy_id,c.lesson_id,(SELECT value FROM translations WHERE table_name='academy_branch_course_terms' AND table_id=t.term_id AND locale='fa' AND field='title' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1) term_name,(SELECT value FROM translations WHERE table_name='lessons' AND table_id=c.lesson_id AND locale='fa' AND field='title' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1) lesson_name,(SELECT value FROM translations WHERE table_name='academy_branch_classrooms' AND table_id=s.classroom_id AND locale='fa' AND field='title' AND deleted_at IS NULL ORDER BY translation_id DESC LIMIT 1) classroom_name FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id JOIN academy_branch_course_terms t ON t.term_id=s.term_id JOIN academy_branch_courses c ON c.course_id=t.course_id WHERE $w ORDER BY b.requested_date DESC,b.start_time DESC,s.term_session_id DESC LIMIT $offset,$per";
@@ -86,6 +87,12 @@ class AcademyClassScheduleService
         unset($row);
         $items = $this->withTeacherNotes($this->enrich($rows, $branches), $actor);
         return ['schedules' => $items, 'branches' => $this->branchOptions($branches), 'organizations' => array_merge(array_map(fn ($a) => ['id' => 0, 'academyId' => (int) $a['academy_id'], 'kind' => 'academy', 'name' => $this->tr('academies', (int) $a['academy_id'], 'title') ?: 'Academy'], $academies), $this->branchOptions($branches)), 'classrooms' => $this->classroomOptions($bids, $academyIds), 'lessons' => $this->lessonOptions($bids, $academyIds), 'timeRanges' => $this->timeRangeOptions($bids, $academyIds), 'total' => (int) $count, 'page' => $page, 'perPage' => $per];
+    }
+
+    private function heatmap(string $where, array $bindings): array
+    {
+        $rows = $this->query("SELECT b.requested_date date,b.start_time startTime,b.end_time endTime,COUNT(DISTINCT s.term_session_id) count FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id JOIN academy_branch_course_terms t ON t.term_id=s.term_id JOIN academy_branch_courses c ON c.course_id=t.course_id WHERE $where GROUP BY b.requested_date,b.start_time,b.end_time ORDER BY b.requested_date,b.start_time", $bindings);
+        return ['heatmap' => $rows];
     }
 
     private function teacherTermIds(int $actor): array

@@ -355,6 +355,7 @@ window.removeStaffLessonRow = async function (btn) {
 
 // ==================== رندر جدول ====================
 window.renderStaffTable = async function (staff = filteredStaff) {
+  window.renderContractTypeCharts?.(staff);
   const tbody = document.querySelector('#staffTable tbody');
   if (!tbody) return;
 

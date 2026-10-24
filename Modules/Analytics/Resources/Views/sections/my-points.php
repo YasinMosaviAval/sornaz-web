@@ -13,9 +13,12 @@ foreach ($personalPoints as $index => $point) {
     foreach ($pointFields as $field => $labels) {
         $value = (string) ($point[$field] ?? '—');
         if ($field === 'action') $value = \Core\database\ActivityText::point($point, locale());
-        if ($field === 'type') $value = $pointText(
-            in_array($value, ['professional','specialized'], true) ? 'حرفه‌ای' : 'عمومی',
-            in_array($value, ['professional','specialized'], true) ? 'Professional' : 'General');
+        if ($field === 'type') $value = match ($value) {
+            'general' => $pointText('عمومی', 'General'),
+            'professional' => $pointText('حرفه‌ای', 'Professional'),
+            'specialized' => $pointText('تخصصی', 'Specialized'),
+            default => $value,
+        };
         $cells[] = ['value' => $value, 'attributes' => 'class="py-4 px-5"'];
     }
     $rows[] = ['cells' => $cells];

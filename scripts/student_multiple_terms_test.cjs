@@ -32,7 +32,12 @@ denied(fn()=>$scheduleService->assignStudent(10,$third,$repeat));check((int)$pdo
 denied(fn()=>$scheduleService->assignStudent(20,$result['ids'][11],$repeat));
 $forged=$repeat;$forged['existingUserToken']='invalid';denied(fn()=>$scheduleService->assignStudent(10,$result['ids'][11],$forged));
 
+$pdo->exec("UPDATE academy_branch_course_term_sessions SET delivery_mode='in_person' WHERE term_id=".$first);
+$pdo->exec("UPDATE academy_branch_course_term_sessions SET delivery_mode='online' WHERE term_id=".$second);
 $academicView=(new Modules\Academy\Services\StudentAcademicDetails())->enrich([['id'=>$mid,'type'=>'student','termId'=>$third,'organizationUserId'=>10,'branchId'=>0]])[0];
+$chartRegistrations=array_column($academicView['termRegistrations'],null,'termId');
+check($chartRegistrations[$first]['deliveryModes']===['in_person']&&$chartRegistrations[$second]['deliveryModes']===['online'],'Chart modes belong to each registration rather than the latest term');
+check($chartRegistrations[$first]['lessonId']>0&&array_key_exists('lessonName',$chartRegistrations[$first]),'Chart lesson metadata is supplied for each registered term');
 $visibleTermIds=array_column($academicView['termRegistrations'],'termId');
 check(in_array($first,$visibleTermIds,true)&&in_array($second,$visibleTermIds,true)&&in_array($third,$visibleTermIds,true),'Student payload retains each registered term instead of only the latest');
 check(count($visibleTermIds)===count(array_unique($visibleTermIds)),'One registration entry per student and term');

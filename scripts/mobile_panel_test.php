@@ -2,7 +2,7 @@
 namespace Core\database {
  class DB { public static array $rows=[];public static int $calls=0; public static function table(string $table):object{self::$calls++;return new class($table){
   private array $joins=[];public function __construct(private string $table){}
-  public function __call(string $name,array $args):mixed{if($name==='join')$this->joins[]=$args[0];if($name==='first'){if(in_array('access_system_roles',$this->joins,true))return DB::$rows['management-role']??null;if(in_array('academy_branch_member_contracts',$this->joins,true))return DB::$rows['management-contract']??null;return DB::$rows[$this->table]??null;}return $this;}
+  public function __call(string $name,array $args):mixed{if($name==='join')$this->joins[]=$args[0];if($name==='get'){$rows=DB::$rows[$this->table]??[];return array_is_list($rows)?$rows:[$rows];}if($name==='first'){if(in_array('access_system_roles',$this->joins,true))return DB::$rows['management-role']??null;if(in_array('academy_branch_member_contracts',$this->joins,true))return DB::$rows['management-contract']??null;return DB::$rows[$this->table]??null;}return $this;}
  };}}
 }
 namespace {
@@ -33,6 +33,8 @@ namespace {
   public string $locale='fa';public function setLocale(string $locale):void{$this->locale=$locale;}public function getLocale():string{return $this->locale;}
   public function container():object{return new class{public function make(string $class):object{
    if($class===\Modules\Academy\Controllers\Web\AcademyCourseController::class)return new $class($GLOBALS['courseService']);
+   if($class===\Modules\Academy\Controllers\Web\AcademyClassScheduleController::class)return new class{public function index(){return \Core\http\ResponseFactory::json(['actor'=>auth()->id(),'query'=>$_GET,'request'=>$_REQUEST,'heatmap'=>[]]);}};
+   if($class===\Modules\Academy\Controllers\Web\AcademyTermController::class)return new class{public function setStatus(int $id){return \Core\http\ResponseFactory::json(['actor'=>auth()->id(),'id'=>$id,'status'=>$_POST['status']??null,'fromStatus'=>$_POST['fromStatus']??null]);}};
    if($class===\Modules\Analytics\Controllers\Web\AdminDashboardController::class)return new class{public function index(){return \Core\http\ResponseFactory::json(['actor'=>auth()->id(),'locale'=>app()->getLocale()]);}};
    return new $class();
   }};}
@@ -105,6 +107,7 @@ namespace {
  check($result['actor']===7&&$result['locale']==='en','Controller did not receive bearer identity and locale');
  check(auth()->id()===1,'Original identity not restored');
  check(field($panel->execute('courses','list'),'status')===403,'Ordinary user invoked management operation');
+ check(field($panel->execute('schedules','heatmap'),'status')===403,'Ordinary user invoked the scoped heatmap');
  check(field($panel->execute('../../_test','delete'),'status')===404,'Uncatalogued operation accepted');
  check(field($panel->execute('chat','send'),'status')===405,'GET invoked write');
  \Core\database\DB::$rows=['academy_branch_members'=>['member_id'=>3]];$keys=array_column(field($panel->index(),'data')['sections'],'key');
@@ -169,6 +172,17 @@ namespace {
  $authMethod->invoke($panel,function(){check(isset($_SESSION['member_user_selections']['fixture']),'Mobile selection lost before enrollment');return true;},false,false,true);
  $authMethod->invoke($panel,function(){check($_SESSION['registration_otp']===null,'Branch OTP inherited browser or staff state');$_SESSION['registration_otp']=['branch'=>'fixture'];return true;},false,true);
  check($_SESSION['registration_otp']===$oldOtp && $_SESSION['mobile_branch_otp'][1]===['branch'=>'fixture'],'Branch OTP isolation failed');
+ $_SERVER['REQUEST_METHOD']='GET';$_GET=['summary'=>'other','branchId'=>'9','day'=>'2'];$_REQUEST=$originalQuery=$_GET;
+ $response=$panel->execute('schedules','heatmap');
+ check(field($response,'status')===200,'Heatmap adapter returned HTTP '.field($response,'status').': '.json_encode(field($response,'data')));
+ $result=field($response,'data');
+ check($result['actor']===1&&$result['query']['summary']==='heatmap'&&$result['query']['branchId']==='9'&&$result['request']['summary']==='heatmap','Fixed heatmap query or scoped filters were lost');
+ check($_GET===$originalQuery&&$_REQUEST===$originalQuery,'Fixed query leaked to the next request');
+ $_SERVER['REQUEST_METHOD']='POST';check(field($panel->execute('schedules','heatmap'),'status')===405,'POST invoked a read-only heatmap');
+ $_GET=['id'=>'8'];$_POST=['payload_b64'=>base64_encode(json_encode(['status'=>'suspended','fromStatus'=>'open']))];$_REQUEST=$_POST;
+ $result=field($panel->execute('terms','set-status'),'data');
+ check($result['actor']===1&&$result['id']===8&&$result['status']==='suspended'&&$result['fromStatus']==='open','Explicit status selection lost actor, ID or concurrency precondition');
+ $_GET=['id'=>'../8'];check(field($panel->execute('terms','set-status'),'status')===422,'Unsafe term ID accepted');
  $users->rows[1]['password']='rotated';check(field($panel->index(),'status')===401,'Rotated bearer accepted');session_destroy();
  echo 'Native panel: '.count($sections)." sections; bearer isolation, roles, real-controller payloads and routing passed.\n";
 }

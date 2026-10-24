@@ -64,7 +64,8 @@ unset($filter);
 $result['posts'][] = ['key' => 'status', 'label' => 'وضعیت', 'type' => 'select', 'rowPath' => 'status', 'queryKey' => 'status', 'options' => ['published' => 'منتشرشده', 'draft' => 'پیش‌نویس', 'pending' => 'در انتظار بررسی', 'private' => 'خصوصی', 'trash' => 'زباله‌دان', 'future' => 'زمان‌بندی‌شده']];
 $result['comments'][] = ['key' => 'status', 'label' => 'وضعیت', 'type' => 'select', 'rowPath' => 'status', 'queryKey' => 'status', 'options' => ['approved' => 'تأیید شده', 'pending' => 'در انتظار', 'rejected' => 'رد شده', 'trash' => 'زباله‌دان']];
 foreach (['_dateFrom' => ['filterFinanceFrom', 'از تاریخ'], '_dateTo' => ['filterFinanceTo', 'تا تاریخ']] as $path => [$key, $label]) $result['finance'][] = ['key' => $key, 'webId' => $key, 'label' => $label, 'type' => 'date', 'rowPath' => $path, 'visibleWhen' => ['_form.filterFinanceRange' => 'custom']];
-$result['comments'][0]['queryKey'] = 'post';
+foreach ($result['comments'] as &$filter) if (($filter['webId'] ?? '') === 'commentPostFilter') $filter['queryKey'] = 'post';
+unset($filter);
 $result['my-points'] = [
  ['key' => 'type', 'label' => 'نوع امتیاز', 'type' => 'select', 'rowPath' => 'type', 'distinct' => true, 'options' => new stdClass()],
  ['key' => 'action', 'label' => 'عملیات', 'type' => 'select', 'rowPath' => 'action', 'distinct' => true, 'options' => new stdClass()],

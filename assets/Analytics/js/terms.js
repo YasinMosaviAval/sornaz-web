@@ -793,6 +793,7 @@ window.filterTerms = async function () {
 // ==================== table ====================
 window.renderTermsTable = async function (list) {
   list = list || filteredTerms;
+  window.renderTermLessonChart?.(list);
   const tbody = document.querySelector('#termsTable tbody');
   if (!tbody) return;
 

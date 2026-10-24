@@ -1,0 +1,43 @@
+const assert=require('node:assert/strict');
+const {execFileSync}=require('node:child_process');
+const {chromium}=require(process.env.PLAYWRIGHT_CORE_PATH||'../storage/notation-browser-check/package');
+const {tableRuntime}=require('./panel-table-fixture.cjs');
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
+ const views=JSON.parse(execFileSync(process.execPath,['scripts/panel_activity_text_test.cjs'],{encoding:'utf8',env:{...process.env,ACTIVITY_VIEWS:'1',ACTIVITY_SPECIALIZED_POINT:'1'}}));
+ for(const lang of ['fa','en']) {
+  const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  let balance={general:100,professional:50,specialized:25};
+  await page.route('**/*',route=>route.fulfill(new URL(route.request().url()).pathname==='/analytics/admin-points'?{json:{success:true,data:{balance,rules:[],organizations:[],canManage:false}}}:{body:'<html></html>',contentType:'text/html'}));
+  await page.goto('http://points.test/');
+  await page.setContent(`<html lang="${lang}"><style>.hidden{display:none}</style><div id="headerPointBalance"></div><main id="mainContent">${views.points}</main>${tableRuntime()}</html>`);
+  await page.evaluate(()=>{document.getElementById('points').classList.remove('hidden');const original=setInterval;window.setInterval=(callback,delay)=>delay===12000?(window.pointsTick=callback,1):original(callback,delay);});
+  for(const script of ['assets/vendor/echarts/echarts.min.js','assets/Analytics/js/charts.js','assets/Analytics/js/personal-points-chart.js','assets/Analytics/js/points.js'])await page.addScriptTag({path:script});
+  await page.waitForFunction(()=>window.SornazCharts?.get('#personalPointsChart'));
+  const data=()=>page.evaluate(()=>SornazCharts.get('#personalPointsChart').getOption().series[0].data.map(item=>[item.id,item.value]));
+  assert.deepEqual(await data(),[['general',100],['professional',50],['specialized',25]],'Use complete confirmed balances, not history or rule counts');
+  assert.equal(await page.locator('#personalPointsChart canvas').count(),1);
+  assert.match(await page.locator('#pointSpecializedBalance').textContent(),/25|۲۵/);
+  assert.match(await page.locator('#headerPointBalance').textContent(),/175|۱۷۵/);
+  assert.ok((await page.locator('#myPointsTable tbody').textContent()).includes('تخصصی'),'Specialized history must have its own label');
+  assert.ok(!(await page.locator('#myPointsTable tbody').textContent()).includes('999'),'Another account must not appear in personal history');
+  balance={general:4,professional:3,specialized:2};await page.evaluate(()=>pointsTick());
+  await page.waitForFunction(()=>SornazCharts.get('#personalPointsChart').getOption().series[0].data[0].value===4);
+  assert.deepEqual(await data(),[['general',4],['professional',3],['specialized',2]],'Balance-only poll changes must refresh the chart');
+  balance={general:7,professional:0};await page.evaluate(()=>pointsTick());
+  await page.waitForFunction(()=>SornazCharts.get('#personalPointsChart').getOption().series[0].data[0].value===7);
+  assert.deepEqual(await data(),[['general',7],['professional',0],['specialized',0]],'Missing specialized values must remain zero');
+  balance={general:0,professional:0,specialized:0};await page.evaluate(()=>pointsTick());
+  await page.waitForFunction(()=>SornazCharts.get('#personalPointsChart').getOption().series[0].data.length===0);
+  balance={general:9,professional:-2,specialized:3};await page.evaluate(()=>pointsTick());
+  await page.waitForFunction(()=>SornazCharts.get('#personalPointsChart').getOption().series[0].data.length===3);
+  assert.deepEqual(await data(),[['general',9],['professional',0],['specialized',3]]);
+  await page.evaluate(()=>document.documentElement.dataset.mode='dark');
+  await page.waitForFunction(()=>SornazCharts.get('#personalPointsChart').getOption().textStyle.color==='#e2e8f0');
+  await page.evaluate(()=>showPointTab('rules'));assert.equal(await page.locator('#personalPointsChart').isVisible(),false);
+  await page.evaluate(()=>showPointTab('personal'));assert.equal(await page.locator('#personalPointsChart').isVisible(),true);
+  await page.setViewportSize({width:390,height:800});await page.waitForTimeout(100);
+  assert.ok(await page.locator('#personalPointsChart').evaluate(el=>SornazCharts.get(el).getWidth()>0));
+  assert.deepEqual(errors,[]);await page.close();
+ }
+ console.log('Personal points pie: three distinct types, confirmed balances, balance-only refresh, specialized history labels, own-account history, missing/zero/negative values, personal tab, dark mode and resize passed (fa/en).');
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

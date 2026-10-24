@@ -109,7 +109,7 @@ $result['my-points']['rowActions'] = [];
 $result['my-points']['showActions'] = false;
 $result['points']['actionsPermission'] = 'canManage';
 $result['points']['summaries'] = [['label' => 'قوانین فعال', 'countRows' => 'rules', 'where' => ['status' => 'active'], 'description' => 'اعمال خودکار با سقف و کنترل تکرار']];
-$result['my-points']['summaries'] = [['label' => 'امتیاز عمومی من', 'path' => 'balance.general'], ['label' => 'امتیاز حرفه‌ای من', 'path' => 'balance.professional']];
+$result['my-points']['summaries'] = [['label' => 'امتیاز عمومی من', 'path' => 'balance.general'], ['label' => 'امتیاز حرفه‌ای من', 'path' => 'balance.professional'], ['label' => 'امتیاز تخصصی من', 'path' => 'balance.specialized']];
 foreach (['my-courses', 'my-terms', 'my-classrooms'] as $key) {
     $result[$key]['columns'] = array_slice($result[$key]['columns'], 1);
     $result[$key]['rowActions'] = [];

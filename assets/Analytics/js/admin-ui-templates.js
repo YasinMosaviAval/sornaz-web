@@ -363,7 +363,7 @@
   }
 
   function normalizeTable(table, section) {
-    if (!table || table.closest('.admin-ui-table')) return;
+    if (!table || table.closest('.admin-ui-table,[data-admin-ui-native],.guide-md')) return;
     let box = table.parentElement;
     while (
       box &&

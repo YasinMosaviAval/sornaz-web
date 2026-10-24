@@ -61,17 +61,26 @@ final class StudentAcademicDetails
             $member = DB::table('academy_branch_members')->where('member_id', (int) $enrollment['member_id'])->whereNull('deleted_at')->first();
             if ($member) $teachers[] = $tr->get('users', (int) $member['user_id'], 'full_name', 'fa') ?: ('مدرس ' . $member['user_id']);
         }
-        return ['levelId' => $levelId, 'level' => $levelId ? ($tr->get('levels', $levelId, 'title', 'fa') ?: ('سطح ' . $levelId)) : '', 'teacher' => implode('، ', array_unique($teachers)), 'teacherNotes' => $this->notes($id)];
+        return ['levelId' => $levelId, 'level' => $levelId ? ($tr->get('levels', $levelId, 'title', 'fa') ?: ('سطح ' . $levelId)) : '', 'teacher' => implode('، ', array_unique($teachers)), ...$this->lessonDetails($course), ...$this->sessionDetails($id)];
     }
 
-    private function notes(int $id): array
+    private function lessonDetails(?array $course): array
+    {
+        $id = (int) ($course['lesson_id'] ?? 0);
+        return ['lessonId' => $id, 'lessonName' => $id ? (TranslationService::manager()->get('lessons', $id, 'title', 'fa') ?: '—') : '—'];
+    }
+
+    private function sessionDetails(int $id): array
     {
         $tr = TranslationService::manager();
         $notes = [];
+        $modes = [];
         foreach (DB::table('academy_branch_course_term_sessions')->where('term_id', $id)->whereNull('deleted_at')->orderBy('term_session_id')->get() as $session) {
+            $mode = $session['delivery_mode'] ?? null;
+            if (in_array($mode, ['in_person', 'online'], true)) $modes[$mode] = true;
             $note = $tr->get('academy_branch_course_term_sessions', (int) $session['term_session_id'], 'teacher_note', 'fa');
             if (trim((string) $note) !== '') $notes[] = ['sessionId' => (int) $session['term_session_id'], 'text' => $note];
         }
-        return $notes;
+        return ['teacherNotes' => $notes, 'deliveryModes' => array_keys($modes)];
     }
 }

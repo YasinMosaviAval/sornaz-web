@@ -142,6 +142,15 @@
             <div class="flex items-center gap-2" id="termsPaginationButtons"></div>
         </div>
     </div>
+        <section class="mt-6 rounded-3xl bg-white p-5 shadow-sm dark:bg-slate-900" aria-labelledby="termLessonChartTitle">
+            <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <h2 id="termLessonChartTitle" class="text-lg font-bold"><?= e(locale() === 'en' ? 'Student terms by lesson and attendance mode' : 'ترم‌های هنرجویان به تفکیک درس و شیوهٔ برگزاری') ?></h2>
+                <button type="button" onclick="downloadTermLessonChart()" class="rounded-xl border px-4 py-2 text-sm"><?= e(locale() === 'en' ? 'Download PNG' : 'دریافت تصویر نمودار') ?></button>
+            </div>
+            <p class="mb-3 text-sm text-gray-500"><?= e(locale() === 'en' ? 'All table filters apply. Each term with students counts once per attendance mode; hybrid terms appear in both series.' : 'تمام فیلترهای جدول اعمال می‌شوند. هر ترم دارای هنرجو در هر شیوه یک‌بار شمرده می‌شود؛ ترم ترکیبی در هر دو ستون حضور دارد.') ?></p>
+            <p id="termLessonChartSummary" class="mb-3 text-sm" aria-live="polite"></p>
+            <div id="termLessonChart" class="w-full" style="height:420px" role="img" aria-label="<?= e(locale() === 'en' ? 'In-person and online term counts by lesson' : 'تعداد ترم‌های حضوری و آنلاین هر درس') ?>"></div>
+        </section>
     </div>
     <?php component('term-discounts'); ?>
 </div>

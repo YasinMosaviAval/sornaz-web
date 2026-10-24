@@ -15,13 +15,20 @@
     ]); ?>
 
     <div data-point-panel="personal">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div class="rounded-3xl bg-gradient-to-l from-amber-400 to-yellow-500 p-5 text-white shadow"><p class="text-sm opacity-90">امتیاز عمومی من</p><strong id="pointGeneralBalance" class="block mt-2 text-3xl">۰</strong></div>
         <div class="rounded-3xl bg-gradient-to-l from-violet-600 to-indigo-600 p-5 text-white shadow"><p class="text-sm opacity-90">امتیاز حرفه‌ای من</p><strong id="pointProfessionalBalance" class="block mt-2 text-3xl">۰</strong></div>
+        <div class="rounded-3xl bg-gradient-to-l from-teal-600 to-cyan-600 p-5 text-white shadow"><p class="text-sm opacity-90"><?= e(locale() === 'en' ? 'My specialized points' : 'امتیاز تخصصی من') ?></p><strong id="pointSpecializedBalance" class="block mt-2 text-3xl">۰</strong></div>
 
     </div>
 
     <?php component('my-points'); ?>
+    <section class="mt-6 rounded-3xl bg-white p-5 shadow-sm dark:bg-slate-900" aria-labelledby="personalPointsChartTitle">
+        <h2 id="personalPointsChartTitle" class="mb-3 text-lg font-bold"><?= e(locale() === 'en' ? 'My points by type' : 'امتیازهای من به تفکیک نوع') ?></h2>
+        <p class="mb-3 text-sm text-gray-500"><?= e(locale() === 'en' ? 'Shares of your confirmed point balances: general, professional and specialized.' : 'سهم امتیازهای عمومی، حرفه‌ای و تخصصی از موجودی تأییدشدهٔ حساب شما.') ?></p>
+        <p id="personalPointsChartSummary" class="mb-3 text-sm" aria-live="polite"></p>
+        <div id="personalPointsChart" class="w-full" style="height:360px" role="img" aria-label="<?= e(locale() === 'en' ? 'Pie chart of my general, professional and specialized points' : 'نمودار دایره‌ای امتیازهای عمومی، حرفه‌ای و تخصصی من') ?>"></div>
+    </section>
     </div>
     <div data-point-panel="rules" class="hidden">
     <div class="flex flex-col md:flex-row md:items-center md:justify-end gap-4 mb-6">

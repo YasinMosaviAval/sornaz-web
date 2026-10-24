@@ -33,7 +33,7 @@ const render = (name, lang) => execFileSync('php', ['scripts/panel-table-view-fi
     [['awards','badges','experiences','certificates','educations','events','polls','publications'],lang==='en'?'Records and achievements':'سوابق و دستاوردها'],
     [['gallery-cover','gallery-logo','gallery-intro-video','gallery-collection'],lang==='en'?'Gallery':'گالری'],
     [['branches','branch-types','availabilities','scheduling-rules','availability-exceptions'],lang==='en'?'Organization':'سازمان'],
-    [['users','roles','permissions'],lang==='en'?'Roles and permissions':'نقش ها و دسترسی ها']]) {
+    [['users','roles','permissions'],lang==='en'?'Users':'کاربران']]) {
      for(const id of ids) {
       await page.evaluate(id=>showSection(id),id);
       assert.equal(await page.locator('#panelPageTitle').textContent(),title);
@@ -42,6 +42,7 @@ const render = (name, lang) => execFileSync('php', ['scripts/panel-table-view-fi
      }
    }
    assert.deepEqual(await page.locator('#users .panel-page-tabs button').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('onclick').match(/"([^"]+)"/)[1])),['roles','permissions','users','teachers','member-schedules','employee-leaves']);
+   assert.equal(await page.locator('#users .panel-page-tabs button').nth(2).textContent(),lang==='en'?'Roles and permissions':'نقش‌ها و دسترسی‌ها');
    assert.match(await page.locator('#branches .panel-page-tabs button').first().getAttribute('onclick'),/branch-types/);
    await page.locator('#permissions .panel-page-tabs button').nth(2).click();
    assert.equal(await page.locator('#users').isVisible(),true);

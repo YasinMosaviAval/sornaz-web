@@ -14,6 +14,7 @@ const {renderPanelView, tableRuntime} = require('./panel-table-fixture.cjs');
           schedules:[session,{...session,id:13,branchId:2,classroomId:5},{...session,id:14,branchId:0,academyId:100,classroomId:6,title:'Academy lesson'}],organizations:[{id:0,academyId:100,name:'Academy root'},{id:1,name:'Fixture branch'},{id:2,name:'Second branch'}],branches:[{id:1,name:'Fixture branch'},{id:2,name:'Second branch'}],classrooms:[{id:4,branchId:1,name:'Piano room'},{id:5,branchId:2,name:'Second room'},{id:6,branchId:0,name:'Academy room'}],lessons:[],timeRanges:[],total:3,page:1,perPage:Number(new URL(route.request().url()).searchParams.get('perPage') || 10),
         }}}));
       await page.goto('http://calendar.test/');
+      await page.clock.install({time:new Date('2026-10-18T12:00:00Z')});
       await page.setContent(`<html lang="${language}"><style>.hidden{display:none} [data-calendar-control-row]{display:flex;flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;gap:8px} [data-calendar-control-row]>button{flex-shrink:0}</style>${renderPanelView('schedules',language)}<div id="modalContainer"></div>${tableRuntime()}</html>`);
       await page.evaluate(() => {document.getElementById('schedules').classList.remove('hidden');window.alert=()=>{};});
       await page.addScriptTag({path:'assets/Analytics/js/schedule-templates.js'});

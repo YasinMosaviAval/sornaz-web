@@ -503,6 +503,7 @@
 
   window.renderStudentsTable = async function (list) {
     list = list || filteredStudents;
+    window.renderStudentLessonChart?.(list);
     const tbody = document.querySelector('#studentsTable tbody');
     if (!tbody) return;
 

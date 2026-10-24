@@ -64,46 +64,47 @@ final class MobilePanelController
             if (!$route || !is_array($route['action'])) {
                 return $this->error(404);
             }
-            $originalUri = $_SERVER['REQUEST_URI'] ?? '';
-            $originalPost = $_POST;
-            $originalRequest = $_REQUEST;
-            if ($action['method'] === 'POST' && isset($_POST['payload_b64'])) {
+            return $this->invokeRoute($route, $path, $action['query'] ?? []);
+        }, $section === 'members' && in_array($operation, ['create', 'registration-otp'], true), $section === 'branches' && in_array($operation, ['register-account', 'registration-otp'], true), (in_array($section, ['members', 'students'], true) && in_array($operation, ['create', 'user-lookup'], true)) || ($section === 'terms' && $operation === 'assign-student'));
+    }
+
+    private function invokeRoute(array $route, string $path, array $fixedQuery)
+    {
+        $original = [$_SERVER['REQUEST_URI'] ?? '', $_GET, $_POST, $_REQUEST];
+        try {
+            if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['payload_b64'])) {
                 $raw = base64_decode((string) $_POST['payload_b64'], true);
                 $payload = $raw === false ? null : json_decode($raw, true);
-                if (!is_array($payload)) {
-                    return $this->error(422);
-                }
+                if (!is_array($payload)) return $this->error(422);
                 $_POST = array_replace($_POST, $payload);
                 $_REQUEST = array_replace($_REQUEST, $_POST);
             }
+            // The catalog owns these parameters; a caller cannot change the operation.
+            $_GET = array_replace($_GET, $fixedQuery);
+            $_REQUEST = array_replace($_REQUEST, $fixedQuery);
             $_SERVER['REQUEST_URI'] = $path;
-            try {
-                $request = new Request();
-                $next = function ($request) use ($route) {
-                    [$class, $method] = $route['action'];
-                    return app()->container()->make($class)->$method(...array_values($route['params']));
-                };
-                $middlewareMap = require base_path('config/middleware.php');
-                foreach (array_reverse($route['middlewares']) as $alias) {
-                    // CSRF protects cookie authentication. This endpoint accepts only
-                    // a validated Authorization bearer and restores the prior session.
-                    if ($alias === 'csrf') {
-                        continue;
-                    }
-                    if (!isset($middlewareMap[$alias])) {
-                        return $this->error(403);
-                    }
-                    $middleware = app()->container()->make($middlewareMap[$alias]);
-                    $downstream = $next;
-                    $next = fn ($request) => $middleware->handle($request, $downstream);
-                }
-                return $next($request);
-            } finally {
-                $_SERVER['REQUEST_URI'] = $originalUri;
-                $_POST = $originalPost;
-                $_REQUEST = $originalRequest;
-            }
-        }, $section === 'members' && in_array($operation, ['create', 'registration-otp'], true), $section === 'branches' && in_array($operation, ['register-account', 'registration-otp'], true), (in_array($section, ['members', 'students'], true) && in_array($operation, ['create', 'user-lookup'], true)) || ($section === 'terms' && $operation === 'assign-student'));
+            return $this->dispatchRoute($route);
+        } finally {
+            [$_SERVER['REQUEST_URI'], $_GET, $_POST, $_REQUEST] = $original;
+        }
+    }
+
+    private function dispatchRoute(array $route)
+    {
+        $next = function ($request) use ($route) {
+            [$class, $method] = $route['action'];
+            return app()->container()->make($class)->$method(...array_values($route['params']));
+        };
+        $middlewareMap = require base_path('config/middleware.php');
+        foreach (array_reverse($route['middlewares']) as $alias) {
+            // CSRF remains on web routes. This adapter accepts authenticated bearer only.
+            if ($alias === 'csrf') continue;
+            if (!isset($middlewareMap[$alias])) return $this->error(403);
+            $middleware = app()->container()->make($middlewareMap[$alias]);
+            $downstream = $next;
+            $next = fn ($request) => $middleware->handle($request, $downstream);
+        }
+        return $next(new Request());
     }
 
     private function authenticated(callable $callback, bool $staffRegistration = false, bool $branchRegistration = false, bool $memberSelection = false)

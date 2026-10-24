@@ -1468,7 +1468,7 @@ class AcademyTermService
 
     private function sessions(array $ids): array
     {
-        $sql = 'SELECT s.term_session_id,s.term_id,s.classroom_id,s.session_type,s.makeup_for_session_id,s.cancellation_status,s.cancellation_requested_by,s.cancellation_decided_by,b.status booking_status,b.requested_date date,b.start_time,b.end_time,b.timezone_id FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id WHERE s.deleted_at IS NULL AND b.deleted_at IS NULL AND s.term_id IN (' . implode(',', array_map('intval', $ids)) . ') ORDER BY b.requested_date,b.start_time,s.term_session_id';
+        $sql = 'SELECT s.term_session_id,s.term_id,s.classroom_id,s.delivery_mode,s.session_type,s.makeup_for_session_id,s.cancellation_status,s.cancellation_requested_by,s.cancellation_decided_by,b.status booking_status,b.requested_date date,b.start_time,b.end_time,b.timezone_id FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id WHERE s.deleted_at IS NULL AND b.deleted_at IS NULL AND s.term_id IN (' . implode(',', array_map('intval', $ids)) . ') ORDER BY b.requested_date,b.start_time,s.term_session_id';
         $rows = db()->query($sql)->fetchAll();
         $sessionIds = array_map(fn ($r) => (int) $r['term_session_id'], $rows);
         $reasons = [];
@@ -1494,11 +1494,8 @@ class AcademyTermService
         };
         foreach ($rows as $r) {
             $id = (int) $r['term_session_id'];
-            $termId = (int) $r['term_id'];
             $parent = (int) ($r['makeup_for_session_id'] ?? 0);
-            $type = (string) ($r['session_type'] ?? 'regular');
-            $number = $regularNumbers[$termId][$root($id)] ?? 0;
-            $out[$termId][] = ['id' => $id, 'number' => $number, 'type' => $type, 'makeupForSessionId' => $parent ?: null, 'date' => $r['date'], 'startTime' => substr((string) $r['start_time'], 0, 5), 'endTime' => substr((string) $r['end_time'], 0, 5), 'timezoneId' => (int) ($r['timezone_id'] ?? 0), 'classroomId' => (int) $r['classroom_id'], 'bookingStatus' => (string) $r['booking_status'], 'cancellationStatus' => (string) ($r['cancellation_status'] ?? 'none'), 'cancellationReason' => $reasons[$id] ?? '', 'cancellationRequestedBy' => (int) ($r['cancellation_requested_by'] ?? 0), 'cancellationDecidedBy' => (int) ($r['cancellation_decided_by'] ?? 0)];
+            $out[(int) $r['term_id']][] = ['deliveryMode' => $r['delivery_mode'] ?? null, 'id' => $id, 'number' => $regularNumbers[(int) $r['term_id']][$root($id)] ?? 0, 'type' => $r['session_type'] ?? 'regular', 'makeupForSessionId' => $parent ?: null, 'date' => $r['date'], 'startTime' => substr((string) $r['start_time'], 0, 5), 'endTime' => substr((string) $r['end_time'], 0, 5), 'timezoneId' => (int) ($r['timezone_id'] ?? 0), 'classroomId' => (int) $r['classroom_id'], 'bookingStatus' => (string) $r['booking_status'], 'cancellationStatus' => (string) ($r['cancellation_status'] ?? 'none'), 'cancellationReason' => $reasons[$id] ?? '', 'cancellationRequestedBy' => (int) ($r['cancellation_requested_by'] ?? 0), 'cancellationDecidedBy' => (int) ($r['cancellation_decided_by'] ?? 0)];
         }return $out;
     }
 

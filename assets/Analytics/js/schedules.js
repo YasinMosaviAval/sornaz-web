@@ -20,6 +20,20 @@
     weeklyLayoutByBranch = new Map();
   let weeklySource = [], weekKey = '', listKey = '', weeklyRequest = 0, listRequest = 0;
   const responseCache = new Map();
+  let heatmapRequest = 0;
+  async function loadListHeatmap() {
+    if (!window.renderScheduleHeatmap) return;
+    const request = ++heatmapRequest, query = params(1);
+    query.delete('page'); query.delete('perPage'); query.set('summary','heatmap');
+    window.setScheduleHeatmapState?.('loading');
+    try {
+      const data = await api('/academy/admin/class-schedules?' + query);
+      if (request !== heatmapRequest || schedulesView !== 'list') return;
+      window.renderScheduleHeatmap(data.heatmap || [], document.documentElement.lang.startsWith('en')?'All filtered results':'کل نتایج فیلترشده');
+    } catch (_) {
+      if (request === heatmapRequest && schedulesView === 'list') window.setScheduleHeatmapState?.('error');
+    }
+  }
   function invalidateScheduleCache() { responseCache.clear(); weekKey = ''; listKey = ''; }
   function visibleOrganizations() {
     return branches.filter(branch => currentBranch === 'all' ||
@@ -134,6 +148,7 @@
   }
   async function load(page = 1) {
     const request = ++listRequest, query = params(page).toString();
+    if (schedulesView === 'list') { heatmapRequest++; window.setScheduleHeatmapState?.('loading'); }
     try {
       const d = await api('/academy/admin/class-schedules?' + query);
       if (request !== listRequest) return;
@@ -150,7 +165,9 @@
       renderFilters();
       renderTimeFilters(allSchedules);
       render();
+      if (schedulesView === 'list') await loadListHeatmap();
     } catch (e) {
+      if (request === listRequest && schedulesView === 'list') window.setScheduleHeatmapState?.('error');
       alert(e.message);
     }
   }
@@ -315,6 +332,8 @@
     const host = document.getElementById('schedulesWeeklyTables');
     if (!host) return;
     const request = ++weeklyRequest;
+    heatmapRequest++;
+    if (schedulesView === 'weekly') window.setScheduleHeatmapState?.('loading');
     try {
       const bounds = await api('/academy/admin/class-schedule-week-bounds?');
       if (request !== weeklyRequest) return;
@@ -347,6 +366,7 @@
       applyWeeklyFilters();
     } catch (e) {
       if (request === weeklyRequest) host.textContent = e.message;
+      if (request === weeklyRequest && schedulesView === 'weekly') window.setScheduleHeatmapState?.('error');
     }
   }
   function weeklyRoomMatches(session, room) {
@@ -538,6 +558,10 @@
         )
         .join('') ||
       '<div class="rounded-3xl bg-white p-12 text-center text-gray-400">شعبه‌ای یافت نشد.</div>';
+    if (schedulesView === 'weekly') {
+      heatmapRequest++;
+      window.renderScheduleHeatmap?.(weeklySchedules, `${window.formatScheduleDate(dates[0])} — ${window.formatScheduleDate(dates[6])}`);
+    }
   }
   window.setSchedulesView = (view) => {
     schedulesView = view === 'weekly' ? 'weekly' : 'list';
@@ -558,6 +582,7 @@
     if (schedulesView === 'weekly') {
       if (weekKey) applyWeeklyFilters(); else loadWeeklySchedules();
     } else if (listKey !== params(currentPage).toString()) load(currentPage);
+    else loadListHeatmap();
   };
   window.changeSchedulesWeek = (offset) => {
     if (!weekStart) weekStart = currentSaturday();

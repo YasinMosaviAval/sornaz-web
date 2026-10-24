@@ -55,17 +55,23 @@ const {renderPanelView,tableRuntime}=require('./panel-table-fixture.cjs');
   assert.equal(await page.evaluate(()=>allTerms.length),16);assert.equal(await page.locator('#termsTable tbody tr').count(),10);assert.equal(await page.locator('#termsTable img').count(),0);
   assert((await page.locator('#termsTable tbody').textContent()).includes('10:00'));
   await page.evaluate(()=>openTermClassroomAssignment(1));
-  assert.deepEqual(await page.locator('[data-assign-term-classroom] option').evaluateAll(nodes=>nodes.map(x=>x.value)),['','1001']);
-  await page.selectOption('[data-assign-term-classroom] select','1001');await page.locator('[data-assign-term-classroom] [type=submit]').click();
-  await page.waitForFunction(()=>allTerms[0].classroomId===1001);
+  assert.equal(await page.locator('[data-assign-term-classroom]').count(),0);
   await page.locator('button[onclick="openTermStudentAssignment(1)"]').click();
   await page.waitForSelector('[data-student-term-id="1"]');
   assert.equal(await page.locator('#stuOrganization').getAttribute('type'),'hidden');
   assert.equal(await page.locator('#stuInstrument,#stuAvailabilityWrap').count(),0);
   await page.locator('#stuName').fill('Student');await page.locator('#stuNationalId').fill('1234567890');await page.locator('#stuFatherName').fill('Father');await page.locator('#stuBirthDate').fill('1990-01-01');await page.locator('#stuPhone').fill('09123456789');
+  await page.locator('#modalContainer').getByRole('button',{name:language==='fa'?'بعدی':'Next',exact:true}).click();
   await page.selectOption('.student-address-province','Province');await page.selectOption('.student-address-city','City');await page.locator('.student-address-text').fill('Address');
+  await page.locator('#modalContainer').getByRole('button',{name:language==='fa'?'بعدی':'Next',exact:true}).click();
+  await page.locator('#modalContainer').getByRole('button',{name:language==='fa'?'بعدی':'Next',exact:true}).click();
   await page.evaluate(async()=>{const pending=saveStudent();saveStudent();await pending;});
   assert.equal(await page.locator('button[onclick="openTermStudentAssignment(1)"]').count(),0);
+  await page.evaluate(()=>openTermClassroomAssignment(1));
+  assert.deepEqual(await page.locator('[data-assign-term-classroom] option').evaluateAll(nodes=>nodes.map(x=>x.value)),['','1001']);
+  await page.selectOption('[data-assign-term-classroom] select','1001');await page.locator('[data-assign-term-classroom] [type=submit]').click();
+  await page.waitForFunction(()=>allTerms[0].classroomId===1001);
+
   await page.evaluate(()=>{allTerms[1].status_code='ongoing';openTermStudentAssignment(2);});assert.equal(await page.locator('[data-student-term-id]').count(),0);
   assert.deepEqual(errors,[]);await page.close();
  }

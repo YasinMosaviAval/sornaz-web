@@ -91,14 +91,14 @@ if ($sidebarFullName === '') $sidebarFullName = $sidebarUsername;
     <nav class="flex-1 overflow-y-auto overflow-x-hidden p-4">
         <ul class="space-y-2">
                 <?php if ((int)auth()->id() === 1 || $previewRole === 'admin'): ?>
-                <li><a href="#" onclick="showSection('guides')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-book-reader w-5 text-center"></i> راهنمای عملکردها</a></li>
+                <li><a href="#" onclick="showSection('guides')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-yellow-300 hover:text-yellow-200"><i class="fas fa-book-reader w-5 text-center"></i> راهنمای عملکردها</a></li>
                 <?php endif; ?>
             <?php if ($isSiteAdmin && ($previewRole === 'admin' || env('APP_ENV', 'production') === 'local')) { ?>
                 <?php if ($previewRole === null): ?>
                 <!-- <li>--------------------------------</li> -->
                 <?php endif; ?>
-                <li><a href="#" onclick="showSection('posts')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-file-alt w-5 text-center"></i> نوشته‌ها</a></li>
-                <li><a href="#" onclick="showSection('chart-gallery')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-chart-pie w-5 text-center"></i> گالری نمودارها</a></li>
+                <li><a href="#" onclick="showSection('posts')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-yellow-300 hover:text-yellow-200"><i class="fas fa-file-alt w-5 text-center"></i> نوشته‌ها</a></li>
+                <li><a href="#" onclick="showSection('chart-gallery')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-yellow-300 hover:text-yellow-200"><i class="fas fa-chart-pie w-5 text-center"></i> گالری نمودارها</a></li>
                 <li><a href="#" onclick="showSection('reports')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-yellow-300 hover:text-yellow-200"><i class="fas fa-chart-bar w-5 text-center"></i> گزارش‌ها</a></li>
                 <!-- <li>--------------------------------</li> -->
                 <!--
@@ -109,11 +109,16 @@ if ($sidebarFullName === '') $sidebarFullName = $sidebarUsername;
                     <li>--------------------------------</li>
                 -->
             <?php } ?>
-            <li><a href="#" onclick="showSection('dashboard')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-home w-5 text-center"></i> داشبورد</a></li>
-            <li><a href="#" onclick="showSection('account')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-user-cog w-5 text-center"></i> حساب کاربری</a></li>
             <?php if ((int) ($panelUser['user_id'] ?? 0) === 1 || $previewRole === 'admin'): ?>
             <li><a href="#" onclick="showSection('notation')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-yellow-300 hover:text-yellow-200"><i class="fas fa-music w-5 text-center"></i> <?= locale()==='en'?'Music Sheets':'نت‌نویسی' ?></a></li>
             <?php endif; ?>
+            <?php if ((int) ($panelUser['user_id'] ?? 0) === 1 || $previewRole === 'admin'): ?>
+            <li><a href="#" onclick="showSection('awards')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 text-yellow-300 hover:text-yellow-200"><i class="fas fa-trophy w-5 text-center"></i> سوابق و دستاوردها</a></li>
+            <?php endif; ?>
+            <?php if($isSiteAdmin): ?><li><a href="#" onclick="showSection('tracking')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-yellow-300 hover:text-yellow-200"><i class="fas fa-chart-line w-5 text-center"></i> تحلیل رفتار کاربران</a></li><?php endif; ?>
+            <?php if($isSiteAdmin): ?><li><a href="#" onclick="showSection('national-holidays')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-yellow-300 hover:text-yellow-200"><i class="fas fa-calendar-times w-5 text-center"></i> تعطیلات رسمی کشور</a></li><?php endif; ?>
+            <li><a href="#" onclick="showSection('dashboard')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-home w-5 text-center"></i> داشبورد</a></li>
+            <li><a href="#" onclick="showSection('account')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-user-cog w-5 text-center"></i> حساب کاربری</a></li>
             <?php if ($hasAcademyPanelAccess): ?>
             <?php if ((int) ($panelUser['user_id'] ?? 0) === 1): ?>
             <li><a href="#" onclick="showSection('gallery')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-images w-5 text-center"></i> گالری</a></li>
@@ -129,25 +134,12 @@ if ($sidebarFullName === '') $sidebarFullName = $sidebarUsername;
             <li><a href="#" onclick="showSection('my-courses')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-book-open w-5 text-center"></i> دوره‌های من</a></li>
             <li><a href="#" onclick="showSection('my-terms')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-calendar-check w-5 text-center"></i> ترم‌های من</a></li>
             <?php endif; ?>
-            <?php if ((int) ($panelUser['user_id'] ?? 0) === 1 || $previewRole === 'admin'): ?>
-            <li><a href="#" onclick="showSection('awards')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-trophy w-5 text-center"></i> سوابق و دستاوردها</a></li>
-            <?php endif; ?>
-            <?php if($isSiteAdmin): ?><li><a href="#" onclick="showSection('tracking')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-chart-line w-5 text-center"></i> تحلیل رفتار کاربران</a></li><?php endif; ?>
-            <?php if($isSiteAdmin): ?><li><a href="#" onclick="showSection('national-holidays')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-calendar-times w-5 text-center"></i> تعطیلات رسمی کشور</a></li><?php endif; ?>
             <?php if($hasAcademyPanelAccess): ?>
             <?php if(!$isBranchAccount): ?>
             <?php if ((int) ($panelUser['user_id'] ?? 0) === 1): ?>
             <li><a href="#" onclick="showSection('branches')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-building w-5 text-center"></i> سازمان</a></li>
             <?php else: ?>
             <li><a href="#" onclick="showSection('branches')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-building w-5 text-center"></i>سازمان</a></li>
-            <?php endif; ?>
-            <?php endif; ?>
-            <?php if ($isSiteAdmin): ?>
-            <li><a href="#" onclick="showSection('teachers')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-chalkboard-teacher w-5 text-center"></i> کارمندها</a></li>
-            <?php endif; ?>
-<?php if($isSiteAdmin || $ownsAcademy || $isAcademyManager || $isBranchAccount || $hasAcademyManagementRole): ?>
-            <?php if ((int) ($panelUser['user_id'] ?? 0) === 1 || $previewRole === 'admin'): ?>
-            <li><a href="#" onclick="showSection('users')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-id-card w-5 text-center"></i> <?= locale() === 'en' ? 'Roles and permissions' : 'نقش‌ها و دسترسی‌ها' ?></a></li>
             <?php endif; ?>
             <?php endif; ?>
             <?php if ((int) ($panelUser['user_id'] ?? 0) === 1 || $previewRole === 'admin'): ?>
@@ -164,6 +156,9 @@ if ($sidebarFullName === '') $sidebarFullName = $sidebarUsername;
             <li><a href="#" onclick="showSection('lessons')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-book w-5 text-center"></i>درس‌ها</a></li>
             <?php endif; ?>
             <li><a href="#" onclick="showSection('classrooms')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-door-open w-5 text-center"></i> کلاس‌ها</a></li>
+            <?php if ($isSiteAdmin): ?>
+            <li><a href="#" onclick="showSection('users')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-chalkboard-teacher w-5 text-center"></i> <?= locale() === 'en' ? 'Users' : 'کاربران' ?></a></li>
+            <?php endif; ?>
             <?php if (!$isSiteAdmin): ?>
             <li><a href="#" onclick="showSection('teachers')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-chalkboard-teacher w-5 text-center"></i> کارمندها</a></li>
             <?php endif; ?>

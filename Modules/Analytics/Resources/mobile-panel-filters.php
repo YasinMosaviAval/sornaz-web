@@ -189,7 +189,9 @@ return json_decode(<<<'JSON'
                 "در حال برگزاری": "در حال برگزاری",
                 "در انتظار تأیید": "در انتظار تأیید",
                 "پایان یافته": "پایان یافته",
-                "باز": "باز"
+                "باز": "باز",
+                "لغو شده": "لغو شده",
+                "تعلیق شده": "تعلیق شده"
             },
             "optionSource": null,
             "distinct": false
@@ -943,19 +945,6 @@ return json_decode(<<<'JSON'
     ],
     "comments": [
         {
-            "key": "commentPostFilter",
-            "webId": "commentPostFilter",
-            "label": "همه نوشته‌ها",
-            "type": "select",
-            "rowPath": "postId",
-            "options": {},
-            "optionSource": {
-                "source": "posts"
-            },
-            "distinct": true,
-            "queryKey": "post"
-        },
-        {
             "key": "status",
             "label": "وضعیت",
             "type": "select",
@@ -971,26 +960,9 @@ return json_decode(<<<'JSON'
     ],
     "media": [
         {
-            "key": "mediaType",
-            "webId": "mediaType",
-            "label": "همه رسانه‌ها",
-            "type": "select",
-            "rowPath": "type",
-            "options": {
-                "image": "تصویر",
-                "video": "ویدیو",
-                "audio": "صوت",
-                "document": "سند",
-                "archive": "فایل فشرده"
-            },
-            "optionSource": null,
-            "distinct": false,
-            "queryKey": "type"
-        },
-        {
             "key": "mediaMonth",
             "webId": "mediaMonth",
-            "label": "همه تاریخ‌ها",
+            "label": "فیلتر",
             "type": "select",
             "rowPath": "month",
             "options": {},

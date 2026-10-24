@@ -65,16 +65,20 @@
       window.syncPanelOrganizationSelect?.(document.getElementById('pointRuleForm')?.elements.namedItem('branchId'), orgs);
       canManage = Boolean(d.canManage);
       const general = Number(d.balance?.general || 0),
-        professional = Number(d.balance?.professional || 0);
+        professional = Number(d.balance?.professional || 0),
+        specialized = Number(d.balance?.specialized || 0);
       document.getElementById('pointGeneralBalance').textContent = general.toLocaleString('fa-IR');
       document.getElementById('pointProfessionalBalance').textContent =
         professional.toLocaleString('fa-IR');
+      const specializedCard = document.getElementById('pointSpecializedBalance');
+      if (specializedCard) specializedCard.textContent = specialized.toLocaleString('fa-IR');
+      window.renderPersonalPointsChart?.(d.balance || {});
       document.getElementById('pointActiveRules').textContent = rows
         .filter((x) => x.status === 'active')
         .length.toLocaleString('fa-IR');
       if (document.getElementById('headerPointBalance'))
         document.getElementById('headerPointBalance').textContent = (
-          general + professional
+          general + professional + specialized
         ).toLocaleString('fa-IR');
       if (silent && previous === JSON.stringify([rows, orgs, canManage])) return;
       tabs();

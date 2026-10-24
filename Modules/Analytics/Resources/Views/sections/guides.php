@@ -1,16 +1,7 @@
 <?php if ((int)auth()->id() !== 1) return; ?>
 <section id="guides" class="section hidden" dir="rtl">
     <div class="mb-6"><h1 class="text-3xl font-bold">راهنمای عملکردها</h1><p class="mt-2 text-gray-500">مستندات ثبت‌نام کاربر، آموزشگاه و شعبه اصلی</p></div>
-    <div class="grid gap-6 xl:grid-cols-3">
-    <?php foreach(($guides??[]) as $guide): ?>
-        <article class="rounded-3xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-slate-900 dark:border-slate-700">
-            <h2 class="text-xl font-bold mb-4"><?= e($guide['title']) ?></h2>
-            <div class="prose prose-sm max-w-none max-h-[32rem] overflow-y-auto whitespace-pre-wrap leading-7 text-gray-600 dark:text-slate-300"><?= e($guide['content']) ?></div>
-            <button type="button" class="mt-5 rounded-xl bg-indigo-600 px-4 py-2 text-white" onclick='openGuideEditor(<?= json_encode($guide,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>)'>ویرایش راهنما</button>
-        </article>
-    <?php endforeach; ?>
-    </div>
-    <div class="guide-library mt-10 rounded-[2rem] border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-sky-50 p-5 shadow-sm dark:border-slate-700 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950 md:p-8">
+    <div data-admin-ui-native class="guide-library mt-10 rounded-[2rem] border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-sky-50 p-5 shadow-sm dark:border-slate-700 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950 md:p-8">
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
                 <div class="mb-3 inline-flex items-center gap-2 rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200"><i class="fas fa-book-open"></i> کتابخانهٔ راهنما</div>

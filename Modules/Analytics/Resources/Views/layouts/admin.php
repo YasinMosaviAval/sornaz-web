@@ -77,8 +77,11 @@
     pushScript('student-term-schedule.js');
     pushScript('student-templates.js');
     pushScript('member-user-picker.js');
+    pushScript('term-lesson-chart.js');
+    pushScript('student-lesson-chart.js');
     pushScript('students.js');
     pushScript('teacher-templates.js');
+    pushScript('contract-type-charts.js');
     pushScript('teachers.js');
     pushScript('branch-templates.js');
     pushScript('panel-organization-filters.js');
@@ -99,6 +102,7 @@
     pushScript('scheduling-rule-templates.js');
     pushScript('scheduling-rules.js');
     pushScript('schedule-templates.js');
+    pushScript('schedule-heatmap.js');
     pushScript('schedules.js');
     pushScript('instrument-templates.js');
     pushScript('instruments.js');
@@ -113,6 +117,7 @@
     pushScript('availability-exceptions.js');
     pushScript('national-holidays.js');
     pushScript('point-templates.js');
+    pushScript('personal-points-chart.js');
     pushScript('points.js');
     pushScript('user-templates.js');
     pushScript('users.js');

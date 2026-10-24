@@ -96,4 +96,13 @@
             <div class="flex items-center gap-2" id="studentsPaginationButtons"></div>
         </div>
     </div>
+    <section class="mt-6 rounded-3xl bg-white p-5 shadow-sm dark:bg-slate-900" aria-labelledby="studentLessonChartTitle">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 id="studentLessonChartTitle" class="text-lg font-bold"><?= e(locale() === 'en' ? 'Students by lesson and attendance mode' : 'هنرجویان به تفکیک درس و شیوهٔ برگزاری') ?></h2>
+            <button type="button" onclick="downloadStudentLessonChart()" class="rounded-xl border px-4 py-2 text-sm"><?= e(locale() === 'en' ? 'Download PNG' : 'دریافت تصویر نمودار') ?></button>
+        </div>
+        <p class="mb-3 text-sm text-gray-500"><?= e(locale() === 'en' ? 'All table filters apply. Each student counts once per lesson and mode across matching registrations; students attending both modes appear in both series.' : 'تمام فیلترهای جدول اعمال می‌شوند. هر هنرجو در ثبت‌نام‌های مطابق فیلتر، برای هر درس و هر شیوه یک‌بار شمرده می‌شود؛ هنرجوی دارای هر دو شیوه در هر دو ستون حضور دارد.') ?></p>
+        <p id="studentLessonChartSummary" class="mb-3 text-sm" aria-live="polite"></p>
+        <div id="studentLessonChart" class="w-full" style="height:420px" role="img" aria-label="<?= e(locale() === 'en' ? 'In-person and online student counts by lesson' : 'تعداد هنرجویان حضوری و آنلاین هر درس') ?>"></div>
+    </section>
 </div>

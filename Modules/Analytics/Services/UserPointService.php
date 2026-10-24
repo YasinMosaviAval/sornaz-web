@@ -20,7 +20,7 @@ final class UserPointService
         $rules = $pdo->query("SELECT r.*,".\Core\translation\EntityText::expression('user_point_rules','r.user_point_rule_id','description')." AS description,IF(r.academy_id IS NULL,'سراسری',CONCAT('آموزشگاه ',r.academy_id)) academy_name,IF(r.branch_id IS NULL,NULL,CONCAT('شعبه ',r.branch_id)) branch_name FROM user_point_rules r WHERE r.deleted_at IS NULL ORDER BY r.user_point_rule_id DESC")->fetchAll(PDO::FETCH_ASSOC);
         $q = $pdo->prepare("SELECT type,COALESCE(SUM(points),0) total FROM user_points WHERE user_id=? AND deleted_at IS NULL AND approved_at IS NOT NULL GROUP BY type");
         $q->execute([$actor]);
-        $balance = ['general' => 0, 'professional' => 0];
+        $balance = ['general' => 0, 'professional' => 0, 'specialized' => 0];
         foreach ($q->fetchAll(PDO::FETCH_ASSOC) as $r) {
             $balance[$r['type']] = (int) $r['total'];
         }

@@ -66,6 +66,7 @@ check(Core\database\ActivityText::action('user_lessons.insert','en')==='Created 
 $pdo->beginTransaction();Core\database\DatabaseChangeNotifier::record($pdo,'lessons','insert',['created_by'=>2],2);$pdo->rollBack();check(count($service->all(2))===1,'Notification rolls back with transaction');
 $pdo->exec('CREATE TABLE user_points(user_point_id INTEGER PRIMARY KEY,user_id INTEGER,type TEXT,points INTEGER,action TEXT,reference_type TEXT,reference_id INTEGER,rule_id INTEGER,award_key TEXT,metadata TEXT,created_at TEXT,updated_at TEXT,approved_at TEXT,approved_by INTEGER,created_by INTEGER,updated_by INTEGER,deleted_at TEXT)');
 $pdo->exec("INSERT INTO user_points VALUES(10,2,'professional',12,'user_lessons.insert','PRIVATE_REF',99,1,'PRIVATE_KEY','PRIVATE_METADATA','2026-10-01','2026-10-02',NULL,1,1,1,NULL),(11,3,'general',999,'manual',NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL)");
+if(getenv('ACTIVITY_SPECIALIZED_POINT'))$pdo->exec("INSERT INTO user_points(user_point_id,user_id,type,points,action) VALUES(12,2,'specialized',25,'manual')");
 if (getenv('ACTIVITY_POINT_COUNT') !== false) {
  $count=max(0,min(30,(int)getenv('ACTIVITY_POINT_COUNT')));
  if (!$count) $pdo->exec('DELETE FROM user_points WHERE user_id=2');

@@ -11,6 +11,9 @@ $sections = (new \Modules\Analytics\Services\MobilePanelCatalog())->sections();
 function expectParity(bool $condition, string $message): void {
     if (!$condition) throw new RuntimeException($message);
 }
+expectParity(($sections['schedules']['actions']['heatmap']['query'] ?? []) === ['summary' => 'heatmap'], 'Heatmap must use the scoped full-result web summary');
+expectParity($sections['terms']['actions']['set-status']['path'] === '/academy/admin/terms/{id}/set-status', 'Explicit term status operation is missing');
+expectParity($sections['terms']['actions']['set-status']['fields'][0]['options'] === \Modules\Academy\Services\AcademyTermService::STATUS_LABELS, 'Mobile term statuses diverge from the authoritative service');
 foreach ($sections as $section) {
     foreach ($section['actions'] as $action) {
         expectParity(\Core\router\Router::dispatch($action['method'], preg_replace('/\{\w+\}/', '1', $action['path'])) !== null, 'Unregistered mobile action: ' . $action['path']);

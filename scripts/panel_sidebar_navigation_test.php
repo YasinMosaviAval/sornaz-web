@@ -80,9 +80,9 @@ namespace {
     $allowed = array_filter($catalog, fn ($section) => empty($section['hidden']) && !empty($caps[$section['access']]));
     $items = $navigation->forCurrentUser($allowed, $caps);
     $index = array_column($items, null, 'key');
-    expectMenu(isset($index['awards'], $index['users'], $index['notation']), 'Founder-only sections missing');
+    expectMenu(isset($index['awards'], $index['users'], $index['notation']) && !isset($index['teachers']), 'Founder-only sections or consolidated users menu incorrect');
     expectMenu(count($index['awards']['links']) === 7, 'Achievement page links incomplete');
-    expectMenu($index['users']['links'] === ['roles', 'permissions', 'members', 'member-schedules', 'employee-leaves'], 'Access page links incomplete');
+    expectMenu($index['users']['links'] === ['roles', 'permissions', 'members', 'member-schedules', 'employee-leaves'] && $index['users']['en'] === 'Users', 'User workspace links incomplete');
     expectMenu($index['branches']['links'][0] === 'branch-types', 'Education types must be the first organization link');
     expectMenu($index['gallery']['section'] === 'gallery' && !isset($index['gallery']['where']), 'Gallery menu must retain access to every collection');
     expectMenu(!isset($index['profileAchievementsSubmenu'], $index['profilesSubmenu'], $index['gallerySubmenu'], $index['branchesSubmenu']), 'Tabbed pages must not have sidebar submenus');

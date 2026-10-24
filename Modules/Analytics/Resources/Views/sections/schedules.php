@@ -147,4 +147,13 @@
         </div>
         <div id="schedulesWeeklyTables" class="space-y-6"></div>
     </div>
+    <section class="mt-6 rounded-3xl bg-white p-5 shadow-sm dark:bg-slate-900" aria-labelledby="scheduleHeatmapTitle">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 id="scheduleHeatmapTitle" class="text-lg font-bold"><?= e(locale() === 'en' ? 'Class schedule heatmap' : 'نقشهٔ حرارتی تقویم کلاس‌ها') ?></h2>
+            <button type="button" onclick="downloadScheduleHeatmap()" class="rounded-xl border px-4 py-2 text-sm"><?= e(locale() === 'en' ? 'Download PNG' : 'دریافت تصویر نمودار') ?></button>
+        </div>
+        <p class="mb-3 text-sm text-gray-500"><?= e(locale() === 'en' ? 'All calendar filters apply. Weekly view uses the selected week; table view uses all matching sessions. Each cell counts sessions overlapping that weekday and hour.' : 'تمام فیلترهای تقویم اعمال می‌شوند. نمای هفتگی محدود به هفتهٔ انتخاب‌شده و نمای جدولی شامل کل نتایج مطابق فیلتر است. هر سلول تعداد جلسات هم‌پوشان در آن روز هفته و ساعت را نشان می‌دهد.') ?></p>
+        <p id="scheduleHeatmapSummary" class="mb-3 text-sm" aria-live="polite"></p>
+        <div id="scheduleHeatmap" class="w-full" style="height:540px" role="img" aria-label="<?= e(locale() === 'en' ? 'Session counts by weekday and hour' : 'تعداد جلسات به تفکیک روز هفته و ساعت') ?>"></div>
+    </section>
 </div>

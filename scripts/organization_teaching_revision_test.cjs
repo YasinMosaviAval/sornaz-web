@@ -30,6 +30,12 @@ check(count(array_filter($catalog['organizations'],fn($o)=>($o['kind']??'')==='a
 check(!array_filter($catalog['organizations'],fn($o)=>($o['academyId']??0)===200),'Foreign academy excluded from calendar organizations');
 $firstDate=$catalog['schedules'][0]['date'];
 $range=$classService->index(10,['termId'=>$tid,'dateFrom'=>$firstDate,'dateTo'=>$firstDate]);
+check(array_sum(array_column($classService->index(10,['termId'=>$tid,'summary'=>'heatmap','perPage'=>1])['heatmap'],'count'))===8,'Heatmap counts the full authorized result before pagination');
+check(array_sum(array_column($classService->index(10,['termId'=>$tid,'summary'=>'heatmap','dateFrom'=>$firstDate,'dateTo'=>$firstDate])['heatmap'],'count'))===1,'Heatmap shares date filters with the table');
+check(($classService->index(20,['termId'=>$tid,'summary'=>'heatmap'])['heatmap']??[])===[],'Heatmap preserves tenant scope');
+check($classService->index(10,['termId'=>$tid,'summary'=>'heatmap','classroom'=>999999])['heatmap']===[],'Heatmap applies classroom filters');
+check($classService->index(10,['termId'=>$tid,'summary'=>'heatmap','lesson'=>999999])['heatmap']===[],'Heatmap applies lesson filters');
+check($classService->index(10,['termId'=>$tid,'summary'=>'heatmap','mode'=>'nonexistent'])['heatmap']===[],'Heatmap applies attendance mode filters');
 check(count($range['schedules'])===1 && $range['schedules'][0]['date']===$firstDate,'Inclusive range fetch returns only requested dates');
 check($classService->index(20,['termId'=>$tid,'dateFrom'=>$firstDate,'dateTo'=>$firstDate])['schedules']===[],'Range filter retains tenant isolation');
 denied(fn()=>$classService->index(10,['dateFrom'=>'2030-02-31']));

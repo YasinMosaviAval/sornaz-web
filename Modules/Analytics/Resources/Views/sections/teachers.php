@@ -110,4 +110,13 @@
             <div class="flex items-center gap-2" id="staffPaginationButtons"></div>
         </div>
     </div>
+    <section class="mt-6 rounded-3xl bg-white p-5 shadow-sm dark:bg-slate-900" aria-labelledby="contractTypeChartsTitle">
+        <h2 id="contractTypeChartsTitle" class="mb-3 text-lg font-bold"><?= e(locale() === 'en' ? 'Members by contract type' : 'اعضا به تفکیک نوع قرارداد') ?></h2>
+        <p class="mb-3 text-sm text-gray-500"><?= e(locale() === 'en' ? 'Table filters apply to all results. Each person counts once per contract type; people with multiple types appear in each relevant slice. Percentages refer to the sum of type memberships.' : 'فیلترهای جدول روی کل نتایج اعمال می‌شوند. هر شخص در هر نوع قرارداد یک‌بار شمرده می‌شود؛ افراد دارای چند نوع قرارداد در بخش‌های مربوط حضور دارند. درصدها سهم از مجموع عضویت‌ها در انواع قرارداد هستند.') ?></p>
+        <p id="contractTypeChartsSummary" class="mb-3 text-sm" aria-live="polite"></p>
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div><h3 class="text-sm font-medium"><?= e(locale() === 'en' ? 'Pie chart' : 'نمودار دایره‌ای') ?></h3><div id="contractTypePie" class="w-full" style="height:360px" role="img" aria-label="<?= e(locale() === 'en' ? 'Members by contract type: pie chart' : 'نمودار دایره‌ای اعضا به تفکیک نوع قرارداد') ?>"></div></div>
+            <div><h3 class="text-sm font-medium"><?= e(locale() === 'en' ? 'Donut chart' : 'نمودار دونات') ?></h3><div id="contractTypeDonut" class="w-full" style="height:360px" role="img" aria-label="<?= e(locale() === 'en' ? 'Members by contract type: donut chart' : 'نمودار دونات اعضا به تفکیک نوع قرارداد') ?>"></div></div>
+        </div>
+    </section>
 </div>

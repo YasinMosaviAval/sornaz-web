@@ -40,10 +40,10 @@ function panelWorkspaceTitle(id) {
   const english = document.documentElement.lang.startsWith('en');
   const staffAccessPage = ['teachers', 'member-schedules'].includes(id) || (id === 'availability-exceptions' && window.holidayLeaveMode === 'member');
   if (staffAccessPage && document.getElementById(id)?.querySelector('.panel-page-tabs button[onclick*="roles"]')) {
-    return english ? 'Roles and permissions' : 'نقش ها و دسترسی ها';
+    return english ? 'Users' : 'کاربران';
   }
   const groups = [
-    [['users', 'roles', 'permissions'], ['نقش ها و دسترسی ها', 'Roles and permissions']],
+    [['users', 'roles', 'permissions'], ['کاربران', 'Users']],
     [['posts', 'post-categories', 'media', 'comments', 'post-editor'], ['نوشته ها', 'Posts']],
     [['awards', 'badges', 'experiences', 'certificates', 'educations', 'events', 'polls', 'publications'], ['سوابق و دستاوردها', 'Records and achievements']],
     [['gallery', 'gallery-cover', 'gallery-logo', 'gallery-intro-video', 'gallery-collection'], ['گالری', 'Gallery']],

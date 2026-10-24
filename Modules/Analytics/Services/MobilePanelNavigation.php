@@ -78,8 +78,9 @@ final class MobilePanelNavigation
         $links = $this->pageLinks($webKey, $key, $sections, $capabilities);
         if ($links !== null) $item['links'] = $links;
         $english = ['account' => 'Account', 'settings' => 'Settings', 'teachers' => 'Staff',
-            'branches' => 'Organization', 'users' => 'Roles and permissions', 'awards' => 'Records and achievements', 'schedules' => 'Class calendar', 'gallery' => 'Gallery', 'lessons' => 'Lessons', 'member-schedules' => 'Employees', 'finance' => 'Finance'];
+            'branches' => 'Organization', 'users' => 'Users', 'awards' => 'Records and achievements', 'schedules' => 'Class calendar', 'gallery' => 'Gallery', 'lessons' => 'Lessons', 'member-schedules' => 'Employees', 'finance' => 'Finance'];
         $item['en'] = $english[$webKey] ?? $item['en'];
+        if ($webKey === 'teachers' && !empty($capabilities['admin'])) $item['en'] = 'Users';
         $category = ['gallery-cover' => 'cover', 'gallery-logo' => 'logo', 'gallery-intro-video' => 'intro_video',
             'gallery-collection' => 'gallery'][$webKey] ?? null;
         if ($category !== null) {
@@ -95,7 +96,7 @@ final class MobilePanelNavigation
         if ($webKey === 'dashboard') return $this->dashboardLinks($sections, !empty($capabilities['websiteManagement'] ?? $capabilities['management']));
         $links = match (true) {
             $webKey === 'lessons' && $key === 'lessons' => ['course-levels', 'courses'],
-            $webKey === 'teachers' => ['users', 'member-schedules', 'employee-leaves'],
+            $webKey === 'teachers' => !empty($capabilities['admin']) ? ['roles', 'permissions', 'users', 'member-schedules', 'employee-leaves'] : ['users', 'member-schedules', 'employee-leaves'],
             $webKey === 'branches' => ['branch-types', 'availabilities', 'scheduling-rules', 'organization-holidays'],
             $webKey === 'users' => ['roles', 'permissions', 'members', 'member-schedules', 'employee-leaves'],
             $webKey === 'awards' => ['badges', 'experiences', 'certificates', 'educations', 'events', 'polls', 'publications'],

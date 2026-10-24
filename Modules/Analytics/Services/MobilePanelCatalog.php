@@ -109,6 +109,12 @@ final class MobilePanelCatalog
         $sections['subscriptions'] = $s('subscriptions', 'اشتراک آموزشگاه', 'Subscriptions', '/academy/admin/subscriptions', 'subscriptions', [], 'management', false);
         $sections['subscriptions']['actions']['pay'] = $a('/academy/admin/subscriptions/{id}/zarinpal', 'پرداخت اشتراک');
         $sections['schedules'] = $s('schedules', 'برنامه کلاس‌ها و حضور و غیاب', 'Class schedule', '/academy/admin/class-schedules', 'sessions', [], 'member', false);
+        // Reuse the scoped web summary; never aggregate an arbitrary client page.
+        $sections['schedules']['actions']['heatmap'] = $a('/academy/admin/class-schedules', 'نقشه حرارتی تقویم', 'GET', [], false) + ['query' => ['summary' => 'heatmap'], 'hidden' => true];
+        $sections['terms']['actions']['set-status'] = $a('/academy/admin/terms/{id}/set-status', 'تعیین وضعیت ترم', 'POST', [
+            $f('status', 'وضعیت', 'select', \Modules\Academy\Services\AcademyTermService::STATUS_LABELS, true),
+            $f('fromStatus', 'وضعیت قبلی'),
+        ]);
         $sections['schedules']['actions']['attendance'] = $a('/academy/admin/class-schedules/{id}/attendance', 'حضور و غیاب', 'POST', [$f('students', 'هنرجویان', 'rows', [$f('id', 'هنرجو', 'select', ['source' => 'students']), $f('status', 'وضعیت', 'select', ['present' => 'حاضر', 'absent' => 'غایب', 'late' => 'تأخیر']), $f('note', 'یادداشت')])]);
         $ranges = [$f('start', 'شروع', 'time'), $f('end', 'پایان', 'time'), $f('status', 'وضعیت', 'select', ['فعال' => 'فعال', 'غیرفعال' => 'غیرفعال'])];
         $sections['member-schedules'] = $s('member-schedules', 'زمان‌های حضور اعضا', 'Member availability', '/academy/admin/member-schedules', 'schedules', [$f('membershipId', 'عضو', 'select', ['source' => 'members']), $f('day', 'روز هفته', 'select', ['0' => 'شنبه', '1' => 'یکشنبه', '2' => 'دوشنبه', '3' => 'سه‌شنبه', '4' => 'چهارشنبه', '5' => 'پنجشنبه', '6' => 'جمعه']), $f('repeatDate', 'تاریخ', 'date'), $f('repeatPeriod', 'تکرار', 'select', ['none' => 'بدون تکرار', 'weekly' => 'هفتگی']), $f('timezone', 'منطقه زمانی', 'select', ['source' => 'staff_catalog.timezones']), $f('ranges', 'بازه‌های زمانی', 'rows', $ranges), ...$description]);
@@ -430,7 +436,7 @@ final class MobilePanelCatalog
             foreach ($presentation as $key => $contract) {
                 if (!isset($sections[$key])) continue;
                 if ($contract['rowActions'] === null) {
-                    $contract['rowActions'] = ['details', ...array_keys(array_filter($sections[$key]['actions'], fn ($action, $name) => ($action['row'] ?? false) && !in_array($name, ['status', 'details'], true), ARRAY_FILTER_USE_BOTH))];
+                    $contract['rowActions'] = ['details', ...array_keys(array_filter($sections[$key]['actions'], fn ($action, $name) => ($action['row'] ?? false) && !in_array($name, ['status', 'set-status', 'details'], true), ARRAY_FILTER_USE_BOTH))];
                 }
                 $contract['detailFields'] ??= array_values(array_reduce(
                     [...$contract['columns'], ...($sections[$key]['fields'] ?? [])],

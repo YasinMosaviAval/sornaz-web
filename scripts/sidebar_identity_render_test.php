@@ -43,8 +43,14 @@ namespace {
         if (str_contains($html, 'white_logo_transparent.png')) throw new \RuntimeException('Old site logo remains');
         if ($type !== 'admin' && str_contains($html, 'lessonsSubmenu')) throw new \RuntimeException("$type still has lessons submenu");
         if ($type !== 'admin' && str_contains($html, "showSection('notation')")) throw new \RuntimeException('Non-admin notation menu is visible');
-        if ($type === 'admin' && (substr_count($html, "showSection('teachers')") !== 1 || strpos($html, "showSection('teachers')") < strpos($html, "showSection('branches')") || strpos($html, "showSection('teachers')") > strpos($html, "showSection('users')"))) {
-            throw new \RuntimeException('Admin employees must appear once immediately after branches');
+        if ($type === 'admin' && (substr_count($html, "showSection('users')") !== 1 || strpos($html, "showSection('users')") < strpos($html, "showSection('classrooms')") || strpos($html, "showSection('users')") < strpos($html, "showSection('lessons')") || str_contains($html, "showSection('teachers')"))) {
+            throw new \RuntimeException('Admin users must open users after lessons/classes without a duplicate menu');
+        }
+        if ($type === 'admin') {
+            foreach (['notation', 'awards', 'tracking', 'national-holidays'] as $section) {
+                if (strpos($html, "showSection('$section')") === false || strpos($html, "showSection('$section')") > strpos($html, "showSection('dashboard')")) throw new \RuntimeException('Admin priority menu order is incorrect');
+            }
+            if (!preg_match('/showSection\(\x27users\x27\).*?کاربران/su', $html)) throw new \RuntimeException('Admin staff label must be Users');
         }
         if ($type === 'academy' && strpos($html, "showSection('classrooms')") > strpos($html, "showSection('teachers')")) throw new \RuntimeException('Academy classrooms must appear before employees');
         if (str_contains($html, "showSection('courses')")) throw new \RuntimeException('Courses still have a standalone sidebar entry');

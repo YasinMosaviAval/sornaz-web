@@ -25,7 +25,7 @@
                     <span class="font-bold text-lg hidden xl:block"><?= e(trans('public.brand', 'برنامه موسیقی سُرناز')) ?></span>
                 </a>
 
-                <nav class="flex min-w-0 flex-1 items-center justify-between gap-2 whitespace-nowrap text-sm">
+                <nav class="flex min-w-0 flex-1 items-center justify-around gap-2 whitespace-nowrap text-sm">
                 <!-- <a href="/page/home" data-page="home" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">خانه</a> -->
                 <a href="/analytics/articles" data-page="articles" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.articles', 'مقاله‌های آموزشی')) ?></a>
                 <a href="/academy/academies" data-page="academies" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.academies', 'آموزشگاه‌ها')) ?></a>
