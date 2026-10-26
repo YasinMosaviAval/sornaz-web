@@ -8,6 +8,7 @@ require __DIR__ . '/../Modules/Analytics/Routes/routes.php';
 require __DIR__ . '/../Modules/Academy/Routes/web.php';
 require __DIR__ . '/../Modules/Analytics/Routes/api.php';
 $sections = (new \Modules\Analytics\Services\MobilePanelCatalog())->sections();
+if (($sections['classrooms']['actions']['heatmap']['path'] ?? '') !== '/academy/admin/classrooms/heatmap') throw new RuntimeException('Missing scoped classroom occupancy API');
 function expectParity(bool $condition, string $message): void {
     if (!$condition) throw new RuntimeException($message);
 }

@@ -129,7 +129,8 @@
     if (!response.ok || result.success === false) throw new Error(result.message || 'ثبت اطلاعات انجام نشد.');
     window.location.reload();
   }
-  function exportTable(sectionId) {
+  async function exportTable(sectionId) {
+    if (!window.AcademyExports || !(await window.AcademyExports.authorize())) return;
     const tables = document.querySelectorAll('#' + sectionId + ' table');
     if (!tables.length) return;
     const lines = [...tables].flatMap((table, index) => [
@@ -144,7 +145,8 @@
     link.click();
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   }
-  function printSection(sectionId) {
+  async function printSection(sectionId) {
+    if (!window.AcademyExports || !(await window.AcademyExports.authorize())) return;
     const style = document.createElement('style');
     style.textContent = '@media print { body * { visibility: hidden !important; } #' + sectionId + ', #' + sectionId + ' * { visibility: visible !important; } #' + sectionId + ' { position: absolute !important; inset: 0 !important; width: 100% !important; } }';
     document.head.appendChild(style);

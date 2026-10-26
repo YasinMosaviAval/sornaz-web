@@ -792,7 +792,9 @@ window.openGoogleMapsPicker = async function (button) {
   window.open(`https://www.google.com/maps/@${lat},${lng},15z`, '_blank');
 };
 
+window.AcademyExports?.register('branches', () => filteredBranches.length ? filteredBranches : allBranches);
 window.exportBranchesToExcel = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredBranches.length ? filteredBranches : allBranches))) return;
   const rows = filteredBranches.length ? filteredBranches : allBranches,
     csv =
       '\uFEFFردیف,آموزشگاه,نام,نوع آموزشی,نوع ارائه,شعبه اصلی,مدیر,وضعیت,تعداد کلاس\n' +
@@ -808,10 +810,12 @@ window.exportBranchesToExcel = async function () {
   link.click();
 };
 window.openBranchesPDFOptionsModal = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredBranches.length ? filteredBranches : allBranches))) return;
   document.getElementById('modalContainer').innerHTML =
     window.getBranchPDFModalHTML(branchPdfColumns);
 };
 window.generateBranchesPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredBranches.length ? filteredBranches : allBranches))) return;
   if (!window.html2canvas || !window.jspdf)
     return alert('ابزار تولید PDF بارگذاری نشده است. لطفاً صفحه را مجدداً بارگذاری کنید.');
   const title = document.getElementById('branchPdfTitle')?.value || 'گزارش شعبه‌های آموزشگاه';

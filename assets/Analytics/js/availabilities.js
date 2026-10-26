@@ -1324,7 +1324,9 @@
     window.filterBranchSchedules();
   }
 
-  window.exportBranchSchedulesToExcel = async function () {
+  window.AcademyExports?.register('availabilities', () => filteredBranchSchedules.length ? filteredBranchSchedules : allBranchSchedules);
+window.exportBranchSchedulesToExcel = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredBranchSchedules.length ? filteredBranchSchedules : allBranchSchedules))) return;
     const data = filteredBranchSchedules.length ? filteredBranchSchedules : allBranchSchedules;
     let csv = '\uFEFFردیف,روز,ساعت,دوره تکرار,منطقه زمانی,سازمان,وضعیت,خلاصه\n';
     data.forEach(function (item, i) {
@@ -1355,12 +1357,14 @@
   };
 
   window.exportBranchSchedulesToPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredBranchSchedules.length ? filteredBranchSchedules : allBranchSchedules))) return;
     document.getElementById('modalContainer').innerHTML = window.getBranchSchedulePDFModalHTML
       ? window.getBranchSchedulePDFModalHTML(bsPdfColumns)
       : '';
   };
 
   window.generateBranchSchedulesPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredBranchSchedules.length ? filteredBranchSchedules : allBranchSchedules))) return;
     if (!window.html2canvas) return alert('ابزار PDF بارگذاری نشده است.');
     const title =
       (document.getElementById('bsPdfTitle') && document.getElementById('bsPdfTitle').value) ||

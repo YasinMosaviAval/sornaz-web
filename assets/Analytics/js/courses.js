@@ -563,7 +563,9 @@ courseRealtimeChannel?.addEventListener('message', async (e) => {
 });
 
 // ==================== خروجی اکسل ====================
+window.AcademyExports?.register('courses', () => filteredCourses.length ? filteredCourses : allCourses);
 window.exportCoursesToExcel = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredCourses.length ? filteredCourses : allCourses))) return;
   const data = filteredCourses.length ? filteredCourses : allCourses;
   let csv = '\uFEFF';
   csv += 'ردیف,نام دوره,سطح,سازمان,درس,ظرفیت اساتید,ظرفیت هنرجوها,وضعیت\n';
@@ -579,16 +581,19 @@ window.exportCoursesToExcel = async function () {
 
 // ==================== خروجی PDF ====================
 window.exportCoursesToPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredCourses.length ? filteredCourses : allCourses))) return;
   openCoursesPDFOptionsModal();
 };
 
 window.openCoursesPDFOptionsModal = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredCourses.length ? filteredCourses : allCourses))) return;
   document.getElementById('modalContainer').innerHTML = window.getCoursePDFModalHTML
     ? window.getCoursePDFModalHTML(coursePdfColumns)
     : '';
 };
 
 window.generateCoursesPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredCourses.length ? filteredCourses : allCourses))) return;
   if (!window.html2canvas) {
     alert('ابزار تولید PDF بارگذاری نشده است. لطفاً صفحه را مجدداً بارگذاری کنید.');
     return;

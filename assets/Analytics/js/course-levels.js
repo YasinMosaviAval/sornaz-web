@@ -43,7 +43,9 @@
     }
   };
 
-  window.exportCourseLevelsToExcel = function () {
+  window.AcademyExports?.register('course-levels', () => window.allCourseLevels || []);
+window.exportCourseLevelsToExcel = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(window.allCourseLevels || []))) return;
     const cell = value => '"' + String(value ?? '').replace(/^\s*[=+@\-]/, "'$&").replace(/"/g, '""') + '"';
     const lines = [['عنوان', 'خلاصه'], ...(window.allCourseLevels || []).map(row => [row.name, row.summary])];
     const url = URL.createObjectURL(new Blob(['\uFEFF' + lines.map(row => row.map(cell).join(',')).join('\r\n')], {type: 'text/csv;charset=utf-8;'}));
@@ -51,6 +53,7 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   window.exportCourseLevelsToPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(window.allCourseLevels || []))) return;
     if (!window.html2canvas || !window.jspdf?.jsPDF) return alert('ابزار PDF بارگذاری نشده است.');
     const rows = window.allCourseLevels || [];
     const doc = new window.jspdf.jsPDF({orientation: 'portrait', unit: 'pt', format: 'a4'});

@@ -334,7 +334,15 @@ class AcademyClassScheduleService
         return ['code' => $r['booking_status'], 'label' => $this->statusLabels[$r['booking_status']] ?? $r['booking_status']];
     }
 
-    private function branches(int $a): array
+    public function exportOrganizations(int $actor): array
+    {
+        $rootIds = [];
+        $branches = $this->branches($actor, $rootIds);
+        $ids = array_unique(array_merge($rootIds, array_column($branches, 'academy_id'), array_column(ClassroomOrganizationScope::academies($actor), 'academy_id')));
+        return ['academies' => $ids ? DB::table('academies')->whereIn('academy_id', $ids)->whereNull('deleted_at')->get() : [], 'branches' => $branches];
+    }
+
+    private function branches(int $a, ?array &$rootAcademyIds = null): array
     {
         $u = DB::table('users')->where('user_id', $a)->whereNull('deleted_at')->first();
         if (!$u) {
@@ -372,7 +380,7 @@ class AcademyClassScheduleService
                 $academyIds[] = (int) $m['academy_id'];
             }
         }$rows = [];
-        $academyIds = array_values(array_unique(array_filter($academyIds)));
+        $rootAcademyIds = $academyIds = array_unique(array_filter($academyIds));
         $branchIds = array_values(array_unique(array_filter($branchIds)));
         if ($academyIds) {
             $rows = array_merge($rows, DB::table('academy_branches')->whereIn('academy_id', $academyIds)->whereNull('deleted_at')->get());

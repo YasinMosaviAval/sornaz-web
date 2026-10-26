@@ -220,6 +220,30 @@ class AcademyClassroomService
         return ClassroomOrganizationScope::rooms($branches, $academies);
     }
 
+    public function heatmap(int $actor, bool $admin, array $filters): array
+    {
+        $raw = (string) ($filters['week'] ?? date('Y-m-d'));
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $raw);
+        if (!$date || $date->format('Y-m-d') !== $raw) {
+            throw new RuntimeException('Invalid week date.', 422);
+        }
+        $start = $date->modify('-' . (((int) $date->format('w') + 1) % 7) . ' days');
+        $end = $start->modify('+6 days');
+        $rooms = $this->scopedRooms($actor, $admin);
+        $ids = array_map(fn ($room) => (int) $room['classroom_id'], $rooms);
+        return ['weekStart' => $start->format('Y-m-d'), 'weekEnd' => $end->format('Y-m-d'),
+            'heatmap' => $this->heatmapRows($ids, $start->format('Y-m-d'), $end->format('Y-m-d'))];
+    }
+
+    private function heatmapRows(array $ids, string $from, string $to): array
+    {
+        if (!$ids) return [];
+        $marks = implode(',', array_fill(0, count($ids), '?'));
+        $query = db()->prepare("SELECT s.classroom_id classroomId,b.requested_date date,b.start_time startTime,b.end_time endTime,COUNT(DISTINCT s.term_session_id) count FROM academy_branch_course_term_sessions s JOIN academy_branch_bookings b ON b.booking_id=s.booking_id JOIN academy_branch_course_terms t ON t.term_id=s.term_id WHERE s.classroom_id IN ($marks) AND s.deleted_at IS NULL AND b.deleted_at IS NULL AND t.deleted_at IS NULL AND b.status NOT IN ('canceled','rejected') AND b.requested_date BETWEEN ? AND ? GROUP BY s.classroom_id,b.requested_date,b.start_time,b.end_time ORDER BY b.requested_date,b.start_time");
+        $query->execute([...$ids, $from, $to]);
+        return $query->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
     private function enumValues(): array
     {
         $labels = DB::table('translations')->where('table_name', self::TABLE)->whereNull('table_id')->where('field', 'type')->whereNull('deleted_at')->get();

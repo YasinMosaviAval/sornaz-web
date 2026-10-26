@@ -687,7 +687,9 @@
       alert(e.message);
     }
   };
-  window.exportSchedulesToExcel = () => {
+  window.AcademyExports?.register('schedules', () => allSchedules);
+window.exportSchedulesToExcel = async () => {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(allSchedules))) return;
     let csv = '\uFEFFعنوان,تاریخ,ساعت,هنرجو,استاد,درس,کلاس,نوع,وضعیت\n';
     allSchedules.forEach(
       (x) =>
@@ -698,7 +700,10 @@
     a.download = 'جلسات.csv';
     a.click();
   };
-  window.exportSchedulesToPDF = () => window.print();
+  window.exportSchedulesToPDF = async () => {
+    if (!window.AcademyExports || !(await window.AcademyExports.authorize(allSchedules))) return;
+    window.print();
+  };
   const scheduleCancellationAllowed = (item) =>
     item.canCancel ||
     (item.sessionType === 'makeup' &&

@@ -88,6 +88,8 @@
     pushScript('branches.js');
     pushScript('branch-types.js');
     pushScript('classroom-templates.js');
+    pushScript('schedule-heatmap.js');
+    pushScript('classroom-heatmap.js');
     pushScript('classrooms.js');
     pushScript('classroom-types.js');
     pushScript('course-templates.js');
@@ -102,7 +104,6 @@
     pushScript('scheduling-rule-templates.js');
     pushScript('scheduling-rules.js');
     pushScript('schedule-templates.js');
-    pushScript('schedule-heatmap.js');
     pushScript('schedules.js');
     pushScript('instrument-templates.js');
     pushScript('instruments.js');
@@ -164,6 +165,7 @@
     <script src="/assets/vendor/echarts/echarts.min.js?v=6.1.0"></script>
     <script src="/assets/Analytics/js/charts.js?v=<?= filemtime(base_path('assets/Analytics/js/charts.js')) ?: 1 ?>"></script>
     <script src="/assets/Academy/js/academy-registration.js?v=<?= filemtime(base_path('assets/Academy/js/academy-registration.js')) ?: 1 ?>"></script>
+    <script src="/assets/Analytics/js/academy-export-access.js?v=<?= filemtime(base_path('assets/Analytics/js/academy-export-access.js')) ?: 1 ?>"></script>
     <?=scripts()?>
     <script src="/assets/vendor/jalalidatepicker/jalalidatepicker.min.js?v=<?= filemtime(base_path('assets/vendor/jalalidatepicker/jalalidatepicker.min.js')) ?: 1 ?>"></script>
     <script src="/assets/theme/localized-date.js?v=<?= filemtime(base_path('assets/theme/localized-date.js')) ?: 1 ?>"></script>

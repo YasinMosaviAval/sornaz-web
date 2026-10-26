@@ -2493,7 +2493,9 @@ window.saveTermSessionAttendance = async function (termId, sessionId, button) {
 };
 
 // ==================== excel / pdf ====================
+window.AcademyExports?.register('terms', () => filteredTerms.length ? filteredTerms : allTerms);
 window.exportTermsToExcel = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredTerms.length ? filteredTerms : allTerms))) return;
   const data = filteredTerms.length ? filteredTerms : allTerms;
   let csv = '\uFEFF';
   csv += 'ردیف,نام ترم,شعبه,دوره مرتبط,تاریخ شروع,تاریخ پایان,وضعیت,هزینه,واحد پول\n';
@@ -2527,16 +2529,19 @@ window.exportTermsToExcel = async function () {
 };
 
 window.exportTermsToPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredTerms.length ? filteredTerms : allTerms))) return;
   openTermsPDFOptionsModal();
 };
 
 window.openTermsPDFOptionsModal = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredTerms.length ? filteredTerms : allTerms))) return;
   document.getElementById('modalContainer').innerHTML = window.getTermPDFModalHTML
     ? window.getTermPDFModalHTML(termPdfColumns)
     : '';
 };
 
 window.generateTermsPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredTerms.length ? filteredTerms : allTerms))) return;
   if (!window.html2canvas) {
     alert('ابزار تولید PDF بارگذاری نشده است. لطفاً صفحه را مجدداً بارگذاری کنید.');
     return;

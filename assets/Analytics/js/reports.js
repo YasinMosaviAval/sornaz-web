@@ -229,7 +229,9 @@
       : '';
   };
 
-  window.exportReportsToExcel = function () {
+  window.AcademyExports?.register('reports', () => filteredReports);
+window.exportReportsToExcel = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredReports))) return;
     const data = filteredReports;
     let csv = '\uFEFFردیف,عنوان,شعبه,نوع,بازه زمانی,از تاریخ,تا تاریخ,تاریخ تولید,وضعیت\n';
     data.forEach(function (r, i) {
@@ -261,13 +263,15 @@
     link.click();
   };
 
-  window.exportReportsToPDF = function () {
+  window.exportReportsToPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredReports))) return;
     document.getElementById('modalContainer').innerHTML = window.getReportPDFModalHTML
       ? window.getReportPDFModalHTML(reportPdfColumns)
       : '';
   };
 
   window.generateReportsPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredReports))) return;
     if (!window.html2canvas) return alert('ابزار PDF بارگذاری نشده است.');
     const title =
       (document.getElementById('reportPdfTitle') &&

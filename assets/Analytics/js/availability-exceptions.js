@@ -736,7 +736,9 @@
     }
   };
 
-  window.exportHolidayLeavesToExcel = async function () {
+  window.AcademyExports?.register('availability-exceptions', () => filteredHolidayLeaves.length ? filteredHolidayLeaves : allHolidayLeaves);
+window.exportHolidayLeavesToExcel = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredHolidayLeaves.length ? filteredHolidayLeaves : allHolidayLeaves))) return;
     const data = filteredHolidayLeaves.length ? filteredHolidayLeaves : allHolidayLeaves;
     let csv = '\uFEFFردیف,نام عضو,تاریخ,ساعت,منطقه زمانی,سازمان,وضعیت,خلاصه\n';
     data.forEach(function (item, i) {
@@ -767,12 +769,14 @@
   };
 
   window.exportHolidayLeavesToPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredHolidayLeaves.length ? filteredHolidayLeaves : allHolidayLeaves))) return;
     document.getElementById('modalContainer').innerHTML = window.getHolidayLeavePDFModalHTML
       ? window.getHolidayLeavePDFModalHTML(hlPdfColumns)
       : '';
   };
 
   window.generateHolidayLeavesPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredHolidayLeaves.length ? filteredHolidayLeaves : allHolidayLeaves))) return;
     if (!window.html2canvas) return alert('ابزار PDF بارگذاری نشده است.');
     const title =
       (document.getElementById('hlPdfTitle') && document.getElementById('hlPdfTitle').value) ||

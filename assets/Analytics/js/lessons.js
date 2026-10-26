@@ -706,7 +706,9 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
+window.AcademyExports?.register('lessons', () => filteredLessons.length ? filteredLessons : allUserLessons);
 window.exportLessonsToExcel = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredLessons.length ? filteredLessons : allUserLessons))) return;
   const data = filteredLessons.length ? filteredLessons : allUserLessons;
   let csv = '\uFEFFردیف,درس,سطح,زمان شروع,اصلی,وضعیت,سازمان\n';
   data.forEach(function (item, i) {
@@ -735,12 +737,14 @@ window.exportLessonsToExcel = async function () {
 };
 
 window.exportLessonsToPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredLessons.length ? filteredLessons : allUserLessons))) return;
   document.getElementById('modalContainer').innerHTML = window.getLessonPDFModalHTML
     ? window.getLessonPDFModalHTML(lessonPdfColumns)
     : '';
 };
 
 window.generateLessonsPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredLessons.length ? filteredLessons : allUserLessons))) return;
   if (!window.html2canvas) return alert('ابزار PDF بارگذاری نشده است.');
   const title =
     (document.getElementById('lesnPdfTitle') && document.getElementById('lesnPdfTitle').value) ||

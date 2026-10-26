@@ -97,29 +97,29 @@
           return paragraph;
         }));
       }
-      if (canEdit && !section.querySelector('[data-edit-page-guide]')) {
+      const header = document.querySelector('[data-admin-help-actions]');
+      const existingEditor = [...document.querySelectorAll('[data-edit-page-guide]')].find(button => button.dataset.editPageGuide === section.id);
+      if (canEdit && header && !existingEditor) {
         const button = document.createElement('button');
         button.type = 'button';
         button.dataset.editPageGuide = section.id;
-        button.className = 'mb-3 rounded-xl border border-indigo-200 px-4 py-2 text-sm text-indigo-600 dark:border-indigo-700 dark:text-indigo-300';
+        button.className = 'rounded-xl border border-indigo-200 px-3 py-2 text-sm text-indigo-600 dark:border-indigo-700 dark:text-indigo-300';
         button.textContent = guide ? (english ? 'Edit page guidance' : 'ویرایش توضیحات صفحه') : (english ? 'Add page guidance' : 'افزودن توضیحات صفحه');
         button.addEventListener('click', () => edit(section));
-        if (guide) guide.before(button);
-        else place(section, button);
+        header.append(button);
       }
-      const editor = section.querySelector('[data-edit-page-guide]');
+      const editor = [...document.querySelectorAll('[data-edit-page-guide]')].find(button => button.dataset.editPageGuide === section.id);
       if (editor && guide) editor.textContent = english ? 'Edit page guidance' : 'ویرایش توضیحات صفحه';
-      if (editor && section.id === 'terms') {
-        let layout = host.querySelector('[data-page-guide-layout]');
-        if (!layout) {
-          layout = document.createElement('div');
-          layout.dataset.pageGuideLayout = '';
-          layout.className = 'mb-4 flex flex-wrap items-start gap-3';
-          place(section, layout);
-        }
-        if (guide) { guide.classList.add('flex-1', 'min-w-0'); layout.append(guide); }
-        layout.append(editor);
-      }
+      if (editor) { editor.title = editor.textContent; editor.setAttribute('aria-label', editor.textContent); }
+    });
+    syncHeader();
+  }
+
+  function syncHeader() {
+    const active = sections().find(section => section.getClientRects().length && !section.closest('[hidden],.hidden'));
+    document.querySelectorAll('[data-edit-page-guide]').forEach(button => {
+      const hidden = button.dataset.editPageGuide !== active?.id;
+      if (button.hidden !== hidden) button.hidden = hidden;
     });
   }
 
@@ -175,6 +175,8 @@
     if (!document.getElementById('mainContent')) return;
     try { guides = await request('/analytics/panel-guides'); apply(); }
     catch (error) { console.error(error.message); }
+    let frame;
+    new MutationObserver(() => { cancelAnimationFrame(frame); frame = requestAnimationFrame(syncHeader); }).observe(document.getElementById('mainContent'), { attributes: true, attributeFilter: ['class', 'style', 'hidden'], childList: true, subtree: true });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize, { once: true });
   else initialize();

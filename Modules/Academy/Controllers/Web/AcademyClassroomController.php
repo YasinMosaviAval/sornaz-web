@@ -49,6 +49,11 @@ class AcademyClassroomController
         });
     }
 
+    public function heatmap()
+    {
+        return $this->run(fn () => $this->s->heatmap((int) auth()->id(), $this->admin(), $_GET));
+    }
+
     public function store()
     {
         return $this->run(fn () => $this->s->saveRoom((int) auth()->id(), $this->data(), $this->admin()), 201);

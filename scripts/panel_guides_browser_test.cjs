@@ -8,7 +8,7 @@ const { renderPanelView } = require('./panel-table-fixture.cjs');
   try {
     for (const founder of [true, false]) {
       const page = await browser.newPage();
-      await page.setContent(`<html lang="${founder ? 'fa' : 'en'}"><body><main id="mainContent"><section id="classrooms" class="section"><h1>Classes</h1></section><section id="courses" class="section"><h1>Courses</h1></section><section id="terms" class="section"><nav>Tabs</nav><div data-term-panel="terms"><div class="admin-ui-header">Actions</div>${renderPanelView('panel-page-guide')}</div><div data-term-panel="discounts">Discounts</div></section></main><template id="panelPageGuideTemplate">${renderPanelView('panel-page-guide')}</template></body></html>`);
+      await page.setContent(`<html lang="${founder ? 'fa' : 'en'}"><body><header><div data-admin-help-actions></div></header><main id="mainContent"><section id="classrooms" class="section"><h1>Classes</h1></section><section id="courses" class="section"><h1>Courses</h1></section><section id="terms" class="section"><nav>Tabs</nav><div data-term-panel="terms"><div class="admin-ui-header">Actions</div>${renderPanelView('panel-page-guide')}</div><div data-term-panel="discounts">Discounts</div></section></main><template id="panelPageGuideTemplate">${renderPanelView('panel-page-guide')}</template></body></html>`);
       await page.evaluate(({ founder, saved }) => {
         window.canEditPanelGuides = founder;
         window.siteCsrfToken = 'fixture-token';
@@ -49,6 +49,8 @@ const { renderPanelView } = require('./panel-table-fixture.cjs');
         assert.equal(await page.locator('#classrooms .panel-page-guide p').textContent(), 'English description');
       }
       await page.evaluate(() => document.getElementById('panelGuideEditor')?.close());
+      await page.evaluate(()=>{const style=document.createElement('style');style.textContent='.hidden{display:none}';document.head.append(style);document.querySelectorAll('#mainContent > .section').forEach(section=>section.classList.toggle('hidden',section.id!=='terms'));});
+      if(founder){await page.locator('header [data-edit-page-guide="terms"]').waitFor({state:'visible'});assert.equal(await page.locator('#mainContent [data-edit-page-guide]').count(),0);assert.equal(await page.locator('header [data-edit-page-guide="classrooms"]').isVisible(),false);}
       const target = page.locator('#terms .panel-page-guide');
       await target.locator('summary').click();
       assert.equal(await target.evaluate(el => el.getAnimations().length > 0), true, 'Opening animates');
@@ -68,7 +70,7 @@ const { renderPanelView } = require('./panel-table-fixture.cjs');
       assert.equal(await page.locator('#terms .panel-page-guide').count(),1);
       assert.equal(await page.locator('[data-term-panel="terms"] [data-guide-title]').textContent(),'Saved terms');
       assert.equal(await page.locator('[data-term-panel="discounts"] .panel-page-guide').count(),0);
-      if(founder)assert.equal(await page.locator('[data-page-guide-layout] [data-edit-page-guide="terms"]').count(),1);
+      if(founder)assert.equal(await page.locator('header [data-edit-page-guide="terms"]').count(),1);
       await page.close();
     }
     console.log('Panel guidance: founder editing, bilingual persistence payload, shared template, escaped output and member display passed.');

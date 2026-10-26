@@ -48,6 +48,7 @@ Router::post('/academy/admin/members/{id}/update', [AcademyBranchController::cla
 Router::post('/academy/admin/members/{id}/status', [AcademyBranchController::class, 'cycleMemberStatus'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/members/{id}/delete', [AcademyBranchController::class, 'deleteMember'])->middleware(['academy-panel', 'csrf']);
 Router::get('/academy/admin/classrooms', [AcademyClassroomController::class, 'index'])->middleware('academy-panel');
+Router::get('/academy/admin/classrooms/heatmap', [AcademyClassroomController::class, 'heatmap'])->middleware('academy-panel');
 Router::get('/academy/admin/classrooms/realtime-version', [AcademyClassroomController::class, 'classroomsRealtimeVersion'])->middleware('academy-panel');
 Router::post('/academy/admin/classrooms', [AcademyClassroomController::class, 'store'])->middleware(['academy-panel', 'csrf']);
 Router::post('/academy/admin/classrooms/{id}/update', [AcademyClassroomController::class, 'update'])->middleware(['academy-panel', 'csrf']);
@@ -115,6 +116,7 @@ Router::post('/academy/admin/term-invoices/{invoiceId}/installments/{installment
 Router::get('/academy/payments/zarinpal/callback', [ZarinpalPaymentController::class, 'callback']);
 Router::get('/academy/payments/zarinpal/continue', [ZarinpalPaymentController::class, 'continuePayment']);
 Router::get('/academy/admin/subscriptions', [AcademySubscriptionController::class, 'index'])->middleware('academy-panel');
+Router::get('/academy/exports/access', [AcademySubscriptionController::class, 'exportAccess'])->middleware('auth');
 Router::post('/academy/admin/subscriptions/{id}/zarinpal', [AcademySubscriptionController::class, 'start'])->middleware(['academy-panel', 'csrf']);
 Router::get('/academy/subscriptions/zarinpal/callback', [AcademySubscriptionController::class, 'callback']);
 Router::post('/academy/admin/terms', [AcademyTermController::class, 'store'])->middleware(['academy-panel', 'csrf']);

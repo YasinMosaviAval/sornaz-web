@@ -25,6 +25,11 @@ class NotationController
             }
         } else {
             $id = (int) auth()->id();
+            // A stale editor tab must not upload another account's local draft.
+            $expected = $_SERVER['HTTP_X_NOTATION_USER'] ?? null;
+            if ($expected !== null && (!is_string($expected) || $expected !== (string) $id)) {
+                throw new \RuntimeException('Refresh the page and try again.', 403);
+            }
             if ($write) {
                 $token = (string) ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
                 if ($token === '' || !csrf()->verify($token)) {
@@ -40,7 +45,7 @@ class NotationController
 
     public function page()
     {
-        return ResponseFactory::view('Notation::index', ['boot' => ['locale' => locale() === 'en' ? 'en' : 'fa', 'userId' => (int) auth()->id(), 'csrf' => csrf_token(), 'api' => '/music-sheets/api', 'embedded' => false, 'websitePanel' => isset($_GET['panel'])]]);
+        return ResponseFactory::view('Notation::index', ['boot' => ['locale' => locale() === 'en' ? 'en' : 'fa', 'userId' => (int) auth()->id(), 'csrf' => csrf_token(), 'api' => '/music-sheets/api', 'embedded' => false, 'webStorage' => true, 'omrEnabled' => (int) auth()->id() === 1, 'websitePanel' => isset($_GET['panel'])]]);
     }
 
     private function payload(): array

@@ -25,6 +25,8 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/not
         await page.evaluate(() => fetch('/data'));
         assert.equal(headers[0].trace, undefined);
       } else {
+        assert.equal(await page.locator('.context-help-button').evaluate(button=>Boolean(button.closest('header'))),true);
+        assert.equal(await page.locator('.context-help-button').evaluate(button=>getComputedStyle(button).position),'static');
         await page.locator('.context-help-button').click();
         const sources = page.locator('.context-help-sources');
         assert.match(await sources.textContent(), /lessons\.php/);
@@ -45,6 +47,10 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/not
         assert.equal(headers.find((item) => item.origin === 'https://external.test').trace, undefined);
         await page.keyboard.press('Escape');
         assert.equal(await page.locator('#contextHelpDialog').count(), 0);
+        await page.evaluate(()=>{document.getElementById('lessons').hidden=true;const section=document.createElement('section');section.id='courses';section.className='section';section.textContent='Courses';document.querySelector('main').append(section);});
+        await page.locator('header .context-help-button').click();
+        assert.equal(await page.locator('#contextHelpDialog').getAttribute('data-source-root'),'courses','The header help follows the active page');
+        assert.equal(await page.locator('.context-help-button').count(),1);
       }
       assert.deepEqual(errors, []);
       await page.close();

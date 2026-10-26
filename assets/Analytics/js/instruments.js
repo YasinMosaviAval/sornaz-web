@@ -442,7 +442,9 @@ window.addEventListener('branch-offerings-loaded', function (e) {
 });
 if (window.branchOfferingData) window.applyInstrumentDatabaseData(window.branchOfferingData);
 
+window.AcademyExports?.register('instruments', () => filteredInstruments.length ? filteredInstruments : allUserInstruments);
 window.exportInstrumentsToExcel = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredInstruments.length ? filteredInstruments : allUserInstruments))) return;
   const data = filteredInstruments.length ? filteredInstruments : allUserInstruments;
   let csv = '\uFEFFردیف,ساز,سطح,سابقه,اصلی,وضعیت,شعبه\n';
   data.forEach(function (item, i) {
@@ -471,12 +473,14 @@ window.exportInstrumentsToExcel = async function () {
 };
 
 window.exportInstrumentsToPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredInstruments.length ? filteredInstruments : allUserInstruments))) return;
   document.getElementById('modalContainer').innerHTML = window.getInstrumentPDFModalHTML
     ? window.getInstrumentPDFModalHTML(instrumentPdfColumns)
     : '';
 };
 
 window.generateInstrumentsPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredInstruments.length ? filteredInstruments : allUserInstruments))) return;
   if (!window.html2canvas) return alert('ابزار PDF بارگذاری نشده است.');
   const title =
     (document.getElementById('instPdfTitle') && document.getElementById('instPdfTitle').value) ||

@@ -835,7 +835,9 @@
     window.filterStudents();
   };
 
-  window.exportStudentsToExcel = async function () {
+  window.AcademyExports?.register('students', () => filteredStudents.length ? filteredStudents : allStudents);
+window.exportStudentsToExcel = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredStudents.length ? filteredStudents : allStudents))) return;
     const data = filteredStudents.length ? filteredStudents : allStudents;
     let csv =
       '\uFEFFردیف,نام,کد ملی,نام پدر,تاریخ تولد,شماره تماس,آدرس,تاریخ ثبت‌نام,ترم آموزشی,سطح,استاد,سازمان,نام والد,کد ملی والد,تلفن والد\n';
@@ -881,12 +883,14 @@
   };
 
   window.exportStudentsToPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredStudents.length ? filteredStudents : allStudents))) return;
     document.getElementById('modalContainer').innerHTML = window.getStudentPDFModalHTML
       ? window.getStudentPDFModalHTML(studentPdfColumns)
       : '';
   };
 
   window.generateStudentsPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredStudents.length ? filteredStudents : allStudents))) return;
     if (!window.html2canvas) return alert('ابزار PDF بارگذاری نشده است.');
     const title =
       (document.getElementById('stuPdfTitle') && document.getElementById('stuPdfTitle').value) ||

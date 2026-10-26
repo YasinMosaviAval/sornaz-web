@@ -612,14 +612,14 @@ async function loadAcademySubscriptions() {
     if (!response.ok || envelope.success === false)
       throw new Error(envelope.message || 'دریافت اشتراک ناموفق بود.');
     academySubscriptionPlans = data.plans || [];
-    const price = document.getElementById('academySubscriptionPrice');
+    const subscriptionTitle = document.documentElement.lang.startsWith('en') ? 'Excel and PDF export subscription' : 'اشتراک خروجی اکسل و PDF';
     allSubscriptionInvoices = (data.periods || []).map(function (p) {
       return {
         id: 'subscription-' + p.id,
         subscriptionId: p.id,
         invoiceKind: 'subscription',
-        title: 'اشتراک سامانه مدیریت آموزشگاه',
-        termName: 'اشتراک سامانه مدیریت آموزشگاه',
+        title: subscriptionTitle,
+        termName: subscriptionTitle,
         branchId: 0,
         branchName: p.academyName || 'آموزشگاه',
         organizationKind: 'academy',
@@ -760,7 +760,9 @@ window.deleteTransaction = async function (id) {
 };
 
 // ==================== اکسل / PDF ====================
+window.AcademyExports?.register('finance', () => filteredTransactions.length ? filteredTransactions : allTransactions);
 window.exportFinanceToExcel = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredTransactions.length ? filteredTransactions : allTransactions))) return;
   const data = filteredTransactions.length ? filteredTransactions : allTransactions;
   let csv = '\uFEFFردیف,شرح,شعبه,نوع,مبلغ,تاریخ,وضعیت,خلاصه\n';
   data.forEach(function (item, i) {
@@ -791,16 +793,19 @@ window.exportFinanceToExcel = async function () {
 };
 
 window.exportFinance = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredTransactions.length ? filteredTransactions : allTransactions))) return;
   exportFinanceToExcel();
 };
 
 window.exportFinanceToPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredTransactions.length ? filteredTransactions : allTransactions))) return;
   document.getElementById('modalContainer').innerHTML = window.getFinancePDFModalHTML
     ? window.getFinancePDFModalHTML(financePdfColumns)
     : '';
 };
 
 window.generateFinancePDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredTransactions.length ? filteredTransactions : allTransactions))) return;
   if (!window.html2canvas) return alert('ابزار PDF بارگذاری نشده است.');
   const title =
     (document.getElementById('financePdfTitle') &&

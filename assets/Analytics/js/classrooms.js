@@ -64,6 +64,7 @@ async function loadClassrooms() {
     renderClassroomTypeFilter();
     renderClassroomCapacityFilter();
     filterClassrooms();
+    window.loadClassroomHeatmap?.();
   } catch (e) {
     alert(e.message);
   }
@@ -316,6 +317,7 @@ window.filterClassrooms = async function () {
 
 // ==================== رندر جدول ====================
 window.renderClassroomsTable = async function (list = filteredClassrooms) {
+  window.updateClassroomHeatmapRooms?.(list);
   const tbody = document.querySelector('#classroomsTable tbody');
   if (!tbody) return;
 
@@ -597,7 +599,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+window.AcademyExports?.register('classrooms', () => filteredClassrooms.length ? filteredClassrooms : allClassrooms);
 window.exportClassroomsToExcel = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredClassrooms.length ? filteredClassrooms : allClassrooms))) return;
   const data = filteredClassrooms.length ? filteredClassrooms : allClassrooms;
   let csv = '\uFEFF';
   csv += 'ردیف,نام کلاس,نوع کلاس,شعبه,ظرفیت,تجهیزات,وضعیت\n';
@@ -614,16 +618,19 @@ window.exportClassroomsToExcel = async function () {
 
 // ==================== خروجی PDF ====================
 window.exportClassroomsToPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredClassrooms.length ? filteredClassrooms : allClassrooms))) return;
   openClassroomsPDFOptionsModal();
 };
 
 window.openClassroomsPDFOptionsModal = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredClassrooms.length ? filteredClassrooms : allClassrooms))) return;
   document.getElementById('modalContainer').innerHTML = window.getClassroomPDFModalHTML
     ? window.getClassroomPDFModalHTML(classroomPdfColumns)
     : '';
 };
 
 window.generateClassroomsPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredClassrooms.length ? filteredClassrooms : allClassrooms))) return;
   if (!window.html2canvas) {
     alert('ابزار تولید PDF بارگذاری نشده است. لطفاً صفحه را مجدداً بارگذاری کنید.');
     return;

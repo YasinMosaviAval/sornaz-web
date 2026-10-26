@@ -10,7 +10,7 @@ const sheet = () => M.fresh();
   assert.equal(s.score.measures[1].notes[0].tiePrevious, true);
   const events = M.timeline(s).events;
   assert.equal(events[3].hz, 0, 'a tied continuation must not reattack');
-  assert.equal(events[2].soundLength, 1.2);
+  assert.ok(Math.abs(events[2].soundLength-1.2)<1e-9, 'tied sound lasts two beats within floating-point precision');
 }
 {
   const s = sheet(); M.insert(s, 0, note('h', 'D4', 1)); M.insert(s, 1, note('q', 'E4'));

@@ -612,7 +612,9 @@ window.saveInlineStaff = async function (id) {
 };
 
 // ==================== خروجی اکسل ====================
+window.AcademyExports?.register('teachers', () => filteredStaff.length ? filteredStaff : allStaff);
 window.exportStaffToExcel = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredStaff.length ? filteredStaff : allStaff))) return;
   const data = filteredStaff.length ? filteredStaff : allStaff;
   let csv = '\uFEFF';
   csv +=
@@ -632,10 +634,12 @@ window.exportStaffToExcel = async function () {
 };
 
 window.exportStaffToPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredStaff.length ? filteredStaff : allStaff))) return;
   openPDFOptionsModal();
 };
 
 window.openPDFOptionsModal = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredStaff.length ? filteredStaff : allStaff))) return;
   const modalHTML = window.getStaffPDFModalHTML
     ? window.getStaffPDFModalHTML(pdfExportColumns)
     : '';
@@ -643,6 +647,7 @@ window.openPDFOptionsModal = async function () {
 };
 
 window.generateStaffPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredStaff.length ? filteredStaff : allStaff))) return;
   if (!window.html2canvas) {
     alert('ابزار تولید PDF بارگذاری نشده است. لطفاً صفحه را مجدداً بارگذاری کنید.');
     return;

@@ -126,6 +126,7 @@ $subscription=new class extends Modules\Academy\Services\AcademySubscriptionServ
  protected function request(string$path,array$data):array{if(str_contains($path,'inquiry'))return ['data'=>['code'=>100,'status'=>'IN_BANK']];return str_contains($path,'request')?['data'=>['code'=>100,'authority'=>'SUBSCRIPTION_'.++$this->requests]]:['data'=>['code'=>100,'ref_id'=>$this->missingRef?'':777]];}
 };
 $first=$subscription->start(7,1,1);check($subscription->start(7,1,1)===$first&&$subscription->requests===1,'Duplicate subscription request');
+check(DB::table('academy_subscription_periods')->where('subscription_period_id',1)->first()['period_start']===max('2026-02-01',date('Y-m-d')),'Expired optional-export renewal starts at checkout instead of charging unused past months');
 denied(fn()=>$subscription->start(7,1,3));
 $sub=DB::table('academy_subscription_payments')->where('subscription_payment_id',1)->first();
 check(str_starts_with($first['redirectUrl'],'https://fixture.test/academy/payments/zarinpal/continue?kind=subscription&token='),'Subscription bypassed merchant domain');

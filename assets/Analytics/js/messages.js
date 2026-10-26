@@ -223,7 +223,9 @@
     channel?.postMessage(Date.now());
     await loadAdminMessages(false);
   };
-  window.exportMessagesToExcel = function () {
+  window.AcademyExports?.register('messages', () => filteredMessages);
+window.exportMessagesToExcel = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredMessages))) return;
     const rows = [
         ['عنوان', 'فرستنده', 'گیرنده', 'نوع', 'وضعیت', 'وضعیت مطالعه', 'تاریخ'],
         ...filteredMessages.map((m) => [
@@ -256,10 +258,12 @@
     { field: 'status', label: 'وضعیت' },
     { field: 'readStatus', label: 'وضعیت مطالعه' },
   ];
-  window.exportMessagesToPDF = function () {
+  window.exportMessagesToPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredMessages))) return;
     document.getElementById('modalContainer').innerHTML = getMessagePDFModalHTML(messagePdfColumns);
   };
   window.generateMessagesPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredMessages))) return;
     if (!window.html2canvas || !window.jspdf?.jsPDF)
       return alert('ابزار تولید PDF بارگذاری نشده است. لطفاً صفحه را مجدداً بارگذاری کنید.');
     const title = document.getElementById('messagePdfTitle')?.value || 'گزارش پیام‌های آموزشگاه',

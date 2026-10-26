@@ -87,4 +87,17 @@
             <div class="flex items-center gap-2" id="classroomPaginationButtons"></div>
         </div>
     </div>
+    <section class="mt-6 rounded-3xl bg-white p-5 shadow-sm dark:bg-slate-900" aria-labelledby="classroomHeatmapTitle">
+        <h2 id="classroomHeatmapTitle" class="mb-3 text-lg font-bold"><?= e(locale() === 'en' ? 'Classroom occupancy heatmap' : 'نقشهٔ حرارتی پر و خالی کلاس‌ها') ?></h2>
+        <p class="mb-3 text-sm text-gray-500"><?= e(locale() === 'en' ? 'Counts available classrooms with bookings overlapping each hour in the selected week. Zero means no booking, not guaranteed availability; closures and working hours are not included. Unavailable and pending classrooms are excluded from free counts. All classroom filters apply.' : 'تعداد کلاس‌های در دسترس با رزرو هم‌پوشان در هر ساعت هفتهٔ انتخاب‌شده. صفر یعنی بدون رزرو، نه تضمین امکان رزرو؛ تعطیلی و ساعات کاری لحاظ نمی‌شوند. کلاس خارج از دسترس و در انتظار در شمارش خالی نیست. تمام فیلترهای کلاس‌ها اعمال می‌شوند.') ?></p>
+        <div class="mb-3 flex flex-wrap items-center gap-3">
+            <button type="button" onclick="changeClassroomHeatmapWeek(-7)" class="rounded-xl border px-4 py-2"><?= e(locale() === 'en' ? 'Previous week' : 'هفته قبل') ?></button>
+            <label><?= e(locale() === 'en' ? 'Week containing date' : 'هفتهٔ شامل تاریخ') ?><input id="classroomHeatmapWeek" type="date" onchange="loadClassroomHeatmap(this.value)" class="mx-2 rounded-xl border p-2 dark:bg-slate-800"></label>
+            <button type="button" onclick="changeClassroomHeatmapWeek(7)" class="rounded-xl border px-4 py-2"><?= e(locale() === 'en' ? 'Next week' : 'هفته بعد') ?></button>
+            <label><?= e(locale() === 'en' ? 'Classroom' : 'کلاس') ?><select id="classroomHeatmapRoom" onchange="selectClassroomHeatmap(this.value)" class="mx-2 rounded-xl border p-2 dark:bg-slate-800"></select></label>
+            <button type="button" onclick="downloadClassroomHeatmap()" class="rounded-xl border px-4 py-2"><?= e(locale() === 'en' ? 'Download PNG' : 'دریافت تصویر نمودار') ?></button>
+        </div>
+        <p id="classroomHeatmapSummary" class="mb-3 text-sm" aria-live="polite"></p>
+        <div id="classroomHeatmap" style="height:540px" class="w-full" role="img" aria-label="<?= e(locale() === 'en' ? 'Occupied classrooms by weekday and hour' : 'کلاس‌های پر به تفکیک روز هفته و ساعت') ?>"></div>
+    </section>
 </div>

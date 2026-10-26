@@ -23,8 +23,8 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/not
     await page.addStyleTag({ path: 'assets/notation/panel.css' });
     await page.evaluate(() => window.Notation.command('new'));
     await page.locator('#metadata').waitFor();
-    assert.deepEqual(await page.locator('#metadata [name]').evaluateAll((nodes) => nodes.map((node) => node.name)), ['title', 'composer', 'arranger', 'lyricist', 'instrument', 'scale_type', 'key', 'clef', 'time', 'tempo_note', 'tempo_dots', 'bpm', 'tempo_text', 'subtitle']);
-    assert.equal(await page.locator('.header').count(), 0);
+    assert.deepEqual(await page.locator('#metadata [name]').evaluateAll((nodes) => nodes.map((node) => node.name)), ['title', 'composer', 'arranger', 'lyricist', 'instrument', 'scale_type', 'key', 'clef', 'time', 'tempo_unit', 'bpm', 'tempo_text', 'subtitle']);
+    assert.equal(await page.locator('.header:visible').count(), 0);
     assert.equal(await page.locator('#metadata textarea[name=subtitle]').count(), 1);
     assert.equal(await page.locator('[name=key]').isDisabled(), true);
     await page.locator('[name=scale_type]').selectOption('minor');
@@ -32,7 +32,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/not
     await page.locator('[name=key]').selectOption('Am');
     await page.locator('.beat-picker summary').click();
     await page.locator('[data-action=beat-unit][data-value="q:2"]').click();
-    assert.deepEqual(await page.locator('[name=tempo_note],[name=tempo_dots]').evaluateAll((nodes) => nodes.map((node) => node.value)), ['q', '2']);
+    assert.equal(await page.locator('[name=tempo_unit]').inputValue(), 'q:2');
     assert.equal(await page.locator('.shell.form').evaluate((node) => getComputedStyle(node).borderTopWidth), '0px');
     assert.deepEqual(errors, []);
     console.log('Panel notation form: Flutter field order, scale, dotted beat and unboxed layout passed.');

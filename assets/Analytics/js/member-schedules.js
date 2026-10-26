@@ -913,7 +913,9 @@
     }
   };
 
-  window.exportMemberSchedulesToExcel = async function () {
+  window.AcademyExports?.register('member-schedules', () => filteredMemberSchedules.length ? filteredMemberSchedules : allMemberSchedules);
+window.exportMemberSchedulesToExcel = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredMemberSchedules.length ? filteredMemberSchedules : allMemberSchedules))) return;
     const data = filteredMemberSchedules.length ? filteredMemberSchedules : allMemberSchedules;
     let csv = '\uFEFFردیف,نام عضو,نقش,روز,ساعت,دوره تکرار,منطقه زمانی,شعبه,وضعیت,خلاصه\n';
     data.forEach(function (item, i) {
@@ -948,12 +950,14 @@
   };
 
   window.exportMemberSchedulesToPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredMemberSchedules.length ? filteredMemberSchedules : allMemberSchedules))) return;
     document.getElementById('modalContainer').innerHTML = window.getMemberSchedulePDFModalHTML
       ? window.getMemberSchedulePDFModalHTML(msPdfColumns)
       : '';
   };
 
   window.generateMemberSchedulesPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredMemberSchedules.length ? filteredMemberSchedules : allMemberSchedules))) return;
     if (!window.html2canvas) return alert('ابزار PDF بارگذاری نشده است.');
     const title =
       (document.getElementById('msPdfTitle') && document.getElementById('msPdfTitle').value) ||

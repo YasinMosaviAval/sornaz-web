@@ -19,6 +19,17 @@ class AcademySubscriptionController
         }
     }
 
+    public function exportAccess()
+    {
+        try {
+            $data = (new \Modules\Academy\Services\AcademyExportAccessService())->status((int) auth()->id(), $_GET);
+            return ResponseFactory::json(['success' => true, 'data' => $data]);
+        } catch (\Throwable $error) {
+            $code = in_array($error->getCode(), [401,403,422], true) ? $error->getCode() : 503;
+            return ResponseFactory::json(['success' => false, 'message' => $code === 503 ? 'دریافت وضعیت اشتراک خروجی‌ها امکان‌پذیر نیست.' : $error->getMessage()], $code);
+        }
+    }
+
     public function start(int $id)
     {
         try {

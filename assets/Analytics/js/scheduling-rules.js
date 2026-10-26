@@ -483,7 +483,9 @@
     await loadSchedulingRules();
   });
 
-  window.exportRulesToExcel = async function () {
+  window.AcademyExports?.register('scheduling-rules', () => filteredRules.length ? filteredRules : allRules);
+window.exportRulesToExcel = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredRules.length ? filteredRules : allRules))) return;
     const data = filteredRules.length ? filteredRules : allRules;
     let csv = '\uFEFFردیف,عنوان,سازمان,نوع,مقدار,وضعیت,خلاصه\n';
     data.forEach(function (item, i) {
@@ -512,12 +514,14 @@
   };
 
   window.exportRulesToPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredRules.length ? filteredRules : allRules))) return;
     document.getElementById('modalContainer').innerHTML = window.getRulePDFModalHTML
       ? window.getRulePDFModalHTML(rulePdfColumns)
       : '';
   };
 
   window.generateRulesPDF = async function () {
+  if (!window.AcademyExports || !(await window.AcademyExports.authorize(filteredRules.length ? filteredRules : allRules))) return;
     if (!window.html2canvas) return alert('ابزار PDF بارگذاری نشده است.');
     const title =
       (document.getElementById('rulePdfTitle') && document.getElementById('rulePdfTitle').value) ||

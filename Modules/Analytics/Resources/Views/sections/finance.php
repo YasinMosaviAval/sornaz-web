@@ -17,8 +17,8 @@
     </div>
 
     <section class="mb-6 flex flex-col gap-3 rounded-3xl border border-indigo-100 bg-indigo-50/50 p-5 sm:flex-row sm:items-center sm:justify-between">
-        <div><h2 class="font-bold">اشتراک سامانه مدیریت آموزشگاه</h2><p class="mt-1 text-sm text-gray-500">ماه اول رایگان است؛ پلن‌های ۱ ماهه ۲ میلیون، ۳ ماهه ۵ میلیون، ۶ ماهه ۹ میلیون و یک‌ساله ۱۶ میلیون تومان هستند.</p></div>
-        <span id="academySubscriptionPrice" class="whitespace-nowrap rounded-xl bg-white px-4 py-2 text-sm text-indigo-700">ماه اول رایگان</span>
+        <div><h2 class="font-bold"><?= e(locale() === 'en' ? 'Excel and PDF export subscription' : 'اشتراک خروجی اکسل و PDF') ?></h2><p class="mt-1 text-sm text-gray-500"><?= e(locale() === 'en' ? 'All other panel features are completely free. Excel and PDF exports are free for the first month, then require an active export subscription. Existing subscription plans apply.' : 'تمام امکانات دیگر پنل کاملاً رایگان‌اند. خروجی اکسل و PDF در ماه اول رایگان است و پس از آن به اشتراک فعال خروجی‌ها نیاز دارد. پلن‌های فعلی اشتراک برای این خروجی‌ها قابل استفاده‌اند.') ?></p></div>
+        <span id="academySubscriptionPrice" class="whitespace-nowrap rounded-xl bg-white px-4 py-2 text-sm text-indigo-700"><?= e(locale() === 'en' ? 'Checking export access…' : 'در حال بررسی دسترسی خروجی‌ها…') ?></span>
     </section>
 
     <!-- تاپ‌بار شعبه‌ها -->
@@ -56,7 +56,7 @@
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">
                 <option value="">همه انواع</option>
                 <option value="فاکتور ترم">فاکتور ترم</option>
-                <option value="اشتراک سامانه">اشتراک سامانه</option>
+                <option value="اشتراک سامانه"><?= e(locale() === 'en' ? 'Excel and PDF export subscription' : 'اشتراک خروجی اکسل و PDF') ?></option>
             </select>
             <select id="filterFinanceRange" onchange="onFinanceRangeChange()"
                     class="w-full border border-gray-300 rounded-2xl py-3 px-4">

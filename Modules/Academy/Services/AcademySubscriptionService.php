@@ -90,14 +90,14 @@ class AcademySubscriptionService
         }, fn ($old) => DB::table('academy_subscription_payments')->where('subscription_payment_id', (int) $old['subscription_payment_id'])->where('status', '<>', 'paid')->update(['status' => 'failed']))) {
             return ZarinpalPaymentService::checkoutRedirect($resume, 'subscription', (string) $pending['callback_token']);
         }
-        $end = (new \DateTimeImmutable($period['period_start']))->modify('+' . $months . ' months')->format('Y-m-d');
+        [$start, $end] = $this->checkoutDates($period, $periodId, $months);
         $token = bin2hex(random_bytes(32));
         $now = date('Y-m-d H:i:s');
-        DB::table('academy_subscription_periods')->where('subscription_period_id', $periodId)->update(['period_end' => $end, 'amount' => $amount, 'currency' => $this->currency(), 'status' => 'pending', 'updated_at' => $now, 'updated_by' => $a]);
+        DB::table('academy_subscription_periods')->where('subscription_period_id', $periodId)->update(['period_start' => $start, 'period_end' => $end, 'due_date' => $start, 'amount' => $amount, 'currency' => $this->currency(), 'status' => 'pending', 'updated_at' => $now, 'updated_by' => $a]);
         $pid = (int) DB::table('academy_subscription_payments')->insertGetId(['subscription_period_id' => $periodId, 'academy_id' => (int) $period['academy_id'], 'user_id' => $a, 'amount' => $amount, 'currency' => $this->currency(), 'callback_token' => $token, 'status' => 'created', 'created_at' => $now, 'created_by' => $a, 'updated_at' => $now, 'updated_by' => $a]);
         $callback = rtrim((string) env('APP_URL', $this->origin()), '/') . '/academy/subscriptions/zarinpal/callback?token=' . $token;
         try {
-            $result = $this->request('/pg/v4/payment/request.json', ['merchant_id' => $merchant, 'amount' => $amount, 'currency' => $this->currency(), 'callback_url' => $callback, 'description' => 'پرداخت اشتراک ' . $months . ' ماهه سامانه مدیریت آموزشگاه', 'metadata' => []]);
+            $result = $this->request('/pg/v4/payment/request.json', ['merchant_id' => $merchant, 'amount' => $amount, 'currency' => $this->currency(), 'callback_url' => $callback, 'description' => 'پرداخت اشتراک ' . $months . ' ماهه خروجی اکسل و PDF آموزشگاه', 'metadata' => []]);
             $code = (int) ($result['data']['code'] ?? 0);
             $authority = (string) ($result['data']['authority'] ?? '');
             if ($code !== 100 || $authority === '') {
@@ -110,6 +110,16 @@ class AcademySubscriptionService
             DB::table('academy_subscription_payments')->where('subscription_payment_id', $pid)->update(['status' => 'failed', 'gateway_message' => mb_substr($e->getMessage(), 0, 500), 'updated_at' => $now]);
             throw $e;
         }
+    }
+
+    private function checkoutDates(array $period, int $periodId, int $months): array
+    {
+        $start = max((string) $period['period_start'], date('Y-m-d'));
+        if ($start !== $period['period_start'] && DB::table('academy_subscription_periods')->where('academy_id', (int) $period['academy_id'])->where('period_start', $start)->where('subscription_period_id', '<>', $periodId)->first()) {
+            throw new RuntimeException('دورهٔ جدیدتری برای اشتراک خروجی‌ها وجود دارد؛ صفحه را تازه کنید.');
+        }
+        $end = (new \DateTimeImmutable($start))->modify('+' . $months . ' months')->format('Y-m-d');
+        return [$start, $end];
     }
 
     public function callback(string $token, string $authority, string $status): array
