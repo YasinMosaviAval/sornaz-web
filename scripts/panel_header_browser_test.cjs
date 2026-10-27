@@ -17,7 +17,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/not
       await page.evaluate(() => showSection('account'));
       assert.equal(await page.locator('#panelPageTitle').innerText(), 'حساب کاربری');
       assert.equal(await page.locator('#account h1').isVisible(), false);
-      assert.equal(await page.locator('#account p').isVisible(), true);
+      assert.equal(await page.locator('#account p').isVisible(), false);
       assert.equal(await page.locator('#accountAction').isVisible(), true);
       assert.equal(await page.locator('#account h2').isVisible(), true);
       await page.evaluate(() => showSection('settings'));

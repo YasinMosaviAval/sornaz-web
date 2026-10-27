@@ -14,7 +14,6 @@
     hideFilters = false,
     pendingFile = null,
     modalItem = null,
-    displayMode = localStorage.getItem('admin.gallery.mode') || 'compact',
     viewerRows = [],
     viewerIndex = 0;
   const selected = {};
@@ -117,27 +116,16 @@
       }, filterConfig);
       if (hideFilters) window.panelBranchFilterShell?.(tabs)?.classList.add('hidden');
     });
-    document.querySelectorAll('[data-gallery-category].section').forEach((section) => {
-      let controls = section.querySelector('.gallery-view-controls');
-      if (!controls) {
-        controls = document.createElement('div');
-        controls.className = 'gallery-view-controls flex gap-2';
-        section.querySelector(':scope > div:first-child')?.appendChild(controls);
-      }
-      controls.innerHTML = `<button onclick="setGalleryDisplayMode('compact')" class="rounded-xl px-4 py-2 text-sm ${displayMode === 'compact' ? 'bg-indigo-600 text-white' : 'border bg-white'}"><i class="fas fa-th-large ml-1"></i> فشرده</button><button onclick="setGalleryDisplayMode('detailed')" class="rounded-xl px-4 py-2 text-sm ${displayMode === 'detailed' ? 'bg-indigo-600 text-white' : 'border bg-white'}"><i class="fas fa-list ml-1"></i> توضیحات</button>`;
-    });
+    document.querySelectorAll('.gallery-view-controls').forEach((controls) => controls.remove());
     document.querySelectorAll('.gallery-grid').forEach((g) => {
       const rows = visibleRows(g.dataset.galleryCategory);
       g.innerHTML = rows.length
-        ? rows.map((item) => window.getGalleryCardHTML(item, displayMode)).join('')
+        ? rows.map((item) => window.getGalleryCardHTML(item, 'compact')).join('')
         : window.getGalleryEmptyHTML();
     });
   }
-  window.setGalleryDisplayMode = (mode) => {
-    displayMode = mode === 'detailed' ? 'detailed' : 'compact';
-    localStorage.setItem('admin.gallery.mode', displayMode);
-    render();
-  };
+  // Keep cached callers compatible without allowing detailed cards to return.
+  window.setGalleryDisplayMode = render;
   window.openGalleryViewer = (id) => {
     const item = items.find((x) => x.id === id);
     if (!item) return;

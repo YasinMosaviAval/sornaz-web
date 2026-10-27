@@ -13,6 +13,7 @@ class AdminPostService
     private const STATUSES = ['draft', 'published', 'private', 'inherit', 'pending', 'trash', 'auto-draft', 'future', 'request-pending', 'request-confirmed'];
     private const VISIBILITIES = ['public', 'private', 'followers', 'premium'];
     private const TEXT_FIELDS = ['title', 'brief', 'description', 'content'];
+    private const METADATA_FIELDS = ['title', 'slug', 'categories', 'cover', 'cover_media_id', 'published_at', 'type', 'status', 'visibility', 'password', 'guid', 'related_posts_id'];
 
     public function index(array $filters): array
     {
@@ -35,6 +36,7 @@ class AdminPostService
             $where[] = 'p.type <> ?';
             $bindings[] = $filters['excludeType'];
         }
+        $this->applyCategoryFilter($filters, $where, $bindings, 'p.categories');
         if (!empty($filters['search'])) {
             $term = '%' . trim((string) $filters['search']) . '%';
             $where[] = "(p.slug LIKE ? OR p.categories LIKE ? OR EXISTS (SELECT 1 FROM translations tx WHERE tx.table_name='posts' AND tx.table_id=p.post_id AND tx.locale='fa' AND tx.field IN ('title','brief','description','content') AND tx.deleted_at IS NULL AND tx.value LIKE ?))";
@@ -89,11 +91,24 @@ class AdminPostService
             $countWhere[] = 'type<>?';
             $countBindings[] = $filters['excludeType'];
         }
+        $this->applyCategoryFilter($filters, $countWhere, $countBindings, 'categories');
         $counts = [];
         foreach ($this->query('SELECT status,COUNT(*) total FROM posts WHERE ' . implode(' AND ', $countWhere) . ' GROUP BY status', $countBindings) as $row) {
             $counts[$row['status']] = (int) $row['total'];
         }
         return $counts;
+    }
+
+    private function applyCategoryFilter(array $filters, array &$where, array &$bindings, string $column): void
+    {
+        if (!isset($filters['category']) || $filters['category'] === '') return;
+        $category = is_scalar($filters['category']) ? (string) $filters['category'] : '';
+        if (!preg_match('/^[1-9][0-9]*$/D', $category)) {
+            $where[] = '1=0';
+            return;
+        }
+        $where[] = "CONCAT(',', REPLACE(REPLACE(COALESCE($column,''), ' ', ''), '،', ','), ',') LIKE ?";
+        $bindings[] = '%,' . $category . ',%';
     }
 
     public function find(int $id): array
@@ -127,6 +142,30 @@ class AdminPostService
             [$values, $texts] = $this->validated($data, $actor, $id);
             DB::table('posts')->where('post_id', $id)->update($values);
             $this->setTexts($id, $texts, $actor);
+        });
+    }
+
+    public function updateMetadata(int $actor, int $id, array $data): void
+    {
+        SiteAdminAccess::requireCurrentUser($actor);
+        $data = array_intersect_key($data, array_fill_keys(self::METADATA_FIELDS, true));
+        transaction(function () use ($actor, $id, $data) {
+            $row = DB::table('posts')->where('post_id', $id)->whereNull('deleted_at')->first();
+            if (!$row) throw new RuntimeException('نوشته یافت نشد.');
+            $title = DB::table('translations')->where('table_name', 'posts')->where('table_id', $id)
+                ->where('locale', 'fa')->where('field', 'title')->whereNull('deleted_at')
+                ->orderBy('translation_id', 'DESC')->first();
+            [$validated, $texts] = $this->validated(array_replace($row, ['title' => $title['value'] ?? $row['slug']], $data), $actor, $id, true);
+            // Updating a row's settings never rewrites the article, excerpt, description,
+            // hidden audience restriction, counters, or authorship from an older snapshot.
+            $values = array_intersect_key($validated, $data);
+            if (($data['status'] ?? null) === 'published' && empty($row['published_at'])) {
+                $values['published_at'] = $validated['published_at'];
+            }
+            $values['updated_by'] = $actor;
+            $values['updated_at'] = date('Y-m-d H:i:s');
+            DB::table('posts')->where('post_id', $id)->whereNull('deleted_at')->update($values);
+            if (array_key_exists('title', $data)) $this->setTexts($id, $texts, $actor, true);
         });
     }
 
@@ -175,7 +214,7 @@ class AdminPostService
         });
     }
 
-    private function validated(array $data, int $actor, int $id = 0): array
+    private function validated(array $data, int $actor, int $id = 0, bool $metadataOnly = false): array
     {
         $title = trim((string) ($data['title'] ?? ''));
         if ($title === '') {
@@ -211,7 +250,7 @@ class AdminPostService
             'related_posts_id' => trim((string) ($data['related_posts_id'] ?? '')) ?: null,
             'updated_by' => $actor,
         ];
-        return [$values, $this->validatedTexts($data, $title)];
+        return [$values, $metadataOnly ? ['title' => $title] : $this->validatedTexts($data, $title)];
     }
 
     private function validatedTexts(array $data, string $title): array
@@ -238,10 +277,12 @@ class AdminPostService
         ];
     }
 
-    private function setTexts(int $id, array $texts, int $actor): void
+    private function setTexts(int $id, array $texts, int $actor, bool $latest = false): void
     {
         foreach ($texts as $field => $value) {
-            $row = DB::table('translations')->where('table_name', 'posts')->where('table_id', $id)->where('locale', 'fa')->where('field', $field)->first();
+            $query = DB::table('translations')->where('table_name', 'posts')->where('table_id', $id)->where('locale', 'fa')->where('field', $field);
+            if ($latest) $query->whereNull('deleted_at')->orderBy('translation_id', 'DESC');
+            $row = $query->first();
             $values = ['value' => $value, 'version' => (int) ($row['version'] ?? 0) + 1, 'updated_by' => $actor, 'deleted_at' => null, 'deleted_by' => null];
             if ($row) {
                 DB::table('translations')->where('translation_id', (int) $row['translation_id'])->update($values);

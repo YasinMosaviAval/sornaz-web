@@ -1996,7 +1996,7 @@ let termDiscountCatalog = null, termDiscountPage = 1, termDiscountOrganization =
 const discountText = (fa,en) => document.documentElement.lang.startsWith('en') ? en : fa;
 window.showTermTab = function (selected) {
   if (!['terms','discounts'].includes(selected)) return;
-  document.querySelectorAll('#terms [data-term-panel]').forEach(panel=>panel.classList.toggle('hidden',panel.dataset.termPanel!==selected));
+  document.querySelectorAll('#terms [data-term-panel],#terms [data-term-panel-actions]').forEach(panel=>panel.classList.toggle('hidden',(panel.dataset.termPanel || panel.dataset.termPanelActions)!==selected));
   document.querySelectorAll('#terms [data-term-tab]').forEach(button=>{
     const active=button.dataset.termTab===selected;
     if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
@@ -2701,14 +2701,17 @@ window.addEventListener('sornaz:data-changed', async function (event) {
   }, 200);
 })();
 
-// Assignment keeps all four steps mounted so identity and schedule selections survive navigation.
+// Keep every step mounted so identity, schedule and payment choices survive navigation.
 window.initTermStudentWizard = function (id) {
   const host = document.querySelector('[data-student-term-id]');
-  if (!host) return;
+  if (!host || host.dataset.termStudentWizard) return;
   const en = document.documentElement.lang.startsWith('en');
   const content = host.querySelector('.max-h-\\[75vh\\]');
+  if (!content) return;
+  host.dataset.termStudentWizard = '1';
   const actions = content.lastElementChild;
-  const panels = Array.from({length:4}, () => document.createElement('section'));
+  const panels = Array.from({length:5}, () => document.createElement('section'));
+  const term = allTerms.find(row => Number(row.id) === Number(id)) || (window.studentTermGroups || []).find(row => Number(row.id) === Number(id)) || {};
   const address = document.getElementById('stuAddresses')?.parentElement;
   const schedule = document.getElementById('stuTermSchedule');
   [...content.children].filter(node => node !== actions).forEach(node => panels[0].append(node));
@@ -2721,7 +2724,6 @@ window.initTermStudentWizard = function (id) {
     label.textContent = en ? 'Classroom' : 'کلاس برگزاری';
     select.className = 'mt-2 w-full rounded-2xl border px-4 py-3';
     select.add(new Option(en ? 'Choose later' : 'تعیین در آینده', ''));
-    const term = (window.studentTermGroups || []).find(row => Number(row.id) === id);
     (window.studentClassrooms || []).filter(room => Number(room.organizationUserId) === Number(term?.organizationUserId) || (room.organizationUserIds || []).map(Number).includes(Number(term?.organizationUserId))).forEach(room => select.add(new Option(room.name, room.id)));
     select.value = String(term?.scheduleDraft?.classroomId || '');
     label.append(select); panels[3].append(label);
@@ -2732,16 +2734,43 @@ window.initTermStudentWizard = function (id) {
   if (!schedule || schedule.classList.contains('hidden')) {
     const note = document.createElement('p'); note.textContent = en ? 'The existing session dates will be retained.' : 'تاریخ جلسات ثبت‌شده حفظ می‌شود.'; panels[2].append(note);
   }
-  const progress = document.createElement('ol'); progress.className = 'grid grid-cols-4 gap-2';
-  const labels = en ? ['Student', 'Address', 'Session dates', 'Classroom'] : ['هنرجو', 'آدرس', 'تاریخ جلسات', 'کلاس برگزاری'];
+  const finance = document.createElement('div'); finance.className = 'grid grid-cols-1 gap-5 sm:grid-cols-2';
+  const countLabel = document.createElement('label'), count = document.createElement('input');
+  countLabel.className = 'block text-sm font-medium'; countLabel.textContent = en ? 'Installments' : 'تعداد اقساط';
+  count.id = 'stuInstallmentCount'; count.dataset.assignmentInstallments = ''; count.type = 'number'; count.required = true;
+  count.min = '1'; count.max = String(Math.max(2, Number(term.sessionCount || term.sessions?.length || 1))); count.step = '1';
+  count.value = String(Math.max(1, Math.min(Number(term.installmentCount || term.installments?.length || 1), Number(count.max))));
+  count.className = 'mt-2 w-full rounded-2xl border px-5 py-3.5 disabled:bg-gray-100';
+  const countHint = document.createElement('small'); countHint.className = 'mt-1 block text-xs font-normal text-gray-500';
+  countHint.textContent = en ? `Up to ${count.max} installments` : `حداکثر ${Number(count.max).toLocaleString('fa-IR')} قسط`;
+  countHint.id = 'stuInstallmentHint'; count.setAttribute('aria-describedby', countHint.id); countLabel.append(count, countHint);
+  const discountLabel = document.createElement('label'), discount = document.createElement('select');
+  discountLabel.className = 'block text-sm font-medium'; discountLabel.textContent = en ? 'Discount' : 'تخفیف';
+  discount.id = 'stuDiscount'; discount.dataset.assignmentDiscount = ''; discount.className = 'mt-2 w-full rounded-2xl border px-5 py-3.5 disabled:bg-gray-100';
+  discount.add(new Option(en ? 'No discount' : 'بدون تخفیف', '0'));
+  const organizationId = term.organizationUserId || document.getElementById('stuOrganization')?.value;
+  (window.availableTermDiscounts?.(organizationId) || []).forEach(row => { if (Number(row.id) > 0) discount.add(new Option(row.name, String(row.id))); });
+  if ([...discount.options].some(option => option.value === String(term.discountId || 0))) discount.value = String(term.discountId || 0);
+  if (term.cost !== undefined && Number(term.cost) === 0) { count.value = '1'; discount.value = '0'; count.disabled = true; discount.disabled = true; }
+  discountLabel.append(discount); finance.append(countLabel, discountLabel); panels[4].append(finance);
+  const progress = document.createElement('ol'); progress.className = 'grid grid-cols-2 gap-2 sm:grid-cols-5';
+  const labels = en ? ['Student', 'Address', 'Session dates', 'Classroom', 'Payment options'] : ['هنرجو', 'آدرس', 'تاریخ جلسات', 'کلاس برگزاری', 'اقساط و تخفیف'];
   labels.forEach((label,index) => {const item=document.createElement('li'); item.className='rounded-2xl border p-3 text-center text-sm'; item.textContent=(index+1).toLocaleString(en?'en':'fa-IR')+' · '+label; progress.append(item);});
   content.prepend(progress);
-  panels.forEach(panel => {panel.className='space-y-6'; content.insertBefore(panel,actions);});
+  panels.forEach((panel,index) => {panel.className='space-y-6'; panel.dataset.termStudentStep=String(index+1); content.insertBefore(panel,actions);});
   const save = actions.querySelector('button'), back = document.createElement('button');
   back.type='button'; back.className='flex-1 rounded-2xl border px-4 py-3'; back.textContent=en?'Previous':'قبلی'; actions.prepend(back);
   let step=0;
-  const render=()=>{panels.forEach((panel,index)=>panel.hidden=index!==step); [...progress.children].forEach((item,index)=>{item.classList.toggle('bg-indigo-600',index===step); item.classList.toggle('text-white',index===step); if(index===step)item.setAttribute('aria-current','step');else item.removeAttribute('aria-current');});back.hidden=step===0;save.textContent=step===3?(en?'Save student':'ذخیره هنرجو'):(en?'Next':'بعدی');};
+  const render=()=>{panels.forEach((panel,index)=>panel.hidden=index!==step); [...progress.children].forEach((item,index)=>{item.classList.toggle('bg-indigo-600',index===step); item.classList.toggle('text-white',index===step); if(index===step)item.setAttribute('aria-current','step');else item.removeAttribute('aria-current');});back.hidden=step===0;save.textContent=step===4?(en?'Save student':'ذخیره هنرجو'):(en?'Next':'بعدی');};
   back.onclick=()=>{step--;render();};
-  save.onclick=()=>{if(step===3)return window.saveStudent(); if(step<2 && !window.validateTermStudentStep(step))return; step++;render();};
+  save.onclick=()=>{
+    if(step===4){
+      if(typeof window.readTermStudentFinance!=='function')return alert(en?'Reload the page to continue.':'برای ادامه صفحه را دوباره بارگذاری کنید.');
+      if(window.readTermStudentFinance()===null)return;
+      return window.saveStudent();
+    }
+    if(step<2 && !window.validateTermStudentStep(step))return;
+    step++;render();
+  };
   render();
 };

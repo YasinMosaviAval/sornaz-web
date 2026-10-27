@@ -88,5 +88,16 @@ html[data-notation-layout="docked"] .website-panel.writing #app { height:100%; }
 .website-panel .notation-tools select,.website-panel .notation-tools button { min-height:40px;font:inherit; }
 .website-panel .notation-tools .palette-link { grid-column:1/-1; }
 .website-panel .editor-footer .rest-choice { margin:0;padding:2px 12px;border-top:1px solid var(--line); }
+.website-panel .notation-top-tools { gap:10px;padding:0 0 12px; }
+.website-panel .notation-control-group { padding:10px;border-radius:14px;box-shadow:0 1px 3px #00000005; }
+.website-panel .notation-group-label { padding-inline:4px;font-size:11px;font-weight:600; }
+.website-panel .notation-tool-button { border-radius:10px;font-family:inherit;font-size:12px;font-weight:500; }
+.website-panel .notation-tool-button .notation-tool-icon { color:var(--accent); }
+.website-panel .notation-tool-button.is-active { background:color-mix(in srgb,var(--accent) 12%,var(--panel)); }
+.website-panel .measure-tools { margin:0 0 12px;border-radius:14px; }
+.website-panel .measure-tools summary { padding:10px 14px;font-size:13px; }
+.website-panel .measure-tools summary>.notation-tool-icon { color:var(--accent); }
+.website-panel .notation-measure-badge { border-radius:8px; }
+@media(max-width:480px){.website-panel .notation-top-tools{gap:8px}.website-panel .notation-control-group{flex:1 1 140px;padding:8px}.website-panel .notation-tool-button{padding-inline:6px}}
 @media(max-width:800px){.website-panel .notation-editor-content:has(>.notation-score-workspace){display:flex;flex-direction:column;gap:10px}.website-panel .notation-score-workspace{flex:1}.website-panel .notation-tools{height:140px;flex:none}.website-panel .notation-tools .palette{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px}.website-panel .notation-tools h2{grid-column:1/-1}}
 @media(max-width:800px){.website-panel .editor-footer .palette{grid-template-columns:1fr}.website-panel .editor-actions{margin-inline-start:0}.website-panel #score{padding:8px 0}}

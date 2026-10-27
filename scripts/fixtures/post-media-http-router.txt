@@ -25,5 +25,5 @@ try {
  if (($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '') !== 'fixture') { http_response_code(403); echo '{"success":false}'; exit; }
  $service = new Modules\Analytics\Services\AdminMediaService();
  if ($_SERVER['REQUEST_METHOD'] === 'GET') { echo json_encode(['success' => true, 'data' => $service->index($_GET)]); exit; }
- echo json_encode(['success' => true, 'data' => $service->uploadPostCover((int) auth()->id(), $_FILES['file'] ?? [])]);
+ (new Modules\Analytics\Controllers\Web\AdminMediaController($service))->uploadPostCover()->send();
 } catch (Throwable $error) { http_response_code($error->getCode() === 403 ? 403 : 422); echo json_encode(['success' => false, 'message' => $error->getMessage()]); }

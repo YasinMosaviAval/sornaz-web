@@ -8,6 +8,7 @@ const php = [
  'term_session_delivery_test.php',
  'post_table_status_test.php',
  'post_editor_options_test.php',
+ 'post_metadata_update_test.php',
  'asset_version_test.php',
  'table-prefix-test.php', 'mobile_finance_bootstrap_test.php', 'enrollment_dashboard_scope_test.php',
  'page_source_trace_test.php',
@@ -33,11 +34,20 @@ suites.push([process.execPath,'student_multiple_terms_test.cjs']);
 suites.push([process.execPath,'staff_registration_test.cjs'],[process.execPath,'waiting_list_chat_test.cjs']);
 suites.push([process.execPath,'term_batch_policy_test.cjs']);
 suites.push([process.execPath,'term_batch_waiting_test.cjs']);
-suites.push([process.execPath,'term_student_assignment_test.cjs']);
+suites.push([process.execPath,'term_student_assignment_test.cjs'],[process.execPath,'term_student_wizard_test.cjs'],[process.execPath,'term_student_finance_test.cjs']);
 suites.push([process.execPath,'panel_report_source_test.cjs'],[process.execPath,'term_people_policy_test.cjs']);
 suites.push([process.execPath,'availability_target_policy_test.cjs'],[process.execPath,'csrf_fetch_test.cjs'],[process.execPath,'profile_render_security_test.cjs'],[process.execPath,'lesson_usage_test.cjs'],[process.execPath,'staff_role_policy_test.cjs'],[process.execPath,'panel_activity_text_test.cjs'],[process.execPath,'term_discount_policy_test.cjs']);
 if (process.argv.includes('--browser')) {
+ suites.push([process.execPath,'panel_add_icons_browser_test.cjs']);
+ suites.push([process.execPath,'panel_export_icons_browser_test.cjs']);
+ suites.push([process.execPath,'panel_table_action_icons_browser_test.cjs']);
+ suites.push([process.execPath,'term_toolbar_browser_test.cjs']);
+ suites.push([process.execPath,'term_student_wizard_browser_test.cjs']);
+ suites.push([process.execPath,'gallery_overview_browser_test.cjs']);
+ suites.push([process.execPath,'post_inline_editor_browser_test.cjs']);
  suites.push([process.execPath,'notation_web_layout_browser_test.cjs']);
+ suites.push([process.execPath,'notation_menu_browser_test.cjs']);
+ suites.push([process.execPath,'notation_symbol_controls_browser_test.cjs']);
  suites.push([process.execPath,'notation_web_parity_browser_test.cjs'],[process.execPath,'notation_shared_features_browser_test.cjs'],[process.execPath,'panel_notation_form_browser_test.cjs'],[process.execPath,'panel_notation_frame_browser_test.cjs']);
  suites.push([process.execPath,'academy_export_access_browser_test.cjs']);
  suites.push([process.execPath,'classroom_heatmap_browser_test.cjs']);

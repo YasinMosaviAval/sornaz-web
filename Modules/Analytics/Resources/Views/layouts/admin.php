@@ -22,6 +22,32 @@
         .panel-page-toolbar-tabs .panel-page-tabs { margin-bottom:0; }
         .panel-page-toolbar-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:.75rem; margin-inline-start:auto; }
         .panel-page-toolbar-actions:empty { display:none; }
+        .panel-page-toolbar-actions > [data-panel-page-action-group] { margin-bottom:0; }
+        .panel-add-icon,.panel-export-icon { position:relative!important; display:inline-flex!important; align-items:center!important; justify-content:center!important; flex:0 0 auto!important; width:44px!important; min-width:44px!important; height:44px!important; min-height:44px!important; padding:10px!important; gap:0!important; box-sizing:border-box; }
+        .panel-add-icon > [data-panel-add-symbol],.panel-export-icon > [data-panel-export-symbol] { display:block; flex:none; width:22px; height:22px; pointer-events:none; }
+        .panel-add-label,.panel-export-label,.panel-table-action-label { position:absolute!important; width:1px!important; height:1px!important; margin:-1px!important; padding:0!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; pointer-events:none; }
+        .panel-add-icon:focus-visible,.panel-export-icon:focus-visible,.panel-table-action-icon:focus-visible { outline:2px solid var(--theme-500,#6366f1); outline-offset:3px; }
+        .panel-table-action-icon { position:relative!important; display:inline-flex!important; align-items:center!important; justify-content:center!important; vertical-align:middle; flex:0 0 auto!important; width:32px!important; min-width:32px!important; height:32px!important; min-height:32px!important; padding:6px!important; gap:0!important; box-sizing:border-box; border-radius:8px; }
+        .panel-table-action-icon > [data-panel-table-action-symbol] { display:block; flex:none; width:18px; height:18px; pointer-events:none; }
+        .panel-table-action-icon:hover { box-shadow:inset 0 0 0 1px currentColor; }
+        .panel-export-icon { border:1px solid var(--border,#d1d5db)!important; border-radius:1rem; background:var(--surface-card,#fff)!important; }
+        .panel-export-icon[data-panel-export-icon="excel"] { color:#15803d!important; }
+        .panel-export-icon[data-panel-export-icon="pdf"] { color:#dc2626!important; }
+        .panel-export-icon:hover { background:var(--surface-muted,#f3f4f6)!important; }
+        html[data-mode="dark"] .panel-export-icon[data-panel-export-icon="excel"] { color:#4ade80!important; }
+        html[data-mode="dark"] .panel-export-icon[data-panel-export-icon="pdf"] { color:#f87171!important; }
+        .panel-action-tooltip { position:fixed; z-index:100000; max-width:min(20rem,calc(100vw - 16px)); box-sizing:border-box; padding:8px 12px; border:1px solid var(--border,#d1d5db); border-radius:10px; background:var(--surface-card,#fff); color:var(--text,#111827); box-shadow:0 4px 16px #0002; font-size:12px; line-height:1.8; white-space:pre-line; overflow-wrap:anywhere; pointer-events:none; }
+        .panel-action-tooltip[hidden] { display:none; }
+        #sidebar { background-color:#fffdf7!important; color:#1f2937; }
+        #sidebar .text-white:not(.text-yellow-300):not(.text-yellow-200) { color:inherit; }
+        #sidebar .text-indigo-300 { color:var(--text-muted,#6b7280); }
+        #sidebar .text-yellow-300 { color:#a16207; }
+        #sidebar .text-yellow-300:hover { color:#854d0e; }
+        #sidebar .nav-link:hover:not(.text-yellow-300),#sidebar .nav-link:is(.bg-indigo-600,.bg-indigo-700,.bg-indigo-800):not(.text-yellow-300) { color:#fff; }
+        #sidebar .nav-link.text-yellow-300:hover,#sidebar .nav-link.text-yellow-300:is(.bg-indigo-600,.bg-indigo-700,.bg-indigo-800) { color:#fde047; }
+        html[data-mode="dark"] #sidebar { background-color:#080b10!important; color:#f3f4f6; }
+        html[data-mode="dark"] #sidebar .text-yellow-300 { color:#fde047; }
+        html[data-mode="dark"] #sidebar .text-yellow-300:hover { color:#fef08a; }
         #mainContent > .section h1:not(:is([role="dialog"],[id$="Modal"],[contenteditable],article,.prose) h1),
         #mainContent > .section h1:not(:is([role="dialog"],[id$="Modal"],[contenteditable],article,.prose) h1) + p,
         #mainContent > .section [data-panel-description],

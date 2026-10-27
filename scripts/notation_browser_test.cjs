@@ -58,8 +58,8 @@ const {chromium} = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/notat
       assert.equal(await page.locator('.editor-footer [data-action=save]').count(),0);
       assert.equal(await page.locator('.editor-header [data-action=save]').count(),1);
       assert.equal(await page.locator('.editor-header [data-action=pdf],.editor-header [data-action=export]').count(),0);
-      assert.equal(await page.locator('.duration-choice .duration-btn').count(),9);
-      assert.equal(await page.locator('.duration-btn svg').count(),9);
+      assert.equal(await page.locator('.duration-choice .duration-btn').count(),7);
+      assert.equal(await page.locator('.duration-btn svg').count(),7);
       assert.deepEqual(await page.locator('.rest-key').evaluate(e=>[e.offsetWidth,e.offsetHeight]),await page.locator('.palette-key').evaluate(e=>[e.offsetWidth,e.offsetHeight]));
       assert.equal(await page.locator('.duration-choice .dot-btn').count(),2);
       assert.equal(await page.locator('.duration-choice .duration-btn[aria-pressed=true]').getAttribute('data-value'),'q');

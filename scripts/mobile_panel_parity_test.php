@@ -55,6 +55,7 @@ expectParity($sections['my-waiting']['access'] === 'common' && $sections['my-wai
         'AcademyBranchController::memberRegistrationForm', // HTML form; native fields come from the catalog.
         'AnalyticsController::adminPanel',
         'AdminMediaController::uploadPostCover', // Browser picker; native uploads use the existing media action.
+        'AdminPostController::metadata', // Browser inline-settings alternative; native retains its covered full-update action.
         'AdminGalleryController::realtimeVersion', 'AdminSchedulingRuleController::realtimeVersion',
         'AcademyBranchController::realtimeVersion', 'AcademyBranchController::staffRealtimeVersion',
         'AcademyClassroomController::classroomsRealtimeVersion', 'AcademyClassroomController::realtimeVersion',

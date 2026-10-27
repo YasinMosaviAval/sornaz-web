@@ -3,12 +3,24 @@
         #post-editor .pe-tool { display:inline-flex; min-width:2rem; height:2rem; align-items:center; justify-content:center; border-radius:.5rem; padding:0 .5rem; font-size:.875rem; color:#374151; }
         #post-editor .pe-tool:hover { background:#fff; color:#4f46e5; box-shadow:0 1px 2px rgb(0 0 0 / .08); }
         #peVisualContent:empty::before { content:attr(data-placeholder); color:#9ca3af; pointer-events:none; }
+        #post-editor #peContent { background-color:var(--surface-card,#fff); color:var(--text,#374151); }
         #post-editor.pe-editor-fullscreen { position:fixed; inset:0; z-index:60; overflow:auto; background:#f3f4f6; padding:1rem; }
         #post-editor.pe-editor-fullscreen #peVisualContent,
         #post-editor.pe-editor-fullscreen #peContent { min-height:calc(100vh - 13rem); }
         #peVisualContent table { border-collapse:collapse; width:100%; }
         #peVisualContent th, #peVisualContent td { border:1px solid #d1d5db; padding:.5rem; }
         #peVisualContent blockquote { border-right:4px solid #6366f1; margin:1rem 0; padding:.75rem 1rem; color:#4b5563; background:#f9fafb; }
+        #posts .post-inline-expand { overflow-anchor:none; }
+        #posts .post-inline-reveal { min-width:0; }
+        #posts .post-inline-editor { position:sticky; inset-inline-start:0; box-sizing:border-box; min-width:0; width:100%; padding:1rem; }
+        #posts .post-inline-editor fieldset { min-width:0; margin:0; padding:0; border:0; }
+        #posts [data-post-editor-title-card] { margin-bottom:1rem; }
+        #posts [data-post-editor-settings] { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; }
+        #posts [data-post-editor-settings]>div { margin:0; min-width:0; }
+        #posts [data-post-editor-title-card] input { min-width:0; }
+        #posts .post-inline-editor input,#posts .post-inline-editor select { max-width:100%; }
+        @media(max-width:1100px){#posts [data-post-editor-settings]{grid-template-columns:repeat(2,minmax(0,1fr))}}
+        @media(max-width:650px){#posts [data-post-editor-settings]{grid-template-columns:minmax(0,1fr)}}
     </style>
     <button type="button" onclick="closePostEditor()" class="mb-6 flex items-center gap-2 text-sm text-gray-500 hover:text-indigo-600"><i class="fas fa-arrow-right"></i> بازگشت به لیست</button>
 
@@ -16,7 +28,7 @@
         <!-- ستون اصلی (۲/۳) -->
         <div class="xl:col-span-2 space-y-5">
             <!-- عنوان -->
-            <div class="bg-white rounded-3xl shadow-sm p-6">
+            <div data-post-editor-title-card class="bg-white rounded-3xl shadow-sm p-6">
                 <input type="text" id="peTitle"
                        placeholder="عنوان نوشته را اینجا بنویسید"
                        class="w-full text-2xl font-bold border-0 focus:outline-none focus:ring-0 placeholder-gray-300">
@@ -54,7 +66,7 @@
                     <button type="button" onclick="peExec('removeFormat')" class="pe-tool" title="پاک‌کردن قالب"><i class="fas fa-eraser"></i></button><button type="button" onclick="peExec('undo')" class="pe-tool" title="واگرد"><i class="fas fa-undo"></i></button><button type="button" onclick="peExec('redo')" class="pe-tool" title="از نو"><i class="fas fa-redo"></i></button><button type="button" onclick="peToggleFullscreen()" class="pe-tool" title="تمام‌صفحه"><i class="fas fa-expand"></i></button>
                 </div>
                 <div id="peVisualContent" contenteditable="true" dir="rtl" data-placeholder="متن نوشته را اینجا بنویسید..." oninput="peVisualChanged()" class="prose max-w-none min-h-[480px] w-full p-6 text-base leading-8 focus:outline-none"></div>
-                <textarea id="peContent" rows="24" dir="ltr" oninput="peCodeChanged()" spellcheck="false" placeholder="کد HTML نوشته را اینجا وارد کنید..." class="hidden min-h-[480px] w-full resize-y border-0 bg-gray-950 p-6 font-mono text-sm leading-7 text-green-300 focus:outline-none"></textarea>
+                <textarea id="peContent" rows="24" dir="ltr" oninput="peCodeChanged()" spellcheck="false" placeholder="کد HTML نوشته را اینجا وارد کنید..." class="hidden min-h-[480px] w-full resize-y border-0 bg-white p-6 font-mono text-sm leading-7 text-gray-700 focus:outline-none"></textarea>
             </div>
 
             <!-- خلاصه و توضیحات -->
@@ -71,7 +83,7 @@
         </div>
 
         <!-- سایدبار (۱/۳) — شبیه وردپرس -->
-        <div class="space-y-5">
+        <div data-post-editor-settings class="space-y-5">
             <!-- انتشار -->
             <div class="bg-white rounded-3xl shadow-sm overflow-hidden">
                 <div class="px-5 py-3 border-b font-semibold text-sm bg-gray-50">انتشار</div>

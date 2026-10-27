@@ -43,4 +43,23 @@ foreach ([[1,1,'invalid'],[1,2,'published'],[9,1,'published']] as $args) {
 $actor=['user_id'=>9,'type'=>'academy'];
 try { $service->status(9,1,'draft'); throw new LogicException('Unauthorized mutation accepted'); }
 catch (RuntimeException $error) { verify($error->getCode()===403, 'Expected access denial'); }
-echo "Post tables: latest localized category names, stored-ID preservation, status-only updates, repeated requests, invalid/deleted rows and authorization passed (SQLite).\n";
+
+$actor=['user_id'=>1,'type'=>'human'];
+$pdo->exec("INSERT INTO posts(post_id,author_id,slug,categories,type,status,visibility) VALUES
+(3,1,'other','17','post','draft','public'),(4,1,'selected-other-type','7','product','draft','public'),
+(5,1,'selected-private','7','post','draft','private'),(6,1,'persian-delimiter','8،7','post','pending','public'),
+(7,1,'selected-page','7','page','draft','public'),(8,1,'selected-published','7','post','published','public');");
+$selected=$service->index(['category'=>'7','perPage'=>10,'excludeType'=>'page']);
+verify(array_column($selected['posts'],'id')===[8,6,5,4,1] && $selected['total']===5, 'Category must match a complete CSV ID, spaces and Persian delimiters without including17');
+verify(($selected['statusCounts']['draft']??0)===2 && ($selected['statusCounts']['published']??0)===2 && ($selected['statusCounts']['pending']??0)===1, 'Status counts must honor category and excluded pages');
+$combined=$service->index(['category'=>'7','type'=>'post','visibility'=>'public','status'=>'published','search'=>'selected','perPage'=>10,'excludeType'=>'page']);
+verify(array_column($combined['posts'],'id')===[8] && $combined['total']===1, 'Category must compose with type, visibility, status and search');
+verify($service->index(['category'=>'','perPage'=>10,'excludeType'=>'page'])['total']===6, 'All categories must remove the category restriction');
+foreach (['7 OR 1=1','7,17','0', ['7']] as $invalid) verify($service->index(['category'=>$invalid,'perPage'=>10])['total']===0, 'Malformed category must not broaden the list');
+for($id=20;$id<32;$id++)$pdo->exec("INSERT INTO posts(post_id,author_id,slug,categories,type,status,visibility) VALUES($id,1,'paged-$id','7','post','draft','public')");
+$paged=$service->index(['category'=>'7','perPage'=>10,'page'=>2,'excludeType'=>'page']);
+verify($paged['total']===17 && count($paged['posts'])===7 && array_column($paged['posts'],'id')===[21,20,8,6,5,4,1], 'Category filtering must apply before pagination');
+$actor=['user_id'=>9,'type'=>'academy'];
+try { $service->index(['category'=>'7']); throw new LogicException('Unauthorized category read accepted'); }
+catch (RuntimeException $error) { verify($error->getCode()===403, 'Category filter must retain site-admin read guard'); }
+echo "Post tables: latest localized category names, exact category filtering/composed filters/pagination, stored-ID preservation, status-only updates, repeated requests, invalid/deleted rows and authorization passed (SQLite).\n";

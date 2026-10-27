@@ -65,6 +65,96 @@
     }
   };
   let generation = 0, requestVersion = 0, rendered = '';
+  let inlineEditingId = null, inlineState = '', inlineError = '', inlineText = null, editorSession = 0;
+  let inlineAnimation = null, inlineResizeObserver = null, inlineAnchorStyle = null, inlineTargetHeight = 0;
+  const metadataHomes = [];
+  function stopPostInlineAnimation(restoreAnchor = true) {
+    inlineAnimation?.cancel(); inlineAnimation = null;
+    inlineResizeObserver?.disconnect(); inlineResizeObserver = null;
+    if (restoreAnchor && inlineAnchorStyle !== null) {
+      document.documentElement.style.overflowAnchor = inlineAnchorStyle;
+      inlineAnchorStyle = null;
+    }
+  }
+  function animatePostInline(reveal, from) {
+    const height = reveal.firstElementChild.getBoundingClientRect().height;
+    if (inlineAnimation && inlineTargetHeight === height) return;
+    const previous = from ?? reveal.getBoundingClientRect().height;
+    inlineAnimation?.cancel(); inlineAnimation = null; inlineTargetHeight = height;
+    if (inlineAnchorStyle === null) inlineAnchorStyle = document.documentElement.style.overflowAnchor;
+    document.documentElement.style.overflowAnchor = 'none';
+    const finish = () => {
+      reveal.style.overflow = '';
+      if (inlineAnchorStyle !== null) document.documentElement.style.overflowAnchor = inlineAnchorStyle;
+      inlineAnchorStyle = null; inlineAnimation = null;
+    };
+    if (!reveal.animate || matchMedia('(prefers-reduced-motion: reduce)').matches || Math.abs(previous - height) < 1) { finish(); return; }
+    reveal.style.overflow = 'clip';
+    inlineAnimation = reveal.animate([{height:previous+'px',opacity:previous ? 1 : 0},{height:height+'px',opacity:1}], {duration:340,easing:'cubic-bezier(.22,1,.36,1)'});
+    const animation = inlineAnimation;
+    animation.onfinish = () => { if (inlineAnimation === animation) finish(); };
+  }
+  function restorePostMetadata() {
+    metadataHomes.forEach(({node, home}) => home.parentNode?.insertBefore(node, home.nextSibling));
+  }
+  function closePostInline() {
+    editorSession++; editorOptionsVersion++;
+    stopPostInlineAnimation();
+    restorePostMetadata();
+    document.querySelectorAll('#postsTable .post-inline-expand').forEach(row => row.remove());
+    document.querySelectorAll('[data-post-inline-edit]').forEach(button => button.setAttribute('aria-expanded', 'false'));
+    if (inlineEditingId !== null) editingId = null;
+    inlineEditingId = null; inlineState = ''; inlineError = ''; inlineText = null;
+  }
+  function mountPostInline() {
+    if (inlineEditingId === null) return;
+    const table = document.getElementById('postsTable'), row = table?.querySelector(`tr[data-post-row-id="${inlineEditingId}"]`);
+    if (!row) { closePostInline(); return; }
+    const existing = table.querySelector(`#postInlineRow-${inlineEditingId}`);
+    const previousHeight = existing?.querySelector('.post-inline-reveal')?.getBoundingClientRect().height || 0;
+    stopPostInlineAnimation(false);
+    if (inlineAnchorStyle === null) inlineAnchorStyle = document.documentElement.style.overflowAnchor;
+    document.documentElement.style.overflowAnchor = 'none';
+    restorePostMetadata();
+    table.querySelectorAll('[data-post-inline-edit]').forEach(button => button.setAttribute('aria-expanded', String(Number(button.dataset.postInlineEdit) === inlineEditingId)));
+    const id = inlineEditingId, cancel = `<button type="button" data-post-inline-cancel onclick="togglePostInlineEdit(${id})" class="rounded-xl border px-5 py-2 text-sm">${editorText('انصراف', 'Cancel')}</button>`;
+    const content = inlineState === 'ready'
+      ? `<fieldset data-post-inline-fields ${editorSaving?'disabled':''}></fieldset><div class="mt-4 flex justify-end">${cancel}</div>`
+      : `<div role="${inlineState==='error'?'alert':'status'}" class="mb-4 text-sm">${esc(inlineState==='error'?inlineError:editorText('در حال بارگیری تنظیمات نوشته…', 'Loading post settings…'))}</div><div class="flex gap-3">${inlineState==='error'?`<button type="button" onclick="togglePostInlineEdit(${id},true)" class="rounded-xl bg-indigo-600 px-5 py-2 text-sm text-white">${editorText('تلاش دوباره', 'Retry')}</button>`:''}${cancel}</div>`;
+    if (!existing) row.insertAdjacentHTML('afterend', window.AdminPanelTable.rowHTML([{html:`<div class="post-inline-reveal"><div class="post-inline-editor" data-post-inline-editor="${id}"></div></div>`,attributes:` colspan="${table.tHead.rows[0].cells.length}" data-admin-identity-colspan="1" class="bg-indigo-50/40" style="padding:0"`}], ` id="postInlineRow-${id}" class="post-inline-expand admin-inline-expand" data-admin-inline-expand`));
+    const host = table.querySelector('.post-inline-editor'), reveal = host.parentElement;
+    host.innerHTML = content;
+    host.setAttribute('aria-busy', String(inlineState==='loading'||editorSaving));
+    host.style.maxWidth = Math.max(260, table.parentElement.clientWidth - 32) + 'px';
+    if (inlineState === 'ready') {
+      if (!metadataHomes.length) document.querySelectorAll('[data-post-editor-title-card],[data-post-editor-settings]').forEach(node => { const home=document.createComment('post metadata home');node.before(home);metadataHomes.push({node,home}); });
+      const fields=host.querySelector('[data-post-inline-fields]');metadataHomes.forEach(({node})=>fields.append(node));
+    }
+    animatePostInline(reveal, previousHeight);
+    if (window.ResizeObserver) {
+      inlineResizeObserver = new ResizeObserver(() => { if (host.isConnected && Math.abs(host.getBoundingClientRect().height - inlineTargetHeight) > 1) animatePostInline(reveal); });
+      inlineResizeObserver.observe(host);
+    }
+  }
+  window.togglePostInlineEdit = async (id, retry = false) => {
+    if (editorSaving) return;
+    id = Number(id);
+    if (!Number.isInteger(id) || !posts.some(post => Number(post.id) === id)) return;
+    if (inlineEditingId === id && !retry) { closePostInline(); return; }
+    closePostInline();
+    const session = ++editorSession;
+    inlineEditingId = id; inlineState = 'loading';mountPostInline();
+    try {
+      const post = await api('/analytics/admin-posts/' + id);
+      if (session !== editorSession || inlineEditingId !== id) return;
+      editingId = id;
+      inlineText = {content:post.content??'',summary:post.summary??'',description:post.description??''};
+      fillEditor(post, true);inlineState = 'ready';mountPostInline();
+    } catch (error) {
+      if (session !== editorSession) return;
+      inlineState = 'error';inlineError = error.message;mountPostInline();
+    }
+  };
   async function api(url, data = null) {
     if (data !== null) { cache.clear(); generation++; }
     const options = {
@@ -97,14 +187,17 @@
     const params = new URLSearchParams({ page, perPage, excludeType: 'page' });
     const search = document.getElementById('postSearch')?.value.trim(),
       type = document.getElementById('postTypeFilter')?.value,
-      visibility = document.getElementById('postVisibilityFilter')?.value;
+      visibility = document.getElementById('postVisibilityFilter')?.value,
+      category = document.getElementById('postCategoryFilter')?.value;
     if (search) params.set('search', search);
     if (type) params.set('type', type);
     if (visibility) params.set('visibility', visibility);
+    if (category) params.set('category', category);
     if (status !== 'all') params.set('status', status);
     return params;
   }
   async function load(nextPage = 1) {
+    window.loadPostCategoryFilter();
     page = nextPage;
     try {
       const key = query().toString(), version = ++requestVersion, requestedGeneration = generation;
@@ -146,10 +239,12 @@
       ? posts
           .map(
             (post) =>
-              ({ cells: [{ html: `<div class="font-medium">${esc(post.title)}</div><div class="mt-0.5 text-xs text-gray-400">${esc(post.slug)}</div>`, attributes: ` class="py-4 px-5"` }, { html: `${esc(post.author_name || '#' + post.author_id)}`, attributes: ` class="py-4 px-5"` }, { html: `${esc((post.category_names || []).join(', ') || '—')}`, attributes: ` class="py-4 px-5 text-xs text-gray-500"` }, { html: `<span class="rounded-lg bg-indigo-50 px-2 py-1 text-xs text-indigo-700">${esc(typeLabels[post.type] || post.type)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `<button type="button" onclick="cyclePostStatus(${Number(post.id)},this)" class="rounded-full px-3 py-1 text-xs ${statusColors[post.status] || 'bg-gray-100 text-gray-600'}">${esc(statusLabels[post.status] || post.status)}</button>`, attributes: ` class="py-4 px-5"` }, { html: `${post.views_count || 0}`, attributes: ` class="py-4 px-5"` }, { html: `${esc(post.published_at || post.created_at || '—')}`, attributes: ` class="py-4 px-5 text-xs"` }, { html: `<button onclick="previewPost(${post.id})" class="ml-2 text-sm text-emerald-600">پیش‌نمایش</button><button onclick="viewPost(${post.id})" class="ml-2 text-sm text-indigo-600">جزئیات</button><button onclick="editPost(${post.id})" class="ml-2 text-sm text-indigo-600">ویرایش</button>${post.status === 'trash' ? `<button onclick="restorePost(${post.id})" class="ml-2 text-sm text-green-600">بازیابی</button>` : ''}<button onclick="deletePost(${post.id})" class="text-sm text-red-500">${post.status === 'trash' ? 'حذف دائمی' : 'زباله‌دان'}</button>`, attributes: ` class="py-4 px-5 text-left whitespace-nowrap"` }], attributes: ` class="hover:bg-gray-50"` })
+              ({ cells: [{ html: `<a href="#post-editor" data-post-title="${Number(post.id)}" onclick="editPost(${Number(post.id)});return false" class="font-medium text-indigo-600 hover:underline">${esc(post.title)}</a><div class="mt-0.5 text-xs text-gray-400">${esc(post.slug)}</div>`, attributes: ` class="py-4 px-5"` }, { html: `${esc(post.author_name || '#' + post.author_id)}`, attributes: ` class="py-4 px-5"` }, { html: `${esc((post.category_names || []).join(', ') || '—')}`, attributes: ` class="py-4 px-5 text-xs text-gray-500"` }, { html: `<span class="rounded-lg bg-indigo-50 px-2 py-1 text-xs text-indigo-700">${esc(typeLabels[post.type] || post.type)}</span>`, attributes: ` class="py-4 px-5"` }, { html: `<button type="button" onclick="cyclePostStatus(${Number(post.id)},this)" class="rounded-full px-3 py-1 text-xs ${statusColors[post.status] || 'bg-gray-100 text-gray-600'}">${esc(statusLabels[post.status] || post.status)}</button>`, attributes: ` class="py-4 px-5"` }, { html: `${post.views_count || 0}`, attributes: ` class="py-4 px-5"` }, { html: `${esc(post.published_at || post.created_at || '—')}`, attributes: ` class="py-4 px-5 text-xs"` }, { html: `<button onclick="previewPost(${post.id})" class="ml-2 text-sm text-emerald-600">پیش‌نمایش</button><button onclick="viewPost(${post.id})" class="ml-2 text-sm text-indigo-600">جزئیات</button><button type="button" data-post-inline-edit="${Number(post.id)}" aria-expanded="false" aria-controls="postInlineRow-${Number(post.id)}" onclick="togglePostInlineEdit(${Number(post.id)})" class="ml-2 text-sm text-indigo-600">ویرایش</button>${post.status === 'trash' ? `<button onclick="restorePost(${post.id})" class="ml-2 text-sm text-green-600">بازیابی</button>` : ''}<button onclick="deletePost(${post.id})" class="text-sm text-red-500">${post.status === 'trash' ? 'حذف دائمی' : 'زباله‌دان'}</button>`, attributes: ` class="py-4 px-5 text-left whitespace-nowrap"` }], attributes: ` data-post-row-id="${Number(post.id)}" class="hover:bg-gray-50"` })
           )
       : [{ cells: [{ html: "نوشته‌ای یافت نشد", attributes: " colspan=\"8\" class=\"py-12 text-center text-gray-400\"" }], attributes: "" }];
+    restorePostMetadata();
     window.AdminPanelTable.setRows(tbody.closest('table'), rows);
+    mountPostInline();
     document.querySelectorAll('[data-post-status-count]').forEach((element) => {
       const key = element.dataset.postStatusCount;
       element.textContent =
@@ -187,7 +282,38 @@
     if (element) element.value = value ?? '';
   }
   const editorSelection = { categories: new Set(), related: new Set() };
-  let editorOptionsVersion = 0, editorCoverMediaId = null, editorCoverUrl = '', editorCoverUpload = null, editorSaving = false;
+  let categoryChoices = null, categoryChoicesPending = null, categoryChoicesVersion = 0;
+  function loadCategoryChoices() {
+    if (categoryChoices) return Promise.resolve(categoryChoices);
+    if (categoryChoicesPending) return categoryChoicesPending;
+    const version = categoryChoicesVersion;
+    const request = api('/analytics/admin-post-categories').then(items => {
+      if (version === categoryChoicesVersion) categoryChoices = items;
+      return items;
+    }).finally(() => { if (version === categoryChoicesVersion) categoryChoicesPending = null; });
+    categoryChoicesPending = request;
+    return request;
+  }
+  window.loadPostCategoryFilter = async () => {
+    const select = document.getElementById('postCategoryFilter');
+    if (!select || select.dataset.categoryChoicesVersion === String(categoryChoicesVersion)) return;
+    const version = categoryChoicesVersion;
+    select.setAttribute('aria-busy', 'true');
+    try {
+      const items = await loadCategoryChoices();
+      if (version !== categoryChoicesVersion || select.dataset.categoryChoicesVersion === String(version)) return;
+      const selected = select.value;
+      const options = items.map(item => new Option(editorText(item.title_fa || item.slug, item.title_en || item.title_fa || item.slug), String(item.id)));
+      select.replaceChildren(new Option(editorText('همه دسته‌ها', 'All categories'), ''), ...options);
+      select.value = selected && options.some(option => option.value === selected) ? selected : '';
+      select.dataset.categoryChoicesVersion = String(version);
+      select.removeAttribute('title');
+      if (selected && !select.value) load(1);
+    } catch (_) {
+      select.title = editorText('بارگیری دسته‌ها ناموفق بود؛ دوباره فهرست را باز کنید.', 'Categories could not be loaded. Open the list again to retry.');
+    } finally { if (version === categoryChoicesVersion) select.removeAttribute('aria-busy'); }
+  };
+  let editorOptionsVersion = 0, editorCoverMediaId = null, editorCoverUrl = '', editorCoverUpload = null, editorSaving = false, editorAudience = null;
   let relatedOptions = [], relatedSearch = '';
   const editorText = (fa, en) => document.documentElement.lang.startsWith('en') ? en : fa;
   const splitSelection = value => new Set(String(value || '').split(/[,،]/).map(value => value.trim()).filter(Boolean));
@@ -214,7 +340,7 @@
   };
   window.loadPostEditorSelections = async () => {
     const version = ++editorOptionsVersion;
-    const results = await Promise.allSettled([api('/analytics/admin-post-categories'), api('/analytics/admin-posts?editorOptions=1')]);
+    const results = await Promise.allSettled([loadCategoryChoices(), api('/analytics/admin-posts?editorOptions=1')]);
     if (version !== editorOptionsVersion) return;
     if (results[0].status === 'fulfilled') {
       const options = results[0].value.map(item => ({ id: item.id, title: editorText(item.title_fa || item.slug, item.title_en || item.title_fa || item.slug) }));
@@ -233,19 +359,17 @@
       document.getElementById(index === 0 ? 'peCategories' : 'peRelated')?.append(message);
     });
   };
-  function editorData() {
+  function editorData(metadataOnly = inlineEditingId !== null) {
     const title = document.getElementById('peTitle').value.trim();
     if (!title) {
       alert('عنوان نوشته الزامی است.');
       return null;
     }
-    peSyncToCode();
+    if (!metadataOnly) peSyncToCode();
     return {
       title,
       slug: document.getElementById('peSlug').value.trim(),
-      content: document.getElementById('peContent').value,
-      summary: document.getElementById('peSummary').value.trim(),
-      description: document.getElementById('peDescription').value.trim(),
+      ...(!metadataOnly ? {content: document.getElementById('peContent').value, summary: document.getElementById('peSummary').value.trim(), description: document.getElementById('peDescription').value.trim(), visibility_user_id: editorAudience} : {}),
       status: document.getElementById('peStatus').value,
       visibility: document.getElementById('peVisibility').value,
       published_at: document.getElementById('pePublishedAt').value || null,
@@ -258,13 +382,16 @@
       guid: document.getElementById('peGuid').value.trim(),
     };
   }
-  function fillEditor(post = {}) {
+  function fillEditor(post = {}, metadataOnly = false) {
+    editorAudience = post.visibility_user_id ?? null;
     setValue('peTitle', post.title);
     setValue('peSlug', post.slug);
-    setValue('peContent', post.content);
-    document.getElementById('peVisualContent').innerHTML = post.content || '';
-    setValue('peSummary', post.summary);
-    setValue('peDescription', post.description);
+    if (!metadataOnly) {
+      setValue('peContent', post.content);
+      document.getElementById('peVisualContent').innerHTML = post.content || '';
+      setValue('peSummary', post.summary);
+      setValue('peDescription', post.description);
+    }
     const statusField = document.getElementById('peStatus');
     if (post.status && ![...statusField.options].some(option => option.value === post.status)) {
       const option = document.createElement('option'); option.value = post.status;
@@ -297,19 +424,24 @@
     document.getElementById('pePostId').textContent = post.id || '—';
     const panelTitle = document.getElementById('panelPageTitle');
     if (panelTitle) panelTitle.textContent = editorText('نوشته ها', 'Posts');
-    peSetEditorMode('visual');
-    peUpdateWordCount();
+    if (!metadataOnly) { peSetEditorMode('visual'); peUpdateWordCount(); }
     updateCoverPreview();
   }
   window.openPostEditor = () => {
+    if (editorSaving) return;
+    closePostInline(); editorSession++;
     editingId = null;
     showSection('post-editor');
     fillEditor();
   };
   window.openAddPostModal = window.openPostEditor;
   window.editPost = async (id) => {
+    if (editorSaving) return;
+    closePostInline();
+    const session = ++editorSession;
     try {
       const post = await api('/analytics/admin-posts/' + id);
+      if (session !== editorSession) return;
       editingId = id;
       closeModal();
       showSection('post-editor');
@@ -318,30 +450,48 @@
       alert(error.message);
     }
   };
-  window.closePostEditor = () => { editorOptionsVersion++; showSection('posts'); };
+  window.closePostEditor = () => { editorSession++; editorOptionsVersion++; showSection('posts'); };
   window.savePostEditor = async (action) => {
     if (editorSaving) return;
+    const session = editorSession, inlineId = inlineEditingId, postId = editingId;
+    if (inlineId !== null && inlineState !== 'ready') return;
     if (editorCoverUpload) {
       try { await editorCoverUpload; } catch (_) { return; }
       if (editorSaving) return;
     }
+    if (session !== editorSession) return;
     const data = editorData();
     if (!data) return;
     if (action === 'draft') data.status = 'draft';
     editorSaving = true;
+    const inlineFields = document.querySelector('[data-post-inline-fields]');
+    if (inlineFields) inlineFields.disabled = true;
+    document.querySelector('.post-inline-editor')?.setAttribute('aria-busy','true');
+    const cancel = document.querySelector('[data-post-inline-cancel]');
+    if (cancel) cancel.disabled = true;
 
     try {
-      if (editingId) await api(`/analytics/admin-posts/${editingId}/update`, data);
+      if (inlineId !== null) await api(`/analytics/admin-posts/${inlineId}/metadata`, data);
+      else if (postId) await api(`/analytics/admin-posts/${postId}/update`, data);
       else {
         const result = await api('/analytics/admin-posts', data);
-        editingId = result.id;
+        if (session === editorSession) editingId = result.id;
       }
+      if (session !== editorSession) return;
       alert('نوشته با موفقیت ذخیره شد.');
+      if (inlineId !== null) closePostInline();
       showSection('posts');
-      await load(1);
+      await load(inlineId !== null ? page : 1);
     } catch (error) {
-      alert(error.message);
-    } finally { editorSaving = false; }
+      if (session === editorSession) alert(error.message);
+    } finally {
+      editorSaving = false;
+      const fields = document.querySelector('[data-post-inline-fields]');
+      if (fields) fields.disabled = false;
+      document.querySelector('.post-inline-editor')?.setAttribute('aria-busy','false');
+      const cancel = document.querySelector('[data-post-inline-cancel]');
+      if (cancel) cancel.disabled = false;
+    }
   };
   window.movePostToTrash = async () => {
     if (!editingId) return;
@@ -395,20 +545,23 @@
     }
   };
   window.previewPostEditor = async () => {
+    const session = editorSession;
     if (editorCoverUpload) { try { await editorCoverUpload; } catch (_) { return; } }
+    if (session !== editorSession) return;
     const data = editorData();
-    if (data) return window.previewPost(null, data);
+    if (data) return window.previewPost(editingId, {...data,...(inlineText||{})});
   };
   window.previewPost = async (id, draft = null) => {
     try {
       const post = draft || await api('/analytics/admin-posts/' + id),
+        editAction = draft ? 'closeModal()' : `editPost(${Number(post.id)})`,
         categories = String(post.categories || '')
           .split(',')
           .map((item) => item.trim())
           .filter(Boolean),
         documentHtml = `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}body{margin:0;background:#fff;color:#374151;font-family:Tahoma,Arial,sans-serif;line-height:2}.page{max-width:850px;margin:auto;padding:48px 28px}h1{color:#111827;font-size:2.25rem;line-height:1.45;margin:0 0 20px}.meta{display:flex;flex-wrap:wrap;gap:12px 28px;border-bottom:1px solid #eee;padding-bottom:20px;margin-bottom:28px;color:#6b7280;font-size:14px}.cover{display:block;width:100%;max-height:430px;object-fit:cover;border-radius:20px;margin-bottom:28px}.tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}.tag{background:#eef2ff;color:#4338ca;border-radius:999px;padding:3px 12px;font-size:13px}.summary{background:#eef2ff;border:1px solid #e0e7ff;color:#312e81;padding:20px;border-radius:18px;margin-bottom:28px}.description{color:#6b7280;margin-bottom:28px}.content{font-size:16px;text-align:justify}.content img{max-width:100%;height:auto}.content h2{color:#111827;font-size:1.55rem;margin-top:38px}.content h3{color:#111827;font-size:1.25rem;margin-top:30px}.content a{color:#4f46e5}.content blockquote{border-right:4px solid #c7d2fe;background:#f8fafc;margin:24px 0;padding:14px 20px;border-radius:12px}.empty{color:#9ca3af;text-align:center;padding:40px}</style></head><body><main class="page"><h1>${esc(post.title)}</h1><div class="meta"><span>نویسنده: ${esc(post.author_name || '—')}</span><span>تاریخ انتشار: ${esc(post.published_at || 'منتشر نشده')}</span><span>${post.views_count || 0} بازدید</span></div>${post.cover ? `<img class="cover" src="${esc(post.cover)}" alt="${esc(post.title)}">` : ''}${categories.length ? `<div class="tags">${categories.map((category) => `<span class="tag">${esc(category)}</span>`).join('')}</div>` : ''}${post.summary ? `<div class="summary">${esc(post.summary)}</div>` : ''}${post.description ? `<div class="description">${esc(post.description)}</div>` : ''}<article class="content">${post.content || '<div class="empty">این نوشته هنوز محتوایی ندارد.</div>'}</article></main></body></html>`;
       document.getElementById('modalContainer').innerHTML =
-        `<div class="fixed inset-0 z-50 flex flex-col bg-gray-900/80 p-3 md:p-6"><div class="mx-auto flex w-full max-w-6xl items-center justify-between rounded-t-2xl bg-gray-900 px-5 py-3 text-white"><div><span class="font-medium">پیش‌نمایش نوشته</span><span class="mr-3 text-xs text-gray-400">${esc(statusLabels[post.status] || post.status)}</span></div><div class="flex items-center gap-3"><button onclick="editPost(${post.id})" class="rounded-xl bg-indigo-600 px-4 py-2 text-sm">ویرایش</button><button onclick="closeModal()" class="text-3xl text-gray-300">×</button></div></div><iframe id="postPreviewFrame" sandbox="" class="mx-auto h-full w-full max-w-6xl rounded-b-2xl bg-white" title="پیش‌نمایش ${esc(post.title)}"></iframe></div>`;
+        `<div class="fixed inset-0 z-50 flex flex-col bg-gray-900/80 p-3 md:p-6"><div class="mx-auto flex w-full max-w-6xl items-center justify-between rounded-t-2xl bg-gray-900 px-5 py-3 text-white"><div><span class="font-medium">پیش‌نمایش نوشته</span><span class="mr-3 text-xs text-gray-400">${esc(statusLabels[post.status] || post.status)}</span></div><div class="flex items-center gap-3"><button onclick="${editAction}" class="rounded-xl bg-indigo-600 px-4 py-2 text-sm">ویرایش</button><button onclick="closeModal()" class="text-3xl text-gray-300">×</button></div></div><iframe id="postPreviewFrame" sandbox="" class="mx-auto h-full w-full max-w-6xl rounded-b-2xl bg-white" title="پیش‌نمایش ${esc(post.title)}"></iframe></div>`;
       document.getElementById('postPreviewFrame').srcdoc = documentHtml;
     } catch (error) {
       alert(error.message);
@@ -434,8 +587,8 @@
       const response = await fetch('/analytics/admin-media/upload-post-cover', {
         method: 'POST', credentials: 'same-origin', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': window.adminCsrfToken || '' }, body: form,
       });
-      const payload = await response.json(), body = payload.data ?? payload;
-      if (!response.ok || payload.success === false || !body.url || !body.id) throw new Error(editorText('بارگذاری تصویر ناموفق بود.', 'Image upload failed.'));
+      const payload = await response.json(), envelope = payload.data ?? payload, body = envelope.data ?? envelope;
+      if (!response.ok || payload.success === false || envelope.success === false || !body.url || !body.id) throw new Error(envelope.message || payload.message || editorText('بارگذاری تصویر ناموفق بود.', 'Image upload failed.'));
       if (version !== editorOptionsVersion) throw new Error('Editor changed');
       editorCoverUrl = body.url; editorCoverMediaId = Number(body.id);
       updateCoverPreview();
@@ -549,11 +702,18 @@
   window.peInsertHeading = () => peExec('formatBlock', 'h2');
   window.peInsertList = () => peExec('insertUnorderedList');
   window.loadPosts = () => load(page);
+  function invalidatePostChoices(url) {
+    if (!/\/analytics\/admin-post-categories(?:[/?]|$)/.test(url)) return;
+    categoryChoices = null; categoryChoicesPending = null; categoryChoicesVersion++;
+    window.loadPostCategoryFilter();
+  }
   window.addEventListener('sornaz:data-mutated', event => {
-    if (/\/analytics\/admin-post(?:s|s-categories)(?:[/?]|$)/.test(event.detail?.url || '')) { cache.clear(); generation++; }
+    invalidatePostChoices(event.detail?.url || '');
+    if (/\/analytics\/admin-post(?:s|-categories)(?:[/?]|$)/.test(event.detail?.url || '')) { cache.clear(); generation++; }
   });
   window.addEventListener('sornaz:remote-mutation', event => {
-    if (!/\/analytics\/admin-post(?:s|s-categories)(?:[/?]|$)/.test(event.detail?.url || '')) return;
+    invalidatePostChoices(event.detail?.url || '');
+    if (!/\/analytics\/admin-post(?:s|-categories)(?:[/?]|$)/.test(event.detail?.url || '')) return;
     cache.clear(); generation++;
     if (!document.getElementById('posts')?.classList.contains('hidden')) load(page);
   });

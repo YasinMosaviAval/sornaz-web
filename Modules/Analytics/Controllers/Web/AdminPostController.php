@@ -35,6 +35,14 @@ class AdminPostController
         });
     }
 
+    public function metadata(int $id)
+    {
+        return $this->run(function () use ($id) {
+            $this->service->updateMetadata((int) auth()->id(), $id, $this->payload());
+            return ['success' => true];
+        });
+    }
+
     public function trash(int $id)
     {
         return $this->run(function () use ($id) {

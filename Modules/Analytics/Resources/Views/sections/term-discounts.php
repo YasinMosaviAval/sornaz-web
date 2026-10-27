@@ -1,5 +1,5 @@
 <div data-panel-content data-term-panel="discounts" class="hidden">
-    <div class="mb-6 flex justify-end">
+    <div data-panel-page-action-group data-term-panel-actions="discounts" class="hidden mb-6 flex justify-end">
         <button type="button" onclick="openAddTermDiscountModal()" class="flex items-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-white"><i class="fas fa-plus" aria-hidden="true"></i><?= e(locale()==='en' ? 'Add discount' : 'افزودن تخفیف جدید') ?></button>
     </div>
     <div class="mb-6 rounded-3xl bg-white p-3 shadow-sm"><div id="termDiscountsBranchTabs" class="flex gap-2 overflow-x-auto"></div></div>

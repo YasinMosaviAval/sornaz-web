@@ -38,8 +38,10 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/not
       const raw = await response.text();
       let result; try { result = JSON.parse(raw); } catch (_) { throw Error(raw.slice(0, 2000)); }
       assert.equal(response.status, 200, JSON.stringify(result));
-      uploaded.push(result.data);
-      const saved = path.resolve(root, result.data.url.replace(/^\/+/, ''));
+      assert.equal(result.status, 200);
+      assert.equal(result.data.success, true);
+      uploaded.push(result.data.data);
+      const saved = path.resolve(root, result.data.data.url.replace(/^\/+/, ''));
       assert.ok(saved.startsWith(path.resolve(root) + path.sep));
       assert.deepEqual(fs.readFileSync(saved), bytes, 'Actual multipart upload must persist identical bytes');
     }

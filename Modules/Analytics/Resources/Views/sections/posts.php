@@ -17,7 +17,7 @@
 
     <!-- فیلتر سریع -->
     <div class="bg-white rounded-3xl p-4 mb-6 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <input type="text" id="postSearch" placeholder="جستجو عنوان / اسلاگ..."
                    onkeyup="filterPosts()"
                    class="w-full border border-gray-300 rounded-2xl py-3 px-4 focus:outline-none focus:border-indigo-500">
@@ -33,6 +33,9 @@
                 <option value="private">خصوصی</option>
                 <option value="followers">دنبال‌کنندگان</option>
                 <option value="premium">ویژه</option>
+            </select>
+            <select id="postCategoryFilter" aria-label="<?= e(locale() === 'en' ? 'Categories' : 'دسته‌ها') ?>" onchange="filterPosts()" onfocus="window.loadPostCategoryFilter?.()" class="w-full border border-gray-300 rounded-2xl py-3 px-4">
+                <option value="" selected><?= e(locale() === 'en' ? 'All categories' : 'همه دسته‌ها') ?></option>
             </select>
         </div>
     </div>

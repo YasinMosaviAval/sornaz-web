@@ -21,14 +21,14 @@
             <h1 class="text-3xl font-bold">مدیریت ترم‌ها</h1>
             <p class="text-gray-500 mt-1">ترم‌های در حال برگزاری، پایان‌یافته و تعلیق‌شده</p>
         </div>
-        <div class="flex flex-wrap gap-3">
+        <div data-panel-page-action-group data-term-panel-actions="terms" class="flex flex-wrap gap-3">
             <button onclick="openAddTermModal()"
                     class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 transition">
                 <i class="fas fa-plus"></i> افزودن ترم جدید
             </button>
-            <button onclick="openTeacherTermBatchModal()"
+            <button onclick="openTeacherTermBatchModal()" data-panel-page-action="teacher-terms" data-panel-add-kind="list"
                     class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 transition">
-                <i class="fas fa-plus"></i> <?= locale() === 'en' ? 'Define teacher terms' : 'تعریف ترم های اساتید' ?>
+                <i class="fas fa-list-ul"></i> <?= locale() === 'en' ? 'Define teacher terms' : 'تعریف ترم های اساتید' ?>
             </button>
             <button onclick="exportTermsToExcel()"
                     class="border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl flex items-center gap-2">

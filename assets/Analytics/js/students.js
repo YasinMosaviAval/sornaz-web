@@ -722,6 +722,14 @@
 
   window.validateTermStudentStep = step => validateStudentData(readStudentForm('stu'), step);
 
+  window.readTermStudentFinance = function () {
+    const count = document.querySelector('[data-assignment-installments]');
+    const discount = document.querySelector('[data-assignment-discount]');
+    if (!count || !discount) return {};
+    if (!count.reportValidity()) return null;
+    return {installmentCount:Number(count.value), discountId:Number(discount.value)};
+  };
+
   window.openAddStudentModal = async function () {
     if (!document.getElementById('modalContainer')) return alert('modalContainer پیدا نشد!');
     try {
@@ -740,7 +748,11 @@
     clearStudentFieldErrors();
     const data = readStudentForm('stu');
     const assignmentId = Number(document.querySelector('[data-student-term-id]')?.dataset.studentTermId || 0);
-    if (assignmentId) { data.termId = assignmentId; data.termKey = String(assignmentId); data.termStatus = 'open'; }
+    if (assignmentId) {
+      const finance = window.readTermStudentFinance();
+      if (finance === null) return;
+      Object.assign(data, finance, {termId:assignmentId, termKey:String(assignmentId), termStatus:'open'});
+    }
     data.classroomId = Number(document.querySelector('[data-assignment-classroom]')?.value || 0);
     if (!validateStudentData(data)) return;
     savingStudent = true;

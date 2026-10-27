@@ -4,6 +4,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_CORE_PATH||'../storage/notation-
  for(const language of ['fa','en']){
   const page=await browser.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.setContent(`<html lang="${language}"><div id="modalContainer"></div></html>`);
+  await page.addScriptTag({path:'assets/vendor/tailwind/tailwindcss.js'});
   await page.addScriptTag({path:'assets/Analytics/js/term-templates.js'});await page.addScriptTag({path:'assets/Analytics/js/terms.js'});
   await page.evaluate(()=>{
    window.termBranches=[{id:10,organizationId:100,kind:'academy'},{id:11,organizationId:101,academyId:100,kind:'branch'},{id:12,organizationId:102,academyId:100,kind:'branch'}];
@@ -16,9 +17,21 @@ const {chromium}=require(process.env.PLAYWRIGHT_CORE_PATH||'../storage/notation-
   for(const mode of ['add','edit','inline'])for(const courseId of [1,2]){
    const prefix=mode==='add'?'':mode==='edit'?'editTerm':'inlineTerm9';const field=name=>'#'+(prefix||'term')+name;
    await page.evaluate(({mode,courseId})=>{
-    const item={id:9,courseId,organizationUserId:courseId===1?11:10,sessionCount:1,teachers:[{id:courseId===1?1:2,name:'Selected teacher'}],sessions:[]};
+    const item={id:9,courseId,organizationUserId:courseId===1?11:10,sessionCount:1,installmentCount:3,discountId:99,teachers:[{id:courseId===1?1:2,name:'Selected teacher'}],sessions:[]};
     document.getElementById('modalContainer').innerHTML=mode==='add'?getTermAddModalHTML():mode==='edit'?getTermEditModalHTML(item):getTermInlineEditRowHTML(item);
    },{mode,courseId});
+   assert.equal(await page.locator(field('InstallmentCount')+','+field('Discount')).count(),0,`${mode}: student payment settings are absent from the term form`);
+   assert.equal(await page.locator(field('TeachersField')).evaluate(element=>element.textContent.includes('برای ترم باز، دست‌کم')),false,`${mode}: static teacher explanation is removed`);
+   assert.equal(await page.locator(field('TeacherAvailabilityNote')).count(),1,`${mode}: operational teacher warnings remain available`);
+   if(mode==='add')for(const width of [390,800,1280]){
+    await page.setViewportSize({width,height:900});
+    await page.waitForFunction(({name,weekday})=>{
+     const first=document.querySelector(name).getBoundingClientRect(),second=document.querySelector(weekday).getBoundingClientRect();
+     return first.width>0&&Math.abs(first.width-second.width)<1;
+    },{name:field('Name'),weekday:field('RecurrenceWeekday')});
+    const widths=await page.locator(field('Name')+','+field('RecurrenceWeekday')).evaluateAll(elements=>elements.map(element=>element.getBoundingClientRect().width));
+    assert.ok(Math.abs(widths[0]-widths[1])<1,`${language}/${width}: weekday width matches term name`);
+   }
    await page.selectOption(field('Branch'),courseId===1?'11':'10');
    await page.selectOption(field('Course'),String(courseId));
    await page.evaluate(prefix=>refreshTermCourse(prefix),prefix);
@@ -45,5 +58,5 @@ const {chromium}=require(process.env.PLAYWRIGHT_CORE_PATH||'../storage/notation-
   }
   assert.deepEqual(errors,[]);await page.close();
  }
- console.log('Term people UI: add/edit/inline, fa/en, course-scoped teachers retained across shared and branch rooms, foreign/other-lesson exclusion and escaped names passed.');
+ console.log('Term people UI: add/edit/inline, fa/en, removed finance fields/static teacher help, responsive weekday width, course-scoped teachers retained across rooms, foreign/other-lesson exclusion and escaped names passed.');
 }finally{await browser.close();}})().catch(error=>{console.error(error);process.exitCode=1;});

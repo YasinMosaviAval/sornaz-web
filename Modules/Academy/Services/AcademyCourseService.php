@@ -272,6 +272,7 @@ class AcademyCourseService
             if (!$belongs) {
                 throw new RuntimeException('ترم متعلق به سازمان انتخاب‌شده نیست.');
             }
+            $invoicePlan = $this->studentInvoicePlan($actor, $termId, $term, $organization, $d, $requireEmptyTerm);
             $approved = !$this->isReceptionist($actor);
             $now = $this->now();
             $approval = ['approved_at' => $approved ? $now : null, 'approved_by' => $approved ? $actor : null];
@@ -339,14 +340,8 @@ class AcademyCourseService
                     throw new RuntimeException('ثبت بازه‌های زمانی هنرجو در دیتابیس کامل نشد.');
                 }
             }
-            $template = DB::table('academy_branch_course_term_invoices')->where('term_id', $termId)->whereNull('member_id')->whereNull('deleted_at')->orderBy('term_invoice_id', 'DESC')->first();
-            $total = (float) ($template['payable_amount'] ?? $term['price'] ?? 0);
-            $invoiceId = DB::table('academy_branch_course_term_invoices')->insertGetId(['term_id' => $termId, 'member_id' => $memberId, 'discount_id' => $template['discount_id'] ?? null, 'payable_amount' => $total, 'currency_id' => $template['currency_id'] ?? $term['currency_id'], 'status' => $approved ? 'issued' : 'draft', 'due_date' => $term['start_date'] ?? date('Y-m-d'), 'issued_at' => $now, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
-            $parts = $template ? DB::table('academy_branch_course_term_invoice_installments')->where('invoice_id', (int) $template['term_invoice_id'])->whereNull('deleted_at')->orderBy('installment_number')->get() : [];
-            if (!$parts) {
-                $parts = [['installment_number' => 1, 'amount' => $total, 'due_date' => $term['start_date'] ?? date('Y-m-d')]];
-            }
-            foreach ($parts as $p) {
+            $invoiceId = DB::table('academy_branch_course_term_invoices')->insertGetId(['term_id' => $termId, 'member_id' => $memberId, 'discount_id' => $invoicePlan['discountId'], 'payable_amount' => $invoicePlan['total'], 'currency_id' => $invoicePlan['currencyId'], 'status' => $approved ? 'issued' : 'draft', 'due_date' => $term['start_date'] ?? date('Y-m-d'), 'issued_at' => $now, 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
+            foreach ($invoicePlan['parts'] as $p) {
                 DB::table('academy_branch_course_term_invoice_installments')->insert(['invoice_id' => $invoiceId, 'installment_number' => (int) $p['installment_number'], 'amount' => $p['amount'], 'due_date' => $p['due_date'], 'status' => $approved ? 'approved' : 'pending', 'created_at' => $now, 'created_by' => $actor, 'updated_at' => $now, 'updated_by' => $actor] + $approval);
             }
             if (!empty($d['studentSchedule'])) {
@@ -359,6 +354,45 @@ class AcademyCourseService
             }
             return ['id' => $memberId, 'member_id' => $memberId, 'user_id' => $userId, 'status' => $memberStatus];
         }));
+    }
+
+    private function studentInvoicePlan(int $actor, int $termId, array $term, array $organization, array $data, bool $assignment): array
+    {
+        $template = DB::table('academy_branch_course_term_invoices')->where('term_id', $termId)->whereNull('member_id')->whereNull('deleted_at')->orderBy('term_invoice_id', 'DESC')->first();
+        $total = $template['payable_amount'] ?? $term['price'] ?? 0;
+        $parts = $template ? DB::table('academy_branch_course_term_invoice_installments')->where('invoice_id', (int) $template['term_invoice_id'])->whereNull('deleted_at')->orderBy('installment_number')->get() : [];
+        if (!$parts) $parts = [['installment_number' => 1, 'amount' => $total, 'due_date' => $term['start_date'] ?? date('Y-m-d')]];
+        $plan = ['total' => $total, 'discountId' => $template['discount_id'] ?? null, 'currencyId' => (int) ($template['currency_id'] ?? $term['currency_id']), 'parts' => $parts];
+        if ($assignment && (array_key_exists('installmentCount', $data) || array_key_exists('discountId', $data))) {
+            return $this->assignmentInvoicePlan($actor, $term, $organization, $data, $plan);
+        }
+        return $plan;
+    }
+
+    private function assignmentInvoicePlan(int $actor, array $term, array $organization, array $data, array $plan): array
+    {
+        $count = $this->assignmentFinanceInteger(array_key_exists('installmentCount', $data) ? $data['installmentCount'] : count($plan['parts']), 1);
+        if ($count > max(2, (int) $term['session_count'])) throw new RuntimeException('تعداد اقساط با تعداد جلسات ترم سازگار نیست.', 422);
+        $discountId = $this->assignmentFinanceInteger(array_key_exists('discountId', $data) ? $data['discountId'] : ($plan['discountId'] ?? 0), 0);
+        (new AcademyDiscountService())->assertAvailable($actor, $discountId, (int) $organization['user_id']);
+        $total = InvoiceLedger::cents($plan['total']);
+        if ($total === 0) {
+            if ($count !== 1 || $discountId !== 0) throw new RuntimeException('ترم رایگان فقط یک قسط و بدون تخفیف دارد.', 422);
+        } else InvoiceLedger::validateDistribution($total, $count);
+        $plan['discountId'] = $discountId ?: null;
+        $start = $term['start_date'] ?? date('Y-m-d');
+        $plan['parts'] = [];
+        for ($index = 0; $index < $count; ++$index) {
+            $plan['parts'][] = ['installment_number' => $index + 1, 'amount' => InvoiceLedger::share($total, $count, $index), 'due_date' => date('Y-m-d', strtotime($start . ' +' . $index . ' month'))];
+        }
+        return $plan;
+    }
+
+    private function assignmentFinanceInteger(mixed $value, int $minimum): int
+    {
+        $integer = (is_int($value) || is_string($value)) ? filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => $minimum]]) : false;
+        if ($integer === false) throw new RuntimeException('تعداد اقساط یا تخفیف انتخاب‌شده معتبر نیست.', 422);
+        return $integer;
     }
 
     private function studentRegistrationTerm(int $termId, bool $requireEmptyTerm): array

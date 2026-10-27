@@ -112,6 +112,7 @@ Router::get('/analytics/admin-posts', [AdminPostController::class, 'index'])->mi
 Router::get('/analytics/admin-posts/{id}', [AdminPostController::class, 'show'])->middleware('site-admin');
 Router::post('/analytics/admin-posts', [AdminPostController::class, 'store'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-posts/{id}/update', [AdminPostController::class, 'update'])->middleware(['site-admin', 'csrf']);
+Router::post('/analytics/admin-posts/{id}/metadata', [AdminPostController::class, 'metadata'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-posts/{id}/status', [AdminPostController::class, 'status'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-posts/{id}/trash', [AdminPostController::class, 'trash'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-posts/{id}/restore', [AdminPostController::class, 'restore'])->middleware(['site-admin', 'csrf']);

@@ -9,7 +9,7 @@ const {chromium} = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/notat
    page.on('pageerror',error=>errors.push(error.message));
    await page.route('**/*',route=>route.fulfill({body:'<html></html>',contentType:'text/html'}));
    await page.goto('http://panel.test/');
-   const css=fs.readFileSync('Modules/Analytics/Resources/Views/layouts/admin.php','utf8').match(/#mainContent > \.section h1[\s\S]*?\{ display:none; \}/)[0];
+   const css=fs.readFileSync('Modules/Analytics/Resources/Views/layouts/admin.php','utf8').match(/<style>([\s\S]*?)<\/style>/)[1];
    await page.setContent(`<html lang="${lang}"><style>.hidden{display:none}${css}</style><h1 id="panelPageTitle"></h1><main id="mainContent">
     <section id="example" class="section"><nav>Tabs</nav><div id="intro"><div><h1>Page title</h1><p id="description">Introduction</p></div><button id="add">Add</button></div><div id="filter">Holiday filter</div><form><label>Field<input></label><p id="help">Field guidance</p></form><div id="exampleModal" role="dialog"><h1>Dialog title</h1><p id="dialogHelp">Dialog guidance</p></div></section>
     <section id="account" class="section"><div id="accountIntro"><h1 id="accountPageTitle">Account title</h1><p data-panel-description id="accountDescription">Account intro</p></div><p id="accountMessage">Account data</p></section>

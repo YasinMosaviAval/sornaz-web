@@ -8,6 +8,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/not
     const errors = [];
     let submitted = '';
     page.on('pageerror', error => errors.push(error.message));
+    await page.addInitScript(() => localStorage.setItem('admin.gallery.mode', 'detailed'));
     await page.route('**/*', async route => {
       const path = new URL(route.request().url()).pathname;
       if (path === '/assets/Analytics/js/gallery.js' || path === '/assets/Analytics/js/gallery-templates.js')
@@ -21,17 +22,33 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/not
       if (path === '/analytics/admin-gallery') return route.fulfill({ json: { success: true, data: {
         owners: [{ userId: 2, name: 'نام آزمایشی' }], hideOwnerFilters: true,
         items: [
-          { id: 1, ownerId: 2, ownerName: 'نام آزمایشی', category: 'cover', type: 'image', title: 'کاور', url: '/cover.jpg' },
+          { id: 1, ownerId: 2, ownerName: 'نام آزمایشی', category: 'cover', type: 'image', title: 'کاور', summary: 'خلاصه کامل کاور', description: 'توضیحات کامل کاور', url: '/cover.jpg' },
           { id: 2, ownerId: 2, ownerName: 'نام آزمایشی', category: 'gallery', type: 'image', title: 'اول', url: '/one.jpg' },
           { id: 3, ownerId: 2, ownerName: 'نام آزمایشی', category: 'gallery', type: 'video', title: 'دوم', url: '/two.mp4' },
+          { id: 10, ownerId: 2, ownerName: 'نام آزمایشی', category: 'logo', type: 'image', title: 'لوگو', url: '/logo.jpg' },
+          { id: 11, ownerId: 2, ownerName: 'نام آزمایشی', category: 'intro_video', type: 'video', title: 'معرفی', url: '/intro.mp4' },
         ],
       } } });
-      return route.fulfill({ contentType: 'text/html; charset=utf-8', body: `<style>.hidden{display:none}</style><div id="gallery" class="section"><button id="add" onclick="openAddGalleryModal()">افزودن</button>${['cover','logo','intro_video','gallery'].map(k => `<section data-gallery-overview-category="${k}"><h2>${k}</h2><div class="gallery-grid" data-gallery-category="${k}"></div></section>`).join('')}</div><div id="modalContainer"></div><script>window.adminCsrfToken='test';window.closeModal=()=>document.getElementById('modalContainer').innerHTML='';</script><script src="/assets/Analytics/js/gallery-templates.js"></script><script src="/assets/Analytics/js/gallery.js"></script>` });
+      return route.fulfill({ contentType: 'text/html; charset=utf-8', body: `<style>.hidden{display:none}</style><div id="gallery" class="section"><button id="add" onclick="openAddGalleryModal()">افزودن</button>${['cover','logo','intro_video','gallery'].map(k => `<section data-gallery-overview-category="${k}"><h2>${k}</h2><div class="gallery-grid" data-gallery-category="${k}"></div></section>`).join('')}</div>${['cover','logo','intro_video','gallery'].map(k => `<div id="gallery-${k}" class="section hidden" data-gallery-category="${k}"><div class="gallery-view-controls"><button>نمایش با توضیحات</button></div><div class="gallery-grid" data-gallery-category="${k}"></div></div>`).join('')}<div id="modalContainer"></div><script>window.adminCsrfToken='test';window.closeModal=()=>document.getElementById('modalContainer').innerHTML='';</script><script src="/assets/Analytics/js/gallery-templates.js"></script><script src="/assets/Analytics/js/gallery.js"></script>` });
     });
     await page.goto('http://sornaz.test/');
     await page.waitForSelector('[data-gallery-category="cover"] .gallery-card');
     assert.deepEqual(await page.locator('[data-gallery-overview-category]').evaluateAll(nodes => nodes.map(n => n.dataset.galleryOverviewCategory)), ['cover','logo','intro_video','gallery']);
-    assert.equal(await page.locator('[data-gallery-category="gallery"] .gallery-card').count(), 2);
+    assert.equal(await page.locator('#gallery [data-gallery-category="gallery"] .gallery-card').count(), 2);
+    for (const category of ['cover', 'logo', 'intro_video', 'gallery']) {
+      const cards = page.locator(`#gallery-${category} .gallery-card`);
+      assert.equal(await cards.count(), category === 'gallery' ? 2 : 1);
+      assert.equal(await cards.evaluateAll(nodes => nodes.every(node => node.classList.contains('gallery-card-compact'))), true);
+    }
+    assert.equal(await page.locator('.gallery-view-controls,[onclick*="setGalleryDisplayMode"]').count(), 0);
+    assert.equal(await page.locator('.gallery-card-description').count(), 0);
+    assert.equal(await page.locator('.gallery-card').evaluateAll(nodes => nodes.some(node => node.textContent.includes('خلاصه کامل کاور'))), false);
+    await page.evaluate(() => setGalleryDisplayMode('detailed'));
+    assert.equal(await page.locator('.gallery-card').evaluateAll(nodes => nodes.every(node => node.classList.contains('gallery-card-compact'))), true, 'Legacy detailed preference and callers cannot restore detailed cards');
+    await page.evaluate(() => openGalleryViewer(1));
+    assert.ok((await page.locator('#galleryViewerModal').textContent()).includes('خلاصه کامل کاور'));
+    assert.ok((await page.locator('#galleryViewerModal').textContent()).includes('توضیحات کامل کاور'));
+    await page.evaluate(() => closeModal());
     await page.click('#add');
     assert.equal(await page.locator('#galleryTitle').inputValue(), 'آیتم شماره 3 گالری نام آزمایشی');
     await page.selectOption('#galleryCategory', 'cover');
@@ -45,6 +62,6 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/not
     await page.evaluate(() => saveGalleryItem());
     assert(submitted.includes('name="collection"') && submitted.includes('intro_video'));
     assert.deepEqual(errors, []);
-    console.log('Gallery overview: order, cards, titles, media type and submission passed.');
+    console.log('Gallery overview: fixed compact cards in all categories despite legacy preference, removed mode controls, preserved viewer details, titles, media type and submission passed.');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
