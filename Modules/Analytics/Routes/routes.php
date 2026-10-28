@@ -33,6 +33,9 @@ use Modules\Analytics\Controllers\Web\ChatController;
 use Modules\Analytics\Controllers\Api\ArticleController;
 
 Router::get('/analytics/admin-panel', [AnalyticsController::class, 'adminPanel'])->middleware('academy-panel');
+Router::get('/analytics/admin-database/tables', [\Modules\Analytics\Controllers\Web\AdminDatabaseController::class, 'tables'])->middleware('auth');
+Router::get('/analytics/admin-database/rows', [\Modules\Analytics\Controllers\Web\AdminDatabaseController::class, 'rows'])->middleware('auth');
+Router::get('/analytics/admin-database/download', [\Modules\Analytics\Controllers\Web\AdminDatabaseController::class, 'download'])->middleware('auth');
 Router::get('/analytics/public-ui-preview', [\Modules\Analytics\Controllers\Web\PublicUiPreviewController::class, 'index']);
 Router::post('/analytics/personal-offerings/lessons', [PersonalOfferingController::class, 'saveLesson'])->middleware(['auth', 'csrf']);
 Router::post('/analytics/personal-offerings/lessons/{id}', [PersonalOfferingController::class, 'saveLesson'])->middleware(['auth', 'csrf']);

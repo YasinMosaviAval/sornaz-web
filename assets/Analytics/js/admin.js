@@ -38,6 +38,7 @@ function hidePanelIntroduction(section) {
 
 function panelWorkspaceTitle(id) {
   const english = document.documentElement.lang.startsWith('en');
+  if (id === 'database-management') return english ? 'Database management' : 'مدیریت دیتابیس';
   const staffAccessPage = ['teachers', 'member-schedules'].includes(id) || (id === 'availability-exceptions' && window.holidayLeaveMode === 'member');
   if (staffAccessPage && document.getElementById(id)?.querySelector('.panel-page-tabs button[onclick*="roles"]')) {
     return english ? 'Users' : 'کاربران';
@@ -255,7 +256,7 @@ function showPanelActionTooltip(button) {
     tooltip.setAttribute('role', 'tooltip');
     document.body.appendChild(tooltip);
   }
-  const label = button.dataset.panelExportLabel || button.dataset.panelTableActionLabel;
+  const label = button.dataset.panelExportLabel || button.dataset.panelTableActionLabel || button.dataset.panelTooltip;
   const explanation = button.dataset.exportSubscriptionRequired === '1' || button.dataset.panelTableAction ? button.getAttribute('title') : '';
   tooltip.textContent = label + (explanation && explanation !== label ? '\n' + explanation : '');
   tooltip.dir = document.documentElement.dir || (document.documentElement.lang.startsWith('en') ? 'ltr' : 'rtl');
@@ -274,7 +275,7 @@ function showPanelActionTooltip(button) {
 }
 
 function watchPanelActionTooltips() {
-  const control = target => target.closest?.('[data-panel-export-icon],[data-panel-table-action]');
+  const control = target => target.closest?.('[data-panel-export-icon],[data-panel-table-action],[data-panel-tooltip]');
   document.addEventListener('pointerover', event => {
     const button = control(event.target);
     if (button && !button.contains(event.relatedTarget)) showPanelActionTooltip(button);
@@ -395,6 +396,7 @@ function showSection(id) {
     if (typeof renderMessagesBranchTabs === 'function') renderMessagesBranchTabs();
     if (typeof filterMessagesByBranch === 'function') filterMessagesByBranch('all');
   }
+  if (section === 'database-management') window.loadDatabaseManagement?.();
   if (section === 'notifications') {
     if (typeof renderNotificationsBranchTabs === 'function') renderNotificationsBranchTabs();
     if (typeof filterNotificationsByBranch === 'function') filterNotificationsByBranch('all');

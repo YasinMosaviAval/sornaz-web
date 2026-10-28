@@ -15,7 +15,7 @@ $paths = [
  'filterPointType' => 'type', 'filterPointCategory' => 'category', 'filterPointStatus' => 'status',
  'filterNotificationActivity' => 'activityTitle',
  'mediaType' => 'type', 'mediaMonth' => 'month',
- 'postTypeFilter' => 'type', 'postVisibilityFilter' => 'visibility', 'commentPostFilter' => 'postId',
+ 'postTypeFilter' => 'type', 'postVisibilityFilter' => 'visibility', 'postCategoryFilter' => 'categories', 'commentPostFilter' => 'postId',
 ];
 $sources = [
  'filterStaffLesson' => ['source' => 'staff_catalog.lessons', 'id' => 'id', 'label' => 'name'],
@@ -25,6 +25,7 @@ $sources = [
  'filterCourseLevel' => ['source' => 'levels'],
  'filterScheduleInstrument' => ['source' => 'lessons'], 'filterScheduleClassroom' => ['source' => 'classrooms'],
  'commentPostFilter' => ['source' => 'posts'],
+ 'postCategoryFilter' => ['source' => 'categories', 'label' => 'title_fa', 'labelEn' => 'title_en'],
 ];
 $paths += ['filterBranchDay' => 'day', 'filterBranchRepeat' => 'repeatPeriod', 'filterBranchTimezone' => 'timezone', 'filterBranchStatus' => 'status', 'filterMemberRole' => 'role', 'filterMemberDay' => 'day', 'filterMemberRepeat' => 'repeatPeriod', 'filterMemberTimezone' => 'timezone', 'filterMemberStatus' => 'status', 'filterScheduleInstrument' => 'lesson'];
 $result = [];
@@ -37,7 +38,7 @@ foreach ($files as $key => $file) {
  foreach ($selects as $select) {
   if (!preg_match('/\bid="([^"]+)"/u', $select[1], $idMatch)) continue;
   $id = $idMatch[1];
-  if (!preg_match('/^(filter|post(Type|Visibility)Filter$|commentPostFilter$|classroomType(Status|Category)Filter$|access(UserStatus|Role(Scope|Level)|Permission(Scope|Risk))$|media(Type|Month)$)/', $id)) continue;
+  if (!preg_match('/^(filter|post(Type|Visibility|Category)Filter$|commentPostFilter$|classroomType(Status|Category)Filter$|access(UserStatus|Role(Scope|Level)|Permission(Scope|Risk))$|media(Type|Month)$)/', $id)) continue;
   preg_match_all('/<option\b([^>]*)>(.*?)<\/option>/su', $select[2], $options, PREG_SET_ORDER);
   $values = []; $label = '';
   foreach ($options as $option) {
@@ -48,6 +49,7 @@ foreach ($files as $key => $file) {
   }
   $field = $paths[$id] ?? lcfirst(preg_replace('/^filter(?:BranchSchedule|MemberSchedule|HolidayLeave|Notification|Schedule|Finance|Message|Rule|Post|Comment)/', '', $id));
   if ($id === 'filterNotificationActivity') $label = 'همه عنوان‌های فعالیت';
+  if ($id === 'postCategoryFilter') $label = 'همه دسته‌ها';
   $filters[] = ['key' => $id, 'webId' => $id, 'label' => $label ?: 'فیلتر', 'type' => 'select', 'rowPath' => $field, 'options' => $values ?: new stdClass(), 'optionSource' => $sources[$id] ?? null, 'distinct' => !$values];
  }
  $result[$key] = $filters;
@@ -60,6 +62,8 @@ $scheduleQueries = ['filterScheduleDay' => 'day', 'filterScheduleType' => 'mode'
 foreach ($result['schedules'] as &$filter) $filter['queryKey'] = $scheduleQueries[$filter['webId']];
 unset($filter);
 foreach (['posts', 'comments'] as $key) foreach ($result[$key] as &$filter) $filter['queryKey'] = $filter['rowPath'];
+unset($filter);
+foreach ($result['posts'] as &$filter) if (($filter['webId'] ?? '') === 'postCategoryFilter') { $filter['queryKey'] = 'category'; $filter['en'] = 'All categories'; $filter['distinct'] = false; }
 unset($filter);
 $result['posts'][] = ['key' => 'status', 'label' => 'وضعیت', 'type' => 'select', 'rowPath' => 'status', 'queryKey' => 'status', 'options' => ['published' => 'منتشرشده', 'draft' => 'پیش‌نویس', 'pending' => 'در انتظار بررسی', 'private' => 'خصوصی', 'trash' => 'زباله‌دان', 'future' => 'زمان‌بندی‌شده']];
 $result['comments'][] = ['key' => 'status', 'label' => 'وضعیت', 'type' => 'select', 'rowPath' => 'status', 'queryKey' => 'status', 'options' => ['approved' => 'تأیید شده', 'pending' => 'در انتظار', 'rejected' => 'رد شده', 'trash' => 'زباله‌دان']];

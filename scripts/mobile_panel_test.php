@@ -37,6 +37,10 @@ namespace {
    if($class===\Modules\Academy\Controllers\Web\AcademyClassroomController::class)return new class{public function heatmap(){return \Core\http\ResponseFactory::json(['actor'=>auth()->id(),'query'=>$_GET,'heatmap'=>[]]);}};
    if($class===\Modules\Academy\Controllers\Web\AcademyTermController::class)return new class{public function setStatus(int $id){return \Core\http\ResponseFactory::json(['actor'=>auth()->id(),'id'=>$id,'status'=>$_POST['status']??null,'fromStatus'=>$_POST['fromStatus']??null]);}};
    if($class===\Modules\Analytics\Controllers\Web\AdminDashboardController::class)return new class{public function index(){return \Core\http\ResponseFactory::json(['actor'=>auth()->id(),'locale'=>app()->getLocale()]);}};
+   if($class===\Modules\Analytics\Controllers\Web\AdminDatabaseController::class)return new class{
+    private function response(){ $GLOBALS['databaseControllerCalls']=($GLOBALS['databaseControllerCalls']??0)+1; return \Core\http\ResponseFactory::json(['actor'=>auth()->id(),'query'=>$_GET,'sessionState'=>session_status()]); }
+    public function tables(){return $this->response();}public function rows(){return $this->response();}public function download(){return $this->response();}
+   };
    return new $class();
   }};}
  };}
@@ -189,6 +193,45 @@ namespace {
  $result=field($panel->execute('terms','set-status'),'data');
  check($result['actor']===1&&$result['id']===8&&$result['status']==='suspended'&&$result['fromStatus']==='open','Explicit status selection lost actor, ID or concurrency precondition');
  $_GET=['id'=>'../8'];check(field($panel->execute('terms','set-status'),'status')===422,'Unsafe term ID accepted');
+ $_SERVER['REQUEST_METHOD']='GET';$_SERVER['HTTP_X_SORNAZ_PANEL_FEATURES']='3';
+ $oldClient=array_column(field($panel->index(),'data')['sections'],null,'key');
+ check(!isset($oldClient['database-management']),'Older clients received a sensitive database section');
+ $_SERVER['HTTP_X_SORNAZ_PANEL_FEATURES']='4';$_SERVER['HTTP_X_SORNAZ_PANEL_FORMS']='2';
+ $newClient=field($panel->index(),'data');$newSections=array_column($newClient['sections'],null,'key');
+ check(isset($newSections['database-management'])&&$newSections['database-management']['sensitive']===true,'Founder client lacks uncached database operations');
+ $newMenu=array_column($newClient['navigation'],'key');
+ check(array_search('database-management',$newMenu,true)===array_search('guides',$newMenu,true)+1,'Native database navigation does not follow guides');
+ $beforeDatabaseSession=$_SESSION;
+ $browserSession=['_auth_user'=>7,'_auth_password_fingerprint'=>substr(hash('sha256','hash'),0,24),'sentinel'=>'browser-seven'];
+ $_SESSION=$browserSession;
+ $users->rows[19]=['user_id'=>19,'password'=>'other-admin','status'=>'approved','type'=>'admin'];
+ foreach([7,19]as$deniedActor){
+  if(session_status()!==PHP_SESSION_ACTIVE)session_start();
+  $_SERVER['HTTP_AUTHORIZATION']='Bearer '.$tokens->issue($users->rows[$deniedActor]);$_GET=[];
+  $calls=$GLOBALS['databaseControllerCalls']??0;
+  check(field($panel->execute('database-management','list'),'status')===403,'Non-founder bearer received database data');
+  check(($GLOBALS['databaseControllerCalls']??0)===$calls,'Denied database call reached controller');
+  check($_SESSION===$browserSession,'Denied bearer altered browser identity');
+ }
+ if(session_status()!==PHP_SESSION_ACTIVE)session_start();
+ $_SERVER['HTTP_AUTHORIZATION']='Bearer '.$tokens->issue($users->rows[1]);$_GET=['mode'=>'data','table'=>'outside'];
+ $calls=$GLOBALS['databaseControllerCalls']??0;
+ foreach(['rows','table-schema','table-data']as$operation){
+  foreach([[],['table'=>''],['table'=>[]]]as$missingTable){$_GET=$missingTable;check(field($panel->execute('database-management',$operation),'status')===422,'Missing table became a whole-database operation');}
+ }
+ check(($GLOBALS['databaseControllerCalls']??0)===$calls,'Incomplete per-table request reached database export');
+ $_GET=['mode'=>'data','table'=>'outside'];
+ $databaseResult=field($panel->execute('database-management','download-schema'),'data');
+ check($databaseResult['actor']===1&&$databaseResult['sessionState']===PHP_SESSION_NONE,'Database export held a session lock or lost bearer actor');
+ check($databaseResult['query']['mode']==='schema'&&$databaseResult['query']['table']==='','Caller changed a full-schema export into another operation');
+ check($_SESSION===$browserSession,'Database export leaked temporary bearer identity');
+ session_start();check($_SESSION===$browserSession,'Database export persisted founder identity into browser session');
+ $_GET=['mode'=>'schema','table'=>'f_posts'];
+ $databaseResult=field($panel->execute('database-management','table-data'),'data');
+ check($databaseResult['query']['mode']==='data'&&$databaseResult['query']['table']==='f_posts','Table export lost fixed mode or selected physical name');
+ session_start();check($_SESSION===$browserSession,'Table export changed persisted browser authentication');
+ $_SESSION=$beforeDatabaseSession;
+ unset($_SERVER['HTTP_X_SORNAZ_PANEL_FEATURES'],$_SERVER['HTTP_X_SORNAZ_PANEL_FORMS']);
  $users->rows[1]['password']='rotated';check(field($panel->index(),'status')===401,'Rotated bearer accepted');session_destroy();
  echo 'Native panel: '.count($sections)." sections; bearer isolation, roles, real-controller payloads and routing passed.\n";
 }

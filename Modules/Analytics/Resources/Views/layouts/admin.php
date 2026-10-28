@@ -169,6 +169,7 @@
 
 
     pushScript('posts.js');
+    if ((int) auth()->id() === 1) pushScript('database-management.js');
     pushScript('post-categories.js');
     pushScript('comments.js');
     pushScript('media.js');

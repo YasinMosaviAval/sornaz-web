@@ -733,7 +733,7 @@ return json_decode(<<<'JSON'
             "rowPath": "type",
             "options": {
                 "فاکتور ترم": "فاکتور ترم",
-                "اشتراک سامانه": "اشتراک سامانه"
+                "اشتراک سامانه": ""
             },
             "optionSource": null,
             "distinct": false
@@ -926,6 +926,22 @@ return json_decode(<<<'JSON'
             "optionSource": null,
             "distinct": false,
             "queryKey": "visibility"
+        },
+        {
+            "key": "postCategoryFilter",
+            "webId": "postCategoryFilter",
+            "label": "همه دسته‌ها",
+            "type": "select",
+            "rowPath": "categories",
+            "options": {},
+            "optionSource": {
+                "source": "categories",
+                "label": "title_fa",
+                "labelEn": "title_en"
+            },
+            "distinct": false,
+            "queryKey": "category",
+            "en": "All categories"
         },
         {
             "key": "status",

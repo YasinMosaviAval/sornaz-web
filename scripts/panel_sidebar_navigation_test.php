@@ -80,6 +80,10 @@ namespace {
     $allowed = array_filter($catalog, fn ($section) => empty($section['hidden']) && !empty($caps[$section['access']]));
     $items = $navigation->forCurrentUser($allowed, $caps);
     $index = array_column($items, null, 'key');
+    $founderKeys = array_column($items, 'key');
+    if (isset($catalog['database-management'])) {
+        expectMenu(isset($index['database-management']) && array_search('database-management', $founderKeys, true) === array_search('guides', $founderKeys, true) + 1, 'Database management must follow guides for the founder');
+    }
     expectMenu(isset($index['awards'], $index['users'], $index['notation']) && !isset($index['teachers']), 'Founder-only sections or consolidated users menu incorrect');
     expectMenu(count($index['awards']['links']) === 7, 'Achievement page links incomplete');
     expectMenu($index['users']['links'] === ['roles', 'permissions', 'members', 'member-schedules', 'employee-leaves'] && $index['users']['en'] === 'Users', 'User workspace links incomplete');
@@ -97,6 +101,7 @@ namespace {
     $caps = $access->capabilities(auth()->user());
     $allowed = array_filter($catalog, fn ($section) => empty($section['hidden']) && !empty($caps[$section['access']]));
     $admin = array_column($navigation->forCurrentUser($allowed, $caps), null, 'key');
+    expectMenu(!isset($admin['database-management']), 'Non-founder administrator received database management');
     expectMenu(!isset($admin['profileAchievementsSubmenu'], $admin['profilesSubmenu'], $admin['notation']), 'Non-founder received founder-only menu');
     expectMenu($admin['settings']['section'] === 'settings', 'Site administrator settings downgraded');
     echo "Website/sidebar navigation: ordinary, student, academy, branch, manager, contract, owner, founder, site admin and local-only menus passed.\n";

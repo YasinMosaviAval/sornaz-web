@@ -85,6 +85,7 @@ $canUsePanelMessageActions = $showAcademyPanelSections || (bool)\Core\database\D
                 component('roles');
                 component('permissions');
                 component('guides', ['guides' => $guides ?? [], 'guideDocuments' => $guideDocuments ?? []]);
+                if ((int) ($panelUser['user_id'] ?? 0) === 1) component('database-management');
             }
             //component('favorites');
             //component('ratings');

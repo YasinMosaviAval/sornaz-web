@@ -22,7 +22,8 @@ final class MobilePanelController
     {
         return $this->authenticated(function (array $user) {
             $capabilities = $this->access->capabilities($user);
-            $sections = array_filter($this->catalog->sections(($_SERVER['HTTP_X_SORNAZ_PANEL_FORMS'] ?? '') === '2'), fn (array $section) => empty($section['hidden']) && ($capabilities[$section['access']] ?? false));
+            $features = max(0, (int) ($_SERVER['HTTP_X_SORNAZ_PANEL_FEATURES'] ?? 0));
+            $sections = array_filter($this->catalog->sections(($_SERVER['HTTP_X_SORNAZ_PANEL_FORMS'] ?? '') === '2', $features >= 4), fn (array $section) => empty($section['hidden']) && ($capabilities[$section['access']] ?? false) && $features >= (int) ($section['minClientFeatures'] ?? 0));
             foreach ($sections as &$section) {
                 $section['branchContext'] = !empty($capabilities['branchContext']);
                 $section['pageGuidance'] = ['canEdit' => !empty($capabilities['founder'])];
@@ -48,6 +49,9 @@ final class MobilePanelController
             if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== $action['method']) {
                 return $this->error(405);
             }
+            foreach ($action['requiredQuery'] ?? [] as $key) {
+                if (!is_string($_GET[$key] ?? null) || $_GET[$key] === '') return $this->error(422);
+            }
             $valid = true;
             $path = preg_replace_callback('/\{(\w+)\}/', function (array $match) use (&$valid) {
                 $value = (string) ($_GET[$match[1]] ?? '');
@@ -65,7 +69,7 @@ final class MobilePanelController
                 return $this->error(404);
             }
             return $this->invokeRoute($route, $path, $action['query'] ?? []);
-        }, $section === 'members' && in_array($operation, ['create', 'registration-otp'], true), $section === 'branches' && in_array($operation, ['register-account', 'registration-otp'], true), (in_array($section, ['members', 'students'], true) && in_array($operation, ['create', 'user-lookup'], true)) || ($section === 'terms' && $operation === 'assign-student'));
+        }, $section === 'members' && in_array($operation, ['create', 'registration-otp'], true), $section === 'branches' && in_array($operation, ['register-account', 'registration-otp'], true), (in_array($section, ['members', 'students'], true) && in_array($operation, ['create', 'user-lookup'], true)) || ($section === 'terms' && $operation === 'assign-student'), $section === 'database-management');
     }
 
     private function invokeRoute(array $route, string $path, array $fixedQuery)
@@ -107,13 +111,15 @@ final class MobilePanelController
         return $next(new Request());
     }
 
-    private function authenticated(callable $callback, bool $staffRegistration = false, bool $branchRegistration = false, bool $memberSelection = false)
+    private function authenticated(callable $callback, bool $staffRegistration = false, bool $branchRegistration = false, bool $memberSelection = false, bool $readOnlySession = false)
     {
         header('Cache-Control: no-store, private');
         $user = $this->tokens->userFromRequest();
         if (!$user) {
             return $this->error(401);
         }
+        // Release only the original session, before installing temporary bearer identity.
+        if ($readOnlySession && session_status() === PHP_SESSION_ACTIVE && !session_write_close()) return $this->error(500);
         $previous = $_SESSION;
         if ($memberSelection) $_SESSION['member_user_selections'] = $previous['mobile_member_user_selections'][(int) $user['user_id']] ?? [];
         if ($staffRegistration) $_SESSION['registration_otp'] = $previous['mobile_staff_otp'][(int) $user['user_id']] ?? null;

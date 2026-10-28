@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . '/mobile_panel_parity_test.php';
 expectParity(!isset($sections['course-levels']['presentation']), 'Legacy clients must retain their presentation');
-$sections = (new \Modules\Analytics\Services\MobilePanelCatalog())->sections(true);
+$sections = (new \Modules\Analytics\Services\MobilePanelCatalog())->sections(true, in_array('--latest-features', $argv, true));
 $classroomColumns = array_column($sections['classrooms']['presentation']['columns'], null, 'key');
 expectParity($classroomColumns['branchName']['label'] === 'سازمان', 'Classroom ownership column must be labeled Organization');
 $levels = $sections['course-levels']['presentation'];

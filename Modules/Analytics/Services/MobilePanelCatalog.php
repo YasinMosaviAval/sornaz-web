@@ -25,7 +25,7 @@ final class MobilePanelCatalog
         return compact('key', 'label', 'en', 'rows', 'fields', 'access', 'actions');
     }
 
-    public function sections(bool $webDialogs = false): array
+    public function sections(bool $webDialogs = false, bool $latestFeatures = false): array
     {
         $f = fn (...$args) => $this->f(...$args);
         $a = fn (...$args) => $this->a(...$args);
@@ -427,7 +427,8 @@ final class MobilePanelCatalog
         $sections['my-schedule']['actions']['delete']['path'] = '/analytics/personal-offerings/schedule/{id}/delete';
         $sections['my-finance'] = $s('my-finance', 'امور مالی من', 'My finance', '/analytics/personal-data/finance', 'invoices', [], 'common', false);
         $sections['my-finance']['actions']['update'] = $a('/analytics/personal-invoices/{id}/update', 'ویرایش فاکتور خود', 'POST', [$f('amount', 'مبلغ', 'number', null, true), $f('statusCode', 'وضعیت', 'select', ['draft' => 'پیش‌نویس', 'issued' => 'صادرشده', 'canceled' => 'لغوشده']), $f('dueDate', 'سررسید', 'date'), $f('title', 'شرح', 'text', null, true), ...$description]);
-        $sections = $this->completePanelContracts($sections, $webDialogs);
+        $sections = $this->completePanelContracts($sections, $webDialogs, $latestFeatures);
+        if ($webDialogs && !$latestFeatures) $this->legacyTermPayments($sections);
         $this->scopedExceptionContracts($sections);
         if ($webDialogs) $sections['availability-exceptions']['hidden'] = true;
         $this->financeAndGuidanceContracts($sections);
@@ -447,7 +448,112 @@ final class MobilePanelCatalog
             }
         }
         $sections['students']['presentation']['detailFields'][] = ['key' => 'teacherNotes', 'label' => 'یادداشت‌های استاد', 'en' => 'Teacher notes'];
+        if ($webDialogs && $latestFeatures) $this->latestContentPresentation($sections);
+        elseif ($webDialogs) {
+            $sections['posts']['presentation']['rowActions'] = array_values(array_diff($sections['posts']['presentation']['rowActions'], ['metadata', 'preview']));
+            $sections['posts']['presentation']['filters'] = array_values(array_filter($sections['posts']['presentation']['filters'], fn ($field) => ($field['webId'] ?? '') !== 'postCategoryFilter'));
+        }
         return $sections;
+    }
+
+    private function assignmentPaymentFields(): array
+    {
+        return [
+            $this->f('installmentCount', 'تعداد اقساط', 'number', null, true) + ['en' => 'Installments', 'default' => 1, 'min' => 1, 'integer' => true, 'maxFrom' => 'record.sessionCount', 'minimumMax' => 2, 'step' => 1, 'wizardStep' => 4],
+            $this->f('discountId', 'تخفیف', 'select', ['source' => 'discounts', 'termDiscounts' => true]) + ['en' => 'Discount', 'default' => 0, 'emptyValue' => 0, 'emptyLabel' => 'بدون تخفیف', 'emptyLabelEn' => 'No discount', 'wizardStep' => 4],
+        ];
+    }
+
+    private function legacyTermPayments(array &$sections): void
+    {
+        foreach (['create', 'update'] as $operation) {
+            $fields = [];
+            foreach ($sections['terms']['actions'][$operation]['fields'] as $field) {
+                $fields[] = $field;
+                if ($field['key'] === 'cost') {
+                    $fields[] = $this->f('installmentCount', 'تعداد اقساط', 'number') + ['default' => 1, 'min' => 1];
+                    $fields[] = $this->f('discountId', 'تخفیف', 'select', ['source' => 'discounts']);
+                }
+            }
+            $sections['terms']['actions'][$operation]['fields'] = $fields;
+        }
+    }
+
+    private function databaseManagementContracts(array &$sections): void
+    {
+        $section = $this->s('database-management', 'مدیریت دیتابیس', 'Database management', '/analytics/admin-database/tables', 'tables', [], 'founder', false);
+        $section += ['rowId' => 'name', 'rowTitle' => 'name', 'sensitive' => true, 'cache' => false, 'minClientFeatures' => 4];
+        $section['actions']['rows'] = $this->a('/analytics/admin-database/rows', 'مشاهده سطرها', 'GET') + ['en' => 'View rows', 'params' => ['table' => 'name'], 'requiredQuery' => ['table']];
+        foreach (['schema' => ['ساختار', 'Schema'], 'data' => ['ساختار و اطلاعات', 'Schema and data']] as $mode => [$fa, $en]) {
+            $download = $this->a('/analytics/admin-database/download', 'دانلود ' . $fa, 'GET', [], false) + ['en' => 'Download ' . strtolower($en), 'query' => ['mode' => $mode, 'table' => ''], 'download' => true, 'filename' => 'database-' . $mode . '.sql'];
+            $section['actions']['download-' . $mode] = $download;
+            $section['actions']['table-' . $mode] = array_replace($download, ['row' => true, 'query' => ['mode' => $mode], 'params' => ['table' => 'name'], 'requiredQuery' => ['table'], 'filename' => 'table-' . $mode . '.sql']);
+        }
+        $before = array_search('guides', array_keys($sections), true);
+        $offset = $before === false ? count($sections) : $before + 1;
+        $sections = array_slice($sections, 0, $offset, true) + ['database-management' => $section] + array_slice($sections, $offset, null, true);
+    }
+
+    private function postWorkflowContracts(array &$sections, bool $webDialogs, bool $latestFeatures): void
+    {
+        $sections['posts']['actions']['list']['query'] = ['excludeType' => 'page'];
+        $sections['posts']['actions']['category-options'] = $this->a('/analytics/admin-post-categories', 'دسته‌ها', 'GET', [], false) + ['hidden' => true, 'optionResultKey' => 'categories', 'optionRows' => 'items'];
+        $sections['posts']['actions']['related-options'] = $this->a('/analytics/admin-posts', 'نوشته‌های مرتبط', 'GET', [], false) + ['hidden' => true, 'query' => ['editorOptions' => '1'], 'optionResultKey' => 'relatedPosts', 'optionRows' => 'posts'];
+        $sections['posts']['actions']['cover-upload'] = $this->a('/analytics/admin-media/upload-post-cover', 'بارگذاری تصویر شاخص', 'POST', [$this->f('file', 'تصویر', 'file', null, true)], false) + ['hidden' => true];
+        $sections['posts']['actions']['status'] = $this->a('/analytics/admin-posts/{id}/status', 'تغییر وضعیت', 'POST', [$this->f('status', 'وضعیت')]);
+        $sections['posts']['actions']['preview'] = $this->a('/analytics/admin-posts/{id}', 'پیش‌نمایش', 'GET') + ['en' => 'Preview', 'preview' => true, 'hidden' => !$latestFeatures];
+        if ($webDialogs && $latestFeatures) $this->postEditorContracts($sections);
+        $fields = array_values(array_filter($sections['posts']['actions']['update']['fields'], fn ($field) => !in_array($field['key'], ['content', 'summary', 'description'], true)));
+        $sections['posts']['actions']['metadata'] = $this->a('/analytics/admin-posts/{id}/metadata', 'ویرایش تنظیمات', 'POST', $fields) + ['en' => 'Edit settings', 'formContractVersion' => 2, 'recordAction' => 'details', 'inline' => true, 'hidden' => !$latestFeatures];
+        if ($latestFeatures) $sections['posts']['optionActions'] = ['category-options', 'related-options'];
+        $sections['terms']['actions']['batch']['icon'] = 'playlist_add';
+        foreach (['gallery', 'my-gallery'] as $key) $sections[$key]['compact'] = true;
+    }
+
+    private function postEditorContracts(array &$sections): void
+    {
+        foreach (['create', 'update'] as $operation) {
+            $fields = array_column($sections['posts']['actions'][$operation]['fields'], null, 'key');
+            $fields['status']['options'] = $this->postEditorStatuses();
+            $fields['status']['optionsEn'] = $this->postEditorStatusEnglish();
+            $fields['categories'] = $this->f('categories', 'دسته‌ها', 'multi', ['source' => 'categories', 'label' => 'title_fa', 'labelEn' => 'title_en']) + ['csv' => true, 'preserveUnknown' => true];
+            $fields['related_posts_id'] = $this->f('related_posts_id', 'نوشته‌های مرتبط', 'multi', ['source' => 'relatedPosts', 'label' => 'title', 'excludeRecord' => true, 'excludeSource' => 'record.id']) + ['csv' => true, 'preserveUnknown' => true];
+            $fields['coverFile'] = $this->postCoverField();
+            $fields['password'] = $this->f('password', 'رمز نوشته', 'password');
+            $fields['summary'] = $this->f('summary', 'خلاصه', 'multiline') + ['minLines' => 5, 'maxLines' => 5];
+            $fields['description'] = $this->f('description', 'توضیحات', 'multiline') + ['minLines' => 10, 'maxLines' => 10];
+            unset($fields['cover'], $fields['cover_media_id']);
+            $sections['posts']['actions'][$operation]['fields'] = array_values($fields);
+        }
+    }
+
+    private function postCoverField(): array
+    {
+        return $this->f('coverFile', 'تصویر شاخص', 'file') + ['en' => 'Featured image', 'imagesOnly' => true, 'extensions' => ['png', 'jpg', 'jpeg', 'webp'], 'maxBytes' => 50 * 1024 * 1024, 'uploadAction' => 'cover-upload', 'mediaIdKey' => 'cover_media_id', 'urlKey' => 'cover', 'previewUrlKey' => 'cover'];
+    }
+
+    private function postEditorStatuses(): array
+    {
+        return ['draft' => 'پیش‌نویس', 'published' => 'منتشرشده', 'private' => 'خصوصی', 'inherit' => 'ارثی', 'pending' => 'در انتظار بررسی', 'trash' => 'زباله‌دان', 'auto-draft' => 'پیش‌نویس خودکار', 'future' => 'زمان‌بندی‌شده', 'request-pending' => 'درخواست در انتظار', 'request-confirmed' => 'درخواست تأییدشده'];
+    }
+
+    private function postEditorStatusEnglish(): array
+    {
+        return ['draft' => 'Draft', 'published' => 'Published', 'private' => 'Private', 'inherit' => 'Inherited', 'pending' => 'Pending review', 'trash' => 'Trash', 'auto-draft' => 'Auto draft', 'future' => 'Scheduled', 'request-pending' => 'Request pending', 'request-confirmed' => 'Request confirmed'];
+    }
+
+    private function latestContentPresentation(array &$sections): void
+    {
+        $sections['posts']['presentation']['rowActions'] = ['preview', 'details', 'metadata', 'delete', 'restore'];
+        $sections['posts']['presentation']['titleAction'] = 'update';
+        foreach ($sections['posts']['presentation']['columns'] as &$column) {
+            if ($column['key'] === 'categories') $column['key'] = 'category_names';
+            if ($column['key'] === 'status') $column['action'] = 'status';
+        }
+        unset($column);
+        if (!in_array('postCategoryFilter', array_column($sections['posts']['presentation']['filters'], 'webId'), true)) {
+            $sections['posts']['presentation']['filters'][] = ['key' => 'postCategoryFilter', 'webId' => 'postCategoryFilter', 'label' => 'همه دسته‌ها', 'en' => 'All categories', 'type' => 'select', 'rowPath' => 'categories', 'queryKey' => 'category', 'optionSource' => ['source' => 'categories', 'label' => 'title_fa', 'labelEn' => 'title_en']];
+        }
     }
 
     private function financeAndGuidanceContracts(array &$sections): void
@@ -476,7 +582,7 @@ final class MobilePanelCatalog
         foreach (['discounts', 'discount'] as $operation) $sections['terms']['actions'][$operation]['hidden'] = true;
     }
 
-    private function completePanelContracts(array $sections, bool $webDialogs = false): array
+    private function completePanelContracts(array $sections, bool $webDialogs = false, bool $latestFeatures = false): array
     {
         $sections['terms']['actions']['attendance'] = $this->a('/academy/admin/class-schedules', 'حضور و غیاب', 'GET') + ['en' => 'Attendance'];
         $sections['lessons']['actions']['usage'] = $this->a('/academy/admin/branch-offerings/lessons/{id}/usage', 'محل‌های استفاده از درس', 'GET') + ['en' => 'Lesson usage'];
@@ -489,7 +595,7 @@ final class MobilePanelCatalog
         $this->waitingApprovalContracts($sections);
         $this->waitingFinalizationContracts($sections);
         if ($webDialogs) $this->webDialogContracts($sections);
-        $this->recentPanelContracts($sections, $webDialogs);
+        $this->recentPanelContracts($sections, $webDialogs, $latestFeatures);
         foreach (['students', 'members'] as $key) {
             $sections[$key]['actions']['user-lookup'] = $this->a('/academy/admin/member-users/lookup', 'جستجوی کاربر موجود', 'POST', [], false) + ['en' => 'Find existing user', 'hidden' => true];
         }
@@ -511,13 +617,15 @@ final class MobilePanelCatalog
         return $sections;
     }
 
-    private function recentPanelContracts(array &$sections, bool $webDialogs): void
+    private function recentPanelContracts(array &$sections, bool $webDialogs, bool $latestFeatures): void
     {
         $english = ['username' => 'Username', 'register_method' => 'Registration method', 'email' => 'Email', 'password' => 'Password', 'password2' => 'Confirm password', 'terms' => 'I accept the registration terms', 'otp' => 'Verification code', 'registration' => 'Employee account registration', 'repeatType' => 'Repeat period', 'weekday' => 'Weekday', 'timezoneId' => 'Time zone', 'rangeStart' => 'Range start', 'rangeEnd' => 'Range end', 'durationMinutes' => 'Session duration (minutes)', 'requestKey' => 'Request identifier', 'classroomId' => 'Classroom'];
         $f = fn (...$args) => $this->f(...$args) + ['en' => $english[$args[0]] ?? $args[1]];
         $this->staffRegistrationContracts($sections, $webDialogs, $f);
         $this->batchTermContracts($sections, $f);
-        $this->termAssignmentContracts($sections, $f);
+        $this->termAssignmentContracts($sections, $f, $latestFeatures);
+        $this->postWorkflowContracts($sections, $webDialogs, $latestFeatures);
+        $this->databaseManagementContracts($sections);
     }
 
     private function staffRegistrationContracts(array &$sections, bool $webDialogs, callable $f): void
@@ -566,7 +674,7 @@ final class MobilePanelCatalog
         ];
     }
 
-    private function termAssignmentContracts(array &$sections, callable $f): void
+    private function termAssignmentContracts(array &$sections, callable $f, bool $latestFeatures): void
     {
         $canonical = $sections;
         $this->studentDialogContracts($canonical);
@@ -582,7 +690,10 @@ final class MobilePanelCatalog
         }
         unset($field);
         $studentFields[] = $f('classroomId', 'کلاس برگزاری', 'select', ['source' => 'classrooms', 'termRooms' => true]);
-        $sections['terms']['actions']['assign-student'] = $this->a('/academy/admin/terms/{id}/student', 'تعیین هنرجو', 'POST', $studentFields) + ['en' => 'Assign student', 'formContractVersion' => 2];
+        if ($latestFeatures) $studentFields = [...$studentFields, ...$this->assignmentPaymentFields()];
+        $steps = ['Student', 'Address', 'Session dates', 'Classroom'];
+        if ($latestFeatures) $steps[] = 'Payment options';
+        $sections['terms']['actions']['assign-student'] = $this->a('/academy/admin/terms/{id}/student', 'تعیین هنرجو', 'POST', $studentFields) + ['en' => 'Assign student', 'formContractVersion' => 2, 'steps' => $steps];
         $sections['terms']['actions']['classroom'] = $this->a('/academy/admin/terms/{id}/classroom', 'تعیین کلاس برگزاری', 'POST', [
             $f('classroomId', 'کلاس برگزاری', 'select', ['source' => 'classrooms', 'termRooms' => true], true),
         ]) + ['en' => 'Assign classroom', 'formContractVersion' => 2];
@@ -753,8 +864,6 @@ final class MobilePanelCatalog
             $f('classroomId', 'کلاس برگزاری', 'select', ['source' => 'classrooms', 'match' => ['organizationUserId' => 'organizationUserId'], 'requireMatch' => true], true) + ['dependsOn' => ['organizationUserId']],
             $f('currencyId', 'نوع پول', 'select', ['source' => 'currencies'], true) + ['defaultFirstOption' => true],
             $f('cost', 'هزینه ترم', 'number') + ['default' => 15000000, 'min' => 0],
-            $f('installmentCount', 'تعداد اقساط', 'number') + ['default' => 1, 'min' => 1],
-            $f('discountId', 'تخفیف', 'select', ['source' => 'discounts']),
             $f('status', 'وضعیت', 'select', ['open' => 'باز', 'ongoing' => 'در حال برگزاری']) + ['default' => 'open', 'hiddenWhen' => ['permissions.isReceptionist' => true], 'valueWhen' => ['when' => ['permissions.isReceptionist' => true], 'value' => 'pending'], 'submitWhenHidden' => true],
             $f('sessionCount', 'تعداد جلسات', 'number') + ['default' => 8, 'min' => 1, 'max' => 100],
             $f('repeatType', 'دوره تکرار', 'select', ['week' => 'هفتگی', '2-week' => 'دو هفته یک‌بار', '3-week' => 'سه هفته یک‌بار', '4-week' => 'چهار هفته یک‌بار', 'month' => 'ماهانه', 'year' => 'سالانه', 'no-period' => 'سایر (تاریخ دقیق)']) + ['default' => 'week'],
