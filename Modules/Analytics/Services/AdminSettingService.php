@@ -23,7 +23,7 @@ class AdminSettingService
             $mode = 'light';
         }
         $theme = (string) $this->value('site_color_theme', 'indigo');
-        if (!in_array($theme, ['indigo', 'emerald', 'rose', 'amber'], true)) {
+        if (!in_array($theme, ['original', 'indigo', 'emerald', 'rose', 'amber'], true)) {
             $theme = 'indigo';
         }
         $english = locale() === 'en';
@@ -68,7 +68,7 @@ class AdminSettingService
             $this->put('site_theme_mode', $mode, 'string', $actor);
         }if (array_key_exists('colorTheme', $data)) {
             $theme = (string) $data['colorTheme'];
-            if (!in_array($theme, ['indigo', 'emerald', 'rose', 'amber'], true)) {
+            if (!in_array($theme, ['original', 'indigo', 'emerald', 'rose', 'amber'], true)) {
                 throw new RuntimeException('تم رنگی انتخاب‌شده معتبر نیست.');
             }
             $this->put('site_color_theme', $theme, 'string', $actor);

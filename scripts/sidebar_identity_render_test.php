@@ -47,11 +47,14 @@ namespace {
             throw new \RuntimeException('Admin users must open users after lessons/classes without a duplicate menu');
         }
         if ($type === 'admin') {
-            foreach (['notation', 'awards', 'tracking', 'national-holidays'] as $section) {
+            foreach (['notation', 'tracking', 'national-holidays'] as $section) {
                 if (strpos($html, "showSection('$section')") === false || strpos($html, "showSection('$section')") > strpos($html, "showSection('dashboard')")) throw new \RuntimeException('Admin priority menu order is incorrect');
             }
             if (!preg_match('/showSection\(\x27users\x27\).*?کاربران/su', $html)) throw new \RuntimeException('Admin staff label must be Users');
         }
+        if (!str_contains($html, "showSection('educations')") || !str_contains($html, "showSection('polls')")) throw new \RuntimeException('Shared achievements/polls menu is missing');
+        if (strpos($html, "showSection('polls')") < strpos($html, "showSection('finance')")) throw new \RuntimeException('Polls must follow finance');
+        if (in_array($type, ['academy', 'admin'], true) && strpos($html, "showSection('educations')") < strpos($html, "showSection('branches')")) throw new \RuntimeException('Achievements must follow Organization');
         if ($type === 'academy' && strpos($html, "showSection('classrooms')") > strpos($html, "showSection('teachers')")) throw new \RuntimeException('Academy classrooms must appear before employees');
         if (str_contains($html, "showSection('courses')")) throw new \RuntimeException('Courses still have a standalone sidebar entry');
         if ($type === 'admin' && !str_contains($html, '<button type="button" onclick="showSection(\'lessons\')"')) throw new \RuntimeException('Lesson sidebar entry must open lessons, independent of tab order');

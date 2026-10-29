@@ -22,7 +22,7 @@ final class MobileLearningController
  JOIN academy_branch_course_term_enrollments e ON e.member_id=m.member_id AND e.deleted_at IS NULL AND e.type IN ('teacher','student')
  JOIN academy_branch_course_terms t ON t.term_id=e.term_id AND t.deleted_at IS NULL
  JOIN academy_branch_courses c ON c.course_id=t.course_id AND c.deleted_at IS NULL
- LEFT JOIN academy_branch_course_term_sessions s ON s.term_id=t.term_id AND s.deleted_at IS NULL
+ LEFT JOIN academy_branch_course_term_sessions s ON s.term_id=t.term_id AND e.status='active' AND m.status='active' AND s.deleted_at IS NULL
  LEFT JOIN academy_branch_bookings b ON b.booking_id=s.booking_id AND b.deleted_at IS NULL
  LEFT JOIN academy_branch_classrooms r ON r.classroom_id=s.classroom_id AND r.deleted_at IS NULL
  WHERE m.user_id=? AND m.deleted_at IS NULL
@@ -33,11 +33,16 @@ final class MobileLearningController
         $learningCourses = $learningTerms = $learningClasses = [];
         foreach ($learningRows as $learningRow) {
             $learningCourses[(int) $learningRow['course_id']] = $learningRow;
-            $learningTerms[(int) $learningRow['term_id']] = $learningRow;
+            $termId = (int) $learningRow['term_id'];
+            if (!isset($learningTerms[$termId])) $learningTerms[$termId] = $learningRow + ['sessions' => []];
             if (!empty($learningRow['term_session_id'])) {
-                $learningClasses[(int) $learningRow['term_session_id']] = $learningRow;
+                $sessionId = (int) $learningRow['term_session_id'];
+                $learningTerms[$termId]['sessions'][$sessionId] = ['id' => $sessionId, 'termId' => $termId, 'date' => $learningRow['requested_date'], 'startTime' => substr((string) $learningRow['start_time'], 0, 5), 'endTime' => substr((string) $learningRow['end_time'], 0, 5)];
+                $learningClasses[$sessionId] = $learningRow + ['id' => $sessionId, 'sessionId' => $sessionId];
             }
         }
+        foreach ($learningTerms as &$term) $term['sessions'] = array_values($term['sessions']);
+        unset($term);
         return ResponseFactory::json(['courses' => array_values($learningCourses), 'terms' => array_values($learningTerms), 'classes' => array_values($learningClasses)]);
     }
 }

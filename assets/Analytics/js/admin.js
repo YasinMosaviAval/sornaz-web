@@ -38,6 +38,7 @@ function hidePanelIntroduction(section) {
 
 function panelWorkspaceTitle(id) {
   const english = document.documentElement.lang.startsWith('en');
+  if (id === 'polls') return english ? 'Polls' : 'نظرسنجی‌ها';
   if (id === 'database-management') return english ? 'Database management' : 'مدیریت دیتابیس';
   const staffAccessPage = ['teachers', 'member-schedules'].includes(id) || (id === 'availability-exceptions' && window.holidayLeaveMode === 'member');
   if (staffAccessPage && document.getElementById(id)?.querySelector('.panel-page-tabs button[onclick*="roles"]')) {
@@ -46,7 +47,7 @@ function panelWorkspaceTitle(id) {
   const groups = [
     [['users', 'roles', 'permissions'], ['کاربران', 'Users']],
     [['posts', 'post-categories', 'media', 'comments', 'post-editor'], ['نوشته ها', 'Posts']],
-    [['awards', 'badges', 'experiences', 'certificates', 'educations', 'events', 'polls', 'publications'], ['سوابق و دستاوردها', 'Records and achievements']],
+    [['educations', 'certificates', 'awards', 'experiences', 'events', 'publications', 'badges'], ['سوابق و دستاوردها', 'Records and achievements']],
     [['gallery', 'gallery-cover', 'gallery-logo', 'gallery-intro-video', 'gallery-collection'], ['گالری', 'Gallery']],
     [['branches', 'branch-types', 'availabilities', 'scheduling-rules', ...(window.holidayLeaveMode !== 'member' ? ['availability-exceptions'] : [])], ['سازمان', 'Organization']],
   ];

@@ -1,12 +1,15 @@
 # فرآیند ثبت شعبه اصلی آموزشگاه
 
-## ۱. ورود به مرحله شعبه
+## ۱. ثبت شعبه از پنل سازمان
 
-پس از تأیید آموزشگاه، شناسه آموزشگاه و شناسه مدیر در session با کلید `academy_branch_setup` ذخیره می‌شود و کاربر به مسیر زیر می‌رود:
+پس از ثبت آموزشگاه هیچ مرحله یا صفحهٔ انتخاب شعبه باز نمی‌شود. کاربر
+واردشده به `/analytics/admin-panel#branches` هدایت می‌شود و مهمان باید با حساب
+آموزشگاه وارد شود. ثبت شعبه‌های اصلی و فرعی از منوی سازمان انجام می‌شود.
 
-- `GET /academy/register-main-branch`: نمایش فرم شعبه اصلی
-
-View این صفحه `Modules/Academy/Resources/Views/register-main-branch.php` است. این view همان فرم آموزشگاه را بازاستفاده می‌کند و متن‌های آن را برای شعبه تغییر می‌دهد. بنابراین ظاهر، مراحل OTP و سنجش رمز یکسان هستند، اما قوانین شعبه متفاوت است.
+فرم پنل از `GET /academy/admin/branches/registration-form` گرفته می‌شود و از
+قالب `admin-branch-registration-dialog.php` استفاده می‌کند. این قالب بخش‌های
+مشترک فرم را از `register-main-branch.php` بازاستفاده می‌کند؛ نام فایل قدیمی
+به معنی وجود مرحلهٔ شعبه در ادامهٔ ثبت آموزشگاه نیست.
 
 ## ۲. قوانین اختصاصی شعبه
 
@@ -24,17 +27,20 @@ View این صفحه `Modules/Academy/Resources/Views/register-main-branch.php` 
 
 مسیر ارسال کد:
 
-- `POST /academy/register-main-branch/send-otp`
+- `POST /academy/admin/branches/registration/send-otp`
 
-این مسیر به `AcademyRegistrationController::sendMainBranchOtp()` می‌رسد. فرم شامل نام کاربری، ایمیل یا موبایل، رمز عبور، تکرار رمز، کد OTP و پذیرش قوانین است.
+این مسیر به `AcademyRegistrationController::sendAdminBranchOtp()` می‌رسد. فرم شامل نام کاربری، ایمیل یا موبایل، رمز عبور، تکرار رمز، کد OTP و پذیرش قوانین است.
 
 در فرم شعبه، نام کاربری باید ۳ تا ۱۰۰ کاراکتر و فقط شامل حروف انگلیسی، عدد و `_` باشد و تکراری نباشد.
 
 ثبت نهایی از مسیر زیر انجام می‌شود:
 
-- `POST /academy/register-main-branch`
+- `POST /academy/admin/branches/registration`
 
-متد `storeMainBranch()` OTP را تأیید کرده و سپس `AcademyRegistrationService::registerMainBranch()` را فراخوانی می‌کند.
+متد `storeAdminBranch()` OTP را تأیید کرده و سپس `AcademyBranchService::store()`
+را اجرا می‌کند. حساب عادی نمی‌تواند با فرستادن `academy_id` آموزشگاه دیگری،
+محدودهٔ مجاز خود را تغییر دهد؛ مجوزهای سرویس شعبه نیز همچنان اعمال می‌شوند.
+این عملیات در پنل باقی می‌ماند و فهرست شعبه‌ها پس از موفقیت تازه می‌شود.
 
 ## ۴. ایجاد حساب شعبه بعد از ثبت کامل
 
@@ -45,7 +51,7 @@ View این صفحه `Modules/Academy/Resources/Views/register-main-branch.php` 
 3. `created_by`، `updated_by` و `approved_by` برابر شناسه مدیر درخواست‌کننده ثبت می‌شوند.
 4. وضعیت کاربر `approved` است.
 5. حساب مالی نوع `branch_wallet` ایجاد می‌شود.
-6. در `academy_branches` یک رکورد با `is_main=1` درج می‌شود.
+6. در `academy_branches` رکورد شعبه درج می‌شود؛ اولین شعبهٔ آموزشگاه اصلی است و شعبه‌های بعدی فرعی هستند.
 7. برای کاربر شعبه در `user_referrals` کد دعوت یکتا ساخته می‌شود.
 8. نقش `academy_branch_owner` برای کاربر شعبه ثبت می‌شود.
 9. نقش `academy_branch_manager` برای مدیر درخواست‌کننده ثبت می‌شود.
@@ -65,7 +71,12 @@ View این صفحه `Modules/Academy/Resources/Views/register-main-branch.php` 
 
 ## ۶. انتقال نهایی و دسترسی پنل
 
-پس از ثبت موفق شعبه، session مرحله پاک می‌شود و کاربر به `/`، یعنی صفحه اصلی سایت، منتقل می‌شود.
+ثبت موفق شعبه، کاربر را در پنل سازمان نگه می‌دارد. مسیرهای قدیمی
+`/academy/register-main-branch` و `/academy/registration-complete` فقط برای
+سازگاری باقی می‌مانند و بدون ایجاد شعبه به سازمان یا ورود هدایت می‌شوند.
+کلید قدیمی `academy_branch_setup` پاک می‌شود. مسیر قدیمی ارسال OTP شعبه
+پاسخ `409` همراه با راهنمای استفاده از سازمان می‌دهد. نشست API قدیمی با
+مرحلهٔ `choice` نیز بدون ایجاد رکورد شعبه کامل می‌شود.
 
 کاربر شعبه از طریق `AcademyPanelMiddleware` به `/analytics/admin-panel` دسترسی دارد. هدر اصلی سایت نیز نقش‌های `academy_manager` و `academy_branch_manager` را بررسی می‌کند و برای آن‌ها لینک «پنل ادمین» نشان می‌دهد.
 

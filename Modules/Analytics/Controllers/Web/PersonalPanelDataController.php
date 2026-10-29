@@ -72,16 +72,10 @@ final class PersonalPanelDataController
             $data = $this->payload();
             $options = [
                 'language' => ['fa', 'en'], 'themeMode' => ['light', 'dark'],
-                'colorTheme' => ['indigo', 'emerald', 'rose', 'amber'],
+                'colorTheme' => ['original', 'indigo', 'emerald', 'rose', 'amber'],
                 'primaryFont' => ['vazir', 'sahel', 'iran_yekan', 'iran_sansx', 'kalameh', 'peyda'],
             ];
-            foreach (['fontScale' => [-2, 2], 'fontWeight' => [0, 5], 'cornerRadius' => [0, 16]] as $key => $bounds) {
-                if (!array_key_exists($key, $data)) continue;
-                if (filter_var($data[$key], FILTER_VALIDATE_INT) === false || (int) $data[$key] < $bounds[0] || (int) $data[$key] > $bounds[1]) {
-                    throw new RuntimeException('مقدار تنظیمات معتبر نیست.', 422);
-                }
-                $options[$key] = null;
-            }
+            $options += $this->numericSettings($data);
             if (array_diff(array_keys($data), array_keys($options))) throw new RuntimeException('گزینهٔ تنظیمات معتبر نیست.', 422);
             foreach ($data as $key => $value) {
                 if (is_array($options[$key]) && !in_array($value, $options[$key], true)) throw new RuntimeException('مقدار تنظیمات معتبر نیست.', 422);
@@ -104,6 +98,20 @@ final class PersonalPanelDataController
         if ($id < 1 || !DB::table('media_files')->where('media_file_id', $id)->where('user_id', $actor)->whereNull('deleted_at')->first()) {
             throw new RuntimeException('رسانه یافت نشد.', 403);
         }
+    }
+
+    private function numericSettings(array $data): array
+    {
+        $numeric = ['fontScale' => [-2, 2]];
+        if (\Modules\System\Services\SiteAdminAccess::allows(auth()->user())) $numeric += ['fontWeight' => [0, 5], 'cornerRadius' => [0, 16]];
+        elseif (array_intersect(['fontWeight', 'cornerRadius'], array_keys($data))) throw new RuntimeException('این تنظیمات فقط برای مدیر سایت مجاز است.', 403);
+        $allowed = [];
+        foreach ($numeric as $key => [$minimum, $maximum]) {
+            if (!array_key_exists($key, $data)) continue;
+            if (filter_var($data[$key], FILTER_VALIDATE_INT) === false || (int) $data[$key] < $minimum || (int) $data[$key] > $maximum) throw new RuntimeException('مقدار تنظیمات معتبر نیست.', 422);
+            $allowed[$key] = null;
+        }
+        return $allowed;
     }
 
     private function payload(): array

@@ -115,11 +115,8 @@ if ($sidebarFullName === '') $sidebarFullName = $sidebarUsername;
             <?php if ((int) ($panelUser['user_id'] ?? 0) === 1 || $previewRole === 'admin'): ?>
             <li><a href="#" onclick="showSection('notation')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-yellow-300 hover:text-yellow-200"><i class="fas fa-music w-5 text-center"></i> <?= locale()==='en'?'Music Sheets':'نت‌نویسی' ?></a></li>
             <?php endif; ?>
-            <?php if ((int) ($panelUser['user_id'] ?? 0) === 1 || $previewRole === 'admin'): ?>
-            <li><a href="#" onclick="showSection('awards')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 text-yellow-300 hover:text-yellow-200"><i class="fas fa-trophy w-5 text-center"></i> سوابق و دستاوردها</a></li>
-            <?php endif; ?>
-            <?php if($isSiteAdmin): ?><li><a href="#" onclick="showSection('tracking')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-yellow-300 hover:text-yellow-200"><i class="fas fa-chart-line w-5 text-center"></i> تحلیل رفتار کاربران</a></li><?php endif; ?>
-            <?php if($isSiteAdmin): ?><li><a href="#" onclick="showSection('national-holidays')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-yellow-300 hover:text-yellow-200"><i class="fas fa-calendar-times w-5 text-center"></i> تعطیلات رسمی کشور</a></li><?php endif; ?>
+            <?php if($isSiteAdmin): ?><li><a href="#" onclick="showSection('tracking')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-chart-line w-5 text-center"></i> تحلیل رفتار کاربران</a></li><?php endif; ?>
+            <?php if($isSiteAdmin): ?><li><a href="#" onclick="showSection('national-holidays')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-calendar-times w-5 text-center"></i> تعطیلات رسمی کشور</a></li><?php endif; ?>
             <li><a href="#" onclick="showSection('dashboard')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-home w-5 text-center"></i> داشبورد</a></li>
             <li><a href="#" onclick="showSection('account')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-white"><i class="fas fa-user-cog w-5 text-center"></i> حساب کاربری</a></li>
             <?php if ($hasAcademyPanelAccess): ?>
@@ -145,6 +142,9 @@ if ($sidebarFullName === '') $sidebarFullName = $sidebarUsername;
             <li><a href="#" onclick="showSection('branches')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-building w-5 text-center"></i>سازمان</a></li>
             <?php endif; ?>
             <?php endif; ?>
+            <?php endif; ?>
+            <li><a href="#" onclick="showSection('educations')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-trophy w-5 text-center"></i> <?= locale() === 'en' ? 'Records and achievements' : 'سوابق و دستاوردها' ?></a></li>
+            <?php if ($hasAcademyPanelAccess): ?>
             <?php if ((int) ($panelUser['user_id'] ?? 0) === 1 || $previewRole === 'admin'): ?>
             <li>
                 <button type="button" onclick="showSection('lessons')" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800">
@@ -177,6 +177,7 @@ if ($sidebarFullName === '') $sidebarFullName = $sidebarUsername;
             <li><a href="#" onclick="showSection('member-schedules')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-calendar-alt w-5 text-center"></i> کارمندها</a></li>
             <li><a href="#" onclick="showSection('finance')" class="nav-link flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-indigo-800"><i class="fas fa-money-bill-wave w-5 text-center"></i> امور مالی</a></li>
             <?php endif; ?>
+            <li><a href="#" onclick="showSection('polls')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800"><i class="fas fa-poll w-5 text-center"></i> <?= locale() === 'en' ? 'Polls' : 'نظرسنجی‌ها' ?></a></li>
             <li><a href="#settings" onclick="showSection('settings')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-cog w-5 text-center"></i> تنظیمات</a></li>
         </ul>
     </nav>

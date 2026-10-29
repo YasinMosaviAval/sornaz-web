@@ -1,6 +1,6 @@
 <div id="<?=e($profileContentEntity)?>" class="section hidden" data-profile-content="<?=e($profileContentEntity)?>">
- <?php component('achievement-page-tabs', ['active' => $profileContentEntity]); ?>
- <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"><button type="button" data-profile-add class="flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-white transition hover:bg-indigo-700"><i class="fas fa-plus"></i> افزودن مورد جدید</button></div>
+ <?php if ($profileContentEntity !== 'polls') component('achievement-page-tabs', ['active' => $profileContentEntity]); ?>
+ <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"><button type="button" data-profile-add <?= $profileContentEntity === 'badges' && !\Modules\System\Services\SiteAdminAccess::allows(auth()->user()) ? 'hidden' : '' ?> class="flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-white transition hover:bg-indigo-700"><i class="fas fa-plus"></i> افزودن مورد جدید</button></div>
  <div class="mb-5 overflow-x-auto rounded-3xl bg-white p-3 shadow-sm"><div data-profile-organization-tabs class="flex min-w-max gap-2"></div></div>
  <?php
  $viewModeTableAttributes='data-profile-view="table"';

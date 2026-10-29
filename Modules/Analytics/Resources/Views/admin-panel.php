@@ -48,7 +48,6 @@ $canUsePanelMessageActions = $showAcademyPanelSections || (bool)\Core\database\D
             if (!$showAcademyPanelSections) component('personal-panel-sections');
             if (!$showAcademyPanelSections && (new \Modules\Academy\Services\AcademyClassScheduleService())->hasTeacherSessions((int) $panelUser['user_id'])) component('schedules');
             component('gallery');
-            if ((int) ($panelUser['user_id'] ?? 0) === 1) {
                 component('awards');
                 component('certificates');
                 component('experiences');
@@ -57,7 +56,6 @@ $canUsePanelMessageActions = $showAcademyPanelSections || (bool)\Core\database\D
                 component('polls');
                 component('publications');
                 component('badges');
-            }
             if ($showAcademyPanelSections) {
             component('reports');
             component('chart-gallery');

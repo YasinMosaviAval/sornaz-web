@@ -28,30 +28,30 @@ class AcademyRegistrationController
 
     public function createMainBranch()
     {
-        $setup = session()->get('academy_branch_setup');
-        if (!$setup || empty($setup['academy_id'])) {
-            return redirect('/academy/send-academy-request');
-        }
-        return ResponseFactory::view('Academy::register-main-branch', ['academy' => $setup])->layout('main')->title('سُرناز | ثبت شعبه اصلی');
+        return $this->completeRegistration();
     }
 
     public function branchChoice()
     {
-        $setup = session()->get('academy_branch_setup');
-        if (empty($setup['academy_id'])) {
-            return redirect('/academy/send-academy-request');
-        }
-        return ResponseFactory::view('Academy::branch-choice')->layout('main')->title(locale() === 'en' ? 'Academy registered' : 'آموزشگاه ثبت شد');
+        return $this->completeRegistration();
     }
 
     public function finishWithoutBranch()
     {
-        if (empty(session()->get('academy_branch_setup')['academy_id'])) {
-            return redirect('/academy/send-academy-request');
-        }
+        return $this->completeRegistration();
+    }
+
+    private function completeRegistration(bool $registered = false)
+    {
+        $registered = $registered || !empty(session()->get('academy_branch_setup')['academy_id']);
         session()->forget('academy_branch_setup');
-        session()->flash('auth_success', locale() === 'en' ? 'Your academy was registered without a branch. You can add branches from your panel later.' : 'آموزشگاه شما بدون شعبه ثبت شد. می‌توانید بعداً از پنل کاربری شعبه اضافه کنید.');
-        return redirect('/');
+        $signedIn = auth()->check();
+        if ($registered) {
+            session()->flash('auth_success', locale() === 'en'
+                ? 'Your academy is registered. ' . ($signedIn ? 'Use' : 'Sign in with your academy account, then use') . ' Organization in your user panel to add main and subsidiary branches.'
+                : 'آموزشگاه شما ثبت شد. ' . ($signedIn ? '' : 'با حساب آموزشگاه وارد شوید و سپس ') . 'شعبه‌های اصلی و فرعی را از منوی سازمان در پنل کاربری ثبت کنید.');
+        }
+        return redirect($signedIn ? '/analytics/admin-panel#branches' : '/system/login');
     }
 
     public function createAdminBranchDialog()
@@ -191,12 +191,9 @@ class AcademyRegistrationController
             if (!$verification['ok']) {
                 return $this->back(['otp' => $verification['message']]);
             }
-            $academyId = $this->service->register($data);
+            $this->service->register($data);
             $this->otp->clear();
-            $academy = DB::table('academies')->where('academy_id', $academyId)->first();
-            session()->put('academy_branch_setup', ['academy_id' => $academyId, 'manager_id' => (int) $academy['created_by']]);
-            session()->flash('auth_success', 'آموزشگاه با موفقیت ثبت شد. ایجاد شعبه اختیاری است.');
-            return redirect('/academy/registration-complete');
+            return $this->completeRegistration(true);
         } catch (ValidationException $e) {
             return $this->back($e->getErrors());
         } catch (Throwable $e) {
@@ -218,38 +215,15 @@ class AcademyRegistrationController
 
     public function sendMainBranchOtp()
     {
-        try {
-            $data = $this->validatedBranchData();
-            $result = \Modules\System\Services\RegistrationOtpPolicy::web() ? ['ok' => true, 'otp_required' => false, 'expires_in' => 0] : $this->otp->send($data['register_method'], (string) $data[$data['register_method']], $this->otpData($data));
-            return ResponseFactory::json(['success' => $result['ok']] + $result, $result['ok'] ? 200 : (isset($result['retry_after']) ? 429 : 503));
-        } catch (ValidationException $e) {
-            return ResponseFactory::json(['success' => false, 'message' => 'اطلاعات فرم را بررسی کنید.', 'errors' => $e->getErrors()], 422);
-        }
+        session()->forget('academy_branch_setup');
+        return ResponseFactory::json(['success' => false,
+            'message' => locale() === 'en' ? 'Add main and subsidiary branches from Organization in your user panel.' : 'شعبه‌های اصلی و فرعی را از منوی سازمان در پنل کاربری ثبت کنید.',
+            'next_url' => auth()->check() ? '/analytics/admin-panel#branches' : '/system/login'], 409);
     }
 
     public function storeMainBranch()
     {
-        try {
-            $setup = session()->get('academy_branch_setup');
-            if (!$setup || empty($setup['academy_id'])) {
-                return redirect('/academy/send-academy-request');
-            }
-            $data = $this->validatedBranchData();
-            $verification = \Modules\System\Services\RegistrationOtpPolicy::web() ? ['ok' => true] : $this->otp->verify(trim((string) ($_POST['otp'] ?? '')), $this->otpData($data));
-            if (!$verification['ok']) {
-                return redirect('/academy/register-main-branch')->withInput($_POST)->withErrors(['otp' => $verification['message']]);
-            }
-            $this->service->registerMainBranch((int) $setup['academy_id'], (int) $setup['manager_id'], $data);
-            $this->otp->clear();
-            session()->forget('academy_branch_setup');
-            session()->flash('auth_success', 'شعبه اصلی با موفقیت ثبت شد.');
-            return redirect('/');
-        } catch (ValidationException $e) {
-            return redirect('/academy/register-main-branch')->withInput($_POST)->withErrors($e->getErrors());
-        } catch (Throwable $e) {
-            error_log('[Main Branch Registration Error] ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-            return redirect('/academy/register-main-branch')->withInput($_POST)->withErrors(['username' => 'ثبت شعبه انجام نشد. لطفاً دوباره تلاش کنید.']);
-        }
+        return $this->completeRegistration();
     }
 
     protected function validatedData(): array

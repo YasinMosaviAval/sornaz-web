@@ -13,6 +13,9 @@ html[data-theme="rose"] { --theme-50:#fff1f2;--theme-100:#ffe4e6;--theme-200:#fe
 html[data-theme="amber"] { --theme-50:#fffbeb;--theme-100:#fef3c7;--theme-200:#fde68a;--theme-300:#fcd34d;--theme-400:#fbbf24;--theme-500:#f59e0b;--theme-600:#d97706;--theme-700:#b45309;--theme-800:#92400e;--theme-900:#78350f; }
 html[data-mode="dark"] { --surface:#0f172a;--surface-card:#172033;--surface-muted:#202b40;--surface-strong:#080d18;--text:#e5e7eb;--text-muted:#9ca3af;--border:#334155;color-scheme:dark; }
 
+/* Match Flutter ColorPalette.original in both appearance modes. */
+html[data-theme="original"] { --theme-50:#edf5ff;--theme-100:#dbeafe;--theme-200:#bfdbfe;--theme-300:#93c5fd;--theme-400:#60a5fa;--theme-500:#0064fb;--theme-600:#0064fb;--theme-700:#0054d4;--theme-800:#0043aa;--theme-900:#00317d; }
+html[data-theme="original"][data-mode="dark"] { --theme-50:#332a0d;--theme-100:#493c13;--theme-200:#66541b;--theme-300:#b18f2b;--theme-400:#d2b657;--theme-500:#c19e32;--theme-600:#c19e32;--theme-700:#a5872b;--theme-800:#806820;--theme-900:#5c4b17; }
 html,body { background-color:var(--surface);color:var(--text); }
 html { font-size:var(--site-root-font-size,16px); }
 body,.bg-gray-50,.bg-gray-100 { background-color:var(--surface)!important; }

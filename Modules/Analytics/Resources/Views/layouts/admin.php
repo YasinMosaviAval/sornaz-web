@@ -39,6 +39,7 @@
         .panel-action-tooltip { position:fixed; z-index:100000; max-width:min(20rem,calc(100vw - 16px)); box-sizing:border-box; padding:8px 12px; border:1px solid var(--border,#d1d5db); border-radius:10px; background:var(--surface-card,#fff); color:var(--text,#111827); box-shadow:0 4px 16px #0002; font-size:12px; line-height:1.8; white-space:pre-line; overflow-wrap:anywhere; pointer-events:none; }
         .panel-action-tooltip[hidden] { display:none; }
         #sidebar { background-color:#fffdf7!important; color:#1f2937; }
+        #sidebar .nav-link:not(.text-yellow-300) { color:inherit; }
         #sidebar .text-white:not(.text-yellow-300):not(.text-yellow-200) { color:inherit; }
         #sidebar .text-indigo-300 { color:var(--text-muted,#6b7280); }
         #sidebar .text-yellow-300 { color:#a16207; }
@@ -121,6 +122,7 @@
     pushScript('course-templates.js');
     pushScript('courses.js');
     pushScript('course-levels.js');
+    pushScript('session-files.js');
     pushScript('term-templates.js');
     pushScript('terms.js');
     pushScript('gallery-templates.js');

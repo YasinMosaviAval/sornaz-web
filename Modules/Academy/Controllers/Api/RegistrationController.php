@@ -1,7 +1,6 @@
 <?php
 namespace Modules\Academy\Controllers\Api;
 
-use Core\database\DB;
 use Core\http\ResponseFactory;
 use Core\validation\ValidationException;
 use Modules\System\Services\MobileAuthTokenService;
@@ -54,6 +53,12 @@ class RegistrationController extends \Modules\Academy\Controllers\Web\AcademyReg
                 }
                 $flow = ['token' => bin2hex(random_bytes(32)), 'actor' => $actor, 'stage' => 'academy', 'expires_at' => time() + 86400];
             }
+            // Resume already-created academies from older clients without a branch step.
+            if ($flow['stage'] === 'choice') {
+                $flow['stage'] = 'complete';
+                $flow['without_branch'] = true;
+                unset($flow['otp']);
+            }
             if ($operation === 'state') {
                 return $this->response($flow);
             }
@@ -65,23 +70,17 @@ class RegistrationController extends \Modules\Academy\Controllers\Web\AcademyReg
             if (!in_array($step, ['academy', 'branch'], true)) {
                 return $this->failure(422);
             }
-            if ($flow['stage'] === 'complete' || ($operation === 'submit' && $step === 'academy' && $flow['stage'] === 'choice')) {
+            if ($flow['stage'] === 'complete') {
                 return $this->response($flow);
             }
             if ($operation === 'without-branch') {
-                if ($flow['stage'] !== 'choice') {
-                    return $this->failure(409);
-                }
-                $flow['stage'] = 'complete';
-                $flow['without_branch'] = true;
-                unset($flow['otp']);
-                return $this->response($flow);
+                return $this->failure(409);
             }
-            if (($step === 'academy' && $flow['stage'] !== 'academy') || ($step === 'branch' && $flow['stage'] !== 'choice')) {
+            if ($step !== 'academy' || $flow['stage'] !== 'academy') {
                 return $this->failure(409);
             }
             session()->put('registration_otp', $flow['otp'] ?? null);
-            $data = $step === 'academy' ? $this->validatedData() : $this->validatedBranchData();
+            $data = $this->validatedData();
             $bound = $this->otpData($data) + ['mobile_stage' => $step, 'mobile_flow' => $flow['token']];
             if ($operation === 'send-code') {
                 if ($actor === 1) {
@@ -99,18 +98,10 @@ class RegistrationController extends \Modules\Academy\Controllers\Web\AcademyReg
             if (!$verified['ok']) {
                 return ResponseFactory::json(['success' => false, 'message' => $verified['message'], 'errors' => ['otp' => $verified['message']]], 422);
             }
-            if ($step === 'academy') {
-                $id = $this->service->register($data, $actor);
-                $academy = DB::table('academies')->where('academy_id', $id)->first();
-                $flow['academy_id'] = $id;
-                $flow['manager_id'] = (int) $academy['created_by'];
-                $flow['academy_name'] = $data['academy_name'];
-                $flow['stage'] = 'choice';
-            } else {
-                $flow['branch_id'] = $this->service->registerMainBranch($flow['academy_id'], $flow['manager_id'], $data);
-                $flow['stage'] = 'complete';
-                $flow['without_branch'] = false;
-            }
+            $flow['academy_id'] = $this->service->register($data, $actor);
+            $flow['academy_name'] = $data['academy_name'];
+            $flow['stage'] = 'complete';
+            $flow['without_branch'] = true;
             unset($flow['otp']);
             $this->otp->clear();
             return $this->response($flow);
@@ -139,7 +130,9 @@ class RegistrationController extends \Modules\Academy\Controllers\Web\AcademyReg
         );
         $terms = trans('academy.terms.content', $fallback);
         $terms = html_entity_decode(strip_tags(str_replace(['</p>', '</h3>', '<br>', '<br/>'], "\n", $terms)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        return ResponseFactory::json(['success' => true, 'otp_required' => $flow['actor'] !== 1, 'flow_token' => $flow['token'], 'stage' => $flow['stage'], 'academy_name' => $flow['academy_name'] ?? '', 'without_branch' => $flow['without_branch'] ?? false, 'terms' => $terms, 'branch_terms' => $this->text(
+        return ResponseFactory::json(['success' => true, 'otp_required' => $flow['actor'] !== 1, 'flow_token' => $flow['token'], 'stage' => $flow['stage'], 'academy_name' => $flow['academy_name'] ?? '', 'without_branch' => $flow['without_branch'] ?? false,
+            'next_section' => 'branches', 'next_url' => '/analytics/admin-panel#branches', 'requires_sign_in' => $flow['actor'] === 0,
+            'terms' => $terms, 'branch_terms' => $this->text(
             "مدیر شعبه مسئول صحت اطلاعات تماس، نشانی، ساعات فعالیت و مجوزهای شعبه است.\nفعالیت‌های شعبه باید مطابق مقررات آموزشگاه مادر باشد.\nمدیر شعبه مسئول کیفیت خدمات، پاسخ‌گویی به هنرجویان و رعایت برنامه‌ها است.\nاطلاعات هنرجویان، استادان و کارکنان محرمانه است و فقط برای خدمات مجاز استفاده می‌شود.\nسُرناز و مدیر آموزشگاه می‌توانند در صورت تخلف یا شکایت معتبر فعالیت شعبه را بررسی یا محدود کنند.",
             "The branch manager is responsible for accurate contact details, address, opening hours and licenses.\nBranches must follow their academy's rules.\nManagers are responsible for service quality, student support and published schedules.\nStudent, teacher and staff information is confidential and may only be used for authorized services.\nSornaz and the academy manager may review or restrict branch activity for violations or valid complaints."
         )]);

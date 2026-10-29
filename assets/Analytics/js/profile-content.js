@@ -233,7 +233,7 @@
       };
       render(root);
       document.querySelectorAll('[data-profile-form][data-profile-entity="' + e + '"] [data-organization-select]').forEach(select => window.syncPanelOrganizationSelect?.(select, (states[e].organizations || []).filter(row => row.writable)));
-      add.disabled = false;
+      add.disabled = states[e].canCreate === false;
     } catch (err) {
       root.querySelector('[data-profile-loading]').textContent = err.message;
     }
@@ -266,6 +266,9 @@
       d = defs[e];
     if (!s) return;
     root.querySelector('[data-profile-loading]').classList.add('hidden');
+    const add = root.querySelector('[data-profile-add]');
+    add.hidden = s.canCreate === false;
+    add.disabled = s.canCreate === false;
     renderTabs(root, s);
     renderViews(root, s);
     const rows = visibleRows(s, e),
@@ -442,7 +445,7 @@
   }
   function editModal(e, x) {
     const s = states[e];
-    if (!s) return;
+    if (!s || (!x && s.canCreate === false) || (x && x.canManage === false)) return;
     openModal(
       `<header class="flex items-center justify-between border-b p-6"><h2 class="text-2xl font-bold">${x ? 'ویرایش' : 'افزودن'} ${defs[e].title}</h2><button data-profile-close class="text-3xl text-gray-400">×</button></header><div class="p-6">${editForm(e, x, s, false)}</div>`
     );
@@ -518,6 +521,7 @@
     },
     inline(e, id) {
       const s = states[e];
+      if (!s?.items.some(item => item.id === id && item.canManage)) return;
       document.getElementById('profileContentModal')?.remove();
       s.editing = s.editing === id ? null : id;
       render(document.querySelector(`[data-profile-content="${e}"]`));
@@ -595,7 +599,7 @@
     const e = root.dataset.profileContent,
       viewButtons = root.querySelectorAll('[data-profile-view]');
     root.querySelector('[data-profile-add]').onclick = () => {
-      if (states[e]) editModal(e, null);
+      if (states[e] && states[e].canCreate !== false) editModal(e, null);
     };
     root.querySelector('[data-profile-search]').oninput = (ev) => {
       states[e].search = ev.target.value;

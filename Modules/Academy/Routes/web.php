@@ -15,6 +15,12 @@ use Modules\Academy\Controllers\Web\NationalHolidayController;
 use Modules\Academy\Controllers\Web\ZarinpalPaymentController;
 use Modules\Academy\Controllers\Web\AcademySubscriptionController;
 
+Router::get('/academy/sessions/{id}/files', [\Modules\Academy\Controllers\Web\AcademySessionFileController::class, 'index'])->middleware('auth');
+Router::post('/academy/sessions/{id}/files', [\Modules\Academy\Controllers\Web\AcademySessionFileController::class, 'upload'])->middleware(['auth', 'csrf']);
+Router::get('/academy/sessions/{id}/files/{file}/download', [\Modules\Academy\Controllers\Web\AcademySessionFileController::class, 'download'])->middleware('auth');
+Router::head('/academy/sessions/{id}/files/{file}/download', [\Modules\Academy\Controllers\Web\AcademySessionFileController::class, 'download'])->middleware('auth');
+Router::post('/academy/sessions/{id}/files/{file}/delete', [\Modules\Academy\Controllers\Web\AcademySessionFileController::class, 'delete'])->middleware(['auth', 'csrf']);
+
 Router::get('/academy/academy', [AnalyticsController::class, 'academy']);
 Router::get('/academy/academies', [AcademyRegistrationController::class, 'index']);
 Router::get('/academy/academy-enroll', [AnalyticsController::class, 'academyEnroll'])->middleware('auth');

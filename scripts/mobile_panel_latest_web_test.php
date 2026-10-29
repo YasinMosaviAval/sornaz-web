@@ -59,4 +59,15 @@ foreach (['schema', 'data'] as $mode) {
     expectParity($database['actions']['table-' . $mode]['requiredQuery'] === ['table'], 'Per-table download must not fall back to exporting the entire database');
 }
 foreach ($database['actions'] as $action) expectParity($action['method'] === 'GET', 'Database administration must remain read-only');
+$personalAppearance = array_column($native['my-settings']['actions']['save']['fields'], null, 'key');
+expectParity(!isset($personalAppearance['fontWeight']) && !isset($personalAppearance['cornerRadius']), 'Personal settings expose administrator appearance controls');
+expectParity(isset($personalAppearance['colorTheme']['options']['original']), 'Original Flutter palette missing from the web/mobile appearance contract');
+foreach (['create', 'update', 'delete', 'status'] as $operation) expectParity($native['badges']['actions'][$operation]['admin'] === true, 'Badge mutation is not administrator-only');
+foreach (['session-files' => 'GET', 'session-file-upload' => 'POST', 'session-file-download' => 'GET', 'session-file-delete' => 'POST'] as $name => $method) {
+    $action = $native['schedules']['actions'][$name];
+    expectParity($action['method'] === $method && $action['hidden'] && empty($action['admin']), 'Session files must use hidden member actions');
+    $route = \Core\router\Router::dispatch($method, str_replace(['{id}', '{file}'], ['1', '2'], $action['path']));
+    expectParity(in_array('auth', $route['middlewares'], true), 'Session files lost web authentication');
+    if ($method === 'POST') expectParity(in_array('csrf', $route['middlewares'], true), 'Session file mutations lost CSRF');
+}
 echo "Latest mobile web parity: safe post metadata, typed image/category/related choices, server filtering, fifth payment step, compact gallery and founder database operations passed.\n";

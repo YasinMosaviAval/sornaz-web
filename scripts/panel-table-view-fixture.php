@@ -19,7 +19,7 @@ function e($value): string { return htmlspecialchars((string) $value, ENT_QUOTES
 function locale(): string { return $GLOBALS['argv'][2] ?? 'fa'; }
 function csrf_token(): string { return 'fixture'; }
 function auth(): object { return new class {
-    public function id(): int { return 10; }
+    public function id(): int { return (int)($GLOBALS['argv'][4] ?? 10); }
     public function user(): array { return ['user_id' => (int)($GLOBALS['argv'][4] ?? 10), 'type' => 'academy']; }
 }; }
 function component(string $name, array $data = []): void {
@@ -27,7 +27,7 @@ function component(string $name, array $data = []): void {
     extract($data);
     require __DIR__ . '/../Modules/Analytics/Resources/Views/sections/' . $name . '.php';
 }
-$previewPanelMode = 'user';
+$previewPanelMode = in_array($argv[5] ?? '', ['user', 'admin', 'academy', 'branch'], true) ? $argv[5] : 'user';
 if (($argv[1] ?? '') === 'data') {
     component('panel-table-template', json_decode($argv[3], true, 512, JSON_THROW_ON_ERROR));
     exit;

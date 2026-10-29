@@ -51,13 +51,13 @@ final class AdminProfileContentController
 
     private function run(callable $f, int $s = 200)
     {
-        if ((int) auth()->id() !== 1) {
-            return ResponseFactory::json(['success' => false, 'message' => 'دسترسی به این بخش فقط برای مدیر سایت مجاز است.'], 403);
+        if (!auth()->id()) {
+            return ResponseFactory::json(['success' => false, 'message' => 'برای ادامه وارد حساب شوید.'], 401);
         }
         try {
             return ResponseFactory::json(['success' => true, 'data' => $f()], $s);
         } catch (\Throwable$e) {
-            return ResponseFactory::json(['success' => false, 'message' => $e->getMessage()], 422);
+            return ResponseFactory::json(['success' => false, 'message' => \Core\security\PublicError::message($e)], \Core\security\PublicError::status($e));
         }
     }
 }

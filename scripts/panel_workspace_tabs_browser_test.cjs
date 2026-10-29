@@ -30,7 +30,7 @@ const render = (name, lang) => execFileSync('php', ['scripts/panel-table-view-fi
    for(const name of ['admin','posts','comments']) await page.addScriptTag({path:`assets/Analytics/js/${name}.js`});
    for(const [ids,title] of [
     [['posts','post-categories','media','comments'],lang==='en'?'Posts':'نوشته ها'],
-    [['awards','badges','experiences','certificates','educations','events','polls','publications'],lang==='en'?'Records and achievements':'سوابق و دستاوردها'],
+    [['educations','certificates','awards','experiences','events','publications','badges'],lang==='en'?'Records and achievements':'سوابق و دستاوردها'],
     [['gallery-cover','gallery-logo','gallery-intro-video','gallery-collection'],lang==='en'?'Gallery':'گالری'],
     [['branches','branch-types','availabilities','scheduling-rules','availability-exceptions'],lang==='en'?'Organization':'سازمان'],
     [['users','roles','permissions'],lang==='en'?'Users':'کاربران']]) {
@@ -48,7 +48,7 @@ const render = (name, lang) => execFileSync('php', ['scripts/panel-table-view-fi
    assert.equal(await page.locator('#users').isVisible(),true);
    await page.evaluate(()=>showSection('branches'));
    assert.match(await page.locator('#branches [aria-current="page"]').getAttribute('onclick'),/branches/);
-   await page.evaluate(()=>{document.getElementById('gallery').remove();showSection('gallery');});
+   await page.evaluate(()=>{document.getElementById('gallery')?.remove();showSection('gallery');});
    assert.equal(await page.locator('#gallery-cover').isVisible(),true);
    await page.evaluate(()=>showSection('posts'));
    await page.evaluate(()=>loadPosts());

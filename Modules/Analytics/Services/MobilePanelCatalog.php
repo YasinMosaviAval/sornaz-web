@@ -112,6 +112,7 @@ final class MobilePanelCatalog
         $sections['schedules'] = $s('schedules', 'برنامه کلاس‌ها و حضور و غیاب', 'Class schedule', '/academy/admin/class-schedules', 'sessions', [], 'member', false);
         // Reuse the scoped web summary; never aggregate an arbitrary client page.
         $sections['schedules']['actions']['heatmap'] = $a('/academy/admin/class-schedules', 'نقشه حرارتی تقویم', 'GET', [], false) + ['query' => ['summary' => 'heatmap'], 'hidden' => true];
+        $this->sessionFileContracts($sections);
         $sections['terms']['actions']['set-status'] = $a('/academy/admin/terms/{id}/set-status', 'تعیین وضعیت ترم', 'POST', [
             $f('status', 'وضعیت', 'select', \Modules\Academy\Services\AcademyTermService::STATUS_LABELS, true),
             $f('fromStatus', 'وضعیت قبلی'),
@@ -177,7 +178,7 @@ final class MobilePanelCatalog
         $sections['schedules']['rows'] = 'schedules';
         $sections['schedules']['actions']['attendance']['fields'] = [$f('teacherNote', 'یادداشت استاد', 'multiline') + ['en' => 'Teacher note', 'visibleWhen' => ['canWriteTeacherNote' => true], 'maxLength' => 10000], $f('attendance', 'حضور و غیاب', 'rows', [$f('memberId', 'عضو', 'select', ['source' => 'attendance']), $f('status', 'وضعیت', 'select', ['present' => 'حاضر', 'absent' => 'غایب', 'late' => 'تأخیر', 'leave' => 'مرخصی', 'excused_absence' => 'غیبت موجه', 'online' => 'آنلاین']), $f('description', 'توضیح')])];
         $sections['settings'] = $s('settings', 'تنظیمات سایت', 'Site settings', '/analytics/site-settings', '', [], 'management', false);
-        $sections['settings']['actions']['save'] = $a('/analytics/admin-settings', 'ویرایش تنظیمات', 'POST', [$f('primaryFont', 'قلم'), $f('fontScale', 'اندازه متن', 'number'), $f('language', 'زبان', 'select', ['fa' => 'فارسی', 'en' => 'English']), $f('themeMode', 'ظاهر', 'select', ['dark' => 'تیره', 'light' => 'روشن']), $f('colorTheme', 'تم رنگی', 'select', ['indigo' => 'نیلی', 'emerald' => 'زمردی', 'rose' => 'رز', 'amber' => 'کهربایی'])], false);
+        $sections['settings']['actions']['save'] = $a('/analytics/admin-settings', 'ویرایش تنظیمات', 'POST', [$f('primaryFont', 'قلم'), $f('fontScale', 'اندازه متن', 'number'), $f('language', 'زبان', 'select', ['fa' => 'فارسی', 'en' => 'English']), $f('themeMode', 'ظاهر', 'select', ['dark' => 'تیره', 'light' => 'روشن']), $f('colorTheme', 'تم رنگی', 'select', ['original' => 'اصلی', 'indigo' => 'نیلی', 'emerald' => 'زمردی', 'rose' => 'رز', 'amber' => 'کهربایی'])], false);
         $sections['reports'] = $s('reports', 'گزارش‌ها و نمودارها', 'Reports and charts', '/analytics/admin-reports', 'reports', [], 'management', false);
         $sections['guides'] = $s('guides', 'راهنمای عملکردها', 'Guides', '/analytics/admin-guides', 'items', [], 'founder', false);
         $guideFields = [$f('fa', 'فارسی', 'object', [$f('title', 'عنوان'), $f('content', 'متن', 'multiline')]), $f('en', 'English', 'object', [$f('title', 'Title'), $f('content', 'Content', 'multiline')])];
@@ -409,9 +410,9 @@ final class MobilePanelCatalog
         $sections['my-settings']['actions']['save'] = $a('/analytics/personal-data/settings', 'ذخیره تنظیمات شخصی', 'POST', [
             $f('language', 'زبان', 'select', ['fa' => 'فارسی', 'en' => 'English']),
             $f('themeMode', 'ظاهر', 'select', ['light' => 'روشن', 'dark' => 'تیره']),
-            $f('colorTheme', 'تم رنگی', 'select', ['indigo' => 'نیلی', 'emerald' => 'زمردی', 'rose' => 'رز', 'amber' => 'کهربایی']),
+            $f('colorTheme', 'تم رنگی', 'select', ['original' => 'اصلی', 'indigo' => 'نیلی', 'emerald' => 'زمردی', 'rose' => 'رز', 'amber' => 'کهربایی']),
             $f('primaryFont', 'قلم', 'select', ['vazir' => 'وزیر', 'sahel' => 'ساحل', 'iran_yekan' => 'ایران‌یکان', 'iran_sansx' => 'ایران‌سنس X', 'kalameh' => 'کلمه', 'peyda' => 'پیدا']),
-            $f('fontScale', 'اندازه قلم', 'number'), $f('fontWeight', 'وزن قلم', 'number'), $f('cornerRadius', 'گردی گوشه‌ها', 'number'),
+            $f('fontScale', 'اندازه قلم', 'number'),
         ], false);
         $galleryFields = [$f('file', 'فایل', 'file'), $f('collection', 'مجموعه', 'select', ['cover' => 'کاور', 'logo' => 'لوگو', 'intro_video' => 'ویدیو معرفی', 'gallery' => 'گالری']), $f('title', 'عنوان'), ...$description];
         $sections['my-gallery'] = $s('my-gallery', 'گالری من', 'My gallery', '/analytics/personal-data/gallery', 'items', $galleryFields, 'common');
@@ -454,6 +455,15 @@ final class MobilePanelCatalog
             $sections['posts']['presentation']['filters'] = array_values(array_filter($sections['posts']['presentation']['filters'], fn ($field) => ($field['webId'] ?? '') !== 'postCategoryFilter'));
         }
         return $sections;
+    }
+
+    private function sessionFileContracts(array &$sections): void
+    {
+        $base = '/academy/sessions/{id}/files';
+        $sections['schedules']['actions']['session-files'] = $this->a($base, 'فایل‌های جلسه', 'GET', [], false) + ['en' => 'Session files', 'hidden' => true, 'sensitive' => true, 'cache' => false];
+        $sections['schedules']['actions']['session-file-upload'] = $this->a($base, 'بارگذاری فایل جلسه', 'POST', [$this->f('file', 'فایل', 'file', null, true)], false) + ['en' => 'Upload session file', 'hidden' => true];
+        $sections['schedules']['actions']['session-file-download'] = $this->a($base . '/{file}/download', 'دانلود فایل جلسه', 'GET', [], false) + ['en' => 'Download session file', 'hidden' => true, 'download' => true, 'sensitive' => true, 'cache' => false];
+        $sections['schedules']['actions']['session-file-delete'] = $this->a($base . '/{file}/delete', 'حذف فایل جلسه', 'POST', [], false) + ['en' => 'Delete session file', 'hidden' => true];
     }
 
     private function assignmentPaymentFields(): array
@@ -1046,6 +1056,7 @@ final class MobilePanelCatalog
             unset($field);
         }
         $sections['my-settings']['actions']['save']['initialSources'] = ['defaults', 'personal'];
+        foreach (['create', 'update', 'delete', 'status'] as $operation) $sections['badges']['actions'][$operation]['admin'] = true;
         foreach (['my-settings', 'settings'] as $key) $sections[$key]['actions']['save']['strictFields'] = true;
         $sections['settings']['actions']['save']['fields'][] = $this->f('fontWeight', 'وزن قلم', 'select', ['0' => 'عادی', '1' => '۱', '2' => '۲', '3' => '۳', '4' => '۴', '5' => '۵']);
         $sections['settings']['actions']['save']['fields'][] = $this->f('cornerRadius', 'گردی گوشه‌ها', 'number');

@@ -61,6 +61,10 @@ namespace {
         \Core\database\DB::$state = $state;
         $caps = $access->capabilities(auth()->user());
         $allowed = array_filter($catalog, fn ($section) => empty($section['hidden']) && !empty($caps[$section['access']]));
+        $insert = array_search('branches', $expected, true);
+        $insert = $insert === false ? array_search('gallery', $expected, true) + (!empty($caps['management']) ? 1 : 0) : $insert + 1;
+        array_splice($expected, $insert, 0, ['educations']);
+        array_splice($expected, array_search('finance', $expected, true) + 1, 0, ['polls']);
         $items = $navigation->forCurrentUser($allowed, $caps);
         expectMenu(array_column($items, 'key') === $expected, $name . ': website menu differs: ' . json_encode(array_column($items, 'key')));
         expectMenu(!array_intersect(['my-gallery', 'my-lessons', 'my-settings', 'my-finance', 'my-waiting'], array_column($items, 'key')), $name . ': API-only entry leaked');
@@ -84,8 +88,8 @@ namespace {
     if (isset($catalog['database-management'])) {
         expectMenu(isset($index['database-management']) && array_search('database-management', $founderKeys, true) === array_search('guides', $founderKeys, true) + 1, 'Database management must follow guides for the founder');
     }
-    expectMenu(isset($index['awards'], $index['users'], $index['notation']) && !isset($index['teachers']), 'Founder-only sections or consolidated users menu incorrect');
-    expectMenu(count($index['awards']['links']) === 7, 'Achievement page links incomplete');
+    expectMenu(isset($index['educations'], $index['users'], $index['notation']) && !isset($index['teachers']), 'Founder-only sections or consolidated users menu incorrect');
+    expectMenu($index['educations']['links'] === ['certificates', 'awards', 'experiences', 'events', 'publications', 'badges'], 'Achievement page links incomplete');
     expectMenu($index['users']['links'] === ['roles', 'permissions', 'members', 'member-schedules', 'employee-leaves'] && $index['users']['en'] === 'Users', 'User workspace links incomplete');
     expectMenu($index['branches']['links'][0] === 'branch-types', 'Education types must be the first organization link');
     expectMenu($index['gallery']['section'] === 'gallery' && !isset($index['gallery']['where']), 'Gallery menu must retain access to every collection');

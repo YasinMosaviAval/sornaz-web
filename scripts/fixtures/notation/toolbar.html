@@ -20,7 +20,19 @@ window.SornazNotation={postMessage(raw){const data=JSON.parse(raw);if(!data.id)r
  click('[data-action=remove-bar]');await pause();Notation.command('export');await pause();if(exported.score.measures.length!==2)throw Error('Remove measure action failed');
  const legacy=exported.score.measures[0].notes;if(legacy[0]?.duration!=='256'||legacy[1]?.duration!=='128')throw Error('Legacy note durations changed on export');
  click('[data-action=metadata]');await pause();const form=document.getElementById('metadata');if(form.elements.tempo_unit.value!=='128:0')throw Error('Legacy tempo unit was lost');
+ const beatOrder=[...form.querySelectorAll('[data-action=beat-unit]')].map(item=>item.dataset.value).filter(value=>!value.startsWith('128:'));
+ const symbols={w:'𝅝',h:'𝅗𝅥',q:'𝅘𝅥',8:'𝅘𝅥𝅮',16:'𝅘𝅥𝅯',32:'𝅘𝅥𝅰',64:'𝅘𝅥𝅱'};
+ const expected=Object.keys(symbols).flatMap(duration=>(duration==='w'||duration==='64'?[0]:duration==='32'?[0,1]:[0,1,2]).map(dots=>({duration,dots}))).sort((a,b)=>NotationModel.ticks(b)-NotationModel.ticks(a));
+ if(JSON.stringify(beatOrder)!==JSON.stringify(expected.map(item=>item.duration+':'+item.dots)))throw Error('Beat unit durations must decrease by real musical length');
  form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));await pause();Notation.command('export');await pause();if(exported.metadata.tempo_note!=='128')throw Error('Metadata editing replaced a legacy tempo unit');
+ const pianoKey=document.querySelector('[data-pitch]');pianoKey.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,pointerType:'mouse',button:0,clientX:150,clientY:200}));
+ for(let index=0;index<expected.length;index++){
+  window.dispatchEvent(new PointerEvent('pointermove',{clientY:200+index*12,pointerType:'mouse'}));
+  const item=expected[index],label=symbols[item.duration]+'·'.repeat(item.dots);
+  if(document.querySelector('.duration-scrubber .active')?.textContent!==label)throw Error('Note duration picker differs from beat-unit order at '+item.duration+':'+item.dots);
+ }
+ window.dispatchEvent(new PointerEvent('pointercancel'));
+ Notation.command('export');await pause();if(exported.score.measures[0].notes[0].duration!=='256')throw Error('Canceling duration selection changed existing notes');
  if(document.querySelector('[data-action=duration][data-value="128"],[data-action=duration][data-value="256"]'))throw Error('Legacy durations leaked into new note choices');
  document.body.dataset.result='PASS';
 }catch(error){document.body.dataset.result='FAIL '+error.message;}})();

@@ -44,8 +44,8 @@ final class AdminProfileContentService
             $row['id'] = $id;
             $row['user_name'] = $names[$ownerId] ?? ('سازمان ' . $ownerId);
             $row['organization'] = $organization;
-            $row['canManage'] = (bool) $organization['writable'];
-            $row['canChangeStatus'] = $canModerate && (bool) $organization['writable'];
+            $row['canManage'] = (bool) $organization['writable'] && ($entity !== 'badges' || $this->badgeWriter($actor));
+            $row['canChangeStatus'] = $canModerate && $row['canManage'];
             $row['approval_status'] = $row['approved_at'] ? 'approved' : 'pending';
             foreach ($c['texts'] as $f) {
                 $row[$f] = $entity === 'publications' && $f === 'content' ? \Core\translation\EntityText::get('user_publications',$id,'content') : $this->text($c['table'], $id, $f);
@@ -55,12 +55,7 @@ final class AdminProfileContentService
             }
             $items[] = $row;
         }
-        $levels = [];
-        if ($entity === 'badges') {
-            foreach (DB::table('verification_levels')->whereNull('deleted_at')->orderBy('priority')->get() as $l) {
-                $levels[] = ['id' => (int) $l['verification_level_id'], 'code' => $l['code'], 'title' => $this->text('verification_levels', (int) $l['verification_level_id'], 'title') ?: $l['code']];
-            }
-        }
+        $levels = $entity === 'badges' ? $this->badgeLevels($items) : [];
         $addresses = [];
         if (in_array($entity, ['experiences', 'events'], true) && $ids) {
             foreach (DB::table('user_addresses')->whereIn('user_id', $ids)->whereNull('deleted_at')->get() as $a) {
@@ -68,11 +63,12 @@ final class AdminProfileContentService
                 $addresses[] = ['id' => $id, 'userId' => (int) $a['user_id'], 'title' => $this->text('user_addresses', $id, 'address') ?: ('نشانی ' . $id)];
             }
         }
-        return ['entity' => $entity, 'organizations' => $organizations, 'hideOrganizationField' => $branchAccount, 'canModerate' => $canModerate, 'autoApprove' => $autoApprove, 'items' => $items, 'levels' => $levels, 'addresses' => $addresses, 'version' => $this->version($c['table'], $ids, $ownerColumn)];
+        return ['entity' => $entity, 'canCreate' => $entity !== 'badges' || $this->badgeWriter($actor), 'organizations' => $organizations, 'hideOrganizationField' => $branchAccount, 'canModerate' => $canModerate, 'autoApprove' => $autoApprove, 'items' => $items, 'levels' => $levels, 'addresses' => $addresses, 'version' => $this->version($c['table'], $ids, $ownerColumn)];
     }
 
     public function save(int $actor, string $entity, ?int $id, array $d): int
     {
+        $this->requireBadgeWriter($actor, $entity);
         return \Core\translation\EntityText::atomic(db(),fn()=>$this->persist($actor,$entity,$id,$d));
     }
 
@@ -92,10 +88,8 @@ final class AdminProfileContentService
             $values[$f] = $this->date($d[$f] ?? null, str_ends_with($f, '_at'));
         }
         if ($entity === 'badges') {
-            $values += ['verification_level_id' => (int) ($d['verification_level_id'] ?? 0), 'granted_by' => $actor, 'status' => $this->one($d['status'] ?? 'active', ['active', 'expired', 'revoked'], 'وضعیت')];
-            if (!$values['verification_level_id']) {
-                throw new RuntimeException('انتخاب نشان الزامی است.');
-            }
+            $values += $this->badgeValues($actor, $d);
+            $values['granted_at'] ??= $now;
         }
         if ($entity === 'certificates' && mb_strlen(trim((string)($d['file_path']??'')))>2048) {
             throw new RuntimeException('File path exceeds 2048 characters.',422);
@@ -149,6 +143,7 @@ final class AdminProfileContentService
 
     public function cycleStatus(int $actor, string $entity, int $id): void
     {
+        $this->requireBadgeWriter($actor, $entity);
         [, ,,$canModerate] = $this->organizations($actor);
         if (!$canModerate) {
             throw new RuntimeException('اجازه تغییر وضعیت تأیید را ندارید.');
@@ -161,10 +156,16 @@ final class AdminProfileContentService
 
     public function vote(int $actor, int $pollId, array $options): void
     {
+        \Modules\System\Services\PaymentMutex::run(db(), 'profile-poll:' . $pollId, fn () => \Core\translation\EntityText::atomic(db(), fn () => $this->voteScoped($actor, $pollId, $options)));
+    }
+
+    private function voteScoped(int $actor, int $pollId, array $options): void
+    {
         $poll = DB::table('user_polls')->where('user_poll_id', $pollId)->where('status', 'active')->whereNull('deleted_at')->first();
         if (!$poll || ($poll['expires_at'] && strtotime($poll['expires_at']) < time())) {
             throw new RuntimeException('این نظرسنجی فعال نیست.');
         }
+        $this->allowedOrganization($actor, (int) $poll['owner_id']);
         $options = array_values(array_unique(array_filter(array_map('intval', $options))));
         if (!$options) {
             throw new RuntimeException('یک گزینه را انتخاب کنید.');
@@ -231,74 +232,53 @@ final class AdminProfileContentService
     private function organizations(int $actor): array
     {
         $me = DB::table('users')->where('user_id', $actor)->whereNull('deleted_at')->first();
-        if (!$me) {
-            throw new RuntimeException('کاربر معتبر نیست.');
-        }
-        $siteAdmin = SiteAdminAccess::allows($me);
-        $academyIds = [];
-        $branchIds = [];
-        $academyWide = false;
+        if (!$me || $actor !== (int) auth()->id()) throw new RuntimeException('کاربر معتبر نیست.', 401);
+        $admin = SiteAdminAccess::allows($me);
+        $wide = $branches = [];
         $reception = false;
         $directBranch = DB::table('academy_branches')->where('user_id', $actor)->whereNull('deleted_at')->first();
         $directAcademy = DB::table('academies')->where('user_id', $actor)->whereNull('deleted_at')->first();
-        if ($siteAdmin) {
-            $academyIds = array_map(fn ($a) => (int) $a['academy_id'], DB::table('academies')->whereNull('deleted_at')->get());
-            $academyWide = true;
-        } elseif ($directAcademy) {
-            $academyIds[] = (int) $directAcademy['academy_id'];
-            $academyWide = true;
+        if ($admin) {
+            foreach (DB::table('academies')->whereNull('deleted_at')->get() as $a) $wide[(int) $a['academy_id']] = true;
         } elseif ($directBranch) {
-            $academyIds[] = (int) $directBranch['academy_id'];
-            $branchIds[] = (int) $directBranch['branch_id'];
+            $branches[(int) $directBranch['academy_id']][(int) $directBranch['branch_id']] = true;
+        } elseif ($directAcademy) {
+            $wide[(int) $directAcademy['academy_id']] = true;
         } else {
-            foreach (DB::table('academy_branch_members')->where('user_id', $actor)->whereNull('deleted_at')->get() as $m) {
-                $roles = DB::table('academy_branch_member_roles')->join('access_system_roles', 'access_system_roles.role_id', '=', 'academy_branch_member_roles.role_id')->where('academy_branch_member_roles.member_id', (int) $m['member_id'])->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->get();
-                foreach ($roles as $r) {
-                    $name = (string) $r['name'];
-                    if (str_contains($name, 'reception')) {
-                        $reception = true;
-                    }
-                    if (str_contains($name, 'academy_manager') || str_contains($name, 'academy_receptionist')) {
-                        $academyIds[] = (int) $m['academy_id'];
-                        $academyWide = true;
-                    } elseif (str_contains($name, 'branch_manager') || str_contains($name, 'branch_receptionist') || in_array((int) $r['role_id'], [16, 17], true)) {
-                        $academyIds[] = (int) $m['academy_id'];
-                        if ($m['branch_id']) {
-                            $branchIds[] = (int) $m['branch_id'];
-                        }
-                    }
+            foreach (DB::table('academy_branch_members')->where('user_id', $actor)->where('status', 'active')->whereNull('deleted_at')->get() as $member) {
+                $roles = DB::table('academy_branch_member_roles')->join('access_system_roles', 'access_system_roles.role_id', '=', 'academy_branch_member_roles.role_id')->where('academy_branch_member_roles.member_id', (int) $member['member_id'])->whereNull('academy_branch_member_roles.deleted_at')->whereNull('access_system_roles.deleted_at')->get();
+                foreach ($roles as $role) {
+                    $name = (string) $role['name'];
+                    $academy = (int) $member['academy_id'];
+                    $branch = (int) ($member['branch_id'] ?? 0);
+                    if (!preg_match('/^(?:academy|branch|academy_branch)_(?:owner|manager|receptionist)(?:_[1-9][0-9]*)?$/D', $name)) continue;
+                    $reception = $reception || str_contains($name, 'receptionist');
+                    if (!$branch && preg_match('/^academy_(?:owner|manager|receptionist)(?:_[1-9][0-9]*)?$/D', $name)) $wide[$academy] = true;
+                    elseif ($branch) $branches[$academy][$branch] = true;
                 }
             }
         }
-        $academyIds = array_values(array_unique(array_filter($academyIds)));
-        $branchIds = array_values(array_unique(array_filter($branchIds)));
         $out = [];
-        foreach ($academyIds as $aid) {
-            $a = DB::table('academies')->where('academy_id', $aid)->whereNull('deleted_at')->first();
-            if (!$a) {
-                continue;
+        foreach (array_unique([...array_keys($wide), ...array_keys($branches)]) as $academyId) {
+            $academy = DB::table('academies')->where('academy_id', $academyId)->whereNull('deleted_at')->first();
+            if (!$academy) continue;
+            $name = $this->text('academies', $academyId, 'title') ?: 'آموزشگاه ' . $academyId;
+            if (isset($wide[$academyId]) && !empty($academy['user_id'])) {
+                $uid = (int) $academy['user_id'];
+                $out[$uid] = ['id' => $uid, 'entityId' => $academyId, 'academyId' => $academyId, 'branchId' => null, 'kind' => 'academy', 'name' => $name, 'writable' => true];
             }
-            $name = $this->text('academies', $aid, 'title') ?: 'آموزشگاه ' . $aid;
-            $uid = (int) $a['user_id'];
-            $academyWritable = $siteAdmin || $academyWide;
-            if ($uid) {
-                $out[$uid] = ['id' => $uid, 'entityId' => $aid, 'academyId' => $aid, 'branchId' => null, 'kind' => 'academy', 'name' => $name, 'writable' => $academyWritable];
+            foreach (DB::table('academy_branches')->where('academy_id', $academyId)->whereNull('deleted_at')->get() as $branch) {
+                $bid = (int) $branch['branch_id'];
+                if ((!isset($wide[$academyId]) && !isset($branches[$academyId][$bid])) || empty($branch['user_id'])) continue;
+                $uid = (int) $branch['user_id'];
+                $out[$uid] = ['id' => $uid, 'entityId' => $bid, 'academyId' => $academyId, 'branchId' => $bid, 'kind' => 'branch', 'name' => $this->text('academy_branches', $bid, 'name') ?: 'شعبه ' . $bid, 'academyName' => $name, 'writable' => $admin || isset($wide[$academyId]) || $uid === $actor || isset($branches[$academyId][$bid])];
             }
-            foreach (DB::table('academy_branches')->where('academy_id', $aid)->whereNull('deleted_at')->get() as $b) {
-                $bid = (int) $b['branch_id'];
-                if (!$academyWide && !in_array($bid, $branchIds, true)) {
-                    continue;
-                }
-                $buid = (int) $b['user_id'];
-                if ($buid) {
-                    $out[$buid] = ['id' => $buid, 'entityId' => $bid, 'academyId' => $aid, 'branchId' => $bid, 'kind' => 'branch', 'name' => ($this->text('academy_branches', $bid, 'name') ?: 'شعبه ' . $bid), 'academyName' => $name, 'writable' => $siteAdmin || $academyWide || in_array($bid, $branchIds, true)];
-                }
-            }
+        }
+        if ($admin) {
+            foreach (DB::table('users')->whereNull('deleted_at')->get() as $user) $out += $this->selfOrganization((int) $user['user_id'], $user);
         }
         $out += $this->selfOrganization($actor, $me);
-        $hide = $this->hideOrganizationField($out, $directBranch, $academyWide, $branchIds);
-        $autoApprove = !$reception;
-        return [array_values($out), (bool) $hide, $autoApprove, $siteAdmin || (!$reception && ($directAcademy || $directBranch || $academyWide || $branchIds))];
+        return [array_values($out), count($out) === 1, !$reception, $admin || (!$reception && ($directAcademy || $directBranch || $wide || $branches))];
     }
 
     private function allowedOrganization(int $a, int $u, bool $write = false): void
@@ -311,7 +291,7 @@ final class AdminProfileContentService
                 break;
             }
         }if (!$o || ($write && !$o['writable'])) {
-            throw new RuntimeException('دسترسی به سازمان انتخاب‌شده ندارید.');
+            throw new RuntimeException('دسترسی به سازمان انتخاب‌شده ندارید.', 403);
         }
     }
 
@@ -328,6 +308,7 @@ final class AdminProfileContentService
 
     private function owned(int $a, string $e, int $id): array
     {
+        $this->requireBadgeWriter($a, $e);
         $c = $this->config($e);
         $r = DB::table($c['table'])->where($c['key'], $id)->whereNull('deleted_at')->first();
         if (!$r) {
@@ -344,6 +325,36 @@ final class AdminProfileContentService
         }
         $rows = DB::table($table)->whereIn($ownerColumn, $ids)->get();
         return sha1(json_encode(array_map(fn ($r) => [$r['updated_at'] ?? null, $r['deleted_at'] ?? null], $rows)));
+    }
+
+    private function badgeWriter(int $actor): bool
+    {
+        return $actor === (int) auth()->id() && SiteAdminAccess::allows(auth()->user());
+    }
+
+    private function badgeValues(int $actor, array $data): array
+    {
+        $level = (int) ($data['verification_level_id'] ?? 0);
+        if (!$level || !DB::table('verification_levels')->where('verification_level_id', $level)->whereNull('deleted_at')->first()) throw new RuntimeException('انتخاب نشان الزامی است.', 422);
+        return ['verification_level_id' => $level, 'granted_by' => $actor, 'status' => $this->one($data['status'] ?? 'active', ['active', 'expired', 'revoked'], 'وضعیت')];
+    }
+
+    private function badgeLevels(array &$items): array
+    {
+        $levels = [];
+        foreach (DB::table('verification_levels')->whereNull('deleted_at')->orderBy('priority')->get() as $level) {
+            $id = (int) $level['verification_level_id'];
+            $levels[] = ['id' => $id, 'code' => $level['code'], 'title' => $this->text('verification_levels', $id, 'title') ?: $level['code']];
+        }
+        $titles = array_column($levels, 'title', 'id');
+        foreach ($items as &$item) $item['badge_title'] = $titles[(int) $item['verification_level_id']] ?? 'نشان';
+        unset($item);
+        return $levels;
+    }
+
+    private function requireBadgeWriter(int $actor, string $entity): void
+    {
+        if ($entity === 'badges' && !$this->badgeWriter($actor)) throw new RuntimeException('اعطا و تغییر نشان فقط برای مدیر سایت مجاز است.', 403);
     }
 
     private function config(string $e): array

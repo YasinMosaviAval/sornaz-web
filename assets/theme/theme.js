@@ -71,7 +71,7 @@
     }).catch(() => {});
   };
   const root = document.documentElement;
-  const themes = ['indigo', 'emerald', 'rose', 'amber'];
+  const themes = ['original', 'indigo', 'emerald', 'rose', 'amber'];
   const apply = (theme, mode, shouldPersist = false) => {
     const safeTheme = themes.includes(theme) ? theme : 'indigo';
     const safeMode = ['light', 'dark'].includes(mode) ? mode : 'light';

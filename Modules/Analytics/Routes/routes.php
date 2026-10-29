@@ -147,12 +147,12 @@ Router::get('/analytics/admin-points', [AdminPointController::class, 'index'])->
 Router::post('/analytics/admin-points', [AdminPointController::class, 'store'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-points/{id}/update', [AdminPointController::class, 'update'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-points/{id}/delete', [AdminPointController::class, 'delete'])->middleware(['site-admin', 'csrf']);
-Router::get('/analytics/admin-profile-content/{entity}', [AdminProfileContentController::class, 'index'])->middleware('academy-panel');
-Router::post('/analytics/admin-profile-content/polls/{id}/vote', [AdminProfileContentController::class, 'vote'])->middleware(['academy-panel', 'csrf']);
-Router::post('/analytics/admin-profile-content/{entity}', [AdminProfileContentController::class, 'store'])->middleware(['academy-panel', 'csrf']);
-Router::post('/analytics/admin-profile-content/{entity}/{id}', [AdminProfileContentController::class, 'update'])->middleware(['academy-panel', 'csrf']);
-Router::post('/analytics/admin-profile-content/{entity}/{id}/status', [AdminProfileContentController::class, 'status'])->middleware(['academy-panel', 'csrf']);
-Router::post('/analytics/admin-profile-content/{entity}/{id}/delete', [AdminProfileContentController::class, 'delete'])->middleware(['academy-panel', 'csrf']);
+Router::get('/analytics/admin-profile-content/{entity}', [AdminProfileContentController::class, 'index'])->middleware('auth');
+Router::post('/analytics/admin-profile-content/polls/{id}/vote', [AdminProfileContentController::class, 'vote'])->middleware(['auth', 'csrf']);
+Router::post('/analytics/admin-profile-content/{entity}', [AdminProfileContentController::class, 'store'])->middleware(['auth', 'csrf']);
+Router::post('/analytics/admin-profile-content/{entity}/{id}', [AdminProfileContentController::class, 'update'])->middleware(['auth', 'csrf']);
+Router::post('/analytics/admin-profile-content/{entity}/{id}/status', [AdminProfileContentController::class, 'status'])->middleware(['auth', 'csrf']);
+Router::post('/analytics/admin-profile-content/{entity}/{id}/delete', [AdminProfileContentController::class, 'delete'])->middleware(['auth', 'csrf']);
 Router::post('/analytics/admin-user-access/{id}', [AdminUserAccessController::class, 'save'])->middleware(['academy-panel', 'csrf']);
 Router::get('/analytics/admin-access-catalog', [AdminAccessCatalogController::class, 'index'])->middleware('site-admin');
 Router::post('/analytics/admin-roles', [AdminAccessCatalogController::class, 'saveRole'])->middleware(['site-admin', 'csrf']);
