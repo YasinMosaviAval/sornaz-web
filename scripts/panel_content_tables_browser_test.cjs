@@ -26,7 +26,7 @@ const { renderPanelView, tableRuntime } = require('./panel-table-fixture.cjs');
         window.openMediaUpload = () => { window.action = 'media'; };
       });
       const layout = fs.readFileSync('Modules/Analytics/Resources/Views/layouts/admin.php', 'utf8');
-      await page.addStyleTag({content: layout.split('\n').filter(line => line.includes('.panel-page-toolbar')).join('\n')});
+      await page.addStyleTag({content: layout.split('\n').filter(line => line.includes('.panel-page-')).join('\n')});
       await page.evaluate(language => document.documentElement.dir = language === 'fa' ? 'rtl' : 'ltr', language);
       for (const key of ['posts', 'post-categories', 'media']) {
         await page.evaluate(key => showSection(key), key);
@@ -34,10 +34,12 @@ const { renderPanelView, tableRuntime } = require('./panel-table-fixture.cjs');
         assert.equal(await active.isVisible(), true);
         assert.equal(await page.locator('#panelPageActions').isVisible(), false);
         assert.equal(await page.locator('#panelPageActions button').count(), 0);
-        assert.equal(await active.evaluate(button => !!button.closest('[data-panel-page-toolbar] [data-panel-page-actions]')), true);
+        assert.equal(await active.evaluate(button => !!button.closest('[data-panel-filter-actions] [data-panel-page-actions]')), true);
         const tab = await page.locator(`#${key} .panel-page-tabs button`).first().boundingBox();
         const action = await active.boundingBox();
-        assert.equal(language === 'fa' ? action.x < tab.x : action.x > tab.x, true, 'Actions must be opposite the tabs');
+        assert.ok(action.y >= tab.y + tab.height, 'Actions belong below the internal navigation');
+        const row = await page.locator(`#${key} [data-panel-filter-actions]`).boundingBox();
+        assert.ok(language === 'fa' ? action.x < row.x + row.width / 2 : action.x > row.x + row.width / 2, 'Actions stay at the opposite end when organization filters are absent');
         await active.click();
         assert.equal(await page.evaluate(() => window.action), key);
       }

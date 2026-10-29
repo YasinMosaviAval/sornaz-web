@@ -26,6 +26,7 @@
                 </a>
 
                 <nav class="flex min-w-0 flex-1 items-center justify-around gap-2 whitespace-nowrap text-sm">
+                <a href="/exams" data-page="exams" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(locale()==='en'?'Tests':'آزمون‌ها') ?></a>
                 <!-- <a href="/page/home" data-page="home" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">خانه</a> -->
                 <a href="/analytics/articles" data-page="articles" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.articles', 'مقاله‌های آموزشی')) ?></a>
                 <a href="/academy/academies" data-page="academies" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.academies', 'آموزشگاه‌ها')) ?></a>
@@ -77,6 +78,7 @@
                 <?php /* component('language-switcher'); */ ?>
             </div>
             <!-- <a href="/page/home" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50">خانه</a> -->
+            <a href="/exams" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(locale()==='en'?'Tests':'آزمون‌ها') ?></a>
             <a href="/analytics/articles" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.articles', 'مقاله‌های آموزشی')) ?></a>
             <a href="/academy/academies" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.academies', 'آموزشگاه‌ها')) ?></a>
             <!-- <a href="/users" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?//= e(trans('public.nav.users', 'کاربران')) ?></a> -->

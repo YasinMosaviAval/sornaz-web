@@ -21,6 +21,14 @@ const layout=fs.readFileSync('Modules/Analytics/Resources/Views/layouts/admin.ph
    assert.equal(await link.evaluate(node=>node.classList.contains('text-yellow-300')),false);
    assert.equal(await link.evaluate(node=>getComputedStyle(node).color),mode==='dark'?'rgb(243, 244, 246)':'rgb(31, 41, 55)');
   }
+  if(user===1){
+   const lesson=page.locator('#sidebar button[onclick="showSection(\'lessons\')"]');
+   await lesson.hover();
+   await page.waitForFunction(()=>getComputedStyle(document.querySelector('#sidebar button.nav-link')).color==='rgb(255, 255, 255)');
+   assert.equal(await lesson.evaluate(node=>getComputedStyle(node).color),'rgb(255, 255, 255)','Lesson button must share link hover color');
+   assert.equal(await lesson.locator('span').first().evaluate(node=>getComputedStyle(node).color),'rgb(255, 255, 255)');
+   await page.mouse.move(1200,0);
+  }
   await page.addScriptTag({path:'assets/theme/theme.js'});
   await page.evaluate(()=>setSiteTheme('original'));
   assert.equal(await page.evaluate(()=>getComputedStyle(document.documentElement).getPropertyValue('--theme-600').trim()),mode==='dark'?'#c19e32':'#0064fb');

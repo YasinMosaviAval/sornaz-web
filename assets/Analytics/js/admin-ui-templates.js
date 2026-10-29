@@ -336,6 +336,7 @@
   function normalizeTabs(section) {
     const tabs = section.querySelector('[id$="BranchTabs"]');
     if (!tabs) return;
+    if (tabs.closest('[data-panel-filter-actions]')) return;
     let box = tabs.parentElement;
     while (box && box.parentElement !== section) box = box.parentElement;
     if (!box || box.dataset.adminUiTemplate || box.closest('.admin-ui-organization-tabs')) return;

@@ -3,6 +3,7 @@ const {spawnSync} = require('node:child_process');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const php = [
+ 'music-practice-integration-test.php',
  'notation_web_account_test.php',
  'mobile_panel_latest_web_test.php',
  'academy_export_access_test.php',
@@ -42,6 +43,8 @@ suites.push([process.execPath,'term_student_assignment_test.cjs'],[process.execP
 suites.push([process.execPath,'panel_report_source_test.cjs'],[process.execPath,'term_people_policy_test.cjs']);
 suites.push([process.execPath,'availability_target_policy_test.cjs'],[process.execPath,'csrf_fetch_test.cjs'],[process.execPath,'profile_render_security_test.cjs'],[process.execPath,'lesson_usage_test.cjs'],[process.execPath,'staff_role_policy_test.cjs'],[process.execPath,'panel_activity_text_test.cjs'],[process.execPath,'term_discount_policy_test.cjs']);
 if (process.argv.includes('--browser')) {
+ suites.push([process.execPath,'music_practice_browser_test.cjs']);
+ suites.push([process.execPath,'guide_documents_test.cjs']);
  suites.push([process.execPath,'appearance_permissions_browser_test.cjs']);
  suites.push([process.execPath,'achievements_browser_test.cjs']);
  suites.push([process.execPath,'session_files_browser_test.cjs']);

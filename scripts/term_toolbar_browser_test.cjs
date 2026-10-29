@@ -48,10 +48,18 @@ const actionSelector = {
         assert.equal(await page.locator('#toolbar-discount').isVisible(), !management, `${lang}/${width}: discount add belongs to discounts`);
         assert.equal(await page.locator('[data-term-panel="terms"]').isVisible(), management);
         assert.equal(await page.locator('[data-term-panel="discounts"]').isVisible(), !management);
-        assert.equal(await toolbar.locator('[data-panel-page-action-group]').count(), 2);
+        assert.equal(await toolbar.locator('[data-panel-page-action-group]').count(), 0);
+        assert.equal(await page.locator('#terms [data-panel-filter-actions] [data-panel-page-action-group]').count(), 2);
         assert.equal(await page.locator('#terms > [data-panel-page-toolbar]').count(), 1);
       };
       await assertTab('terms');
+      const filter = page.locator('#termsBranchTabs');
+      assert.equal(await filter.evaluate(element => !!element.closest('[data-panel-filter-actions]')), true);
+      if (width === 1280) {
+        const f = await filter.boundingBox(), a = await page.locator('#toolbar-addTerm').boundingBox();
+        assert.ok(Math.abs((f.y + f.height / 2) - (a.y + a.height / 2)) < 20, 'Organization filters and actions share a row');
+        assert.ok(lang === 'fa' ? a.x < f.x : a.x > f.x, 'Actions are opposite organization filters');
+      }
       for (const name of ['addTerm', 'batch']) assert.deepEqual(await page.locator('#toolbar-' + name).evaluate(element => { const rect = element.getBoundingClientRect(); return [rect.width, rect.height]; }), [44, 44]);
       const batch = page.locator('#toolbar-batch');
       assert.equal(await batch.getAttribute('data-panel-add-kind'), 'list');
@@ -77,6 +85,12 @@ const actionSelector = {
         await assertTab('terms');
       }
       assert.equal(await page.evaluate(() => Object.entries(termToolbarOriginals).every(([name, element]) => document.getElementById('toolbar-' + name) === element)), true, 'Actions retain their original nodes, IDs and listeners');
+      await page.evaluate(() => { window.academyHasNoBranches = true; applyAcademyOrganizationTabs(); alignPanelPageActions(document.getElementById('terms')); });
+      assert.equal(await filter.isVisible(), false, 'Branchless accounts do not regain hidden organization filters');
+      assert.equal(await page.locator('#toolbar-addTerm').isVisible(), true, 'Hiding organization filters must not hide the actions');
+      const emptyRow = await page.locator('#terms > [data-panel-content=""][data-term-panel="terms"] > [data-panel-filter-actions]').boundingBox();
+      const remainingActions = await page.locator('#terms [data-term-panel="terms"] [data-panel-page-actions]').boundingBox();
+      assert.ok(Math.abs(lang === 'fa' ? remainingActions.x - emptyRow.x : remainingActions.x + remainingActions.width - emptyRow.x - emptyRow.width) < 2, 'Actions retain their edge without visible organization filters');
       assert.deepEqual(await page.evaluate(() => termToolbarClicks), ['batch', 'listener', 'term', 'discount']);
       assert.deepEqual(errors, []);
       await page.close();

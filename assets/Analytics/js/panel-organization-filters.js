@@ -115,6 +115,7 @@ window.academyOrganizationTabHandlers = {
     if (select.value !== selected) select.dispatchEvent(new Event('change', { bubbles: true }));
   };
   window.panelBranchFilterShell = (container) =>
+    container.closest('[data-panel-organization-shell]') ||
     container.closest('.admin-ui-organization-tabs') ||
     (container.parentElement?.children.length === 1 ? container.parentElement : container);
 

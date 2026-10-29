@@ -2,6 +2,9 @@
 
 // Logical names remain stable in translations, permissions and API payloads.
 return [
+    'music_practice_nodes' => 'f_music_practice_nodes',
+    'music_practice_exams' => 'f_music_practice_exams',
+    'music_practice_plans' => 'f_music_practice_plans',
     "academies" => "p_academies",
     "academy_branches" => "p_academy_branches",
     "academy_branch_bookings" => "p_academy_branch_bookings",

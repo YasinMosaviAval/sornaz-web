@@ -147,7 +147,7 @@ if ($sidebarFullName === '') $sidebarFullName = $sidebarUsername;
             <?php if ($hasAcademyPanelAccess): ?>
             <?php if ((int) ($panelUser['user_id'] ?? 0) === 1 || $previewRole === 'admin'): ?>
             <li>
-                <button type="button" onclick="showSection('lessons')" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800">
+                <button type="button" onclick="showSection('lessons')" class="nav-link w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800">
                     <span class="flex gap-3"><i class="fas fa-book w-5"></i>درس‌ها</span>
                 </button>
                 <ul id="lessonsSubmenu" class="mt-1 mr-4 space-y-1 hidden border-r border-indigo-700/60 pr-2">

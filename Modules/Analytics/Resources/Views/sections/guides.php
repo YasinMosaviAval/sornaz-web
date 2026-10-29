@@ -8,7 +8,7 @@
                 <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">فایل‌های راهنما و مستندات پروژه</h2>
                 <p class="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">برای دیدن متن کامل و قالب‌بندی‌شده، کارت هر فایل را باز کنید.</p>
             </div>
-            <span class="rounded-2xl border border-indigo-200 bg-white px-4 py-2 text-sm font-bold text-indigo-700 shadow-sm dark:border-indigo-500/30 dark:bg-slate-800 dark:text-indigo-200"><?= count($guideDocuments ?? []) ?> فایل Markdown</span>
+            <span data-guide-file-count class="rounded-2xl border border-indigo-200 bg-white px-4 py-2 text-sm font-bold text-indigo-700 shadow-sm dark:border-indigo-500/30 dark:bg-slate-800 dark:text-indigo-200"><?= count($guideDocuments ?? []) ?> فایل Markdown</span>
         </div>
         <label for="guideDocumentSearch" class="mt-6 block text-sm font-semibold text-slate-700 dark:text-slate-200">جست‌وجو در عنوان و مسیر فایل‌ها</label>
         <div class="relative mt-2">
@@ -25,10 +25,14 @@
             <h3 class="mb-4 flex items-center gap-3 text-lg font-bold text-slate-800 dark:text-slate-100"><span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300"><i class="<?= e($icon) ?>"></i></span><?= e($groupTitle) ?><span class="rounded-full bg-white px-2.5 py-1 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300"><?= count($groupDocuments) ?></span></h3>
             <div class="grid items-start gap-4 lg:grid-cols-2">
             <?php foreach ($groupDocuments as $index => $document): ?>
-                <details class="guide-document-card group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-indigo-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-500" data-guide-search="<?= e(mb_strtolower($document['title'] . ' ' . $document['path'])) ?>">
+                <details class="guide-document-card group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-indigo-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-500" data-guide-path="<?= e($document['path']) ?>" data-guide-search="<?= e(mb_strtolower($document['title'] . ' ' . $document['path'])) ?>">
                     <summary class="flex cursor-pointer list-none items-center gap-4 p-5 marker:hidden">
                         <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl <?= $prefix === 'docs/' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300' : 'bg-teal-100 text-teal-700 dark:bg-teal-500/20 dark:text-teal-300' ?>"><i class="fas fa-file-alt"></i></span>
-                        <span class="min-w-0 flex-1"><span class="block text-base font-bold leading-7 text-slate-900 dark:text-white"><?= e($document['title']) ?></span><span class="mt-1 block truncate text-xs text-slate-500 dark:text-slate-400" dir="ltr"><?= e($document['path']) ?></span></span>
+                        <span class="min-w-0 flex-1"><span data-guide-file-title class="block text-base font-bold leading-7 text-slate-900 dark:text-white"><?= e($document['title']) ?></span><span class="mt-1 block truncate text-xs text-slate-500 dark:text-slate-400" dir="ltr"><?= e($document['path']) ?></span></span>
+                        <span class="inline-flex shrink-0 gap-2">
+                            <button type="button" data-guide-file-action="edit" class="inline-flex h-9 w-9 items-center justify-center rounded-xl border text-indigo-600" data-panel-tooltip="<?= locale() === 'en' ? 'Edit Markdown file' : 'ویرایش فایل راهنما' ?>" aria-label="<?= locale() === 'en' ? 'Edit Markdown file' : 'ویرایش فایل راهنما' ?>"><i class="fas fa-pen" aria-hidden="true"></i></button>
+                            <button type="button" data-guide-file-action="delete" class="inline-flex h-9 w-9 items-center justify-center rounded-xl border text-red-600" data-panel-tooltip="<?= locale() === 'en' ? 'Delete Markdown file' : 'حذف فایل راهنما' ?>" aria-label="<?= locale() === 'en' ? 'Delete Markdown file' : 'حذف فایل راهنما' ?>"><i class="fas fa-trash" aria-hidden="true"></i></button>
+                        </span>
                         <span class="guide-document-chevron text-indigo-500 transition-transform"><i class="fas fa-chevron-down"></i></span>
                     </summary>
                     <div class="border-t border-slate-100 px-5 pb-5 pt-5 dark:border-slate-700">
@@ -45,6 +49,7 @@
     </div>
 </section>
 <style>
+#guideDocumentDialog::backdrop{background:transparent;backdrop-filter:none}
 #guides .guide-document-card[open] .guide-document-chevron{transform:rotate(180deg)}
 #guides .guide-document-card[open]{grid-column:1/-1}
 #guides .guide-document-card .guide-md{max-height:min(36rem,55vh);overflow:auto;overscroll-behavior:contain}

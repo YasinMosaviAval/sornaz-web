@@ -3,6 +3,13 @@
 use Core\router\Router;
 use Modules\Education\Controllers\Api\EducationController;
 use Modules\Education\Controllers\Api\PracticeController;
+use Modules\Education\Controllers\MusicPracticeController;
+
+Router::get('/api/sornaz/v1/music-practice/people',[MusicPracticeController::class,'people']);
+Router::get('/api/sornaz/v1/music-practice/catalog',[MusicPracticeController::class,'catalog']);
+Router::get('/api/sornaz/v1/music-practice/progress',[MusicPracticeController::class,'progress']);
+Router::get('/api/sornaz/v1/music-practice/plans',[MusicPracticeController::class,'plans']);
+foreach(['results'=>'result','nodes'=>'node','exams'=>'exam','shares'=>'share','publish'=>'publish','plans/propose'=>'propose','plans/approve'=>'approve','purchase'=>'purchase'] as $path=>$method) Router::post('/api/sornaz/v1/music-practice/'.$path,[MusicPracticeController::class,$method]);
 
 // Validated mobile Bearer tokens only; never cookie authentication.
 Router::get('/api/sornaz/v1/practice/interval-results', [PracticeController::class, 'index']);

@@ -17,12 +17,12 @@ class AdminGuideService
         $documents = [];
         foreach (['docs', 'Modules'] as $directory) {
             $root = base_path($directory);
-            if (!is_dir($root)) {
+            if (!is_dir($root) || is_link($root)) {
                 continue;
             }
             $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));
             foreach ($files as $file) {
-                if (!$file->isFile() || strtolower($file->getExtension()) !== 'md') {
+                if (!$file->isFile() || $file->isLink() || strtolower($file->getExtension()) !== 'md') {
                     continue;
                 }
                 $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
@@ -41,6 +41,11 @@ class AdminGuideService
         }
         usort($documents, static fn (array $a, array $b): int => strcmp($a['path'], $b['path']));
         return $documents;
+    }
+
+    public function documentHtml(string $markdown): string
+    {
+        return $this->renderMarkdown($markdown);
     }
 
     private function renderMarkdown(string $markdown): string

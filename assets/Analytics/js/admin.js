@@ -332,9 +332,8 @@ function alignPanelPageActions(page) {
   if (!page) return;
   normalizePanelActions(page);
   const tabs = [...page.querySelectorAll('.panel-page-tabs')];
-  if (!tabs.length) return;
   let toolbar = page.querySelector(':scope > [data-panel-page-toolbar]');
-  if (!toolbar) {
+  if (!toolbar && tabs.length) {
     toolbar = document.createElement('div');
     toolbar.dataset.panelPageToolbar = '1';
     toolbar.className = 'panel-page-toolbar';
@@ -352,13 +351,41 @@ function alignPanelPageActions(page) {
     toolbar.append(navigation, actions);
     hosts.forEach(host => navigation.append(host));
   }
-  const actions = toolbar.querySelector('[data-panel-page-actions]');
+  const candidates = new Set(toolbar?.querySelector(':scope > [data-panel-page-actions]')?.children || []);
   page.querySelectorAll('button,a').forEach(button => {
-    if (button.closest('[data-panel-page-toolbar],form,table,nav,[role="dialog"],[id$="Modal"],.fixed,[contenteditable]')) return;
+    if (button.closest('form,table,nav,[role="dialog"],[id$="Modal"],.fixed,[contenteditable]')) return;
     const add = isPanelAddAction(button);
     const exportFile = !!panelExportActionType(button);
     if (!add && !exportFile) return;
     const action = button.closest('[data-panel-page-action-group]') || button;
+    candidates.add(action);
+  });
+  candidates.forEach(action => {
+    const panel = action.dataset.termPanelActions;
+    const scope = (panel && page.querySelector(`[data-term-panel="${panel}"]`)) || page;
+    let row = scope.querySelector(':scope > [data-panel-filter-actions]');
+    if (!row) {
+      row = document.createElement('div');
+      row.dataset.panelFilterActions = '1';
+      row.className = 'panel-page-filter-actions';
+      const filter = scope.querySelector('[id$="BranchTabs"],[data-profile-organization-tabs],.gallery-owner-tabs');
+      const shell = filter && (window.panelBranchFilterShell?.(filter) || filter.closest('.admin-ui-organization-tabs') || (filter.parentElement.children.length === 1 ? filter.parentElement : filter));
+      if (shell && shell !== scope) {
+        shell.before(row);
+        shell.dataset.panelOrganizationShell = '1';
+        row.append(shell);
+      } else {
+        const anchor = scope === page ? toolbar : null;
+        if (anchor) anchor.after(row);
+        else scope.prepend(row);
+      }
+      const actions = document.createElement('div');
+      actions.dataset.panelPageActions = '1';
+      actions.className = 'panel-page-toolbar-actions';
+      row.append(actions);
+    }
+    const actions = row.querySelector('[data-panel-page-actions]');
+    if (action.parentElement === actions) return;
     const previous = action.parentElement;
     actions.append(action);
     let container = previous;
@@ -368,6 +395,7 @@ function alignPanelPageActions(page) {
       container = container.parentElement;
     }
   });
+  toolbar?.querySelector(':scope > [data-panel-page-actions]:empty')?.remove();
 }
 
 function showSection(id) {

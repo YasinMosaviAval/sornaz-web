@@ -52,6 +52,8 @@ expectParity($sections['my-waiting']['access'] === 'common' && $sections['my-wai
     }
     $routes = (new ReflectionProperty(\Core\router\Router::class, 'routes'))->getValue();
     $webOnly = [
+        // Founder-only Markdown library editor on the website; native guides retain their existing database contract.
+        'AdminGuideDocumentController::read', 'AdminGuideDocumentController::update', 'AdminGuideDocumentController::delete',
         'AcademyBranchController::memberRegistrationForm', // HTML form; native fields come from the catalog.
         'AnalyticsController::adminPanel',
         'AdminGalleryController::realtimeVersion', 'AdminSchedulingRuleController::realtimeVersion',

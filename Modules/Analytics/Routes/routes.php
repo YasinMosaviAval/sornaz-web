@@ -166,6 +166,9 @@ Router::post('/analytics/admin-site-page-content', [SitePageContentController::c
 Router::get('/analytics/panel-guides', [SitePageContentController::class, 'panelGuides'])->middleware('auth');
 Router::post('/analytics/admin-panel-guide', [SitePageContentController::class, 'savePanelGuide'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-guides', [AdminGuideController::class, 'save'])->middleware(['site-admin', 'csrf']);
+Router::get('/analytics/admin-guide-documents', [\Modules\Analytics\Controllers\Web\AdminGuideDocumentController::class, 'read'])->middleware('auth');
+Router::post('/analytics/admin-guide-documents/update', [\Modules\Analytics\Controllers\Web\AdminGuideDocumentController::class, 'update'])->middleware(['auth', 'csrf']);
+Router::post('/analytics/admin-guide-documents/delete', [\Modules\Analytics\Controllers\Web\AdminGuideDocumentController::class, 'delete'])->middleware(['auth', 'csrf']);
 Router::post('/analytics/member-schedules/{id}/delete', [AdminTestController::class, 'deleteAvailability'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/availability-exceptions/{id}/delete', [AdminTestController::class, 'deleteAvailabilityException'])->middleware(['site-admin', 'csrf']);
 Router::post('/analytics/admin-inline-translations/save', [AdminTestController::class, 'saveInlineTranslation'])->middleware(['site-admin', 'csrf']);

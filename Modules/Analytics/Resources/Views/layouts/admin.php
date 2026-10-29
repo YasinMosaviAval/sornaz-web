@@ -22,6 +22,9 @@
         .panel-page-toolbar-tabs .panel-page-tabs { margin-bottom:0; }
         .panel-page-toolbar-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:.75rem; margin-inline-start:auto; }
         .panel-page-toolbar-actions:empty { display:none; }
+        .panel-page-filter-actions { display:flex; align-items:center; flex-wrap:wrap; gap:.75rem; margin-bottom:1.5rem; min-width:0; }
+        .panel-page-filter-actions > [data-panel-organization-shell] { flex:1 1 16rem; min-width:0; margin-bottom:0; overflow-x:auto; }
+        .panel-page-filter-actions > .panel-page-toolbar-actions { flex:0 0 auto; max-width:100%; }
         .panel-page-toolbar-actions > [data-panel-page-action-group] { margin-bottom:0; }
         .panel-add-icon,.panel-export-icon { position:relative!important; display:inline-flex!important; align-items:center!important; justify-content:center!important; flex:0 0 auto!important; width:44px!important; min-width:44px!important; height:44px!important; min-height:44px!important; padding:10px!important; gap:0!important; box-sizing:border-box; }
         .panel-add-icon > [data-panel-add-symbol],.panel-export-icon > [data-panel-export-symbol] { display:block; flex:none; width:22px; height:22px; pointer-events:none; }
@@ -183,6 +186,7 @@
     pushScript('admin.js');
     pushScript('admin-i18n.js');
     pushScript('admin-inline-editor.js');
+    if ((int) auth()->id() === 1) pushScript('guide-documents.js');
     ?>
     <div id="modalContainer"></div>
     <?php component('panel-page-guide', ['asTemplate' => true]); ?>

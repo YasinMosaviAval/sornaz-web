@@ -2,6 +2,7 @@
 
 $current = current_url();
 $menu = [
+    ['title'=>locale()==='en'?'Tests':'آزمون‌ها', 'url'=>'/exams'],
     ['title'=>'خانه', 'url'=>'/'],
     ['title'=>'آموزشگاه ها', 'url'=>'/academy'],
     ['title'=>'اساتید', 'url'=>'/teacher'],
