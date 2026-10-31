@@ -6,6 +6,7 @@ final class MusicPracticeAccess
     public function __construct(private MusicPracticeStore $store) {}
     public function permitted(int $actor, array $exam): bool
     {
+        if(!empty($exam['deleted_at']))return false;
         if ($actor === 1 || ($actor > 0 && $actor === (int)$exam['owner_id'])) return true;
         if (!(int)$exam['published']) return false;
         if ($exam['audience'] === 'public') return true;
@@ -17,8 +18,19 @@ final class MusicPracticeAccess
     }
     public function expires(int $actor, int $teacher, int $exam): ?string
     {
-        $row = $this->store->one("SELECT MAX(COALESCE(expires_at,'2100-01-01 00:00:00')) expires_at FROM f_music_practice_orders WHERE buyer_id=? AND teacher_id=? AND (exam_id IS NULL OR exam_id=?) AND status='paid' AND starts_at<=? AND (expires_at IS NULL OR expires_at>?)", [$actor,$teacher,$exam,$this->store->now(),$this->store->now()]);
+        $nodes=$this->store->hasNodeScope('music_practice_orders')?($this->nodePath($exam,$teacher)?:[0]):[];
+        $scope=$nodes?' AND (node_id IS NULL OR node_id IN ('.implode(',',array_fill(0,count($nodes),'?')).'))':'';
+        $row = $this->store->one("SELECT MAX(COALESCE(expires_at,'2100-01-01 00:00:00')) expires_at FROM f_music_practice_orders WHERE buyer_id=? AND teacher_id=? AND (exam_id IS NULL OR exam_id=?) AND status='paid' AND starts_at<=? AND (expires_at IS NULL OR expires_at>?)$scope", [$actor,$teacher,$exam,$this->store->now(),$this->store->now(),...$nodes]);
         return $row['expires_at'] ?? null;
+    }
+    public function rootNode(int $exam,int $teacher): int
+    {
+        $path=$this->nodePath($exam,$teacher);return $path?(int)end($path):0;
+    }
+    public function nodePath(int $exam,int $teacher): array
+    {
+        $row=$this->store->one('SELECT n.id node_id,p.id parent_id,g.id grandparent_id FROM f_music_practice_exams e JOIN f_music_practice_nodes n ON n.id=e.node_id LEFT JOIN f_music_practice_nodes p ON p.id=n.parent_id LEFT JOIN f_music_practice_nodes g ON g.id=p.parent_id WHERE e.id=? AND e.owner_id=?',[$exam,$teacher]);
+        return array_values(array_map('intval',array_filter($row?:[],static fn($id)=>$id!==null)));
     }
     public function permit(int $actor, array $exam): array
     {
@@ -45,6 +57,10 @@ final class MusicPracticeAccess
         $key=$dedicated!==''?$dedicated:(string)config('app.key','');
         if(strlen($key)<32)throw new \RuntimeException('کلید امن اجرای آفلاین روی سرور آماده نیست.',503);
         return $key;
+    }
+    public function signingReady(): bool
+    {
+        try{$this->key();return true;}catch(\RuntimeException $e){if($e->getCode()!==503)throw $e;return false;}
     }
     private function student(int $actor, int $teacher): bool
     {

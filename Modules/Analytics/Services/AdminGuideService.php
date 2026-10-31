@@ -12,7 +12,7 @@ class AdminGuideService
         'main-branch-registration' => ['title' => 'ثبت شعبه اصلی آموزشگاه', 'file' => 'MAIN_BRANCH_REGISTRATION_FLOW.md'],
     ];
 
-    public function documents(): array
+    public function documents(bool $withContent=true): array
     {
         $documents = [];
         foreach (['docs', 'Modules'] as $directory) {
@@ -20,7 +20,10 @@ class AdminGuideService
             if (!is_dir($root) || is_link($root)) {
                 continue;
             }
-            $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));
+            $tree=new \RecursiveCallbackFilterIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS),static function($file)use($directory){
+                return !$file->isLink()&&(!$file->isDir()||$directory!=='Modules'||strcasecmp($file->getFilename(),'Lib')!==0);
+            });
+            $files = new \RecursiveIteratorIterator($tree);
             foreach ($files as $file) {
                 if (!$file->isFile() || $file->isLink() || strtolower($file->getExtension()) !== 'md') {
                     continue;
@@ -29,13 +32,14 @@ class AdminGuideService
                 if ($directory === 'Modules' && str_contains($relative, '/Lib/')) {
                     continue;
                 }
-                $content = (string) file_get_contents($file->getPathname());
+                $content = $withContent?(string)file_get_contents($file->getPathname()):(string)file_get_contents($file->getPathname(),false,null,0,8192);
                 preg_match('/^#\s+(.+)$/m', $content, $heading);
                 $documents[] = [
                     'path' => $directory . '/' . $relative,
                     'title' => trim($heading[1] ?? pathinfo($file->getFilename(), PATHINFO_FILENAME)),
-                    'content' => $content,
-                    'html' => $this->renderMarkdown($content),
+                    'content' => $withContent?$content:'',
+                    'html' => $withContent?$this->renderMarkdown($content):'',
+                    'loaded' => $withContent,
                 ];
             }
         }

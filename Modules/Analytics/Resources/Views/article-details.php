@@ -15,13 +15,10 @@
 
 <div id="page-article-detail">
     <div class="max-w-6xl mx-auto px-4 py-10 md:py-14">
-        <nav class="flex flex-wrap items-center gap-2 text-sm text-gray-400 mb-8">
-            <a href="/" class="hover:text-indigo-600"><?= $isEnglish ? 'Home' : 'خانه' ?></a>
-            <span class="text-gray-300">⟵</span>
-            <a href="/analytics/articles" class="hover:text-indigo-600"><?= $isEnglish ? 'Educational articles' : 'مقاله‌های آموزشی' ?></a>
-            <span class="text-gray-300">⟵</span>
-            <span class="text-gray-600 line-clamp-1" data-dynamic-content><?= htmlspecialchars($article['title']) ?></span>
-        </nav>
+        <?php
+        $breadcrumbItems=[['label'=>$isEnglish?'Home':'خانه','href'=>'/'],['label'=>$isEnglish?'Educational articles':'مقاله‌های آموزشی','href'=>'/analytics/articles'],['label'=>$article['title']]];
+        require base_path('resources/views/partials/breadcrumb.php');
+        ?>
 
         <h1 class="text-3xl md:text-4xl font-bold leading-tight mb-6" data-dynamic-content><?= htmlspecialchars($article['title']) ?></h1>
 

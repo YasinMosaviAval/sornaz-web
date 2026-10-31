@@ -36,7 +36,7 @@
                         <span class="guide-document-chevron text-indigo-500 transition-transform"><i class="fas fa-chevron-down"></i></span>
                     </summary>
                     <div class="border-t border-slate-100 px-5 pb-5 pt-5 dark:border-slate-700">
-                        <div class="guide-md rounded-xl bg-slate-50 p-4 text-sm leading-8 text-slate-700 dark:bg-slate-900 dark:text-slate-200 md:p-6" dir="auto"><?= $document['html'] ?></div>
+                        <div data-guide-loaded="<?= ($document['loaded']??true)?'1':'0' ?>" class="guide-md rounded-xl bg-slate-50 p-4 text-sm leading-8 text-slate-700 dark:bg-slate-900 dark:text-slate-200 md:p-6" dir="auto"><?= $document['html'] ?></div>
                         <button type="button" class="guide-document-close mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-100 px-4 py-2 text-sm font-bold text-indigo-700 hover:bg-indigo-200" onclick="closeGuideDocument(this)"><i class="fas fa-chevron-up"></i> بستن راهنما</button>
                     </div>
                 </details>

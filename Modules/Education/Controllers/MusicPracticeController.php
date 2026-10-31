@@ -28,6 +28,9 @@ final class MusicPracticeController
         }
         header('X-Sornaz-Practice-Actor: '.$actor);
         if($required&&$actor<1)throw new \RuntimeException('ابتدا وارد شوید.',401);
+        // These endpoints do not mutate session data. Release the cookie lock
+        // after authentication/CSRF so a slow API call cannot block other pages.
+        if(session_status()===PHP_SESSION_ACTIVE&&!session_write_close())throw new \RuntimeException('آزادسازی نشست ناموفق بود؛ دوباره تلاش کنید.',503);
         return $actor;
     }
     private function input(): array
@@ -40,7 +43,7 @@ final class MusicPracticeController
     }
     private function run(callable $work)
     {
-        try{return ResponseFactory::json(['success'=>true,'data'=>$work(new MusicPracticeStore())]);}
+        try{return ResponseFactory::json(['success'=>true,'data'=>$work(new MusicPracticeStore(null,str_starts_with($_SERVER['REQUEST_URI']??'','/exams/api/')))]);}
         catch(\Throwable $error){return ResponseFactory::json(['success'=>false,'message'=>PublicError::message($error)],PublicError::status($error));}
     }
     public function catalog(){return $this->run(fn($s)=>(new MusicPracticeCatalog($s))->listing($this->actor(),($_GET['manage']??'')==='1'));}
@@ -49,8 +52,10 @@ final class MusicPracticeController
     public function result(){return $this->run(fn($s)=>(new MusicPracticeResults($s))->store($this->actor(true),$this->input()));}
     public function node(){return $this->run(fn($s)=>(new MusicPracticeCatalog($s))->saveNode($this->actor(true),$this->input()));}
     public function exam(){return $this->run(fn($s)=>(new MusicPracticeCatalog($s))->saveExam($this->actor(true),$this->input()));}
+    public function deleteExam(){return $this->run(fn($s)=>(new MusicPracticeCatalog($s))->deleteExam($this->actor(true),$this->input()));}
+    public function deleteNode(){return $this->run(fn($s)=>(new MusicPracticeCatalog($s))->deleteNode($this->actor(true),$this->input()));}
     public function publish(){return $this->run(fn($s)=>(new MusicPracticeCatalog($s))->publish($this->actor(true),$this->input()));}
-    public function plans(){return $this->run(fn($s)=>(new MusicPracticePlans($s))->listing($this->actor()));}
+    public function plans(){return $this->run(function($s){$actor=$this->actor();$exam=isset($_GET['examId'])?filter_var($_GET['examId'],FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]):0;if($exam===false)throw new \RuntimeException('شناسه آزمون معتبر نیست.',422);return (new MusicPracticePlans($s))->listing($actor,$exam);});}
     public function propose(){return $this->run(fn($s)=>(new MusicPracticePlans($s))->propose($this->actor(true),$this->input()));}
     public function approve(){return $this->run(fn($s)=>(new MusicPracticePlans($s))->approve($this->actor(true),$this->input()));}
     public function share(){return $this->run(fn($s)=>(new MusicPracticePlans($s))->share($this->actor(true),$this->input()));}

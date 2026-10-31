@@ -37,6 +37,7 @@ const render = (name, lang) => execFileSync('php', ['scripts/panel-table-view-fi
      for(const id of ids) {
       await page.evaluate(id=>showSection(id),id);
       assert.equal(await page.locator('#panelPageTitle').textContent(),title);
+      assert.equal(await page.title(),title);
       assert.equal(await page.locator('#'+id+' h1').count(),0);
       assert.equal(await page.locator('#'+id).isVisible(),true);
      }

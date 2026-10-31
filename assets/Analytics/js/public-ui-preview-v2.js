@@ -190,6 +190,7 @@
     const candidate = document.getElementById(activeKey);
     const realSection = candidate?.classList.contains('section') && original.contains(candidate) ? candidate : null;
     document.getElementById('panelPageTitle').textContent = realSection?.querySelector('h1')?.textContent?.trim() || section.label;
+    document.title = document.getElementById('panelPageTitle').textContent;
     renderNavigation();
     for (const item of original.querySelectorAll('.section')) item.classList.add('hidden');
     if (realSection) {

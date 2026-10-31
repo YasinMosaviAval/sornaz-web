@@ -415,6 +415,7 @@ function showSection(id) {
       [...document.querySelectorAll('#sidebar a[onclick]')].find((link) => link.getAttribute('onclick') === `showSection('${section}')`)?.textContent?.trim() || section;
     const panelTitle = document.getElementById('panelPageTitle');
     if (panelTitle) panelTitle.textContent = title;
+    document.title = title;
     hidePanelIntroduction(target);
     alignPanelPageActions(target);
   }

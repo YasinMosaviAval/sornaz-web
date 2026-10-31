@@ -16,7 +16,7 @@ function session(){return new class{function get($k,$default=null){return $k==='
 function app(){return new class{function container(){return new Core\container\Container;}};}
 if($uri==='/assets/Analytics/js/guide-documents.js'){header('Content-Type: application/javascript');readfile($root.$uri);exit;}
 if($uri==='/fixture-ui'){
- header('Content-Type: text/html; charset=utf-8');$guideDocuments=(new Modules\Analytics\Services\AdminGuideService)->documents();
+ header('Content-Type: text/html; charset=utf-8');$guideDocuments=(new Modules\Analytics\Services\AdminGuideService)->documents(false);
  echo '<html lang="'.locale().'"><style>.hidden,[hidden]{display:none!important}</style><body>';
  require $root.'/Modules/Analytics/Resources/Views/sections/guides.php';
  echo '<script>window.adminCsrfToken="fixture-token";document.getElementById("guides").classList.remove("hidden");</script><script src="/assets/Analytics/js/guide-documents.js"></script></body></html>';exit;
@@ -70,6 +70,12 @@ $next()->send();
    browser??=await chromium.launch({channel:'msedge',headless:true});const page=await browser.newPage({extraHTTPHeaders:{'X-Fixture-Actor':'1'},viewport:{width:lang==='fa'?390:1280,height:850}}),pageErrors=[];page.on('pageerror',e=>pageErrors.push(e.message));
    await page.goto(origin+'/fixture-ui?lang='+lang);
    const card=page.locator('[data-guide-path="docs/lesson.md"]');assert.equal(await card.getAttribute('open'),null);
+   assert.equal(await card.locator('.guide-md').textContent(),'','Closed guides must not preload their full HTML');
+   await card.locator('[data-guide-file-title]').click();
+   await page.waitForFunction(()=>document.querySelector('[data-guide-path="docs/lesson.md"] .guide-md').dataset.guideLoaded==='1');
+   assert.match(await card.locator('.guide-md').textContent(),/<img src=x/);
+   assert.equal(await card.locator('.guide-md img').count(),0,'Lazy-loaded Markdown must stay escaped');
+   await card.locator('[data-guide-file-title]').click();
    await card.locator('[data-guide-file-action=edit]').click();await page.waitForFunction(()=>!document.querySelector('[data-guide-file-submit]').disabled);
    assert.equal(await card.getAttribute('open'),null,'Action click must not expand its card');assert.equal(await page.locator('#guideDocumentDialog').evaluate(e=>getComputedStyle(e,'::backdrop').backgroundColor),'rgba(0, 0, 0, 0)');
    assert.match(await page.locator('[data-guide-file-content]').inputValue(),/<\/textarea>/);assert.equal(await page.evaluate(()=>window.injected),undefined);

@@ -4,7 +4,7 @@
     <script>window.siteCsrfToken=<?= json_encode(csrf_token()) ?>;</script>
     <script src="/assets/theme/csrf.js?v=1"></script>
     <meta charset="UTF-8">
-    <title><?= $title ?? 'Sornaz' ?></title>
+    <title><?= e(($title ?? '') ?: trans('public.site_name', 'سُرناز')) ?></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="stylesheet" href="<?= asset('assets/css/dashboard.css') ?>">
     <link rel="stylesheet" href="/assets/theme/theme.css?v=<?= filemtime(base_path('assets/theme/theme.css')) ?: 1 ?>">

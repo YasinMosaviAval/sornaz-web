@@ -51,18 +51,28 @@ final class MusicPracticeResults
         if(!is_array($answers)||!array_is_list($answers)||count($answers)>100||!is_bool($input['closed']??null))throw new RuntimeException('فهرست پاسخ‌ها معتبر نیست.',422);
         $exam=$this->store->one('SELECT e.*,v.definition,v.was_published FROM f_music_practice_exams e JOIN f_music_practice_versions v ON v.exam_id=e.id WHERE e.id=? AND v.version=?',[$input['examId'],$input['version']]);
         if(!$exam)throw new RuntimeException('نسخهٔ آزمون پیدا نشد.',404);
-        $access=new MusicPracticeAccess($this->store);
-        if(!$access->validPermit($actor,$input))throw new RuntimeException('مجوز دریافت آزمون معتبر نیست؛ آن را دوباره دریافت کنید.',403);
+        $expiry=$this->permitExpiry($actor,$exam,$input);
         $definition=json_decode($exam['definition'],true,512,JSON_THROW_ON_ERROR);
         MusicPracticeDefinition::integer($input['stage'],1,$definition['stageCount']);
         $normalized=[];
         foreach($answers as $answer){
             if(!is_array($answer))throw new RuntimeException('پاسخ معتبر نیست.',422);
             $row=MusicPracticeDefinition::answer($answer,$definition['config']);
-            if(strtotime($row['answeredAt'])>(int)$input['permitExpiresAt']||strtotime($row['answeredAt'])>time()+300)throw new RuntimeException('پاسخ خارج از مهلت دسترسی ثبت شده است.',403);
+            if(strtotime($row['answeredAt'])>$expiry||strtotime($row['answeredAt'])>time()+300)throw new RuntimeException('پاسخ خارج از مهلت دسترسی ثبت شده است.',403);
             $normalized[]=$row;
         }
         return [$client,$definition,$normalized,$exam];
+    }
+    private function permitExpiry(int $actor,array $exam,array $input): int
+    {
+        $access=new MusicPracticeAccess($this->store);
+        if($this->store->onlineOnly){
+            if(!$access->permitted($actor,$exam))throw new RuntimeException('دسترسی به آزمون مجاز نیست.',403);
+            if((int)$exam['version']!==$input['version'])throw new RuntimeException('نسخهٔ آزمون تغییر کرده است؛ صفحه را تازه کنید.',409);
+            return time()+300;
+        }
+        if(!$access->validPermit($actor,$input))throw new RuntimeException('مجوز دریافت آزمون معتبر نیست؛ آن را دوباره دریافت کنید.',403);
+        return empty($exam['deleted_at'])?(int)$input['permitExpiresAt']:min((int)$input['permitExpiresAt'],strtotime($exam['deleted_at'].' UTC'));
     }
     public function store(int $actor,array $input): array
     {

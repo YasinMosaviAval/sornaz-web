@@ -5,7 +5,7 @@
     <script src="/assets/theme/csrf.js?v=1"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>آموزشگاه موسیقی</title>
+    <title><?= e(($title ?? '') ?: trans('auth.site_name', 'آموزشگاه موسیقی')) ?></title>
     <script src="/assets/vendor/tailwind/tailwindcss.js"></script>
     <script>tailwind.config={darkMode:['class','[data-mode="dark"]']};</script>
     <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">

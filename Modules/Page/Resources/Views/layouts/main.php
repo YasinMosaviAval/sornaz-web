@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>(function(){const r=document.documentElement;r.dataset.theme=localStorage.getItem('sornaz.theme')||'indigo';r.dataset.mode=localStorage.getItem('sornaz.mode')||'light';})();</script>
-    <title><?= e(trans('public.site_name', 'برنامه موسیقی سُرناز')) ?></title>
+    <title><?= e(($title ?? '') ?: trans('public.site_name', 'برنامه موسیقی سُرناز')) ?></title>
     <link rel="icon" type="image/jpeg" href="/assets/images/logo/cropped-favicon_512x512.jpg">
     <link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
     <script src="/assets/vendor/tailwind/tailwindcss.js"></script>

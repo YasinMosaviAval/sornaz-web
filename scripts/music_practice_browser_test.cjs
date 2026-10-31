@@ -25,9 +25,11 @@ if($uri==='/fixture-orders'&&auth()->id()===1){header('Content-Type: application
 require $root.'/Modules/Education/Routes/web.php';require $root.'/Modules/Education/Routes/api.php';
 $route=Core\router\Router::dispatch($_SERVER['REQUEST_METHOD'],$uri);
 if(!$route||$route['action'][0]!==Modules\Education\Controllers\MusicPracticeController::class){http_response_code(404);exit;}
+if(isset($_SERVER['HTTP_X_FIXTURE_SESSION_TEST'])){session_save_path($fixture);session_start();}
 $next=static fn()=>(new Modules\Education\Controllers\MusicPracticeController(new FixtureMusicGateway))->{$route['action'][1]}();
-foreach(array_reverse($route['middlewares'])as$alias){$previous=$next;$next=static fn()=>(new ($alias==='auth'?Core\middleware\AuthMiddleware::class:Core\csrf\CsrfMiddleware::class))->handle(new Core\http\Request,$previous);}
-$next()->send();
+foreach(array_reverse($route['middlewares'])as$alias){$previous=$next;if(isset($_SERVER['HTTP_X_FIXTURE_SESSION_TEST'])){session_save_path($fixture);session_start();}
+$next=static fn()=>(new ($alias==='auth'?Core\middleware\AuthMiddleware::class:Core\csrf\CsrfMiddleware::class))->handle(new Core\http\Request,$previous);}
+$response=$next();if(isset($_SERVER['HTTP_X_FIXTURE_SESSION_TEST']))header('X-Fixture-Session-Status: '.session_status());$response->send();
 `;
 (async()=>{
  const project=path.resolve(__dirname,'..'),fixture=fs.mkdtempSync(path.join(os.tmpdir(),'sornaz-music-browser-'));
@@ -45,6 +47,8 @@ $next()->send();
   assert.equal((await request(3,'/api/sornaz/v1/music-practice/progress',null,'',true)).status,200);
   assert.equal((await request(3,'/exams/api/nodes',{titleFa:'forbidden'})).status,403);
   assert.equal((await request(1,'/exams/api/nodes',{titleFa:'csrf'},'bad')).status,419);
+  const sessionRead=await fetch(origin+'/exams/api/catalog',{headers:{'X-Fixture-Actor':'1','X-Fixture-Session-Test':'1'}});
+  assert.equal(sessionRead.status,200);assert.equal(sessionRead.headers.get('X-Fixture-Session-Status'),'1','Catalog must release PHP session before database work');
   assert.equal((await request(3,'/exams/api/people?q=st')).status,403);
   assert.deepEqual((await request(2,'/exams/api/people?q=st')).data.users,[{id:3,username:'student'}]);
   const catalog=(await request(1,'/exams/api/catalog?manage=1')).data,rhythm=catalog.nodes.find(n=>n.slug==='rhythm');
@@ -60,6 +64,17 @@ $next()->send();
   const revenue=(await request(2,'/exams/api/plans')).data.revenue.filter(r=>r.order_id==order.id);assert.equal(revenue.length,1);assert.equal(Number(revenue[0].amount),9600,'HTTP share was not default 80 percent rounded down');
   console.log('Music practice: HTTP auth, payment and ledger passed');
   browser=await chromium.launch({channel:'msedge',headless:true});
+  const slowContext=await browser.newContext({extraHTTPHeaders:{'X-Fixture-Actor':'3'}}),slowPage=await slowContext.newPage();
+  let releaseProgress,progressStarted,slowCatalogRequests=0;
+  const blocked=new Promise(resolve=>releaseProgress=resolve),started=new Promise(resolve=>progressStarted=resolve);
+  slowPage.on('request',request=>{if(request.url().endsWith('/exams/api/catalog'))slowCatalogRequests++;});
+  await slowPage.route('**/exams/api/progress',async route=>{progressStarted();await blocked;await route.continue();});
+  try{
+   await slowPage.goto(origin+'/exams?lang=en');await started;
+   await slowPage.getByRole('button',{name:'Solfege practice',exact:true}).waitFor({timeout:2000});
+   assert.equal(await slowPage.locator('[data-practice-refresh],[data-practice-upload]').count(),0);
+   assert.equal(slowCatalogRequests,1,'Repeated refresh clicks must share one pending catalog request');
+  }finally{const finished=slowPage.waitForResponse('**/exams/api/progress');releaseProgress();await finished;await slowPage.waitForLoadState('networkidle');assert.equal(slowCatalogRequests,1,'Catalog rendering must not trigger duplicate fetches');await slowContext.close();}
   const buyerContext=await browser.newContext({extraHTTPHeaders:{'X-Fixture-Actor':'4'}}),buyer=await buyerContext.newPage();
   await buyer.goto(origin+'/exams?lang=en');await buyer.getByRole('button',{name:'Rhythm practice',exact:true}).click();
   const paidCard=buyer.locator('article').filter({has:buyer.getByRole('heading',{name:'Checkout test',exact:true})});
@@ -76,30 +91,46 @@ $next()->send();
    await page.getByRole('button',{name:lang==='en'?'Interval recognition':'تشخیص فاصله',exact:true}).click();
    await page.getByRole('button',{name:lang==='en'?'Iranian music':'موسیقی ایرانی',exact:true}).click();
    await page.getByRole('heading',{name:lang==='en'?'Level 180':'سطح 180',exact:true}).waitFor();
-   await page.locator('[data-practice-breadcrumb]').getByRole('button',{name:lang==='en'?'Interval recognition':'تشخیص فاصله',exact:true}).click();
+   await page.locator('[data-practice-breadcrumb]').getByRole('link',{name:lang==='en'?'Interval recognition':'تشخیص فاصله',exact:true}).click();
    await page.getByRole('button',{name:lang==='en'?'Western music':'موسیقی جهانی',exact:true}).click();
    assert.equal(await page.locator('[data-practice-list] article').count(),44);
-   await page.locator('[data-practice-breadcrumb] button').first().click();
+   await page.locator('[data-practice-breadcrumb]').getByRole('link',{name:lang==='en'?'Tests':'آزمون‌ها',exact:true}).click();
    await page.getByRole('button',{name:lang==='en'?'Rhythm practice':'تمرین ریتم',exact:true}).click();
    const card=page.locator('[data-practice-list] article').filter({has:page.getByRole('heading',{name:lang==='en'?definition.titleEn:definition.titleFa,exact:true})});await card.waitFor();
-   await context.setOffline(true);
+
    for(let stage=1;stage<=2;stage++){
     await card.getByRole('button',{name:lang==='en'?'Start practice':'شروع تمرین',exact:true}).click();
     assert.equal(await page.locator('[data-practice-player] img').count(),0);assert.equal(await page.evaluate(()=>window.injected),undefined);
-    await page.getByRole('button',{name:'Correct',exact:true}).click();await page.getByText(lang==='en'?'Stage completed.':'مرحله کامل شد.',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'Correct',exact:true}).click();await page.getByRole('button',{name:lang==='en'?'Check answer':'بررسی پاسخ',exact:true}).click();await page.getByText(lang==='en'?'Stage completed.':'مرحله کامل شد.',{exact:true}).waitFor();
     await page.getByRole('button',{name:lang==='en'?'Back':'بازگشت',exact:true}).click();await card.waitFor();
    }
+   await card.getByText(/★★★★★/).waitFor();
    assert.ok((await card.textContent()).includes('★★★★★'));
-   await context.setOffline(false);await page.locator('[data-practice-upload]').click();
+
    await page.waitForFunction(()=>document.querySelector('[data-practice-status]').textContent===''||/uploaded|بارگذاری شدند/.test(document.querySelector('[data-practice-status]').textContent));
-   for(let retry=0;retry<60;retry++){const data=(await request(3,'/exams/api/progress')).data;const p=data.progress.find(p=>p.examId===created.data.id);if(p?.stars===5)break;if(retry===59)assert.fail('Offline stages did not upload');await new Promise(r=>setTimeout(r,50));}
+   for(let retry=0;retry<60;retry++){const data=(await request(3,'/exams/api/progress')).data;const p=data.progress.find(p=>p.examId===created.data.id);if(p?.stars===5)break;if(retry===59)assert.fail('Online stages did not persist');await new Promise(r=>setTimeout(r,50));}
    assert.deepEqual(pageErrors,[]);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'No mobile horizontal page overflow');
-   await context.setExtraHTTPHeaders({'X-Fixture-Actor':'4'});await page.locator('[data-practice-refresh]').click();await page.waitForFunction(()=>document.querySelector('[data-practice-list]').children.length===0);
+   await context.setExtraHTTPHeaders({'X-Fixture-Actor':'4'});await page.evaluate(()=>window.dispatchEvent(new Event('online')));await page.waitForFunction(()=>document.querySelector('[data-practice-list]').children.length===0);
    assert.equal(await page.evaluate(()=>new Promise((resolve,reject)=>{const request=indexedDB.open('sornaz-music-practice-v1',1);request.onsuccess=()=>{const r=request.result.transaction('records').objectStore('records').get('catalog:3');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);};})),null,'Changed account retained another user’s cached catalog');
    await context.close();console.log('Music practice browser passed: '+suffix);
   }
   const teacherContext=await browser.newContext({extraHTTPHeaders:{'X-Fixture-Actor':'1'}}),author=await teacherContext.newPage(),uiErrors=[];author.on('pageerror',e=>uiErrors.push(e.message));
   await author.goto(origin+'/exams?lang=en');await author.locator('[data-practice-manage]').click();await author.getByRole('button',{name:'Rhythm practice',exact:true}).click();
+  let nodeWrites=0;author.on('request',request=>{if(request.method()==='POST'&&request.url().endsWith('/exams/api/nodes'))nodeWrites++;});
+  await author.getByRole('button',{name:'Add section',exact:true}).click();
+  const address=author.locator('[name=slug]'),position=author.locator('[name=position]');
+  const addressHelp=author.locator('#'+await address.getAttribute('aria-describedby'));
+  assert.match(await addressHelp.getAttribute('class'),/text-gray/);
+  await author.locator('[name=titleFa]').fill('تربیت گوش مرورگر');await author.locator('[name=titleEn]').fill('Ear Training Browser');
+  assert.equal(await address.inputValue(),'ear-training-browser','Section address should be suggested automatically');
+  await address.fill('rhythm');await address.focus();assert.match(await addressHelp.textContent(),/already used/);assert.match(await addressHelp.getAttribute('class'),/text-red/);
+  await author.locator('[data-practice-editor] button[type=submit]').click();assert.equal(nodeWrites,0,'Invalid addresses must not submit');
+  await address.fill('موسیقی');assert.match(await addressHelp.getAttribute('class'),/text-red/);
+  await address.fill('EAR-TRAINING-BROWSER');assert.equal(await address.inputValue(),'ear-training-browser');assert.match(await addressHelp.getAttribute('class'),/text-emerald/);
+  await position.fill('-1');await position.focus();const positionHelp=author.locator('#'+await position.getAttribute('aria-describedby'));assert.match(await positionHelp.getAttribute('class'),/text-red/);
+  await position.fill('۰');assert.equal(await position.inputValue(),'0');assert.match(await positionHelp.getAttribute('class'),/text-emerald/);
+  await author.locator('[data-practice-editor] button[type=submit]').click();await author.getByRole('button',{name:'Ear Training Browser',exact:true}).waitFor();
+  assert.equal(nodeWrites,1,'Valid section should be saved once');
   await author.getByRole('button',{name:'Add test',exact:true}).click();await author.locator('[data-practice-editor] [name=titleFa]').fill('آزمون فرم');await author.locator('[data-practice-editor] [name=titleEn]').fill('Form test');await author.locator('[name=kind]').selectOption('choice');await author.getByRole('button',{name:'Add question',exact:true}).click();await author.locator('[name=promptFa]').fill('پرسش');await author.locator('[name=promptEn]').fill('Question');await author.locator('[name=choices]').fill('Right\nWrong');await author.locator('[name=stageCount]').fill('3');await author.locator('[name=published]').selectOption('1');await author.locator('[data-practice-editor] button[type=submit]').click();
   await author.getByRole('heading',{name:'Form test',exact:true}).waitFor();
   const formCard=author.locator('article').filter({has:author.getByRole('heading',{name:'Form test',exact:true})});await formCard.getByRole('button',{name:'Revenue share',exact:true}).click();await author.locator('[name=teacherPercent]').fill('72.5');await author.locator('[data-practice-editor] button[type=submit]').click();await author.locator('[data-practice-editor]').waitFor({state:'hidden'});
@@ -116,6 +147,6 @@ $next()->send();
   assert.equal((await request(4,'/exams/api/catalog')).data.exams.some(e=>e.id===updated.id),false);
   assert.equal((await request(3,'/exams/api/catalog')).data.exams.find(e=>e.id===updated.id).access,true);
   assert.deepEqual(uiErrors,[]);await teacherContext.close();
-  console.log('Music practice browser/HTTP: real PHP routes, signed bearer, CSRF, three-level navigation, fa/en dark/mobile, escaped questions, offline stages/upload, live server progress, author forms and per-exam revenue editing passed.');
+  console.log('Music practice browser/HTTP: real PHP routes, signed bearer, CSRF, three-level navigation, fa/en dark/mobile, escaped questions, online stages/results, live server progress, author forms and per-exam revenue editing passed.');
  }finally{if(browser)await browser.close();if(child&&child.exitCode===null){const done=new Promise(r=>child.once('exit',r));child.kill();await done;}if(!path.resolve(fixture).startsWith(path.resolve(os.tmpdir())+path.sep)||!path.basename(fixture).startsWith('sornaz-music-browser-'))throw Error('Unsafe cleanup');fs.rmSync(fixture,{recursive:true,force:true,maxRetries:6,retryDelay:100});}
 })().catch(e=>{console.error(e);process.exitCode=1;});

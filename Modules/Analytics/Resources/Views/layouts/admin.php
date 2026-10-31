@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <link rel="icon" type="image/jpeg" href="/assets/images/logo/cropped-favicon_512x512.jpg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= e(trans('admin.meta.title','پنل کاربری سرناز')) ?></title>
+    <title><?= e(($title ?? '') ?: trans('admin.meta.title','پنل کاربری سرناز')) ?></title>
     <script>(function(){const r=document.documentElement;r.dataset.theme=localStorage.getItem('sornaz.theme')||'indigo';r.dataset.mode=localStorage.getItem('sornaz.mode')||'light';})();</script>
     <script src="/assets/vendor/tailwind/tailwindcss.js"></script>
     <script>tailwind.config={darkMode:['class','[data-mode="dark"]']};</script>

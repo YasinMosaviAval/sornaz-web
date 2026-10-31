@@ -150,11 +150,11 @@
     if (pageTitle) pageTitle.textContent = 'حساب کاربری';
     if (!document.getElementById('account')?.classList.contains('hidden')) {
       const panelTitle = document.getElementById('panelPageTitle');
-      if (panelTitle && pageTitle) panelTitle.textContent = pageTitle.textContent;
+      if (panelTitle && pageTitle) { panelTitle.textContent = pageTitle.textContent; document.title = pageTitle.textContent; }
     }
     if (!document.getElementById('account')?.classList.contains('hidden')) {
       const panelTitle = document.getElementById('panelPageTitle');
-      if (panelTitle && pageTitle) panelTitle.textContent = pageTitle.textContent;
+      if (panelTitle && pageTitle) { panelTitle.textContent = pageTitle.textContent; document.title = pageTitle.textContent; }
     }
     const coverLabel = document.getElementById('accountCoverLabel');
     if (coverLabel)

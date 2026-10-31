@@ -6,13 +6,17 @@ use RuntimeException;
 final class MusicPracticePlans
 {
     public function __construct(private MusicPracticeStore $store) {}
-    public function listing(int $actor): array
+    public function listing(int $actor,int $examId=0): array
     {
         $this->store->ready();
         $title=\Core\translation\EntityText::expression('music_practice_plans','p.id','title');
-        $select="SELECT p.*,COALESCE(NULLIF($title,''),p.title) title FROM f_music_practice_plans p";
+        $select="SELECT p.*,$title title FROM f_music_practice_plans p";
         $plans=$actor===1?$this->store->rows($select.' ORDER BY p.id DESC'):$this->store->rows($select." WHERE p.status='approved' OR p.teacher_id=? ORDER BY p.id DESC",[$actor]);
-        foreach($plans as &$plan)foreach(['id','teacher_id','exam_id','amount','days','teacher_bps','version','approved_by'] as $field)if($plan[$field]!==null)$plan[$field]=(int)$plan[$field];unset($plan);
+        $target=$examId?$this->store->one('SELECT * FROM f_music_practice_exams WHERE id=? AND published=1'.$this->store->liveExamSql(),[$examId]):null;
+        if($target&&$target['audience']!=='subscribers'&&!(new MusicPracticeAccess($this->store))->permitted($actor,$target))$target=null;
+        $nodes=$target?(new MusicPracticeAccess($this->store))->nodePath($examId,(int)$target['owner_id']):[];
+        $plans=array_values(array_filter($plans,static fn($p)=>($p['exam_id']===null&&empty($p['node_id']))||$actor===1||(int)$p['teacher_id']===$actor||($p['exam_id']===null&&$target&&(int)$p['teacher_id']===(int)$target['owner_id']&&in_array((int)$p['node_id'],$nodes,true))));
+        foreach($plans as &$plan)foreach(['id','teacher_id','exam_id','node_id','amount','days','teacher_bps','version','approved_by'] as $field)if(isset($plan[$field]))$plan[$field]=(int)$plan[$field];unset($plan);
         return ['plans'=>$plans,'revenue'=>$actor>0?$this->store->rows('SELECT r.*,o.teacher_id,o.buyer_id,o.paid_at FROM f_music_practice_revenue r JOIN f_music_practice_orders o ON o.id=r.order_id WHERE r.user_id=? ORDER BY r.order_id DESC LIMIT 100',[$actor]):[]];
     }
     public function propose(int $actor,array $input): array
@@ -24,15 +28,37 @@ final class MusicPracticePlans
             $old=$id?$this->store->one('SELECT * FROM f_music_practice_plans WHERE id=?'.$this->store->lock(),[$id]):null;
             if($id&&(!$old||(int)$old['teacher_id']!==$actor))throw new RuntimeException('پلن متعلق به شما نیست.',403);
             $exam=MusicPracticeDefinition::integer($input['examId']??0,0,PHP_INT_MAX);
-            if($exam&&!$this->store->one('SELECT id FROM f_music_practice_exams WHERE id=? AND owner_id=?',[$exam,$actor]))throw new RuntimeException('آزمون متعلق به شما نیست.',403);
-            $values=[MusicPracticeDefinition::text($input['title']??''),MusicPracticeDefinition::integer($input['amount']??null,1000,1000000000),$exam?0:MusicPracticeDefinition::integer($input['days']??null,1,366),$this->store->now(),$exam?:null];
-            if($id){
-                if(($input['version']??null)!==(int)$old['version'])throw new RuntimeException('پلن تغییر کرده است.',409);
-                $this->store->execute("UPDATE f_music_practice_plans SET title=?,amount=?,days=?,updated_at=?,exam_id=?,status='proposed',teacher_bps=NULL,approved_by=NULL,version=version+1 WHERE id=?",[...$values,$id]);
-            }else{$this->store->execute('INSERT INTO f_music_practice_plans(title,amount,days,updated_at,exam_id,teacher_id) VALUES(?,?,?,?,?,?)',[...$values,$actor]);$id=(int)$this->store->connection()->lastInsertId();}
-            $this->store->saveTitles('music_practice_plans',$id,$values[0],$values[0],$actor);
+            if($exam)throw new RuntimeException('خرید سطح تکی مجاز نیست؛ کل آزمون یا اشتراک مدرس را انتخاب کنید.',422);
+            $node=$this->proposalNode($actor,$exam,$input,$old);
+            if($node&&!in_array($input['days']??null,[30,90,180,365],true))throw new RuntimeException('مدت اشتراک باید ماهانه، سه‌ماهه، شش‌ماهه یا سالانه باشد.',422);
+            $title=MusicPracticeDefinition::text($input['title']??'');
+            $values=[MusicPracticeDefinition::integer($input['amount']??null,1000,1000000000),$exam?0:MusicPracticeDefinition::integer($input['days']??null,1,366),$this->store->now(),$exam?:null];
+            if($id&&($input['version']??null)!==(int)$old['version'])throw new RuntimeException('پلن تغییر کرده است.',409);
+            $id=$this->writeProposal($id,$values,$node,$actor);
+            $this->store->saveTitles('music_practice_plans',$id,$title,$title,$actor);
             return ['id'=>$id];
         });
+    }
+    private function writeProposal(int $id,array $values,int $node,int $actor): int
+    {
+        $scope=$this->store->hasNodeScope('music_practice_plans');
+        if($id){
+            $column=$scope?',node_id=?':'';
+            $this->store->execute("UPDATE f_music_practice_plans SET amount=?,days=?,updated_at=?,exam_id=?,status='proposed',teacher_bps=NULL,approved_by=NULL,version=version+1$column WHERE id=?",[...$values,...($scope?[$node?:null]:[]),$id]);
+            return $id;
+        }
+        $fields=array_combine(['amount','days','updated_at','exam_id','teacher_id'],[...$values,$actor]);
+        if($scope)$fields['node_id']=$node?:null;
+        return $this->store->insertTitled('music_practice_plans',$fields);
+    }
+    private function proposalNode(int $actor,int $exam,array $input,?array $old): int
+    {
+        $node=MusicPracticeDefinition::integer($input['nodeId']??$old['node_id']??0,0,PHP_INT_MAX);
+        if(!$node)return 0;
+        if($exam)throw new RuntimeException('خرید تکی نمی‌تواند اشتراک یک بخش باشد.',422);
+        if(!$this->store->supportsSectionSubscriptions())throw new RuntimeException('ساختار اشتراک بخش‌ها روی سرور آماده نیست.',503);
+        if(!$this->store->one('SELECT id FROM f_music_practice_nodes WHERE id=? AND (published=1 OR created_by=?)'.$this->store->liveNodeSql(),[$node,$actor]))throw new RuntimeException('بخش مجاز نیست.',403);
+        return $node;
     }
     public function approve(int $actor,array $input): array
     {

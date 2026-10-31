@@ -424,6 +424,7 @@
     document.getElementById('pePostId').textContent = post.id || '—';
     const panelTitle = document.getElementById('panelPageTitle');
     if (panelTitle) panelTitle.textContent = editorText('نوشته ها', 'Posts');
+    document.title = editorText('نوشته ها', 'Posts');
     if (!metadataOnly) { peSetEditorMode('visual'); peUpdateWordCount(); }
     updateCoverPreview();
   }

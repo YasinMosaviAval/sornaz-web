@@ -6,7 +6,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="<?= e(csrf_token()) ?>">
-    <title><?= e($pageTitle ?? $title ?? trans('public.site_name', 'سُرناز')) ?></title>
+    <title><?= e(($pageTitle ?? '') ?: (($title ?? '') ?: trans('public.site_name', 'سُرناز'))) ?></title>
     <script>(function(){const r=document.documentElement;r.dataset.theme=localStorage.getItem('sornaz.theme')||'indigo';r.dataset.mode=localStorage.getItem('sornaz.mode')||'light';})();</script>
     <link rel="icon" href="/assets/images/logo/cropped-favicon_512x512.jpg">
     <link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">

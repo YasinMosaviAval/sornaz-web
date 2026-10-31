@@ -30,7 +30,7 @@
     const el = node.parentElement;
     if (
       el.closest(
-        '[data-no-inline-edit],script,style,textarea,select,option,input,[contenteditable],#modalContainer,#appDialogHost'
+        'head,title,[data-no-inline-edit],script,style,textarea,select,option,input,[contenteditable],#modalContainer,#appDialogHost'
       )
     )
       return false;
@@ -43,7 +43,7 @@
     const text = normalize(node.nodeValue);
     return text.length > 0 && text.length <= 500 && /[\p{L}]/u.test(text);
   }
-  function mark(root = document) {
+  function mark(root = document.body) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const nodes = [];
     while (walker.nextNode()) if (eligible(walker.currentNode)) nodes.push(walker.currentNode);

@@ -4,6 +4,25 @@
   if (!library) return;
   const text = (fa, en) => document.documentElement.lang.startsWith('en') ? en : fa;
   let active;
+  async function loadCard(card) {
+    const body=card.querySelector('.guide-md');
+    if(!body||body.dataset.guideLoaded==='1'||body.dataset.guideLoading==='1')return;
+    body.dataset.guideLoading='1';body.textContent=text('در حال دریافت راهنما…','Loading guide…');
+    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),20000);
+    try {
+      const document=await request('',{path:card.dataset.guidePath},controller.signal);
+      if(!card.isConnected||body.dataset.guideLoaded==='1')return;
+      body.innerHTML=document.html;
+      body.dataset.guideLoaded='1';
+    } catch(error) {
+      body.textContent=error.name==='AbortError'?text('دریافت راهنما طول کشید.','Loading the guide timed out.'):error.message;
+      const retry=document.createElement('button');retry.type='button';retry.className='rounded-xl border px-3 py-2';retry.textContent=text('تلاش دوباره','Try again');
+      retry.onclick=()=>loadCard(card);body.append(retry);
+    } finally {clearTimeout(timeout);delete body.dataset.guideLoading;}
+  }
+  library.addEventListener('toggle',event=>{
+    if(event.target.matches?.('[data-guide-path]')&&event.target.open)loadCard(event.target);
+  },true);
   async function request(operation, data, signal) {
     const token = window.adminCsrfToken || window.siteCsrfToken || '';
     const body = new FormData();
@@ -64,6 +83,7 @@
       else {
         state.card.querySelector('[data-guide-file-title]').textContent = result.title;
         state.card.querySelector('.guide-md').innerHTML = result.html;
+        state.card.querySelector('.guide-md').dataset.guideLoaded = '1';
         state.card.dataset.guideSearch = (result.title + ' ' + result.path).toLocaleLowerCase();
       }
       state.busy = false;

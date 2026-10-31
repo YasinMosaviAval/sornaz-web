@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 <head>
-    <title>Sornaz</title>
+    <title><?= e(($title ?? '') ?: trans('public.site_name', 'سُرناز')) ?></title>
 </head>
 <body>
     <header>

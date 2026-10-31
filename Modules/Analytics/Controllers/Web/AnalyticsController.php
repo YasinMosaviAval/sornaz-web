@@ -95,7 +95,7 @@ class AnalyticsController
     public function adminPanel()
     {
         $guides = (int) auth()->id() === 1 ? $this->guides->all(locale()) : [];
-        $guideDocuments = (int) auth()->id() === 1 ? $this->guides->documents() : [];
+        $guideDocuments = (int) auth()->id() === 1 ? $this->guides->documents(false) : [];
         return ResponseFactory::view('Analytics::admin-panel', ['guides' => $guides, 'guideDocuments' => $guideDocuments, 'adminUiMap' => $this->adminTests->adminUiMap(locale()), 'inlineTranslationCatalog' => $this->adminTests->inlineTranslationCatalog()])->layout('admin')->title('سُرناز | پنل کاربری');
     }
 }
