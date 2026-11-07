@@ -3,16 +3,22 @@
 const text=(locale,fa,en)=>locale==='fa'?fa:en;
 function dialog(title){const box=document.createElement('dialog');box.className='notation-web-dialog';const heading=document.createElement('h2');heading.textContent=title;box.append(heading);document.body.append(box);return box;}
 function button(box,label,value,resolve){const b=document.createElement('button');b.type='button';b.textContent=label;b.onclick=()=>{box.close();box.remove();resolve(value);};box.append(b);return b;}
-function preferences(){try{const raw=JSON.parse(localStorage.getItem('notation_web_preferences')||'{}');return {durationMode:[1,2,3].includes(raw.durationMode)?raw.durationMode:1,pianoLabelMode:[1,2].includes(raw.pianoLabelMode)?raw.pianoLabelMode:1};}catch(_){return {durationMode:1,pianoLabelMode:1};}}
+function preferences(){try{const raw=JSON.parse(localStorage.getItem('notation_web_preferences')||'{}');return {durationMode:[1,2,3].includes(raw.durationMode)?raw.durationMode:1,pianoLabelMode:[1,2].includes(raw.pianoLabelMode)?raw.pianoLabelMode:1,showHelp:raw.showHelp!==false,showQuarterTones:raw.showQuarterTones===true};}catch(_){return {durationMode:1,pianoLabelMode:1,showHelp:true,showQuarterTones:false};}}
 function settings(config,apply,container){
  const locale=config.locale,box=container||dialog(text(locale,'تنظیمات نت‌نویسی','Notation settings'));
  if(container){container.replaceChildren();container.classList.add('notation-settings-form');}
  const fields=[['durationMode',text(locale,'حالت انتخاب کشش نت','Note duration mode'),[text(locale,'حالت اول','Mode one'),text(locale,'حالت دوم','Mode two'),text(locale,'حالت سوم','Mode three')]],['pianoLabelMode',text(locale,'نام نت‌های کلاویه','Piano note labels'),[text(locale,'همه نت‌ها','All notes'),text(locale,'نت‌های گام انتخاب‌شده','Selected scale notes')]]];
  const values=preferences();
+ for(const [name,title,description] of [
+  ['showHelp',text(locale,'نمایش راهنمای عملکرد','Show control help'),text(locale,'نگه داشتن انگشت روی دکمه','Hold your finger on the button')],
+ ]){
+  const label=document.createElement('label');label.className='notation-help-setting';const input=document.createElement('input');input.type='checkbox';input.name=name;input.checked=config[name]??values[name];
+  const captions=document.createElement('span'),heading=document.createElement('span'),hint=document.createElement('small');heading.textContent=title;hint.textContent=description;captions.append(heading,hint);label.append(input,captions);box.append(label);
+ }
  for(const [name,title,options] of fields){const label=document.createElement('label');label.textContent=title;const select=document.createElement('select');select.name=name;options.forEach((caption,i)=>select.add(new Option(caption,i+1)));select.value=String(config[name]||values[name]);label.append(select);box.append(label);}
  const hint=document.createElement('p');hint.textContent=text(locale,'نت‌های محلی فقط در همین مرورگر و حساب ذخیره می‌شوند. برای نگهداری مستقل، فایل JSON دانلود کنید؛ محل دانلود را مرورگر تعیین می‌کند.','Local sheets stay in this browser and account. Download JSON for an independent backup; the browser controls the download location.');box.append(hint);
  const status=document.createElement('p');status.setAttribute('role','status');box.append(status);
- const save=document.createElement('button');save.type='button';save.className='primary';save.textContent=text(locale,'ذخیره تنظیمات','Save settings');save.onclick=()=>{const next={durationMode:Number(box.querySelector('[name=durationMode]').value),pianoLabelMode:Number(box.querySelector('[name=pianoLabelMode]').value)};try{localStorage.setItem('notation_web_preferences',JSON.stringify(next));apply(next);if(container)status.textContent=text(locale,'تنظیمات ذخیره شد.','Settings saved.');else{box.close();box.remove();}}catch(_){status.textContent=text(locale,'ذخیره تنظیمات انجام نشد.','Could not save settings.');}};box.append(save);
+ const save=document.createElement('button');save.type='button';save.className='primary';save.textContent=text(locale,'ذخیره تنظیمات','Save settings');save.onclick=()=>{const next={showHelp:box.querySelector('[name=showHelp]').checked,durationMode:Number(box.querySelector('[name=durationMode]').value),pianoLabelMode:Number(box.querySelector('[name=pianoLabelMode]').value)};try{localStorage.setItem('notation_web_preferences',JSON.stringify(next));apply(next);if(container)status.textContent=text(locale,'تنظیمات ذخیره شد.','Settings saved.');else{box.close();box.remove();}}catch(_){status.textContent=text(locale,'ذخیره تنظیمات انجام نشد.','Could not save settings.');}};box.append(save);
  if(!container){button(box,text(locale,'انصراف','Cancel'),null,()=>{});box.addEventListener('cancel',()=>box.remove());box.showModal();}
 }
 function ask(title,options={}){return new Promise(resolve=>{

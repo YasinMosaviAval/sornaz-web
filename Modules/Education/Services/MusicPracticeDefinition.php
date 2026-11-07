@@ -5,6 +5,13 @@ use RuntimeException;
 
 final class MusicPracticeDefinition
 {
+    public static function iconKey(mixed $value): ?string
+    {
+        if($value===null||$value==='')return null;
+        if(!is_string($value)||!in_array($value,['music_note','library_music','piano','queue_music','headphones','mic','hearing','graphic_eq','speed','album','school','star','tune','folder'],true))throw new RuntimeException('آیکن انتخاب‌شده معتبر نیست.',422);
+        return $value;
+    }
+
     public static function integer(mixed $value, int $min, int $max): int
     {
         if (!is_int($value) || $value < $min || $value > $max) throw new RuntimeException('مقدار عددی معتبر نیست.', 422);
@@ -17,10 +24,11 @@ final class MusicPracticeDefinition
         return trim($value);
     }
 
-    public static function config(mixed $input): array
+    public static function config(mixed $input, ?\Modules\Notation\Services\NotationService $notation = null): array
     {
         if(!is_array($input))throw new RuntimeException('تنظیمات آزمون معتبر نیست.',422);
         $kind = $input['kind'] ?? '';
+        if($kind==='notation')return self::notationConfig($input,$notation);
         if ($kind === 'interval') {
             $steps = $input['quarterSteps'] ?? [];
             if (!is_array($steps) || !array_is_list($steps) || !$steps || count($steps) > 24) throw new RuntimeException('فاصله‌های تمرین معتبر نیستند.', 422);
@@ -36,6 +44,13 @@ final class MusicPracticeDefinition
             $clean[] = self::question($kind,$question);
         }
         return ['kind' => $kind, 'questions' => $clean];
+    }
+    private static function notationConfig(array $input,?\Modules\Notation\Services\NotationService $notation): array
+    {
+        $assessment=$input['assessment']??'pitch_rhythm';$questions=$input['questions']??null;
+        if(!in_array($assessment,['pitch_rhythm','rhythm'],true)||!is_array($questions)||!array_is_list($questions)||!$questions||count($questions)>20||strlen(json_encode($input,JSON_THROW_ON_ERROR))>220000)throw new RuntimeException('تعریف سطح نوشتاری معتبر نیست.',422);
+        $notation??=new \Modules\Notation\Services\NotationService(new \Modules\CourseMarket\Repositories\CourseRepository(db()));
+        return ['kind'=>'notation','gradingVersion'=>1,'assessment'=>$assessment,'questions'=>array_map(fn($q)=>MusicPracticeNotation::question($q,$notation),$questions)];
     }
     private static function question(string $kind,mixed $question): array
     {
@@ -65,12 +80,21 @@ final class MusicPracticeDefinition
             $target = $root * 2 + ($config['direction'] === 'ascending' ? 1 : -1) * $expected;
             if (!in_array($expected, $config['quarterSteps'], true) || !in_array($selected, $config['quarterSteps'], true) || $target < 42 || $target > 216 || (!$config['variableRoot'] && ($root < 48 || $root > 72))) throw new RuntimeException('پاسخ خارج از تعریف آزمون است.', 422);
             $row += ['expected' => $expected, 'selected' => $selected, 'rootMidi' => $root];
+        } elseif($config['kind']==='notation') {
+            $row+=self::notationAnswer($answer,$config);
         } else {
             $question = self::integer($answer['question'] ?? null, 0, count($config['questions']) - 1);
             $selected = self::integer($answer['selected'] ?? null, 0, count($config['questions'][$question]['choices']) - 1);
             $row += ['question' => $question, 'expected' => $config['questions'][$question]['correct'], 'selected' => $selected];
         }
         return $row;
+    }
+    private static function notationAnswer(array $answer,array $config): array
+    {
+        $question=self::integer($answer['question']??null,0,count($config['questions'])-1);
+        $recording=MusicPracticeNotation::recording($answer['recording']??null);
+        $grade=MusicPracticeNotation::grade($config['questions'][$question]['reference'],$recording,$config['assessment']);
+        return ['question'=>$question,'recording'=>$recording,'expected'=>1,'selected'=>$grade['passed']?1:0,'assessment'=>$grade];
     }
     private static function timestamp(mixed $value): string
     {

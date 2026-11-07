@@ -5,6 +5,7 @@ use RuntimeException;
 
 final class MusicPracticeCatalog
 {
+    private bool $notationSupported = false;
     private array $managedUsers=[];
     public function __construct(private MusicPracticeStore $store) {}
     public function people(int $actor,mixed $query): array
@@ -65,8 +66,9 @@ final class MusicPracticeCatalog
             return ['id'=>$id,'deleted'=>true];
         });
     }
-    public function listing(int $actor, bool $manage = false): array
+    public function listing(int $actor, bool $manage = false, bool $notationSupported = false): array
     {
+        $this->notationSupported=$notationSupported;
         if ($manage && !$this->store->allows($actor, 'create') && !$this->store->allows($actor, 'edit') && !$this->store->allows($actor, 'publish') && !$this->store->allows($actor,'delete')) throw new RuntimeException('اجازهٔ مدیریت آزمون‌ها را ندارید.',403);
         $this->store->ready();
         $nodes = $this->store->translatedTitles('music_practice_nodes',$this->store->rows('SELECT n.* FROM f_music_practice_nodes n WHERE 1=1'.$this->store->liveNodeSql('n').' ORDER BY n.depth,n.position,n.id'));
@@ -83,7 +85,11 @@ final class MusicPracticeCatalog
             $row=$this->examRow($actor,$exam,$manage,$access);
             if($row)$exams[]=$row;
         }
-        return ['viewerId'=>$actor,'nodes'=>array_map(static fn($n)=>['id'=>(int)$n['id'],'parentId'=>$n['parent_id']?(int)$n['parent_id']:null,'slug'=>$n['slug'],'titleFa'=>$n['titleFa'],'titleEn'=>$n['titleEn'],'canManage'=>$actor===1||(int)$n['created_by']===$actor,'depth'=>(int)$n['depth'],'position'=>(int)$n['position'],'published'=>(bool)$n['published'],'version'=>(int)$n['version']],array_values($visible)), 'exams'=>$exams]+$this->catalogState($actor,$access);
+        return ['viewerId'=>$actor,'nodes'=>array_map(fn($n)=>$this->nodeRow($actor,$n),array_values($visible)), 'exams'=>$exams]+$this->catalogState($actor,$access);
+    }
+    private function nodeRow(int $actor,array $node): array
+    {
+        return ['id'=>(int)$node['id'],'parentId'=>$node['parent_id']?(int)$node['parent_id']:null,'slug'=>$node['slug'],'iconKey'=>$node['icon_key']??null,'titleFa'=>$node['titleFa'],'titleEn'=>$node['titleEn'],'canManage'=>$actor===1||(int)$node['created_by']===$actor,'depth'=>(int)$node['depth'],'position'=>(int)$node['position'],'published'=>(bool)$node['published'],'version'=>(int)$node['version']];
     }
     private function definitions(): array
     {
@@ -91,7 +97,7 @@ final class MusicPracticeCatalog
     }
     private function catalogState(int $actor,MusicPracticeAccess $access): array
     {
-        return ['capabilities'=>$this->capabilities($actor),'offlineMessage'=>$this->offlineMessage($actor,$access),'sectionSubscriptions'=>$this->store->supportsSectionSubscriptions(),'levelDeletion'=>$this->store->supportsLevelDeletion(),'nodeDeletion'=>$this->store->supportsNodeDeletion()];
+        return ['capabilities'=>$this->capabilities($actor),'offlineMessage'=>$this->offlineMessage($actor,$access),'sectionSubscriptions'=>$this->store->supportsSectionSubscriptions(),'levelDeletion'=>$this->store->supportsLevelDeletion(),'nodeDeletion'=>$this->store->supportsNodeDeletion(),'nodeIcons'=>$this->store->supportsNodeIcons(),'notationQuestions'=>true];
     }
     private function offlineMessage(int $actor,MusicPracticeAccess $access): ?string
     {
@@ -105,6 +111,7 @@ final class MusicPracticeCatalog
             $allowed = $access->permitted($actor,$exam);
             if (!$manage && !$allowed && $exam['audience'] !== 'subscribers') return null;
             $definition = json_decode($exam['definition'],true,512,JSON_THROW_ON_ERROR);
+            if(($definition['config']['kind']??'')==='notation'&&!$this->notationSupported)return null;
             $row = ['id'=>(int)$exam['id'],'nodeId'=>(int)$exam['node_id'],'ownerId'=>(int)$exam['owner_id'],'titleFa'=>$exam['titleFa'],'titleEn'=>$exam['titleEn'],'version'=>(int)$exam['version'],'position'=>(int)$exam['position'],'published'=>(bool)$exam['published'],'audience'=>$exam['audience'],'access'=>$allowed,'stageCount'=>$definition['stageCount'],'requiredWins'=>$definition['requiredWins'],'legacyKey'=>$exam['legacy_key']];
             if ($allowed || $manage) $row['config']=$definition['config'];
             if ($allowed && !$this->store->onlineOnly && $access->signingReady()) $row += $access->permit($actor,$exam);
@@ -144,9 +151,17 @@ final class MusicPracticeCatalog
             }else{
                 $id=$this->store->insertTitled('music_practice_nodes',array_combine(['parent_id','slug','depth','position','published','updated_at','created_by'],[...$values,$actor]));
             }
-            $this->store->saveTitles('music_practice_nodes',$id,MusicPracticeDefinition::text($input['titleFa']??''),MusicPracticeDefinition::text($input['titleEn']??''),$actor);
+            $this->saveNodePresentation($actor,$id,$input);
             return ['id'=>$id];
         });
+    }
+    private function saveNodePresentation(int $actor,int $id,array $input): void
+    {
+        $this->store->saveTitles('music_practice_nodes',$id,MusicPracticeDefinition::text($input['titleFa']??''),MusicPracticeDefinition::text($input['titleEn']??''),$actor);
+        if(!array_key_exists('iconKey',$input))return;
+        if(!$this->store->supportsNodeIcons())throw new RuntimeException('انتخاب آیکن پس از به‌روزرسانی ساختار آزمون‌ها فعال می‌شود.',503);
+        $icon=MusicPracticeDefinition::iconKey($input['iconKey']);
+        $this->store->execute('UPDATE f_music_practice_nodes SET icon_key=? WHERE id=?',[$icon,$id]);
     }
     private function nodeSlug(array $input,int $id): string
     {
@@ -177,7 +192,7 @@ final class MusicPracticeCatalog
     {
         $id=MusicPracticeDefinition::integer($input['id']??0,0,PHP_INT_MAX);
         $this->store->require($actor,$id?'edit':'create');
-        $definition=['stageCount'=>MusicPracticeDefinition::integer($input['stageCount']??5,1,100),'requiredWins'=>MusicPracticeDefinition::integer($input['requiredWins']??10,1,100),'config'=>MusicPracticeDefinition::config($input['config']??[])];
+        $definition=$this->examDefinition($input);
         return $this->store->transaction(function()use($actor,$input,$id,$definition){
             $old=$id?$this->store->one('SELECT * FROM f_music_practice_exams WHERE id=?'.$this->store->lock(),[$id]):null;
             if($id&&(!$old||!empty($old['deleted_at'])))throw new RuntimeException('آزمون پیدا نشد.',404);
@@ -192,6 +207,11 @@ final class MusicPracticeCatalog
             foreach(array_unique($users) as $user)$this->store->execute('INSERT INTO f_music_practice_grants(exam_id,user_id) VALUES(?,?)',[$id,$user]);
             return ['id'=>$id,'version'=>$version];
         });
+    }
+    private function examDefinition(array $input): array
+    {
+        $notation=($input['config']['kind']??'')==='notation'?new \Modules\Notation\Services\NotationService(new \Modules\CourseMarket\Repositories\CourseRepository($this->store->connection())):null;
+        return ['stageCount'=>MusicPracticeDefinition::integer($input['stageCount']??5,1,100),'requiredWins'=>MusicPracticeDefinition::integer($input['requiredWins']??10,1,100),'config'=>MusicPracticeDefinition::config($input['config']??[],$notation)];
     }
     private function examSettings(int $actor,array $input,?array $old): array
     {

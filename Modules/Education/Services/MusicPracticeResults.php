@@ -91,8 +91,13 @@ final class MusicPracticeResults
             foreach($normalized as $answer)$run=$this->append($run,$answer,$definition['requiredWins']);
             if($input['closed']&&$run['status']==='in_progress')$run['status']='abandoned';
             $this->store->execute('UPDATE f_music_practice_runs SET status=?,answer_count=?,streak=?,best_streak=?,updated_at=? WHERE id=? AND user_id=?',[$run['status'],$run['answer_count'],$run['streak'],$run['best_streak'],$this->store->now(),$run['id'],$actor]);
-            return ['runId'=>$client,'acceptedThrough'=>(int)$run['answer_count'],'status'=>$run['status']];
+            return self::acknowledgement($client,$run,$normalized);
         });
+    }
+    private static function acknowledgement(string $client,array $run,array $normalized): array
+    {
+        $last=$normalized?end($normalized):null;
+        return ['runId'=>$client,'acceptedThrough'=>(int)$run['answer_count'],'status'=>$run['status'],'assessment'=>$last['assessment']??null];
     }
     private function append(array $run,array $answer,int $wins): array
     {

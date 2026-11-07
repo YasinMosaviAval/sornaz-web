@@ -13,4 +13,5 @@
     <section data-practice-editor hidden class="space-y-4 rounded-2xl border bg-white p-5"></section>
 </main>
 <script>window.musicPracticeBoot=<?= json_encode($practiceBoot,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;</script>
+<script defer src="/assets/Education/js/practice-notation.js?v=<?= e(\Core\support\AssetManager::version('/assets/Education/js/practice-notation.js')) ?>"></script>
 <script defer src="/assets/Education/js/music-practice.js?v=<?= e(\Core\support\AssetManager::version('/assets/Education/js/music-practice.js')) ?>"></script>

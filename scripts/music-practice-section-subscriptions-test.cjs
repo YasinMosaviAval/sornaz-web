@@ -97,7 +97,65 @@ $catalog->deleteNode(1,['id'=>$leaf,'version'=>1]);$catalog->deleteNode(1,['id'=
 check(!in_array($leaf,array_column($catalog->listing(1,true)['nodes'],'id'),true),'Archived section stayed visible');
 check($store->one('SELECT id FROM f_music_practice_orders WHERE id=?',[$leafOrder['id']])!==null,'Archive erased paid purchase');
 
-echo 'Section subscriptions: '.$checks.' checks passed ('.($mysql?'MariaDB':'SQLite').').'.PHP_EOL;
+// Optional icons upgrade independently; failed writes must roll back all data.
+if($mysql){ check(!$pdo->query("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND ENGINE<>'InnoDB'")->fetchColumn(),'Fixture tables must support transactions');}
+
+$catalog=new MusicPracticeCatalog(new ScopeStore($pdo,true));
+$beforeIcons=$pdo->query('SELECT COUNT(*) FROM f_music_practice_nodes')->fetchColumn();
+denied(503,fn()=>$catalog->saveNode(2,$nodeInput+['slug'=>'icon-before-migration','iconKey'=>'piano']));
+check($pdo->query('SELECT COUNT(*) FROM f_music_practice_nodes')->fetchColumn()===$beforeIcons,'Unsupported icon write partially created a section');
+if($mysql){
+
+ foreach(['2026_10_31_music_practice_node_icons.sql','2026_10_31_music_practice_node_icons.mariadb.sql'] as $file){
+  for($repeat=0;$repeat<2;$repeat++){
+   $q=$pdo->query(file_get_contents(base_path('docs/database/migrations/'.$file)));
+   do{if($q->columnCount())$q->fetchAll();}while($q->nextRowset());$q->closeCursor();
+  }
+ }
+}else{$pdo->exec('ALTER TABLE f_music_practice_nodes ADD COLUMN icon_key VARCHAR(32) NULL');}
+$store=new ScopeStore($pdo,true);$catalog=new MusicPracticeCatalog($store);
+check($catalog->listing(1,true)['nodeIcons']===true,'Icons capability was not enabled after migration');
+check($store->one('SELECT icon_key FROM f_music_practice_nodes WHERE id=?',[$b])['icon_key']===null,'Migration changed an existing section');
+$iconParent=0;
+foreach(['music_note','piano','headphones'] as $depth=>$icon){
+ $iconInput=$nodeInput+['slug'=>'icon-depth-'.$depth,'parentId'=>$iconParent,'iconKey'=>$icon];
+ $iconId=$catalog->saveNode(2,$iconInput)['id'];
+ check($store->one('SELECT icon_key FROM f_music_practice_nodes WHERE id=?',[$iconId])['icon_key']===$icon,'Depth icon was not saved');
+ $visible=array_column($catalog->listing(3)['nodes'],null,'id');
+ check($visible[$iconId]['iconKey']===$icon,'Other viewers did not receive the saved icon');
+ $editIcon=$iconInput+['id'=>$iconId,'version'=>1];
+ denied(403,fn()=>$catalog->saveNode(5,$editIcon));
+ denied(403,fn()=>$catalog->saveNode(3,$editIcon));
+ denied(422,fn()=>$catalog->saveNode(2,array_replace($editIcon,['iconKey'=>'<svg onload=alert(1)>'])));
+ check((int)$store->one('SELECT version FROM f_music_practice_nodes WHERE id=?',[$iconId])['version']===1,'Rejected icon changed the section version');
+ $legacyEdit=$editIcon;unset($legacyEdit['iconKey']);$catalog->saveNode(2,$legacyEdit);
+ check($store->one('SELECT icon_key FROM f_music_practice_nodes WHERE id=?',[$iconId])['icon_key']===$icon,'Old client erased the icon');
+ denied(409,fn()=>$catalog->saveNode(2,$editIcon));
+ $catalog->saveNode(2,array_replace($editIcon,['version'=>2,'iconKey'=>null]));
+ check($store->one('SELECT icon_key FROM f_music_practice_nodes WHERE id=?',[$iconId])['icon_key']===null,'Default icon could not be restored');
+ $iconParent=$iconId;
+}
+// Written questions use the same ownership, version and immutable-result boundary.
+$sheet=['metadata'=>['title'=>'Fixture','instrument'=>'Tar','clef'=>'treble','key'=>'C','scale_type'=>'major','time'=>'4/4','tempo_note'=>'q','bpm'=>120],'score'=>['measures'=>[['notes'=>[['pitch'=>'C4','duration'=>'q','rest'=>false],['pitch'=>'D4','duration'=>'q','rest'=>false]]]]]];
+$notation=['kind'=>'notation','assessment'=>'pitch_rhythm','questions'=>[['sheet'=>$sheet,'preview'=>'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M1 1L3 3"/></svg>']]];
+$written=array_replace($testInput,['nodeId'=>$b,'audience'=>'public','config'=>$notation]);
+denied(403,fn()=>$catalog->saveExam(3,$written));
+$writtenId=$catalog->saveExam(2,$written)['id'];
+check(!in_array($writtenId,array_column($catalog->listing(3)['exams'],'id'),true),'Old client received an unsupported written level');
+$newCatalog=$catalog->listing(3,false,true);check($newCatalog['notationQuestions']===true&&in_array($writtenId,array_column($newCatalog['exams'],'id'),true),'New client cannot see written level');
+denied(403,fn()=>$catalog->saveExam(5,array_replace($written,['id'=>$writtenId,'version'=>1])));
+$frames=[];for($at=0;$at<2000;$at+=50)$frames[]=[$at,$at<500?26163:($at<1000?29366:0),$at<1000?100:0];
+$answer=['sequence'=>1,'question'=>0,'recording'=>['durationMs'=>2000,'frames'=>$frames],'selected'=>0,'elapsedMs'=>2000,'answeredAt'=>gmdate('Y-m-d\TH:i:s.000\Z')];
+$batch=['runId'=>str_repeat('e',32),'examId'=>$writtenId,'version'=>1,'stage'=>1,'answers'=>[$answer],'closed'=>true];
+$results=new Modules\Education\Services\MusicPracticeResults($store);
+$assessed=$results->store(3,$batch);check($assessed['status']==='passed'&&$assessed['assessment']['pitch']===100,'Recorded response was not graded by server');
+$results->store(3,$batch);check((int)$store->one('SELECT answer_count FROM f_music_practice_runs WHERE client_id=?',[str_repeat('e',32)])['answer_count']===1,'Recording retry duplicated result');
+$changed=$batch;$changed['answers'][0]['recording']['frames'][0][2]=99;denied(409,fn()=>$results->store(3,$changed));
+check($results->progress(4)['recent']===[],'Another learner received recorded response progress');
+$catalog->saveExam(2,array_replace($written,['id'=>$writtenId,'version'=>1]));
+denied(409,fn()=>$catalog->saveExam(2,array_replace($written,['id'=>$writtenId,'version'=>1])));
+denied(409,fn()=>$results->store(3,array_replace($batch,['runId'=>str_repeat('f',32)])));
+echo 'Section subscriptions and written levels: '.$checks.' checks passed ('.($mysql?'MariaDB':'SQLite').').'.PHP_EOL;
 `;
 const directory=fs.mkdtempSync(path.join(os.tmpdir(),'sornaz-scope-test-'));
 try{

@@ -3,11 +3,15 @@
 $map = require __DIR__ . '/../vendor/composer/autoload_classmap.php';
 spl_autoload_register(static function (string $class) use ($map): void {
     if (isset($map[$class])) require_once $map[$class];
+    elseif (str_starts_with($class, 'Modules\\')) {
+        $file = dirname(__DIR__) . '/' . str_replace('\\', '/', $class) . '.php';
+        if (is_file($file)) require_once $file;
+    }
 });
 require __DIR__ . '/../Modules/Analytics/Routes/routes.php';
 require __DIR__ . '/../Modules/Academy/Routes/web.php';
 require __DIR__ . '/../Modules/Analytics/Routes/api.php';
-$sections = (new \Modules\Analytics\Services\MobilePanelCatalog())->sections();
+$sections = (new \Modules\Analytics\Services\MobilePanelCatalog())->sections(false, false, true);
 if (($sections['classrooms']['actions']['heatmap']['path'] ?? '') !== '/academy/admin/classrooms/heatmap') throw new RuntimeException('Missing scoped classroom occupancy API');
 function expectParity(bool $condition, string $message): void {
     if (!$condition) throw new RuntimeException($message);
@@ -52,8 +56,6 @@ expectParity($sections['my-waiting']['access'] === 'common' && $sections['my-wai
     }
     $routes = (new ReflectionProperty(\Core\router\Router::class, 'routes'))->getValue();
     $webOnly = [
-        // Founder-only Markdown library editor on the website; native guides retain their existing database contract.
-        'AdminGuideDocumentController::read', 'AdminGuideDocumentController::update', 'AdminGuideDocumentController::delete',
         'AcademyBranchController::memberRegistrationForm', // HTML form; native fields come from the catalog.
         'AnalyticsController::adminPanel',
         'AdminGalleryController::realtimeVersion', 'AdminSchedulingRuleController::realtimeVersion',

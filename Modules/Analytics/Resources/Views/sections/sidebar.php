@@ -91,16 +91,16 @@ if ($sidebarFullName === '') $sidebarFullName = $sidebarUsername;
     <nav class="flex-1 overflow-y-auto overflow-x-hidden p-4">
         <ul class="space-y-2">
                 <?php if ((int)auth()->id() === 1 || $previewRole === 'admin'): ?>
-                <li><a href="#" onclick="showSection('guides')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-yellow-300 hover:text-yellow-200"><i class="fas fa-book-reader w-5 text-center"></i> راهنمای عملکردها</a></li>
+                <li><a href="#" onclick="showSection('guides')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-book-reader w-5 text-center"></i> راهنمای عملکردها</a></li>
                 <?php if ($previewRole === null && $panelUserId === 1): ?>
-                <li><a href="#" onclick="showSection('database-management')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-yellow-300 hover:text-yellow-200"><i class="fas fa-database w-5 text-center"></i> <?= e(locale() === 'en' ? 'Database management' : 'مدیریت دیتابیس') ?></a></li>
+                <li><a href="#" onclick="showSection('database-management')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-database w-5 text-center"></i> <?= e(locale() === 'en' ? 'Database management' : 'مدیریت دیتابیس') ?></a></li>
                 <?php endif; ?>
                 <?php endif; ?>
             <?php if ($isSiteAdmin && ($previewRole === 'admin' || env('APP_ENV', 'production') === 'local')) { ?>
                 <?php if ($previewRole === null): ?>
                 <!-- <li>--------------------------------</li> -->
                 <?php endif; ?>
-                <li><a href="#" onclick="showSection('posts')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-yellow-300 hover:text-yellow-200"><i class="fas fa-file-alt w-5 text-center"></i> نوشته‌ها</a></li>
+                <li><a href="#" onclick="showSection('posts')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition"><i class="fas fa-file-alt w-5 text-center"></i> نوشته‌ها</a></li>
                 <li><a href="#" onclick="showSection('chart-gallery')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-yellow-300 hover:text-yellow-200"><i class="fas fa-chart-pie w-5 text-center"></i> گالری نمودارها</a></li>
                 <li><a href="#" onclick="showSection('reports')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-indigo-800 transition text-yellow-300 hover:text-yellow-200"><i class="fas fa-chart-bar w-5 text-center"></i> گزارش‌ها</a></li>
                 <!-- <li>--------------------------------</li> -->

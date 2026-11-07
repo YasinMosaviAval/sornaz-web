@@ -46,7 +46,7 @@ final class MusicPracticeController
         try{return ResponseFactory::json(['success'=>true,'data'=>$work(new MusicPracticeStore(null,str_starts_with($_SERVER['REQUEST_URI']??'','/exams/api/')))]);}
         catch(\Throwable $error){return ResponseFactory::json(['success'=>false,'message'=>PublicError::message($error)],PublicError::status($error));}
     }
-    public function catalog(){return $this->run(fn($s)=>(new MusicPracticeCatalog($s))->listing($this->actor(),($_GET['manage']??'')==='1'));}
+    public function catalog(){return $this->run(fn($s)=>(new MusicPracticeCatalog($s))->listing($this->actor(),($_GET['manage']??'')==='1',($_GET['notation']??'')==='1'));}
     public function people(){return $this->run(fn($s)=>(new MusicPracticeCatalog($s))->people($this->actor(true),$_GET['q']??''));}
     public function progress(){return $this->run(fn($s)=>(new MusicPracticeResults($s))->progress($this->actor(true)));}
     public function result(){return $this->run(fn($s)=>(new MusicPracticeResults($s))->store($this->actor(true),$this->input()));}

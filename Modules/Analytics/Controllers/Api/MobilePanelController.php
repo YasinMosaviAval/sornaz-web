@@ -23,7 +23,7 @@ final class MobilePanelController
         return $this->authenticated(function (array $user) {
             $capabilities = $this->access->capabilities($user);
             $features = max(0, (int) ($_SERVER['HTTP_X_SORNAZ_PANEL_FEATURES'] ?? 0));
-            $sections = array_filter($this->catalog->sections(($_SERVER['HTTP_X_SORNAZ_PANEL_FORMS'] ?? '') === '2', $features >= 4), fn (array $section) => empty($section['hidden']) && ($capabilities[$section['access']] ?? false) && $features >= (int) ($section['minClientFeatures'] ?? 0));
+            $sections = $this->visibleSections($features, $capabilities);
             foreach ($sections as &$section) {
                 $section['branchContext'] = !empty($capabilities['branchContext']);
                 $section['pageGuidance'] = ['canEdit' => !empty($capabilities['founder'])];
@@ -34,10 +34,16 @@ final class MobilePanelController
         });
     }
 
+    private function visibleSections(int $features, array $capabilities): array
+    {
+        $sections = $this->catalog->sections(($_SERVER['HTTP_X_SORNAZ_PANEL_FORMS'] ?? '') === '2', $features >= 4, $features >= 5);
+        return array_filter($sections, fn (array $section) => empty($section['hidden']) && ($capabilities[$section['access']] ?? false) && $features >= (int) ($section['minClientFeatures'] ?? 0));
+    }
+
     public function execute(string $section, string $operation)
     {
         return $this->authenticated(function (array $user) use ($section, $operation) {
-            $definition = $this->catalog->sections()[$section] ?? null;
+            $definition = $this->catalog->sections(false, false, true)[$section] ?? null;
             $action = $definition['actions'][$operation] ?? null;
             if (!$definition || !$action) {
                 return $this->error(404);

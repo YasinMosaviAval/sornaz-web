@@ -11,3 +11,9 @@
 @media(prefers-reduced-motion:reduce){.practice-exam-card{transition:none}.practice-exam-active>[data-practice-player]{animation:none}}
 
 .practice-choices-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.practice-notation-preview{display:block;width:100%;height:auto;background:#fff;border-radius:.5rem;padding:.5rem;max-height:50vh;object-fit:contain}
+.practice-notation-composer{width:min(1200px,96vw);height:94dvh;max-height:94dvh;padding:.5rem;border:1px solid var(--surface-border,#ddd);border-radius:.75rem;background:var(--surface-card,#fff);color:var(--text-primary,#111)}
+.practice-notation-composer[open]{display:flex;flex-direction:column;gap:.5rem}
+.practice-notation-composer::backdrop{background:rgb(0 0 0 / .55)}
+.practice-notation-composer>iframe{width:100%;flex:1;min-height:0;border:0}
+.practice-notation-composer>button{align-self:flex-end;padding:.25rem 1rem}

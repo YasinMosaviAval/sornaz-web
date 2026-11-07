@@ -11,6 +11,11 @@ final class AdminGuideDocumentController
 {
     public function __construct(private AdminGuideDocumentService $files, private AdminGuideService $guides) {}
 
+    public function index()
+    {
+        return $this->run(fn () => ['documents' => $this->guides->documents(false)]);
+    }
+
     public function read() { return $this->run(function(){
         $document=$this->files->read(1,$this->text($_GET,'path'));
         return $document+['html'=>$this->guides->documentHtml($document['content'])];

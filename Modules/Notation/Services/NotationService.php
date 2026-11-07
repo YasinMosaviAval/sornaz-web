@@ -6,6 +6,9 @@ use RuntimeException;
 
 class NotationService
 {
+    private const NOTE_ACCIDENTALS = ['', '#', 'b', 'n', '##', 'bb', '+', 'd', 'k', 'o', 'bk', '#o'];
+    public const IRANIAN_KEYS = ['C','C:o','Db','D:k','D','D:o','Eb','E:k','E','E:o','F','F:o','Gb','G:k','G','G:o','Ab','A:k','A','A:o','Bb','B:k','B','B:o'];
+    private const IRANIAN_SCALES = ['iran_shur', 'iran_mahur', 'iran_homayun', 'iran_nava', 'iran_segah', 'iran_chahargah', 'iran_rastpanjgah', 'iran_abuata', 'iran_bayat_tork', 'iran_afshari', 'iran_dashti', 'iran_bayat_esfahan'];
     public const KEYS = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'Am', 'Em', 'Bm', 'F#m', 'C#m', 'G#m', 'D#m', 'A#m', 'Dm', 'Gm', 'Cm', 'Fm', 'Bbm', 'Ebm', 'Abm'];
     public const DURATIONS = ['w' => 64, 'h' => 32, 'q' => 16, '8' => 8, '16' => 4, '32' => 2, '64' => 1, '128' => .5, '256' => .25];
 
@@ -113,7 +116,8 @@ class NotationService
         if (!ctype_digit($clean['instrument']) && !in_array($clean['instrument'], ['Tar', 'Setar', 'Guitar', 'Piano', 'Violin', 'Flute', 'Voice'], true)) {
             throw new RuntimeException('Invalid instrument.', 422);
         }
-        $enums = ['key' => self::KEYS, 'tempo_note' => array_map('strval', array_keys(self::DURATIONS)), 'clef' => ['treble', 'treble_8vb', 'treble_8va', 'bass', 'bass_8vb', 'bass_8va', 'baritone-f', 'soprano', 'mezzo-soprano', 'alto', 'tenor']];
+        $allowedKeys = in_array($meta['scale_type'] ?? '', self::IRANIAN_SCALES, true) ? self::IRANIAN_KEYS : self::KEYS;
+        $enums = ['key' => $allowedKeys, 'tempo_note' => array_map('strval', array_keys(self::DURATIONS)), 'clef' => ['treble', 'treble_8vb', 'treble_8va', 'bass', 'bass_8vb', 'bass_8va', 'baritone-f', 'soprano', 'mezzo-soprano', 'alto', 'tenor']];
         foreach ($enums as $key => $values) {
             $v = $meta[$key] ?? null;
             if (!in_array($v, $values, true)) {
@@ -166,7 +170,7 @@ class NotationService
                     throw new RuntimeException('Invalid note duration.', 422);
                 }
                 $acc = $n['accidental'] ?? '';
-                if (!in_array($acc, ['', '#', 'b', 'n', '##', 'bb', '+', 'd'], true)) {
+                if (!in_array($acc, self::NOTE_ACCIDENTALS, true)) {
                     throw new RuntimeException('Invalid accidental.', 422);
                 }
                 $staff = $n['staff'] ?? 1;
@@ -212,7 +216,7 @@ class NotationService
                 foreach ($pitches as $tone) {
                     if (!is_array($tone) || !is_string($tone['pitch'] ?? null)
                         || !preg_match('/^(?:[A-G][1-7]|[AB]0|C8)$/D', $tone['pitch'])
-                        || !in_array($tone['accidental'] ?? '', ['', '#', 'b', 'n', '##', 'bb', '+', 'd'], true)) {
+                        || !in_array($tone['accidental'] ?? '', self::NOTE_ACCIDENTALS, true)) {
                         throw new RuntimeException('Invalid chord tone.', 422);
                     }
                     $cleanTone = ['pitch' => $tone['pitch'], 'accidental' => $tone['accidental'] ?? ''];
@@ -299,7 +303,7 @@ class NotationService
                     $note['graces'] = [];
                     foreach ($n['graces'] as $grace) {
                         if (!is_array($grace) || !is_string($grace['pitch'] ?? null) || !preg_match('/^(?:[A-G][1-7]|[AB]0|C8)$/D', $grace['pitch'])
-                            || !in_array($grace['accidental'] ?? '', ['', '#', 'b', 'n', '##', 'bb', '+', 'd'], true)
+                            || !in_array($grace['accidental'] ?? '', self::NOTE_ACCIDENTALS, true)
                             || !in_array($grace['kind'] ?? null, ['grace', 'appoggiatura', 'acciaccatura'], true)
                             || !in_array($grace['duration'] ?? null, ['8', '16'], true)) throw new RuntimeException('Invalid grace note.', 422);
                         $note['graces'][] = ['pitch' => $grace['pitch'], 'accidental' => $grace['accidental'] ?? '', 'kind' => $grace['kind'], 'duration' => $grace['duration']];
@@ -353,7 +357,7 @@ class NotationService
                 }
             }
             if (isset($measure['key'])) {
-                if (!in_array($measure['key'], self::KEYS, true)) throw new RuntimeException('Invalid measure key.', 422);
+                if (!in_array($measure['key'], $allowedKeys, true)) throw new RuntimeException('Invalid measure key.', 422);
                 $bar['key'] = $measure['key'];
             }
             if (isset($measure['rehearsal'])) {
@@ -494,8 +498,9 @@ class NotationService
     private function extendedMetadata(array $meta, string $key): array
     {
         $scaleType = $meta['scale_type'] ?? (str_ends_with($key, 'm') ? 'minor' : 'major');
-        if (!in_array($scaleType, ['major', 'minor', 'melodic_minor', 'harmonic_minor'], true)
-            || ($scaleType === 'major') === str_ends_with($key, 'm')) {
+        $iranian = in_array($scaleType, self::IRANIAN_SCALES, true);
+        if (($iranian && !in_array($key, self::IRANIAN_KEYS, true)) || (!$iranian && (!in_array($scaleType, ['major', 'minor', 'melodic_minor', 'harmonic_minor'], true)
+            || ($scaleType === 'major') === str_ends_with($key, 'm')))) {
             throw new RuntimeException('Invalid scale.', 422);
         }
         $tempoDots = $meta['tempo_dots'] ?? 0;

@@ -15,7 +15,10 @@ class AdminGuideController
         if ((int) auth()->id() !== 1) {
             abort(403);
         }
-        return ResponseFactory::json(['items' => $this->service->all(locale())]);
+        $items = $this->service->all(locale());
+        foreach ($items as &$item) $item['html'] = $this->service->documentHtml($item['content']);
+        unset($item);
+        return ResponseFactory::json(['items' => $items]);
     }
 
     public function save()

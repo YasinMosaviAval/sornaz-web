@@ -25,7 +25,7 @@ final class MobilePanelCatalog
         return compact('key', 'label', 'en', 'rows', 'fields', 'access', 'actions');
     }
 
-    public function sections(bool $webDialogs = false, bool $latestFeatures = false): array
+    public function sections(bool $webDialogs = false, bool $latestFeatures = false, bool $documentLibrary = false): array
     {
         $f = fn (...$args) => $this->f(...$args);
         $a = fn (...$args) => $this->a(...$args);
@@ -454,7 +454,20 @@ final class MobilePanelCatalog
             $sections['posts']['presentation']['rowActions'] = array_values(array_diff($sections['posts']['presentation']['rowActions'], ['metadata', 'preview']));
             $sections['posts']['presentation']['filters'] = array_values(array_filter($sections['posts']['presentation']['filters'], fn ($field) => ($field['webId'] ?? '') !== 'postCategoryFilter'));
         }
+        if ($documentLibrary) $this->guideDocumentContracts($sections);
         return $sections;
+    }
+
+    private function guideDocumentContracts(array &$sections): void
+    {
+        $sections['guides']['documentLibrary'] = ['section' => 'guide-documents', 'version' => 1];
+        $section = $this->s('guide-documents', 'فایل‌های راهنما', 'Guide documents', '/analytics/admin-guide-documents/list', 'documents', [], 'founder', false);
+        $section['hidden'] = true;
+        $section['actions']['read'] = $this->a('/analytics/admin-guide-documents', 'خواندن راهنما', 'GET', [], false) + ['requiredQuery' => ['path']];
+        foreach (['update' => 'ذخیره راهنما', 'delete' => 'حذف راهنما'] as $key => $label) {
+            $section['actions'][$key] = $this->a('/analytics/admin-guide-documents/' . $key, $label, 'POST', [], false);
+        }
+        $sections['guide-documents'] = $section;
     }
 
     private function sessionFileContracts(array &$sections): void

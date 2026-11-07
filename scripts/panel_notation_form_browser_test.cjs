@@ -27,9 +27,13 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE_PATH || '../storage/not
     assert.equal(await page.locator('.header:visible').count(), 0);
     assert.equal(await page.locator('#metadata textarea[name=subtitle]').count(), 1);
     assert.equal(await page.locator('[name=key]').isDisabled(), true);
-    await page.locator('[name=scale_type]').selectOption('minor');
+    assert.equal(await page.locator('[data-control-key=instrument].notation-symbol-picker').evaluate(node=>node.getBoundingClientRect().height), await page.locator('[name=lyricist]').evaluate(node=>node.getBoundingClientRect().height));
+    assert.equal(await page.locator('[data-control-key=tempo_text].notation-symbol-picker').evaluate(node=>node.getBoundingClientRect().height), await page.locator('[name=bpm]').evaluate(node=>node.getBoundingClientRect().height));
+    await page.locator('[data-control-key=scale_type].notation-symbol-picker').click();
+    await page.locator('[data-notation-option=minor]').click();
     assert.equal(await page.locator('[name=key]').isDisabled(), false);
-    await page.locator('[name=key]').selectOption('Am');
+    await page.locator('[data-control-key=key].notation-symbol-picker').click();
+    await page.locator('[data-notation-option=Am]').click();
     await page.locator('.beat-picker summary').click();
     await page.locator('[data-action=beat-unit][data-value="q:2"]').click();
     assert.equal(await page.locator('[name=tempo_unit]').inputValue(), 'q:2');

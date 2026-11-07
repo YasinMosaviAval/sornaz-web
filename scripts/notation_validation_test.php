@@ -1,6 +1,20 @@
 <?php
 require __DIR__.'/../Modules/Notation/Services/NotationService.php';
 $service=(new ReflectionClass(Modules\Notation\Services\NotationService::class))->newInstanceWithoutConstructor();
+foreach (['iran_shur','iran_mahur','iran_homayun','iran_nava','iran_segah','iran_chahargah','iran_rastpanjgah','iran_abuata','iran_bayat_tork','iran_afshari','iran_dashti','iran_bayat_esfahan'] as $iranianScale) {
+    foreach (Modules\Notation\Services\NotationService::IRANIAN_KEYS as $iranianTonic) {
+    foreach (['k','o','bk','#o'] as $accidental) {
+        $iranianScore = ['metadata'=>['title'=>'Iranian test','clef'=>'treble','instrument'=>'Tar','key'=>$iranianTonic,'scale_type'=>$iranianScale,'time'=>'4/4','tempo_note'=>'q','bpm'=>100], 'score'=>['measures'=>[['notes'=>[['pitch'=>'C4','duration'=>'q','rest'=>false,'accidental'=>$accidental,'pitches'=>[['pitch'=>'E4','accidental'=>$accidental]],'graces'=>[['pitch'=>'D4','accidental'=>$accidental,'duration'=>'8','kind'=>'acciaccatura']]]]]]]];
+        $iranianSaved = $service->validate($iranianScore);
+        if (json_decode($iranianSaved['metadata'], true)['scale_type'] !== $iranianScale) throw new Exception('Iranian mode lost');
+        $iranianNote = json_decode($iranianSaved['score'], true)['measures'][0]['notes'][0];
+        if ($iranianNote['accidental'] !== $accidental || $iranianNote['pitches'][0]['accidental'] !== $accidental || $iranianNote['graces'][0]['accidental'] !== $accidental) throw new Exception('Iranian accidental lost');
+    }
+}
+}
+$iranianScore['metadata']['key'] = 'C:bad';
+try { $service->validate($iranianScore); throw new Exception('Invalid Iranian tonic accepted'); }
+catch (RuntimeException $e) { if ($e->getCode() !== 422) throw $e; }
 $meta=['title'=>'Score','instrument'=>'Piano','key'=>'C','time'=>'4/4','tempo_note'=>'q','bpm'=>100];
 foreach(['treble','bass','baritone-f','soprano','mezzo-soprano','alto','tenor'] as $clef){
     $score=['metadata'=>$meta+['clef'=>$clef],'score'=>['measures'=>[

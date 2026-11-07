@@ -3,6 +3,7 @@ const {spawnSync} = require('node:child_process');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const php = [
+ 'music-practice-notation-test.php',
  'music-practice-integration-test.php',
  'notation_web_account_test.php',
  'mobile_panel_latest_web_test.php',
@@ -56,6 +57,8 @@ if (process.argv.includes('--browser')) {
  suites.push([process.execPath,'term_student_wizard_browser_test.cjs']);
  suites.push([process.execPath,'gallery_overview_browser_test.cjs']);
  suites.push([process.execPath,'post_inline_editor_browser_test.cjs']);
+ suites.push([process.execPath,'music-practice-notation-browser-test.cjs']);
+ suites.push([process.execPath,'music-practice-written-ui-browser-test.cjs']);
  suites.push([process.execPath,'notation_web_layout_browser_test.cjs']);
  suites.push([process.execPath,'notation_menu_browser_test.cjs']);
  suites.push([process.execPath,'notation_symbol_controls_browser_test.cjs']);

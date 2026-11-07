@@ -20,6 +20,8 @@ class MusicPracticeStore
     }
     public function supportsLevelDeletion(): bool {return $this->hasColumn('music_practice_exams','deleted_at')&&$this->hasColumn('music_practice_exams','deleted_by');}
     public function supportsNodeDeletion(): bool {return $this->hasColumn('music_practice_nodes','deleted_at')&&$this->hasColumn('music_practice_nodes','deleted_by');}
+    public function supportsNodeIcons(): bool {return $this->hasColumn('music_practice_nodes','icon_key');}
+
     public function liveNodeSql(string $alias=''): string
     {
         if($alias!==''&&!preg_match('/^[a-z]+$/D',$alias))throw new \LogicException('Invalid alias');

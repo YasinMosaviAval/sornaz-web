@@ -9,7 +9,7 @@ namespace {
  require_once __DIR__.'/../Modules/Analytics/Services/PanelTableRenderer.php';
  require_once __DIR__.'/../Modules/Analytics/Services/MobilePanelNavigation.php';
  $map=require __DIR__.'/../vendor/composer/autoload_classmap.php';
- spl_autoload_register(static function(string $class)use($map):void{if(isset($map[$class]))require_once $map[$class];});
+ spl_autoload_register(static function(string $class)use($map):void{if(isset($map[$class]))require_once $map[$class];elseif(str_starts_with($class,'Modules\\')){$file=dirname(__DIR__).'/'.str_replace('\\','/',$class).'.php';if(is_file($file))require_once $file;}});
  $testDb=new \PDO('sqlite::memory:');$testDb->exec('CREATE TABLE auth_remember_tokens(token_hash TEXT PRIMARY KEY,user_id INTEGER,expires_at INTEGER)');
  $testDb->sqliteCreateFunction('NOW', static fn (): string => '2026-10-15 12:00:00');
  $testDb->exec('CREATE TABLE access_system_permissions(permission_id INTEGER,name TEXT,deleted_at TEXT);
@@ -21,7 +21,7 @@ namespace {
  function env($key,$default=null){return $default;}
  if(!function_exists('locale')){function locale():string{return app()->getLocale();}}
  if(!function_exists('e')){function e(mixed $value):string{return htmlspecialchars((string)$value,ENT_QUOTES,'UTF-8');}}
- function base_path(string $path=''):string{return dirname(__DIR__).'/'.$path;}
+ function base_path(string $path=''):string{return ($GLOBALS['guideFixtureRoot']??dirname(__DIR__)).'/'.$path;}
  $testRoot=dirname(__DIR__).'/storage/mobile-panel-test-'.bin2hex(random_bytes(6));
  function storage_path(string $path):string{return $GLOBALS['testRoot'].'/'.$path;}
  register_shutdown_function(static function()use($testRoot){if(session_status()===PHP_SESSION_ACTIVE)session_destroy();foreach(glob($testRoot.'/sessions/sess_*')as$file)unlink($file);if(is_dir($testRoot.'/sessions'))rmdir($testRoot.'/sessions');if(is_dir($testRoot))rmdir($testRoot);});
@@ -32,6 +32,7 @@ namespace {
  function app():object{static $a;return $a??=new class{
   public string $locale='fa';public function setLocale(string $locale):void{$this->locale=$locale;}public function getLocale():string{return $this->locale;}
   public function container():object{return new class{public function make(string $class):object{
+   if($class===\Modules\Analytics\Controllers\Web\AdminGuideDocumentController::class)return new $class(new \Modules\Analytics\Services\AdminGuideDocumentService(),new \Modules\Analytics\Services\AdminGuideService());
    if($class===\Modules\Academy\Controllers\Web\AcademyCourseController::class)return new $class($GLOBALS['courseService']);
    if($class===\Modules\Academy\Controllers\Web\AcademyClassScheduleController::class)return new class{public function index(){return \Core\http\ResponseFactory::json(['actor'=>auth()->id(),'query'=>$_GET,'request'=>$_REQUEST,'heatmap'=>[]]);}};
    if($class===\Modules\Academy\Controllers\Web\AcademyClassroomController::class)return new class{public function heatmap(){return \Core\http\ResponseFactory::json(['actor'=>auth()->id(),'query'=>$_GET,'heatmap'=>[]]);}};
@@ -231,6 +232,49 @@ namespace {
  check($databaseResult['query']['mode']==='data'&&$databaseResult['query']['table']==='f_posts','Table export lost fixed mode or selected physical name');
  session_start();check($_SESSION===$browserSession,'Table export changed persisted browser authentication');
  $_SESSION=$beforeDatabaseSession;
+ $_SERVER['HTTP_X_SORNAZ_PANEL_FEATURES']='4';
+ $legacyGuides=array_column(field($panel->index(),'data')['sections'],null,'key');
+ check(!isset($legacyGuides['guides']['documentLibrary']),'Document library leaked into older clients');
+ $_SERVER['HTTP_X_SORNAZ_PANEL_FEATURES']='5';
+ $currentGuides=array_column(field($panel->index(),'data')['sections'],null,'key');
+ check(isset($currentGuides['guides']['documentLibrary'])&&!isset($currentGuides['guide-documents']),'Founder library discovery or hidden transport changed');
+ $guideFixtureRoot=$testRoot.'/guide-fixture';
+ foreach(['docs','Modules/Test/Lib','config']as$directory)mkdir($guideFixtureRoot.'/'.$directory,0700,true);
+ file_put_contents($guideFixtureRoot.'/docs/sample.md',"# Sample\n\nOriginal text.");
+ file_put_contents($guideFixtureRoot.'/Modules/Test/README.md',"# Module\n\nModule guide.");
+ file_put_contents($guideFixtureRoot.'/Modules/Test/Lib/hidden.md','# Hidden vendor');
+ copy(dirname(__DIR__).'/config/middleware.php',$guideFixtureRoot.'/config/middleware.php');
+ $guideSession=$_SESSION;
+ try{
+  $_GET=[];$_POST=[];$_REQUEST=[];$_SERVER['REQUEST_METHOD']='GET';
+  $library=field($panel->execute('guide-documents','list'),'data')['data']??[];
+  check(count($library['documents']??[])===2,'Native library omitted files or exposed vendor Markdown');
+  check(($library['documents'][0]['content']??'')===''&&($library['documents'][0]['html']??'')==='','Library eagerly loaded document bodies');
+  $_GET=['path'=>'docs/sample.md'];
+  $opened=field($panel->execute('guide-documents','read'),'data')['data']??[];
+  check($opened['content']==="# Sample\n\nOriginal text."&&strlen($opened['version'])===64,'Native document read/version failed');
+  $_GET=['path'=>'docs/../config/middleware.php'];check(field($panel->execute('guide-documents','read'),'status')===404,'Native document path escaped allowed roots');
+  $_SERVER['HTTP_AUTHORIZATION']='Bearer '.$tokens->issue($users->rows[7]);
+  $_GET=['path'=>'docs/sample.md'];check(field($panel->execute('guide-documents','read'),'status')===403,'Ordinary user read founder documents');
+  check(field($panel->execute('guide-documents','list'),'status')===403,'Ordinary user listed founder documents');
+  $_SERVER['REQUEST_METHOD']='POST';check(field($panel->execute('guide-documents','delete'),'status')===403,'Ordinary user deleted founder documents');
+  $_SERVER['HTTP_AUTHORIZATION']='Bearer '.$tokens->issue($users->rows[1]);
+  $_GET=[];$_POST=['payload_b64'=>base64_encode(json_encode(['path'=>'docs/sample.md','version'=>$opened['version'],'content'=>"# Changed\n\n<script>alert(1)</script>"]))];
+  $updated=field($panel->execute('guide-documents','update'),'data')['data']??[];
+  check($updated['version']!==$opened['version']&&str_contains($updated['html'],'&lt;script&gt;'),'Native document save lost versioning or safe Markdown');
+  check(field($panel->execute('guide-documents','update'),'status')===409,'Native document editor overwrote a newer version');
+  $_POST=['payload_b64'=>base64_encode(json_encode(['path'=>'docs/sample.md','version'=>$opened['version']]))];
+  check(field($panel->execute('guide-documents','delete'),'status')===409,'Stale native delete erased a newer file');
+  $_POST=['payload_b64'=>base64_encode(json_encode(['path'=>'docs/sample.md','version'=>$updated['version']]))];
+  check(field($panel->execute('guide-documents','delete'),'status')===200&&!is_file($guideFixtureRoot.'/docs/sample.md'),'Native document deletion failed');
+  check($_SESSION===$guideSession,'Guide operation leaked bearer identity into browser session');
+ }finally{
+  foreach(['docs/sample.md','Modules/Test/README.md','Modules/Test/Lib/hidden.md','config/middleware.php']as$file)if(is_file($guideFixtureRoot.'/'.$file))unlink($guideFixtureRoot.'/'.$file);
+  foreach(['Modules/Test/Lib','Modules/Test','Modules','docs','config']as$directory)rmdir($guideFixtureRoot.'/'.$directory);
+  rmdir($guideFixtureRoot);unset($GLOBALS['guideFixtureRoot']);
+  foreach(glob($testRoot.'/guide-document-locks/*.lock')as$file)unlink($file);
+  if(is_dir($testRoot.'/guide-document-locks'))rmdir($testRoot.'/guide-document-locks');
+ }
  unset($_SERVER['HTTP_X_SORNAZ_PANEL_FEATURES'],$_SERVER['HTTP_X_SORNAZ_PANEL_FORMS']);
  $users->rows[1]['password']='rotated';check(field($panel->index(),'status')===401,'Rotated bearer accepted');session_destroy();
  echo 'Native panel: '.count($sections)." sections; bearer isolation, roles, real-controller payloads and routing passed.\n";
