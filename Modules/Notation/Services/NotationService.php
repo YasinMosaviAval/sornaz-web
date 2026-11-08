@@ -91,10 +91,11 @@ class NotationService
         return trim($value);
     }
 
-    public function validate(array $data): array
+    public function validate(array $data, bool $embeddedPart = false): array
     {
         $meta = $data['metadata'] ?? null;
         $score = $data['score'] ?? null;
+        $this->validateScoreStructure($score, $embeddedPart);
         if (!is_array($meta) || !is_array($score) || !isset($score['measures']) || !is_array($score['measures']) || !array_is_list($score['measures']) || count($score['measures']) < 1 || count($score['measures']) > 64) {
             throw new RuntimeException('Use between 1 and 64 measures.', 422);
         }
@@ -477,6 +478,9 @@ class NotationService
             && !isset($measures[count($measures) - 1]['key']) && !isset($measures[count($measures) - 1]['tempo']) && !isset($measures[count($measures) - 1]['rehearsal']) && !isset($measures[count($measures) - 1]['text']) && !isset($measures[count($measures) - 1]['displayNumber']) && !isset($measures[count($measures) - 1]['multiRest']) && !isset($measures[count($measures) - 1]['beamPattern'])) {
             array_pop($measures);
         }
+        if (!$measures && ($embeddedPart || !empty($score['parts']) || !empty($score['sections']))) {
+            $measures = [['notes' => [], 'preserve' => true]];
+        }
         if (!$measures) {
             throw new RuntimeException('Enter at least one note before saving.', 422);
         }
@@ -484,7 +488,52 @@ class NotationService
         if (!in_array($visibility, ['private', 'public'], true)) {
             throw new RuntimeException('Invalid visibility.', 422);
         }
-        return ['title' => $clean['title'], 'metadata' => json_encode($clean, JSON_UNESCAPED_UNICODE), 'score' => json_encode(['measures' => $measures], JSON_UNESCAPED_UNICODE), 'visibility' => $visibility];
+        $cleanScore = ['measures' => $measures] + $this->validatedSections($score, $clean) + $this->validatedParts($score, $clean);
+        return ['title' => $clean['title'], 'metadata' => json_encode($clean, JSON_UNESCAPED_UNICODE), 'score' => json_encode($cleanScore, JSON_UNESCAPED_UNICODE), 'visibility' => $visibility];
+    }
+
+    private function validateScoreStructure(mixed $score, bool $embeddedPart): void
+    {
+        if (is_array($score) && array_key_exists('parts', $score) && ($embeddedPart || !is_array($score['parts']) || !array_is_list($score['parts']) || count($score['parts']) > 7)) {
+            throw new RuntimeException('Invalid score parts.', 422);
+        }
+        if (is_array($score) && array_key_exists('sections', $score) && (!is_array($score['sections']) || !array_is_list($score['sections']) || count($score['sections']) > 15)) {
+            throw new RuntimeException('Invalid score sections.', 422);
+        }
+    }
+
+    private function validatedSections(array $score, array $metadata): array
+    {
+        $result = [];
+        if (!empty($score['sections'])) {
+            $result['sections'] = [];
+            foreach ($score['sections'] as $section) {
+                if (!is_array($section) || array_diff(array_keys($section), ['measures'])) {
+                    throw new RuntimeException('Invalid score sections.', 422);
+                }
+                $validated = $this->validate(['metadata' => $metadata, 'score' => $section, 'visibility' => 'private'], true);
+                $result['sections'][] = json_decode($validated['score'], true);
+            }
+        }
+        return $result;
+    }
+
+    private function validatedParts(array $score, array $metadata): array
+    {
+        $result = [];
+        if (!empty($score['parts'])) {
+            $result['parts'] = [];
+            foreach ($score['parts'] as $part) {
+                if (!is_array($part) || array_diff(array_keys($part), ['metadata', 'score'])) {
+                    throw new RuntimeException('Invalid score parts.', 422);
+                }
+                $validated = $this->validate($part + ['visibility' => 'private'], true);
+                $partMeta = json_decode($validated['metadata'], true);
+                foreach (['title', 'subtitle', 'composer', 'arranger', 'lyricist'] as $field) $partMeta[$field] = $metadata[$field];
+                $result['parts'][] = ['metadata' => $partMeta, 'score' => json_decode($validated['score'], true)];
+            }
+        }
+        return $result;
     }
 
     private function validatedTime(mixed $time): string
@@ -530,7 +579,7 @@ class NotationService
             return $this->show($actor, $id);
         }
         $this->r->transaction(function () use ($actor, $id, $values, $data) {
-            $row = $this->r->one('SELECT owner_id,version,deleted_at FROM music_sheets WHERE id=? FOR UPDATE', [$id]);
+            $row = $this->r->one('SELECT owner_id,version,deleted_at,score FROM music_sheets WHERE id=? FOR UPDATE', [$id]);
             if (!$row || $row['deleted_at'] !== null) {
                 throw new RuntimeException('Sheet not found.', 404);
             }
@@ -538,6 +587,15 @@ class NotationService
                 throw new RuntimeException('Only the owner can edit this sheet.', 403);
             }
             if ((int) ($data['version'] ?? 0) !== (int) $row['version']) {
+                throw new RuntimeException('This sheet changed elsewhere. Reload before saving.', 409);
+            }
+            // Cached single-part editors must not silently erase embedded parts.
+            $storedScore = json_decode($row['score'], true);
+            $lostSections = !empty($storedScore['sections']) && empty($data['score']['sections']);
+            foreach ($storedScore['parts'] ?? [] as $index => $part) {
+                if (!empty($part['score']['sections']) && empty($data['score']['parts'][$index]['score']['sections'])) $lostSections = true;
+            }
+            if (($data['notation_schema'] ?? 0) !== 2 && ((!empty($storedScore['parts']) && empty($data['score']['parts'])) || $lostSections)) {
                 throw new RuntimeException('This sheet changed elsewhere. Reload before saving.', 409);
             }
             $this->r->query('UPDATE music_sheets SET title=?,metadata=?,score=?,visibility=?,version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?', array_merge(array_values($values), [$id]));

@@ -178,4 +178,27 @@ $contract['score']['measures'][0]['notes'][0]['pitch']='C4';
 $contract['score']['measures'][0]['notes'][0]['pitches']=array_fill(0,7,['pitch'=>'E4','accidental'=>'']);$service->validate($contract);
 $contract['score']['measures'][0]['notes'][0]['pitches'][]=['pitch'=>'G4','accidental'=>''];
 try{$service->validate($contract);throw new Exception('Eight extra chord tones accepted');}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
-echo "Notation validation: legacy scores, staves, chords, timing, tuplets, repeats, piano markings and import contract passed.\n";
+$partsMeta=['title'=>'Parts fixture','instrument'=>'Tar','clef'=>'treble','key'=>'C','time'=>'4/4','tempo_note'=>'q','bpm'=>100];
+$partsDocument=['metadata'=>$partsMeta,'score'=>['measures'=>[['notes'=>[['pitch'=>'C4','duration'=>'q','rest'=>false]]]],'parts'=>[['metadata'=>array_replace($partsMeta,['instrument'=>'Violin']),'score'=>['measures'=>[['notes'=>[]]]]]]]];
+$savedParts=json_decode($service->validate($partsDocument)['score'],true);
+if(count($savedParts['parts'])!==1||$savedParts['parts'][0]['metadata']['instrument']!=='Violin'||$savedParts['parts'][0]['score']['measures'][0]['notes'])throw new Exception('Empty embedded part lost');
+$section=['measures'=>[['notes'=>[['pitch'=>'E4','duration'=>'q','rest'=>false]]]]];
+$sectionDocument=$partsDocument;$sectionDocument['score']['sections']=[$section];$sectionDocument['score']['parts'][0]['score']['sections']=[$section];
+$savedSections=json_decode($service->validate($sectionDocument)['score'],true);
+if($savedSections['sections'][0]['measures'][0]['notes'][0]['pitch']!=='E4'||count($savedSections['parts'][0]['score']['sections'])!==1)throw new Exception('Sequential sections lost');
+foreach(['nested','limit','note'] as $invalidSection){
+    $invalid=$sectionDocument;
+    if($invalidSection==='nested')$invalid['score']['sections'][0]['sections']=[];
+    if($invalidSection==='limit')$invalid['score']['sections']=array_fill(0,16,$section);
+    if($invalidSection==='note')$invalid['score']['sections'][0]['measures'][0]['notes'][0]['pitch']='Z9';
+    try{$service->validate($invalid);throw new Exception('Invalid section accepted: '.$invalidSection);}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+}
+foreach(['nested','limit','instrument','note'] as $invalidPart){
+    $invalid=$partsDocument;
+    if($invalidPart==='nested')$invalid['score']['parts'][0]['score']['parts']=[];
+    if($invalidPart==='limit')$invalid['score']['parts']=array_fill(0,8,$partsDocument['score']['parts'][0]);
+    if($invalidPart==='instrument')$invalid['score']['parts'][0]['metadata']['instrument']='invalid';
+    if($invalidPart==='note')$invalid['score']['parts'][0]['score']['measures'][0]['notes']=[['pitch'=>'Z9','duration'=>'q','rest'=>false]];
+    try{$service->validate($invalid);throw new Exception('Invalid embedded part accepted: '.$invalidPart);}catch(RuntimeException $e){if($e->getCode()!==422)throw $e;}
+}
+echo "Notation validation: legacy scores, staves, chords, timing, tuplets, repeats, piano markings, embedded parts and import contract passed.\n";
