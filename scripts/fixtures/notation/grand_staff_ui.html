@@ -9,17 +9,18 @@ const piano = {id:'piano',en:'Piano',fa:'پیانو',staves:[{clef:'treble'},{cl
 const guitar = {id:'guitar',en:'Guitar',fa:'گیتار'};
 window.fetch = async url => {window.lastNotationUrl=String(url);return {ok:true,json:async()=>({success:true,data:
   String(url).endsWith('/instruments')?[piano,guitar]:{items:[],has_more:false}})}};
-window.NOTATION_BOOT = {locale:'en',embedded:false,api:'/music-sheets/api',userId:1};
+window.NOTATION_BOOT = {locale:'en',showHelp:false,embedded:false,api:'/music-sheets/api',userId:1};
 </script>
 <script src="../../../assets/notation/vendor/vexflow.js"></script>
 <script src="../../../assets/notation/piano_style.js"></script><script src="../../../assets/notation/model.js"></script>
 <script src="../../../assets/notation/ui_symbols.js"></script>
 <script src="../../../assets/notation/score_renderer.js"></script>
+<script src="../../../assets/notation/ui_controls.js"></script>
 <script src="../../../assets/notation/notation.js"></script>
 <script>
 const pause = () => new Promise(resolve => setTimeout(resolve, 40));
-// Selection editing now requires opening the note tools sheet.
-const click = selector => {if(selector.startsWith('#score')||selector.startsWith('[data-pitch'))document.querySelector('[data-action=close-tool-sheet]')?.click();if(!document.querySelector(selector)&&/chord|grace-mode|paste-notes|copy-notes|cut-notes|duplicate-notes/.test(selector))Notation.command('tool-palette');const item=document.querySelector(selector);if(!item)throw Error('Missing '+selector);item.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));if(item.matches('[data-pitch]'))document.querySelector('.note-duration-picker .active')?.click();if(item.matches('[data-pitch],#score [data-note]'))Notation.command('tool-palette');};
+// Note tools remain available in the permanent strip.
+const click = selector => {if(selector==='[data-action=close-tool-sheet]'&&!document.querySelector(selector))return;if(selector.startsWith('#score')||selector.startsWith('[data-pitch'))document.querySelector('[data-action=close-tool-sheet]')?.click();if(!document.querySelector(selector)&&/chord|grace-mode|paste-notes|copy-notes|cut-notes|duplicate-notes/.test(selector))Notation.command('tool-palette');const item=document.querySelector(selector);if(!item)throw Error('Missing '+selector);item.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));if(item.matches('[data-pitch]'))document.querySelector('.note-duration-picker .active')?.click();if(item.matches('[data-pitch],#score [data-note]'))Notation.command('tool-palette');};
 setTimeout(async()=>{
  try {
   if(typeof window.Notation.search!=='function')throw Error('List search API is missing');
@@ -36,10 +37,10 @@ setTimeout(async()=>{
   Notation.command('tool-palette');
   if(document.querySelectorAll('.palette-group').length<5)throw Error('Notation tools are not grouped');
   click('[data-action=close-tool-sheet]');Notation.command('tool-measure');
-  if(!document.querySelector('.notation-tool-sheet')?.open)throw Error('Measure tools did not open from their own trigger');
+  if(!document.querySelector('.notation-measure-strip')||document.querySelector('[data-tool-sheet=measure]'))throw Error('Measure tools must remain in the inline strip');
   click('[data-action=close-tool-sheet]');Notation.command('tool-voices');
   if(document.querySelectorAll('.notation-tool-sheet [data-action=staff]').length!==2)throw Error('Piano staff selector is missing');
-  click('[data-action=close-tool-sheet]');click('[data-staff="1"][data-bar="0"]');click('[data-pitch="C4"]');await pause();
+  click('[data-action=close-tool-sheet]');click('#score .note-hit[data-staff="1"][data-bar="0"]:not([data-note])');click('[data-pitch="C4"]');await pause();
   Notation.command('tool-voices');click('[data-action=staff][data-staff="2"]');click('[data-action=close-tool-sheet]');click('[data-pitch="C3"]');await pause();
   const hits=[...document.querySelectorAll('#score [data-note]')];
   if(hits.length!==2||!hits.some(hit=>hit.dataset.staff==='1')||!hits.some(hit=>hit.dataset.staff==='2'))
@@ -110,8 +111,8 @@ setTimeout(async()=>{
   if(document.querySelector('#score [data-note][data-staff="2"]')||document.querySelector('[data-action="chord-tone"]'))throw Error('Redo did not remove the bass chord without a rest');
   Notation.command('tool-measure');
   const setMeasure=(key,value)=>{const control=document.querySelector(`[data-measure-choice="${key}"]`);if(!control)throw Error('Missing measure control '+key);control.value=value;control.dispatchEvent(new Event('change',{bubbles:true}));};
-  setMeasure('time','7/8');await pause();
-  if(document.querySelector('[data-measure-choice="time"]')?.value!=='7/8')throw Error('Time signature change was not retained');
+  click('[data-action=close-tool-sheet]');document.querySelector('#score [data-signature-field=time]').scrollIntoView({block:'center'});await new Promise(resolve=>setTimeout(resolve,200));click('#score [data-signature-field=time]');await new Promise(resolve=>setTimeout(resolve,200));click('.notation-symbol-popup [data-notation-option="7/8"]');await pause();Notation.command('tool-measure');
+  if(document.querySelector('#score [data-signature-field=time]')?.dataset.signatureValue!=='7/8')throw Error('Time signature change was not retained');
   setMeasure('repeatLine','start');await pause();
   if(document.querySelector('[data-measure-choice="repeatLine"]')?.value!=='start')throw Error('Repeat start could not be edited');
   click('[data-action="add-bar"]');await pause();
@@ -138,7 +139,7 @@ setTimeout(async()=>{
   if(document.querySelector('[data-measure-text="rehearsal"],[data-measure-number="displayNumber"]'))throw Error('Removed measure fields are still visible');
   const description=document.querySelector('[data-measure-text="text"]');if(!description)throw Error('Measure description is missing');description.value='Measure description';description.dispatchEvent(new Event('change',{bubbles:true}));await pause();
   const descriptionField=document.querySelector('[data-measure-text="text"]');if(descriptionField?.value!=='Measure description')throw Error('Measure description edit was not retained');
-  const descriptionStyle=getComputedStyle(descriptionField.closest('label'));if(descriptionStyle.gridColumnStart!=='1'||descriptionStyle.gridColumnEnd!=='-1')throw Error('Measure description does not span its row');
+  if(!descriptionField.closest('.notation-measure-strip'))throw Error('Measure description is outside the inline row');
   click('[data-action=close-tool-sheet]');click('[data-action="grace-mode"]');click('[data-pitch="D4"]');await pause();
   if(document.querySelectorAll('[data-action="remove-grace"]').length!==1)throw Error('Grace note was not attached to selected note');
   click('[data-action="remove-grace"]');await pause();

@@ -31,7 +31,7 @@ final class MusicPracticeNotation
         $beat=self::units(['duration'=>$meta['tempo_note'],'dots'=>$meta['tempo_dots']??0]);
         $ms=60000/($meta['bpm']*$beat);$offset=0;$events=[];$time=$meta['time'];$key=$meta['key'];$previousTie=false;$previousPitch='';
         foreach($bars as $bar){
-            if (!empty($bar['repeat']) || !empty($bar['multiRest']) || !empty($bar['tempo']) || !empty($bar['clefChanges'])) self::unsupported();
+            if (!empty($bar['repeat']) || !empty($bar['multiRest']) || !empty($bar['tempo']) || !empty($bar['tempo_unit']) || !empty($bar['clefChanges'])) self::unsupported();
             $time=$bar['time']??$time;$key=$bar['key']??$key;$signature=self::signature($meta['scale_type']??'',$key);
             [$top,$bottom]=array_map('intval',explode('/',$time));$capacity=$bar['length']??(int)($top*self::WHOLE/$bottom);
             self::barEvents($events,$bar,$signature,$ms,$offset,$previousTie,$previousPitch);

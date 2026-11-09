@@ -247,7 +247,7 @@ class NotationService
                         $cleanTone['cautionary'] = $tone['cautionary'];
                     }
                     if (isset($tone['finger'])) {
-                        if (!in_array($tone['finger'], ['0', '1', '2', '3', '4', '5'], true)) throw new RuntimeException('Invalid chord fingering.', 422);
+                        if (!in_array($tone['finger'], ['0', '1', '2', '3', '4', '5', '+'], true)) throw new RuntimeException('Invalid chord fingering.', 422);
                         $cleanTone['finger'] = $tone['finger'];
                     }
                     $note['pitches'][] = $cleanTone;
@@ -282,7 +282,7 @@ class NotationService
                     if (!is_int($n['beamGroup']) || $n['beamGroup'] < 1 || $n['beamGroup'] > 1000000 || $n['rest'] || $length > 120960 || isset($n['crossBeam'])) throw new RuntimeException('Invalid beam group.', 422);
                     $note['beamGroup'] = $n['beamGroup'];
                 }
-                foreach (['dynamic' => ['', 'ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff', 'sf', 'sff', 'sfff', 'sfz', 'sffz', 'sfffz', 'fz', 'ffz', 'fffz', 'fp'], 'articulation' => ['', 'staccato', 'accent', 'tenuto', 'marcato', 'staccatissimo', 'fermata', 'breath', 'caesura'], 'bow' => ['', 'up', 'down'], 'ornament' => ['', 'trill', 'mordent', 'invertedMordent', 'turn', 'invertedTurn'], 'finger' => ['', '0', '1', '2', '3', '4', '5']] as $field => $values) {
+                foreach (['dynamic' => ['', 'ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff', 'sf', 'sff', 'sfff', 'sfz', 'sffz', 'sfffz', 'fz', 'ffz', 'fffz', 'fp'], 'articulation' => ['', 'staccato', 'accent', 'tenuto', 'marcato', 'staccatissimo', 'fermata', 'breath', 'caesura'], 'bow' => ['', 'up', 'down'], 'ornament' => ['', 'trill', 'mordent', 'invertedMordent', 'turn', 'invertedTurn'], 'finger' => ['', '0', '1', '2', '3', '4', '5', '+']] as $field => $values) {
                     $value = $n[$field] ?? '';
                     if (!in_array($value, $values, true)) {
                         throw new RuntimeException('Invalid note marking.', 422);
@@ -392,6 +392,13 @@ class NotationService
                 if (!is_string($measure['text']) || mb_strlen($measure['text']) > 160) throw new RuntimeException('Invalid measure note.', 422);
                 $bar['text'] = $measure['text'];
             }
+            if (array_key_exists('tempo_unit', $measure)) {
+                $unit = $measure['tempo_unit'];
+                if (!is_string($unit) || !preg_match('/^(w|h|q|8|16|32|64|128|256):[0-2]$/D', $unit)) {
+                    throw new RuntimeException('Invalid tempo unit.', 422);
+                }
+                $bar['tempo_unit'] = $unit;
+            }
             if (isset($measure['tempo'])) {
                 $tempo = $measure['tempo'];
                 if (!is_array($tempo) || !in_array($tempo['mode'] ?? null, ['instant', 'ritardando', 'accelerando', 'aTempo'], true)
@@ -462,7 +469,7 @@ class NotationService
                 for ($offset = 0; $offset < $count; $offset++) {
                     $part = $measures[$index + $offset];
                     if ($part['notes'] || isset($part['time']) || isset($part['timeSymbol']) || isset($part['length']) || isset($part['barline']) || isset($part['repeat'])
-                        || isset($part['clefs']) || isset($part['key']) || isset($part['tempo']) || isset($part['rehearsal']) || isset($part['text'])
+                        || isset($part['clefs']) || isset($part['key']) || isset($part['tempo']) || isset($part['tempo_unit']) || isset($part['rehearsal']) || isset($part['text'])
                         || ($offset > 0 && (isset($part['multiRest']) || isset($part['displayNumber'])))) throw new RuntimeException('Invalid multi-measure rest.', 422);
                     $measures[$index + $offset]['preserve'] = true;
                 }
@@ -490,7 +497,7 @@ class NotationService
         while ($measures && !$measures[count($measures) - 1]['notes'] && !$measures[count($measures) - 1]['preserve']
             && !isset($measures[count($measures) - 1]['time']) && !isset($measures[count($measures) - 1]['timeSymbol']) && !isset($measures[count($measures) - 1]['length'])
             && !isset($measures[count($measures) - 1]['barline']) && !isset($measures[count($measures) - 1]['repeat']) && !isset($measures[count($measures) - 1]['clefs']) && !isset($measures[count($measures) - 1]['clefChanges'])
-            && !isset($measures[count($measures) - 1]['key']) && !isset($measures[count($measures) - 1]['tempo']) && !isset($measures[count($measures) - 1]['rehearsal']) && !isset($measures[count($measures) - 1]['text']) && !isset($measures[count($measures) - 1]['displayNumber']) && !isset($measures[count($measures) - 1]['multiRest']) && !isset($measures[count($measures) - 1]['beamPattern'])) {
+            && !isset($measures[count($measures) - 1]['key']) && !isset($measures[count($measures) - 1]['tempo']) && !isset($measures[count($measures) - 1]['tempo_unit']) && !isset($measures[count($measures) - 1]['rehearsal']) && !isset($measures[count($measures) - 1]['text']) && !isset($measures[count($measures) - 1]['displayNumber']) && !isset($measures[count($measures) - 1]['multiRest']) && !isset($measures[count($measures) - 1]['beamPattern'])) {
             array_pop($measures);
         }
         if (!$measures && ($embeddedPart || !empty($score['parts']) || !empty($score['sections']))) {
