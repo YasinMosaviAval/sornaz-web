@@ -2,6 +2,7 @@
 
 // Logical names remain stable in translations, permissions and API payloads.
 return [
+    'notation_scales' => 'f_notation_scales',
     'music_practice_nodes' => 'f_music_practice_nodes',
     'music_practice_exams' => 'f_music_practice_exams',
     'music_practice_plans' => 'f_music_practice_plans',

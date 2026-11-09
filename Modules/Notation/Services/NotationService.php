@@ -29,6 +29,21 @@ class NotationService
         return $items;
     }
 
+    /** Display catalog only; musical validation keeps stable supported identifiers. */
+    public function scales(): array
+    {
+        $pdo = $this->r->connection();
+        $supported = array_merge(['major', 'minor', 'melodic_minor', 'harmonic_minor'], self::IRANIAN_SCALES);
+        $items = [];
+        foreach ($this->r->query('SELECT id,code,position,updated_at FROM notation_scales WHERE active=1 ORDER BY position,id', []) as $row) {
+            if (!in_array($row['code'], $supported, true)) continue;
+            $fa = \Core\translation\EntityText::get('notation_scales', (int) $row['id'], 'title', $pdo, 'fa') ?: '';
+            $en = \Core\translation\EntityText::get('notation_scales', (int) $row['id'], 'title', $pdo, 'en') ?: '';
+            $items[] = ['id' => $row['code'], 'fa' => $fa ?: $en ?: $row['code'], 'en' => $en ?: $fa ?: $row['code']];
+        }
+        return $items;
+    }
+
     public function listing(int $actor, string $mode, int $page = 1, string $query = ''): array
     {
         if (!in_array($mode, ['all', 'mine', 'saved'], true)) {

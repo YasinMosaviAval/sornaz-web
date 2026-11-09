@@ -134,10 +134,11 @@ setTimeout(async()=>{
   if(document.querySelector('[data-note-lyric]')?.value!=='Hello')throw Error('Lyric edit was not retained');
   const chord=document.querySelector('[data-note-chord-symbol]');chord.value='Cm7';chord.dispatchEvent(new Event('change',{bubbles:true}));await pause();
   if(document.querySelector('[data-note-chord-symbol]')?.value!=='Cm7')throw Error('Chord symbol edit was not retained');
-  Notation.command('tool-measure');const rehearsal=document.querySelector('[data-measure-text="rehearsal"]');rehearsal.value='B';rehearsal.dispatchEvent(new Event('change',{bubbles:true}));await pause();
-  if(document.querySelector('[data-measure-text="rehearsal"]')?.value!=='B')throw Error('Rehearsal mark edit was not retained');
-  const displayNumber=document.querySelector('[data-measure-number="displayNumber"]');displayNumber.value='42';displayNumber.dispatchEvent(new Event('change',{bubbles:true}));await pause();
-  if(document.querySelector('[data-measure-number="displayNumber"]')?.value!=='42')throw Error('Measure number edit was not retained');
+  Notation.command('tool-measure');
+  if(document.querySelector('[data-measure-text="rehearsal"],[data-measure-number="displayNumber"]'))throw Error('Removed measure fields are still visible');
+  const description=document.querySelector('[data-measure-text="text"]');if(!description)throw Error('Measure description is missing');description.value='Measure description';description.dispatchEvent(new Event('change',{bubbles:true}));await pause();
+  const descriptionField=document.querySelector('[data-measure-text="text"]');if(descriptionField?.value!=='Measure description')throw Error('Measure description edit was not retained');
+  const descriptionStyle=getComputedStyle(descriptionField.closest('label'));if(descriptionStyle.gridColumnStart!=='1'||descriptionStyle.gridColumnEnd!=='-1')throw Error('Measure description does not span its row');
   click('[data-action=close-tool-sheet]');click('[data-action="grace-mode"]');click('[data-pitch="D4"]');await pause();
   if(document.querySelectorAll('[data-action="remove-grace"]').length!==1)throw Error('Grace note was not attached to selected note');
   click('[data-action="remove-grace"]');await pause();

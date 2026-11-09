@@ -1,6 +1,7 @@
 <?php
 // Entity discriminators remain logical names; TableNames resolves physical tables.
 return [
+    'notation_scales' => ['key'=>'id','fields'=>['title'],'store'=>'f_translations'],
     'music_practice_nodes' => ['key'=>'id','fields'=>['title'],'store'=>'f_translations'],
     'music_practice_exams' => ['key'=>'id','fields'=>['title'],'store'=>'f_translations'],
     'music_practice_plans' => ['key'=>'id','fields'=>['title'],'store'=>'f_translations'],

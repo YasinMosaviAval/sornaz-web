@@ -26,6 +26,11 @@ $forward = file_get_contents(__DIR__ . '/../docs/database/migrations/2026_10_04_
 $reverse = file_get_contents(__DIR__ . '/../docs/database/migrations/2026_10_04_table_prefixes_rollback.sql');
 foreach ($mapping as $logical => $physical) {
     if ($logical === $physical) { continue; }
+    if ($logical === 'notation_scales') {
+        $newTable = file_get_contents(__DIR__ . '/../docs/database/migrations/2026_11_09_notation_scales.sql');
+        prefixCheck(str_contains($newTable, 'CREATE TABLE IF NOT EXISTS ' . $physical . ' ('), 'Notation scales migration differs from runtime map');
+        continue;
+    }
     if (str_starts_with($logical,'music_practice_')) {
         $newTable=file_get_contents(__DIR__.'/../docs/database/migrations/2026_10_29_music_practice_catalog.sql');
         prefixCheck(str_contains($newTable,'CREATE TABLE IF NOT EXISTS '.$physical.' ('),'New music practice table migration missing');

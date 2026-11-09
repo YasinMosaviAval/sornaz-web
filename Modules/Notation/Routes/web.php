@@ -8,6 +8,7 @@ foreach (['/music-sheets/api', '/api/sornaz/v1/music-sheets'] as $prefix) {
         Router::get('', [C::class, 'index']);
         Router::post('', [C::class, 'create']);
         Router::get('/instruments', [C::class, 'instruments']);
+        Router::get('/scales', [C::class, 'scales']);
         Router::get('/{id}', [C::class, 'show']);
         Router::post('/{id}', [C::class, 'update']);
         Router::post('/{id}/delete', [C::class, 'remove']);

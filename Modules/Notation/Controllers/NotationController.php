@@ -80,6 +80,11 @@ class NotationController
         return $this->run(fn ($a) => $this->service()->listing($a, (string) ($_GET['mode'] ?? 'all'), max(1, (int) ($_GET['page'] ?? 1)), (string) ($_GET['q'] ?? '')));
     }
 
+    public function scales()
+    {
+        return $this->run(fn ($a) => $this->service()->scales());
+    }
+
     public function instruments()
     {
         return $this->run(fn ($a) => $this->service()->instruments());

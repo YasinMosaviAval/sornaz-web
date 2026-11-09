@@ -3,7 +3,7 @@
 'use strict';
 const clone=value=>JSON.parse(JSON.stringify(value));
 class NotationWebStorage {
- constructor(userId,remote,storage=root.localStorage){this.userId=Number(userId)||0;this.remote=remote;this.storage=storage;this.key='notation_web_v1_'+this.userId;this.favorite='__favorite__';}
+ constructor(userId,remote,storage=root.localStorage){this.userId=Number(userId)||0;this.remote=remote;this.storage=storage;this.key='notation_web_v1_'+this.userId;this.favorite='__favorite__';this.catalogJobs=new Map();this.catalogChecked=new Set();}
  read(){
   const primary=this.storage.getItem(this.key),backup=this.storage.getItem(this.key+'_backup');
   for(const raw of [primary,backup]){if(raw===null)continue;try{const value=JSON.parse(raw);if(value&&typeof value==='object'&&!Array.isArray(value)&&value.entries&&value.lists)return value;}catch(_){} }
@@ -17,13 +17,17 @@ class NotationWebStorage {
  }
  summary(sheet){return {...clone(sheet),title:sheet.metadata.title,editable:sheet.owner_id===this.userId,local:true};}
  async remember(sheet){const store=this.read();store.entries[sheet.id]={...clone(sheet),local:true,uploaded:true,remote_id:sheet.id,remote_version:sheet.version};this.write(store);return this.summary(store.entries[sheet.id]);}
- request(action,data={}){return root.navigator?.locks?root.navigator.locks.request(this.key,()=>this.perform(action,data)):this.perform(action,data);}
+ async catalog(action,data={}){
+  const key=this.key+'_'+action,valid=items=>Array.isArray(items)&&items.every(row=>row&&['string','number'].includes(typeof row.id)&&(action!=='scales'||typeof row.id==='string'&&/^[a-z][a-z0-9_]{0,63}$/.test(row.id))&&typeof row.fa==='string'&&typeof row.en==='string')&&new Set(items.map(row=>String(row.id))).size===items.length;let cached;
+  try{const items=JSON.parse(this.storage.getItem(key)||'null');if(valid(items))cached=items;}catch(_){}
+  const fallback=action==='scales'?null:[{id:'Piano',fa:'پیانو',en:'Piano',staves:[{clef:'treble'},{clef:'bass'}]},{id:'Guitar',fa:'گیتار',en:'Guitar'},{id:'Violin',fa:'ویولن',en:'Violin'},{id:'Voice',fa:'آواز',en:'Voice'}];
+  if(root.navigator?.onLine===false)return cached??fallback;if(!data.refresh&&cached&&this.catalogChecked.has(action))return cached;
+  if(!this.catalogJobs.has(action)){const job=this.remote(action,data).then(items=>{if(!valid(items))throw Error('Invalid catalog');const normalized=action==='instruments'?items.map(item=>({...item,...((item.en||'').toLowerCase()==='piano'?{staves:[{clef:'treble'},{clef:'bass'}]}:{})})):items;this.storage.setItem(key,JSON.stringify(normalized));this.catalogChecked.add(action);return normalized;}).catch(()=>cached??fallback).finally(()=>this.catalogJobs.delete(action));this.catalogJobs.set(action,job);}
+  return !data.refresh&&cached?cached:await this.catalogJobs.get(action);
+ }
+ request(action,data={}){if(action==='instruments'||action==='scales')return this.catalog(action,data);return root.navigator?.locks?root.navigator.locks.request(this.key,()=>this.perform(action,data)):this.perform(action,data);}
  async perform(action,data={}){
   const store=this.read(),id=Number(data.sheetId),entry=store.entries[id];
-  if(action==='instruments'){
-   try{const items=(await this.remote(action,data)).map(item=>({...item,...((item.en||'').toLowerCase()==='piano'||item.fa==='پیانو'?{staves:[{clef:'treble'},{clef:'bass'}]}:{})}));this.storage.setItem(this.key+'_instruments',JSON.stringify(items));return items;}
-   catch(error){const cached=this.storage.getItem(this.key+'_instruments');if(cached)return JSON.parse(cached);return [{id:'Piano',fa:'پیانو',en:'Piano',staves:[{clef:'treble'},{clef:'bass'}]},{id:'Guitar',fa:'گیتار',en:'Guitar'},{id:'Violin',fa:'ویولن',en:'Violin'},{id:'Voice',fa:'آواز',en:'Voice'}];}
-  }
   if(action==='list'){
    const query=String(data.query||'').toLowerCase(),matches=s=>[s.metadata?.title,s.author,s.metadata?.composer,s.metadata?.arranger,s.metadata?.lyricist].some(v=>String(v||'').toLowerCase().includes(query));
    const local=Object.values(store.entries).map(s=>this.summary(s));
