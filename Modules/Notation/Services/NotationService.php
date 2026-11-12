@@ -510,7 +510,7 @@ class NotationService
         if (!in_array($visibility, ['private', 'public'], true)) {
             throw new RuntimeException('Invalid visibility.', 422);
         }
-        $cleanScore = ['measures' => $measures] + $this->validatedSections($score, $clean) + $this->validatedParts($score, $clean);
+        $cleanScore = ['measures' => $measures] + $this->validatedSubsections($score, $clean) + $this->validatedSections($score, $clean) + $this->validatedParts($score, $clean);
         return ['title' => $clean['title'], 'metadata' => json_encode($clean, JSON_UNESCAPED_UNICODE), 'score' => json_encode($cleanScore, JSON_UNESCAPED_UNICODE), 'visibility' => $visibility];
     }
 
@@ -530,7 +530,7 @@ class NotationService
         if (!empty($score['sections'])) {
             $result['sections'] = [];
             foreach ($score['sections'] as $section) {
-                if (!is_array($section) || array_diff(array_keys($section), ['measures'])) {
+                if (!is_array($section) || array_diff(array_keys($section), ['measures', 'subsections'])) {
                     throw new RuntimeException('Invalid score sections.', 422);
                 }
                 $validated = $this->validate(['metadata' => $metadata, 'score' => $section, 'visibility' => 'private'], true);
@@ -538,6 +538,24 @@ class NotationService
             }
         }
         return $result;
+    }
+
+    private function validatedSubsections(array $score, array $metadata): array
+    {
+        if (!array_key_exists('subsections', $score)) return [];
+        $children = $score['subsections'];
+        if (!is_array($children) || !array_is_list($children) || count($children) > 15) {
+            throw new RuntimeException('Invalid score subsections.', 422);
+        }
+        $result = [];
+        foreach ($children as $child) {
+            if (!is_array($child) || array_diff(array_keys($child), ['measures'])) {
+                throw new RuntimeException('Invalid score subsections.', 422);
+            }
+            $validated = $this->validate(['metadata' => $metadata, 'score' => $child, 'visibility' => 'private'], true);
+            $result[] = json_decode($validated['score'], true);
+        }
+        return $result ? ['subsections' => $result] : [];
     }
 
     private function validatedParts(array $score, array $metadata): array
@@ -556,6 +574,14 @@ class NotationService
             }
         }
         return $result;
+    }
+
+    private function hasSubsections(array $score): bool
+    {
+        if (!empty($score['subsections'])) return true;
+        foreach ($score['sections'] ?? [] as $section) if (!empty($section['subsections'])) return true;
+        foreach ($score['parts'] ?? [] as $part) if ($this->hasSubsections($part['score'])) return true;
+        return false;
     }
 
     private function validatedTime(mixed $time): string
@@ -617,7 +643,10 @@ class NotationService
             foreach ($storedScore['parts'] ?? [] as $index => $part) {
                 if (!empty($part['score']['sections']) && empty($data['score']['parts'][$index]['score']['sections'])) $lostSections = true;
             }
-            if (($data['notation_schema'] ?? 0) !== 2 && ((!empty($storedScore['parts']) && empty($data['score']['parts'])) || $lostSections)) {
+            if (!in_array($data['notation_schema'] ?? 0, [2, 3], true) && ((!empty($storedScore['parts']) && empty($data['score']['parts'])) || $lostSections)) {
+                throw new RuntimeException('This sheet changed elsewhere. Reload before saving.', 409);
+            }
+            if (($data['notation_schema'] ?? 0) !== 3 && $this->hasSubsections($storedScore)) {
                 throw new RuntimeException('This sheet changed elsewhere. Reload before saving.', 409);
             }
             $this->r->query('UPDATE music_sheets SET title=?,metadata=?,score=?,visibility=?,version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?', array_merge(array_values($values), [$id]));

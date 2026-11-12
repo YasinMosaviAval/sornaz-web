@@ -53,7 +53,7 @@ class NotationWebStorage {
   if(action==='upload'){
    if(!this.userId)throw Error('Sign in to continue.');
    if(!entry||entry.owner_id!==this.userId)throw Error('Only the owner can edit this sheet.');
-   const remote=await this.remote('save',{sheetId:entry.remote_id||0,payload:{metadata:entry.metadata,score:entry.score,notation_schema:2,visibility:entry.visibility||'private',version:entry.remote_version||0}});
+   const remote=await this.remote('save',{sheetId:entry.remote_id||0,payload:{metadata:entry.metadata,score:entry.score,notation_schema:3,visibility:entry.visibility||'private',version:entry.remote_version||0}});
    store.entries[id]={...entry,uploaded:true,remote_id:remote.id,remote_version:remote.version};this.write(store);return this.summary(store.entries[id]);
   }
   if(action==='delete'){

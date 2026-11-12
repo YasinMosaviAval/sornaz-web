@@ -24,10 +24,18 @@ final class MusicPracticeNotation
         return ['sheet'=>$sheet,'preview'=>self::preview($input['preview']??null),'reference'=>self::reference($sheet)];
     }
 
+    private static function validateReferenceShape(array $sheet): void
+    {
+        $meta = $sheet['metadata'];
+        if (!empty($sheet['score']['subsections']) || count($meta['staves']) !== 1
+            || count($sheet['score']['measures']) > 8 || str_contains($meta['clef'], '_8')) self::unsupported();
+    }
+
     public static function reference(array $sheet): array
     {
         $meta=$sheet['metadata'];$bars=$sheet['score']['measures'];
-        if (count($meta['staves'])!==1 || count($bars)>8 || str_contains($meta['clef'],'_8')) self::unsupported();
+
+        self::validateReferenceShape($sheet);
         $beat=self::units(['duration'=>$meta['tempo_note'],'dots'=>$meta['tempo_dots']??0]);
         $ms=60000/($meta['bpm']*$beat);$offset=0;$events=[];$time=$meta['time'];$key=$meta['key'];$previousTie=false;$previousPitch='';
         foreach($bars as $bar){

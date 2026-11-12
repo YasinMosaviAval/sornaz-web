@@ -3,6 +3,7 @@ const {spawnSync} = require('node:child_process');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const php = [
+ 'notation_subsections_test.php',
  'music-practice-notation-test.php',
  'music-practice-integration-test.php',
  'notation_web_account_test.php',

@@ -118,9 +118,9 @@ setTimeout(async()=>{
   click('[data-action="add-bar"]');await pause();
   if(!document.querySelector('.note-hit[data-bar="1"]')||document.querySelector('[data-tool-sheet=measure] .notation-control-badge'))throw Error('Measure insertion was not exposed');
   click('[data-action=close-tool-sheet]');Notation.command('tool-voices');click('[data-action=staff][data-staff="1"]');click('[data-action="voice"][data-voice="2"]');click('[data-action=close-tool-sheet]');Notation.command('tool-palette');
-  click('[data-action="duration"][data-value="8"]');
+  click('[data-pitch="C5"]');await pause();click('#score [data-bar="1"][data-note="0"]');click('[data-action="duration"][data-value="8"]');await pause();click('#score [data-bar="1"][data-note="0"]');
   const tuplet=document.querySelector('[data-tuplet]');if(!tuplet)throw Error('Tuplet control is missing');tuplet.value='3:2';tuplet.dispatchEvent(new Event('change',{bubbles:true}));await pause();
-  click('[data-action=close-tool-sheet]');for(let i=0;i<3;i++)click('[data-pitch="C5"]');await pause();
+  click('[data-action=close-tool-sheet]');for(let i=0;i<2;i++)click('[data-pitch="C5"]');await pause();
   if(document.querySelectorAll('#score [data-bar="1"][data-note]').length!==3)throw Error('Triplet notes in the second voice could not be written');
   click('#score [data-bar="1"][data-note]');click('[data-action="copy-notes"]');await pause();
   Notation.command('tool-measure');click('[data-action="add-bar"]');await pause();click('[data-action=close-tool-sheet]');
@@ -153,10 +153,7 @@ setTimeout(async()=>{
   Notation.command('tool-palette');const ornament=document.querySelector('[data-choice="ornament"]');ornament.value='trill';ornament.dispatchEvent(new Event('change',{bubbles:true}));await pause();click('[data-action=close-tool-sheet]');Notation.command('tool-palette');
   const upperAccidental=document.querySelector('[data-ornament-accidental="ornamentUpperAccidental"]');if(!upperAccidental)throw Error('Ornament accidental control is missing');upperAccidental.value='#';upperAccidental.dispatchEvent(new Event('change',{bubbles:true}));await pause();
   if(document.querySelector('[data-ornament-accidental="ornamentUpperAccidental"]')?.value!=='#')throw Error('Ornament accidental was not retained');
-  Notation.command('tool-measure');const beamPattern=document.querySelector('[data-measure-choice="beamPattern"]');const grouping=[...beamPattern.options].find(o=>o.value==='2+2+3')?.value||'2+2';beamPattern.value=grouping;beamPattern.dispatchEvent(new Event('change',{bubbles:true}));await pause();
-  if(document.querySelector('[data-measure-choice="beamPattern"]')?.value!==grouping)throw Error('Beam grouping was not retained');
-  window.Notation.command('undo');await pause();
-  if(document.querySelector('[data-measure-choice="beamPattern"]')?.value===grouping)throw Error('Beam grouping did not undo');
+  if(document.querySelector('[data-measure-choice=beamPattern]'))throw Error('Removed beam grouping field is still visible');
   click('[data-action="add-bar"]');await pause();
   const multiRest=document.querySelector('[data-measure-choice="multiRest"]');multiRest.value='2';multiRest.dispatchEvent(new Event('change',{bubbles:true}));await pause();
   if(document.querySelector('[data-measure-choice="multiRest"]')?.value!=='2'||!document.querySelector('#score .notation-multi-rest'))throw Error('Multi-measure rest could not be edited');
