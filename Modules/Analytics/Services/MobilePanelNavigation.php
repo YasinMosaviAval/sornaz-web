@@ -62,8 +62,7 @@ final class MobilePanelNavigation
 
     private function destination(string $webKey, string $label, array $sections, array $capabilities): ?array
     {
-        if ($webKey === 'notation') return !empty($capabilities['founder'])
-            ? ['key' => 'notation', 'destination' => 'notation', 'label' => $label, 'en' => 'Notation'] : null;
+        if ($webKey === 'notation') return ['key' => 'notation', 'destination' => 'notation', 'label' => $label, 'en' => 'Notation'];
         if ($webKey === 'chart-gallery') return ['key' => $webKey, 'destination' => 'website-example',
             'label' => $label, 'en' => 'Chart gallery'];
         $key = ['teachers' => 'members', 'gallery-cover' => 'gallery', 'gallery-logo' => 'gallery',

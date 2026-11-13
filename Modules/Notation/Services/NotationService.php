@@ -256,6 +256,10 @@ class NotationService
                     if (!is_bool($n['cautionary']) || ($n['cautionary'] && !$acc)) throw new RuntimeException('Invalid cautionary accidental.', 422);
                     $note['cautionary'] = $n['cautionary'];
                 }
+                if (array_key_exists('showAccidental', $n)) {
+                    if (!is_bool($n['showAccidental']) || ($n['showAccidental'] && ($n['rest'] || !$acc))) throw new RuntimeException('Invalid accidental display.', 422);
+                    $note['showAccidental'] = $n['showAccidental'];
+                }
                 foreach (['tieNext', 'tiePrevious'] as $tie) {
                     if (isset($n[$tie])) {
                         if (!is_bool($n[$tie]) || ($n[$tie] && $n['rest'])) {

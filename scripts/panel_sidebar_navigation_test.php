@@ -65,6 +65,7 @@ namespace {
         $insert = $insert === false ? array_search('gallery', $expected, true) + (!empty($caps['management']) ? 1 : 0) : $insert + 1;
         array_splice($expected, $insert, 0, ['educations']);
         array_splice($expected, array_search('finance', $expected, true) + 1, 0, ['polls']);
+        array_unshift($expected, 'notation');
         $items = $navigation->forCurrentUser($allowed, $caps);
         expectMenu(array_column($items, 'key') === $expected, $name . ': website menu differs: ' . json_encode(array_column($items, 'key')));
         expectMenu(!array_intersect(['my-gallery', 'my-lessons', 'my-settings', 'my-finance', 'my-waiting'], array_column($items, 'key')), $name . ': API-only entry leaked');
@@ -106,7 +107,8 @@ namespace {
     $allowed = array_filter($catalog, fn ($section) => empty($section['hidden']) && !empty($caps[$section['access']]));
     $admin = array_column($navigation->forCurrentUser($allowed, $caps), null, 'key');
     expectMenu(!isset($admin['database-management']), 'Non-founder administrator received database management');
-    expectMenu(!isset($admin['profileAchievementsSubmenu'], $admin['profilesSubmenu'], $admin['notation']), 'Non-founder received founder-only menu');
+    expectMenu(!isset($admin['profileAchievementsSubmenu'], $admin['profilesSubmenu']), 'Non-founder received founder-only menu');
+    expectMenu(isset($admin['notation']), 'Notation missing for ordinary site administrator');
     expectMenu($admin['settings']['section'] === 'settings', 'Site administrator settings downgraded');
     echo "Website/sidebar navigation: ordinary, student, academy, branch, manager, contract, owner, founder, site admin and local-only menus passed.\n";
 }
