@@ -1,8 +1,9 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{execFileSync}=require('node:child_process');
 const {chromium}=require('../storage/notation-browser-check/package'),root=path.resolve(__dirname,'..');
+const notationAssets=process.env.SORNAZ_NOTATION_ASSET_ROOT?path.resolve(process.env.SORNAZ_NOTATION_ASSET_ROOT):path.join(root,'assets/notation');
 (async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
  const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.route('http://localhost:8769/**',route=>{const u=new URL(route.request().url());if(u.pathname==='/')return route.fulfill({contentType:'text/html',body:'<body><script src="/assets/Education/js/practice-notation.js"></script></body>'});if(u.pathname==='/music-sheets/api/instruments')return route.fulfill({json:{data:[]}});const f=path.resolve(root,'.'+u.pathname);return f.startsWith(root+path.sep)&&fs.existsSync(f)?route.fulfill({path:f}):route.fulfill({status:404,body:''});});
+ await page.route('http://localhost:8769/**',route=>{const u=new URL(route.request().url());if(u.pathname==='/')return route.fulfill({contentType:'text/html',body:'<body><script src="/assets/Education/js/practice-notation.js"></script></body>'});if(u.pathname==='/music-sheets/api/instruments')return route.fulfill({json:{data:[]}});const isNotation=u.pathname.startsWith('/assets/notation/'),base=isNotation?notationAssets:root,f=isNotation?path.resolve(base,u.pathname.slice('/assets/notation/'.length)):path.resolve(base,'.'+u.pathname);return f.startsWith(base+path.sep)&&fs.existsSync(f)?route.fulfill({path:f}):route.fulfill({status:404,body:''});});
  await page.goto('http://localhost:8769/');
  const sheet={metadata:{title:'Question </script> safe',instrument:'Tar',clef:'treble',key:'C',scale_type:'major',time:'4/4',tempo_note:'q',bpm:120},score:{measures:[{notes:[{pitch:'C4',duration:'q',rest:false,at:0,staff:1,voice:1},{pitch:'D4',duration:'q',rest:false,at:241920,staff:1,voice:1}]}]}};
  await page.evaluate(sheet=>{window.composed=null;PracticeNotation.compose({sheet},{locale:'en',userId:1},(_,en)=>en).then(value=>window.composed=value);},sheet);
@@ -16,5 +17,19 @@ const {chromium}=require('../storage/notation-browser-check/package'),root=path.
  const cut={reference:{notes:[[0,2000,60]],durationMs:2000,beatMs:500,pitchTolerance:35},recording:{durationMs:300,frames:frames.slice(0,6)},assessment:'rhythm'};const cutJs=await page.evaluate(d=>PracticeNotation.grade(d.reference,d.recording,d.assessment),cut),cutPhp=JSON.parse(execFileSync('php',[path.join(root,'scripts/music-practice-notation-test.php'),'grade'],{input:JSON.stringify(cut),encoding:'utf8'}));assert.deepEqual(cutJs,cutPhp);assert.equal(cutJs.passed,false);
  const iranian=structuredClone(sheet);iranian.metadata.scale_type='iran_shur';iranian.metadata.key='G';iranian.score.measures[0].notes[0].pitch='A4';iranian.score.measures[0].notes[1].pitch='B4';
  await page.evaluate(sheet=>{window.composed=null;PracticeNotation.compose({sheet},{locale:'fa',userId:1},(fa)=>fa).then(value=>window.composed=value);},iranian);await frame.locator('[data-action="save"]').click();await page.waitForFunction(()=>window.composed);const iranianResult=await page.evaluate(()=>window.composed);const iranianQuestion=JSON.parse(execFileSync('php',[path.join(root,'scripts/music-practice-notation-test.php'),'question'],{input:JSON.stringify(iranianResult),encoding:'utf8'}));assert.equal(iranianQuestion.reference.notes[0][2],68.5);
+ for(const [name,edit] of [
+  ['lyrics',s=>{s.score.measures[0].notes[0].lyric='Hello world';}],
+  ['chord-symbol',s=>{s.score.measures[0].notes[0].chordSymbol='Am';}],
+  ['accent',s=>{s.score.measures[0].notes[0].articulation='accent';}],
+  ['slur',s=>{s.score.measures[0].notes[0].slurStart=true;s.score.measures[0].notes[1].slurEnd=true;}],
+  ['small-note',s=>{s.score.measures[0].notes[0].noteSize='small';}],
+  ['compound-time',s=>{s.metadata.time='6/8';}],
+ ]){
+  const candidate=structuredClone(sheet);edit(candidate);
+  await page.evaluate(sheet=>{window.composed=null;PracticeNotation.compose({sheet},{locale:'en',userId:1},(_,en)=>en).then(value=>window.composed=value);},candidate);
+  await frame.locator('[data-action="save"]').click();await page.waitForFunction(()=>window.composed);const rendered=await page.evaluate(()=>window.composed);
+  fs.writeFileSync(path.join(root,'storage/notation-browser-check/practice-question-'+name+'.json'),JSON.stringify(rendered));
+  try{execFileSync('php',[path.join(root,'scripts/music-practice-notation-test.php'),'question'],{input:JSON.stringify(rendered),encoding:'utf8',stdio:['pipe','pipe','pipe']});}catch(error){throw Error('Rendered '+name+' preview was rejected: '+error.stderr);}
+ }
  assert.deepEqual(errors,[]);console.log('Notation composer, SVG validation, JS/PHP grading parity and synthetic PCM: passed');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

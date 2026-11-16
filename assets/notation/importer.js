@@ -12,7 +12,7 @@ const accidentalValues=new Set(['','#','b','n','##','bb','+','d','k','o','bk','#
 const markingValues={dynamic:new Set(['','ppp','pp','p','mp','mf','f','ff','fff','sf','sff','sfff','sfz','sffz','sfffz','fz','ffz','fffz','fp']),articulation:new Set(['','staccato','accent','tenuto','marcato','staccatissimo','fermata','breath','caesura']),ornament:new Set(['','trill','mordent','invertedMordent','turn','invertedTurn'])};
 const knownBar=new Set(['notes','preserve','time','timeSymbol','length','barline','repeat','clefs','clefChanges','key','tempo','tempo_unit','rehearsal','text','displayNumber','multiRest','beamPattern']);
 const knownMeta=new Set(['title','subtitle','composer','arranger','lyricist','tempo_text','instrument','key','tempo_note','clef','time','staves','bpm','scale_type','tempo_dots']);
-const knownNote=new Set(['pitch','duration','dots','rest','accidental','staff','voice','at','tuplet','pitches','cautionary','tieNext','tiePrevious','slurStart','slurEnd','pedal','crossBeam','beamGroup','dynamic','articulation','bow','ornament','finger','ornamentUpperAccidental','ornamentLowerAccidental','slide','lyric','hairpin','chordSymbol','tremolo','graces','octaveShift','noteSize','harmonic','arpeggio']);
+const knownNote=new Set(['durationSeconds','pitch','duration','dots','rest','accidental','staff','voice','at','tuplet','pitches','cautionary','tieNext','tiePrevious','slurStart','slurEnd','pedal','crossBeam','beamGroup','dynamic','articulation','bow','ornament','finger','ornamentUpperAccidental','ornamentLowerAccidental','slide','lyric','hairpin','chordSymbol','tremolo','graces','octaveShift','noteSize','harmonic','arpeggio']);
 const knownTone=new Set(['pitch','accidental','tieNext','tiePrevious','cautionary','finger']);
 const hasUnknown=(value,allowed)=>Object.keys(value).some(key=>!allowed.has(key));
 function validate(raw,embeddedPart=false){
@@ -29,10 +29,13 @@ function validate(raw,embeddedPart=false){
  for(const source of bars){
   if(!object(source)||hasUnknown(source,knownBar)||!Array.isArray(source.notes)||source.notes.length>128)fail('Invalid measure.');
   if(source.tempo_unit!==undefined&&(typeof source.tempo_unit!=='string'||!/^(w|h|q|8|16|32|64|128|256):[0-2]$/.test(source.tempo_unit)))fail('Invalid tempo unit.');
+  if(M.isFree(sheet)&&['time','timeSymbol','length','barline','repeat','multiRest','beamPattern','displayNumber'].some(key=>key in source)||!M.isFree(sheet)&&source.time==='free')fail('Measure markings are unavailable in free meter.');
   const bar=M.clone(source);bar.notes=[];bar.preserve=true;sheet.score.measures.push(bar);
-  try{const capacity=M.barUnits(sheet,sheet.score.measures.length-1);if(!Number.isInteger(capacity)||capacity<=0||capacity>M.wholeUnits*4)fail('Invalid measure length.');}catch(_){fail('Invalid measure length.');}
+  try{const capacity=M.barUnits(sheet,sheet.score.measures.length-1);if(!Number.isInteger(capacity)||capacity<=0||capacity>(M.isFree(sheet)?M.freeCapacity:M.wholeUnits*4))fail('Invalid measure length.');}catch(_){fail('Invalid measure length.');}
   const cursors=new Map();
   for(const note of source.notes){
+   if(!object(note))fail('Invalid note.');
+   if(M.isFree(sheet)){M.secondsUnits(note.durationSeconds);if(note.tuplet)fail('Invalid tuplet.');}else if(note.durationSeconds!==undefined)fail('Seconds require free meter.');
    if(!object(note)||hasUnknown(note,knownNote)||!M.durations[note.duration]||!Number.isInteger(note.dots||0)||(note.dots||0)>2||!Number.isInteger(note.staff||1)||(note.staff||1)<1||(note.staff||1)>sheet.metadata.staves.length||!Number.isInteger(note.voice||1)||(note.voice||1)<1||(note.voice||1)>4||!validPitch(note.pitch))fail('Invalid note.');
    if(note.rest&&note.pitches?.length||note.pitches!==undefined&&(!Array.isArray(note.pitches)||note.pitches.length>maxChordTones||note.pitches.some(t=>!object(t)||hasUnknown(t,knownTone)||!validPitch(t.pitch))))fail('Invalid chord.');
    if(!accidentalValues.has(note.accidental||'')||note.pitches?.some(t=>!accidentalValues.has(t.accidental||'')))fail('Invalid accidental.');

@@ -57,7 +57,13 @@ final class MusicPracticeDefinition
             if (!is_array($question)) throw new RuntimeException('پرسش معتبر نیست.', 422);
             $choices = $question['choices'] ?? [];
             if (!is_array($choices) || !array_is_list($choices) || count($choices) < 2 || count($choices) > 12) throw new RuntimeException('گزینه‌ها معتبر نیستند.', 422);
-            $row = ['promptFa' => self::text($question['promptFa'] ?? '', 2000), 'promptEn' => self::text($question['promptEn'] ?? '', 2000), 'choices' => array_map(fn ($text) => self::text($text), $choices), 'correct' => self::integer($question['correct'] ?? null, 0, count($choices) - 1)];
+            $prompts=[];
+            foreach(['promptFa','promptEn'] as $field){
+                $value=$question[$field]??'';
+                $prompts[$field]=is_string($value)&&trim($value)===''?'':self::text($value,2000);
+            }
+            if($prompts['promptFa']===''&&$prompts['promptEn']==='')throw new RuntimeException('متن پرسش را وارد کنید.',422);
+            $row = $prompts + ['choices' => array_map(fn ($text) => self::text($text), $choices), 'correct' => self::integer($question['correct'] ?? null, 0, count($choices) - 1)];
             if ($kind === 'rhythm') {
                 $beats = $question['beats'] ?? [];
                 if (!is_array($beats) || !array_is_list($beats) || !$beats || count($beats) > 64) throw new RuntimeException('الگوی ریتم معتبر نیست.', 422);

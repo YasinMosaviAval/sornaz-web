@@ -98,6 +98,11 @@ echo json_encode(['html'=>$html,'catalog'=>$listing],JSON_THROW_ON_ERROR);
   await page.locator('[data-practice-manage]').click();await page.getByRole('button',{name:t('افزودن بخش','Add section'),exact:true}).waitFor();
   const rootCard=page.locator('article').filter({has:page.getByRole('button',{name:t('بخش','Section'),exact:true})});
   const rootPencil=rootCard.getByRole('button',{name:t('ویرایش بخش','Edit section'),exact:true});
+  async function checkLevelGap(card){
+   const caption=await card.locator(':scope>button').nth(0).boundingBox(),icon=await card.locator(':scope>button').nth(1).boundingBox();
+   assert.ok(Math.abs((language==='en'?icon.x-caption.x-caption.width:caption.x-icon.x-icon.width)-8)<1,'Level text/icon gap must be 8px');
+  }
+  await checkLevelGap(rootCard);
   assert.equal(await rootPencil.innerText(),'');assert.equal(await rootPencil.locator('.fa-pen').count(),1);
   await rootPencil.click();await page.locator('[data-practice-editor]').getByRole('button',{name:t('بستن','Close'),exact:true}).click();
   const countBeforeDelete=writes.length,rootTrash=rootCard.getByRole('button',{name:t('حذف سطح','Delete level'),exact:true});
@@ -135,6 +140,7 @@ echo json_encode(['html'=>$html,'catalog'=>$listing],JSON_THROW_ON_ERROR);
    await form.waitFor({state:'hidden'});
    assert.deepEqual(writes.at(-1),{path:'/exams/api/nodes',parentId:currentParent,level:depth,[titleKey]:t('زیرسطح تازه','New nested level'),position:0});
    const nextLabel=t('زیرسطح '+depth,'Nested '+depth),card=page.locator('article').filter({has:page.getByRole('button',{name:nextLabel,exact:true})});
+   await checkLevelGap(card);
    await Promise.all([page.waitForResponse(r=>r.url().includes('/catalog')),card.getByRole('button',{name:t('عدم نمایش عمومی','Hide from public'),exact:true}).click()]);
    assert.deepEqual(writes.at(-1),{path:'/exams/api/publish',kind:'node',id:9000+depth,version:1,published:false});
    await Promise.all([page.waitForResponse(r=>r.url().includes('/catalog')),card.getByRole('button',{name:t('نمایش عمومی','Show publicly'),exact:true}).click()]);
@@ -168,6 +174,27 @@ echo json_encode(['html'=>$html,'catalog'=>$listing],JSON_THROW_ON_ERROR);
    const first=await rhythm.locator('[name='+names[0]+']').locator('..').boundingBox(),second=await rhythm.locator('[name='+names[1]+']').locator('..').boundingBox();
    assert.ok(Math.abs(first.y-second.y)<1&&Math.abs(first.width-second.width)<1);
   }
+  await form.locator('[name=kind]').selectOption('choice');
+  const promptKey=language==='en'?'promptEn':'promptFa',hiddenPrompt=language==='en'?'promptFa':'promptEn';
+  assert.equal(await rhythm.locator('[name='+hiddenPrompt+']').isVisible(),false);
+  assert.equal(await rhythm.locator('[name='+hiddenPrompt+']').isDisabled(),true);
+  await rhythm.locator('[name='+promptKey+']').fill('Single locale question');
+  await rhythm.locator('[name=choices]').fill('A\nB');await rhythm.locator('[name=correct]').fill('0');
+  const configRect=await form.locator('.practice-exam-config').boundingBox(),writtenTypeRect=await form.locator('[name=kind]').boundingBox();
+  assert.ok(Math.abs(configRect.width-writtenTypeRect.width)<1);
+  const saveButton=form.locator('button[type=submit]');
+  assert.equal(await saveButton.evaluate(el=>getComputedStyle(el).fontSize),'14px');
+  await page.route('**/exams/api/exams',route=>{
+   const payload=JSON.parse(new URLSearchParams(route.request().postData()).get('payload'));
+   assert.equal(payload.config.questions[0][promptKey],'Single locale question');assert.ok(!(hiddenPrompt in payload.config.questions[0]));
+   return route.fulfill({status:422,json:{success:false,message:'Fixture validation error'}});
+  });
+  await saveButton.click();const inlineError=form.locator('[data-practice-form-error]');await inlineError.getByText('Fixture validation error',{exact:true}).waitFor();
+  assert.equal(await inlineError.evaluate(el=>getComputedStyle(el).color),'rgb(220, 38, 38)');
+  assert.equal(await inlineError.evaluate(el=>getComputedStyle(el).fontSize),'12px');
+  assert.ok((await inlineError.boundingBox()).y+(await inlineError.boundingBox()).height<=(await saveButton.boundingBox()).y);
+  assert.equal(await page.locator('[data-practice-status]').textContent(),'');
+  await page.unroute('**/exams/api/exams');
   await rhythm.getByRole('button',{name:t('حذف پرسش','Remove question'),exact:true}).click();await form.locator('[name=kind]').selectOption('interval');
   await form.getByRole('button',{name:t('ذخیره','Save'),exact:true}).click();await form.waitFor({state:'hidden'});
   const saved=writes.at(-1);assert.equal(saved.nodeId,fixture.catalog.nodes[0].id);assert.equal(saved[titleKey],t('آزمون تازه','New test'));assert.ok(!('published' in saved)&&!(t('titleEn','titleFa') in saved));

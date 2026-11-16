@@ -3,6 +3,7 @@ const {spawnSync} = require('node:child_process');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const php = [
+ 'notation_free_meter_test.php',
  'notation_subsections_test.php',
  'music-practice-notation-test.php',
  'music-practice-integration-test.php',
@@ -29,6 +30,7 @@ const suites = php.map(file => ['php',file]);
 suites.push([process.execPath,'database_admin_test.cjs']);
 suites.push([process.execPath,'session_files_http_test.cjs']);
 suites.push([process.execPath,'achievements_access_test.cjs']);
+suites.push([process.execPath,'notation_free_meter_test.cjs']);
 suites.push([process.execPath,'notation_web_storage_test.cjs'],[process.execPath,'notation_model_test.cjs']);
 suites.push(['php','classroom_heatmap_test.php']);
 suites.push(['php','national_holiday_branch_test.php']);
@@ -46,6 +48,7 @@ suites.push([process.execPath,'term_student_assignment_test.cjs'],[process.execP
 suites.push([process.execPath,'panel_report_source_test.cjs'],[process.execPath,'term_people_policy_test.cjs']);
 suites.push([process.execPath,'availability_target_policy_test.cjs'],[process.execPath,'csrf_fetch_test.cjs'],[process.execPath,'profile_render_security_test.cjs'],[process.execPath,'lesson_usage_test.cjs'],[process.execPath,'staff_role_policy_test.cjs'],[process.execPath,'panel_activity_text_test.cjs'],[process.execPath,'term_discount_policy_test.cjs']);
 if (process.argv.includes('--browser')) {
+ suites.push([process.execPath,'notation_free_meter_browser_test.cjs']);
  suites.push([process.execPath,'music_practice_browser_test.cjs']);
  suites.push([process.execPath,'guide_documents_test.cjs']);
  suites.push([process.execPath,'appearance_permissions_browser_test.cjs']);

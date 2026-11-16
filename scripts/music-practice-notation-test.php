@@ -14,6 +14,19 @@ function reject($work){try{$work();}catch(RuntimeException $e){check($e->getCode
 $sheet=['metadata'=>['title'=>'Fixture','instrument'=>'Tar','clef'=>'treble','key'=>'C','scale_type'=>'major','time'=>'4/4','tempo_note'=>'q','bpm'=>120], 'score'=>['measures'=>[['notes'=>[['pitch'=>'C4','duration'=>'q','rest'=>false],['pitch'=>'D4','duration'=>'q','rest'=>false]]]]]];
 $svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40"><path d="M1 2 L3 4" fill="black"/></svg>';
 $config=D::config(['kind'=>'notation','assessment'=>'pitch_rhythm','questions'=>[['sheet'=>$sheet,'preview'=>$svg,'reference'=>['notes'=>[[0,1,99]]]]]],$service);
+foreach(['11pt','12px','1.2em','.9rem','100%','12','1e1'] as $size){
+ $preview=str_replace('</svg>','<text x="1" y="2" font-size="'.$size.'">Lyric</text></svg>',$svg);
+ check(str_contains(N::question(['sheet'=>$sheet,'preview'=>$preview],$service)['preview'],'font-size="'.$size.'"'),'Safe font size rejected');
+}
+foreach(['url(https://invalid.test/x)','calc(1px + 2px)','var(--size)','11pt;fill:red','expression(alert(1))','11vh'] as $size){
+ reject(fn()=>N::question(['sheet'=>$sheet,'preview'=>str_replace('</svg>','<text font-size="'.$size.'">X</text></svg>',$svg)],$service));
+}
+foreach(['promptFa'=>'Question FA','promptEn'=>'Question EN'] as $locale=>$prompt){
+ $question=D::config(['kind'=>'choice','questions'=>[[$locale=>$prompt,'choices'=>['A','B'],'correct'=>0]]])['questions'][0];
+ check($question[$locale]===$prompt&&$question[$locale==='promptFa'?'promptEn':'promptFa']==='','Single-language question copied or rejected');
+}
+reject(fn()=>D::config(['kind'=>'choice','questions'=>[['choices'=>['A','B'],'correct'=>0]]]));
+reject(fn()=>D::config(['kind'=>'choice','questions'=>[['promptFa'=>'Valid','promptEn'=>[],'choices'=>['A','B'],'correct'=>0]]]));
 $reference=$config['questions'][0]['reference'];
 check($reference['notes']===[[0,500,60],[500,1000,62]],'Canonical pitch/time not generated');
 check($reference['durationMs']===2000,'Implicit rests not counted');

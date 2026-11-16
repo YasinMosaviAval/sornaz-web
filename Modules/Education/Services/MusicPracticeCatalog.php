@@ -113,7 +113,17 @@ final class MusicPracticeCatalog
             $definition = json_decode($exam['definition'],true,512,JSON_THROW_ON_ERROR);
             if(($definition['config']['kind']??'')==='notation'&&!$this->notationSupported)return null;
             $row = ['id'=>(int)$exam['id'],'nodeId'=>(int)$exam['node_id'],'ownerId'=>(int)$exam['owner_id'],'titleFa'=>$exam['titleFa'],'titleEn'=>$exam['titleEn'],'version'=>(int)$exam['version'],'position'=>(int)$exam['position'],'published'=>(bool)$exam['published'],'audience'=>$exam['audience'],'access'=>$allowed,'stageCount'=>$definition['stageCount'],'requiredWins'=>$definition['requiredWins'],'legacyKey'=>$exam['legacy_key']];
-            if ($allowed || $manage) $row['config']=$definition['config'];
+            if ($allowed || $manage) {
+                $row['config']=$definition['config'];
+                // Older players expect both keys. Fallback is response-only, never persisted.
+                if(!$manage&&in_array($row['config']['kind']??'',['choice','rhythm'],true)){
+                    foreach($row['config']['questions'] as &$question){
+                        $question['promptFa']=$question['promptFa']?:$question['promptEn'];
+                        $question['promptEn']=$question['promptEn']?:$question['promptFa'];
+                    }
+                    unset($question);
+                }
+            }
             if ($allowed && !$this->store->onlineOnly && $access->signingReady()) $row += $access->permit($actor,$exam);
             if ($exam['audience']==='subscribers' && $actor !== 1 && $actor !== (int)$exam['owner_id']) $row['accessExpiresAt']=$access->expires($actor,(int)$exam['owner_id'],(int)$exam['id']);
             if ($manage) $row += $this->managedExam($exam);

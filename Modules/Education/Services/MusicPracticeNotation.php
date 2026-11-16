@@ -27,7 +27,7 @@ final class MusicPracticeNotation
     private static function validateReferenceShape(array $sheet): void
     {
         $meta = $sheet['metadata'];
-        if (!empty($sheet['score']['subsections']) || count($meta['staves']) !== 1
+        if (($meta['time'] ?? '') === 'free' || !empty($sheet['score']['subsections']) || count($meta['staves']) !== 1
             || count($sheet['score']['measures']) > 8 || str_contains($meta['clef'], '_8')) self::unsupported();
     }
 
@@ -174,7 +174,8 @@ final class MusicPracticeNotation
     private static function previewAttribute(string $name,string $raw,array $geometry): bool
     {
         $valid=false;
-                if(in_array($name,$geometry,true))$valid=(bool)preg_match('/^[\d., eE+%\-]+$/D',$raw);
+                if($name==='font-size')$valid=(bool)preg_match('/^(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+\-]?\d+)?(?:px|pt|em|rem|%)?$/D',$raw);
+                elseif(in_array($name,$geometry,true))$valid=(bool)preg_match('/^[\d., eE+%\-]+$/D',$raw);
                 elseif($name==='d')$valid=strlen($raw)<60000&&(bool)preg_match('/^[MmZzLlHhVvCcSsQqTtAa\d., eE+\-]+$/D',$raw);
                 elseif(in_array($name,['fill','stroke'],true))$valid=(bool)preg_match('/^(?:none|transparent|currentColor|black|white|#[a-fA-F0-9]{3,8})$/D',$raw);
                 elseif($name==='transform')$valid=(bool)preg_match('/^(?:(?:translate|scale|rotate|matrix|skewX|skewY)\([\d., eE+\-]+\)\s*)+$/D',$raw);

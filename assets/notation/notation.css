@@ -210,3 +210,9 @@ h1,h2,h3,h4,h5,h6,strong,b{font-weight:var(--app-font-weight,400)}
 .duration-options button>*{pointer-events:none}
 .rest-key.is-pressed{background:var(--accent)!important;color:#fff}
 .rest-choice button.is-pressed{background:var(--accent)!important;color:#fff}
+.shell.form .form-row.tempo-row[hidden]{display:none!important}
+.free-duration-picker{width:min(340px,calc(100vw - 24px));padding:16px}
+.free-duration-picker form{display:grid;gap:12px}
+.free-duration-picker p{margin:0;font-size:12px;line-height:1.8}
+.free-duration-picker input{width:100%;font:inherit;font-size:18px}
+.free-duration-button{font:inherit;font-size:12px;white-space:nowrap;min-height:40px}

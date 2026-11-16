@@ -243,6 +243,23 @@ check($results->progress(4)['recent']===[],'Another learner received recorded re
 $catalog->saveExam(2,array_replace($written,['id'=>$writtenId,'version'=>1]));
 denied(409,fn()=>$catalog->saveExam(2,array_replace($written,['id'=>$writtenId,'version'=>1])));
 denied(409,fn()=>$results->store(3,array_replace($batch,['runId'=>str_repeat('f',32)])));
+// One prompt locale must persist without copying the fallback into the definition.
+if($mysql)check((int)$pdo->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE 'f_%' AND ENGINE<>'InnoDB'")->fetchColumn()===0,'Write fixture tables must be transactional');
+foreach(['promptFa'=>'Question FA','promptEn'=>'Question EN'] as $promptKey=>$prompt){
+ $pdo->beginTransaction();
+ try{
+  $oneLanguage=array_replace($testInput,['nodeId'=>$b,'audience'=>'public','config'=>['kind'=>'choice','questions'=>[[$promptKey=>$prompt,'choices'=>['A','B'],'correct'=>0]]]]);
+  denied(403,fn()=>$catalog->saveExam(3,$oneLanguage));
+  $oneId=$catalog->saveExam(2,$oneLanguage)['id'];
+  $raw=json_decode($store->one('SELECT definition FROM f_music_practice_versions WHERE exam_id=? AND version=1',[$oneId])['definition'],true)['config']['questions'][0];
+  check($raw[$promptKey]===$prompt&&$raw[$promptKey==='promptFa'?'promptEn':'promptFa']==='','Prompt locale copied or missing');
+  $public=array_values(array_filter($catalog->listing(3)['exams'],fn($row)=>$row['id']===$oneId))[0]['config']['questions'][0];
+  check($public['promptFa']===$prompt&&$public['promptEn']===$prompt,'Legacy player fallback missing');
+  denied(403,fn()=>$catalog->saveExam(5,array_replace($oneLanguage,['id'=>$oneId,'version'=>1])));
+  $oneLanguage['config']['questions'][0][$promptKey]='';
+  denied(422,fn()=>$catalog->saveExam(2,$oneLanguage));
+ }finally{$pdo->rollBack();}
+}
 echo 'Section subscriptions and written levels: '.$checks.' checks passed ('.($mysql?'MariaDB':'SQLite').').'.PHP_EOL;
 `;
 const directory=fs.mkdtempSync(path.join(os.tmpdir(),'sornaz-scope-test-'));

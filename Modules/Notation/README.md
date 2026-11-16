@@ -4,6 +4,8 @@ The website route is `/music-sheets`; it is linked from the public header and ac
 
 ## Shared editor
 
+Free meter is available for new website scores: choose it in metadata, then assign each note/rest 0.01–5 seconds in 0.01-second steps. Playback ignores tempo, and screen/PDF omit metrical barlines and filler rests. JSON preserves timings; free-meter MusicXML and automatic written grading are not supported. Deployment, compatibility and verification: `docs/notation-free-meter.fa.md`.
+
 The model, importer, engraving, music symbols and core editor in `assets/notation/` are shared with Flutter. Website-only adapters are `web_storage.js`, `web_tools.js`, `omr.js` and `panel.css`; do not copy the whole website directory over the mobile bundle. VexFlow 4.2.5 and its MIT license are bundled locally; rendering does not download a CDN script. The mobile host is `lib/screens/Notation/music_sheets_page.dart`.
 
 ## Website parity (2026-10-25)

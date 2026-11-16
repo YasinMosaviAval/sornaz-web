@@ -6,6 +6,8 @@ use RuntimeException;
 
 class NotationService
 {
+    private const FREE_CENTISECOND_UNITS = 241920; // Same exact units as assets/notation/model.js.
+    private const FREE_CAPACITY = 128 * 500 * self::FREE_CENTISECOND_UNITS;
     private const NOTE_ACCIDENTALS = ['', '#', 'b', 'n', '##', 'bb', '+', 'd', 'k', 'o', 'bk', '#o'];
     public const IRANIAN_KEYS = ['C','C:o','Db','D:k','D','D:o','Eb','E:k','E','E:o','F','F:o','Gb','G:k','G','G:o','Ab','A:k','A','A:o','Bb','B:k','B','B:o'];
     private const IRANIAN_SCALES = ['iran_shur', 'iran_mahur', 'iran_homayun', 'iran_nava', 'iran_segah', 'iran_chahargah', 'iran_rastpanjgah', 'iran_abuata', 'iran_bayat_tork', 'iran_afshari', 'iran_dashti', 'iran_bayat_esfahan'];
@@ -158,6 +160,7 @@ class NotationService
         $measures = [];
         $measureLengths = [];
         $currentTime = $clean['time'];
+        $freeMeter = $currentTime === 'free';
         $currentBpm = $clean['bpm'];
         foreach ($score['measures'] as $measure) {
             if (!is_array($measure) || !isset($measure['notes']) || !is_array($measure['notes']) || !array_is_list($measure['notes']) || count($measure['notes']) > 128) {
@@ -166,10 +169,11 @@ class NotationService
             if (isset($measure['preserve']) && !is_bool($measure['preserve'])) {
                 throw new RuntimeException('Invalid measure.', 422);
             }
+            $this->validateFreeMeasure($measure, $freeMeter);
             if (isset($measure['time'])) $currentTime = $this->validatedTime($measure['time']);
             $barTime = $currentTime;
-            [$top, $bottom] = array_map('intval', explode('/', $barTime));
-            $fullLength = intdiv($top * 967680, $bottom);
+            [$top, $bottom] = array_map('intval', explode('/', $freeMeter ? '4/4' : $barTime));
+            $fullLength = $freeMeter ? self::FREE_CAPACITY : intdiv($top * 967680, $bottom);
             $capacity = $measure['length'] ?? $fullLength;
             if (!is_int($capacity) || $capacity < 1 || $capacity > $fullLength) {
                 throw new RuntimeException('Invalid measure length.', 422);
@@ -210,6 +214,8 @@ class NotationService
                     }
                     $length = intdiv($numerator, $tuplet['actual']);
                 }
+                $seconds = $this->validatedNoteSeconds($n, $freeMeter);
+                if ($seconds !== null) $length = (int) round($seconds * 100) * self::FREE_CENTISECOND_UNITS;
                 $lane = $staff . ':' . $voice;
                 $at = $n['at'] ?? ($cursors[$lane] ?? 0);
                 if (!is_int($at) || $at < 0 || $at + $length > $capacity) {
@@ -223,6 +229,7 @@ class NotationService
                 $intervals[$lane][] = [$at, $at + $length];
                 $cursors[$lane] = max($cursors[$lane] ?? 0, $at + $length);
                 $note = ['pitch' => $n['pitch'], 'duration' => $n['duration'], 'dots' => $dots, 'rest' => $n['rest'], 'accidental' => $acc, 'staff' => $staff, 'voice' => $voice, 'at' => $at];
+                if ($seconds !== null) $note['durationSeconds'] = $seconds;
                 if ($tuplet !== null) $note['tuplet'] = ['actual' => $tuplet['actual'], 'normal' => $tuplet['normal']];
                 $pitches = $n['pitches'] ?? [];
                 if (!is_array($pitches) || !array_is_list($pitches) || count($pitches) > 7 || ($n['rest'] && $pitches)) {
@@ -590,10 +597,36 @@ class NotationService
 
     private function validatedTime(mixed $time): string
     {
+        if ($time === 'free') return $time;
         if (!is_string($time) || !preg_match('/^([1-9]|[12][0-9]|3[0-2])\/(1|2|4|8|16|32|64|128|256)$/D', $time)) {
             throw new RuntimeException('Invalid time signature.', 422);
         }
         return $time;
+    }
+
+    private function validateFreeMeasure(array $measure, bool $free): void
+    {
+        if (!$free) {
+            if (($measure['time'] ?? null) === 'free') throw new RuntimeException('Choose free meter for the whole score.', 422);
+            return;
+        }
+        foreach (['time', 'timeSymbol', 'length', 'barline', 'repeat', 'multiRest', 'beamPattern', 'displayNumber'] as $field) {
+            if (array_key_exists($field, $measure)) throw new RuntimeException('Measure markings are unavailable in free meter.', 422);
+        }
+    }
+
+    private function validatedNoteSeconds(array $note, bool $free): ?float
+    {
+        if (!$free) {
+            if (array_key_exists('durationSeconds', $note)) throw new RuntimeException('Seconds require free meter.', 422);
+            return null;
+        }
+        $value = $note['durationSeconds'] ?? null;
+        if ((!is_int($value) && !is_float($value)) || !is_finite((float) $value) || $value < 0.01 || $value > 5
+            || abs($value * 100 - round($value * 100)) > 0.00000001 || isset($note['tuplet'])) {
+            throw new RuntimeException('Duration must be between 0.01 and 5 seconds in steps of 0.01.', 422);
+        }
+        return round($value, 2);
     }
 
     private function extendedMetadata(array $meta, string $key): array
