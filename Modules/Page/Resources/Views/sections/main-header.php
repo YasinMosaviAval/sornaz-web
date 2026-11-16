@@ -2,6 +2,7 @@
     <div id="siteScrollProgress" class="pointer-events-none absolute inset-x-0 bottom-[-5px] z-50 hidden h-[5px] bg-transparent" aria-hidden="true"><div id="siteScrollProgressBar" class="h-full w-0 bg-indigo-600 transition-[width] duration-75"></div></div>
     <?php
     $headerUser = auth()->user();
+    $canUseNotation = (new \Modules\System\Services\AccessControl())->notationWebsiteAllows((int) ($headerUser['user_id'] ?? 0));
     $isSiteAdmin = \Modules\System\Services\SiteAdminAccess::allows($headerUser);
     $isBranchUser = ($headerUser['type'] ?? null) === 'branch';
     $hasManagerPanelRole = false;
@@ -30,6 +31,9 @@
                 <!-- <a href="/page/home" data-page="home" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50">خانه</a> -->
                 <a href="/analytics/articles" data-page="articles" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.articles', 'مقاله‌های آموزشی')) ?></a>
                 <a href="/academy/academies" data-page="academies" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.academies', 'آموزشگاه‌ها')) ?></a>
+                <?php if ($canUseNotation): ?>
+                <a href="/music-sheets" data-page="notation" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(locale() === 'en' ? 'Music Sheets' : 'نت‌نویسی') ?></a>
+                <?php endif; ?>
                 <!-- <a href="/users" data-page="users" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.users', 'کاربران')) ?></a> -->
                 <?php if ($hasAdminPanel): ?>
                     <a href="/analytics/admin-panel" data-page="contact" class="nav-link-site px-3 py-2 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.user_panel', 'پنل کاربری')) ?></a>
@@ -81,6 +85,9 @@
             <a href="/exams" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(locale()==='en'?'Tests':'آزمون‌ها') ?></a>
             <a href="/analytics/articles" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.articles', 'مقاله‌های آموزشی')) ?></a>
             <a href="/academy/academies" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.academies', 'آموزشگاه‌ها')) ?></a>
+            <?php if ($canUseNotation): ?>
+            <a href="/music-sheets" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(locale() === 'en' ? 'Music Sheets' : 'نت‌نویسی') ?></a>
+            <?php endif; ?>
             <!-- <a href="/users" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?//= e(trans('public.nav.users', 'کاربران')) ?></a> -->
             <?php if ($hasAdminPanel): ?>
                 <a href="/analytics/admin-panel" onclick="closeMobileMenu();" class="block px-3 py-2.5 rounded-lg hover:bg-gray-50"><?= e(trans('public.nav.user_panel', 'پنل کاربری')) ?></a>

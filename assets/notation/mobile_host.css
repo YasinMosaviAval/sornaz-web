@@ -1,0 +1,13 @@
+/* The compact browser host uses the same score, piano and dialogs as Flutter. */
+.notation-mobile .compact-editor-header{height:48px;min-height:48px;padding:0 8px;gap:4px!important;flex-wrap:nowrap;color:#111;background:#fff}
+.notation-mobile .compact-editor-header>.icon{flex:0 0 40px;width:40px;height:40px;padding:8px}
+.notation-mobile .compact-editor-header .editor-actions{display:flex;flex:0 1 auto;min-width:0;gap:4px;overflow-x:auto;scrollbar-width:none}
+.notation-mobile .compact-editor-header .editor-actions::-webkit-scrollbar{display:none}
+.notation-mobile .compact-editor-header .editor-actions .icon{flex:0 0 32px;width:32px;height:40px;min-height:40px;padding:5px;color:#111;background:transparent;border:0}
+.notation-mobile .compact-editor-header svg{width:22px;height:22px;display:block}
+.notation-mobile .editor-footer{padding-bottom:env(safe-area-inset-bottom,0px)}
+.notation-mobile .sheet .open strong{font-size:10px}
+.notation-mobile .sheet small{font-size:8px}
+.notation-mobile .notation-list-tools{display:flex;align-items:center;gap:8px;padding:4px 12px 8px}
+.notation-mobile .notation-list-tools .web-search{flex:1;min-width:0;margin:0;padding:0}
+.notation-mobile .notation-settings-button{flex:0 0 40px;width:40px;height:40px;padding:0;font-size:24px;line-height:1;background:transparent;color:var(--ink)}

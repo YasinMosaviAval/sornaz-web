@@ -1,4 +1,5 @@
 <section id="notation" class="section hidden">
+    <style>@media(max-width:700px),(pointer:coarse),(display-mode:standalone){#panelNotationToolbar{display:none!important}}</style>
     <h1 class="hidden"><?= e(locale() === 'en' ? 'Music sheets' : 'نت‌نویسی') ?></h1>
     <div id="panelNotationToolbar" class="mb-5 flex flex-wrap items-center justify-between gap-4">
     <nav id="panelNotationTabs" class="flex flex-wrap gap-3" aria-label="<?= e(locale() === 'en' ? 'Music sheet filters' : 'دسته‌بندی نت‌ها') ?>">

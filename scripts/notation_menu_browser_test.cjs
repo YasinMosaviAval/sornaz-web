@@ -15,6 +15,15 @@ const php=source=>execFileSync('php',['-r',source],{encoding:'utf8',cwd:root});
    if(url.pathname.startsWith('/music-sheets/api')){const query=(url.searchParams.get('q')||'').toLowerCase();let data={items:sheets.filter(item=>item.title.toLowerCase().includes(query)),has_more:false};if(url.pathname.endsWith('/instruments'))data=[{id:'Piano',fa:'پیانو',en:'Piano'}];const match=/\/api\/(\d+)$/.exec(url.pathname);if(match)data=sheets.find(s=>s.id===Number(match[1]));return route.fulfill({json:{success:true,data}});}
    const file=path.resolve(root,'.'+url.pathname);return file.startsWith(root+path.sep)&&fs.existsSync(file)?route.fulfill({path:file}):route.fulfill({status:404,body:''});});
   await page.goto('http://notation.test/');await page.evaluate(()=>localStorage.clear());await page.reload();const frame=page.frameLocator('#panelNotationFrame');
+  if(width===390){
+   const summary=frame.locator('.sheet .sheet-menu summary').first();await summary.click();
+   await page.locator('.notation-floating-menu').waitFor();await page.keyboard.press('Escape');
+   assert.equal(await page.locator('.notation-floating-menu').count(),0);
+   await summary.click();await page.locator('#outsideHeader').click();
+   assert.equal(await page.locator('.notation-floating-menu').count(),0);
+   assert.equal(await frame.locator('[data-action=web-list-view]').count(),0);
+   assert.deepEqual(errors,[]);continue;
+  }
   await frame.locator('table[data-panel-table]').waitFor();
   const metrics=()=>page.evaluate(()=>{const f=document.getElementById('panelNotationFrame'),d=f.contentDocument;return {pageHeight:document.documentElement.scrollHeight,mainScroll:document.getElementById('mainContent').scrollTop,iframeHeight:f.clientHeight,appHeight:d.getElementById('app').getBoundingClientRect().height,documentHeight:d.documentElement.scrollHeight};});
   async function openAndCheck(summary){
@@ -37,5 +46,5 @@ const php=source=>execFileSync('php',['-r',source],{encoding:'utf8',cwd:root});
   await frame.locator('[data-action=web-list-view][data-view=cards]').click();await page.evaluate(()=>document.documentElement.dataset.mode='dark');await frame.locator('html[data-mode=dark]').waitFor();summary=frame.locator('.sheet .sheet-menu summary');floating=await openAndCheck(summary);assert.notEqual(await floating.evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)');await page.keyboard.press('Escape');
   assert.deepEqual(errors,[]);
  }
- console.log('Notation menus: fa/en, desktop/mobile, table/card/nested lists, clipped iframe viewports, unchanged page scroll, Escape, keyboard focus, outside click and action IDs passed.');
+ console.log('Notation menus: fa/en, desktop, table/card/nested lists, clipped iframe viewports, unchanged page scroll, Escape, keyboard focus, outside click and action IDs passed.');
 }finally{await browser.close();}})().catch(error=>{console.error(error);process.exitCode=1;});

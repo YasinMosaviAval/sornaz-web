@@ -25,6 +25,9 @@ class NotationController
             }
         } else {
             $id = (int) auth()->id();
+            if (!(new \Modules\System\Services\AccessControl())->notationWebsiteAllows($id)) {
+                throw new \RuntimeException('Notation access is not permitted.', 403);
+            }
             // A stale editor tab must not upload another account's local draft.
             $expected = $_SERVER['HTTP_X_NOTATION_USER'] ?? null;
             if ($expected !== null && (!is_string($expected) || $expected !== (string) $id)) {
@@ -45,6 +48,9 @@ class NotationController
 
     public function page()
     {
+        if (!(new \Modules\System\Services\AccessControl())->notationWebsiteAllows((int) auth()->id())) {
+            return ResponseFactory::json(['success' => false, 'message' => 'Notation access is not permitted.'], 403);
+        }
         return ResponseFactory::view('Notation::index', ['boot' => ['locale' => locale() === 'en' ? 'en' : 'fa', 'userId' => (int) auth()->id(), 'csrf' => csrf_token(), 'api' => '/music-sheets/api', 'embedded' => false, 'webStorage' => true, 'omrEnabled' => (int) auth()->id() === 1, 'websitePanel' => isset($_GET['panel'])]]);
     }
 

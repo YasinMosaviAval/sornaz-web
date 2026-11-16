@@ -5,12 +5,16 @@ $menu = [
     ['title'=>locale()==='en'?'Tests':'آزمون‌ها', 'url'=>'/exams'],
     ['title'=>'خانه', 'url'=>'/'],
     ['title'=>'آموزشگاه ها', 'url'=>'/academy'],
-    ['title'=>'اساتید', 'url'=>'/teacher'],
     ['title'=>locale()==='en'?'Music Sheets':'نت‌نویسی', 'url'=>'/music-sheets'],
+    ['title'=>'اساتید', 'url'=>'/teacher'],
     ['title'=>'مقالات', 'url'=>'/blog'],
     ['title'=>'درباره ما', 'url'=>'/about'],
     ['title'=>'تماس', 'url'=>'/contact']
 ];
+
+if (!(new \Modules\System\Services\AccessControl())->notationWebsiteAllows((int) auth()->id())) {
+    $menu = array_values(array_filter($menu, static fn ($item) => $item['url'] !== '/music-sheets'));
+}
 
 ?>
 

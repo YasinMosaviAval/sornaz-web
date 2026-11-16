@@ -5,6 +5,11 @@ use Core\database\DB;
 
 class AccessControl
 {
+    public function notationWebsiteAllows(int $userId): bool
+    {
+        return $userId > 0 && $this->allows($userId, 'notation.access');
+    }
+
     public function allows(int $userId, string $permission): bool
     {
         if ($userId === 1) {

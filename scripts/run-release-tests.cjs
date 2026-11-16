@@ -7,6 +7,7 @@ const php = [
  'music-practice-notation-test.php',
  'music-practice-integration-test.php',
  'notation_web_account_test.php',
+ 'notation_header_access_test.php',
  'mobile_panel_latest_web_test.php',
  'academy_export_access_test.php',
  'term_session_delivery_test.php',
@@ -61,6 +62,7 @@ if (process.argv.includes('--browser')) {
  suites.push([process.execPath,'music-practice-notation-browser-test.cjs']);
  suites.push([process.execPath,'music-practice-written-ui-browser-test.cjs']);
  suites.push([process.execPath,'notation_web_layout_browser_test.cjs']);
+ suites.push([process.execPath,'notation_mobile_host_test.cjs']);
  suites.push([process.execPath,'notation_menu_browser_test.cjs']);
  suites.push([process.execPath,'notation_symbol_controls_browser_test.cjs']);
  suites.push([process.execPath,'notation_web_parity_browser_test.cjs'],[process.execPath,'notation_shared_features_browser_test.cjs'],[process.execPath,'panel_notation_form_browser_test.cjs'],[process.execPath,'panel_notation_frame_browser_test.cjs']);
