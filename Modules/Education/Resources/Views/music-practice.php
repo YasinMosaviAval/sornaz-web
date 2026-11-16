@@ -6,12 +6,13 @@
     $breadcrumbItems=[['label'=>locale()==='en'?'Home':'خانه','href'=>'/'],['label'=>locale()==='en'?'Tests':'آزمون‌ها']];
     require base_path('resources/views/partials/breadcrumb.php');
     ?></div>
-    <div class="flex flex-wrap items-center justify-between gap-3"><h1 class="text-2xl font-bold"><?= locale()==='en'?'Tests':'آزمون‌ها' ?></h1><div class="flex gap-2"><button type="button" data-practice-manage hidden class="rounded-xl border px-4"><?= locale()==='en'?'Manage tests':'مدیریت آزمون‌ها' ?></button></div></div>
+    <div class="flex flex-wrap items-center justify-between gap-3"><h1 class="text-2xl font-bold"><?= locale()==='en'?'Tests':'آزمون‌ها' ?></h1><div class="flex gap-2"><button type="button" data-practice-add hidden class="rounded-xl border px-4 py-3" aria-label="<?= locale()==='en'?'Add section':'افزودن بخش' ?>" title="<?= locale()==='en'?'Add section':'افزودن سطح' ?>"><i class="fas fa-plus" aria-hidden="true"></i></button><button type="button" data-practice-manage hidden class="rounded-xl border px-4"><?= locale()==='en'?'Manage tests':'مدیریت آزمون‌ها' ?></button></div></div>
     <p data-practice-status role="status" class="text-sm text-gray-500"></p>
     <div data-practice-list class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"></div>
     <section data-practice-player hidden class="space-y-4 rounded-2xl border bg-white p-5"></section>
     <section data-practice-editor hidden class="space-y-4 rounded-2xl border bg-white p-5"></section>
 </main>
 <script>window.musicPracticeBoot=<?= json_encode($practiceBoot,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;</script>
+<script defer src="/assets/theme/dialog.js?v=<?= e(\Core\support\AssetManager::version('/assets/theme/dialog.js')) ?>"></script>
 <script defer src="/assets/Education/js/practice-notation.js?v=<?= e(\Core\support\AssetManager::version('/assets/Education/js/practice-notation.js')) ?>"></script>
 <script defer src="/assets/Education/js/music-practice.js?v=<?= e(\Core\support\AssetManager::version('/assets/Education/js/music-practice.js')) ?>"></script>

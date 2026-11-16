@@ -141,27 +141,48 @@ final class MusicPracticeCatalog
             if($id&&(!$old||!empty($old['deleted_at'])))throw new RuntimeException('بخش پیدا نشد.',404);
             if($old&&$actor!==1&&(int)$old['created_by']!==$actor)throw new RuntimeException('بخش متعلق به کاربر دیگری است.',403);
             [$parent,$p]=$this->parentNode($input,$old,$id);
-            $published=$input['published']??false;
+            [$slug,$automaticSlug]=$this->nodeAddress($input,$old,$id,$parent);
+            $published=$input['published']??(bool)($old['published']??false);
             if(!is_bool($published))throw new RuntimeException('وضعیت معتبر نیست.',422);
             if($published!== (bool)($old['published']??false))$this->store->require($actor,'publish');
-            $values=[$parent?:null,$this->nodeSlug($input,$id),$p?(int)$p['depth']+1:1,MusicPracticeDefinition::integer($input['position']??0,0,100000),(int)$published,$this->store->now()];
+            $values=[$parent?:null,$slug,$p?(int)$p['depth']+1:1,MusicPracticeDefinition::integer($input['position']??0,0,100000),(int)$published,$this->store->now()];
             if($id){
                 if(($input['version']??null)!==(int)$old['version'])throw new RuntimeException('بخش تغییر کرده است؛ دوباره دریافت کنید.',409);
                 $this->store->execute('UPDATE f_music_practice_nodes SET parent_id=?,slug=?,depth=?,position=?,published=?,updated_at=?,version=version+1 WHERE id=?',[...$values,$id]);
             }else{
-                $id=$this->store->insertTitled('music_practice_nodes',array_combine(['parent_id','slug','depth','position','published','updated_at','created_by'],[...$values,$actor]));
+                $id=$this->insertNode($actor,$values,$automaticSlug);
             }
             $this->saveNodePresentation($actor,$id,$input);
             return ['id'=>$id];
         });
     }
+    private function insertNode(int $actor,array $values,bool $automaticSlug): int
+    {
+        $id=$this->store->insertTitled('music_practice_nodes',array_combine(['parent_id','slug','depth','position','published','updated_at','created_by'],[...$values,$actor]));
+        if($automaticSlug)$this->store->execute('UPDATE f_music_practice_nodes SET slug=? WHERE id=?',['exam-l'.$values[2].'-n'.$id,$id]);
+        return $id;
+    }
     private function saveNodePresentation(int $actor,int $id,array $input): void
     {
-        $this->store->saveTitles('music_practice_nodes',$id,MusicPracticeDefinition::text($input['titleFa']??''),MusicPracticeDefinition::text($input['titleEn']??''),$actor);
+        $this->saveCatalogTitles('music_practice_nodes',$actor,$id,$input);
         if(!array_key_exists('iconKey',$input))return;
         if(!$this->store->supportsNodeIcons())throw new RuntimeException('انتخاب آیکن پس از به‌روزرسانی ساختار آزمون‌ها فعال می‌شود.',503);
         $icon=MusicPracticeDefinition::iconKey($input['iconKey']);
         $this->store->execute('UPDATE f_music_practice_nodes SET icon_key=? WHERE id=?',[$icon,$id]);
+    }
+    private function saveCatalogTitles(string $table,int $actor,int $id,array $input): void
+    {
+        if(!array_key_exists('titleFa',$input)&&!array_key_exists('titleEn',$input))throw new RuntimeException('عنوان سطح را وارد کنید.',422);
+        foreach(['fa'=>'titleFa','en'=>'titleEn'] as $language=>$key){
+            if(array_key_exists($key,$input))\Core\translation\EntityText::save($table,$id,'title',MusicPracticeDefinition::text($input[$key]),$actor,$this->store->connection(),$language);
+        }
+    }
+    private function nodeAddress(array $input,?array $old,int $id,int $parent): array
+    {
+        if(!is_bool($input['firstLevel']??false)||(!empty($input['firstLevel'])&&$parent))throw new RuntimeException('از صفحهٔ اول فقط سطح اول آزمون قابل ایجاد است.',422);
+        $automatic=!$id&&(!empty($input['firstLevel'])||array_key_exists('level',$input)||!array_key_exists('slug',$input));
+        $slug=$automatic?'exam-pending-'.bin2hex(random_bytes(16)):($id&&!array_key_exists('slug',$input)?$old['slug']:$this->nodeSlug($input,$id));
+        return [$slug,$automatic];
     }
     private function nodeSlug(array $input,int $id): string
     {
@@ -185,6 +206,7 @@ final class MusicPracticeCatalog
         $parent=MusicPracticeDefinition::integer($input['parentId']??0,0,PHP_INT_MAX);
         $p=$parent?$this->store->one('SELECT * FROM f_music_practice_nodes WHERE id=?'.$this->store->lock(),[$parent]):null;
         if(($parent&&(!$p||!empty($p['deleted_at'])))||($parent===$id&&$id)||($p&&(int)$p['depth']>=3))throw new RuntimeException('حداکثر سه سطح بخش مجاز است.',422);
+        if(array_key_exists('level',$input)&&MusicPracticeDefinition::integer($input['level'],1,3)!==($p?(int)$p['depth']+1:1))throw new RuntimeException('سطح جدید با بخش والد تطابق ندارد.',422);
         if($old&&(int)$old['parent_id']!==$parent&&$this->store->one('SELECT id FROM f_music_practice_nodes WHERE parent_id=?',[$id]))throw new RuntimeException('بخش دارای زیرمجموعه قابل جابه‌جایی نیست.',422);
         return [$parent,$p];
     }
@@ -198,10 +220,9 @@ final class MusicPracticeCatalog
             if($id&&(!$old||!empty($old['deleted_at'])))throw new RuntimeException('آزمون پیدا نشد.',404);
             if($old&&$actor!==1&&(int)$old['owner_id']!==$actor)throw new RuntimeException('آزمون متعلق به کاربر دیگری است.',403);
             [$published,$node,$audience,$users]=$this->examSettings($actor,$input,$old);
-            $fa=MusicPracticeDefinition::text($input['titleFa']??'');$en=MusicPracticeDefinition::text($input['titleEn']??'');
             $values=[$node,MusicPracticeDefinition::integer($input['position']??0,0,100000),(int)$published,$audience,$this->store->now()];
             [$id,$version]=$this->writeExam($actor,$input,$old,$values);
-            $this->store->saveTitles('music_practice_exams',$id,$fa,$en,$actor);
+            $this->saveCatalogTitles('music_practice_exams',$actor,$id,$input);
             $this->store->execute('INSERT INTO f_music_practice_versions(exam_id,version,definition,was_published,created_at) VALUES(?,?,?,?,?)',[$id,$version,json_encode($definition,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR),(int)$published,$this->store->now()]);
             $this->store->execute('DELETE FROM f_music_practice_grants WHERE exam_id=?',[$id]);
             foreach(array_unique($users) as $user)$this->store->execute('INSERT INTO f_music_practice_grants(exam_id,user_id) VALUES(?,?)',[$id,$user]);
@@ -215,7 +236,7 @@ final class MusicPracticeCatalog
     }
     private function examSettings(int $actor,array $input,?array $old): array
     {
-        $published=$input['published']??false;
+        $published=$input['published']??(bool)($old['published']??false);
         if(!is_bool($published))throw new RuntimeException('وضعیت معتبر نیست.',422);
         if($published||(bool)($old['published']??false))$this->store->require($actor,'publish');
         $node=MusicPracticeDefinition::integer($input['nodeId']??null,1,PHP_INT_MAX);

@@ -1,4 +1,23 @@
 .practice-exam-card{transition:border-color .2s ease,box-shadow .2s ease;min-width:0}
+.practice-item-icon{width:2.75rem;height:2.75rem;padding:.5rem;vertical-align:middle}
+.practice-item-delete{color:#dc2626}
+[data-mode=dark] .practice-item-delete{color:#f87171}
+.practice-item-icon:disabled{opacity:.5;cursor:default}
+.practice-exam-numbers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem;grid-column:1/-1}
+.practice-exam-numbers>label{min-width:0;display:grid;grid-template-rows:3em 3rem;gap:.5rem;align-content:start}
+.practice-exam-numbers input{min-width:0;width:100%;height:3rem;box-sizing:border-box}
+.practice-exam-form{display:grid;gap:1rem}
+.practice-exam-form>*{grid-column:1/-1;min-width:0}
+.practice-audience-picker{display:grid;gap:.5rem}
+.practice-audience-picker>div:empty{display:none}
+.practice-audience-picker>input[type=search]{display:block;width:100%;box-sizing:border-box}
+.practice-exam-config,.practice-exam-form [data-question]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.practice-exam-config>label,.practice-exam-form [data-question]>label{min-width:0}
+.practice-exam-config>label{display:grid;grid-template-rows:3em 3rem 1fr;gap:.5rem;align-content:start}
+.practice-exam-config>[hidden]{display:none!important}
+.practice-exam-config input,.practice-exam-config select{height:3rem}
+.practice-exam-config input,.practice-exam-config select,.practice-exam-form [data-question] input,.practice-exam-form [data-question] textarea{min-width:0;width:100%;box-sizing:border-box}
+.practice-exam-form [data-question]>button{grid-column:1/-1}
 .practice-exam-active{grid-column:1/-1;border-color:var(--theme-500,#6366f1);box-shadow:0 4px 20px color-mix(in srgb,var(--theme-500,#6366f1) 12%,transparent)}
 .practice-exam-active>[data-practice-player]{max-width:48rem;margin-inline:auto;border:0;background:transparent;padding:1rem 0;animation:practice-open .25s ease-out}
 .practice-progress{display:block;width:100%;height:.5rem;accent-color:var(--theme-500,#6366f1)}

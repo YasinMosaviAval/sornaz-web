@@ -135,6 +135,94 @@ foreach(['music_note','piano','headphones'] as $depth=>$icon){
  check($store->one('SELECT icon_key FROM f_music_practice_nodes WHERE id=?',[$iconId])['icon_key']===null,'Default icon could not be restored');
  $iconParent=$iconId;
 }
+// First-level forms submit one locale and receive an address based on the real ID.
+foreach(['titleFa'=>'سطح تازه','titleEn'=>'New first level'] as $titleKey=>$titleValue){
+ $first=$catalog->saveNode(2,['firstLevel'=>true,'parentId'=>0,$titleKey=>$titleValue])['id'];
+ $row=$store->one('SELECT * FROM f_music_practice_nodes WHERE id=?',[$first]);
+ check($row['slug']==='exam-l1-n'.$first&&$row['parent_id']===null&&(int)$row['depth']===1,'Automatic first-level address or parent is incorrect');
+ check((int)$row['published']===0,'New first level was published without a visibility action');
+ $translations=$store->rows("SELECT locale,value FROM f_translations WHERE table_name='music_practice_nodes' AND table_id=?",[$first]);
+ check(count($translations)===1&&$translations[0]['value']===$titleValue&&$translations[0]['locale']===($titleKey==='titleFa'?'fa':'en'),'Single-locale title was copied or stored incorrectly');
+ check(!in_array($first,array_column($catalog->listing(3)['nodes'],'id'),true),'Private first level leaked to the public catalog');
+ denied(403,fn()=>$catalog->publish(5,['kind'=>'node','id'=>$first,'version'=>1,'published'=>true]));
+ denied(403,fn()=>$catalog->publish(3,['kind'=>'node','id'=>$first,'version'=>1,'published'=>true]));
+ $catalog->publish(2,['kind'=>'node','id'=>$first,'version'=>1,'published'=>true]);
+ denied(409,fn()=>$catalog->publish(2,['kind'=>'node','id'=>$first,'version'=>1,'published'=>true]));
+ check(in_array($first,array_column($catalog->listing(3)['nodes'],'id'),true),'Public visibility action did not expose the first level');
+ $catalog->saveNode(2,['id'=>$first,'version'=>2,'parentId'=>0,'titleFa'=>'عنوان ویرایش‌شده']);
+ $row=$store->one('SELECT * FROM f_music_practice_nodes WHERE id=?',[$first]);
+ check($row['slug']==='exam-l1-n'.$first&&(int)$row['published']===1,'Partial title update changed address or publication');
+ if($titleKey==='titleEn')check($store->one("SELECT value FROM f_translations WHERE table_name='music_practice_nodes' AND table_id=? AND locale='en'",[$first])['value']===$titleValue,'Editing Persian erased the English translation');
+ denied(403,fn()=>$catalog->saveNode(5,['id'=>$first,'version'=>3,'titleFa'=>'غیرمجاز']));
+ $catalog->publish(2,['kind'=>'node','id'=>$first,'version'=>3,'published'=>false]);
+ check(!in_array($first,array_column($catalog->listing(3)['nodes'],'id'),true),'Hidden first level remained public');
+}
+$beforeFirst=(int)$pdo->query('SELECT COUNT(*) FROM f_music_practice_nodes')->fetchColumn();
+denied(422,fn()=>$catalog->saveNode(2,['firstLevel'=>true,'parentId'=>$a,'titleFa'=>'والد نامعتبر']));
+denied(422,fn()=>$catalog->saveNode(2,['firstLevel'=>'true','titleFa'=>'نامعتبر']));
+denied(422,fn()=>$catalog->saveNode(2,['firstLevel'=>true]));
+denied(422,fn()=>$catalog->saveNode(2,['firstLevel'=>true,'titleFa'=>'']));
+denied(403,fn()=>$catalog->saveNode(3,['firstLevel'=>true,'titleFa'=>'غیرمجاز']));
+check((int)$pdo->query('SELECT COUNT(*) FROM f_music_practice_nodes')->fetchColumn()===$beforeFirst,'Rejected first-level writes were not atomic');
+check(!$store->one("SELECT id FROM f_music_practice_nodes WHERE slug LIKE 'exam-pending-%'"),'Temporary addresses escaped the transaction');
+// New nested forms pin their parent and declare their intended depth.
+foreach(['titleFa'=>'زیرسطح تازه','titleEn'=>'New nested level'] as $titleKey=>$titleValue){
+ $nestedParent=$a;
+ foreach([2,3] as $depth){
+  $nested=$catalog->saveNode(2,['parentId'=>$nestedParent,'level'=>$depth,$titleKey=>$titleValue,'slug'=>'ignored-client-address'])['id'];
+  $row=$store->one('SELECT * FROM f_music_practice_nodes WHERE id=?',[$nested]);
+  check((int)$row['parent_id']===$nestedParent&&(int)$row['depth']===$depth&&$row['slug']==='exam-l'.$depth.'-n'.$nested,'Nested level escaped its parent/depth or used a client address');
+  check((int)$row['published']===0,'Nested level was initially public');
+  check(!in_array($nested,array_column($catalog->listing(3)['nodes'],'id'),true),'Draft nested level leaked');
+  check((int)$store->one("SELECT COUNT(*) total FROM f_translations WHERE table_name='music_practice_nodes' AND table_id=?",[$nested])['total']===1,'Nested title was duplicated into another locale');
+  denied(403,fn()=>$catalog->publish(5,['kind'=>'node','id'=>$nested,'version'=>1,'published'=>true]));
+  denied(403,fn()=>$catalog->saveNode(5,['id'=>$nested,'version'=>1,'parentId'=>$nestedParent,'level'=>$depth,$titleKey=>'Forbidden']));
+  $catalog->publish(2,['kind'=>'node','id'=>$nested,'version'=>1,'published'=>true]);
+  check(in_array($nested,array_column($catalog->listing(3)['nodes'],'id'),true),'Published nested level was not visible');
+  denied(409,fn()=>$catalog->publish(2,['kind'=>'node','id'=>$nested,'version'=>1,'published'=>false]));
+  $catalog->publish(2,['kind'=>'node','id'=>$nested,'version'=>2,'published'=>false]);
+  check(!in_array($nested,array_column($catalog->listing(3)['nodes'],'id'),true),'Nested visibility was not revoked');
+  $catalog->publish(2,['kind'=>'node','id'=>$nested,'version'=>3,'published'=>true]);
+  $nestedParent=$nested;
+ }
+ denied(422,fn()=>$catalog->saveNode(2,['parentId'=>$nestedParent,'level'=>3,$titleKey=>'Fourth level']));
+}
+$beforeNested=(int)$pdo->query('SELECT COUNT(*) FROM f_music_practice_nodes')->fetchColumn();
+foreach([['parentId'=>$a,'level'=>3],['parentId'=>0,'level'=>2],['parentId'=>$a,'level'=>'2'],['parentId'=>PHP_INT_MAX,'level'=>2],['parentId'=>$a,'level'=>4]] as $invalid){
+ denied(422,fn()=>$catalog->saveNode(2,$invalid+['titleFa'=>'نامعتبر']));
+}
+check((int)$pdo->query('SELECT COUNT(*) FROM f_music_practice_nodes')->fetchColumn()===$beforeNested,'Invalid depth/parent writes were not atomic');
+check(!$store->one("SELECT id FROM f_music_practice_nodes WHERE slug LIKE 'exam-pending-%'"),'Temporary nested address escaped transaction');
+// A new exam needs only the active title; its publication is a separate action.
+foreach(['titleFa'=>'مرحله تازه','titleEn'=>'New exam stage'] as $titleKey=>$titleValue){
+ $single=$testInput;unset($single['titleFa'],$single['titleEn'],$single['published']);$single+=['nodeId'=>$a,$titleKey=>$titleValue,'position'=>2];
+ $singleId=$catalog->saveExam(2,$single)['id'];
+ $row=$store->one('SELECT * FROM f_music_practice_exams WHERE id=?',[$singleId]);
+ check((int)$row['node_id']===$a&&(int)$row['published']===0,'Single-title exam lost its section or was published');
+ $texts=$store->rows("SELECT locale,value FROM f_translations WHERE table_name='music_practice_exams' AND table_id=?",[$singleId]);
+ check(count($texts)===1&&$texts[0]['value']===$titleValue&&$texts[0]['locale']===($titleKey==='titleFa'?'fa':'en'),'Exam title was duplicated or saved with the wrong locale');
+ check(!in_array($singleId,array_column($catalog->listing(3)['exams'],'id'),true),'Draft exam leaked');
+ $edit=array_replace($single,['id'=>$singleId,'version'=>1]);
+ denied(403,fn()=>$catalog->saveExam(5,$edit));
+ unset($edit['titleFa'],$edit['titleEn']);$edit[$titleKey==='titleFa'?'titleEn':'titleFa']='Other translation';
+ $catalog->saveExam(2,$edit);
+ check($store->one("SELECT value FROM f_translations WHERE table_name='music_practice_exams' AND table_id=? AND locale=?",[$singleId,$texts[0]['locale']])['value']===$titleValue,'Partial exam title update erased the other locale');
+ denied(403,fn()=>$catalog->publish(5,['kind'=>'exam','id'=>$singleId,'version'=>2,'published'=>true]));
+ denied(403,fn()=>$catalog->publish(3,['kind'=>'exam','id'=>$singleId,'version'=>2,'published'=>true]));
+ denied(409,fn()=>$catalog->publish(2,['kind'=>'exam','id'=>$singleId,'version'=>1,'published'=>true]));
+ foreach([true,true,false] as $visible){
+  $catalog->publish(2,['kind'=>'exam','id'=>$singleId,'version'=>2,'published'=>$visible]);
+  check(in_array($singleId,array_column($catalog->listing(3)['exams'],'id'),true)===$visible,'Exam eye action did not change public access');
+ }
+ check((int)$store->one('SELECT was_published FROM f_music_practice_versions WHERE exam_id=? AND version=2',[$singleId])['was_published']===1,'Publication history was not preserved');
+}
+$examCount=(int)$pdo->query('SELECT COUNT(*) FROM f_music_practice_exams')->fetchColumn();
+foreach([['position'=>-1],['position'=>'2'],['stageCount'=>0],['stageCount'=>1.5],['requiredWins'=>101],['requiredWins'=>'2']] as $invalid){denied(422,fn()=>$catalog->saveExam(2,array_replace($single,$invalid)));}
+denied(404,fn()=>$catalog->saveExam(2,array_replace($single,['nodeId'=>PHP_INT_MAX])));
+denied(404,fn()=>$catalog->saveExam(2,array_replace($single,['nodeId'=>$leaf])));
+$noTitle=$single;unset($noTitle['titleFa'],$noTitle['titleEn']);denied(422,fn()=>$catalog->saveExam(2,$noTitle));
+denied(422,fn()=>$catalog->saveExam(2,array_replace($single,[$titleKey=>''])));
+check((int)$pdo->query('SELECT COUNT(*) FROM f_music_practice_exams')->fetchColumn()===$examCount,'Rejected exam writes were not atomic');
 // Written questions use the same ownership, version and immutable-result boundary.
 $sheet=['metadata'=>['title'=>'Fixture','instrument'=>'Tar','clef'=>'treble','key'=>'C','scale_type'=>'major','time'=>'4/4','tempo_note'=>'q','bpm'=>120],'score'=>['measures'=>[['notes'=>[['pitch'=>'C4','duration'=>'q','rest'=>false],['pitch'=>'D4','duration'=>'q','rest'=>false]]]]]];
 $notation=['kind'=>'notation','assessment'=>'pitch_rhythm','questions'=>[['sheet'=>$sheet,'preview'=>'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M1 1L3 3"/></svg>']]];

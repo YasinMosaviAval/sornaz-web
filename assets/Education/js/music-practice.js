@@ -20,10 +20,34 @@
   const fail=e=>{status.textContent=e.message||t('ارتباط برقرار نشد.','Connection failed.');};
   function element(tag,text='',className=''){const el=document.createElement(tag);el.textContent=text;el.className=className;return el;}
   function button(text,action,primary=false){const b=element('button',text,'rounded-xl border px-4 py-3 '+(primary?'bg-indigo-600 text-white':'hover:bg-gray-50'));b.type='button';b.onclick=()=>Promise.resolve().then(action).catch(fail);return b;}
+  function itemIcon(label,iconName,action,danger=false){
+    const control=button('',action);control.className='practice-item-icon rounded-xl border hover:bg-gray-50'+(danger?' practice-item-delete':'');
+    control.setAttribute('aria-label',label);control.title=label;
+    const icon=element('i','','fas '+iconName);icon.setAttribute('aria-hidden','true');control.append(icon);return control;
+  }
+  function deleteButton(item,kind){
+    const control=itemIcon(t('حذف سطح','Delete level'),'fa-trash',async()=>{
+      control.disabled=true;
+      try{
+        const message=t(`آیا «${title(item)}» حذف شود؟ نتایج و خریدهای قبلی حفظ می‌شوند.`,`Delete “${title(item)}”? Existing results and purchases will be preserved.`);
+        const confirmed=window.AppDialog?await AppDialog.confirm(message,{title:t('حذف سطح؟','Delete level?'),confirmText:t('حذف','Delete'),cancelText:t('انصراف','Cancel')}):window.confirm(message);
+        if(!confirmed)return;
+        await api(kind==='exam'?'exams/delete':'nodes/delete',{id:item.id,version:item.version});await load();
+      }finally{control.disabled=false;}
+    },true);return control;
+  }
+  function visibilityButton(item,kind){
+    const control=button('',async()=>{control.disabled=true;try{await api('publish',{kind,id:item.id,version:item.version,published:!item.published});await load();}finally{control.disabled=false;}});
+    control.setAttribute('aria-label',item.published?t('عدم نمایش عمومی','Hide from public'):t('نمایش عمومی','Show publicly'));control.title=control.getAttribute('aria-label');control.setAttribute('aria-pressed',String(item.published));
+    const icon=element('i','','fas '+(item.published?'fa-eye':'fa-eye-slash'));icon.setAttribute('aria-hidden','true');control.append(icon);return control;
+  }
   function visibleNodes(){return catalog.nodes.filter(n=>(n.parentId??null)===parent);}
   function render(){
     if(!catalog||active)return;
     list.replaceChildren();root.querySelector('[data-practice-manage]').hidden=!Object.values(catalog.capabilities||{}).some(Boolean);
+    const add=root.querySelector('[data-practice-add]');
+    if(add){add.hidden=!managing||!catalog.capabilities.create||(catalog.nodes.find(n=>n.id===parent)?.depth??0)>=3;add.onclick=()=>nodeForm();}
+    else if(managing&&catalog.capabilities.create)list.append(button(t('افزودن بخش','Add section'),()=>nodeForm()));
     const crumbs=root.querySelector('[data-site-breadcrumb]'),items=crumbs.querySelector('[data-breadcrumb-items]');items.replaceChildren();
     const appendCrumb=(label,action,href)=>{if(items.children.length)items.append(crumbs.querySelector('[data-breadcrumb-separator]').content.cloneNode(true));const fragment=crumbs.querySelector(action||href?'[data-breadcrumb-link]':'[data-breadcrumb-current]').content.cloneNode(true),item=fragment.firstElementChild;item.textContent=label;if(action){item.href='#';item.onclick=e=>{e.preventDefault();action();};}else if(href)item.href=href;items.append(fragment);};
     appendCrumb(t('خانه','Home'),null,'/');
@@ -32,8 +56,9 @@
     for(const node of path)appendCrumb(title(node),node.id===parent?null:()=>{parent=node.id;render();});
     for(const node of visibleNodes()){
       const card=element('article','','space-y-3 rounded-2xl border bg-white p-4');card.append(button(title(node),()=>{parent=node.id;render();},true));
-      if(managing&&catalog.capabilities.edit&&node.canManage)card.append(button(t('ویرایش بخش','Edit section'),()=>nodeForm(node)));
-      if(managing&&catalog.capabilities.publish&&node.canManage)card.append(button(node.published?t('توقف انتشار','Unpublish'):t('انتشار','Publish'),async()=>{await api('publish',{kind:'node',id:node.id,version:node.version,published:!node.published});await load();}));
+      if(managing&&catalog.capabilities.edit&&node.canManage)card.append(itemIcon(t('ویرایش بخش','Edit section'),'fa-pen',()=>nodeForm(node)));
+      if(managing&&catalog.capabilities.publish&&node.canManage)card.append(visibilityButton(node,'node'));
+      if(managing&&catalog.capabilities.delete&&node.canManage&&catalog.nodeDeletion&&catalog.levelDeletion)card.append(deleteButton(node,'node'));
       list.append(card);
     }
     for(const exam of catalog.exams.filter(e=>e.nodeId===parent)){
@@ -41,13 +66,14 @@
       if(exam.audience==='public')card.append(element('p',exam.ownerId===1?t('رایگان · مدیر سایت','Free · Site administrator'):t('رایگان','Free'),'text-sm text-gray-500'));
       const done=progress.find(p=>p.examId===exam.id&&p.version===exam.version);card.append(element('p',`${'★'.repeat(done?.stars||0)}${'☆'.repeat(5-(done?.stars||0))} · ${done?.completedStages?.length||0}/${exam.stageCount}`,'text-sm'));
       const launch=button(exam.access?t('شروع تمرین','Start practice'):t('خرید آزمون یا اشتراک','Buy test or subscription'),()=>exam.access?start(exam,card):offers(exam.ownerId,exam.id),true);launch.dataset.practiceStart='';card.append(launch);
-      if(managing&&catalog.capabilities.edit)card.append(button(t('ویرایش آزمون','Edit test'),()=>examForm(exam)));
-      if(managing&&catalog.capabilities.publish)card.append(button(exam.published?t('توقف انتشار','Unpublish'):t('انتشار','Publish'),async()=>{await api('publish',{id:exam.id,version:exam.version,published:!exam.published});await load();}));
+      if(managing&&catalog.capabilities.edit)card.append(itemIcon(t('ویرایش آزمون','Edit test'),'fa-pen',()=>examForm(exam)));
+      if(managing&&catalog.capabilities.publish)card.append(visibilityButton(exam,'exam'));
+      if(managing&&catalog.capabilities.delete&&catalog.levelDeletion)card.append(deleteButton(exam,'exam'));
       if(managing&&catalog.capabilities.approvePlans)card.append(button(t('سهم درآمد','Revenue share'),()=>shareForm(exam)));
       list.append(card);
     }
     if(!list.children.length)list.append(element('p',t('هنوز آزمونی در این بخش منتشر نشده است.','No tests have been published in this section yet.')));
-    if(managing){if(catalog.capabilities.create)list.prepend(button(t('افزودن بخش','Add section'),()=>nodeForm()),button(t('افزودن آزمون','Add test'),()=>examForm()),button(t('پیشنهاد اشتراک','Propose subscription'),()=>planForm()));if(catalog.capabilities.approvePlans)list.prepend(button(t('بررسی اشتراک‌ها و سهم درآمد','Review subscriptions and revenue'),reviewPlans));}
+    if(managing){if(catalog.capabilities.create){if(parent)list.prepend(button(t('افزودن آزمون','Add test'),()=>examForm()));list.prepend(button(t('پیشنهاد اشتراک','Propose subscription'),()=>planForm()));}if(catalog.capabilities.approvePlans)list.prepend(button(t('بررسی اشتراک‌ها و سهم درآمد','Review subscriptions and revenue'),reviewPlans));}
   }
   let loadingCatalog=null,loadingMode=false,queuedCatalog=null;
   function load(force=false){
@@ -125,7 +151,7 @@
     next.answers.push({...q,selected,...(recording?{recording}:{}),sequence:run.answers.length+1,elapsedMs:Math.min(86400000,Math.round(performance.now()-run.started)),answeredAt:new Date().toISOString()});next.streak=expected===selected?run.streak+1:0;next.passed=next.streak>=run.exam.requiredWins;next.closed=next.passed;next.current=question(run.exam);
     try{await record('run:'+scope+':'+run.id,next);delete run.selected;Object.assign(run,next,{started:performance.now()});status.textContent=expected===selected?t('درست','Correct'):t('دوباره تلاش کنید.','Try again.');drawPlayer();if(boot.userId)upload().catch(fail);}finally{run.busy=false;}
   }
-  function form(heading,submit){editor.hidden=false;editor.replaceChildren(element('h2',heading,'text-lg font-bold'));const f=element('form','','grid gap-4 sm:grid-cols-2');editor.append(f);const controls=element('div','','flex gap-2 sm:col-span-2'),save=element('button',t('ذخیره','Save'),'rounded-xl bg-indigo-600 px-4 py-3 text-white');save.type='submit';controls.append(save,button(t('بستن','Close'),()=>editor.hidden=true));f.append(controls);f.onsubmit=async e=>{e.preventDefault();save.disabled=true;try{await submit(new FormData(f));editor.hidden=true;await load();}catch(e){fail(e);}finally{save.disabled=false;}};return f;}
+  function form(heading,submit){editor.hidden=false;editor.replaceChildren(element('h2',heading,'text-lg font-bold'));const f=element('form','','grid gap-4 sm:grid-cols-2');editor.append(f);const controls=element('div','','flex gap-2 sm:col-span-2'),save=element('button',t('ذخیره','Save'),'rounded-xl bg-indigo-600 px-4 py-3 text-white');save.type='submit';controls.onpointerdown=event=>{if(event.target.closest('button'))event.preventDefault();};controls.append(save,button(t('بستن','Close'),()=>editor.hidden=true));f.append(controls);f.onsubmit=async e=>{e.preventDefault();save.disabled=true;try{await submit(new FormData(f));editor.hidden=true;await load();}catch(e){fail(e);}finally{save.disabled=false;}};return f;}
   const asciiNumbers=value=>String(value).replace(/[۰-۹]/g,c=>String(c.charCodeAt(0)-1776)).replace(/[٠-٩]/g,c=>String(c.charCodeAt(0)-1632)).replace(/،/g,',').replace(/٫/g,'.');
   const numericRanges={position:[0,100000],stageCount:[1,100],requiredWins:[1,100],amount:[1000,1000000000],days:[1,366],bpm:[30,240],teacherPercent:[0,100]};
   function fieldHint(name){
@@ -166,16 +192,23 @@
   let fieldSequence=0;
   function field(f,name,label,value='',type='text'){
     const wrapper=element('label',label,'grid gap-2 text-sm'),input=element(type==='textarea'?'textarea':'input','','rounded-xl border bg-transparent p-3'),help=element('small');
-    input.name=name;if(type!=='textarea')input.type='text';if(type==='number')input.inputMode=name==='teacherPercent'?'decimal':'numeric';
+    input.name=name;input.style.font='inherit';if(type!=='textarea')input.type='text';if(type==='number')input.inputMode=name==='teacherPercent'?'decimal':'numeric';
+    if(type==='integer'){
+      input.type='number';input.inputMode='numeric';input.min=String(numericRanges[name][0]);input.max=String(numericRanges[name][1]);input.step='1';
+      input.addEventListener('keydown',e=>{if(e.key.length!==1||e.ctrlKey||e.metaKey||e.altKey)return;const digit=asciiNumbers(e.key);if(!/^[0-9]$/.test(e.key)){e.preventDefault();if(/^[0-9]$/.test(digit)){input.value+=digit;input.dispatchEvent(new Event('input',{bubbles:true}));}}});
+      input.addEventListener('paste',e=>{e.preventDefault();input.value=asciiNumbers(e.clipboardData.getData('text')).replace(/[^0-9]/g,'');input.dispatchEvent(new Event('input',{bubbles:true}));});
+    }
     input.value=String(value??'');input.required=true;help.id=`practice-field-help-${++fieldSequence}`;help.setAttribute('aria-live','polite');input.setAttribute('aria-describedby',help.id);
     const update=(force=false)=>{
       const focused=force||document.activeElement===input,error=fieldError(name,input.value,f,input);
       input.setCustomValidity(error);input.setAttribute('aria-invalid',error?'true':'false');
-      help.textContent=focused?(error||t('مقدار واردشده قابل قبول است.','This value is acceptable.')):fieldHint(name);
+      help.textContent=type==='integer'?(focused&&error?error:''):focused?(error||t('مقدار واردشده قابل قبول است.','This value is acceptable.')):fieldHint(name);
+      help.hidden=type==='integer'&&!help.textContent;
       help.className='text-xs '+(focused?(error?'text-red-600 dark:text-red-400':'text-emerald-600 dark:text-emerald-400'):'text-gray-500 dark:text-gray-400');
     };
     input.addEventListener('input',()=>{
       if(numericRanges[name]||['quarterSteps','beats','correct'].includes(name))input.value=asciiNumbers(input.value);
+      if(type==='integer')input.value=input.value.replace(/[^0-9]/g,'');
       if(name==='slug')input.value=input.value.toLowerCase();
       update();if(name==='choices')f.querySelector('[name=correct]')?.dispatchEvent(new Event('input'));
     });
@@ -185,13 +218,22 @@
   function select(f,name,label,options,value){const wrapper=element('label',label,'grid gap-2 text-sm'),input=element('select','','rounded-xl border bg-transparent p-3');input.name=name;for(const [key,text]of options){const o=element('option',text);o.value=key;input.append(o);}input.value=String(value);wrapper.append(input);f.prepend(wrapper);return input;}
   const nodeOptions=()=>catalog.nodes.map(n=>[n.id,`${'—'.repeat(n.depth-1)} ${title(n)}`]);
   function userPicker(f,exam){
-    const selected=new Map((exam.users||[]).map(u=>[u.id,u.username])),ids=new Set(exam.userIds||[]),box=element('div','','space-y-2 sm:col-span-2'),chips=element('div','','flex flex-wrap gap-2'),choices=element('div','','flex flex-wrap gap-2'),input=element('input','','w-full rounded-xl border bg-transparent p-3'),hidden=document.createElement('input');
-    hidden.type='hidden';hidden.name='userIds';input.type='search';input.placeholder=t('جستجوی نام کاربری هنرجو','Search student username');input.setAttribute('aria-label',input.placeholder);
+    const selected=new Map((exam.users||[]).map(u=>[u.id,u.username])),ids=new Set(exam.userIds||[]),box=element('div','','practice-audience-picker sm:col-span-2'),chips=element('div','','flex flex-wrap gap-2'),choices=element('div','','flex flex-wrap gap-2'),input=element('input','','w-full rounded-xl border bg-transparent p-3'),hidden=document.createElement('input');
+    box.classList.add('text-sm');input.style.font='inherit';hidden.type='hidden';hidden.name='userIds';input.type='search';input.placeholder=t('جستجوی نام کاربری هنرجو','Search student username');input.setAttribute('aria-label',input.placeholder);
     const draw=()=>{hidden.value=[...ids].join(',');chips.replaceChildren();for(const id of ids)chips.append(button('@'+(selected.get(id)||String(id))+' ×',()=>{ids.delete(id);draw();}));};
     let timer,sequence=0;input.onkeydown=e=>{if(e.key==='Enter')e.preventDefault();};input.oninput=()=>{clearTimeout(timer);const current=++sequence;choices.replaceChildren();if(input.value.trim().length<2)return;timer=setTimeout(async()=>{try{const data=await api('people?q='+encodeURIComponent(input.value.trim()));if(current!==sequence||data.viewerId!==Number(scope))return;choices.replaceChildren();for(const user of data.users)choices.append(button('@'+user.username,()=>{ids.add(user.id);selected.set(user.id,user.username);draw();choices.replaceChildren();input.value='';}));}catch(e){fail(e);}},250);};
     box.append(element('label',t('هنرجویان یا کاربران منتخب','Selected students or users')),input,chips,choices,hidden);f.prepend(box);draw();
   }
   function nodeForm(node={}){
+    if(!node.id){
+      const owner=catalog.nodes.find(n=>n.id===parent),parentId=parent||0,level=owner?owner.depth+1:1;
+      if((parentId&&!owner)||level>3)throw new Error(t('حداکثر سه سطح بخش مجاز است.','Only three section levels are allowed.'));
+      const name=boot.locale==='en'?'titleEn':'titleFa',heading=level===1?t('افزودن سطح اول آزمون','Add first test level'):level===2?t('افزودن سطح دوم آزمون','Add second test level'):t('افزودن سطح سوم آزمون','Add third test level');
+      const f=form(heading,data=>api('nodes',{...(level===1?{firstLevel:true}:{level}),parentId,[name]:data.get(name),position:Number(data.get('position'))}));
+      field(f,'position',t('ترتیب','Order'),0,'number');
+      field(f,name,t('عنوان فارسی','English title'),'');
+      return;
+    }
     const f=form(t('بخش آزمون‌ها','Test section'),data=>api('nodes',{id:node.id||0,version:node.version,parentId:Number(data.get('parentId')),slug:data.get('slug'),titleFa:data.get('titleFa'),titleEn:data.get('titleEn'),position:Number(data.get('position')),published:data.get('published')==='1'}));
     select(f,'published',t('انتشار','Publication'),[['0',t('پیش‌نویس','Draft')],['1',t('منتشرشده','Published')]],node.published?'1':'0').disabled=!catalog.capabilities.publish;
     field(f,'position',t('ترتیب','Order'),node.position||0,'number');
@@ -209,7 +251,9 @@
     field(f,'titleFa',t('عنوان فارسی','Persian title'),node.titleFa||'');
   }
   function examForm(exam={}){
-    let f;f=form(t('تعریف آزمون','Test definition'),data=>{let config;const kind=data.get('kind');if(kind==='interval')config={kind,quarterSteps:String(data.get('quarterSteps')).split(',').map(Number),direction:data.get('direction'),variableRoot:data.get('variableRoot')==='1'};else if(kind==='notation'){if(!catalog.notationQuestions||!writtenQuestions.children.length)throw Error(t('حداقل یک سؤال با نت‌نویسی تعریف کنید.','Compose at least one notation question.'));config={kind,assessment:assessment.value,questions:[...writtenQuestions.children].map(row=>({sheet:row.question.sheet,preview:row.question.preview}))};}else config={kind,questions:[...f.querySelectorAll('[data-question]')].map(row=>({promptFa:row.querySelector('[name=promptFa]').value,promptEn:row.querySelector('[name=promptEn]').value,choices:row.querySelector('[name=choices]').value.split('\n').filter(Boolean),correct:Number(row.querySelector('[name=correct]').value),...(kind==='rhythm'?{beats:row.querySelector('[name=beats]').value.split(',').map(Number),bpm:Number(row.querySelector('[name=bpm]').value)}:{})}))};return api('exams',{id:exam.id||0,version:exam.version,nodeId:Number(data.get('nodeId')),titleFa:data.get('titleFa'),titleEn:data.get('titleEn'),position:Number(data.get('position')),stageCount:Number(data.get('stageCount')),requiredWins:Number(data.get('requiredWins')),published:data.get('published')==='1',audience:data.get('audience'),userIds:String(data.get('userIds')||'').split(',').filter(x=>x.trim()).map(Number),config});});
+    const creating=!exam.id,nodeId=exam.nodeId||parent,titleName=boot.locale==='en'?'titleEn':'titleFa';
+    if(creating&&!nodeId)throw new Error(t('ابتدا وارد سطح مورد نظر شوید.','Open the target section first.'));
+    let f;f=form(t('تعریف آزمون','Test definition'),data=>{let config;const kind=data.get('kind');if(kind==='interval')config={kind,quarterSteps:String(data.get('quarterSteps')).split(',').map(Number),direction:data.get('direction'),variableRoot:data.get('variableRoot')==='1'};else if(kind==='notation'){if(!catalog.notationQuestions||!writtenQuestions.children.length)throw Error(t('حداقل یک سؤال با نت‌نویسی تعریف کنید.','Compose at least one notation question.'));config={kind,assessment:assessment.value,questions:[...writtenQuestions.children].map(row=>({sheet:row.question.sheet,preview:row.question.preview}))};}else config={kind,questions:[...f.querySelectorAll('[data-question]')].map(row=>({promptFa:row.querySelector('[name=promptFa]').value,promptEn:row.querySelector('[name=promptEn]').value,choices:row.querySelector('[name=choices]').value.split('\n').filter(Boolean),correct:Number(row.querySelector('[name=correct]').value),...(kind==='rhythm'?{beats:row.querySelector('[name=beats]').value.split(',').map(Number),bpm:Number(row.querySelector('[name=bpm]').value)}:{})}))};return api('exams',{id:exam.id||0,version:exam.version,nodeId:creating?nodeId:Number(data.get('nodeId')),...(creating?{[titleName]:data.get(titleName)}:{titleFa:data.get('titleFa'),titleEn:data.get('titleEn')}),position:Number(data.get('position')),stageCount:Number(data.get('stageCount')),requiredWins:Number(data.get('requiredWins')),...(creating?{}:{published:data.get('published')==='1'}),audience:data.get('audience'),userIds:String(data.get('userIds')||'').split(',').filter(x=>x.trim()).map(Number),config});});
     const questions=element('div','','space-y-3 sm:col-span-2');f.prepend(questions);
     function addQuestion(q={}){const row=element('fieldset','','grid gap-2 rounded-xl border p-3 sm:grid-cols-2');row.dataset.question='1';questions.append(row);field(row,'promptFa',t('پرسش فارسی','Persian question'),q.promptFa||'');field(row,'promptEn',t('پرسش انگلیسی','English question'),q.promptEn||'');field(row,'choices',t('گزینه‌ها؛ هر گزینه در یک سطر','Choices, one per line'),(q.choices||[]).join('\n'),'textarea');field(row,'correct',t('شماره گزینهٔ درست (از صفر)','Correct choice index (starting at zero)'),q.correct||0,'number');const beats=field(row,'beats',t('کشش ضرب‌ها با ویرگول','Beat lengths separated by commas'),(q.beats||[1,1]).join(','));const bpm=field(row,'bpm',t('ضرب در دقیقه','Beats per minute'),q.bpm||80,'number');row.append(button(t('حذف پرسش','Remove question'),()=>row.remove()));return [beats,bpm];}
     for(const q of (exam.config?.kind==='notation'?[]:exam.config?.questions||[]))addQuestion(q);questions.append(button(t('افزودن پرسش','Add question'),()=>addQuestion()));
@@ -219,11 +263,17 @@
     function addWritten(q){const row=element('div','','rounded-xl border p-3');row.question=q;const redraw=()=>{row.replaceChildren(PracticeNotation.image(row.question,t),button(t('ویرایش صورت سؤال','Edit score'),async()=>{const next=await PracticeNotation.compose(row.question,boot,t);if(next){row.question=next;redraw();}}),button(t('حذف پرسش','Remove question'),()=>row.remove()));};redraw();writtenQuestions.append(row);}
     if(exam.config?.kind==='notation')for(const q of exam.config.questions)addWritten(q);written.append(button(t('افزودن پرسش با نت‌نویسی','Compose a question'),async()=>{if(writtenQuestions.children.length>=20)return;const q=await PracticeNotation.compose(null,boot,t);if(q)addWritten(q);}));
     const intervalFields=[field(f,'quarterSteps',t('فاصله‌ها با واحد ربع‌پرده و ویرگول','Quarter-tone distances separated by commas'),(exam.config?.quarterSteps||[14,24]).join(',')),select(f,'direction',t('جهت','Direction'),[['ascending',t('بالارونده','Ascending')],['descending',t('پایین‌رونده','Descending')]],exam.config?.direction||'ascending'),select(f,'variableRoot',t('نت پایهٔ متغیر','Variable starting note'),[['0',t('خیر','No')],['1',t('بله','Yes')]],exam.config?.variableRoot?'1':'0')];
-    const update=()=>{for(const option of kind.options)option.hidden=mode.value==='audio'?['notation','choice'].includes(option.value):!['notation','choice'].includes(option.value);written.hidden=kind.value!=='notation';assessment.disabled=written.hidden;questions.hidden=['interval','notation'].includes(kind.value);intervalFields.forEach(input=>{input.closest('label').hidden=kind.value!=='interval';input.disabled=kind.value!=='interval';});questions.querySelectorAll('input,textarea').forEach(input=>input.disabled=['interval','notation'].includes(kind.value));};kind.onchange=()=>{mode.value=['notation','choice'].includes(kind.value)?'written':'audio';update();};mode.onchange=()=>{kind.value=mode.value==='written'?(catalog.notationQuestions?'notation':'choice'):'interval';update();};update();
+    const update=()=>{for(const option of kind.options)option.hidden=mode.value==='audio'?['notation','choice'].includes(option.value):!['notation','choice'].includes(option.value);written.hidden=kind.value!=='notation';assessment.disabled=written.hidden;assessment.closest('label').hidden=written.hidden;questions.hidden=['interval','notation'].includes(kind.value);intervalFields.forEach(input=>{input.closest('label').hidden=kind.value!=='interval';input.disabled=kind.value!=='interval';});questions.querySelectorAll('input,textarea').forEach(input=>input.disabled=['interval','notation'].includes(kind.value));};kind.onchange=()=>{mode.value=['notation','choice'].includes(kind.value)?'written':'audio';update();};mode.onchange=()=>{kind.value=mode.value==='written'?(catalog.notationQuestions?'notation':'choice'):'interval';update();};update();
     userPicker(f,exam);
     select(f,'audience',t('مخاطبان','Audience'),[['public',t('عمومی','Public')],['users',t('کاربران منتخب / هنرجویان شخصی','Selected users / personal students')],['students',t('هنرجویان فعال مدرس','Teacher’s active students')],['subscribers',t('مشترکان مدرس','Teacher’s subscribers')]],exam.audience||'public');
-    select(f,'published',t('انتشار','Publication'),[['0',t('پیش‌نویس','Draft')],['1',t('منتشرشده','Published')]],exam.published?'1':'0').disabled=!catalog.capabilities.publish;
-    field(f,'stageCount',t('تعداد مراحل','Number of stages'),exam.stageCount||5,'number');field(f,'requiredWins',t('پاسخ درست پیاپی برای هر مرحله','Consecutive correct answers per stage'),exam.requiredWins||10,'number');field(f,'position',t('ترتیب','Order'),exam.position||0,'number');select(f,'nodeId',t('بخش؛ هر سه سطح مجاز است','Section; any of the three levels'),nodeOptions(),exam.nodeId||parent||catalog.nodes[0]?.id);field(f,'titleEn',t('عنوان انگلیسی','English title'),exam.titleEn||'');field(f,'titleFa',t('عنوان فارسی','Persian title'),exam.titleFa||'');
+    if(!creating){select(f,'published',t('انتشار','Publication'),[['0',t('پیش‌نویس','Draft')],['1',t('منتشرشده','Published')]],exam.published?'1':'0').disabled=!catalog.capabilities.publish;select(f,'nodeId',t('بخش؛ هر سه سطح مجاز است','Section; any of the three levels'),nodeOptions(),exam.nodeId);}
+    const numbers=element('div','','practice-exam-numbers');f.prepend(numbers);
+    for(const [name,label,value] of [['requiredWins',t('پاسخ درست پیاپی','Consecutive correct answers'),exam.requiredWins||10],['stageCount',t('تعداد مراحل','Number of stages'),exam.stageCount||5],['position',t('ترتیب','Order'),exam.position||0]])field(numbers,name,label,value,'integer');
+    if(creating)field(f,titleName,t('عنوان فارسی','English title'),'');else{field(f,'titleEn',t('عنوان انگلیسی','English title'),exam.titleEn||'');field(f,'titleFa',t('عنوان فارسی','Persian title'),exam.titleFa||'');}
+    f.classList.add('practice-exam-form');
+    const configuration=element('div','','practice-exam-config'),controls=f.querySelector('button[type=submit]').parentElement;
+    configuration.append(kind.closest('label'),...intervalFields.map(input=>input.closest('label')),assessment.closest('label'));
+    f.insertBefore(mode.closest('label'),controls);f.insertBefore(configuration,controls);f.insertBefore(written,controls);f.insertBefore(questions,controls);
   }
   function planForm(){
     const f=form(t('پیشنهاد اشتراک آزمون‌ها','Propose test subscription'),data=>api('plans/propose',{examId:0,nodeId:Number(data.get('nodeId')),title:data.get('title'),amount:Number(data.get('amount')),days:Number(data.get('days'))}));
