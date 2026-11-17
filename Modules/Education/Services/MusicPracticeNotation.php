@@ -27,7 +27,7 @@ final class MusicPracticeNotation
     private static function validateReferenceShape(array $sheet): void
     {
         $meta = $sheet['metadata'];
-        if (($meta['time'] ?? '') === 'free' || !empty($sheet['score']['subsections']) || count($meta['staves']) !== 1
+        if (($sheet['score']['time'] ?? $meta['time'] ?? '') === 'free' || !empty($sheet['score']['subsections']) || count($meta['staves']) !== 1
             || count($sheet['score']['measures']) > 8 || str_contains($meta['clef'], '_8')) self::unsupported();
     }
 
@@ -37,7 +37,7 @@ final class MusicPracticeNotation
 
         self::validateReferenceShape($sheet);
         $beat=self::units(['duration'=>$meta['tempo_note'],'dots'=>$meta['tempo_dots']??0]);
-        $ms=60000/($meta['bpm']*$beat);$offset=0;$events=[];$time=$meta['time'];$key=$meta['key'];$previousTie=false;$previousPitch='';
+        $ms=60000/($meta['bpm']*$beat);$offset=0;$events=[];$time=$sheet['score']['time']??$meta['time'];$key=$meta['key'];$previousTie=false;$previousPitch='';
         foreach($bars as $bar){
             if (!empty($bar['repeat']) || !empty($bar['multiRest']) || !empty($bar['tempo']) || !empty($bar['tempo_unit']) || !empty($bar['clefChanges'])) self::unsupported();
             $time=$bar['time']??$time;$key=$bar['key']??$key;$signature=self::signature($meta['scale_type']??'',$key);

@@ -17,7 +17,16 @@ const {chromium}=require(process.env.PLAYWRIGHT_CORE_PATH||'../storage/notation-
   await page.goto(pathToFileURL(path.resolve(__dirname,'../assets/notation/index.html')).href);
   await page.locator('[data-action=new]').click();await page.locator('[name=title]').fill('Free phrase');
   await page.locator('[name=instrument]').selectOption('42');await page.locator('[name=scale_type]').selectOption('major');
-  await page.locator('[name=time]').selectOption('free');
+  await page.locator('#metadata .notation-symbol-picker[data-control-key=time]').click();
+  const popup=page.locator('.notation-form-options[data-control-key=time]'),free=popup.locator('[data-notation-option=free]');
+  assert.equal(await free.locator('.notation-signature-name').textContent(),locale==='fa'?'میزان آزاد (بدون میزان)':'Free meter');
+  assert.equal(await free.isVisible(),true,'the visible picker must expose free meter');
+  assert.notEqual(await free.locator('svg').innerHTML(),await popup.locator('[data-notation-option="4/4"] svg').innerHTML(),'free meter must not look like 4/4');
+  assert.ok(await free.evaluate(node=>{const box=node.getBoundingClientRect();return box.left>=0&&box.right<=innerWidth&&box.top>=0&&box.bottom<=innerHeight;}),'the free-meter choice fits the viewport');
+  await page.screenshot({path:path.resolve(__dirname,`../storage/notation-browser-check/free-meter-picker-${locale}-${width}.png`)});
+  await free.click();
+  assert.equal(await page.locator('[name=time]').inputValue(),'free');
+  assert.equal(await page.locator('#metadata .notation-symbol-picker[data-control-key=time]').textContent(),locale==='fa'?'میزان آزاد (بدون میزان)':'Free meter');
   assert.equal(await page.locator('.tempo-row').isVisible(),false);
   await page.locator('#metadata').evaluate(form=>form.requestSubmit());await page.locator('#score svg').waitFor();
   const enter=async(value,rest=false)=>{

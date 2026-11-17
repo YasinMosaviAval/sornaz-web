@@ -34,7 +34,7 @@ const gapDurations=Object.keys(M.durations).flatMap(duration=>[0,1,2].map(dots=>
 function spacingNotes(length){const notes=[];while(length>0){const part=gapDurations.find(item=>item.value<=length);if(!part)break;notes.push(new VF.GhostNote({duration:part.duration,dots:part.dots}));length-=part.value;}return notes;}
 // Render-only rests never enter the score, undo history, export or playback.
 function completedVoice(source,sheet,index,staff,voice){
- if(M.isFree(sheet))return source;
+ if(M.isFree(sheet,index))return source;
  const end=M.barUnits(sheet,index),pattern=M.beamPattern(sheet,index),boundaries=[];let boundary=0;
  if(pattern)for(const part of pattern.parts){boundary+=part*M.wholeUnits/pattern.denominator;boundaries.push(boundary);}
  const ratios=[...new Map(source.filter(n=>n.tuplet).map(n=>[n.tuplet.actual+':'+n.tuplet.normal,n.tuplet])).values()];
@@ -46,7 +46,7 @@ function completedVoice(source,sheet,index,staff,voice){
  for(const note of source){fill(Math.min(note.at,end));result.push(note);cursor=Math.max(cursor,note.at+M.units(note));}fill(end);return result;
 }
 function renderingBeamPattern(sheet,index){
- if(M.isFree(sheet))return null;
+ if(M.isFree(sheet,index))return null;
  const m=M.effectiveTempoUnit(sheet,index);if(!M.durations[m.tempo_note])return M.beamPattern(sheet,index);
  const beat=M.units({duration:m.tempo_note,dots:Number(m.tempo_dots)||0}),length=M.barUnits(sheet,index),parts=[];for(let at=0;at<length;at+=beat)parts.push(Math.min(beat,length-at));return {parts,denominator:M.wholeUnits};
 }
@@ -66,7 +66,7 @@ function notationBeam(notes){
 }
 // Beam groups choose a common stem direction, including pitches across the middle line.
 function rhythmicBeams(notes,positions,sheet,index){
- if(M.isFree(sheet))return [];
+ if(M.isFree(sheet,index))return [];
  const pattern=renderingBeamPattern(sheet,index);if(!pattern)return VF.Beam.generateBeams(notes,{maintain_stem_directions:false});
  const bounds=[];let end=0;for(const part of pattern.parts){end+=part*M.wholeUnits/pattern.denominator;bounds.push(end);}
  const beams=[];let run=[],previousEnd=-1,previousGroup=-1;const flush=()=>{if(run.length>1)beams.push(notationBeam(run));run=[];};
@@ -123,11 +123,11 @@ function renderRow(target,bars,start,options){
    // Keep the clef context even when its repeated visual modifier is omitted.
    stave.clef=clefs[lane].split('_')[0];
    const changedClef=index===0||clefs[lane]!==M.clefAt(options.sheet,index-1,lane+1,Infinity);
-   if(col===0||bar.clefs?.[lane+1]||bar.time||bar.timeSymbol||bar.key||selectedHint){if(col===0||bar.clefs?.[lane+1]&&(!options.continuousSignatures||changedClef))stave.addClef(clefs[lane].split('_')[0],undefined,clefs[lane].split('_')[1]);if(options.continuousSignatures?(index===0||!M.sameKeySignature(options.sheet,barKey,M.effectiveKey(options.sheet,index-1))):(col===0||bar.key)){const signature=M.iranianSignature?.(m.scale_type,barKey);if(signature)stave.addModifier(new IranianKeySignature(signature,clefs[lane].split('_')[0],index>0?M.iranianSignature(m.scale_type,M.effectiveKey(options.sheet,index-1)):null));else stave.addKeySignature(barKey,index>0?M.effectiveKey(options.sheet,index-1):undefined);}if(!M.isFree(options.sheet)&&(index===0||barTime!==M.effectiveTime(options.sheet,index-1)||selectedHint)){stave.addTimeSignature(bar.timeSymbol==='common'?'C':bar.timeSymbol==='cut'?'C|':barTime);if(selectedHint&&barTime===M.effectiveTime(options.sheet,index-1))stave.getModifiers().find(mod=>mod.getCategory()==='TimeSignature')?.setStyle({fillStyle:'#c4c4c4',strokeStyle:'#c4c4c4'});}
+   if(col===0||bar.clefs?.[lane+1]||bar.time||bar.timeSymbol||bar.key||selectedHint){if(col===0||bar.clefs?.[lane+1]&&(!options.continuousSignatures||changedClef))stave.addClef(clefs[lane].split('_')[0],undefined,clefs[lane].split('_')[1]);if(options.continuousSignatures?(index===0||!M.sameKeySignature(options.sheet,barKey,M.effectiveKey(options.sheet,index-1))):(col===0||bar.key)){const signature=M.iranianSignature?.(m.scale_type,barKey);if(signature)stave.addModifier(new IranianKeySignature(signature,clefs[lane].split('_')[0],index>0?M.iranianSignature(m.scale_type,M.effectiveKey(options.sheet,index-1)):null));else stave.addKeySignature(barKey,index>0?M.effectiveKey(options.sheet,index-1):undefined);}if(!M.isFree(options.sheet,index)&&(index===0||barTime!==M.effectiveTime(options.sheet,index-1)||selectedHint)){stave.addTimeSignature(bar.timeSymbol==='common'?'C':bar.timeSymbol==='cut'?'C|':barTime);if(selectedHint&&barTime===M.effectiveTime(options.sheet,index-1))stave.getModifiers().find(mod=>mod.getCategory()==='TimeSignature')?.setStyle({fillStyle:'#c4c4c4',strokeStyle:'#c4c4c4'});}
    }
-   if(!M.isFree(options.sheet)&&lane===0&&(bar.displayNumber||index>0)){ctx.save();ctx.setFillStyle('#666');ctx.setFont('Arial',5.5);ctx.fillText(String(bar.displayNumber||index+1),x+9,35);ctx.restore();}
+   if(!M.isFree(options.sheet,index)&&lane===0&&(bar.displayNumber||index>0)){ctx.save();ctx.setFillStyle('#666');ctx.setFont('Arial',5.5);ctx.fillText(String(bar.displayNumber||index+1),x+9,35);ctx.restore();}
    if(bar.repeat?.start)stave.setBegBarType(VF.Barline.type.REPEAT_BEGIN);
-   if(M.isFree(options.sheet)){stave.setBegBarType(VF.Barline.type.NONE);stave.setEndBarType(VF.Barline.type.NONE);}
+   if(M.isFree(options.sheet,index)){stave.setBegBarType(VF.Barline.type.NONE);stave.setEndBarType(VF.Barline.type.NONE);}
    else if(multiRest&&index<multiRest.end)stave.setEndBarType(VF.Barline.type.NONE);
    else if(bar.repeat?.end)stave.setEndBarType(VF.Barline.type.REPEAT_END);
    else if(bar.barline==='double')stave.setEndBarType(VF.Barline.type.DOUBLE);
@@ -139,7 +139,7 @@ function renderRow(target,bars,start,options){
   const noteStart=Math.max(...staves.map(stave=>stave.getNoteStartX()))+12;
   staves.forEach(stave=>stave.setNoteStartX(noteStart));
   if(grand){
-   for(const type of [...(M.isFree(options.sheet)?[]:[VF.StaveConnector.type.SINGLE_LEFT,VF.StaveConnector.type.SINGLE_RIGHT]),...(col===0?[VF.StaveConnector.type.BRACE]:[])])
+   for(const type of [...(M.isFree(options.sheet,index)?[]:[VF.StaveConnector.type.SINGLE_LEFT,VF.StaveConnector.type.SINGLE_RIGHT]),...(col===0?[VF.StaveConnector.type.BRACE]:[])])
     new VF.StaveConnector(staves[0],staves[1]).setType(type).setContext(ctx).draw();
   }
   const addLabel=(label,y,size=12)=>{const element=document.createElementNS('http://www.w3.org/2000/svg','text');for(const[key,value]of Object.entries({x:x+barWidth/2,y,'text-anchor':'middle','font-family':'NotationTheme, Arial','font-size':size,fill:'#111'}))element.setAttribute(key,value);element.textContent=label;svg.append(element);};
@@ -161,7 +161,7 @@ function renderRow(target,bars,start,options){
   if(bar.rehearsal)addLabel(bar.rehearsal,staves[0].getY()-53,12);
   if(bar.text)addLabel(bar.text,staves[0].getY()-66,10);
   const currentUnit=M.effectiveTempoUnit(options.sheet,index),previousUnit=M.effectiveTempoUnit(options.sheet,index-1),unitChanged=currentUnit.tempo_note!==previousUnit.tempo_note||currentUnit.tempo_dots!==previousUnit.tempo_dots,segment=M.tempoSegment(options.sheet,index),previousBpm=index?M.tempoSegment(options.sheet,index-1).final:Number(m.bpm),tempoChanged=!!bar.tempo&&(segment.initial!==previousBpm||segment.final!==segment.initial);
-  if(!M.isFree(options.sheet)&&(unitChanged||tempoChanged||selectedHint)&&!(index===0&&(!bar.tempo||bar.tempo.mode==='instant'))){
+  if(!M.isFree(options.sheet,index)&&(unitChanged||tempoChanged||selectedHint)&&!(index===0&&(!bar.tempo||bar.tempo.mode==='instant'))){
    const ns='http://www.w3.org/2000/svg',label=document.createElementNS(ns,'g'),scale=options.pixels/width,reference=target.closest('.shell')?.querySelector('.score-title .metronome-mark'),font=reference?parseFloat(getComputedStyle(reference).fontSize):10,fontSize=font/scale;let offset=0;
    for(const[key,value]of Object.entries({'font-family':'NotationTheme, Arial','font-size':fontSize,fill:'#111','class':'notation-tempo-change','data-bar':index,'data-staff-top':staves[0].getYForLine(0),'data-note-start':noteStart}))label.setAttribute(key,String(value));svg.append(label);
    const unit=M.effectiveTempoUnit(options.sheet,index),bpm=bar.tempo?.mode==='aTempo'?m.bpm:bar.tempo?.bpm||M.tempoSegment(options.sheet,index).initial,part=(text,field,faint)=>{const span=document.createElementNS(ns,'text');span.textContent=text;span.setAttribute('x',String(offset));span.setAttribute('y','0');span.setAttribute('fill',faint?'#c4c4c4':'#111');span.setAttribute('class','notation-measure-'+field);label.append(span);offset+=span.getBBox().width;if(field)tempoTargets.push({span,field});};
@@ -174,7 +174,7 @@ function renderRow(target,bars,start,options){
   staves.forEach((stave,lane)=>{
    if(multiRest||repeatRegion)return;
    const staff=lane+1,all=bar.notes.map((n,i)=>({...n,index:i,at:M.positionOf(bar,i)})).filter(n=>M.staffOf(n)===staff),voiceIds=[...new Set(all.map(M.voiceOf))];
-   if(!all.length&&!M.isFree(options.sheet))centeredGlyph(ctx,svg,'restWhole',(stave.getNoteStartX()+stave.getNoteEndX())/2,stave.getYForLine(1),'notation-measure-rest',{'data-bar':index,'data-staff':staff,'data-units':M.barUnits(options.sheet,index)},true);
+   if(!all.length&&!M.isFree(options.sheet,index))centeredGlyph(ctx,svg,'restWhole',(stave.getNoteStartX()+stave.getNoteEndX())/2,stave.getYForLine(1),'notation-measure-rest',{'data-bar':index,'data-staff':staff,'data-units':M.barUnits(options.sheet,index)},true);
    const displayAccidentals=measureAccidentals(options.sheet,index,staff);
    const ghost=!options.printing&&index===options.ghostBar&&options.ghost&&M.staffOf(options.ghost)===staff?options.ghost:null;
    if(ghost&&!voiceIds.length)previewTargets.push({stave,n:ghost,x:stave.getNoteStartX()+12});
@@ -218,7 +218,7 @@ function renderRow(target,bars,start,options){
     if(ratio){tupletRatio=ratio;tupletGroup.push(v);if(tupletGroup.length===n.tuplet.actual)finishTuplet();}
    });
    finishTuplet();
-   if(notes.length){const[beats,beatValue]=(M.isFree(options.sheet)?'4/4':barTime).split('/').map(Number),voice=new VF.Voice({num_beats:beats,beat_value:beatValue}).setStrict(false);voice.addTickables(notes);voices.push({voice,stave});beams.push(...rhythmicBeams(actual,noteTimes,options.sheet,index));}
+   if(notes.length){const[beats,beatValue]=(M.isFree(options.sheet,index)?'4/4':barTime).split('/').map(Number),voice=new VF.Voice({num_beats:beats,beat_value:beatValue}).setStrict(false);voice.addTickables(notes);voices.push({voice,stave});beams.push(...rhythmicBeams(actual,noteTimes,options.sheet,index));}
    }
   });
   // Attach manual beams before formatting/drawing so their notes suppress standalone flags.
@@ -347,9 +347,10 @@ function fitMeasureTempos(element){
 function freeLayout(sheet){
  const layout=M.clone(sheet);layout._freeLayout=true;layout.score.measures=[];
  sheet.score.measures.forEach((bar,b)=>{
+  if(!M.isFree(sheet,b)){layout.score.measures.push({...M.clone(bar),_sourceBar:b,notes:bar.notes.map((note,i)=>({...M.clone(note),_sourceNote:i}))});return;}
   const entries=bar.notes.map((n,i)=>({n,i,at:M.positionOf(bar,i)})).sort((a,c)=>a.at-c.at||a.i-c.i),onsets=[...new Set(entries.map(e=>e.at))];
   for(let start=0;start<Math.max(1,onsets.length);start+=4){
-   const times=onsets.slice(start,start+4),fragment={notes:[],_sourceBar:b};
+   const times=onsets.slice(start,start+4),fragment={notes:[],_sourceBar:b,time:'free'};
    if(start===0){if(b===0||bar.key)fragment.key=M.effectiveKey(sheet,b);if(b===0||bar.clefs||sheet.score.measures[b-1]?.clefChanges)fragment.clefs=Object.fromEntries(M.staves(sheet.metadata).map((_,staff)=>[staff+1,M.effectiveClef(sheet,b,staff+1)]));}
    for(const event of bar.clefChanges||[])if(times.length&&event.at>=times[0]&&(start+4>=onsets.length||event.at<onsets[start+4])){fragment.clefChanges??=[];fragment.clefChanges.push({...event,at:Math.max(0,times.findIndex(time=>time>=event.at))*M.wholeUnits/4});}
    for(const {n,i,at}of entries.filter(e=>times.includes(e.at))){const copy={...M.clone(n),duration:'q',dots:0,at:times.indexOf(at)*M.wholeUnits/4,_seconds:n.durationSeconds,_sourceNote:i};delete copy.durationSeconds;delete copy.tuplet;fragment.notes.push(copy);}
@@ -366,7 +367,7 @@ function remapFreeHits(element,layout){
  }
 }
 function draw(element,sheet,options={}){
- if(M.isFree(sheet)&&!sheet._freeLayout){
+ if(M.hasFree(sheet)&&!sheet._freeLayout){
   const layout=freeLayout(sheet),selectedNotes=new Set();let activeBar=-1,activeNote=-1;
   layout.score.measures.forEach((bar,b)=>bar.notes.forEach((n,i)=>{if(options.selectedNotes?.has(bar._sourceBar+':'+n._sourceNote))selectedNotes.add(b+':'+i);if(bar._sourceBar===options.activeBar&&n._sourceNote===options.activeNote){activeBar=b;activeNote=i;}}));
   draw(element,layout,{...options,selectedNotes,activeBar,activeNote,ghost:null,measureSelected:false});remapFreeHits(element,layout);return;
@@ -379,7 +380,7 @@ function draw(element,sheet,options={}){
 }
 // One horizontal system per instrument; all systems share physical bar widths.
 function drawEnsemble(element,parts,options={}){
- if(parts.some(M.isFree)){element.replaceChildren();element.classList.add('notation-ensemble');for(const[partIndex,part]of parts.entries()){const lane=document.createElement('section');lane.className='notation-ensemble-part';lane.dataset.part=partIndex;element.append(lane);draw(lane,part,options);}return;}
+ if(parts.some(part=>M.hasFree(part))){element.replaceChildren();element.classList.add('notation-ensemble');for(const[partIndex,part]of parts.entries()){const lane=document.createElement('section');lane.className='notation-ensemble-part';lane.dataset.part=partIndex;const label=document.createElement('div');label.className='notation-ensemble-label';label.textContent=options.instrumentName?options.instrumentName(part.metadata,partIndex):part.metadata.instrument+' '+(partIndex+1);const score=document.createElement('div');lane.append(label,score);element.append(lane);draw(score,part,options);}return;}
  const scrollLeft=element.scrollLeft;element.replaceChildren();element.classList.add('notation-ensemble');
  const count=Math.max(...parts.map(part=>Math.max(1,M.trimmedMeasures(part).length))),prefix=Math.max(...parts.map(signatureReserve))*2+170;
  const measureWidths=Array.from({length:count},(_,index)=>Math.max(210,...parts.map(part=>part.score.measures[index]?estimate(part.score.measures[index],0,part,index):210))+(index===0?prefix:0));
@@ -408,7 +409,7 @@ function metronomeUnit(metadata,symbols={}){const notes={w:'\u{1D15D}',h:'\u{1D1
 function printDocument(sheet,locale='en',symbols={}){
  if(sheet.score.sections?.length||sheet.score.subsections?.length)return printDocument(M.joinSections(sheet),locale,symbols);
  if(sheet.score.parts?.length){const documents=M.parts(sheet).map((part,printPartIndex)=>printDocument({...part,printPart:true,printPartIndex},locale,symbols)),body=documents.map(html=>new DOMParser().parseFromString(html,'text/html').body.innerHTML).join(''),combined=new DOMParser().parseFromString(body,'text/html');combined.querySelectorAll('.print-page-number').forEach((node,i)=>node.textContent=String(i+1));return documents[0].replace(/<body>[\s\S]*<\/body>/,()=>'<body>'+combined.body.innerHTML+'</body>');}
- if(M.isFree(sheet)&&!sheet._freeLayout)return printDocument(freeLayout(sheet),locale,symbols);
+ if(M.hasFree(sheet)&&!sheet._freeLayout)return printDocument(freeLayout(sheet),locale,symbols);
  const trimmed=M.trimmedMeasures(sheet),measures=trimmed.length?trimmed:[sheet.score.measures[0]||{notes:[]}],rows=groups(measures,1000,true,signatureReserve(sheet),sheet),pages=[],engraved=[];let index=0;
  const printInstrument=symbols.instrumentName?symbols.instrumentName(sheet.metadata,sheet.printPartIndex):sheet.metadata.instrument+' '+((sheet.printPartIndex||0)+1);
  const host=document.createElement('div');host.style.cssText='position:absolute;left:-10000px;top:0;visibility:hidden';document.body.append(host);

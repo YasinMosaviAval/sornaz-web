@@ -263,6 +263,8 @@ body.writing{overscroll-behavior-x:none}
 
 .notation-form-options .notation-signature-name{font-size:calc(8px * var(--font-scale,1))}
 .notation-form-options[data-control-key=time] .notation-control-glyph text{font-size:calc(10.666667px * var(--font-scale,1))}
+.notation-form-options[data-control-key=time] [data-notation-option=free]{grid-column:1/-1;gap:8px}
+.notation-form-options[data-control-key=time] [data-notation-option=free] .notation-signature-name{font-size:calc(12px * var(--font-scale,1))}
 
 .notation-signature-hit{cursor:pointer;touch-action:pan-y pinch-zoom}.notation-signature-hit:focus-visible{stroke:var(--accent,#0065ff);stroke-width:1;outline:none}
 

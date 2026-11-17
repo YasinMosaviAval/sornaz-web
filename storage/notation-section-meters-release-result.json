@@ -1,0 +1,19 @@
+{
+  "suites": 155,
+  "passed": 148,
+  "failed": 7,
+  "failures": [
+    "music-practice-integration-test.php",
+    "sidebar_identity_render_test.php",
+    "music_practice_browser_test.cjs",
+    "notation_symbol_controls_browser_test.cjs",
+    "notation_shared_features_browser_test.cjs",
+    "panel_notation_form_browser_test.cjs",
+    "panel_notation_frame_browser_test.cjs"
+  ],
+  "logs": [
+    "storage/notation-section-meters-release-tests.log",
+    "storage/notation-section-meters-release-rest.log"
+  ],
+  "note": "Resumed after interruption. The resume runner counted a truncated PowerShell error excerpt twice; this aggregate counts actual FAILED lines and unique suites. Targeted notation browser suites were rerun after the final snapshot cleanup and passed."
+}

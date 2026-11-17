@@ -159,7 +159,7 @@ class NotationService
         $clean['bpm'] = $this->validatedBpm($meta['bpm'] ?? null);
         $measures = [];
         $measureLengths = [];
-        $currentTime = $clean['time'];
+        $currentTime = array_key_exists('time', $score) ? $this->validatedTime($score['time']) : $clean['time'];
         $freeMeter = $currentTime === 'free';
         $currentBpm = $clean['bpm'];
         foreach ($score['measures'] as $measure) {
@@ -521,7 +521,7 @@ class NotationService
         if (!in_array($visibility, ['private', 'public'], true)) {
             throw new RuntimeException('Invalid visibility.', 422);
         }
-        $cleanScore = ['measures' => $measures] + $this->validatedSubsections($score, $clean) + $this->validatedSections($score, $clean) + $this->validatedParts($score, $clean);
+        $cleanScore = ['measures' => $measures] + (isset($score['time']) ? ['time' => $this->validatedTime($score['time'])] : []) + $this->validatedSubsections($score, $clean) + $this->validatedSections($score, $clean) + $this->validatedParts($score, $clean);
         return ['title' => $clean['title'], 'metadata' => json_encode($clean, JSON_UNESCAPED_UNICODE), 'score' => json_encode($cleanScore, JSON_UNESCAPED_UNICODE), 'visibility' => $visibility];
     }
 
@@ -541,7 +541,7 @@ class NotationService
         if (!empty($score['sections'])) {
             $result['sections'] = [];
             foreach ($score['sections'] as $section) {
-                if (!is_array($section) || array_diff(array_keys($section), ['measures', 'subsections'])) {
+                if (!is_array($section) || array_diff(array_keys($section), ['measures', 'subsections', 'time'])) {
                     throw new RuntimeException('Invalid score sections.', 422);
                 }
                 $validated = $this->validate(['metadata' => $metadata, 'score' => $section, 'visibility' => 'private'], true);
@@ -560,7 +560,7 @@ class NotationService
         }
         $result = [];
         foreach ($children as $child) {
-            if (!is_array($child) || array_diff(array_keys($child), ['measures'])) {
+            if (!is_array($child) || array_diff(array_keys($child), ['measures', 'time'])) {
                 throw new RuntimeException('Invalid score subsections.', 422);
             }
             $validated = $this->validate(['metadata' => $metadata, 'score' => $child, 'visibility' => 'private'], true);
@@ -595,6 +595,23 @@ class NotationService
         return false;
     }
 
+    private function hasSectionMeters(array $score): bool
+    {
+        if (isset($score['time'])) return true;
+        foreach (array_merge($score['sections'] ?? [], $score['subsections'] ?? []) as $child) {
+            if ($this->hasSectionMeters($child)) return true;
+        }
+        foreach ($score['parts'] ?? [] as $part) if ($this->hasSectionMeters($part['score'])) return true;
+        return false;
+    }
+
+    private function requireSectionMeterSupport(array $score, array $data): void
+    {
+        if ($this->hasSectionMeters($score) && ($data['notation_section_meters'] ?? false) !== true) {
+            throw new RuntimeException('This sheet changed elsewhere. Reload before saving.', 409);
+        }
+    }
+
     private function validatedTime(mixed $time): string
     {
         if ($time === 'free') return $time;
@@ -607,7 +624,7 @@ class NotationService
     private function validateFreeMeasure(array $measure, bool $free): void
     {
         if (!$free) {
-            if (($measure['time'] ?? null) === 'free') throw new RuntimeException('Choose free meter for the whole score.', 422);
+            if (($measure['time'] ?? null) === 'free') throw new RuntimeException('Choose free meter for this section.', 422);
             return;
         }
         foreach (['time', 'timeSymbol', 'length', 'barline', 'repeat', 'multiRest', 'beamPattern', 'displayNumber'] as $field) {
@@ -676,6 +693,7 @@ class NotationService
             }
             // Cached single-part editors must not silently erase embedded parts.
             $storedScore = json_decode($row['score'], true);
+            $this->requireSectionMeterSupport($storedScore, $data);
             $lostSections = !empty($storedScore['sections']) && empty($data['score']['sections']);
             foreach ($storedScore['parts'] ?? [] as $index => $part) {
                 if (!empty($part['score']['sections']) && empty($data['score']['parts'][$index]['score']['sections'])) $lostSections = true;
